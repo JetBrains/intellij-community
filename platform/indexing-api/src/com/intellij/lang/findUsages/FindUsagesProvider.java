@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines the support for the "Find Usages" feature in a custom language.
  *
  * @author max
- * @see com.intellij.lang.LanguageExtension#forLanguage(com.intellij.lang.Language)
+ * @see LanguageFindUsages#forLanguage(com.intellij.lang.Language)
  */
 public interface FindUsagesProvider {
 
