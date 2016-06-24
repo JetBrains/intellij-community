@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
@@ -89,7 +88,7 @@ public class HierarchyServiceImpl extends HierarchyService {
       public boolean process(int fileId, IndexTree.Unit unit) {
         if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
         if (files.get(fileId)) {
-          QualifiedName pkg = StringUtil.isEmpty(unit.myPackageId) ? null : names.fromString(unit.myPackageId, true);
+          QualifiedName pkg = unit.myPackageName.length == 0 ? null : names.myNamesEnumerator.getFullName(unit.myPackageName, true);
           stubEnter.unitEnter(Translator.internNames(names, unit, fileId, pkg));
         }
         return true;

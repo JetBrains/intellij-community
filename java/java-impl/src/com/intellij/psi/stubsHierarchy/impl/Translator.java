@@ -16,15 +16,12 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.*;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Translator {
   private static final Key<long[]> DEFAULT_JAVA_IMPORTS_KEY = Key.create("java_imports");
@@ -91,11 +88,10 @@ public class Translator {
   }
 
   private static ClassDeclaration processClassDecl(NameEnvironment nameEnvironment, int fileId, IndexTree.ClassDecl def) {
-    String stubName = def.myName;
-    int name = stubName == null ? 0 : nameEnvironment.simpleName(stubName, true);
+    int name = def.myName;
     ArrayList<QualifiedName> superList = new ArrayList<QualifiedName>();
-    for (String aSuper : def.mySupers) {
-      superList.add(id(nameEnvironment, aSuper));
+    for (int[] aSuper : def.mySupers) {
+      superList.add(nameEnvironment.concat(aSuper, true));
     }
     if (BitUtil.isSet(def.myMods, IndexTree.ENUM)) {
       superList.add(nameEnvironment.java_lang_Enum);
@@ -130,21 +126,8 @@ public class Translator {
   }
 
   private static long processImport(NameEnvironment nameEnvironment, IndexTree.Import anImport) {
-    QualifiedName fullname = nameEnvironment.fromString(anImport.myFullname, true);
-    int aliasName = anImport.myAlias == null ? 0 : nameEnvironment.simpleName(anImport.myAlias, true);
-    return Import.mkImport(fullname, anImport.myStaticImport, anImport.myOnDemand, aliasName);
+    QualifiedName fullname = nameEnvironment.myNamesEnumerator.getFullName(anImport.myFullname, true);
+    return Import.mkImport(fullname, anImport.myStaticImport, anImport.myOnDemand, anImport.myAlias);
   }
 
-  private static QualifiedName id(NameEnvironment nameEnvironment, String s) {
-    s = PsiNameHelper.getQualifiedClassName(s, true);
-    List<String> ids = StringUtil.split(s, ".");
-    int[] comps = new int[ids.size()];
-    int i = 0;
-    for (String id : ids) {
-      int name = nameEnvironment.simpleName(id, true);
-      comps[i] = name;
-      i++;
-    }
-    return nameEnvironment.concat(comps, true);
-  }
 }
