@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
-CHAR_REFS_URL = 'http://dev.w3.org/html5/html-author/charref'
-refs = `curl #{CHAR_REFS_URL}`
+CHAR_REFS_URL = 'https://dev.w3.org/html5/html-author/charref'
+refs = `curl -L #{CHAR_REFS_URL}`
 
 header = <<header
 <!--
