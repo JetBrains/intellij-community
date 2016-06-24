@@ -96,12 +96,14 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void inputRequested() {
-    final ConsoleCommunication consoleCommunication = myExecuteActionHandler.getConsoleCommunication();
-    if (consoleCommunication instanceof PythonDebugConsoleCommunication) {
-      ((PythonDebugConsoleCommunication)consoleCommunication).waitingForInput = true;
-      myExecuteActionHandler.inputRequested();
-      myExecuteActionHandler.setEnabled(true);
-      myExecuteActionHandler.clearInputBuffer();
+    if (myExecuteActionHandler != null) {
+      final ConsoleCommunication consoleCommunication = myExecuteActionHandler.getConsoleCommunication();
+      if (consoleCommunication instanceof PythonDebugConsoleCommunication) {
+        ((PythonDebugConsoleCommunication)consoleCommunication).waitingForInput = true;
+        myExecuteActionHandler.inputRequested();
+        myExecuteActionHandler.setEnabled(true);
+        myExecuteActionHandler.clearInputBuffer();
+      }
     }
   }
 
