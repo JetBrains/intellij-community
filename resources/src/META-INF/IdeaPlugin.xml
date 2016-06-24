@@ -961,10 +961,6 @@
       <category>Java/Annotations</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
