@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,12 +103,10 @@ public class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
+      @CalledInAwt
       protected void nameChanged(String errorMessage) {
-        if (!UndoManager.getInstance(myProject).isRedoInProgress() &&
-            !UndoManager.getInstance(myProject).isUndoInProgress() &&
-            myExistingListsCombo.isShowing()) {
-          updateDescription();
-        }
+        //invoke later because of undo manager problem: when you try to undo changelist after description was already changed manually
+        ApplicationManager.getApplication().invokeLater(() -> updateDescription(), ModalityState.current());
         myOkEnabledListener.consume(errorMessage);
       }
 
