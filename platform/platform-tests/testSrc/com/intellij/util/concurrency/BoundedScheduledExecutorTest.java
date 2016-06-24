@@ -16,7 +16,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -270,22 +269,24 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
-    ExecutorService executor = new BoundedScheduledExecutorService(PooledThreadExecutor.INSTANCE, 1);
-    int N = 100000;
-    StringBuffer log = new StringBuffer(N*4);
+    for (int maxTasks=1; maxTasks<10;maxTasks++) {
+      ExecutorService executor = new BoundedScheduledExecutorService(PooledThreadExecutor.INSTANCE, maxTasks);
+      int N = 100000;
+      StringBuffer log = new StringBuffer(N*4);
 
-    Future[] futures = new Future[N];
-    for (int i = 0; i < N; i++) {
-      futures[i] = executor.submit(() -> log.append(" "));
-    }
-    executor.shutdown();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      Future[] futures = new Future[N];
+      for (int i = 0; i < N; i++) {
+        futures[i] = executor.submit(() -> log.append(" "));
+      }
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
 
-    String logs = log.toString();
-    assertEquals(StringUtil.repeat(" ", N), logs);
-    for (Future future : futures) {
-      assertTrue(future.isDone());
-      assertTrue(!future.isCancelled());
+      String logs = log.toString();
+      assertEquals(N, logs.length());
+      for (Future future : futures) {
+        assertTrue(future.isDone());
+        assertTrue(!future.isCancelled());
+      }
     }
   }
 
