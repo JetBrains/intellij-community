@@ -29,6 +29,23 @@ public class StubHierarchyConnector {
     myResolve = new StubResolver(symbols, this);
   }
 
+  private void resolveName(Symbol.ClassSymbol place, QualifiedName name, Set<Symbol.ClassSymbol> result) throws IncompleteHierarchyException {
+    if (place.isCompiled()) {
+      Symbol.ClassSymbol[] candidates = myResolve.findGlobalType(name);
+      if (candidates.length == 0) {
+        throw new IncompleteHierarchyException();
+      }
+
+      Collections.addAll(result, candidates);
+    } else {
+      for (Symbol symbol : myResolve.resolveBase(place, name.myComponents)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
+  }
+
   void connect(Symbol sym) {
     Symbol.ClassSymbol c = (Symbol.ClassSymbol) sym;
 
@@ -37,39 +54,28 @@ public class StubHierarchyConnector {
     }
 
     // Determine supertype.
-    Set<Symbol> supertypes = new HashSet<Symbol>();
+    Set<Symbol.ClassSymbol> supertypes = new HashSet<>();
     for (QualifiedName name : c.mySuperNames) {
-      if (c.isCompiled()) {
-        if (name != null) {
-          Collections.addAll(supertypes, myResolve.findGlobalType(name));
-        }
-      } else {
-        try {
-          supertypes.addAll(myResolve.resolveBase(c, name.myComponents));
-        }
-        catch (IncompleteHierarchyException ignore) {
-          c.markHierarchyIncomplete();
-          break;
-        }
+      try {
+        resolveName(c, name, supertypes);
+      }
+      catch (IncompleteHierarchyException ignore) {
+        c.markHierarchyIncomplete();
+        return;
       }
     }
 
     if (isJavaLangObject(c) || c.isHierarchyIncomplete()) {
       c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
     } else {
-      for (Iterator<Symbol> iter = supertypes.iterator(); iter.hasNext();) {
-        Symbol s = iter.next();
-        if (!(s instanceof Symbol.ClassSymbol) || isJavaLangObject(s)) {
+      for (Iterator<Symbol.ClassSymbol> iter = supertypes.iterator(); iter.hasNext();) {
+        Symbol.ClassSymbol s = iter.next();
+        if (isJavaLangObject(s)) {
             iter.remove();
         }
       }
-      if (supertypes.isEmpty()) {
-        c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
-      }
-      else {
-        //noinspection SuspiciousToArrayCall
-        c.mySuperClasses = supertypes.toArray(new Symbol.ClassSymbol[supertypes.size()]);
-      }
+      c.mySuperClasses =
+        supertypes.isEmpty() ? Symbol.ClassSymbol.EMPTY_ARRAY : supertypes.toArray(new Symbol.ClassSymbol[supertypes.size()]);
     }
 
     // cleaning up
