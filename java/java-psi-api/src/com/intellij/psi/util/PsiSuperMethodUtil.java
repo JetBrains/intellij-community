@@ -129,7 +129,7 @@ public class PsiSuperMethodUtil {
       for (HierarchicalMethodSignature hms : superClass.getVisibleSignatures()) {
         PsiMethod method = hms.getMethod();
         if (MethodSignatureUtil.findMethodBySignature(aClass, method.getSignature(superClassSubstitutor), false) != null) continue;
-        final PsiClass containingClass = mapClass(method.getContainingClass(), resolveScope);
+        final PsiClass containingClass = correctClassByScope(method.getContainingClass(), resolveScope);
         if (containingClass == null) continue;
         method = containingClass.findMethodBySignature(method, false);
         if (method == null) continue;
@@ -150,7 +150,7 @@ public class PsiSuperMethodUtil {
   }
 
   @Nullable
-  public static PsiClass mapClass(PsiClass psiClass, final GlobalSearchScope resolveScope) {
+  public static PsiClass correctClassByScope(PsiClass psiClass, final GlobalSearchScope resolveScope) {
     if (psiClass == null) return null;
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
