@@ -37,6 +37,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
@@ -111,8 +112,12 @@ open class FileBasedStorage(file: Path,
     try {
       attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
     }
-    catch (e: IOException) {
+    catch (e: NoSuchFileException) {
       LOG.debug(e) { "Document was not loaded for $fileSpec, doesn't exists" }
+      return null
+    }
+    catch (e: IOException) {
+      processReadException(e)
       return null
     }
 
