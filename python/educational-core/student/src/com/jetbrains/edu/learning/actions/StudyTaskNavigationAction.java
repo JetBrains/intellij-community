@@ -92,8 +92,10 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
       VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
       VirtualFile vf = srcDir == null ? taskDir.findChild(name) : srcDir.findChild(name);
       if (vf != null) {
-        FileEditorManager.getInstance(project).openFile(vf, true);
-        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+        if (shouldBeActive != null) {
+          FileEditorManager.getInstance(project).openFile(vf, true);
+        }
+        if (shouldBeActive == null && !taskFile.getAnswerPlaceholders().isEmpty()) {
           shouldBeActive = vf;
         }
       }
