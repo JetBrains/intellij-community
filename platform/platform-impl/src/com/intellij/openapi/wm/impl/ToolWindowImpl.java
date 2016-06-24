@@ -60,11 +60,11 @@ import java.util.Set;
  * @author Vladimir Kondratyev
  */
 public final class ToolWindowImpl implements ToolWindowEx {
-  private final PropertyChangeSupport myChangeSupport;
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
   private final JComponent myComponent;
-  private boolean myAvailable;
+  private boolean myAvailable = true;
   private final ContentManager myContentManager;
   private Icon myIcon;
   private String myStripeTitle;
@@ -74,18 +74,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private InternalDecorator myDecorator;
 
-  private boolean myHideOnEmptyContent = false;
+  private boolean myHideOnEmptyContent;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
 
-  private static Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
-    new KeyStroke[] {
+  private static final Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
+    new KeyStroke[]{
       KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)
     }
   ));
 
-  private static Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<KeyStroke>(Arrays.asList(
-    new KeyStroke[] {
+  private static final Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
+    new KeyStroke[]{
       KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)
     }
   ));
@@ -102,16 +102,13 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
 
-  ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
+  ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager, @NotNull String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
-    myChangeSupport = new PropertyChangeSupport(this);
     myId = id;
-    myAvailable = true;
 
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
-    myContentManager =
-      contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
+    myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
@@ -224,7 +221,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public ActionCallback getReady(@NotNull final Object requestor) {
     final ActionCallback result = new ActionCallback();
     myShowing.getReady(this).doWhenDone(() -> {
-      ArrayList<FinalizableCommand> cmd = new ArrayList<FinalizableCommand>();
+      ArrayList<FinalizableCommand> cmd = new ArrayList<>();
       cmd.add(new FinalizableCommand(null) {
         @Override
         public void run() {
@@ -268,7 +265,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setAnchor(final ToolWindowAnchor anchor, @Nullable final Runnable runnable) {
+  public final void setAnchor(@NotNull final ToolWindowAnchor anchor, @Nullable final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setToolWindowAnchor(myId, anchor);
     if (runnable != null) {
@@ -330,7 +327,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setType(final ToolWindowType type, @Nullable final Runnable runnable) {
+  public final void setType(@NotNull final ToolWindowType type, @Nullable final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setToolWindowType(myId, type);
     if (runnable != null) {
@@ -416,6 +413,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     //return getSelectedContent().getIcon();
   }
 
+  @NotNull
   public final String getId() {
     return myId;
   }
@@ -531,11 +529,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myContentManager.isDisposed();
   }
 
-  public boolean isPlaceholderMode() {
+  boolean isPlaceholderMode() {
     return myPlaceholderMode;
   }
 
-  public void setPlaceholderMode(final boolean placeholderMode) {
+  void setPlaceholderMode(final boolean placeholderMode) {
     myPlaceholderMode = placeholderMode;
   }
 
@@ -546,7 +544,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @NotNull
-  public ActionCallback setActivation(@NotNull ActionCallback activation) {
+  ActionCallback setActivation(@NotNull ActionCallback activation) {
     if (!myActivation.isProcessed() && !myActivation.equals(activation)) {
       myActivation.setRejected();
     }

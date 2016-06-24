@@ -1779,6 +1779,7 @@ public class UIUtil {
     }
   }
 
+  @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
       return RetinaImage.create(width, height, type);
@@ -1787,6 +1788,7 @@ public class UIUtil {
     return new BufferedImage(width, height, type);
   }
 
+  @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     if (isRetina(g)) {
       return RetinaImage.create(width, height, type);
