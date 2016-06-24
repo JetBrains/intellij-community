@@ -51,6 +51,7 @@ public class PatchTest extends PatchTestCase {
   public void testBasics() throws Exception {
     List<PatchAction> expectedActions = Arrays.asList(
       new CreateAction(myPatch, "newDir/newFile.txt"),
+      new CreateAction(myPatch, "newDir2/link"),
       new UpdateAction(myPatch, "Readme.txt", CHECKSUMS.README_TXT),
       new UpdateZipAction(myPatch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
@@ -79,6 +80,7 @@ public class PatchTest extends PatchTestCase {
 
     List<PatchAction> expectedActions = Arrays.asList(
       new CreateAction(myPatch, "newDir/newFile.txt"),
+      new CreateAction(myPatch, "newDir2/link"),
       new UpdateZipAction(myPatch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
                           Collections.singletonList("org/jetbrains/annotations/Nullable.class"),

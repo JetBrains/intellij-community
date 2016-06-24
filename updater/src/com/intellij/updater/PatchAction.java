@@ -46,7 +46,15 @@ public abstract class PatchAction {
     out.write(file.canExecute() ? 1 : 0);
   }
 
-  protected static boolean readExecutableFlag(InputStream in) throws IOException {
+  protected static void writeSymlinkFlag(OutputStream out, File file) throws IOException {
+    out.write(isSymlink(file) ? 1 : 0);
+  }
+
+  protected static boolean isSymlink(File file) throws IOException {
+    return !file.getAbsolutePath().equals(file.getCanonicalPath());
+  }
+
+  protected static boolean readFlag(InputStream in) throws IOException {
     return in.read() == 1;
   }
 

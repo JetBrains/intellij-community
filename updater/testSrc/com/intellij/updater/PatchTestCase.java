@@ -38,6 +38,9 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     newFile.getParentFile().mkdirs();
     newFile.createNewFile();
     FileUtil.writeToFile(newFile, "hello");
+    File link = new File(myNewerDir, "newDir2/link");
+    link.getParentFile().mkdirs();
+    Runtime.getRuntime().exec("ln -s ../newDir/newFile.txt " + link.getAbsolutePath());
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations_changed.jar"));
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));

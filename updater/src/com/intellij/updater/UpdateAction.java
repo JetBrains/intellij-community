@@ -20,6 +20,9 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
+    if (isSymlink(newerFile)) {
+      throw new IOException("Updates to symlinks not supported");
+    }
     if (!myIsMove) {
       patchOutput.putNextEntry(new ZipEntry(myPath));
       writeExecutableFlag(patchOutput, newerFile);
@@ -35,7 +38,7 @@ public class UpdateAction extends BaseUpdateAction {
     if (!myIsMove) {
       updated = Utils.createTempFile();
       InputStream in = Utils.findEntryInputStream(patchFile, myPath);
-      boolean executable = readExecutableFlag(in);
+      boolean executable = readFlag(in);
 
       OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
       try {
