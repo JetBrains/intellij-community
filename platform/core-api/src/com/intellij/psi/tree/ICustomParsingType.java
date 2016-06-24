@@ -17,7 +17,13 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * A token which is more convenient to parse separately. Parsing is done when leaf elements are created.
+ */
 public interface ICustomParsingType {
-  ASTNode parse(CharSequence text, CharTable table);
+
+  @NotNull
+  ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table);
 }
