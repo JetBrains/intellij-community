@@ -246,19 +246,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
       final PyFunction containingFunction = PsiTreeUtil.getParentOfType(myElement, PyFunction.class);
 
-      if (containingFunction != null && containingFunction.getContainingClass() != null) {
-        final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
-        PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
+      if (containingFunction != null) {
+        final PyClass containingClass = containingFunction.getContainingClass();
 
-        if (processor.getElements().isEmpty()) {
-          ret.addAll(
-            Optional
-              .ofNullable(PyBuiltinCache.getInstance(myElement).getObjectType())
-              .map(type -> type.resolveMember(PyNames.__CLASS__, myElement, AccessDirection.of(myElement), myContext))
-              .orElse(Collections.emptyList())
-          );
+        if (containingClass != null) {
+          final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
+          PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, containingFunction);
 
-          return ret;
+          if (processor.getElements().isEmpty()) {
+            ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, containingClass));
+            return ret;
+          }
         }
       }
     }

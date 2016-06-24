@@ -67,8 +67,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClass() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "A");
   }
 
   public void testImplicitDunderDoc() {
@@ -86,8 +85,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClassWithClassAttr() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "A");
   }
 
   public void testImplicitDunderDocWithClassAttr() {
@@ -105,8 +103,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClassWithInheritedClassAttr() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "B");
   }
 
   public void testImplicitDunderDocWithInheritedClassAttr() {
@@ -124,8 +121,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClass() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "A");
   }
 
   public void testInstanceDunderDoc() {
@@ -216,8 +212,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClass() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "type");
   }
 
   public void testTypeDunderDoc() {
@@ -236,8 +231,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithClassAttr() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "type");
   }
 
   public void testTypeDunderDocWithClassAttr() {
@@ -266,8 +260,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithInheritedClassAttr() {
-    final PyTargetExpression expression = assertResolvesTo(PyTargetExpression.class, PyNames.__CLASS__);
-    assertEquals(PyBuiltinCache.BUILTIN_FILE_3K, expression.getContainingFile().getName());
+    assertResolvesTo(PyClass.class, "type");
   }
 
   public void testTypeDunderDocWithInheritedClassAttr() {
