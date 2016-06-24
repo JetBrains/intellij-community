@@ -196,24 +196,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     classMember = resolveClassMember(myClass, myIsDefinition, name, location);
 
-    if (PyNames.__CLASS__.equals(name) && !isBuiltin()) {
-      final LanguageLevel languageLevel = LanguageLevel.forElement(myClass);
-      final boolean py2K = languageLevel.isOlderThan(LanguageLevel.PYTHON30);
-      final boolean newStyleClass = myClass.isNewStyleClass(resolveContext.getTypeEvalContext());
-
-      final boolean py2KNewStyleClass = py2K && newStyleClass;
-      final boolean py2KOldStyleClass = py2K && !newStyleClass;
-
-      if (myIsDefinition && py2KOldStyleClass && classMember == null) {
-        return Collections.emptyList();
-      }
-
-      if (myIsDefinition && (py2KNewStyleClass || !py2K) || !myIsDefinition && py2KOldStyleClass) {
-        return Optional
-          .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
-          .map(type -> type.resolveMember(name, location, direction, resolveContext))
-          .orElse(Collections.emptyList());
-      }
+    if (PyNames.__CLASS__.equals(name)) {
+      return resolveDunderClass(context, classMember);
     }
 
     if (classMember != null) {
@@ -319,6 +303,36 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
     return resultRef;
+  }
+
+  @Nullable
+  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @Nullable PsiElement classMember) {
+    final boolean newStyleClass = myClass.isNewStyleClass(context);
+
+    if (!myIsDefinition) {
+      if (newStyleClass && classMember != null) {
+        return ResolveResultList.to(classMember);
+      }
+
+      return ResolveResultList.to(
+        myClass.getAncestorClasses(context)
+        .stream()
+        .filter(cls -> !PyUtil.isObjectClass(cls))
+        .<PsiElement>map(cls -> cls.findClassAttribute(PyNames.__CLASS__, true, context))
+        .filter(target -> target != null)
+        .findFirst()
+        .orElse(myClass)
+      );
+    }
+
+    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+      return ResolveResultList.to(classMember);
+    }
+
+    return Optional
+      .ofNullable(PyBuiltinCache.getInstance(myClass).getTypeType())
+      .map(typeType -> ResolveResultList.to(typeType.getPyClass()))
+      .orElse(null);
   }
 
   @Nullable
