@@ -17,6 +17,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     myHintText.setLineWrap(true);
     myHintText.setWrapStyleWord(true);
     myHintText.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myHintText.setFont(myAnswerPlaceholderText.getFont());
     myAnswerPlaceholderText.grabFocus();
   }
 
