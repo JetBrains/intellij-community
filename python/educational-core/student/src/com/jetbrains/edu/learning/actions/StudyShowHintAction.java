@@ -18,6 +18,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,7 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
     if (file == null) {
       return;
     }
+    EduUsagesCollector.hintShown();
     String hintText = ourWarningMessage;
     if (answerPlaceholder != null) {
       String hint = answerPlaceholder.getHint();
