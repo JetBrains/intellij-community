@@ -75,7 +75,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     }
   }
 
-  private void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
+  private static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
     if (shouldBeActive != null) {
       ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
