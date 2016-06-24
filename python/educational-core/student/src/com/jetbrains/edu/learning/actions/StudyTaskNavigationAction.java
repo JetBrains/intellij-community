@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -19,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -63,23 +66,47 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     }
 
     VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
-    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
-    TreePath path = tree.getSelectionPath();
-    if (path != null) {
-      TreePath oldSelectionPath = path.getParentPath();
-      if (oldSelectionPath != null) {
-        tree.collapsePath(oldSelectionPath);
-        tree.fireTreeCollapsed(oldSelectionPath);
-      }
-    }
-    if (shouldBeActive != null) {
-      ProjectView.getInstance(project).select(shouldBeActive, shouldBeActive, false);
-      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
-    }
+
+    updateProjectView(project, shouldBeActive);
 
     ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
     if (runToolWindow != null) {
       runToolWindow.hide(null);
+    }
+  }
+
+  private void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
+    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    if (shouldBeActive != null) {
+      ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
+        List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
+        List<TreePath> toCollapse = new ArrayList<TreePath>();
+        TreePath selectedPath = tree.getSelectionPath();
+        for (TreePath treePath : paths) {
+          if (treePath.isDescendant(selectedPath)) {
+            continue;
+          }
+          if (toCollapse.isEmpty()) {
+            toCollapse.add(treePath);
+            continue;
+          }
+          for (int i = 0; i < toCollapse.size(); i++) {
+            TreePath path = toCollapse.get(i);
+            if (treePath.isDescendant(path)) {
+              toCollapse.set(i, treePath);
+            }  else {
+              if (!path.isDescendant(treePath)) {
+                toCollapse.add(treePath);
+              }
+            }
+          }
+        }
+        for (TreePath path : toCollapse) {
+          tree.collapsePath(path);
+          tree.fireTreeCollapsed(path);
+        }
+      });
+      FileEditorManager.getInstance(project).openFile(shouldBeActive, true);
     }
   }
 
