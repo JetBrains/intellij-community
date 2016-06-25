@@ -53,34 +53,35 @@ public class StubHierarchyConnector {
       ((Symbol.ClassSymbol)c.myOwner).connect(this);
     }
 
+    Object supers = c.mySuperClasses;
+    if (supers == null) {
+      c.setSupers(Collections.emptySet());
+      return;
+    }
+
     // Determine supertype.
     Set<Symbol.ClassSymbol> supertypes = new HashSet<>();
-    for (QualifiedName name : c.mySuperNames) {
-      try {
-        resolveName(c, name, supertypes);
-      }
-      catch (IncompleteHierarchyException ignore) {
-        c.markHierarchyIncomplete();
-        return;
-      }
-    }
 
-    if (isJavaLangObject(c) || c.isHierarchyIncomplete()) {
-      c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
-    } else {
-      for (Iterator<Symbol.ClassSymbol> iter = supertypes.iterator(); iter.hasNext();) {
-        Symbol.ClassSymbol s = iter.next();
-        if (isJavaLangObject(s)) {
-            iter.remove();
+    try {
+      if (supers instanceof QualifiedName[]) {
+        for (QualifiedName name : (QualifiedName[])supers) {
+          resolveName(c, name, supertypes);
         }
+      } else {
+        resolveName(c, (QualifiedName)supers, supertypes);
       }
-      c.mySuperClasses =
-        supertypes.isEmpty() ? Symbol.ClassSymbol.EMPTY_ARRAY : supertypes.toArray(new Symbol.ClassSymbol[supertypes.size()]);
+    }
+    catch (IncompleteHierarchyException ignore) {
+      c.markHierarchyIncomplete();
+      return;
     }
 
-    // cleaning up
-    c.mySuperNames = null;
-    c.myUnitInfo = null;
+    for (Iterator<Symbol.ClassSymbol> iterator = supertypes.iterator(); iterator.hasNext();) {
+      if (isJavaLangObject(iterator.next())) {
+        iterator.remove();
+      }
+    }
+    c.setSupers(supertypes);
   }
 
   private boolean isJavaLangObject(Symbol s) {

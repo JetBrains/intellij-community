@@ -21,7 +21,9 @@ import com.intellij.util.BitUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Set;
 
 /**
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
@@ -88,9 +90,14 @@ public abstract class Symbol {
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
     final StubClassAnchor myClassAnchor;
-    ClassSymbol[] mySuperClasses;
+
+    /**
+     * null for empty 'supers' list
+     * ClassSymbol/QualifiedName for a single resolved/unresolved super
+     * ClassSymbol[]/QualifiedName[] for multiple resolved/unresolved supers
+     */
+    Object mySuperClasses;
     UnitInfo myUnitInfo;
-    QualifiedName[] mySuperNames;
     private ClassSymbol[] myMembers;
 
     ClassSymbol(StubClassAnchor classAnchor,
@@ -101,7 +108,7 @@ public abstract class Symbol {
                 QualifiedName[] supers) {
       super(flags | IndexTree.CLASS, owner, name);
       this.myClassAnchor = classAnchor;
-      this.mySuperNames = supers;
+      this.mySuperClasses = supers.length == 0 ? null : supers.length == 1 ? supers[0] : supers;
       this.myUnitInfo = unitInfo;
     }
 
@@ -133,7 +140,9 @@ public abstract class Symbol {
     @NotNull
     ClassSymbol[] rawSuperClasses() {
       assert isConnectStarted();
-      return mySuperClasses == null ? EMPTY_ARRAY : mySuperClasses;
+      return mySuperClasses instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)mySuperClasses} :
+             mySuperClasses instanceof ClassSymbol[] ? (ClassSymbol[])mySuperClasses :
+             EMPTY_ARRAY;
     }
 
     boolean isCompiled() {
@@ -149,10 +158,15 @@ public abstract class Symbol {
     }
 
     void markHierarchyIncomplete() {
-      mySuperClasses = EMPTY_ARRAY;
-      mySuperNames = null;
-      myUnitInfo = null;
+      setSupers(Collections.emptySet());
       myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
+    }
+
+    void setSupers(Set<ClassSymbol> supers) {
+      mySuperClasses = supers.isEmpty() ? null :
+                       supers.size() == 1 ? supers.iterator().next() :
+                       supers.toArray(new ClassSymbol[supers.size()]);
+      myUnitInfo = null;
     }
 
     boolean isHierarchyIncomplete() {
