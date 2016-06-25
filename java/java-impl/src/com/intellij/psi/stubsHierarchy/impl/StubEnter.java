@@ -57,7 +57,11 @@ public class StubEnter {
         members[i++] = member;
       }
     }
-    members = members.length == 0 ? ClassSymbol.EMPTY_ARRAY : Arrays.copyOf(members, i);
+    if (i == 0) return ClassSymbol.EMPTY_ARRAY;
+
+    if (i < members.length) {
+      members = Arrays.copyOf(members, i);
+    }
     Arrays.sort(members, CLASS_SYMBOL_BY_NAME_COMPARATOR);
     return members;
   }
@@ -97,8 +101,9 @@ public class StubEnter {
     if (uncompleted != null) {
       uncompleted.add(classSymbol);
     }
-    ClassSymbol[] members = enter(tree.myDeclarations, info, classSymbol, qname);
-    classSymbol.setMembers(members);
+    if (tree.myDeclarations.length > 0) {
+      classSymbol.setMembers(enter(tree.myDeclarations, info, classSymbol, qname));
+    }
     return classSymbol;
   }
 

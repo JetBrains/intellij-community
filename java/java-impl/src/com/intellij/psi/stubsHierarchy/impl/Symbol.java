@@ -45,7 +45,7 @@ public abstract class Symbol {
     return myShortName;
   }
 
-  public ClassSymbol[] members() {
+  ClassSymbol[] getMembers() {
     return ClassSymbol.EMPTY_ARRAY;
   }
 
@@ -84,7 +84,7 @@ public abstract class Symbol {
 
   /** A class for class symbols
    */
-  public static class ClassSymbol extends Symbol {
+  public static class ClassSymbol extends MemberSymbol {
     private static final int HIERARCHY_INCOMPLETE = 1 << 20;
     private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
@@ -98,7 +98,6 @@ public abstract class Symbol {
      */
     Object mySuperClasses;
     UnitInfo myUnitInfo;
-    private ClassSymbol[] myMembers;
 
     ClassSymbol(StubClassAnchor classAnchor,
                 int flags,
@@ -149,14 +148,6 @@ public abstract class Symbol {
       return BitUtil.isSet(myFlags, IndexTree.COMPILED);
     }
 
-    public ClassSymbol[] members() {
-      return myMembers;
-    }
-
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
-    }
-
     void markHierarchyIncomplete() {
       setSupers(Collections.emptySet());
       myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
@@ -192,15 +183,27 @@ public abstract class Symbol {
    * Represents methods, fields and other constructs that may contain anonymous or local classes.
    */
   public static class MemberSymbol extends Symbol {
-    private ClassSymbol[] myMembers;
-    public MemberSymbol(Symbol owner) {
+    /**
+     * null when no members, or a single ClassSymbol, or ClassSymbol[]
+     */
+    private Object myMembers = null;
+
+    MemberSymbol(Symbol owner) {
       super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
     }
-    public ClassSymbol[] members() {
-      return myMembers;
+
+    MemberSymbol(int flags, Symbol owner, int name) {
+      super(flags, owner, name);
     }
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
+
+    ClassSymbol[] getMembers() {
+      return myMembers == null ? ClassSymbol.EMPTY_ARRAY :
+             myMembers instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)myMembers} :
+             (ClassSymbol[])myMembers;
+    }
+
+    void setMembers(ClassSymbol[] members) {
+      myMembers = members.length == 0 ? null : members.length == 1 ? members[0] : members;
     }
   }
 

@@ -103,33 +103,9 @@ public class StubResolver {
     if (!processed.add(s)) {
       return;
     }
-    findImmediateMemberType(s, name, symbols);
+    processMembers(s.getMembers(), name, symbols, false);
     if (s.isClass())
       findInheritedMemberType((Symbol.ClassSymbol)s, name, symbols, processed);
-  }
-
-  private static void findImmediateMemberType(Symbol s, int name, Set<Symbol> symbols) {
-    Symbol.ClassSymbol[] members = s.members();
-    int index = getIndex(name, members);
-    if (index < 0) return;
-
-    // elem
-    Symbol.ClassSymbol member = members[index];
-    symbols.add(member);
-    // on the left
-    int i = index - 1;
-    while (i >= 0 && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i--;
-    }
-    // on the right
-    i = index + 1;
-    while (i < members.length && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i++;
-    }
   }
 
   private void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
@@ -204,25 +180,25 @@ public class StubResolver {
           return;
         for (Symbol.ClassSymbol c : cs.getSuperClasses(myConnector))
           importFrom(c);
-        importMember(cs.members(), name, symbols, true);
+        processMembers(cs.getMembers(), name, symbols, true);
       }
     }.importFrom(tsym);
   }
 
-  private static void importMember(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean isStatic) {
+  private static void processMembers(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean requireStatic) {
     int index = getIndex(name, members);
     if (index < 0) return;
 
     // elem
     Symbol.ClassSymbol member = members[index];
-    if (!isStatic || member.isStatic()) {
+    if (!requireStatic || member.isStatic()) {
       symbols.add(member);
     }
     // on the left
     int i = index - 1;
     while (i >= 0 && members[i].myShortName == name) {
       member = members[i];
-      if (!isStatic || member.isStatic()) {
+      if (!requireStatic || member.isStatic()) {
         symbols.add(member);
       }
       i--;
@@ -231,7 +207,7 @@ public class StubResolver {
     i = index + 1;
     while (i < members.length && members[i].myShortName == name) {
       member = members[i];
-      if (!isStatic || member.isStatic()) {
+      if (!requireStatic || member.isStatic()) {
         symbols.add(member);
       }
       i++;
