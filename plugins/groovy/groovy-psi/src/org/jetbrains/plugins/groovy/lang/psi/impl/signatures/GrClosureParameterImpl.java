@@ -38,10 +38,10 @@ class GrClosureParameterImpl implements GrClosureParameter {
     this(parameter, PsiSubstitutor.EMPTY, false);
   }
 
-  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor, boolean type) {
+  public GrClosureParameterImpl(@NotNull PsiParameter parameter, @NotNull PsiSubstitutor substitutor, boolean eraseType) {
     myParameter = parameter;
     mySubstitutor = substitutor;
-    myEraseType = type;
+    myEraseType = eraseType;
   }
 
   @Nullable
