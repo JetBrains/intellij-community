@@ -382,12 +382,14 @@ public class FindManagerImpl extends FindManager {
       return null;
     }
 
-    FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
-    if (data == null || !data.isAcceptableFor(model, file, text)) {
-      model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
-    }
+    synchronized (model) {
+      FindExceptCommentsOrLiteralsData data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
+      if (data == null || !data.isAcceptableFor(model, file, text)) {
+        model.putUserData(ourExceptCommentsOrLiteralsDataKey, data = new FindExceptCommentsOrLiteralsData(file, model, text));
+      }
 
-    return data;
+      return data;
+    }
   }
 
   @Override
