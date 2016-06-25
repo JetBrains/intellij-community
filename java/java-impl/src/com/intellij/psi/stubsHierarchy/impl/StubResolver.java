@@ -16,8 +16,6 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.Import;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,9 +128,9 @@ public class StubResolver {
   }
 
   public void handleImport(long tree, int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
-    QualifiedName fullname = Import.getFullName(tree, myNameEnvironment);
-    if (Import.isOnDemand(tree)) {
-      if (Import.isStatic(tree)) {
+    QualifiedName fullname = Imports.getFullName(tree, myNameEnvironment);
+    if (Imports.isOnDemand(tree)) {
+      if (Imports.isStatic(tree)) {
         for (Symbol.ClassSymbol p : findGlobalType(fullname))
           importNamedStatic(p, name, symbols);
       }
@@ -146,11 +144,11 @@ public class StubResolver {
         return;
       }
       int shortName = myNameEnvironment.shortName(fullname);
-      int alias = Import.getAlias(tree);
+      int alias = Imports.getAlias(tree);
       boolean shouldImport = ((alias & name) == name) || shortName == name;
       if (!shouldImport)
         return;
-      if (Import.isStatic(tree)) {
+      if (Imports.isStatic(tree)) {
           for (Symbol.ClassSymbol s : findGlobalType(prefix))
             importNamedStatic(s, shortName, symbols);
       }

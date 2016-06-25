@@ -40,10 +40,10 @@ public class StubClassAnchor extends SmartClassAnchor {
   public final int myFileId;
   final int myStubId;
 
-  StubClassAnchor(int symbolId, ClassAnchor classAnchor) {
+  StubClassAnchor(int symbolId, int fileId, int stubId) {
     myId = symbolId;
-    myFileId = classAnchor.myFileId;
-    myStubId = classAnchor.myStubId;
+    myFileId = fileId;
+    myStubId = stubId;
   }
 
   @Override

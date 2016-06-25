@@ -26,7 +26,7 @@ public class NameEnvironment extends UserDataHolderBase {
   public final QualifiedName empty;
   public final QualifiedName java_lang;
   public final QualifiedName java_lang_Enum;
-  public final QualifiedName[] annotation;
+  public final QualifiedName annotation;
   public final NamesEnumerator myNamesEnumerator;
 
   public NameEnvironment() {
@@ -34,7 +34,7 @@ public class NameEnvironment extends UserDataHolderBase {
     empty = myNamesEnumerator.getFullName(new int[]{}, true);
     java_lang = fromString("java.lang", true);
     java_lang_Enum = fromString("java.lang.Enum", true);
-    annotation = new QualifiedName[]{fromString("java.lang.annotation.Annotation", true)};
+    annotation = fromString("java.lang.annotation.Annotation", true);
   }
 
   @Nullable

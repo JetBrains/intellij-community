@@ -2,7 +2,6 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.PackageSymbol;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,14 +62,15 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor,
-                                int flags,
-                                int shortName,
-                                Symbol owner,
-                                UnitInfo info,
-                                QualifiedName[] supers,
-                                @Nullable QualifiedName qualifiedName) {
-    StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), classAnchor);
+  ClassSymbol enterClass(int fileId,
+                         int stubId,
+                         int flags,
+                         int shortName,
+                         Symbol owner,
+                         UnitInfo info,
+                         @CompactArray(QualifiedName.class) Object supers,
+                         @Nullable QualifiedName qualifiedName) {
+    StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), fileId, stubId);
     ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, shortName, info, supers);
     myClassSymbols.add(c);
     if (qualifiedName != null) {

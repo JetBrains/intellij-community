@@ -88,8 +88,7 @@ public class HierarchyServiceImpl extends HierarchyService {
       public boolean process(int fileId, IndexTree.Unit unit) {
         if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
         if (files.get(fileId)) {
-          QualifiedName pkg = unit.myPackageName.length == 0 ? null : names.myNamesEnumerator.getFullName(unit.myPackageName, true);
-          stubEnter.unitEnter(Translator.internNames(names, unit, fileId, pkg));
+          stubEnter.unitEnter(unit, fileId);
         }
         return true;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubsHierarchy.stubs;
+package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 
 public abstract class UnitInfo {
   private static final UnitInfo[] EMPTY_INFOS = new UnitInfo[]{
-    new LongUnitInfo(IndexTree.BYTECODE, Import.EMPTY_ARRAY),
-    new LongUnitInfo(IndexTree.JAVA, Import.EMPTY_ARRAY),
-    new LongUnitInfo(IndexTree.GROOVY, Import.EMPTY_ARRAY)
+    new LongUnitInfo(IndexTree.BYTECODE, Imports.EMPTY_ARRAY),
+    new LongUnitInfo(IndexTree.JAVA, Imports.EMPTY_ARRAY),
+    new LongUnitInfo(IndexTree.GROOVY, Imports.EMPTY_ARRAY)
   };
 
   static UnitInfo mkUnitInfo(byte unitType, long[] imports) {
@@ -29,7 +29,7 @@ public abstract class UnitInfo {
       return EMPTY_INFOS[unitType];
     }
     for (long anImport : imports) {
-      if (Import.getAlias(anImport) != 0) {
+      if (Imports.getAlias(anImport) != 0) {
         return new LongUnitInfo(unitType, imports);
       }
     }

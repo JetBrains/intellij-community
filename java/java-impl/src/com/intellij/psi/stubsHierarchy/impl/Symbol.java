@@ -16,7 +16,6 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import com.intellij.util.BitUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -90,13 +89,7 @@ public abstract class Symbol {
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
     final StubClassAnchor myClassAnchor;
-
-    /**
-     * null for empty 'supers' list
-     * ClassSymbol/QualifiedName for a single resolved/unresolved super
-     * ClassSymbol[]/QualifiedName[] for multiple resolved/unresolved supers
-     */
-    Object mySuperClasses;
+    @CompactArray({QualifiedName.class, ClassSymbol.class}) Object mySuperClasses;
     UnitInfo myUnitInfo;
 
     ClassSymbol(StubClassAnchor classAnchor,
@@ -104,10 +97,10 @@ public abstract class Symbol {
                 Symbol owner,
                 int name,
                 UnitInfo unitInfo,
-                QualifiedName[] supers) {
+                @CompactArray(QualifiedName.class) Object supers) {
       super(flags | IndexTree.CLASS, owner, name);
       this.myClassAnchor = classAnchor;
-      this.mySuperClasses = supers.length == 0 ? null : supers.length == 1 ? supers[0] : supers;
+      this.mySuperClasses = supers;
       this.myUnitInfo = unitInfo;
     }
 
@@ -183,10 +176,7 @@ public abstract class Symbol {
    * Represents methods, fields and other constructs that may contain anonymous or local classes.
    */
   public static class MemberSymbol extends Symbol {
-    /**
-     * null when no members, or a single ClassSymbol, or ClassSymbol[]
-     */
-    private Object myMembers = null;
+    @CompactArray(ClassSymbol.class) private Object myMembers = null;
 
     MemberSymbol(Symbol owner) {
       super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
