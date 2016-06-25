@@ -22,8 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class NameEnvironment extends UserDataHolderBase {
+  public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
   public final QualifiedName empty;
-  public final QualifiedName java_lang_Object;
+  public final QualifiedName java_lang;
   public final QualifiedName java_lang_Enum;
   public final QualifiedName[] annotation;
   public final NamesEnumerator myNamesEnumerator;
@@ -31,7 +32,7 @@ public class NameEnvironment extends UserDataHolderBase {
   public NameEnvironment() {
     myNamesEnumerator = new NamesEnumerator();
     empty = myNamesEnumerator.getFullName(new int[]{}, true);
-    java_lang_Object = fromString("java.lang.Object", true);
+    java_lang = fromString("java.lang", true);
     java_lang_Enum = fromString("java.lang.Enum", true);
     annotation = new QualifiedName[]{fromString("java.lang.annotation.Annotation", true)};
   }
@@ -55,13 +56,6 @@ public class NameEnvironment extends UserDataHolderBase {
   public int shortName(QualifiedName name) {
     int[] ids = name.myComponents;
     return ids[ids.length - 1];
-  }
-
-  public QualifiedName qualifiedName(Symbol owner, int shortName) {
-    if (shortName == NamesEnumerator.NO_NAME || owner == null || owner.myQualifiedName == null) {
-      return null;
-    }
-    return qualifiedName(owner.myQualifiedName, shortName, true);
   }
 
   public QualifiedName qualifiedName(QualifiedName prefix, int shortName, boolean create) {

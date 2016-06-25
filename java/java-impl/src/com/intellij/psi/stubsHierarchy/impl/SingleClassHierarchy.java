@@ -176,7 +176,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     // compacting
     result = Arrays.copyOf(result, i);
 
-    Arrays.sort(result, Comparator.comparing(a -> a.myFileId));
+    Arrays.sort(result, (a1, a2) -> Integer.compare(a1.myFileId, a2.myFileId));
     return result;
   }
 

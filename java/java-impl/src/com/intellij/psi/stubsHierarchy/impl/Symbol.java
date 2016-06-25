@@ -21,7 +21,9 @@ import com.intellij.util.BitUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Set;
 
 /**
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
@@ -30,13 +32,11 @@ import java.util.Comparator;
 public abstract class Symbol {
   public int myFlags;
   public int myShortName;
-  public final QualifiedName myQualifiedName;
   public final Symbol myOwner;
 
-  public Symbol(int flags, Symbol owner, QualifiedName qualifiedName, int name) {
+  public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
     this.myOwner = owner;
-    this.myQualifiedName = qualifiedName;
     this.myShortName = name;
   }
 
@@ -45,11 +45,8 @@ public abstract class Symbol {
     return myShortName;
   }
 
-  public ClassSymbol[] members() {
+  ClassSymbol[] getMembers() {
     return ClassSymbol.EMPTY_ARRAY;
-  }
-
-  public void setMembers(ClassSymbol[] members) {
   }
 
   public boolean isStatic() {
@@ -77,35 +74,40 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
+    final QualifiedName myQualifiedName;
+
     public PackageSymbol(Symbol owner, QualifiedName fullname, int name) {
-      super(IndexTree.PACKAGE, owner, fullname, name);
-      setMembers(ClassSymbol.EMPTY_ARRAY);
+      super(IndexTree.PACKAGE, owner, name);
+      myQualifiedName = fullname;
     }
   }
 
   /** A class for class symbols
    */
-  public static class ClassSymbol extends Symbol {
+  public static class ClassSymbol extends MemberSymbol {
     private static final int HIERARCHY_INCOMPLETE = 1 << 20;
     private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
     final StubClassAnchor myClassAnchor;
-    ClassSymbol[] mySuperClasses;
+
+    /**
+     * null for empty 'supers' list
+     * ClassSymbol/QualifiedName for a single resolved/unresolved super
+     * ClassSymbol[]/QualifiedName[] for multiple resolved/unresolved supers
+     */
+    Object mySuperClasses;
     UnitInfo myUnitInfo;
-    QualifiedName[] mySuperNames;
-    private ClassSymbol[] myMembers;
 
     ClassSymbol(StubClassAnchor classAnchor,
-                       int flags,
-                       Symbol owner,
-                       QualifiedName fullname,
-                       int name,
-                       UnitInfo unitInfo,
-                       QualifiedName[] supers) {
-      super(flags | IndexTree.CLASS, owner, fullname, name);
+                int flags,
+                Symbol owner,
+                int name,
+                UnitInfo unitInfo,
+                QualifiedName[] supers) {
+      super(flags | IndexTree.CLASS, owner, name);
       this.myClassAnchor = classAnchor;
-      this.mySuperNames = supers;
+      this.mySuperClasses = supers.length == 0 ? null : supers.length == 1 ? supers[0] : supers;
       this.myUnitInfo = unitInfo;
     }
 
@@ -137,26 +139,25 @@ public abstract class Symbol {
     @NotNull
     ClassSymbol[] rawSuperClasses() {
       assert isConnectStarted();
-      return mySuperClasses == null ? EMPTY_ARRAY : mySuperClasses;
+      return mySuperClasses instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)mySuperClasses} :
+             mySuperClasses instanceof ClassSymbol[] ? (ClassSymbol[])mySuperClasses :
+             EMPTY_ARRAY;
     }
 
     boolean isCompiled() {
       return BitUtil.isSet(myFlags, IndexTree.COMPILED);
     }
 
-    public ClassSymbol[] members() {
-      return myMembers;
-    }
-
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
-    }
-
     void markHierarchyIncomplete() {
-      mySuperClasses = EMPTY_ARRAY;
-      mySuperNames = null;
-      myUnitInfo = null;
+      setSupers(Collections.emptySet());
       myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
+    }
+
+    void setSupers(Set<ClassSymbol> supers) {
+      mySuperClasses = supers.isEmpty() ? null :
+                       supers.size() == 1 ? supers.iterator().next() :
+                       supers.toArray(new ClassSymbol[supers.size()]);
+      myUnitInfo = null;
     }
 
     boolean isHierarchyIncomplete() {
@@ -182,15 +183,27 @@ public abstract class Symbol {
    * Represents methods, fields and other constructs that may contain anonymous or local classes.
    */
   public static class MemberSymbol extends Symbol {
-    private ClassSymbol[] myMembers;
-    public MemberSymbol(Symbol owner) {
-      super(IndexTree.MEMBER, owner, null, NamesEnumerator.NO_NAME);
+    /**
+     * null when no members, or a single ClassSymbol, or ClassSymbol[]
+     */
+    private Object myMembers = null;
+
+    MemberSymbol(Symbol owner) {
+      super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
     }
-    public ClassSymbol[] members() {
-      return myMembers;
+
+    MemberSymbol(int flags, Symbol owner, int name) {
+      super(flags, owner, name);
     }
-    public void setMembers(ClassSymbol[] members) {
-      this.myMembers = members;
+
+    ClassSymbol[] getMembers() {
+      return myMembers == null ? ClassSymbol.EMPTY_ARRAY :
+             myMembers instanceof ClassSymbol ? new ClassSymbol[]{(ClassSymbol)myMembers} :
+             (ClassSymbol[])myMembers;
+    }
+
+    void setMembers(ClassSymbol[] members) {
+      myMembers = members.length == 0 ? null : members.length == 1 ? members[0] : members;
     }
   }
 

@@ -29,6 +29,23 @@ public class StubHierarchyConnector {
     myResolve = new StubResolver(symbols, this);
   }
 
+  private void resolveName(Symbol.ClassSymbol place, QualifiedName name, Set<Symbol.ClassSymbol> result) throws IncompleteHierarchyException {
+    if (place.isCompiled()) {
+      Symbol.ClassSymbol[] candidates = myResolve.findGlobalType(name);
+      if (candidates.length == 0) {
+        throw new IncompleteHierarchyException();
+      }
+
+      Collections.addAll(result, candidates);
+    } else {
+      for (Symbol symbol : myResolve.resolveBase(place, name.myComponents)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
+  }
+
   void connect(Symbol sym) {
     Symbol.ClassSymbol c = (Symbol.ClassSymbol) sym;
 
@@ -36,45 +53,40 @@ public class StubHierarchyConnector {
       ((Symbol.ClassSymbol)c.myOwner).connect(this);
     }
 
+    Object supers = c.mySuperClasses;
+    if (supers == null) {
+      c.setSupers(Collections.emptySet());
+      return;
+    }
+
     // Determine supertype.
-    Set<Symbol> supertypes = new HashSet<Symbol>();
-    for (QualifiedName name : c.mySuperNames) {
-      if (c.isCompiled()) {
-        if (name != null) {
-          Collections.addAll(supertypes, myResolve.findGlobalType(name));
+    Set<Symbol.ClassSymbol> supertypes = new HashSet<>();
+
+    try {
+      if (supers instanceof QualifiedName[]) {
+        for (QualifiedName name : (QualifiedName[])supers) {
+          resolveName(c, name, supertypes);
         }
       } else {
-        try {
-          supertypes.addAll(myResolve.resolveBase(c, name.myComponents));
-        }
-        catch (IncompleteHierarchyException ignore) {
-          c.markHierarchyIncomplete();
-          break;
-        }
+        resolveName(c, (QualifiedName)supers, supertypes);
       }
     }
-
-    if (c.myQualifiedName == myNameEnvironment.java_lang_Object || c.isHierarchyIncomplete()) {
-      c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
-    } else {
-      for (Iterator<Symbol> iter = supertypes.iterator(); iter.hasNext();) {
-        Symbol s = iter.next();
-        if (!(s instanceof Symbol.ClassSymbol) || s.myQualifiedName == myNameEnvironment.java_lang_Object) {
-            iter.remove();
-        }
-      }
-      if (supertypes.isEmpty()) {
-        c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
-      }
-      else {
-        //noinspection SuspiciousToArrayCall
-        c.mySuperClasses = supertypes.toArray(new Symbol.ClassSymbol[supertypes.size()]);
-      }
+    catch (IncompleteHierarchyException ignore) {
+      c.markHierarchyIncomplete();
+      return;
     }
 
-    // cleaning up
-    c.mySuperNames = null;
-    c.myUnitInfo = null;
+    for (Iterator<Symbol.ClassSymbol> iterator = supertypes.iterator(); iterator.hasNext();) {
+      if (isJavaLangObject(iterator.next())) {
+        iterator.remove();
+      }
+    }
+    c.setSupers(supertypes);
   }
 
+  private boolean isJavaLangObject(Symbol s) {
+    return s.myShortName == NameEnvironment.OBJECT_NAME &&
+           s.myOwner instanceof Symbol.PackageSymbol &&
+           ((Symbol.PackageSymbol)s.myOwner).myQualifiedName == myNameEnvironment.java_lang;
+  }
 }

@@ -17,6 +17,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,47 +39,51 @@ public class StubEnter {
 
   void unitEnter(Unit tree) {
     PackageSymbol pkg = tree.myPackageId != null ? mySymbols.enterPackage(tree.myPackageId) : mySymbols.myRootPackage;
-    enter(tree.myClasses, tree.myUnitInfo, pkg);
+    enter(tree.myClasses, tree.myUnitInfo, pkg, pkg.myQualifiedName);
   }
 
-  private void enter(ClassDeclaration[] trees, UnitInfo info, Symbol owner) {
+  private void enter(ClassDeclaration[] trees, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName) {
     for (ClassDeclaration tree : trees) {
-      enter(tree, info, owner);
+      enter(tree, info, owner, ownerName);
     }
   }
 
-  private ClassSymbol[] enter(Declaration[] trees, UnitInfo info, Symbol owner) {
+  private ClassSymbol[] enter(Declaration[] trees, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName) {
     ClassSymbol[] members = new ClassSymbol[trees.length];
     int i = 0;
     for (Declaration tree : trees) {
-      ClassSymbol member = enter(tree, info, owner);
+      ClassSymbol member = enter(tree, info, owner, ownerName);
       if (member != null && member.myShortName != 0) {
         members[i++] = member;
       }
     }
-    members = members.length == 0 ? ClassSymbol.EMPTY_ARRAY : Arrays.copyOf(members, i);
+    if (i == 0) return ClassSymbol.EMPTY_ARRAY;
+
+    if (i < members.length) {
+      members = Arrays.copyOf(members, i);
+    }
     Arrays.sort(members, CLASS_SYMBOL_BY_NAME_COMPARATOR);
     return members;
   }
 
-  private ClassSymbol enter(Declaration tree, UnitInfo info, Symbol owner) {
+  private ClassSymbol enter(Declaration tree, UnitInfo info, Symbol owner, QualifiedName ownerName) {
     if (tree instanceof ClassDeclaration) {
-      return classEnter((ClassDeclaration)tree, info, owner);
+      return classEnter((ClassDeclaration)tree, info, owner, ownerName);
     }
     if (tree instanceof MemberDeclaration) {
-      memberEnter((MemberDeclaration)tree, info, owner);
+      memberEnter((MemberDeclaration)tree, info, owner, ownerName);
       return null;
     }
     return null;
   }
 
-  private void memberEnter(MemberDeclaration tree, UnitInfo info, Symbol owner) {
+  private void memberEnter(MemberDeclaration tree, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName) {
     MemberSymbol mc = new MemberSymbol(owner);
-    ClassSymbol[] members = enter(tree.myDeclarations, info, mc);
+    ClassSymbol[] members = enter(tree.myDeclarations, info, mc, ownerName);
     mc.setMembers(members);
   }
 
-  private ClassSymbol classEnter(ClassDeclaration tree, UnitInfo info, Symbol owner) {
+  private ClassSymbol classEnter(ClassDeclaration tree, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName) {
     int flags = checkFlags(tree.mods, owner);
     if (info.getType() == IndexTree.BYTECODE) {
       flags |= IndexTree.COMPILED;
@@ -88,13 +93,17 @@ public class StubEnter {
       supers = myNameEnvironment.annotation;
     }
 
-    ClassSymbol classSymbol = mySymbols.enterClass(tree.myClassAnchor, flags, tree.myName, owner, info, supers);
+    int name = tree.myName;
+    QualifiedName qname = name == NamesEnumerator.NO_NAME || ownerName == null ? null
+                                                                               : myNameEnvironment.qualifiedName(ownerName, name, true);
+    ClassSymbol classSymbol = mySymbols.enterClass(tree.myClassAnchor, flags, name, owner, info, supers, qname);
 
-    if (uncompleted != null)  {
+    if (uncompleted != null) {
       uncompleted.add(classSymbol);
     }
-    ClassSymbol[] members = enter(tree.myDeclarations, info, classSymbol);
-    classSymbol.setMembers(members);
+    if (tree.myDeclarations.length > 0) {
+      classSymbol.setMembers(enter(tree.myDeclarations, info, classSymbol, qname));
+    }
     return classSymbol;
   }
 
