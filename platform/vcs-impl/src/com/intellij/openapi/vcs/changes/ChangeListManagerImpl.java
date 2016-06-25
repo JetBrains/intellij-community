@@ -389,17 +389,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void freeze(final ContinuationPause context, final String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
     invokeAfterUpdate(() -> {
-      freezeImmediately(reason);
+      myUpdater.setIgnoreBackgroundOperation(false);
+      myUpdater.pause();
+      myFreezeName.set(reason);
       context.ping();
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
     context.suspend();
-  }
-
-  @Override
-  public void freezeImmediately(@Nullable String reason) {
-    myUpdater.setIgnoreBackgroundOperation(false);
-    myUpdater.pause();
-    myFreezeName.set(reason);
   }
 
   @Override

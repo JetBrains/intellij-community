@@ -385,10 +385,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void freezeImmediately(@Nullable String reason) {
-  }
-
-  @Override
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
     return addChangeList(name, comment);
   }
