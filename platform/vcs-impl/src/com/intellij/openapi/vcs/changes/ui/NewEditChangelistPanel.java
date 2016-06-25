@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -30,19 +30,20 @@ import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
-  private EditorTextField myNameTextField;
-  private EditorTextField myDescriptionTextArea;
-  private JPanel myAdditionalControlsPanel;
-  private JCheckBox myMakeActiveCheckBox;
+  protected final EditorTextField myNameTextField;
+  protected final EditorTextField myDescriptionTextArea;
+  private final JPanel myAdditionalControlsPanel;
+  private final JCheckBox myMakeActiveCheckBox;
 
   private Consumer<LocalChangeList> myConsumer;
-  private final Project myProject;
+  protected final Project myProject;
 
   public NewEditChangelistPanel(final Project project) {
     super(new GridBagLayout());
@@ -52,14 +53,15 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     final JLabel nameLabel = new JLabel(VcsBundle.message("edit.changelist.name"));
     add(nameLabel, gb);
-    ++ gb.gridx;
+    ++gb.gridx;
     gb.fill = GridBagConstraints.HORIZONTAL;
     gb.weightx = 1;
-    myNameTextField = createEditorField(project, 1);
+    ComponentWithTextFieldWrapper componentWithTextField = createComponentWithTextField(project);
+    myNameTextField = componentWithTextField.getEditorTextField();
     myNameTextField.setOneLineMode(true);
     myNameTextField.setText("New changelist");
     myNameTextField.selectAll();
-    add(myNameTextField, gb);
+    add(componentWithTextField.myComponent, gb);
     nameLabel.setLabelFor(myNameTextField);
 
     ++ gb.gridy;
@@ -100,11 +102,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
       support.installSearch(myNameTextField, myDescriptionTextArea);
       myConsumer = support.addControls(myAdditionalControlsPanel, initial);
     }
-    myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
+    myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent event) {
         nameChangedImpl(myProject, initial);
@@ -160,6 +158,17 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
   protected abstract void nameChanged(String errorMessage);
 
+  protected ComponentWithTextFieldWrapper createComponentWithTextField(Project project) {
+    final EditorTextField editorTextField = createEditorField(project, 1);
+    return new ComponentWithTextFieldWrapper(editorTextField) {
+      @NotNull
+      @Override
+      public EditorTextField getEditorTextField() {
+        return editorTextField;
+      }
+    };
+  }
+
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
@@ -177,5 +186,16 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
     editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
     return editorField;
+  }
+
+  protected abstract static class ComponentWithTextFieldWrapper {
+    @NotNull private final Component myComponent;
+
+    public ComponentWithTextFieldWrapper(@NotNull Component component) {
+      myComponent = component;
+    }
+
+    @NotNull
+    abstract EditorTextField getEditorTextField();
   }
 }

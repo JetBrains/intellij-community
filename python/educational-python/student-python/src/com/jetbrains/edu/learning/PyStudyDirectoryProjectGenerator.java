@@ -165,6 +165,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     return generator -> {
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
       final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+      if (course == null) return true;
       if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);

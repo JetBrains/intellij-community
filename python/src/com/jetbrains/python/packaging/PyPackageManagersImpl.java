@@ -29,10 +29,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -98,14 +95,14 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       throw new ExecutionException(getErrorMessage());
     }
 
+    @Override
+    public boolean hasManagement() throws ExecutionException {
+      return false;
+    }
+
     @NotNull
     private String getErrorMessage() {
       return "Invalid interpreter \"" + myName + "\" version: " + myLanguageLevel.toString() + " type: " + myFlavor.getName();
-    }
-
-    @Override
-    public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
     }
 
     @Override
@@ -135,19 +132,13 @@ public class PyPackageManagersImpl extends PyPackageManagers {
 
     @Nullable
     @Override
-    public List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
+    public List<PyPackage> getPackages() {
+      return null;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException {
-      throw new ExecutionException(getErrorMessage());
-    }
-
-    @Nullable
-    @Override
-    public PyPackage findPackage(@NotNull String name) throws ExecutionException {
+    public List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
       throw new ExecutionException(getErrorMessage());
     }
 
@@ -157,7 +148,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       return null;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
       throw new ExecutionException(getErrorMessage());

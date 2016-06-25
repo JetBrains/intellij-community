@@ -26,14 +26,14 @@ public class StubHierarchyConnector {
 
   protected StubHierarchyConnector(NameEnvironment nameEnvironment, Symbols symbols) {
     this.myNameEnvironment = nameEnvironment;
-    myResolve = new StubResolver(symbols);
+    myResolve = new StubResolver(symbols, this);
   }
 
   void connect(Symbol sym) {
     Symbol.ClassSymbol c = (Symbol.ClassSymbol) sym;
 
     if (c.myOwner instanceof Symbol.ClassSymbol) {
-      ((Symbol.ClassSymbol)c.myOwner).connect();
+      ((Symbol.ClassSymbol)c.myOwner).connect(this);
     }
 
     // Determine supertype.
@@ -67,6 +67,7 @@ public class StubHierarchyConnector {
         c.mySuperClasses = Symbol.ClassSymbol.EMPTY_ARRAY;
       }
       else {
+        //noinspection SuspiciousToArrayCall
         c.mySuperClasses = supertypes.toArray(new Symbol.ClassSymbol[supertypes.size()]);
       }
     }

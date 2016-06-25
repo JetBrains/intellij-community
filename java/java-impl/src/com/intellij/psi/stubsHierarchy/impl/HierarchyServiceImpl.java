@@ -19,13 +19,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.EverythingGlobalScope;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -33,17 +30,18 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.BitSet;
 
 public class HierarchyServiceImpl extends HierarchyService {
   private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
   private final Project myProject;
-  private final ProjectFileIndex myFileIndex;
   private final CachedValue<SingleClassHierarchy> myHierarchy;
 
   public HierarchyServiceImpl(Project project) {
     myProject = project;
-    myFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     myHierarchy = CachedValuesManager.getManager(project).createCachedValue(
       () -> CachedValueProvider.Result.create(buildHierarchy(), PsiModificationTracker.MODIFICATION_COUNT),
       false);
@@ -69,38 +67,56 @@ public class HierarchyServiceImpl extends HierarchyService {
   private SingleClassHierarchy buildHierarchy() {
     Symbols symbols = new Symbols();
     StubEnter stubEnter = new StubEnter(symbols);
+    IdSets idSets = IdSets.getIdSets(myProject);
 
-    loadUnits(false, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_FILES, symbols.myNameEnvironment, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(true, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_FILES, symbols.myNameEnvironment, stubEnter);
     stubEnter.connect2();
 
     return symbols.createHierarchy();
   }
 
-  private void loadUnits(boolean sourceMode, NameEnvironment names, StubEnter stubEnter) {
-    GlobalSearchScope scope = new DelegatingGlobalSearchScope(new EverythingGlobalScope(myProject)) {
-      @Override
-      public boolean contains(@NotNull VirtualFile file) {
-        return sourceMode ? myFileIndex.isInSourceContent(file) : myFileIndex.isInLibraryClasses(file);
-      }
-    };
+  private void loadUnits(BitSet files, int indexKey, NameEnvironment names, StubEnter stubEnter) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    FileBasedIndex index = FileBasedIndex.getInstance();
-    for (String packageName : index.getAllKeys(StubHierarchyIndex.INDEX_ID, myProject)) {
-      QualifiedName pkg = StringUtil.isEmpty(packageName) ? null : names.fromString(packageName, true);
-      index.processValues(StubHierarchyIndex.INDEX_ID, packageName, null, new FileBasedIndex.ValueProcessor<IndexTree.Unit>() {
-        int count = 0;
 
-        @Override
-        public boolean process(VirtualFile file, IndexTree.Unit unit) {
-          if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
-          stubEnter.unitEnter(Translator.internNames(names, unit, ((VirtualFileWithId)file).getId(), pkg));
-          return true;
+    FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    index.processAllValues(StubHierarchyIndex.INDEX_ID, indexKey, myProject, new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+      int count = 0;
+      @Override
+      public boolean process(int fileId, IndexTree.Unit unit) {
+        if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
+        if (files.get(fileId)) {
+          QualifiedName pkg = unit.myPackageName.length == 0 ? null : names.myNamesEnumerator.getFullName(unit.myPackageName, true);
+          stubEnter.unitEnter(Translator.internNames(names, unit, fileId, pkg));
         }
-      }, scope);
-    }
+        return true;
+      }
+    });
   }
 
+  private static class IdSets {
+    final BitSet sourceFiles = new BitSet();
+    final BitSet libraryFiles = new BitSet();
+
+    static IdSets getIdSets(@NotNull Project project) {
+      return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+        IdSets answer = new IdSets();
+        ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+        FileBasedIndex.getInstance().iterateIndexableFiles(file -> {
+          if (!file.isDirectory() && file instanceof VirtualFileWithId) {
+            if (index.isInSourceContent(file)) {
+              answer.sourceFiles.set(((VirtualFileWithId) file).getId());
+            }
+            else if (index.isInLibraryClasses(file)) {
+              answer.libraryFiles.set(((VirtualFileWithId) file).getId());
+            }
+          }
+          return true;
+        }, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
+        return CachedValueProvider.Result.create(answer, ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
+      });
+    }
+  }
 }

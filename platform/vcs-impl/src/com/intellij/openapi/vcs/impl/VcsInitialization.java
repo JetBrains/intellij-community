@@ -76,7 +76,7 @@ public class VcsInitialization implements Disposable {
     }
   }
 
-  public void execute() {
+  private void execute() {
     final List<Pair<VcsInitObject, Runnable>> list;
     synchronized (myLock) {
       list = myList;
@@ -103,6 +103,11 @@ public class VcsInitialization implements Disposable {
   @Override
   public void dispose() {
     myIndicator.cancel();
+    cancelBackgroundInitialization();
+  }
+
+  private void cancelBackgroundInitialization() {
+    // do not leave VCS initialization run in background when the project is closed
     Future<?> future = myFuture;
     if (future != null) {
       future.cancel(false);

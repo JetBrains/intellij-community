@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -17,6 +16,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
 
@@ -75,7 +75,8 @@ public class CCChangeCourseInfo extends DumbAwareAction {
 
     builder.setTitle(ACTION_TEXT);
     JPanel changeInfoPanel = panel.getMainPanel();
-    changeInfoPanel.setMinimumSize(JBUI.size(400, 300));
+    changeInfoPanel.setPreferredSize(new Dimension(450, 300));
+    changeInfoPanel.setMinimumSize(new Dimension(450, 300));
     builder.setCenterPanel(changeInfoPanel);
 
     return builder;

@@ -58,7 +58,7 @@ public class FormatterTagHandler {
     return FormatterTag.NONE;
   }
 
-  private FormatterTag getFormatterTag(@NotNull PsiComment comment) {
+  protected FormatterTag getFormatterTag(@NotNull PsiComment comment) {
     CharSequence nodeChars = comment.getNode().getChars();
     if (mySettings.FORMATTER_TAGS_ACCEPT_REGEXP) {
       Pattern onPattern = mySettings.getFormatterOnPattern();

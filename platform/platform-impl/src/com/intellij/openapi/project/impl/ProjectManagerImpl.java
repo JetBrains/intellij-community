@@ -314,6 +314,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
 
+    for (Project p : myOpenProjects) {
+      if (ProjectUtil.isSameProject(project.getBasePath(), p)) {
+        ProjectUtil.focusProjectWindow(p, false);
+        return false;
+      }
+    }
+
     if (!addToOpened(project)) {
       return false;
     }
@@ -384,19 +391,31 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
-    Project project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
-      @Override
-      protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-        final Project project = convertAndLoadProject(filePath);
-        if (project == null) {
-          return null;
-        }
+  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
+    final String filePath = toCanonicalName(originalFilePath);
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(filePath);
+    Project project;
+    if (conversionResult.openingIsCanceled()) {
+      project = null;
+    }
+    else {
+      project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
+        @Override
+        protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
+          final Project project = loadProjectWithProgress(filePath);
+          if (project == null) {
+            return null;
+          }
 
-        openProject(project);
-        return project;
-      }
-    });
+          if (!conversionResult.conversionNotNeeded()) {
+            StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
+          }
+          openProject(project);
+          return project;
+        }
+      });
+    }
+
     if (project == null) {
       WelcomeFrame.showIfNoProjectOpened();
       return null;
@@ -423,20 +442,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    final Project project;
-    try {
-      project = loadProjectWithProgress(filePath);
-      if (project == null) return null;
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    catch (Throwable t) {
-      LOG.info(t);
-      throw new IOException(t);
-    }
+    final Project project = loadProjectWithProgress(filePath);
 
-    if (!conversionResult.conversionNotNeeded()) {
+    if (project != null && !conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
@@ -449,23 +457,26 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Nullable
-  private Project loadProjectWithProgress(@NotNull final String filePath) {
-    final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
-    if (myProgressManager.getProgressIndicator() != null) {
-      initProject(project, null);
-      return project;
-    }
+  private Project loadProjectWithProgress(@NotNull String filePath) throws IOException {
     try {
+      final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
+      if (myProgressManager.getProgressIndicator() != null) {
+        initProject(project, null);
+        return project;
+      }
       myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
         initProject(project, null);
         return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
+      return project;
     }
-    catch (ProcessCanceledException ignore) {
+    catch (ProcessCanceledException e) {
       return null;
     }
-
-    return project;
+    catch (Throwable t) {
+      LOG.info(t);
+      throw new IOException(t);
+    }
   }
 
   private static void notifyProjectOpenFailed() {

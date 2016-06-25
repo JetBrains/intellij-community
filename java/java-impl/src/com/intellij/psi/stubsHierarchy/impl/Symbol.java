@@ -86,28 +86,27 @@ public abstract class Symbol {
   /** A class for class symbols
    */
   public static class ClassSymbol extends Symbol {
+    private static final int HIERARCHY_INCOMPLETE = 1 << 20;
+    private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
-    public final StubClassAnchor myClassAnchor;
-    public ClassSymbol[] mySuperClasses;
-    public UnitInfo myUnitInfo;
-    public QualifiedName[] mySuperNames;
-    private ClassSymbol[] myMembers;
-    private StubHierarchyConnector myConnector;
-    private boolean myHierarchyIncomplete;
 
-    public ClassSymbol(StubClassAnchor classAnchor,
+    final StubClassAnchor myClassAnchor;
+    ClassSymbol[] mySuperClasses;
+    UnitInfo myUnitInfo;
+    QualifiedName[] mySuperNames;
+    private ClassSymbol[] myMembers;
+
+    ClassSymbol(StubClassAnchor classAnchor,
                        int flags,
                        Symbol owner,
                        QualifiedName fullname,
                        int name,
                        UnitInfo unitInfo,
-                       QualifiedName[] supers,
-                       StubHierarchyConnector connector) {
+                       QualifiedName[] supers) {
       super(flags | IndexTree.CLASS, owner, fullname, name);
       this.myClassAnchor = classAnchor;
       this.mySuperNames = supers;
       this.myUnitInfo = unitInfo;
-      this.myConnector = connector;
     }
 
     @Override
@@ -115,18 +114,21 @@ public abstract class Symbol {
       return myClassAnchor.toString();
     }
 
-    public void connect() {
-      if (myConnector != null) {
-        StubHierarchyConnector c = myConnector;
-        myConnector = null;
-        c.connect(this);
+    void connect(StubHierarchyConnector connector) {
+      if (!isConnectStarted()) {
+        myFlags = BitUtil.set(myFlags, CONNECT_STARTED, true);
+        connector.connect(this);
       }
     }
 
+    private boolean isConnectStarted() {
+      return BitUtil.isSet(myFlags, CONNECT_STARTED);
+    }
+
     @NotNull
-    public ClassSymbol[] getSuperClasses() throws IncompleteHierarchyException {
-      connect();
-      if (myHierarchyIncomplete) {
+    ClassSymbol[] getSuperClasses(StubHierarchyConnector connector) throws IncompleteHierarchyException {
+      connect(connector);
+      if (isHierarchyIncomplete()) {
         throw IncompleteHierarchyException.INSTANCE;
       }
       return rawSuperClasses();
@@ -134,11 +136,11 @@ public abstract class Symbol {
 
     @NotNull
     ClassSymbol[] rawSuperClasses() {
-      assert myConnector == null;
+      assert isConnectStarted();
       return mySuperClasses == null ? EMPTY_ARRAY : mySuperClasses;
     }
 
-    public boolean isCompiled() {
+    boolean isCompiled() {
       return BitUtil.isSet(myFlags, IndexTree.COMPILED);
     }
 
@@ -154,11 +156,11 @@ public abstract class Symbol {
       mySuperClasses = EMPTY_ARRAY;
       mySuperNames = null;
       myUnitInfo = null;
-      myHierarchyIncomplete = true;
+      myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
     }
 
     boolean isHierarchyIncomplete() {
-      return myHierarchyIncomplete;
+      return BitUtil.isSet(myFlags, HIERARCHY_INCOMPLETE);
     }
 
     boolean hasAmbiguousSupers() {

@@ -63,10 +63,10 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, StubHierarchyConnector connector) {
+  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers) {
     QualifiedName qualifiedName = myNameEnvironment.qualifiedName(owner, shortName);
     StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), classAnchor);
-    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, qualifiedName, shortName, info, supers, connector);
+    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, qualifiedName, shortName, info, supers);
     myClassSymbols.add(c);
     putClassByName(c);
     return c;

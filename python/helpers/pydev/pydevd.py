@@ -1180,6 +1180,7 @@ def _locked_settrace(
         if bufferStdErrToServer:
             init_stderr_redirect()
 
+        patch_stdin(debugger)
         debugger.set_trace_for_frame_and_parents(get_frame(), False, overwrite_prev_trace=overwrite_prev_trace)
 
 
@@ -1382,6 +1383,12 @@ def apply_debugger_options(setup_options):
         enable_qt_support()
 
 
+def patch_stdin(debugger):
+    from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn
+    orig_stdin = sys.stdin
+    sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
+
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -1512,6 +1519,7 @@ if __name__ == '__main__':
         pass  # It's ok not having stackless there...
 
     is_module = setup['module']
+    patch_stdin(debugger)
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")

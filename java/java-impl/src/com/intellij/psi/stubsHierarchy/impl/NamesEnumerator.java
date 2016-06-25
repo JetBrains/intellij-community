@@ -15,31 +15,15 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 public class NamesEnumerator {
   final static int NO_NAME = 0;
 
-  private TObjectIntHashMap<byte[]> myAsciiMap = new TObjectIntHashMap<byte[]>(new TObjectHashingStrategy<byte[]>() {
-    @Override
-    public int computeHashCode(byte[] object) {
-      return Arrays.hashCode(object);
-    }
-
-    @Override
-    public boolean equals(byte[] o1, byte[] o2) {
-      return Arrays.equals(o1, o2);
-    }
-  });
-
-  private TObjectIntHashMap<String> myNonAsciiMap = new TObjectIntHashMap<String>();
-
-  TObjectIntHashMap<int[]> fullNameMap = new TObjectIntHashMap<int[]>(new TObjectHashingStrategy<int[]>() {
+  private final TObjectIntHashMap<int[]> myFullNameMap = new TObjectIntHashMap<int[]>(new TObjectHashingStrategy<int[]>() {
     @Override
     public int computeHashCode(int[] object) {
       return Arrays.hashCode(object);
@@ -50,38 +34,17 @@ public class NamesEnumerator {
       return Arrays.equals(o1, o2);
     }
   });
-
   private QualifiedName[] myQualifiedNames = new QualifiedName[0x8000];
 
   QualifiedName qualifiedName(int id) {
     return myQualifiedNames[id];
   }
 
-  public int getSimpleName(String s, boolean create) {
-    byte[] bytes = convertToBytesIfAsciiString(s);
-    if (bytes != null) {
-      int id = myAsciiMap.get(bytes);
-      if (id == 0 && create) {
-        id = myAsciiMap.size() + myNonAsciiMap.size() + 1;
-        myAsciiMap.put(bytes, id);
-      }
-      return id;
-    }
-    else {
-      int id = myNonAsciiMap.get(s);
-      if (id == 0 && create) {
-        id = myAsciiMap.size() + myNonAsciiMap.size() + 1;
-        myNonAsciiMap.put(s, id);
-      }
-      return id;
-    }
-  }
-
   public QualifiedName getFullName(int[] ids, boolean create) {
-    int id = fullNameMap.get(ids);
+    int id = myFullNameMap.get(ids);
     if (id == 0 && create) {
-      id = fullNameMap.size() + 1;
-      fullNameMap.put(ids, id);
+      id = myFullNameMap.size() + 1;
+      myFullNameMap.put(ids, id);
       ensureFullCapacity(id);
       myQualifiedNames[id] = new QualifiedName(id, ids);
     }
@@ -102,22 +65,6 @@ public class NamesEnumerator {
     while (currentLength < maxIndex + 1)
       currentLength *= 2;
     return currentLength;
-  }
-
-  @Nullable
-  public static byte[] convertToBytesIfAsciiString(CharSequence name) {
-    int length = name.length();
-    if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      char c = name.charAt(i);
-      if (c >= 128) {
-        return null;
-      }
-      bytes[i] = (byte)c;
-    }
-    return bytes;
   }
 
 }

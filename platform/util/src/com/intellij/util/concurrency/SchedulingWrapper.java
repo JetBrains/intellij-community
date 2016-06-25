@@ -183,8 +183,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     public int compareTo(@NotNull Delayed other) {
-      if (other == this) // compare zero if same object
-      {
+      if (other == this) {
         return 0;
       }
       if (other instanceof MyScheduledFutureTask) {

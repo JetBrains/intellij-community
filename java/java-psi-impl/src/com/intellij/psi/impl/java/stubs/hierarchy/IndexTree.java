@@ -17,12 +17,19 @@ package com.intellij.psi.impl.java.stubs.hierarchy;
 
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class IndexTree {
   public static final boolean STUB_HIERARCHY_ENABLED = Registry.is("java.hierarchy.service");
 
+  @SuppressWarnings("PointlessBitwiseExpression")
   public final static int PACKAGE = 1 << 0;
   public final static int CLASS = 1 << 1;
   public static final int STATIC       = 1 << 3;
@@ -36,15 +43,52 @@ public class IndexTree {
   public static final byte JAVA = 1;
   public static final byte GROOVY = 2;
 
+  private static int hashIdentifier(@Nullable String s) {
+    if (s == null) return 0;
+
+    // not using String.hashCode because this way there's less collisions for short package names like 'com'
+    int hash = 0;
+    for (int i = 0; i < s.length(); i++) {
+      hash = hash * 239 + s.charAt(i);
+    }
+    return hash;
+  }
+
+  public static int[] hashQualifiedName(@NotNull String qName) {
+    qName = PsiNameHelper.getQualifiedClassName(qName, true);
+    if (qName.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
+
+    List<String> components = StringUtil.split(qName, ".");
+    int[] result = new int[components.size()];
+    for (int i = 0; i < components.size(); i++) {
+      result[i] = hashIdentifier(components.get(i));
+    }
+    return result;
+  }
+
+  private static int[][] hashQualifiedNameArray(String[] supers) {
+    int[][] superHashes = new int[supers.length][];
+    for (int i = 0; i < supers.length; i++) {
+      superHashes[i] = hashQualifiedName(supers[i]);
+    }
+    return superHashes;
+  }
+
   public static class Unit {
+    @NotNull public final int[] myPackageName;
     public final byte myUnitType;
     public final Import[] imports;
     public final ClassDecl[] myDecls;
 
-    public Unit(byte unitType, Import[] imports, ClassDecl[] decls) {
-      this.myUnitType = unitType;
+    public Unit(@Nullable String packageName, byte unitType, Import[] imports, ClassDecl[] decls) {
+      this(hashQualifiedName(StringUtil.notNullize(packageName)), unitType, imports, decls);
+    }
+
+    public Unit(@NotNull int[] packageName, byte unitType, Import[] imports, ClassDecl[] decls) {
+      myPackageName = packageName;
+      myUnitType = unitType;
       this.imports = imports;
-      this.myDecls = decls;
+      myDecls = decls;
     }
 
     @Override
@@ -54,6 +98,8 @@ public class IndexTree {
 
       Unit unit = (Unit)o;
 
+      if (myUnitType != unit.myUnitType) return false;
+      if (!Arrays.equals(myPackageName, unit.myPackageName)) return false;
       if (!Arrays.equals(imports, unit.imports)) return false;
       if (!Arrays.equals(myDecls, unit.myDecls)) return false;
 
@@ -62,22 +108,33 @@ public class IndexTree {
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(myDecls);
+      int hash = myUnitType * 31 + Arrays.hashCode(myPackageName);
+      for (ClassDecl decl : myDecls) {
+        int name = decl.myName;
+        if (name != 0) {
+          return hash * 31 + name;
+        }
+      }
+      return hash;
     }
   }
 
   public static class Import {
     public static final Import[] EMPTY_ARRAY = new Import[0];
-    public final String myFullname;
+    public final int[] myFullname;
     public final boolean myStaticImport;
     public final boolean myOnDemand;
-    public final String myAlias;
+    public final int myAlias;
 
-    public Import(String fullname, boolean staticImport, boolean onDemand, String alias) {
-      this.myFullname = fullname;
-      this.myStaticImport = staticImport;
-      this.myOnDemand = onDemand;
-      this.myAlias = alias;
+    public Import(String fullname, boolean staticImport, boolean onDemand, @Nullable String alias) {
+      this(hashQualifiedName(fullname), staticImport, onDemand, hashIdentifier(alias));
+    }
+
+    public Import(int[] fullname, boolean staticImport, boolean onDemand, int alias) {
+      myFullname = fullname;
+      myStaticImport = staticImport;
+      myOnDemand = onDemand;
+      myAlias = alias;
     }
 
     @Override
@@ -89,18 +146,18 @@ public class IndexTree {
 
       if (myStaticImport != anImport.myStaticImport) return false;
       if (myOnDemand != anImport.myOnDemand) return false;
-      if (!myFullname.equals(anImport.myFullname)) return false;
-      if (myAlias != null ? !myAlias.equals(anImport.myAlias) : anImport.myAlias != null) return false;
+      if (!Arrays.equals(myFullname, anImport.myFullname)) return false;
+      if (myAlias != anImport.myAlias) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myFullname.hashCode();
+      int result = Arrays.hashCode(myFullname);
       result = 31 * result + (myStaticImport ? 1 : 0);
       result = 31 * result + (myOnDemand ? 1 : 0);
-      result = 31 * result + (myAlias != null ? myAlias.hashCode() : 0);
+      result = 31 * result + myAlias;
       return result;
     }
   }
@@ -118,16 +175,20 @@ public class IndexTree {
     public static final ClassDecl[] EMPTY_ARRAY = new ClassDecl[0];
     public final int myStubId;
     public final int myMods;
-    public final String myName;
-    public final String[] mySupers;
+    public final int myName;
+    public final int[][] mySupers;
 
-    public ClassDecl(int stubId, int mods, String name, String[] supers, Decl[] decls) {
+    public ClassDecl(int stubId, int mods, @Nullable String name, String[] supers, Decl[] decls) {
+      this(stubId, mods, hashIdentifier(name), hashQualifiedNameArray(supers), decls);
+    }
+
+    public ClassDecl(int stubId, int mods, int name, int[][] supers, Decl[] decls) {
       super(decls);
       assert stubId > 0;
-      this.myStubId = stubId;
-      this.myMods = mods;
-      this.myName = name;
-      this.mySupers = supers;
+      myStubId = stubId;
+      myMods = mods;
+      myName = name;
+      mySupers = supers;
     }
 
     @Override
@@ -138,8 +199,8 @@ public class IndexTree {
       ClassDecl classDecl = (ClassDecl)o;
       if (myStubId != classDecl.myStubId) return false;
       if (myMods != classDecl.myMods) return false;
-      if (myName != null ? !myName.equals(classDecl.myName) : classDecl.myName != null) return false;
-      if (!Arrays.equals(mySupers, classDecl.mySupers)) return false;
+      if (myName != classDecl.myName) return false;
+      if (!Arrays.deepEquals(mySupers, classDecl.mySupers)) return false;
       if (!Arrays.equals(myDecls, classDecl.myDecls)) return false;
       return true;
     }
@@ -148,7 +209,7 @@ public class IndexTree {
     public int hashCode() {
       int result = myStubId;
       result = 31 * result + myMods;
-      result = 31 * result + (myName != null ? myName.hashCode() : 0);
+      result = 31 * result + myName;
       return result;
     }
   }

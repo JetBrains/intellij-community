@@ -88,7 +88,7 @@ public class StubEnter {
       supers = myNameEnvironment.annotation;
     }
 
-    ClassSymbol classSymbol = mySymbols.enterClass(tree.myClassAnchor, flags, tree.myName, owner, info, supers, myStubHierarchyConnector);
+    ClassSymbol classSymbol = mySymbols.enterClass(tree.myClassAnchor, flags, tree.myName, owner, info, supers);
 
     if (uncompleted != null)  {
       uncompleted.add(classSymbol);
@@ -100,14 +100,14 @@ public class StubEnter {
 
   public void connect1() {
     for (ClassSymbol classSymbol : uncompleted) {
-      classSymbol.connect();
+      classSymbol.connect(myStubHierarchyConnector);
     }
     uncompleted = new ArrayList<ClassSymbol>();
   }
 
   public void connect2() {
     for (ClassSymbol classSymbol : uncompleted) {
-      classSymbol.connect();
+      classSymbol.connect(myStubHierarchyConnector);
     }
     uncompleted = null;
   }

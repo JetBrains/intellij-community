@@ -58,7 +58,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
-    if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
+    if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar() && context.getOffsetMap().containsOffset(PARAM_LIST_START)) {
       final int plStart = context.getOffset(PARAM_LIST_START);
       final int plEnd = context.getOffset(PARAM_LIST_END);
       if (plStart >= 0 && plEnd >= 0) {

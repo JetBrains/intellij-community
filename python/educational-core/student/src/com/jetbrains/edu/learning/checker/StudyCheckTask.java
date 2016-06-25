@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +37,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected final VirtualFile myTaskDir;
   protected final StudyTaskManager myTaskManger;
   private final StudyStatus myStatusBeforeCheck;
-  private Ref<Boolean> myCheckInProcess;
+  private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
+  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -118,7 +120,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       String stderr = output.getStderr();
       if (!stderr.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                          StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                               MessageType.WARNING.getPopupBackground(),
                                                                                               myProject));
         //log error output of tests
@@ -149,7 +151,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           runAfterTaskCheckedActions();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                                     MessageType.WARNING
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
@@ -214,8 +216,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final String login = studySettings.getUser().getEmail();
-    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getUser().getPassword();
+    final StepicUser user = studySettings.getUser();
+    if (user == null) return;
+    final String login = user.getEmail();
+    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }

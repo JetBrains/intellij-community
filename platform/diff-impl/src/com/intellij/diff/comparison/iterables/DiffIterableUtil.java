@@ -18,7 +18,6 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
@@ -88,20 +87,6 @@ public class DiffIterableUtil {
     return diff(data1, data2, indicator);
   }
 
-  /*
-   * Compare two arrays, basing on equals() and hashCode() of it's elements
-   *
-   * If the input arrays are too big, "everything is changed" can be returned.
-   */
-  @NotNull
-  public static <T> FairDiffIterable diffSomehow(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
-    // TODO: use ProgressIndicator inside
-    Diff.Change change = Diff.buildChangesSomehow(data1, data2);
-    return fair(create(change, data1.length, data2.length));
-  }
-
   //
   // Iterable
   //
@@ -157,15 +142,6 @@ public class DiffIterableUtil {
   //
   // Misc
   //
-
-  @NotNull
-  public static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable changes) {
-    final List<DiffFragment> fragments = new ArrayList<>();
-    for (Range ch : changes.iterateChanges()) {
-      fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
-    }
-    return fragments;
-  }
 
   @NotNull
   public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {

@@ -28,10 +28,12 @@ import java.util.Set;
 public class StubResolver {
   private final Symbols mySymbols;
   private final NameEnvironment myNameEnvironment;
+  private final StubHierarchyConnector myConnector;
 
-  public StubResolver(Symbols symbols) {
+  public StubResolver(Symbols symbols, StubHierarchyConnector connector) {
     this.mySymbols = symbols;
     this.myNameEnvironment = symbols.myNameEnvironment;
+    myConnector = connector;
   }
 
   // resolve class `sym` extends/implements `baseId`
@@ -97,7 +99,7 @@ public class StubResolver {
     }
   }
 
-  private static void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) throws IncompleteHierarchyException {
+  private void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) throws IncompleteHierarchyException {
     if (!processed.add(s)) {
       return;
     }
@@ -130,9 +132,9 @@ public class StubResolver {
     }
   }
 
-  private static void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
+  private void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
     throws IncompleteHierarchyException {
-    for (Symbol.ClassSymbol st : c.getSuperClasses())
+    for (Symbol.ClassSymbol st : c.getSuperClasses(myConnector))
       findMemberType(st, name, symbols, processed);
   }
 
@@ -194,13 +196,13 @@ public class StubResolver {
   }
 
   // handling of import static `tsym.name` as
-  private static void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
+  private void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
     new Object() {
       Set<Symbol> processed = new HashSet<Symbol>();
       void importFrom(Symbol.ClassSymbol cs) throws IncompleteHierarchyException {
         if (cs == null || !processed.add(cs))
           return;
-        for (Symbol.ClassSymbol c : cs.getSuperClasses())
+        for (Symbol.ClassSymbol c : cs.getSuperClasses(myConnector))
           importFrom(c);
         importMember(cs.members(), name, symbols, true);
       }

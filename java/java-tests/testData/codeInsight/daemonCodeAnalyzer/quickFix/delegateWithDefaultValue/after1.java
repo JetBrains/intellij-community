@@ -1,4 +1,4 @@
-// "Generate overloaded method with default parameter value" "true"
+// "Generate overloaded method with default parameter values" "true"
 class Test {
     void foo() {
       foo(<caret>);

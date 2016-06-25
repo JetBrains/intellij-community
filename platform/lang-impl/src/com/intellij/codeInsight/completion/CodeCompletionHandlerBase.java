@@ -566,10 +566,9 @@ public class CodeCompletionHandlerBase {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
-    int idEndOffset = indicator.getIdentifierEndOffset();
-    if (idEndOffset < 0) {
-      idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
-    }
+    final int idEndOffset = indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+                            indicator.getIdentifierEndOffset() :
+                            CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
     CompletionAssertions.WatchingInsertionContext context;

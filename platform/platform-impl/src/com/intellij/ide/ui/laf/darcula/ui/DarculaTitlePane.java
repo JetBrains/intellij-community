@@ -15,14 +15,18 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.imgscalr.Scalr;
 import sun.swing.SwingUtilities2;
 
@@ -293,7 +297,7 @@ public class DarculaTitlePane extends JComponent {
     menu.add(myCloseAction);
   }
 
-  private static JButton createButton(String accessibleName, Icon icon, Action action) {
+  private static JButton createButton(String accessibleName, Icon icon, Icon hoverIcon, Action action, Color hoverBg) {
     JButton button = new JButton() {
       boolean mouseOverButton = false;
       {
@@ -314,11 +318,11 @@ public class DarculaTitlePane extends JComponent {
       }
       @Override
       protected void paintComponent(Graphics g) {
-        final Window window = SwingUtilities.windowForComponent(this);
-        float alpha = window.isActive() && mouseOverButton ? 1f : 0.5f;
-        final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
-        getIcon().paintIcon(this, g, 0, 0);
-        config.restore();
+        if (mouseOverButton) {
+          g.setColor(hoverBg);
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+        IconUtil.paintInCenterOf(this, g, mouseOverButton ? hoverIcon : icon);
       }
     };
     button.setFocusPainted(false);
@@ -334,14 +338,14 @@ public class DarculaTitlePane extends JComponent {
   }
 
   private void createButtons() {
-    myCloseButton = createButton("Close", UIManager.getIcon("InternalFrame.closeIcon"), myCloseAction);
+    myCloseButton = createButton("Close", AllIcons.Windows.CloseActive, AllIcons.Windows.CloseHover, myCloseAction, Color.red);
 
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
       myMaximizeIcon = UIManager.getIcon("InternalFrame.maximizeIcon");
       myMinimizeIcon = UIManager.getIcon("InternalFrame.minimizeIcon");
 
-      myIconifyButton = createButton("Iconify", UIManager.getIcon("InternalFrame.iconifyIcon"), myIconifyAction);
-      myToggleButton = createButton("Maximize", myMaximizeIcon, myRestoreAction);
+      myIconifyButton = createButton("Iconify", AllIcons.Windows.MinimizeInactive, AllIcons.Windows.Minimize,  myIconifyAction, new Color(0x55585A));
+      myToggleButton = createButton("Maximize", AllIcons.Windows.MaximizeInactive, AllIcons.Windows.MaximizeInactive, myRestoreAction, new Color(0x55585A));
     }
   }
 
@@ -541,14 +545,14 @@ public class DarculaTitlePane extends JComponent {
     }
 
 
-    int w = width;
-    int h = height;
-    h--;
+    //int w = width;
+    //int h = height;
+    //h--;
     g.setColor(UIManager.getColor("MenuBar.darcula.borderColor"));
-    g.drawLine(0, h, w, h);
-    h--;
-    g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
-    g.drawLine(0, h, w, h);
+    //g.drawLine(0, h, w, h);
+    //h--;
+    //g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
+    g.drawLine(0, getHeight()-1, getWidth(), getHeight()-1);
   }
 
   private class CloseAction extends AbstractAction {
@@ -604,7 +608,8 @@ public class DarculaTitlePane extends JComponent {
       }
 
       if (mySystemIcon != null) {
-        g.drawImage(mySystemIcon, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, null);
+        final int offset = (getHeight() - mySystemIcon.getHeight(null)) / 2;
+        g.drawImage(mySystemIcon, offset, offset, null);
       }
       else {
         Icon icon = UIManager.getIcon("InternalFrame.icon");
@@ -653,7 +658,7 @@ public class DarculaTitlePane extends JComponent {
         iconHeight = IMAGE_HEIGHT;
       }
 
-      return Math.max(Math.max(fontHeight, iconHeight), JBUI.scale(myIdeMenu == null ? 28 : 36));
+      return Math.max(Math.max(fontHeight, iconHeight), JBUI.scale(31));
     }
 
     public void layoutContainer(Container c) {
@@ -661,17 +666,17 @@ public class DarculaTitlePane extends JComponent {
       int h = getHeight();
       int x;
       int spacing;
-      int buttonHeight;
-      int buttonWidth;
+      int buttonHeight = JBUI.scale(29);
+      int buttonWidth = JBUI.scale(45);
 
-      if (myCloseButton != null && myCloseButton.getIcon() != null) {
-        buttonHeight = myCloseButton.getIcon().getIconHeight();
-        buttonWidth = myCloseButton.getIcon().getIconWidth();
-      }
-      else {
-        buttonHeight = IMAGE_HEIGHT;
-        buttonWidth = IMAGE_WIDTH;
-      }
+      //if (myCloseButton != null && myCloseButton.getIcon() != null) {
+      //  buttonHeight = myCloseButton.getIcon().getIconHeight();
+      //  buttonWidth = myCloseButton.getIcon().getIconWidth();
+      //}
+      //else {
+      //  buttonHeight = IMAGE_HEIGHT;
+      //  buttonWidth = IMAGE_WIDTH;
+      //}
 
       spacing = 5;
       x = spacing;
@@ -679,33 +684,33 @@ public class DarculaTitlePane extends JComponent {
         myMenuBar.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
 
+      int systemIconSize = mySystemIcon == null ? JBUI.scale(16) : mySystemIcon.getWidth(null);
+
+        x = buttonHeight - systemIconSize + systemIconSize + systemIconSize/2; // offset + width + offset, where offset is (H - iconHeight) / 2
       if (myIdeMenu != null) {
         final Dimension size = myIdeMenu.getPreferredSize();
-
-        x += spacing + (myMenuBar != null ? buttonWidth : 0);
 
         myIdeMenu.setBounds(x, (h - size.height) / 2, size.width, size.height);
       }
 
       x = w;
-      spacing = 8;
-      x += -spacing - buttonWidth;
+      spacing = 0;
+      x -= spacing + buttonWidth;
       if (myCloseButton != null) {
         myCloseButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
-
       if (getWindowDecorationStyle() == JRootPane.FRAME) {
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(
           Frame.MAXIMIZED_BOTH)) {
           if (myToggleButton.getParent() != null) {
             //spacing = 10;
-            x += -spacing - buttonWidth;
+            x -= spacing + buttonWidth;
             myToggleButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
           }
         }
 
         if (myIconifyButton != null && myIconifyButton.getParent() != null) {
-          x += -spacing - buttonWidth;
+          x -= spacing + buttonWidth;
           myIconifyButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
         }
       }
@@ -757,7 +762,7 @@ public class DarculaTitlePane extends JComponent {
     } else if (icons.size() == 1) {
       mySystemIcon = icons.get(0);
     } else {
-      final JBDimension size = JBUI.size(32);
+      final JBDimension size = JBUI.size(16);
       final Image image = icons.get(0);
       mySystemIcon = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, size.width, size.height);
     }

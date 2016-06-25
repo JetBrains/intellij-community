@@ -56,6 +56,11 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        for (VirtualFile openedFile : source.getOpenFiles()) {
+          if (StudyUtils.getTaskFile(project, openedFile) != null) {
+            return;
+          }
+        }
         toolWindow.setEmptyText(project);
       }
 

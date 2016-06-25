@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
@@ -31,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
@@ -144,11 +146,8 @@ public class CCUtils {
     return generatedRoot.get();
   }
 
-  /**
-   * @param requestor {@link VirtualFileEvent#getRequestor}
-   */
   @Nullable
-  public static VirtualFile generateFolder(@NotNull Project project, @NotNull Module module, @Nullable Object requestor, String name) {
+  public static VirtualFile generateFolder(@NotNull Project project, @NotNull Module module, String name) {
     VirtualFile generatedRoot = getGeneratedFilesFolder(project, module);
     if (generatedRoot == null) {
       return null;
@@ -159,9 +158,9 @@ public class CCUtils {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         if (folder.get() != null) {
-          folder.get().delete(requestor);
+          folder.get().delete(null);
         }
-        folder.set(generatedRoot.createChildDirectory(requestor, name));
+        folder.set(generatedRoot.createChildDirectory(null, name));
       }
       catch (IOException e) {
         LOG.info("Failed to generate folder " + name, e);

@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.fragments;
 
-import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,14 +54,6 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
     myStartLine3 = startLine3;
     myEndLine3 = endLine3;
     myInnerFragments = innerFragments;
-  }
-
-  public MergeLineFragmentImpl(@NotNull MergeRange range) {
-    this(range, null);
-  }
-
-  public MergeLineFragmentImpl(@NotNull MergeRange range, @Nullable List<MergeWordFragment> innerFragments) {
-    this(range.start1, range.end1, range.start2, range.end2, range.start3, range.end3, innerFragments);
   }
 
   public MergeLineFragmentImpl(@NotNull MergeLineFragment fragment, @Nullable List<MergeWordFragment> fragments) {

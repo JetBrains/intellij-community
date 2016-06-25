@@ -66,6 +66,7 @@ import java.util.*;
 
 public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractClassProcessor");
+  @NonNls public static final String REFACTORING_NAME = "Extract Delegate";
 
   private final PsiClass sourceClass;
   private final List<PsiField> fields;

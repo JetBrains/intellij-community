@@ -12,7 +12,7 @@ import java.util.List;
  * and when project is being created
  */
 public class CourseInfo {
-  public static CourseInfo INVALID_COURSE = new CourseInfo();
+  public static final CourseInfo INVALID_COURSE = new CourseInfo();
 
   @SerializedName("title") private String myName;
   int id;

@@ -75,7 +75,7 @@ public class Course {
   }
 
   public static String getAuthorsString(@NotNull List<StepicUser> authors) {
-    return StringUtil.join(authors, author -> author.getName(), ", ");
+    return StringUtil.join(authors, StepicUser::getName, ", ");
   }
 
   public void setAuthors(String[] authors) {
