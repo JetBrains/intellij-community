@@ -388,13 +388,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void freeze(final ContinuationPause context, final String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
-    // this update is nessesary for git, to refresh local changes before
-    invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        freezeImmediately(reason);
-        context.ping();
-      }
+    invokeAfterUpdate(() -> {
+      freezeImmediately(reason);
+      context.ping();
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
     context.suspend();
   }
