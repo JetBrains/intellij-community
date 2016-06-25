@@ -395,7 +395,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         freezeImmediately(reason);
         context.ping();
       }
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
     context.suspend();
   }
 
