@@ -225,6 +225,14 @@
       <expected>ERR</expected>
     </test>
     <test>
+      <pattern>[&amp;&amp;[^\d]]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[a&amp;&amp;]</pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
       <pattern>a[b&amp;&amp;c&amp;&amp;d]</pattern>
       <expected>OK</expected>
     </test>
