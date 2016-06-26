@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -26,9 +27,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import git4idea.GitCommit;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,17 +49,21 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
  * current branch are merged to, and makes force delete, if wanted.
  */
 class GitDeleteBranchOperation extends GitBranchOperation {
-  
+
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
+  private static final String UNDO_LINK = "undo";
+  private static final String DELETE_REMOTE_LINK = "delete_remote";
 
   @NotNull private final String myBranchName;
   @NotNull private final VcsNotifier myNotifier;
+  @NotNull private final MultiMap<String, GitRepository> myTrackedBranches;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
     super(project, git, uiHandler, repositories);
     myBranchName = branchName;
     myNotifier = VcsNotifier.getInstance(myProject);
+    myTrackedBranches = groupByTrackedBranchName(branchName, repositories);
   }
 
   @Override
@@ -114,7 +121,10 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = String.format("Deleted branch %s", formatBranchName(myBranchName));
-    message += "<br/><a href='undo'>Restore</a>";
+    message += "<br/><a href='" + UNDO_LINK + "'>Restore</a>";
+    if (!myTrackedBranches.isEmpty()) {
+      message += "<br/><a href='" + DELETE_REMOTE_LINK + "'>Delete tracked remote branch</a>";
+    }
     myNotifier.notifySuccess("", message, new SuccessNotificationLinkListener());
   }
 
@@ -283,6 +293,17 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return Collections.emptyList();
   }
 
+  @NotNull
+  private static MultiMap<String, GitRepository> groupByTrackedBranchName(@NotNull String branchName,
+                                                                          @NotNull Collection<GitRepository> repositories) {
+    MultiMap<String, GitRepository> trackedBranchNames = MultiMap.createLinked();
+    for (GitRepository repository : repositories) {
+      GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfo(repository, branchName);
+      if (trackInfo != null) trackedBranchNames.putValue(trackInfo.getRemoteBranch().getNameForLocalOperations(), repository);
+    }
+    return trackedBranchNames;
+  }
+
   // warning: not deleting branch 'feature' that is not yet merged to
   //          'refs/remotes/origin/feature', even though it is merged to HEAD.
   // error: The branch 'feature' is not fully merged.
@@ -317,12 +338,23 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private class SuccessNotificationLinkListener extends NotificationListener.Adapter {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      if (e.getDescription().equals("undo")) {
-        notification.expire();
+      notification.expire();
+      if (e.getDescription().equals(UNDO_LINK)) {
         new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             rollbackBranchDeletion();
+          }
+        }.queue();
+      }
+      else if (e.getDescription().equals(DELETE_REMOTE_LINK)) {
+        new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            GitBrancher brancher = ServiceManager.getService(getProject(), GitBrancher.class);
+            for (String remoteBranch : myTrackedBranches.keySet()) {
+              brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(myTrackedBranches.get(remoteBranch)));
+            }
           }
         }.queue();
       }
