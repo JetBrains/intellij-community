@@ -183,7 +183,7 @@ abstract class GitBranchOperation {
     VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 
-  protected final void notifySuccess() {
+  protected void notifySuccess() {
     notifySuccess(getSuccessMessage());
   }
 

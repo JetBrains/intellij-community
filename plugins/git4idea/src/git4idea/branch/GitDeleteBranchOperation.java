@@ -15,7 +15,11 @@
  */
 package git4idea.branch;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +33,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,12 +49,14 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
 
-  private final String myBranchName;
+  @NotNull private final String myBranchName;
+  @NotNull private final VcsNotifier myNotifier;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<GitRepository> repositories, @NotNull String branchName) {
     super(project, git, uiHandler, repositories);
     myBranchName = branchName;
+    myNotifier = VcsNotifier.getInstance(myProject);
   }
 
   @Override
@@ -104,6 +111,13 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
   }
 
+  @Override
+  protected void notifySuccess() {
+    String message = String.format("Deleted branch %s", formatBranchName(myBranchName));
+    message += "<br/><a href='undo'>Restore</a>";
+    myNotifier.notifySuccess("", message, new SuccessNotificationLinkListener());
+  }
+
   private static void refresh(@NotNull GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       repository.update();
@@ -112,17 +126,21 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @Override
   protected void rollback() {
+    GitCompoundResult result = doRollback();
+    if (!result.totalSuccess()) {
+      myNotifier.notifyError("Error during rollback of branch deletion", result.getErrorOutputWithReposIndication());
+    }
+  }
+
+  @NotNull
+  private GitCompoundResult doRollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
       GitCommandResult res = myGit.branchCreate(repository, myBranchName);
       result.append(repository, res);
       refresh(repository);
     }
-
-    if (!result.totalSuccess()) {
-      VcsNotifier.getInstance(myProject).notifyError("Error during rollback of branch deletion",
-                                                     result.getErrorOutputWithReposIndication());
-    }
+    return result;
   }
 
   @NotNull
@@ -132,7 +150,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @NotNull
   public String getSuccessMessage() {
-    return String.format("Deleted branch <b><code>%s</code></b>", myBranchName);
+    return String.format("Deleted branch %s", formatBranchName(myBranchName));
   }
 
   @NotNull
@@ -147,6 +165,11 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @Override
   protected String getOperationName() {
     return "branch deletion";
+  }
+
+  @NotNull
+  private static String formatBranchName(@NotNull String name) {
+    return "<b><code>" + name + "</b></code>";
   }
 
   @NotNull
@@ -288,6 +311,31 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     @Nullable
     public String getBaseBranch() {
       return myBaseBranch;
+    }
+  }
+
+  private class SuccessNotificationLinkListener extends NotificationListener.Adapter {
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      if (e.getDescription().equals("undo")) {
+        notification.expire();
+        new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            rollbackBranchDeletion();
+          }
+        }.queue();
+      }
+    }
+
+    private void rollbackBranchDeletion() {
+      GitCompoundResult result = doRollback();
+      if (result.totalSuccess()) {
+        myNotifier.notifySuccess("Restored " + formatBranchName(myBranchName));
+      }
+      else {
+        myNotifier.notifyError("Couldn't Restore " + formatBranchName(myBranchName), result.getErrorOutputWithReposIndication());
+      }
     }
   }
 }
