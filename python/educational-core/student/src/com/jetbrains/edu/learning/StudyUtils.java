@@ -67,6 +67,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -115,7 +116,11 @@ public class StudyUtils {
   }
 
   public static <T> T getFirst(@NotNull final Iterable<T> container) {
-    return container.iterator().next();
+    Iterator<T> iterator = container.iterator();
+    if (!iterator.hasNext()) {
+      return null;
+    }
+    return iterator.next();
   }
 
   public static boolean indexIsValid(int index, @NotNull final Collection collection) {
