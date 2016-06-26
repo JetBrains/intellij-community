@@ -221,7 +221,7 @@ public class CCUtils {
       if (child == null) {
         continue;
       }
-      Document patternDocument = StudyUtils.getPatternDocument(project, entry.getValue(), name);
+      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
       Document document = FileDocumentManager.getInstance().getDocument(child);
       if (document == null || patternDocument == null) {
         return;

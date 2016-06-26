@@ -393,12 +393,12 @@ public class StudyUtils {
 
 
   @Nullable
-  public static VirtualFile getPatternFile(@NotNull Project project, @NotNull TaskFile taskFile, String name) {
+  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
-    File resourceFile = getCourseDirectory(project, course);
+    File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {
       return null;
     }
@@ -411,8 +411,8 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static Document getPatternDocument(@NotNull Project project, @NotNull final TaskFile taskFile, String name) {
-    VirtualFile patternFile = getPatternFile(project, taskFile, name);
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    VirtualFile patternFile = getPatternFile(taskFile, name);
     if (patternFile == null) {
       return null;
     }
