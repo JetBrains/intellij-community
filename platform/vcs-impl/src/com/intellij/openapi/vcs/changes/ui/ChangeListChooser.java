@@ -86,6 +86,7 @@ public class ChangeListChooser extends DialogWrapper {
     }
   }
 
+  @Nullable
   public LocalChangeList getSelectedList() {
     return mySelectedList;
   }

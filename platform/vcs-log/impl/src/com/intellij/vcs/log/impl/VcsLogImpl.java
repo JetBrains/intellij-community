@@ -29,10 +29,7 @@ import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -50,6 +47,12 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   public List<CommitId> getSelectedCommits() {
     return getSelectedDataFromTable(GraphTableModel::getCommitIdAtRow);
+  }
+
+  @NotNull
+  @Override
+  public List<VcsShortCommitDetails> getSelectedShortDetails() {
+    return getSelectedDataFromTable(GraphTableModel::getShortDetails);
   }
 
   @NotNull
@@ -93,7 +96,7 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public Collection<VcsLogProvider> getLogProviders() {
+  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myLogData.getLogProviders();
   }
 

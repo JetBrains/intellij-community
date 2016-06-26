@@ -27,6 +27,7 @@ import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,6 +150,17 @@ public class ContainingBranchesGetter {
   @NotNull
   private static SLRUMap<CommitId, List<String>> createCache() {
     return new SLRUMap<CommitId, List<String>>(1000, 1000);
+  }
+
+  @CalledInAny
+  @NotNull
+  public List<String> getContainingBranchesSynchronously(@NotNull VirtualFile root, @NotNull Hash hash) {
+    return doGetContainingBranches(myLogData.getDataPack(), root, hash);
+  }
+
+  @NotNull
+  private List<String> doGetContainingBranches(@NotNull DataPack dataPack, @NotNull VirtualFile root, @NotNull Hash hash) {
+    return new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()).getContainingBranches(myLogData);
   }
 
   private static class Task {

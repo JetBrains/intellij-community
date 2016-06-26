@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -35,6 +36,16 @@ public interface VcsLog {
    */
   @NotNull
   List<CommitId> getSelectedCommits();
+
+  /**
+   * Returns those details of the selected commit which are visible in the table. <br/>
+   * The information for these commits are loaded fast (while scrolling),
+   * and - which is more important - user is not likely to select anything unless he sees what he selects,
+   * which means that the short details are already loaded. <br/>
+   * This makes this method preferable to {@link #getSelectedDetails()}.
+   */
+  @NotNull
+  List<VcsShortCommitDetails> getSelectedShortDetails();
 
   /**
    * Returns details of the selected commits.
@@ -71,5 +82,5 @@ public interface VcsLog {
    * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.
    */
   @NotNull
-  Collection<VcsLogProvider> getLogProviders();
+  Map<VirtualFile, VcsLogProvider> getLogProviders();
 }

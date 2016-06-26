@@ -215,8 +215,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public Collection<VcsLogProvider> getLogProviders() {
-    return myLogProviders.values();
+  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
+    return myLogProviders;
   }
 
   @NotNull
