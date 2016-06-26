@@ -95,7 +95,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
         return;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        VirtualFile patternFile = StudyUtils.getPatternFile(project, taskFile, oldName);
+        VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, oldName);
         if (patternFile != null) {
           try {
             patternFile.delete(CCRefactoringElementListenerProvider.class);

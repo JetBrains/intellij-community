@@ -45,7 +45,7 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     }
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     final StudyState studyState = new StudyState(studyEditor);
-    Document patternDocument = StudyUtils.getPatternDocument(project, answerPlaceholder.getTaskFile(), studyState.getVirtualFile().getName());
+    Document patternDocument = StudyUtils.getPatternDocument(answerPlaceholder.getTaskFile(), studyState.getVirtualFile().getName());
     if (patternDocument == null) {
       return;
     }
