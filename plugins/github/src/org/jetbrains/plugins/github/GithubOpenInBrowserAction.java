@@ -47,7 +47,6 @@ import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.LOG;
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,35 +66,37 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
 
     final GitRepository gitRepository = manager.getRepositoryForFile(virtualFile);
     if (gitRepository == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isUnversioned(virtualFile)) {
-      setVisibleEnabled(e, true, false);
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
     Change change = changeListManager.getChange(virtualFile);
     if (change != null && change.getType() == Change.Type.NEW) {
-      setVisibleEnabled(e, true, false);
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override

@@ -74,10 +74,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
-      GithubUtil.setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GithubUtil.setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override

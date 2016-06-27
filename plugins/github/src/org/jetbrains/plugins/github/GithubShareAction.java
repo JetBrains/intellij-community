@@ -68,8 +68,6 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
-
 /**
  * @author oleg
  */
@@ -83,10 +81,10 @@ public class GithubShareAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   // get gitRepository
