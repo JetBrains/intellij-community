@@ -96,6 +96,98 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
   
+  public void testNewStyleStringWithPercentSymbol() {
+    doTest();
+  }
+  
+  public void testNewStylePackedAndNonPackedArgs() {
+    doTest();
+  }
+  
+  public void testNewStyleEmptyDictArg() {
+    doTest();
+  }
+  
+  public void testNewStyleDictLiteralExprInsideDictCall() {
+    doTest();
+  }
+  
+  public void testNewStylePositionalSubstitutionWithDictArg() {
+    doTest();
+  }
+  
+  public void testNewStylePackedReference() {
+    doTest();
+  }
+  
+  public void testNewStylePackedFunctionCall() {
+    doTest();
+  }
+  
+  public void testNewStyleStringRegularExpression() {
+    doTest();
+  }
+  
+  public void testNewStyleStringMapArg() {
+    doTest();
+  }
+  
+  public void testNewStyleDictLiteralWithReferenceKeys() {
+    doTest();
+  }
+  
+  public void testNewStyleDictLiteralWithNumericKeys() {
+    doTest();
+  }
+  
+  public void testNewStyleCallExpressionArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringWithFormatStringReplacementSymbols() {
+    doTest();
+  }
+  
+  public void testPercentStringPositionalWithEmptyDictArg() {
+    doTest();
+  }
+  
+  public void testPercentStringWithDictElement() {
+    doTest();
+  }
+  
+  public void testPercentStringWithDictCall() {
+    doTest();
+  }
+  
+  public void testPercentStringWithDictArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringPositionalListArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringPositionalDictArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringKeywordSetArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringKeywordListArgument() {
+    doTest();
+  }
+  
+  public void testPercentStringCallUnionArgument() {
+    doTest();
+  } 
+  
+  public void testPercentStringCallArgument() {
+    doTest();
+  }
+  
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyStringFormatInspection.class);

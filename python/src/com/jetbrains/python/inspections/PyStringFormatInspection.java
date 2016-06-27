@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
@@ -161,30 +162,9 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final PyCallExpression call = (PyCallExpression)rightExpression;
-
-          final IntSummaryStatistics statistics = call.multiResolveCalleeFunction(resolveContext)
-            .stream()
-            .map(callable -> callable.getCallType(myTypeEvalContext, call))
-            .collect(
-              Collectors.summarizingInt(
-                callType -> {
-                  if (callType instanceof PyTupleType) {
-                    return ((PyTupleType)callType).getElementCount();
-                  }
-                  else {
-                    return 1;
-                  }
-                }
-              )
-            );
-
-          if (statistics.getMin() == statistics.getMax()) {
-            return statistics.getMin();
-          }
-          else {
-            return -1;
-          }
+          final PyExpression callee = ((PyCallExpression)rightExpression).getCallee();
+          if (callee != null && "dict".equals(callee.getName())) return 1;
+          return inspectCallExpression((PyCallExpression)rightExpression, resolveContext, myTypeEvalContext, true);
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
           final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
@@ -590,36 +570,6 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private int inspectCallExpression(@NotNull PyCallExpression callExpression, @NotNull PyResolveContext resolveContext) {
-        final PyReturnStatement[] returnStatements = getFunctionReturnValues(callExpression, resolveContext);
-        int expressionsSize = -1;
-        for (PyReturnStatement returnStatement : returnStatements) {
-          if (returnStatement.getExpression() instanceof PyCallExpression) {
-            return -1;
-          }
-          final int argumentsSize = Math.max(PyUtil.flattenedParensAndTuples(returnStatement.getExpression()).size(),
-                                             PyUtil.flattenedParensAndLists(returnStatement.getExpression()).size());
-          if (expressionsSize < 0) {
-            expressionsSize = argumentsSize;
-          }
-          if (expressionsSize != argumentsSize) {
-            return -1;
-          }
-        }
-        return expressionsSize;
-      }
-
-
-      private PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,
-                                                          @NotNull PyResolveContext resolveContext) {
-        final PyCallable callable = callExpression.resolveCalleeFunction(resolveContext);
-        if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST(callable)) {
-          PyStatementList statementList = ((PyFunction)callable).getStatementList();
-          return PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
-        }
-        return new PyReturnStatement[0];
-      }
-
       private void registerProblem(@NotNull PsiElement problemTarget, @NotNull final String message) {
         myProblemRegister = true;
         myVisitor.registerProblem(problemTarget, message);
@@ -660,7 +610,8 @@ public class PyStringFormatInspection extends PyInspection {
                                                       indexElement);
             }
             else if (inspectedElement instanceof PyCallExpression) {
-              final int callResultsArgumentsNumber = inspectCallExpression((PyCallExpression)inspectedElement, resolveContext);
+              final int callResultsArgumentsNumber = inspectCallExpression((PyCallExpression)inspectedElement, resolveContext,
+                                                                           myTypeEvalContext, false);
               if (callResultsArgumentsNumber <= index) {
                 registerProblem(inspectedElement, PyBundle.message("INSP.too.few.args.for.fmt.string"));
               }
@@ -671,10 +622,10 @@ public class PyStringFormatInspection extends PyInspection {
           }
           catch (NumberFormatException e) {
             if (inspectedElement instanceof PyCallExpression) {
-              final PyReturnStatement[] returnValues = getFunctionReturnValues((PyCallExpression)inspectedElement, resolveContext);
+              final PyReturnStatement[] returnValues = getFunctionReturnValues((PyCallExpression)inspectedElement, resolveContext,
+                                                                               myTypeEvalContext);
               for (PyReturnStatement value : returnValues) {
-                PyExpression valueExpression = value.getExpression();
-                valueExpression = PyPsiUtils.flattenParens(valueExpression);
+                PyExpression valueExpression = PyPsiUtils.flattenParens(value.getExpression());
                 if (valueExpression instanceof PyDictLiteralExpression) {
                   inspectDictForKey(formatExpression, inspectedElement, (PyDictLiteralExpression)valueExpression, mappingKey,
                                     indexElement);
@@ -816,6 +767,87 @@ public class PyStringFormatInspection extends PyInspection {
       public boolean isProblem() {
         return myProblemRegister;
       }
+    }
+
+    static int inspectCallExpression(@NotNull PyCallExpression callExpression,
+                                     @NotNull PyResolveContext resolveContext,
+                                     @NotNull TypeEvalContext evalContext,
+                                     boolean isPercent) {
+      final IntSummaryStatistics statistics = callExpression.multiResolveCalleeFunction(resolveContext)
+        .stream()
+        .map(callable -> callable.getCallType(evalContext, callExpression))
+        .collect(
+          Collectors.summarizingInt(
+            callType -> {
+              if (callType instanceof PyTupleType) {
+                return ((PyTupleType)callType).getElementCount();
+              }
+              else if (callType instanceof PyCollectionTypeImpl
+                       && ((PyCollectionTypeImpl)callType).getElementTypes(evalContext).size() == 1) {
+                if (isPercent) return 1;
+
+                final PyClass pyClass = ((PyCollectionTypeImpl)callType).getPyClass();
+                if ("list".equals(pyClass.getName())) {
+                  final PyReturnStatement[] returnStatements = getFunctionReturnValues(callExpression, resolveContext, evalContext);
+                  int expressionsSize = -1;
+                  for (PyReturnStatement returnStatement : returnStatements) {
+                    if (returnStatement.getExpression() instanceof PyCallExpression) {
+                      return -1;
+                    }
+                    final int argumentsSize = PyUtil.flattenedParensAndLists(returnStatement.getExpression()).size();
+                    if (expressionsSize < 0) {
+                      expressionsSize = argumentsSize;
+                    }
+                    if (expressionsSize != argumentsSize) {
+                      return -1;
+                    }
+                  }
+                  return expressionsSize;
+                }
+              }
+              else if (callType instanceof PyNoneType) {
+                return 1;
+              }
+              else if (callType instanceof PyClassType) {
+                final PyClassType setType = PyBuiltinCache.getInstance(callExpression).getSetType();
+                final PyClassType tupleType = PyBuiltinCache.getInstance(callExpression).getTupleType();
+
+                if (!callType.equals(tupleType) &&
+                    (callType.equals(setType) && isPercent
+                     || PyBuiltinCache.getInstance(callExpression).isBuiltin(((PyClassType)callType).getPyClass()))) {
+                  return 1;
+                }
+              }
+              else if (callType instanceof PyUnionType) {
+                if (((PyUnionType)callType).getMembers().stream().allMatch(PyType::isBuiltin)) return 1;
+              }
+
+              else {
+                return 1;
+              }
+            }
+          )
+        );
+
+      if (statistics.getMin() == statistics.getMax()) {
+        return statistics.getMin();
+      }
+      else {
+        return -1;
+      }
+
+      return -1;
+    }
+
+    private static PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,
+                                                               @NotNull PyResolveContext resolveContext,
+                                                               @NotNull TypeEvalContext evalContext) {
+      final PyCallable callable = callExpression.resolveCalleeFunction(resolveContext);
+      if (callable instanceof PyFunction && evalContext.maySwitchToAST(callable)) {
+        PyStatementList statementList = ((PyFunction)callable).getStatementList();
+        return PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
+      }
+      return new PyReturnStatement[0];
     }
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
