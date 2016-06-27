@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.CheckEmptyTagInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +124,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
           final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
 
           doc.insertString(insertionOffset, text2insert);
-          caretTo = insertionOffset + text2insert.length();
+          caretTo = insertionOffset + (text2insert.length() > 2 ? 1 : text2insert.length());
         }
 
         commitChanges(project, editor, psiFile, caretTo, null);
@@ -199,7 +200,10 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {
-    return getClosingQuote(xmlAttribute) + (emptyTag ? "/>" : ">");
+    return getClosingQuote(xmlAttribute) +
+           (emptyTag ?
+              CheckEmptyTagInspection.isTagWithEmptyEndNotAllowed(tagAtCaret) ? "></" + tagAtCaret.getName() + ">"  : "/>" :
+              ">");
   }
 
   @NotNull
