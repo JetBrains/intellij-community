@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.psi.search.FilenameIndex;
@@ -100,7 +98,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       if (file instanceof VirtualFilePathWrapper) {
         return ((VirtualFilePathWrapper)file).getPresentablePath();
       }
-      return getEditorTabText(file, uniqueNameBuilderForShortName, UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS);
+      return uniqueNameBuilderForShortName.getShortPath(file);
     }
     return file.getPresentableName();
   }
@@ -139,16 +137,5 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       return builder;
     }
     return null;
-  }
-
-  public static <T> String getEditorTabText(T key, UniqueNameBuilder<T> builder, boolean hideKnownExtensionInTabs) {
-    String result = builder.getShortPath(key);
-    if (hideKnownExtensionInTabs) {
-      String withoutExtension = FileUtil.getNameWithoutExtension(result);
-      if (StringUtil.isNotEmpty(withoutExtension) && !withoutExtension.endsWith(builder.getSeparator())) {
-        return withoutExtension;
-      }
-    }
-    return result;
   }
 }

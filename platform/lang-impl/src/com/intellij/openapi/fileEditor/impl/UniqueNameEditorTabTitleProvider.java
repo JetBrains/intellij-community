@@ -19,7 +19,11 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 /**
  * @author yole
@@ -31,9 +35,20 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
       return null;
     }
     // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
-    final String uniqueName = UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE ? 
-                              UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file) : 
-                              UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
+    String uniqueName = UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE ?
+                        UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file) :
+                        UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
+    uniqueName = getEditorTabText(uniqueName, File.separator, UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS);
     return uniqueName.equals(file.getName()) ? null : uniqueName;
+  }
+
+  public static <T> String getEditorTabText(String result, String separator, boolean hideKnownExtensionInTabs) {
+    if (hideKnownExtensionInTabs) {
+      String withoutExtension = FileUtil.getNameWithoutExtension(result);
+      if (StringUtil.isNotEmpty(withoutExtension) && !withoutExtension.endsWith(separator)) {
+        return withoutExtension;
+      }
+    }
+    return result;
   }
 }
