@@ -293,6 +293,7 @@ def getProperties(String home, String buildNumber) {
                 fileset(dir: "${home}/${androidRoot}/android/lib") {
                   include(name: "**/fest-*.jar")
                 }
+                fileset(file: "${home}/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28/truth-0.28.jar")
               }
               dir("testData") {
                 dir("guiTests") {
