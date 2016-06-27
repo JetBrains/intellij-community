@@ -69,7 +69,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     if (data == null) {
       project.putUserData(key, data = CachedValuesManager.getManager(project).createCachedValue(
         () -> new CachedValueProvider.Result<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>(
-          ContainerUtil.<String, UniqueNameBuilder<VirtualFile>>createConcurrentSoftValueMap(),
+          ContainerUtil.createConcurrentSoftValueMap(),
           PsiModificationTracker.MODIFICATION_COUNT,
           //ProjectRootModificationTracker.getInstance(project),
           //VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
@@ -107,7 +107,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   private static UniqueNameBuilder<VirtualFile> filesWithTheSameName(String fileName, Project project,
                                                               boolean skipNonOpenedFiles,
                                                               GlobalSearchScope scope) {
-    Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.<VirtualFile>emptySet() :
+    Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.emptySet() :
                                                 FilenameIndex.getVirtualFilesByName(project, fileName,
                                                                                     scope);
     THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<VirtualFile>(filesWithSameName);
