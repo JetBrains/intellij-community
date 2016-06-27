@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -264,5 +265,9 @@ public class ShelvedChange {
 
   public String getPatchPath() {
     return myPatchPath;
+  }
+
+  public String toString() {
+    return FileUtil.toSystemDependentName(myBeforePath == null ? myAfterPath : myBeforePath);
   }
 }
