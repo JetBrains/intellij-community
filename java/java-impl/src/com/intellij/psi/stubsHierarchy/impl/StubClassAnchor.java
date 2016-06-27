@@ -15,23 +15,11 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class StubClassAnchor extends SmartClassAnchor {
   public static final StubClassAnchor[] EMPTY_ARRAY = new StubClassAnchor[0];
@@ -49,50 +37,13 @@ public class StubClassAnchor extends SmartClassAnchor {
   @Override
   @NotNull
   public VirtualFile retrieveFile() {
-    VirtualFile file = PersistentFS.getInstance().findFileById(myFileId);
-    assert file != null : this;
-    return file;
+    return AnchorRepository.retrieveFile(myFileId);
   }
 
   @Override
   @NotNull
   public PsiClass retrieveClass(@NotNull Project project) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(retrieveFile());
-    assert psiFile != null : this;
-    PsiElement element = restoreFromStubIndex((PsiFileWithStubSupport)psiFile, myStubId);
-    if (!(element instanceof PsiClass)) {
-      throw new AssertionError(this + "; " + psiFile);
-    }
-    return (PsiClass)element;
-  }
-
-  private static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {
-    StubTree tree = fileImpl.getStubTree();
-
-    boolean foreign = tree == null;
-    if (foreign) {
-      if (fileImpl instanceof PsiFileImpl) {
-        tree = ((PsiFileImpl)fileImpl).calcStubTree();
-      }
-      else {
-        return null;
-      }
-    }
-
-    List<StubElement<?>> list = tree.getPlainList();
-    if (index >= list.size()) {
-      return null;
-    }
-    StubElement stub = list.get(index);
-
-    if (foreign) {
-      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
-      if (cachedPsi != null) return cachedPsi;
-
-      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-      return ast != null ? ast.getPsi() : null;
-    }
-    return stub.getPsi();
+    return AnchorRepository.retrieveClass(project, myFileId, myStubId);
   }
 
   @Override
@@ -102,6 +53,16 @@ public class StubClassAnchor extends SmartClassAnchor {
 
   @Override
   public String toString() {
-    return myStubId + " in " + retrieveFile().getPath();
+    return AnchorRepository.anchorToString(myStubId, myFileId);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof StubClassAnchor)) return false;
+    StubClassAnchor anchor = (StubClassAnchor)o;
+    return myId == anchor.myId &&
+           myFileId == anchor.myFileId &&
+           myStubId == anchor.myStubId;
   }
 }

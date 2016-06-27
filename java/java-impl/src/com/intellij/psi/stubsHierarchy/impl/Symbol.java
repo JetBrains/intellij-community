@@ -88,25 +88,30 @@ public abstract class Symbol {
     private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
-    final StubClassAnchor myClassAnchor;
+    final int myAnchorId;
     @CompactArray({QualifiedName.class, ClassSymbol.class}) Object mySuperClasses;
     UnitInfo myUnitInfo;
 
-    ClassSymbol(StubClassAnchor classAnchor,
+    ClassSymbol(int anchorId,
                 int flags,
                 Symbol owner,
                 int name,
                 UnitInfo unitInfo,
                 @CompactArray(QualifiedName.class) Object supers) {
       super(flags | IndexTree.CLASS, owner, name);
-      this.myClassAnchor = classAnchor;
+      this.myAnchorId = anchorId;
       this.mySuperClasses = supers;
       this.myUnitInfo = unitInfo;
     }
 
     @Override
+    public int hashCode() {
+      return myAnchorId;
+    }
+
+    @Override
     public String toString() {
-      return myClassAnchor.toString();
+      return String.valueOf(myAnchorId);
     }
 
     void connect(StubHierarchyConnector connector) {

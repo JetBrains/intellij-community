@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 
 public class HierarchyServiceImpl extends HierarchyService {
-  private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
+  private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY, new AnchorRepository());
   private final Project myProject;
   private final CachedValue<SingleClassHierarchy> myHierarchy;
 
@@ -69,16 +69,16 @@ public class HierarchyServiceImpl extends HierarchyService {
     StubEnter stubEnter = new StubEnter(symbols);
     IdSets idSets = IdSets.getIdSets(myProject);
 
-    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_FILES, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_FILES, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_FILES, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_FILES, stubEnter);
     stubEnter.connect2();
 
     return symbols.createHierarchy();
   }
 
-  private void loadUnits(BitSet files, int indexKey, NameEnvironment names, StubEnter stubEnter) {
+  private void loadUnits(BitSet files, int indexKey, StubEnter stubEnter) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();

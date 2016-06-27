@@ -12,6 +12,7 @@ import java.util.List;
 public class Symbols {
   public final PackageSymbol myRootPackage;
   protected final NameEnvironment myNameEnvironment = new NameEnvironment();
+  private final AnchorRepository myClassAnchors = new AnchorRepository();
 
   private List<ClassSymbol> myClassSymbols = new ArrayList<>(0x8000);
   // fullName -> PackageSymbol
@@ -70,8 +71,8 @@ public class Symbols {
                          UnitInfo info,
                          @CompactArray(QualifiedName.class) Object supers,
                          @Nullable QualifiedName qualifiedName) {
-    StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), fileId, stubId);
-    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, shortName, info, supers);
+    int anchorId = myClassAnchors.registerClass(fileId, stubId);
+    ClassSymbol c = new ClassSymbol(anchorId, flags, owner, shortName, info, supers);
     myClassSymbols.add(c);
     if (qualifiedName != null) {
       putClassByName(c, qualifiedName.myId);
@@ -115,6 +116,6 @@ public class Symbols {
   SingleClassHierarchy createHierarchy() {
     ClassSymbol[] array = myClassSymbols.toArray(ClassSymbol.EMPTY_ARRAY);
     myClassSymbols = null;
-    return new SingleClassHierarchy(array);
+    return new SingleClassHierarchy(array, myClassAnchors);
   }
 }
