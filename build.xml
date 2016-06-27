@@ -47,6 +47,7 @@
 
   <macrodef name="call_gant">
     <attribute name="script" />
+    <attribute name="target" default="default" />
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
         <jvmarg line="-Xmx2048m -XX:MaxPermSize=512m"/>
@@ -54,6 +55,7 @@
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="compile.parallel" value="true" />
         <sysproperty key="gant.script" value="@{script}"/>
+        <sysproperty key="gant.target" value="@{target}" />
         <sysproperty key="intellij.build.kotlin.plugin" value ="../../prebuilts/tools/common/kotlin-plugin-ij/Kotlin"/>
         <sysproperty key="intellij.build.dependencies.file" value ="build/dependencies/gradle.properties"/>
         <sysproperty key="intellij.build.scripts.deps" value ="studio/build-scripts-deps"/>
