@@ -1,0 +1,119 @@
+REGEXP_FILE
+  RegExpPatternImpl: <<error descr="Unresolved named group reference">\k<adsf></error>>
+    RegExpBranchImpl: <<error descr="Unresolved named group reference">\k<adsf></error>>
+      RegExpCharImpl: <<>
+        PsiElement(CHARACTER)('<')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <s>
+        PsiElement(CHARACTER)('s')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <=>
+        PsiElement(CHARACTER)('=')
+      RegExpCharImpl: <">
+        PsiElement(CHARACTER)('"')
+      RegExpCharImpl: <U>
+        PsiElement(CHARACTER)('U')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <s>
+        PsiElement(CHARACTER)('s')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <l>
+        PsiElement(CHARACTER)('l')
+      RegExpCharImpl: <v>
+        PsiElement(CHARACTER)('v')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpCharImpl: <m>
+        PsiElement(CHARACTER)('m')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <g>
+        PsiElement(CHARACTER)('g')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <u>
+        PsiElement(CHARACTER)('u')
+      RegExpCharImpl: <p>
+        PsiElement(CHARACTER)('p')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <f>
+        PsiElement(CHARACTER)('f')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <">
+        PsiElement(CHARACTER)('"')
+      RegExpCharImpl: <>>
+        PsiElement(CHARACTER)('>')
+      RegExpNamedGroupRefImpl: <\k<adsf>>
+        PsiElement(RUBY_NAMED_GROUP_REF)('\k<')
+        PsiElement(NAME)('adsf')
+        PsiElement(GT)('>')
+      RegExpCharImpl: <<>
+        PsiElement(CHARACTER)('<')
+      RegExpCharImpl: </>
+        PsiElement(CHARACTER)('/')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <>>
+        PsiElement(CHARACTER)('>')

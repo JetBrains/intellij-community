@@ -1,0 +1,12 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a\p}>
+    RegExpBranchImpl: <a\p}>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpPropertyImpl: <\p}>
+        PsiElement(PROPERTY)('\p')
+        PsiErrorElement:Character category expected
+          <empty list>
+        PsiElement(CHARACTER)('}')
+        PsiErrorElement:Unclosed character family
+          <empty list>

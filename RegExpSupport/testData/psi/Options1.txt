@@ -1,0 +1,175 @@
+REGEXP_FILE
+  RegExpPatternImpl: <(?i>
+    RegExpBranchImpl: <(?i>
+      RegExpSetOptionsImpl: <(?i>
+        PsiElement(SET_OPTIONS)('(?')
+        RegExpOptionsImpl: <i>
+          PsiElement(OPTIONS_ON)('i')
+        PsiErrorElement:Unclosed options group
+          <empty list>
+  PsiElement(BAD_CHARACTER)('<')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('e')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('o')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)(' ')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('d')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('e')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('s')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('c')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('=')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('"')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('U')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('k')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('o')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('w')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)(' ')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('i')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('l')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('i')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('e')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)(' ')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('o')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('p')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('t')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('i')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('o')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('n')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)(' ')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('f')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('l')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('a')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('g')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('"')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('>')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('Z')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('<')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('/')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('e')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('o')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('r')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('>')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('m')
+  PsiErrorElement:Unmatched closing ')'
+    <empty list>
+  PsiElement(GROUP_END)(')')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('a')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('b')
+  PsiErrorElement:Pattern expected
+    <empty list>
+  PsiElement(CHARACTER)('c')

@@ -1,0 +1,119 @@
+REGEXP_FILE
+  RegExpPatternImpl: <[<warning descr="Redundant character range">a-a</warning>]>
+    RegExpBranchImpl: <[<warning descr="Redundant character range">a-a</warning>]>
+      RegExpClassImpl: <[<warning descr="Redundant character range">a-a</warning>]>
+        PsiElement(CLASS_BEGIN)('[')
+        RegExpUnionImpl: <<warning descr="Redundant character range">a-a</warning>>
+          RegExpCharImpl: <<>
+            PsiElement(CHARACTER)('<')
+          RegExpCharImpl: <w>
+            PsiElement(CHARACTER)('w')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <i>
+            PsiElement(CHARACTER)('i')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <g>
+            PsiElement(CHARACTER)('g')
+          RegExpCharImpl: < >
+            PsiElement(CHARACTER)(' ')
+          RegExpCharImpl: <d>
+            PsiElement(CHARACTER)('d')
+          RegExpCharImpl: <e>
+            PsiElement(CHARACTER)('e')
+          RegExpCharImpl: <s>
+            PsiElement(CHARACTER)('s')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: <=>
+            PsiElement(CHARACTER)('=')
+          RegExpCharImpl: <">
+            PsiElement(CHARACTER)('"')
+          RegExpCharImpl: <R>
+            PsiElement(CHARACTER)('R')
+          RegExpCharImpl: <e>
+            PsiElement(CHARACTER)('e')
+          RegExpCharImpl: <d>
+            PsiElement(CHARACTER)('d')
+          RegExpCharImpl: <u>
+            PsiElement(CHARACTER)('u')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <d>
+            PsiElement(CHARACTER)('d')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <t>
+            PsiElement(CHARACTER)('t')
+          RegExpCharImpl: < >
+            PsiElement(CHARACTER)(' ')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
+          RegExpCharImpl: <h>
+            PsiElement(CHARACTER)('h')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <c>
+            PsiElement(CHARACTER)('c')
+          RegExpCharImpl: <t>
+            PsiElement(CHARACTER)('t')
+          RegExpCharImpl: <e>
+            PsiElement(CHARACTER)('e')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: < >
+            PsiElement(CHARACTER)(' ')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <g>
+            PsiElement(CHARACTER)('g')
+          RegExpCharImpl: <e>
+            PsiElement(CHARACTER)('e')
+          RegExpCharImpl: <">
+            PsiElement(CHARACTER)('"')
+          RegExpCharImpl: <>>
+            PsiElement(CHARACTER)('>')
+          RegExpCharRangeImpl: <a-a>
+            RegExpCharImpl: <a>
+              PsiElement(CHARACTER)('a')
+            PsiElement(MINUS)('-')
+            RegExpCharImpl: <a>
+              PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <<>
+            PsiElement(CHARACTER)('<')
+          RegExpCharImpl: </>
+            PsiElement(CHARACTER)('/')
+          RegExpCharImpl: <w>
+            PsiElement(CHARACTER)('w')
+          RegExpCharImpl: <a>
+            PsiElement(CHARACTER)('a')
+          RegExpCharImpl: <r>
+            PsiElement(CHARACTER)('r')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <i>
+            PsiElement(CHARACTER)('i')
+          RegExpCharImpl: <n>
+            PsiElement(CHARACTER)('n')
+          RegExpCharImpl: <g>
+            PsiElement(CHARACTER)('g')
+          RegExpCharImpl: <>>
+            PsiElement(CHARACTER)('>')
+        PsiElement(CLASS_END)(']')

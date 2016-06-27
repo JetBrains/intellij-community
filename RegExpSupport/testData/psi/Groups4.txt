@@ -1,0 +1,90 @@
+REGEXP_FILE
+  RegExpPatternImpl: <<warning descr="Empty group">(|)</warning>>
+    RegExpBranchImpl: <<warning descr="Empty group">(|)</warning>>
+      RegExpCharImpl: <<>
+        PsiElement(CHARACTER)('<')
+      RegExpCharImpl: <w>
+        PsiElement(CHARACTER)('w')
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <i>
+        PsiElement(CHARACTER)('i')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <g>
+        PsiElement(CHARACTER)('g')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')
+      RegExpCharImpl: <s>
+        PsiElement(CHARACTER)('s')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <=>
+        PsiElement(CHARACTER)('=')
+      RegExpCharImpl: <">
+        PsiElement(CHARACTER)('"')
+      RegExpCharImpl: <E>
+        PsiElement(CHARACTER)('E')
+      RegExpCharImpl: <m>
+        PsiElement(CHARACTER)('m')
+      RegExpCharImpl: <p>
+        PsiElement(CHARACTER)('p')
+      RegExpCharImpl: <t>
+        PsiElement(CHARACTER)('t')
+      RegExpCharImpl: <y>
+        PsiElement(CHARACTER)('y')
+      RegExpCharImpl: < >
+        PsiElement(CHARACTER)(' ')
+      RegExpCharImpl: <g>
+        PsiElement(CHARACTER)('g')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <u>
+        PsiElement(CHARACTER)('u')
+      RegExpCharImpl: <p>
+        PsiElement(CHARACTER)('p')
+      RegExpCharImpl: <">
+        PsiElement(CHARACTER)('"')
+      RegExpCharImpl: <>>
+        PsiElement(CHARACTER)('>')
+      RegExpGroupImpl: <(|)>
+        PsiElement(GROUP_BEGIN)('(')
+        RegExpPatternImpl: <|>
+          RegExpBranchImpl: <>
+            <empty list>
+          PsiElement(UNION)('|')
+          RegExpBranchImpl: <>
+            <empty list>
+        PsiElement(GROUP_END)(')')
+      RegExpCharImpl: <<>
+        PsiElement(CHARACTER)('<')
+      RegExpCharImpl: </>
+        PsiElement(CHARACTER)('/')
+      RegExpCharImpl: <w>
+        PsiElement(CHARACTER)('w')
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpCharImpl: <r>
+        PsiElement(CHARACTER)('r')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <i>
+        PsiElement(CHARACTER)('i')
+      RegExpCharImpl: <n>
+        PsiElement(CHARACTER)('n')
+      RegExpCharImpl: <g>
+        PsiElement(CHARACTER)('g')
+      RegExpCharImpl: <>>
+        PsiElement(CHARACTER)('>')
