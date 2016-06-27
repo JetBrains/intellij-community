@@ -1607,7 +1607,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC)
     throws StorageException {
-    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
+    AtomicInteger rebuildStatus = ourRebuildStatus.get(indexId);
+    if (rebuildStatus == null) {
+      LOG.error("Problem updating " + indexId + " for " + inputId + "," + file + " with content:" + currentFC + ", initialized:" + myInitialized);
+      return;
+    }
+    if (rebuildStatus.get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
@@ -2351,6 +2356,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         indexRoot.mkdirs();
         // serialization manager is initialized before and use removed index root so we need to reinitialize it
         mySerializationManagerEx.reinitializeNameStorage();
+        ID.reinitializeDiskStorage();
       }
       FileUtil.delete(corruptionMarker);
     }
