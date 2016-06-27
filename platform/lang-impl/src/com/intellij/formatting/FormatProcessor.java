@@ -68,7 +68,15 @@ public class FormatProcessor {
     final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, settings, defaultIndentOption, myProgressCallback);
     myWrapState = new WrapBlocksState(builder, blockIndentOptions);
     
-    myStateProcessor = new StateProcessor(myWrapState);
+    FormatTextRanges ranges = options.myAffectedRanges;
+    if (ranges != null) {
+      AdjustFormatRangesState adjustRangesState = new AdjustFormatRangesState(block, ranges);
+      myStateProcessor = new StateProcessor(adjustRangesState);
+      myStateProcessor.setNextState(myWrapState);
+    }
+    else {
+      myStateProcessor = new StateProcessor(myWrapState); 
+    }
   }
   
   public BlockRangesMap getBlockRangesMap() {

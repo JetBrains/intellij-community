@@ -178,4 +178,13 @@ public abstract class AbstractBlock implements ASTBlock {
   public String toString() {
     return myNode.getText() + " " + getTextRange();
   }
+
+  /**
+   * @return additional range to reformat, when this block if formatted
+   */
+  @Nullable
+  public TextRange getExtraRangeToReformat() {
+    return null;
+  }
+  
 }
