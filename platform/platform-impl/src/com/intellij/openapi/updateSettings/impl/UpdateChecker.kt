@@ -589,8 +589,8 @@ object UpdateChecker {
   @JvmStatic
   fun checkForUpdate(event: IdeaLoggingEvent) {
     if (!ourHasFailedPlugins) {
-      val settings = UpdateSettings.getInstance()
-      if (settings != null && settings.isCheckNeeded) {
+      val app = ApplicationManager.getApplication()
+      if (!app.isDisposed && !app.isDisposeInProgress && UpdateSettings.getInstance().isCheckNeeded) {
         val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
