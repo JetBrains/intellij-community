@@ -16,6 +16,9 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
+import com.intellij.psi.PsiModifier;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,34 +40,49 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
 
   public class OptionsPanel {
     private JCheckBox myCheckLocalVariablesCheckBox;
-    private JCheckBox myCheckClassesCheckBox;
-    private JCheckBox myCheckFieldsCheckBox;
-    private JCheckBox myCheckMethodsCheckBox;
-    private JCheckBox myCheckParametersCheckBox;
-    private JCheckBox myReportUnusedParametersInPublics;
+    private JComboBox<String> myCheckClassesCheckBox;
+    private JComboBox<String> myCheckFieldsCheckBox;
+    private JComboBox<String> myCheckMethodsCheckBox;
+    private JComboBox<String> myCheckParametersCheckBox;
     private JPanel myPanel;
+    private JCheckBox myCheckGettersSettersCheckBox;
 
     public OptionsPanel() {
       myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
-      myCheckClassesCheckBox.setSelected(CLASS);
-      myCheckFieldsCheckBox.setSelected(FIELD);
-      myCheckMethodsCheckBox.setSelected(METHOD);
+      myCheckGettersSettersCheckBox.setSelected(!isIgnoreAccessors());
+      String[] visibilities = new String[] {"none", PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE};
+      myCheckClassesCheckBox.setModel(new DefaultComboBoxModel<>(visibilities));
+      myCheckFieldsCheckBox.setModel(new DefaultComboBoxModel<>(visibilities));
+      myCheckMethodsCheckBox.setModel(new DefaultComboBoxModel<>(visibilities));
+      myCheckParametersCheckBox.setModel(new DefaultComboBoxModel<>(visibilities));
 
-      myCheckParametersCheckBox.setSelected(PARAMETER);
-      myReportUnusedParametersInPublics.setSelected(REPORT_PARAMETER_FOR_PUBLIC_METHODS);
-      myReportUnusedParametersInPublics.setEnabled(PARAMETER);
+      final ListCellRendererWrapper<String> renderer = new ListCellRendererWrapper<String>() {
+        @Override
+        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+          if (value != null && !"none".equals(value)) {
+            setText(VisibilityUtil.toPresentableText(value));
+          }
+        }
+      };
+      myCheckClassesCheckBox.setRenderer(renderer);
+      myCheckMethodsCheckBox.setRenderer(renderer);
+      myCheckFieldsCheckBox.setRenderer(renderer);
+      myCheckParametersCheckBox.setRenderer(renderer);
+
+      myCheckClassesCheckBox.setSelectedItem(getClassVisibility());
+      myCheckFieldsCheckBox.setSelectedItem(getFieldVisibility());
+      myCheckMethodsCheckBox.setSelectedItem(getMethodVisibility());
+      myCheckParametersCheckBox.setSelectedItem(getParameterVisibility());
 
       final ActionListener listener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
-          CLASS = myCheckClassesCheckBox.isSelected();
-          FIELD = myCheckFieldsCheckBox.isSelected();
-          METHOD = myCheckMethodsCheckBox.isSelected();
-
-          PARAMETER = myCheckParametersCheckBox.isSelected();
-          REPORT_PARAMETER_FOR_PUBLIC_METHODS = PARAMETER && myReportUnusedParametersInPublics.isSelected();
-          myReportUnusedParametersInPublics.setEnabled(PARAMETER);
+          setIgnoreAccessors(!myCheckGettersSettersCheckBox.isSelected());
+          setClassVisibility((String)myCheckClassesCheckBox.getSelectedItem());
+          setFieldVisibility((String)myCheckFieldsCheckBox.getSelectedItem());
+          setMethodVisibility((String)myCheckMethodsCheckBox.getSelectedItem());
+          setParameterVisibility((String)myCheckParametersCheckBox.getSelectedItem());
         }
       };
       myCheckLocalVariablesCheckBox.addActionListener(listener);
@@ -72,7 +90,7 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
       myCheckMethodsCheckBox.addActionListener(listener);
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
-      myReportUnusedParametersInPublics.addActionListener(listener);
+      myCheckGettersSettersCheckBox.addActionListener(listener);
     }
 
     public JComponent getPanel() {
