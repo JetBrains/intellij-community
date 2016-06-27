@@ -1,6 +1,7 @@
 <component name="CopyrightManager">
   <settings default="aosp">
     <module2copyright>
+      <element module="bazel" copyright="bazel" />
       <element module="firebase-code" copyright="google" />
       <element module="aosp-code" copyright="aosp" />
     </module2copyright>
