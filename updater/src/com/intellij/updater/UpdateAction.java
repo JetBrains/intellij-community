@@ -20,7 +20,7 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    if (isSymlink(newerFile)) {
+    if (Utils.isSymlink(newerFile)) {
       throw new IOException("Updates to symlinks not supported");
     }
     if (!myIsMove) {
