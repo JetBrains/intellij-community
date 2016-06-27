@@ -69,20 +69,18 @@ public class HierarchyServiceImpl extends HierarchyService {
     StubEnter stubEnter = new StubEnter(symbols);
     IdSets idSets = IdSets.getIdSets(myProject);
 
-    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_FILES, stubEnter);
+    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_KEYS, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_FILES, stubEnter);
+    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_KEYS, stubEnter);
     stubEnter.connect2();
 
     return symbols.createHierarchy();
   }
 
-  private void loadUnits(BitSet files, int indexKey, StubEnter stubEnter) {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-
-    FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    index.processAllValues(StubHierarchyIndex.INDEX_ID, indexKey, myProject, new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+  private void loadUnits(BitSet files, int[] indexKeys, StubEnter stubEnter) {
+    FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit> processor = new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+      final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       int count = 0;
       @Override
       public boolean process(int fileId, IndexTree.Unit unit) {
@@ -92,7 +90,11 @@ public class HierarchyServiceImpl extends HierarchyService {
         }
         return true;
       }
-    });
+    };
+
+    for (int indexKey : indexKeys) {
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).processAllValues(StubHierarchyIndex.INDEX_ID, indexKey, myProject, processor);
+    }
   }
 
   private static class IdSets {
