@@ -56,23 +56,23 @@ interface BlockProcessor {
 }
 
 class AdditionalRangesExtractor : BlockProcessor {
+  val extraRanges = mutableListOf<ExtraReformatRanges>()
 
-  val additionalRanges = mutableListOf<TextRange>()
-
-  override fun processLeafBlock(block: Block) {
-    extractAdditionalRange(block)
-  }
+  override fun processLeafBlock(block: Block) = Unit
 
   override fun processCompositeBlock(block: Block) {
-    extractAdditionalRange(block)
-  }
-
-  private fun extractAdditionalRange(block: Block) {
     if (block is AbstractBlock) {
-      block.extraRangeToReformat?.let { additionalRanges.add(it) }
+      block.extraRangesToFormat?.let { extraRanges.add(it) }
     }
   }
-  
+}
+
+class ExtraReformatRanges(val ranges: List<TextRange> = emptyList()) {
+  constructor(range: TextRange): this(listOf(range))
+}
+
+fun FormatTextRanges.mergeWith(extraRanges: ExtraReformatRanges) {
+  extraRanges.ranges.forEach { add(it, false) }
 }
 
 
@@ -84,7 +84,7 @@ class AdjustFormatRangesState(var currentRoot: Block,
   
   init {
     setOnDone({
-      extractor.additionalRanges.forEach { formatRanges.add(it, true) }
+      extractor.extraRanges.forEach { formatRanges.mergeWith(it) }
     })
   }
   
