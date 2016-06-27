@@ -319,4 +319,8 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testBug8() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Redundant character escape\">\\ </weak_warning>b"); }
   public void testBug9() throws IOException { doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
   public void testBug10() throws IOException { doCodeTest("\\h \\H \\v \\V"); }
+
+  public void testParse1() throws IOException { doCodeTest("123 | 456"); }
+  public void testParse2() throws IOException { doCodeTest("1**"); }
+  public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
 }
