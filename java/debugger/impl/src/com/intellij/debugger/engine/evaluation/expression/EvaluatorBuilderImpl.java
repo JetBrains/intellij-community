@@ -805,13 +805,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
         else {
-          myResult = new ReferenceEvaluator(name);
+          myResult = createFallbackEvaluator(new LocalVariableEvaluator(name, false),
+                                             new FieldEvaluator(new ThisEvaluator(), FieldEvaluator.TargetClassFilter.ALL, name));
         }
       }
     }
 
     private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
       return new Evaluator() {
+        private boolean myIsFallback;
         @Override
         public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
           try {
@@ -819,7 +821,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           catch (EvaluateException e) {
             try {
-              return fallback.evaluate(context);
+              Object res = fallback.evaluate(context);
+              myIsFallback = true;
+              return res;
             }
             catch (EvaluateException e1) {
               throw e;
@@ -829,7 +833,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         @Override
         public Modifier getModifier() {
-          return primary.getModifier();
+          return myIsFallback ? fallback.getModifier() : primary.getModifier();
         }
       };
     }
