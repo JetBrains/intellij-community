@@ -20,6 +20,7 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -1280,6 +1281,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
     return result;
   }
+  
+  @Nullable
+  @Override
+  public ExtraReformatRanges getExtraRangesToFormat() {
+    if (!Registry.is("smart.reformat.vcs.changes")) return null;
 
-
+    if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement) {
+      return new ExtraReformatRanges(myNode.getTextRange());
+    }
+    
+    return null;
+  }
+  
 }
