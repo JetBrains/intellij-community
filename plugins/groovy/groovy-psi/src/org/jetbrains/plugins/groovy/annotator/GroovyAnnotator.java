@@ -1994,7 +1994,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
                                      GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
       }
 
-      PsiElement superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassReference().resolve();
+      PsiClass superClass = ((PsiAnonymousClass)typeDefinition).getBaseClassType().resolve();
       if (superClass instanceof GrTypeDefinition && ((GrTypeDefinition)superClass).isTrait()) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.cannot.be.created.from.traits"));
       }
