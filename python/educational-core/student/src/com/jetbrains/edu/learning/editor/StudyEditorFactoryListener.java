@@ -81,7 +81,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
 
         if (!taskFile.getAnswerPlaceholders().isEmpty()) {
           StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-          boolean isStudyProject = EduNames.STUDY.equals(course.getCourseType());
+          boolean isStudyProject = EduNames.STUDY.equals(course.getCourseMode());
           StudyUtils.drawAllWindows(editor, taskFile);
           if (isStudyProject) {
             editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
