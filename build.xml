@@ -62,6 +62,7 @@
 
   <macrodef name="call_gant">
     <attribute name="script" />
+    <attribute name="target" default="default" />
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
         <jvmarg line="-Xmx2048m -XX:MaxPermSize=512m"/>
@@ -75,6 +76,7 @@
         <sysproperty key="compile.parallel" value="${compile.parallel}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
+        <sysproperty key="gant.target" value="@{target}" />
         <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
         <sysproperty key="idea.test.group" value="ALL_EXCLUDE_DEFINED"/>
         <arg value="-f"/>
