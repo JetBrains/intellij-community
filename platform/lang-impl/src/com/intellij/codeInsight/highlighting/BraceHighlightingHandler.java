@@ -472,7 +472,7 @@ public class BraceHighlightingHandler {
     if (lBrace != null && rBrace !=null) {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
-      if (endLine - startLine > 0) {
+      if (endLine - startLine >= 0) {
         final Runnable runnable = () -> {
           if (myProject.isDisposed() || myEditor.isDisposed()) return;
           Color color = attributes.getBackgroundColor();
