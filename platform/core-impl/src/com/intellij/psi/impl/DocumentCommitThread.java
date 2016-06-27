@@ -161,8 +161,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     log(null, "enabled", null, reason);
   }
 
+  // under lock
   private void wakeUpQueue() {
-    if (!isDisposed) {
+    if (!isDisposed && !documentsToCommit.isEmpty()) {
       executor.execute(this);
     }
   }
@@ -287,41 +288,40 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
 
   // cancels all pending commits
-  @TestOnly
+  @TestOnly // under lock
   private void cancelAll() {
-    synchronized (lock) {
-      String reason = "Cancel all in tests";
-      cancel(reason);
-      for (CommitTask commitTask : documentsToCommit) {
-        commitTask.cancel(reason, this);
-        log(commitTask.project, "Removed from background queue", commitTask);
-      }
-      documentsToCommit.clear();
-      for (CommitTask commitTask : documentsToApplyInEDT) {
-        commitTask.cancel(reason, this);
-        log(commitTask.project, "Removed from EDT apply queue (sync commit called)", commitTask);
-      }
-      documentsToApplyInEDT.clear();
-      CommitTask task = currentTask;
-      if (task != null) {
-        cancelAndRemoveFromDocsToCommit(task, reason);
-      }
-      cancel("Sync commit intervened");
-      ((BoundedTaskExecutor)executor).clearAndCancelAll();
+    String reason = "Cancel all in tests";
+    cancel(reason);
+    for (CommitTask commitTask : documentsToCommit) {
+      commitTask.cancel(reason, this);
+      log(commitTask.project, "Removed from background queue", commitTask);
     }
+    documentsToCommit.clear();
+    for (CommitTask commitTask : documentsToApplyInEDT) {
+      commitTask.cancel(reason, this);
+      log(commitTask.project, "Removed from EDT apply queue (sync commit called)", commitTask);
+    }
+    documentsToApplyInEDT.clear();
+    CommitTask task = currentTask;
+    if (task != null) {
+      cancelAndRemoveFromDocsToCommit(task, reason);
+    }
+    cancel("Sync commit intervened");
+    ((BoundedTaskExecutor)executor).clearAndCancelAll();
   }
 
   @TestOnly
   public void clearQueue() {
-    cancelAll();
-    clearLog();
-    wakeUpQueue();
+    synchronized (lock) {
+      cancelAll();
+      clearLog();
+      wakeUpQueue();
+    }
   }
 
+  @TestOnly // under lock
   private void clearLog() {
-    synchronized (log) {
-      log.setLength(0);
-    }
+    log.setLength(0);
   }
 
   private void cancelAndRemoveCurrentTask(@NotNull CommitTask newTask, @NotNull Object reason) {
@@ -776,6 +776,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       }
     }
 
+    @NotNull
     Document getDocument() {
       return document;
     }
