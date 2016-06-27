@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
     return uniqueName.equals(file.getName()) ? null : uniqueName;
   }
 
-  public static <T> String getEditorTabText(String result, String separator, boolean hideKnownExtensionInTabs) {
+  public static String getEditorTabText(String result, String separator, boolean hideKnownExtensionInTabs) {
     if (hideKnownExtensionInTabs) {
       String withoutExtension = FileUtil.getNameWithoutExtension(result);
       if (StringUtil.isNotEmpty(withoutExtension) && !withoutExtension.endsWith(separator)) {
