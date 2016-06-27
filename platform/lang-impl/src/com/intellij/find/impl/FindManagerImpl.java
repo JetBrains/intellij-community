@@ -501,8 +501,10 @@ public class FindManagerImpl extends FindManager {
   }
 
   public static void clearPreviousFindData(FindModel model) {
-    model.putUserData(ourCommentsLiteralsSearchDataKey, null);
-    model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
+    synchronized (model) {
+      model.putUserData(ourCommentsLiteralsSearchDataKey, null);
+      model.putUserData(ourExceptCommentsOrLiteralsDataKey, null);
+    }
   }
 
   private static class CommentsLiteralsSearchData {
