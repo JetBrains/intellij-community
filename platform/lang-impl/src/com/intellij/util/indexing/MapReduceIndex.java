@@ -16,6 +16,9 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -575,7 +578,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       catch (StorageException|ProcessCanceledException ex) {
         LOG.info("Exception during updateWithMap:" + ex);
-        FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+        Application application = ApplicationManager.getApplication();
+        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+          // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
+          application.invokeLater(() -> FileBasedIndex.getInstance().requestRebuild(myIndexId, ex), ModalityState.any());
+        } else {
+          FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+        }
         return Boolean.FALSE;
       }
 
