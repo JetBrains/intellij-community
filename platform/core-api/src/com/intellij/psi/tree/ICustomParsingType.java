@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.quickFix;
+package com.intellij.psi.tree;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * User: anna
- * Date: Aug 30, 2010
+ * A token which is more convenient to parse separately. Parsing is done when leaf elements are created.
  */
-public class RemoveRedundantElseActionTest extends LightQuickFixParameterizedTestCase {
+public interface ICustomParsingType {
 
-  public void test() throws Exception { doAllTests(); }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/removeRedundantElse";
-  }
-
+  @NotNull
+  ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table);
 }
-

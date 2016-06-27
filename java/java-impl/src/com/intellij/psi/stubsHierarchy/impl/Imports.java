@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubsHierarchy.stubs;
+package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.psi.stubsHierarchy.impl.NameEnvironment;
-import com.intellij.psi.stubsHierarchy.impl.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 
-public class Import {
+public class Imports {
   public final static long[] EMPTY_ARRAY = ArrayUtil.EMPTY_LONG_ARRAY;
 
   public static final int onDemandMask = 1 << 29;

@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,7 +25,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.Consumer;
 
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
@@ -194,6 +192,16 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     addDependencies_37_78();
     final String name = getTestName(false);
     myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testUnrelatedDefaultsFromDifferentJdkVersions() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
+    myFixture.copyFileToProject("java7/p/I.java");
+    myFixture.copyFileToProject("java8/p/I.java");
+
+    final String testName = getTestName(false);
+    myFixture.configureByFiles("java8/p/" + testName + ".java", "java7/p/" + testName + ".java");
     myFixture.checkHighlighting();
   }
 

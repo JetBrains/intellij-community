@@ -547,6 +547,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
           recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
         }
+        else if (AbstractCommand.isInputRequested(frame.getCommand())) {
+          myDebugProcess.consoleInputRequested();
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }

@@ -231,23 +231,20 @@ public class RegExpParser implements PsiParser {
   private boolean parseClassIntersection(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
-    if (!parseClassdef(builder, false)) {
-      marker.drop();
-      return false;
-    }
+    parseClassdef(builder);
     if (RegExpTT.ANDAND != builder.getTokenType()) {
       marker.drop();
       return true;
     }
     while (RegExpTT.ANDAND == builder.getTokenType()) {
       builder.advanceLexer();
-      parseClassdef(builder, true);
+      parseClassdef(builder);
     }
     marker.done(RegExpElementTypes.INTERSECTION);
     return true;
   }
 
-  private boolean parseClassdef(PsiBuilder builder, boolean mayBeEmpty) {
+  private boolean parseClassdef(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     int count = 0;
     while (true) {
@@ -271,7 +268,7 @@ public class RegExpParser implements PsiParser {
         else {
           marker.drop();
         }
-        return mayBeEmpty || count > 0;
+        return count > 0;
       }
       count++;
     }
@@ -309,7 +306,7 @@ public class RegExpParser implements PsiParser {
           return;
         }
         else if (t == RegExpTT.CLASS_BEGIN) { // [a-[b]]
-          if (parseClassdef(builder, false)) {
+          if (parseClassdef(builder)) {
             return;
           }
         }

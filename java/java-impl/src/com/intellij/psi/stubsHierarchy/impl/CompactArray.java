@@ -15,15 +15,19 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-public class ClassAnchor {
-  final int myFileId;
-  final int myStubId;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-  public static final ClassAnchor[] EMPTY_ARRAY = new ClassAnchor[0];
-
-  ClassAnchor(int fileId, int stubId) {
-    myFileId = fileId;
-    myStubId = stubId;
-  }
-
+/**
+ * This annotation exists for documentation purposes only.<p/>
+ *
+ * The value annotated with this annotation is used to save memory when storing mostly-singular or empty collections.
+ * For empty collection, 'null' value is used. For one-element collection, the value is the single element. Otherwise,
+ * an array is used. Possible component types are specified in the annotation value.
+ *
+ * @author peter
+ */
+@Retention(RetentionPolicy.SOURCE)
+public @interface CompactArray {
+  Class[] value();
 }

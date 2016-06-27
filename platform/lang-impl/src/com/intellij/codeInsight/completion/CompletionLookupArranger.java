@@ -462,6 +462,10 @@ public class CompletionLookupArranger extends LookupArranger {
       return;
     }
 
+    if (!context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET)) {
+      return;
+    }
+    
     final Document document = context.getDocument();
     int startOffset = context.getStartOffset();
     int tailOffset = context.getEditor().getCaretModel().getOffset();
@@ -550,7 +554,9 @@ public class CompletionLookupArranger extends LookupArranger {
 
     public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
-      if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
+      if (context.getOffsetMap().containsOffset(CompletionInitializationContext.START_OFFSET) && 
+          context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET) && 
+          context.getTailOffset() >= context.getStartOffset()) {
         textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
       } else {
         textInserted = item.getLookupString();

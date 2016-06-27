@@ -12,7 +12,6 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class CCTreeStructureProvider extends StudyTreeStructureProvider {
@@ -24,7 +23,7 @@ public class CCTreeStructureProvider extends StudyTreeStructureProvider {
     if (!needModify(parent)) {
       return children;
     }
-    Collection<AbstractTreeNode> modifiedChildren = new ArrayList(super.modify(parent, children, settings));
+    Collection<AbstractTreeNode> modifiedChildren = super.modify(parent, children, settings);
 
     for (AbstractTreeNode node : children) {
       Project project = node.getProject();
@@ -41,7 +40,8 @@ public class CCTreeStructureProvider extends StudyTreeStructureProvider {
           if (virtualFile == null) {
             continue;
           }
-          if (StudyUtils.getTaskFile(project, virtualFile) == null && !StudyUtils.isTaskDescriptionFile(virtualFile.getName())) {
+          if (project != null && StudyUtils.getTaskFile(project, virtualFile) == null
+              && !StudyUtils.isTaskDescriptionFile(virtualFile.getName())) {
             modifiedChildren.add(new CCStudentInvisibleFileNode(project, ((PsiFileNode)node).getValue(), settings));
           }
         }

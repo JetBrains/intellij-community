@@ -37,7 +37,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -272,7 +275,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       @Override
       public boolean isActionEnabled(boolean isExcludeAction) {
-        return true;
+        return getPresentation().isExcludeAvailable();
       }
 
       @Override

@@ -241,9 +241,9 @@ public class ApplyPatchAction extends DumbAwareAction {
         @Override
         public boolean value(MergeTool.MergeViewer viewer) {
           int result = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                      "Would you like to abort applying patch action?",
+                                                      "Would you like to (A)bort&Rollback applying patch action or (S)kip this file?",
                                                       "Close Merge",
-                                                      "Abort", "Skip File", "Cancel", Messages.getQuestionIcon());
+                                                      "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
 
           if (result == Messages.YES) {
             applyPatchStatusReference.set(ApplyPatchStatus.ABORT);

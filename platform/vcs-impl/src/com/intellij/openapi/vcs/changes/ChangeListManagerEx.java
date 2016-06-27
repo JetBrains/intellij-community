@@ -32,8 +32,6 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges);
 
 
-  public abstract void freezeImmediately(@Nullable String reason);
-
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment, @Nullable Object data);
 
   /**

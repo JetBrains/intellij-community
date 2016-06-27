@@ -98,6 +98,10 @@ public class TaskFile {
       answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
       answerPlaceholderCopy.setHint(answerPlaceholder.getHint());
+      final AnswerPlaceholder.MyInitialState state = answerPlaceholder.getInitialState();
+      if (state != null) {
+        answerPlaceholderCopy.setInitialState(new AnswerPlaceholder.MyInitialState(state.getOffset(), state.getLength()));
+      }
       answerPlaceholdersCopy.add(answerPlaceholderCopy);
     }
     target.name = source.name;

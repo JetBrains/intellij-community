@@ -139,6 +139,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
     super.initGeneratorListeners();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(this::checkValid);
+      myErrorLabel.addMouseListener(((PythonProjectGenerator)myProjectGenerator).getErrorLabelMouseListener());
     }
   }
 

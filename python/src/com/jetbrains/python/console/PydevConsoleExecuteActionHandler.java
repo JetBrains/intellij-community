@@ -100,6 +100,10 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
     sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), false));
   }
 
+  public void clearInputBuffer() {
+    myInputBuffer = null;
+  }
+
   private void processOneLine(String line) {
     int indentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
     line = StringUtil.trimTrailing(line);

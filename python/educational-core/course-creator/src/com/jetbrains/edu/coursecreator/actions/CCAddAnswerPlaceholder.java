@@ -26,7 +26,7 @@ import java.util.List;
 public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   public CCAddAnswerPlaceholder() {
-    super("Add/Delete Answer Placeholder", "Add/Delete answer placeholder", null);
+    super("Add/Delete Answer Placeholder", "Add/Delete answer placeholder");
   }
 
 
@@ -84,7 +84,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   }
 
   private static void computeInitialState(Project project, PsiFile file, TaskFile taskFile, Document document) {
-    Document patternDocument = StudyUtils.getPatternDocument(project, taskFile, file.getName());
+    Document patternDocument = StudyUtils.getPatternDocument(taskFile, file.getName());
     if (patternDocument == null) {
       return;
     }
@@ -102,8 +102,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
     for (int i = 0; i < placeholders.size(); i++) {
       AnswerPlaceholder fromPlaceholder = placeholders.get(i);
-      AnswerPlaceholder.MyInitialState state = fromPlaceholder.getInitialState();
-      taskFile.getAnswerPlaceholders().get(i).setInitialState(new AnswerPlaceholder.MyInitialState(state.getOffset(), state.getLength()));
+      taskFile.getAnswerPlaceholders().get(i).setInitialState(new AnswerPlaceholder.MyInitialState(fromPlaceholder.getOffset(), fromPlaceholder.getLength()));
     }
   }
 

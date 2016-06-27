@@ -21,7 +21,7 @@ import javax.swing.*;
 public abstract class StudyCheckAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
 
-  protected Ref<Boolean> myCheckInProgress = new Ref<>(false);
+  protected final Ref<Boolean> myCheckInProgress = new Ref<>(false);
 
   public StudyCheckAction() {
     super("Check Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Check current task", InteractiveLearningIcons.CheckTask);

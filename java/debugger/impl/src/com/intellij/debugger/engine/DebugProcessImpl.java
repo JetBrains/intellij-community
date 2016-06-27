@@ -1068,9 +1068,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   ArrayReference argArray = lastParamType.newInstance(count);
                   argArray.setValues(0, myArgs, paramCount - 1, count);
                   myArgs.set(paramCount - 1, argArray);
-                  for (int ii = paramCount; ii < argCount; ii++) {
-                    myArgs.remove(paramCount);
-                  }
+                  myArgs.subList(paramCount, argCount).clear();
                 }
               }
             }

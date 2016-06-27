@@ -16,46 +16,30 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class NameEnvironment extends UserDataHolderBase {
-
+  public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
   public final QualifiedName empty;
-  public final QualifiedName java_lang_Object;
+  public final QualifiedName java_lang;
   public final QualifiedName java_lang_Enum;
-  public final QualifiedName[] annotation;
+  public final QualifiedName annotation;
   public final NamesEnumerator myNamesEnumerator;
 
   public NameEnvironment() {
     myNamesEnumerator = new NamesEnumerator();
     empty = myNamesEnumerator.getFullName(new int[]{}, true);
-    java_lang_Object = fromString("java.lang.Object", true);
+    java_lang = fromString("java.lang", true);
     java_lang_Enum = fromString("java.lang.Enum", true);
-    annotation = new QualifiedName[]{fromString("java.lang.annotation.Annotation", true)};
+    annotation = fromString("java.lang.annotation.Annotation", true);
   }
 
   @Nullable
   public QualifiedName fromString(String s, boolean create) {
-    List<String> comps = StringUtil.split(s, ".");
-    int[] ids = new int[comps.size()];
-    for (int i = 0; i < comps.size(); i++) {
-      int name = simpleName(comps.get(i), create);
-      if (name == NamesEnumerator.NO_NAME) {
-        return null;
-      }
-      ids[i] = name;
-    }
-    return myNamesEnumerator.getFullName(ids, create);
-  }
-
-  public int simpleName(String s, boolean create) {
-    if (s == null)
-      return NamesEnumerator.NO_NAME;
-    return myNamesEnumerator.getSimpleName(s, create);
+    return myNamesEnumerator.getFullName(IndexTree.hashQualifiedName(s), create);
   }
 
   public QualifiedName prefix(QualifiedName name) {
@@ -72,13 +56,6 @@ public class NameEnvironment extends UserDataHolderBase {
   public int shortName(QualifiedName name) {
     int[] ids = name.myComponents;
     return ids[ids.length - 1];
-  }
-
-  public QualifiedName qualifiedName(Symbol owner, int shortName) {
-    if (shortName == NamesEnumerator.NO_NAME || owner == null || owner.myQualifiedName == null) {
-      return null;
-    }
-    return qualifiedName(owner.myQualifiedName, shortName, true);
   }
 
   public QualifiedName qualifiedName(QualifiedName prefix, int shortName, boolean create) {

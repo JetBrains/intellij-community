@@ -16,8 +16,6 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.psi.stubsHierarchy.stubs.Import;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +26,12 @@ import java.util.Set;
 public class StubResolver {
   private final Symbols mySymbols;
   private final NameEnvironment myNameEnvironment;
+  private final StubHierarchyConnector myConnector;
 
-  public StubResolver(Symbols symbols) {
+  public StubResolver(Symbols symbols, StubHierarchyConnector connector) {
     this.mySymbols = symbols;
     this.myNameEnvironment = symbols.myNameEnvironment;
+    myConnector = connector;
   }
 
   // resolve class `sym` extends/implements `baseId`
@@ -97,42 +97,18 @@ public class StubResolver {
     }
   }
 
-  private static void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) throws IncompleteHierarchyException {
+  private void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) throws IncompleteHierarchyException {
     if (!processed.add(s)) {
       return;
     }
-    findImmediateMemberType(s, name, symbols);
+    processMembers(s.getMembers(), name, symbols, false);
     if (s.isClass())
       findInheritedMemberType((Symbol.ClassSymbol)s, name, symbols, processed);
   }
 
-  private static void findImmediateMemberType(Symbol s, int name, Set<Symbol> symbols) {
-    Symbol.ClassSymbol[] members = s.members();
-    int index = getIndex(name, members);
-    if (index < 0) return;
-
-    // elem
-    Symbol.ClassSymbol member = members[index];
-    symbols.add(member);
-    // on the left
-    int i = index - 1;
-    while (i >= 0 && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i--;
-    }
-    // on the right
-    i = index + 1;
-    while (i < members.length && members[i].myShortName == name) {
-      member = members[i];
-      symbols.add(member);
-      i++;
-    }
-  }
-
-  private static void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
+  private void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
     throws IncompleteHierarchyException {
-    for (Symbol.ClassSymbol st : c.getSuperClasses())
+    for (Symbol.ClassSymbol st : c.getSuperClasses(myConnector))
       findMemberType(st, name, symbols, processed);
   }
 
@@ -152,9 +128,9 @@ public class StubResolver {
   }
 
   public void handleImport(long tree, int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
-    QualifiedName fullname = Import.getFullName(tree, myNameEnvironment);
-    if (Import.isOnDemand(tree)) {
-      if (Import.isStatic(tree)) {
+    QualifiedName fullname = Imports.getFullName(tree, myNameEnvironment);
+    if (Imports.isOnDemand(tree)) {
+      if (Imports.isStatic(tree)) {
         for (Symbol.ClassSymbol p : findGlobalType(fullname))
           importNamedStatic(p, name, symbols);
       }
@@ -168,11 +144,11 @@ public class StubResolver {
         return;
       }
       int shortName = myNameEnvironment.shortName(fullname);
-      int alias = Import.getAlias(tree);
+      int alias = Imports.getAlias(tree);
       boolean shouldImport = ((alias & name) == name) || shortName == name;
       if (!shouldImport)
         return;
-      if (Import.isStatic(tree)) {
+      if (Imports.isStatic(tree)) {
           for (Symbol.ClassSymbol s : findGlobalType(prefix))
             importNamedStatic(s, shortName, symbols);
       }
@@ -194,33 +170,33 @@ public class StubResolver {
   }
 
   // handling of import static `tsym.name` as
-  private static void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
+  private void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
     new Object() {
       Set<Symbol> processed = new HashSet<Symbol>();
       void importFrom(Symbol.ClassSymbol cs) throws IncompleteHierarchyException {
         if (cs == null || !processed.add(cs))
           return;
-        for (Symbol.ClassSymbol c : cs.getSuperClasses())
+        for (Symbol.ClassSymbol c : cs.getSuperClasses(myConnector))
           importFrom(c);
-        importMember(cs.members(), name, symbols, true);
+        processMembers(cs.getMembers(), name, symbols, true);
       }
     }.importFrom(tsym);
   }
 
-  private static void importMember(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean isStatic) {
+  private static void processMembers(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean requireStatic) {
     int index = getIndex(name, members);
     if (index < 0) return;
 
     // elem
     Symbol.ClassSymbol member = members[index];
-    if (!isStatic || member.isStatic()) {
+    if (!requireStatic || member.isStatic()) {
       symbols.add(member);
     }
     // on the left
     int i = index - 1;
     while (i >= 0 && members[i].myShortName == name) {
       member = members[i];
-      if (!isStatic || member.isStatic()) {
+      if (!requireStatic || member.isStatic()) {
         symbols.add(member);
       }
       i--;
@@ -229,7 +205,7 @@ public class StubResolver {
     i = index + 1;
     while (i < members.length && members[i].myShortName == name) {
       member = members[i];
-      if (!isStatic || member.isStatic()) {
+      if (!requireStatic || member.isStatic()) {
         symbols.add(member);
       }
       i++;
