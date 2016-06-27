@@ -24,7 +24,6 @@
 
 # precision is available for str, float, and complex
 "{:.2}".format("s")
-"{:.2}".format(<warning descr="Unexpected type int">1</warning>)
 "{:.2}".format(1.0)
 "{:.2}".format(complex(2, 3))
 
