@@ -479,7 +479,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     ExecutorService executor2 = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
     Future<?> future = executor2.submit(() -> TimeoutUtil.sleep(10000));
     executor2.shutdown();
-    assertFalse(executor2.awaitTermination(100, TimeUnit.SECONDS));
+    assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
     assertFalse(future.isDone());
     assertFalse(future.isCancelled());
     assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
