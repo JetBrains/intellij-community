@@ -57,11 +57,7 @@ public class XmlName implements Comparable<XmlName> {
     final XmlName xmlName = (XmlName)o;
 
     if (!myLocalName.equals(xmlName.myLocalName)) return false;
-    if (Comparing.equal(myNamespaceKey, xmlName.myNamespaceKey)) return true;
-
-    if (myNamespaceKey == null) return false;
-
-    return myNamespaceKey.equals(xmlName.myNamespaceKey);
+    return Comparing.equal(myNamespaceKey, xmlName.myNamespaceKey);
   }
 
   public int hashCode() {
