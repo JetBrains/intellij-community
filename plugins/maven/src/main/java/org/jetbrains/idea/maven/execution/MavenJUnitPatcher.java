@@ -61,7 +61,11 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
   }
 
-  private void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters, MavenProject mavenProject, String plugin, Element config) {
+  private static void patchJavaParameters(@NotNull Module module,
+                                          @NotNull JavaParameters javaParameters,
+                                          @NotNull MavenProject mavenProject,
+                                          @NotNull String plugin,
+                                          @NotNull Element config) {
     MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
     MavenTestRunningSettings testRunningSettings = MavenProjectSettings.getInstance(module.getProject()).getTestRunningSettings();
