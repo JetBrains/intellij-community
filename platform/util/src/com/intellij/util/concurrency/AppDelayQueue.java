@@ -43,7 +43,9 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
             if (LOG.isTraceEnabled()) {
               LOG.trace("Took "+BoundedTaskExecutor.info(task));
             }
-            task.getBackendExecutorService().execute(task);
+            if (!task.isDone()) {  // can be cancelled already
+              task.getBackendExecutorService().execute(task);
+            }
           }
           catch (InterruptedException e) {
             if (!shutdown.get()) {

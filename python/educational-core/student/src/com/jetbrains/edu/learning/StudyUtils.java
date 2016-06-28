@@ -67,6 +67,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -115,7 +116,11 @@ public class StudyUtils {
   }
 
   public static <T> T getFirst(@NotNull final Iterable<T> container) {
-    return container.iterator().next();
+    Iterator<T> iterator = container.iterator();
+    if (!iterator.hasNext()) {
+      return null;
+    }
+    return iterator.next();
   }
 
   public static boolean indexIsValid(int index, @NotNull final Collection collection) {
@@ -388,12 +393,12 @@ public class StudyUtils {
 
 
   @Nullable
-  public static VirtualFile getPatternFile(@NotNull Project project, @NotNull TaskFile taskFile, String name) {
+  public static VirtualFile getPatternFile(@NotNull TaskFile taskFile, String name) {
     Task task = taskFile.getTask();
     String lessonDir = EduNames.LESSON + String.valueOf(task.getLesson().getIndex());
     String taskDir = EduNames.TASK + String.valueOf(task.getIndex());
     Course course = task.getLesson().getCourse();
-    File resourceFile = getCourseDirectory(project, course);
+    File resourceFile = new File(course.getCourseDirectory());
     if (!resourceFile.exists()) {
       return null;
     }
@@ -406,8 +411,8 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static Document getPatternDocument(@NotNull Project project, @NotNull final TaskFile taskFile, String name) {
-    VirtualFile patternFile = getPatternFile(project, taskFile, name);
+  public static Document getPatternDocument(@NotNull final TaskFile taskFile, String name) {
+    VirtualFile patternFile = getPatternFile(taskFile, name);
     if (patternFile == null) {
       return null;
     }

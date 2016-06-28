@@ -628,7 +628,7 @@ public class HtmlUtil {
 
   public static boolean isHtmlFile(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
+    return language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE;
   }
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {

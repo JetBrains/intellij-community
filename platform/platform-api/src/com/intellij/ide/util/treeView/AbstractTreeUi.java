@@ -1529,6 +1529,11 @@ public class AbstractTreeUi {
         }
 
         final Object element = getElementFor(node);
+        if (element == null) {
+          debug("null element for node " + node);
+          result.set(new Pair<Boolean, LoadedChildren>(true, null));
+          return;
+        }
 
         addToUpdatingChildren(node);
 

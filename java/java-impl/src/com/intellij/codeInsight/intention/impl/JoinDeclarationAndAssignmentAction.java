@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.RemoveInitializerFix;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -70,7 +71,7 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
           if (ReferencesSearch.search(variable, new LocalSearchScope(rExpression), false).findFirst() != null) {
             return null;
           }
-          return Pair.create(variable, assignmentExpression);
+          return Pair.createNonNull(variable, assignmentExpression);
         }
       }
     }
@@ -104,12 +105,15 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final Pair<PsiLocalVariable, PsiAssignmentExpression> pair = getPair(element);
+    if (pair == null) return;
     final PsiLocalVariable variable = pair.getFirst();
     final PsiAssignmentExpression assignmentExpression = pair.getSecond();
+    final PsiExpression initializer = variable.getInitializer();
+    if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
+      RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable);
+    }
     final PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(variable, assignmentExpression);
     variable.setInitializer(initializerExpression);
     assignmentExpression.delete();
   }
-
-  
 }

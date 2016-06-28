@@ -55,7 +55,7 @@ class TypeCorrector extends PsiTypeMapper {
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         if (psiClass != null && classResolveResult.getSubstitutor() == PsiSubstitutor.EMPTY) {
-          final PsiClass mappedClass = PsiSuperMethodUtil.mapClass(psiClass, myResolveScope);
+          final PsiClass mappedClass = PsiSuperMethodUtil.correctClassByScope(psiClass, myResolveScope);
           if (mappedClass == null || mappedClass == psiClass) return (T) classType;
         }
       }
@@ -78,7 +78,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     PsiUtilCore.ensureValid(psiClass);
 
-    final PsiClass mappedClass = PsiSuperMethodUtil.mapClass(psiClass, myResolveScope);
+    final PsiClass mappedClass = PsiSuperMethodUtil.correctClassByScope(psiClass, myResolveScope);
     if (mappedClass == null) return classType;
 
     PsiClassType mappedType = new PsiCorrectedClassType(classType.getLanguageLevel(),

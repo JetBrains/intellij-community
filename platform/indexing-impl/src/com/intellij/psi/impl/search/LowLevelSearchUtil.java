@@ -106,7 +106,7 @@ public class LowLevelSearchUtil {
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
     if (start < 0) {
-      throw new AssertionError("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
+      throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; leafElement=" + leafElement + ";  scope=" + scope+"; leafElement.isValid(): "+ (leafElement == null ? null : leafElement.isValid()));
     }
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     lastElement = leafNode;

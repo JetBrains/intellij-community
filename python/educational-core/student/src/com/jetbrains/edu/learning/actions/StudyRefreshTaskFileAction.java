@@ -82,7 +82,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    if (!resetDocument(project, document, taskFile, name)) {
+    if (!resetDocument(document, taskFile, name)) {
       return false;
     }
     taskFile.getTask().setStatus(StudyStatus.Unchecked);
@@ -111,11 +111,10 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   }
 
 
-  private static boolean resetDocument(@NotNull final Project project, 
-                                       @NotNull final Document document, 
+  private static boolean resetDocument(@NotNull final Document document,
                                        @NotNull final TaskFile taskFile,
                                        String fileName) {
-    final Document patternDocument = StudyUtils.getPatternDocument(project, taskFile, fileName);
+    final Document patternDocument = StudyUtils.getPatternDocument(taskFile, fileName);
     if (patternDocument == null) {
       return false;
     }

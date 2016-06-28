@@ -1,7 +1,6 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-public class X {
+public class F {
   void f() {
     List<String> list = new ArrayList<String>();
   }

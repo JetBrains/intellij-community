@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 
 public class HierarchyServiceImpl extends HierarchyService {
-  private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY);
+  private static final SingleClassHierarchy EMPTY_HIERARCHY = new SingleClassHierarchy(Symbol.ClassSymbol.EMPTY_ARRAY, new AnchorRepository());
   private final Project myProject;
   private final CachedValue<SingleClassHierarchy> myHierarchy;
 
@@ -70,31 +69,32 @@ public class HierarchyServiceImpl extends HierarchyService {
     StubEnter stubEnter = new StubEnter(symbols);
     IdSets idSets = IdSets.getIdSets(myProject);
 
-    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_FILES, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.libraryFiles, StubHierarchyIndex.BINARY_KEYS, stubEnter);
     stubEnter.connect1();
 
-    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_FILES, symbols.myNameEnvironment, stubEnter);
+    loadUnits(idSets.sourceFiles, StubHierarchyIndex.SOURCE_KEYS, stubEnter);
     stubEnter.connect2();
 
     return symbols.createHierarchy();
   }
 
-  private void loadUnits(BitSet files, int indexKey, NameEnvironment names, StubEnter stubEnter) {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-
-    FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    index.processAllValues(StubHierarchyIndex.INDEX_ID, indexKey, myProject, new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+  private void loadUnits(BitSet files, int[] indexKeys, StubEnter stubEnter) {
+    FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit> processor = new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+      final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       int count = 0;
       @Override
       public boolean process(int fileId, IndexTree.Unit unit) {
         if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
         if (files.get(fileId)) {
-          QualifiedName pkg = StringUtil.isEmpty(unit.myPackageId) ? null : names.fromString(unit.myPackageId, true);
-          stubEnter.unitEnter(Translator.internNames(names, unit, fileId, pkg));
+          stubEnter.unitEnter(unit, fileId);
         }
         return true;
       }
-    });
+    };
+
+    for (int indexKey : indexKeys) {
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).processAllValues(StubHierarchyIndex.INDEX_ID, indexKey, myProject, processor);
+    }
   }
 
   private static class IdSets {

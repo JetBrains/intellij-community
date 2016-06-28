@@ -391,6 +391,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
+
+        if (myFoldingModel.isInBatchFoldingOperation()) {
+          throw new IllegalStateException("Highlighters shouldn't be added or removed during batch folding operation");
+        }
         
         if (myUseNewRendering && renderersChanged) {
           updateGutterSize();

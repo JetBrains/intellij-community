@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
@@ -398,6 +399,7 @@ public class Alarm implements Disposable {
           }
         }
       }
+      catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
       }

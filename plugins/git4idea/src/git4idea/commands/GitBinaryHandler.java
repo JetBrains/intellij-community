@@ -52,17 +52,16 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected void startHandlingStreams() {
-    handleStream(myProcess.getErrorStream(), myStderr);
-    handleStream(myProcess.getInputStream(), myStdout);
+    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of "+myCommandLine.getCommandLineString());
+    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of "+myCommandLine.getCommandLineString());
   }
 
   /**
    * Handle the single stream
-   *
    * @param in  the standard input
    * @param out the standard output
    */
-  private void handleStream(final InputStream in, final ByteArrayOutputStream out) {
+  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
     Thread t = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -86,7 +85,7 @@ public class GitBinaryHandler extends GitHandler {
           mySteamSemaphore.release(1);
         }
       }
-    }, "Stream copy thread");
+    }, cmd);
     t.setDaemon(true);
     t.start();
   }

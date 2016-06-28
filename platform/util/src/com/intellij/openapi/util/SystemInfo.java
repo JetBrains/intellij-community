@@ -142,6 +142,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSMavericks = isMac && isOsVersionAtLeast("10.9");
   public static final boolean isMacOSYosemite = isMac && isOsVersionAtLeast("10.10");
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
+  public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
 
   @NotNull
   public static String getMacOSMajorVersion() {
@@ -233,7 +234,7 @@ public class SystemInfo extends SystemInfoRt {
 
   private static boolean isJetbrainsJvm() {
     final String vendor = SystemProperties.getJavaVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains");
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "JetBrains");
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */

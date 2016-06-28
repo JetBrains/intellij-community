@@ -105,7 +105,12 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(ArrayOpeningBracket) || position.isAt(LeftParenthesis)
+        position -> position.before().isAt(ArrayOpeningBracket)
+      )) {
+        return myFactory.createIndentCalculator(getIndentTypeInBrackets(), IndentCalculator.LINE_BEFORE);
+      }
+      else if (getPosition(editor, offset).matchesRule(
+        position -> position.before().isAt(LeftParenthesis)
       )) {
         return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
       }
@@ -240,4 +245,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   }
   
   public abstract boolean isSuitableForLanguage(@NotNull Language language);
+
+  protected Type getIndentTypeInBrackets() {
+    return CONTINUATION;
+  }
 }

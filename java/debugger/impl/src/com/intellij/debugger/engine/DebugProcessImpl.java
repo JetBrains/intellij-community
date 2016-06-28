@@ -894,23 +894,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private abstract class InvokeCommand <E extends Value> {
     private final Method myMethod;
-    private final List myArgs;
+    private final List<Value> myArgs;
 
-    protected InvokeCommand(@NotNull Method method, @NotNull List args) {
+    protected InvokeCommand(@NotNull Method method, @NotNull List<? extends Value> args) {
       myMethod = method;
-      if (!args.isEmpty()) {
-        myArgs = new ArrayList(args);
-      }
-      else {
-        myArgs = args;
-      }
+      myArgs = new ArrayList<>(args);
     }
 
     public String toString() {
       return "INVOKE: " + super.toString();
     }
 
-    protected abstract E invokeMethod(int invokePolicy, Method method, final List args) throws InvocationException,
+    protected abstract E invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
                                                                                 ClassNotLoadedException,
                                                                                 IncompatibleThreadStateException,
                                                                                 InvalidTypeException;
@@ -1068,9 +1063,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   ArrayReference argArray = lastParamType.newInstance(count);
                   argArray.setValues(0, myArgs, paramCount - 1, count);
                   myArgs.set(paramCount - 1, argArray);
-                  for (int ii = paramCount; ii < argCount; ii++) {
-                    myArgs.remove(paramCount);
-                  }
+                  myArgs.subList(paramCount, argCount).clear();
                 }
               }
             }
@@ -1147,7 +1140,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public Value invokeMethod(@NotNull EvaluationContext evaluationContext, @NotNull ObjectReference objRef, @NotNull Method method, final List args) throws EvaluateException {
+  public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
+                            @NotNull ObjectReference objRef,
+                            @NotNull Method method,
+                            @NotNull List<? extends Value> args) throws EvaluateException {
     return invokeInstanceMethod(evaluationContext, objRef, method, args, 0);
   }
 
@@ -1155,12 +1151,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
                                     @NotNull final ObjectReference objRef,
                                     @NotNull Method method,
-                                    @NotNull List args,
+                                    @NotNull List<? extends Value> args,
                                     final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
         }
@@ -1178,21 +1174,22 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public Value invokeMethod(final EvaluationContext evaluationContext, final ClassType classType,
-                            final Method method,
-                            final List args) throws EvaluateException {
+  public Value invokeMethod(EvaluationContext evaluationContext,
+                            ClassType classType,
+                            Method method,
+                            List<? extends Value> args) throws EvaluateException {
     return invokeMethod(evaluationContext, classType, method, args, false);
   }
 
   public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
                             @NotNull final ClassType classType,
                             @NotNull Method method,
-                            @NotNull List args,
+                            @NotNull List<? extends Value> args,
                             boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
+      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
                                                                              ClassNotLoadedException,
                                                                              IncompatibleThreadStateException,
                                                                              InvalidTypeException {
@@ -1209,14 +1206,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
   }
 
-  public Value invokeMethod(final EvaluationContext evaluationContext,
-                            final InterfaceType interfaceType,
-                            final Method method,
-                            final List args) throws EvaluateException {
+  public Value invokeMethod(EvaluationContext evaluationContext,
+                            InterfaceType interfaceType,
+                            Method method,
+                            List<? extends Value> args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
+      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
                                                                                       ClassNotLoadedException,
                                                                                       IncompatibleThreadStateException,
                                                                                       InvalidTypeException {
@@ -1259,11 +1256,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public ObjectReference newInstance(@NotNull final EvaluationContext evaluationContext,
                                      @NotNull final ClassType classType,
                                      @NotNull Method method,
-                                     @NotNull List args) throws EvaluateException {
+                                     @NotNull List<? extends Value> args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(method, args) {
       @Override
-      protected ObjectReference invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
+      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
                                                                                        ClassNotLoadedException,
                                                                                        IncompatibleThreadStateException,
                                                                                        InvalidTypeException {
@@ -1397,28 +1394,24 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     qName = reformatArrayName(qName);
     ReferenceType refType = null;
     VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
-    final List classClasses = virtualMachine.classesByName("java.lang.Class");
-    if (!classClasses.isEmpty()) {
-      ClassType classClassType = (ClassType)classClasses.get(0);
+    ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));
+    if (classClassType != null) {
       final Method forNameMethod;
+      List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
+      args.add(virtualMachine.mirrorOf(qName));
       if (classLoader != null) {
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+        args.add(virtualMachine.mirrorOf(true));
+        args.add(classLoader);
       }
       else {
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
-      final List<Mirror> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
-      final StringReference qNameMirror = virtualMachine.mirrorOf(qName);
-      args.add(qNameMirror);
-      if (classLoader != null) {
-        args.add(virtualMachine.mirrorOf(true));
-        args.add(classLoader);
-      }
-      final Value value = invokeMethod(evaluationContext, classClassType, forNameMethod, args);
-      if (value instanceof ClassObjectReference) {
-        refType = ((ClassObjectReference)value).reflectedType();
+      Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args);
+      if (classReference instanceof ClassObjectReference) {
+        refType = ((ClassObjectReference)classReference).reflectedType();
       }
     }
     return refType;

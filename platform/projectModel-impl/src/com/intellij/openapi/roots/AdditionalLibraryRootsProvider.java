@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.impl;
+package com.intellij.openapi.roots;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
-public interface VcsRootsRegistry {
-  int getId(@NotNull VirtualFile root) throws IOException;
+public abstract class AdditionalLibraryRootsProvider {
+  public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");
 
-  @Nullable
-  VirtualFile getRootById(int id) throws IOException;
+  @NotNull
+  public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
+    return Collections.emptyList();
+  }
 }

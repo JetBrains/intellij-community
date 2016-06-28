@@ -105,6 +105,12 @@ public class ID<K, V> {
     }
   }
 
+  public static void reinitializeDiskStorage() {
+    synchronized (ourNameToIdRegistry) {
+      writeEnumFile();
+    }
+  }
+
   private static void writeEnumFile() {
     try {
       final File f = getEnumFile();

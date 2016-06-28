@@ -101,7 +101,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    assert isShutdown() : "must await termination after shutdown() or shutdownNow() only";
+    if (!isShutdown()) throw new IllegalStateException("must await termination after shutdown() or shutdownNow() only");
     List<MyScheduledFutureTask> tasks = new ArrayList<MyScheduledFutureTask>(delayQueue);
     for (MyScheduledFutureTask task : tasks) {
       if (task.getBackendExecutorService() != backendExecutorService) {
@@ -317,6 +317,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
       throw new RejectedExecutionException("Already shutdown");
     }
     delayQueue.add(t);
+    if (t.getDelay(TimeUnit.HOURS) > 24 && !t.isPeriodic()) {
+      // guard against inadvertent queue overflow
+      throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.MINUTES) + " minutes: " + BoundedTaskExecutor.info(t));
+    }
     return t;
   }
 

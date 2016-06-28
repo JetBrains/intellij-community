@@ -101,12 +101,23 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
   @Nullable
   private static byte[] toBytesIfPossible(CharSequence seq) {
     byte[] bytes = new byte[seq.length()];
-    for (int i = 0; i < bytes.length; i++) {
-      char c = seq.charAt(i);
-      if ((c & 0xff00) != 0) {
-        return null;
+    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
+    if (chars != null) {
+      for (int i = 0; i < bytes.length; i++) {
+        char c = chars[i];
+        if ((c & 0xff00) != 0) {
+          return null;
+        }
+        bytes[i] = (byte)c;
       }
-      bytes[i] = (byte)c;
+    } else {
+      for (int i = 0; i < bytes.length; i++) {
+        char c = seq.charAt(i);
+        if ((c & 0xff00) != 0) {
+          return null;
+        }
+        bytes[i] = (byte)c;
+      }
     }
     return bytes;
   }

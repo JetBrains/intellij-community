@@ -92,7 +92,7 @@ class GrVetoableSupportTest {
       assert method
       assert method.containingClass == clazz
       assert method.originInfo == VetoableTransformationSupportKt.ORIGIN_INFO
-      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE)
+      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE_FQN)
       fixture.checkHighlighting()
     }
   }

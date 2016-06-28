@@ -70,6 +70,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    *  for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
    */
+  // multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   public CoreProgressManager() {
@@ -87,30 +88,37 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }, this);
   }
 
-  @NotNull
-  private ScheduledFuture<?> startBackgroundIndicatorPing() {
-    return JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        for (ProgressIndicator indicator : nonStandardIndicators) {
-          try {
-            indicator.checkCanceled();
-          }
-          catch (ProcessCanceledException e) {
-            indicatorCanceled(indicator);
+  // must be under threadsUnderIndicator lock
+  private void startBackgroundNonStandardIndicatorsPing() {
+    if (myCheckCancelledFuture == null) {
+      myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+          for (ProgressIndicator indicator : nonStandardIndicators) {
+            try {
+              indicator.checkCanceled();
+            }
+            catch (ProcessCanceledException e) {
+              indicatorCanceled(indicator);
+            }
           }
         }
-      }
-    }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+      }, 0, CHECK_CANCELED_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  // must be under threadsUnderIndicator lock
+  private void stopBackgroundNonStandardIndicatorsPing() {
+    if (myCheckCancelledFuture != null) {
+      myCheckCancelledFuture.cancel(true);
+      myCheckCancelledFuture = null;
+    }
   }
 
   @Override
   public void dispose() {
     synchronized (threadsUnderIndicator) {
-      if (myCheckCancelledFuture != null) {
-        myCheckCancelledFuture.cancel(true);
-        myCheckCancelledFuture = null;
-      }
+      stopBackgroundNonStandardIndicatorsPing();
     }
   }
 
@@ -351,7 +359,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         boolean processCanceled = false;
         Exception exception = null;
         try {
-          ProgressManager.getInstance().runProcess(process, progressIndicator);
+          runProcess(process, progressIndicator);
         }
         catch (ProcessCanceledException e) {
           processCanceled = true;
@@ -381,7 +389,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       @Override
       public void run() {
         try {
-          new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
+          new TaskRunnable(task, getProgressIndicator()).run();
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -400,7 +408,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return result;
   }
 
-  protected static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {
+  static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {
     try {
       if (exception != null) {
         task.onError(exception);
@@ -474,9 +482,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         boolean isStandard = thisIndicator instanceof StandardProgressIndicator;
         if (!isStandard) {
           nonStandardIndicators.add(thisIndicator);
-          if (myCheckCancelledFuture == null) {
-            myCheckCancelledFuture = startBackgroundIndicatorPing();
-          }
+          startBackgroundNonStandardIndicatorsPing();
         }
 
         if (thisIndicator.isCanceled()) {
@@ -508,8 +514,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           if (!isStandard) {
             nonStandardIndicators.remove(thisIndicator);
             if (nonStandardIndicators.isEmpty()) {
-              myCheckCancelledFuture.cancel(true);
-              myCheckCancelledFuture = null;
+              stopBackgroundNonStandardIndicatorsPing();
             }
           }
           // by this time oldIndicator may have been canceled
@@ -573,7 +578,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @NotNull
   @Override
   public final NonCancelableSection startNonCancelableSection() {
-    final ProgressIndicator myOld = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator myOld = getProgressIndicator();
 
     final Thread currentThread = Thread.currentThread();
     NonCancelableIndicator nonCancelor = new NonCancelableIndicator() {

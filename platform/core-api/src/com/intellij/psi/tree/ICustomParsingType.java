@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubsHierarchy.stubs;
+package com.intellij.psi.tree;
 
-import com.intellij.psi.stubsHierarchy.impl.QualifiedName;
+import com.intellij.lang.ASTNode;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
-public class Unit {
-  public final QualifiedName myPackageId;
-  public final UnitInfo myUnitInfo;
-  public final ClassDeclaration[] myClasses;
+/**
+ * A token which is more convenient to parse separately. Parsing is done when leaf elements are created.
+ */
+public interface ICustomParsingType {
 
-  public Unit(QualifiedName packageId, long[] imports, ClassDeclaration[] classes, byte unitType) {
-    this.myPackageId = packageId;
-    this.myUnitInfo = UnitInfo.mkUnitInfo(unitType, imports);
-    this.myClasses = classes;
-  }
-
+  @NotNull
+  ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table);
 }

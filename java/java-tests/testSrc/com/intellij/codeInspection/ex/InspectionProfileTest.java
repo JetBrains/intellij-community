@@ -30,6 +30,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
 import org.jdom.Element;
@@ -265,7 +266,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
     tool.ADD_NONJAVA_TO_ENTRIES = true;
     UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
-    inspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
+    inspectionTool.setParameterVisibility(PsiModifier.PUBLIC);
     model.commit();
     String mergedText = "<profile version=\"1.0\">\n" +
                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
@@ -300,6 +301,46 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertElementsEqual(mergedElement, serializeProfile(profile));
 
     assertElementsEqual(mergedElement, serializeProfile(importedProfile));
+  }
+
+  public void testStoredMemberVisibility() throws Exception {
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(JDOMUtil.loadDocument("<profile version=\"1.0\">\n" +
+                                               "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                               "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                                               "    <option name=\"FIELD\" value=\"true\" />\n" +
+                                               "    <option name=\"METHOD\" value=\"true\" />\n" +
+                                               "    <option name=\"CLASS\" value=\"true\" />\n" +
+                                               "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                                               "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
+                                               "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                                               "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                                               "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                                               "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                                               "  </inspection_tool>\n" +
+                                               "</profile>").getRootElement());
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
+    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
+    UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
+    inspectionTool.setClassVisibility("none");
+    model.commit();
+    String mergedText = "<profile version=\"1.0\">\n" +
+                        "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" inner_class=\"none\">\n" +
+                        "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                        "    <option name=\"FIELD\" value=\"true\" />\n" +
+                        "    <option name=\"METHOD\" value=\"true\" />\n" +
+                        "    <option name=\"CLASS\" value=\"false\" />\n" +
+                        "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                        "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                        "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                        "  </inspection_tool>\n" +
+                        "</profile>";
+    assertEquals(mergedText, serialize(profile));
   }
 
   public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {
