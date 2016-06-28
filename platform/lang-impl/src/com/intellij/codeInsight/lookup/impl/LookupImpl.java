@@ -29,6 +29,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -42,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -521,22 +523,45 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       public void perform(Caret caret) {
         EditorModificationUtil.deleteSelectedText(hostEditor);
         final int caretOffset = hostEditor.getCaretModel().getOffset();
-        int lookupStart = Math.min(caretOffset, Math.max(caretOffset - prefix, 0));
 
-        int len = hostEditor.getDocument().getTextLength();
-        LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
-                       "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
-        LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
-
-        hostEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
-
-        int offset = lookupStart + lookupString.length();
+        int offset = insertLookupInDocumentWindowIfNeeded(caretOffset, prefix, lookupString);
         hostEditor.getCaretModel().moveToOffset(offset);
         hostEditor.getSelectionModel().removeSelection();
       }
     });
 
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private int insertLookupInDocumentWindowIfNeeded(int caretOffset, int prefix, String lookupString) {
+    DocumentWindow document = getInjectedDocument(caretOffset);
+    if (document == null) return insertLookupInDocument(caretOffset, myEditor.getDocument(), prefix, lookupString);
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    int offset = document.hostToInjected(caretOffset);
+    int lookupStart = Math.min(offset, Math.max(offset - prefix, 0));
+    int diff = -1;
+    if (file != null) {
+      List<TextRange> ranges = InjectedLanguageManager.getInstance(myProject)
+        .intersectWithAllEditableFragments(file, TextRange.create(lookupStart, offset));
+      if (!ranges.isEmpty()) {
+        diff = ranges.get(0).getStartOffset() - lookupStart;
+        if (ranges.size() == 1 && diff == 0) diff = -1;
+      }
+    }
+    if (diff == -1) return insertLookupInDocument(caretOffset, myEditor.getDocument(), prefix, lookupString);
+    return document.injectedToHost(
+      insertLookupInDocument(offset, document, prefix - diff, diff == 0 ? lookupString : lookupString.substring(diff))
+    );
+  }
+
+  private static int insertLookupInDocument(int caretOffset, Document document, int prefix, String lookupString) {
+    int lookupStart = Math.min(caretOffset, Math.max(caretOffset - prefix, 0));
+    int len = document.getTextLength();
+    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
+                   "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
+    document.replaceString(lookupStart, caretOffset, lookupString);
+    return lookupStart + lookupString.length();
   }
 
   private String getCaseCorrectedLookupString(LookupElement item) {
@@ -935,21 +960,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return file.findElementAt(0);
   }
 
-  @Override
-  @NotNull 
-  public Editor getEditor() {
+  @Nullable
+  private DocumentWindow getInjectedDocument(int offset) {
     PsiFile hostFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (hostFile != null) {
-      int offset = myEditor.getCaretModel().getOffset();
       // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
       for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
         if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
-          PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(documentWindow);
-          return InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+          return documentWindow;
         }
       }
     }
+    return null;
+  }
 
+  @Override
+  @NotNull 
+  public Editor getEditor() {
+    DocumentWindow documentWindow = getInjectedDocument(myEditor.getCaretModel().getOffset());
+    if (documentWindow != null) {
+      PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(documentWindow);
+      return InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+    }
     return myEditor;
   }
 
