@@ -1,111 +1,9 @@
 REGEXP_FILE
-  RegExpPatternImpl: <[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]>
-    RegExpBranchImpl: <[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]>
-      RegExpClassImpl: <[<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>]>
+  RegExpPatternImpl: <[\udbff\udfff-\ud800\udc00]>
+    RegExpBranchImpl: <[\udbff\udfff-\ud800\udc00]>
+      RegExpClassImpl: <[\udbff\udfff-\ud800\udc00]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <<error descr="Illegal character range (to < from)">\udbff\udfff-\ud800\udc00</error>>
-          RegExpCharImpl: <<>
-            PsiElement(CHARACTER)('<')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <o>
-            PsiElement(CHARACTER)('o')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <d>
-            PsiElement(CHARACTER)('d')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <s>
-            PsiElement(CHARACTER)('s')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <=>
-            PsiElement(CHARACTER)('=')
-          RegExpCharImpl: <">
-            PsiElement(CHARACTER)('"')
-          RegExpCharImpl: <I>
-            PsiElement(CHARACTER)('I')
-          RegExpCharImpl: <l>
-            PsiElement(CHARACTER)('l')
-          RegExpCharImpl: <l>
-            PsiElement(CHARACTER)('l')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <g>
-            PsiElement(CHARACTER)('g')
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <l>
-            PsiElement(CHARACTER)('l')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
-          RegExpCharImpl: <h>
-            PsiElement(CHARACTER)('h')
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <c>
-            PsiElement(CHARACTER)('c')
-          RegExpCharImpl: <t>
-            PsiElement(CHARACTER)('t')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <a>
-            PsiElement(CHARACTER)('a')
-          RegExpCharImpl: <n>
-            PsiElement(CHARACTER)('n')
-          RegExpCharImpl: <g>
-            PsiElement(CHARACTER)('g')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <(>
-            PsiElement(CHARACTER)('(')
-          RegExpCharImpl: <t>
-            PsiElement(CHARACTER)('t')
-          RegExpCharImpl: <o>
-            PsiElement(CHARACTER)('o')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <<>
-            PsiElement(CHARACTER)('<')
-          RegExpCharImpl: < >
-            PsiElement(CHARACTER)(' ')
-          RegExpCharImpl: <f>
-            PsiElement(CHARACTER)('f')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <o>
-            PsiElement(CHARACTER)('o')
-          RegExpCharImpl: <m>
-            PsiElement(CHARACTER)('m')
-          RegExpCharImpl: <)>
-            PsiElement(CHARACTER)(')')
-          RegExpCharImpl: <">
-            PsiElement(CHARACTER)('"')
-          RegExpCharImpl: <>>
-            PsiElement(CHARACTER)('>')
+        RegExpUnionImpl: <\udbff\udfff-\ud800\udc00>
           RegExpCharImpl: <\udbff>
             PsiElement(UNICODE_CHAR)('\udbff')
           RegExpCharRangeImpl: <\udfff-\ud800>
@@ -116,20 +14,4 @@ REGEXP_FILE
               PsiElement(UNICODE_CHAR)('\ud800')
           RegExpCharImpl: <\udc00>
             PsiElement(UNICODE_CHAR)('\udc00')
-          RegExpCharImpl: <<>
-            PsiElement(CHARACTER)('<')
-          RegExpCharImpl: </>
-            PsiElement(CHARACTER)('/')
-          RegExpCharImpl: <e>
-            PsiElement(CHARACTER)('e')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <o>
-            PsiElement(CHARACTER)('o')
-          RegExpCharImpl: <r>
-            PsiElement(CHARACTER)('r')
-          RegExpCharImpl: <>>
-            PsiElement(CHARACTER)('>')
         PsiElement(CLASS_END)(']')

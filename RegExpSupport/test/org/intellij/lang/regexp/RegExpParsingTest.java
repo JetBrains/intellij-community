@@ -48,14 +48,14 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testSimple12() throws IOException { doCodeTest("a.c"); }
   public void testSimple13() throws IOException { doCodeTest("a.*c"); }
   public void testSimple14() throws IOException { doCodeTest("*a"); }
-  public void testSimple15() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Single repetition\">{1}</weak_warning>"); }
+  public void testSimple15() throws IOException { doCodeTest("a{1}"); }
   public void testSimple16() throws IOException { doCodeTest("a{}"); }
   public void testSimple17() throws IOException { doCodeTest("a{"); }
   public void testSimple18() throws IOException { doCodeTest("a}"); }
   public void testSimple19() throws IOException { doCodeTest("a{1,}"); }
   public void testSimple20() throws IOException { doCodeTest("a{1,2}"); }
   public void testSimple21() throws IOException { doCodeTest("a{1,foo}"); }
-  public void testSimple22() throws IOException { doCodeTest(/* fixme */"<weak_warning descr=\"Redundant character escape\">\\;</weak_warning>"); }
+  public void testSimple22() throws IOException { doCodeTest("\\;"); }
 
   public void testQuantifiers1() throws IOException { doCodeTest("a?"); }
   public void testQuantifiers2() throws IOException { doCodeTest("a+"); }
@@ -70,11 +70,11 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testQuantifiers11() throws IOException { doCodeTest("a{2}"); }
   public void testQuantifiers12() throws IOException { doCodeTest("a{1,2}"); }
   public void testQuantifiers13() throws IOException { doCodeTest("a{2,1}"); }
-  public void testQuantifiers14() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Repetition range replaceable by '?'\">{0,1}</weak_warning>"); }
-  public void testQuantifiers15() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Repetition range replaceable by '+'\">{1,}</weak_warning>"); }
-  public void testQuantifiers16() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Repetition range replaceable by '*'\">{0,}</weak_warning>"); }
-  public void testQuantifiers17() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Single repetition\">{1}</weak_warning>"); }
-  public void testQuantifiers18() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning>"); }
+  public void testQuantifiers14() throws IOException { doCodeTest("a{0,1}"); }
+  public void testQuantifiers15() throws IOException { doCodeTest("a{1,}"); }
+  public void testQuantifiers16() throws IOException { doCodeTest("a{0,}"); }
+  public void testQuantifiers17() throws IOException { doCodeTest("a{1}"); }
+  public void testQuantifiers18() throws IOException { doCodeTest("a{3,3}"); }
   public void testQuantifiers19() throws IOException { doCodeTest("a{"); }
   public void testQuantifiers20() throws IOException { doCodeTest("a}"); }
   public void testQuantifiers21() throws IOException { doCodeTest("a{}"); }
@@ -138,22 +138,22 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharclasses57() throws IOException { doCodeTest("a\\p}"); }
   public void testCharclasses58() throws IOException { doCodeTest("a\\p{123}"); }
   public void testCharclasses59() throws IOException { doCodeTest("[\\p{nothing}]"); }
-  public void testCharclasses60() throws IOException { doCodeTest(/* fixme */"a\\p{<error descr=\"Character family name expected\">*</error>}b"); }
-  public void testCharclasses61() throws IOException { doCodeTest(/* fixme */"[<warning descr=\"Redundant character range\">\\w-\\w</warning>]"); }
+  public void testCharclasses60() throws IOException { doCodeTest("a\\p{*}b"); }
+  public void testCharclasses61() throws IOException { doCodeTest("[\\w-\\w]"); }
   public void testCharclasses62() throws IOException { doCodeTest("[a-\\w]"); }
   public void testCharclasses63() throws IOException { doCodeTest("(?x)abc #foo \\q bar\n# foo\n(?-xi)xyz(?i:ABC)"); }
   public void testCharclasses64() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
   public void testCharclasses65() throws IOException { doCodeTest("\\R"); }
   public void testCharclasses66() throws IOException { doCodeTest("\\X"); }
-  public void testCharclasses67() throws IOException { doCodeTest(/* fixme */"<weak_warning descr=\"Redundant character escape\">\\-</weak_warning>[<weak_warning descr=\"Redundant character escape\">\\*</weak_warning>\\-\\[\\]\\\\<weak_warning descr=\"Redundant character escape\">\\+]</weak_warning>"); }
+  public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
   public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
-  public void testGroups3() throws IOException { doCodeTest(/* fixme */"<warning descr=\"Empty group\">()</warning>"); }
-  public void testGroups4() throws IOException { doCodeTest(/* fixme */"<warning descr=\"Empty group\">(|)</warning>"); }
+  public void testGroups3() throws IOException { doCodeTest("()"); }
+  public void testGroups4() throws IOException { doCodeTest("(|)"); }
   public void testGroups5() throws IOException { doCodeTest("(*)b"); }
-  public void testGroups6() throws IOException { doCodeTest(/* fixme */"<warning descr=\"Redundant group nesting\">((a))</warning>"); }
+  public void testGroups6() throws IOException { doCodeTest("((a))"); }
   public void testGroups7() throws IOException { doCodeTest("(a)b(c)"); }
   public void testGroups8() throws IOException { doCodeTest("(a*)*"); }
   public void testGroups9() throws IOException { doCodeTest("(a*)+"); }
@@ -182,7 +182,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testGroups32() throws IOException { doCodeTest("(?i:*)"); }
   public void testGroups33() throws IOException { doCodeTest("(?<asdf>[a-c])\\1"); }
   public void testGroups34() throws IOException { doCodeTest("(?<asdf>[a-c])\\k<asdf>"); }
-  public void testGroups35() throws IOException { doCodeTest(/* fixme */"<error descr=\"Unresolved named group reference\">\\k<adsf></error>"); }
+  public void testGroups35() throws IOException { doCodeTest("\\k<adsf>"); }
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }
@@ -197,15 +197,15 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testEscapes11() throws IOException { doCodeTest("\\x{0}"); }
   public void testEscapes12() throws IOException { doCodeTest("\\x{2011F}"); }
   public void testEscapes13() throws IOException { doCodeTest("[\\x4a-\\x4b]"); }
-  public void testEscapes14() throws IOException { doCodeTest(/* fixme */"[<warning descr=\"Redundant character range\">a-a</warning>]"); }
+  public void testEscapes14() throws IOException { doCodeTest("[a-a]"); }
   public void testEscapes15() throws IOException { doCodeTest("[\\x4a-\\x3f]"); }
-  public void testEscapes16() throws IOException { doCodeTest(/* fixme */"[<error descr=\"Illegal character range (to < from)\">\\udbff\\udfff-\\ud800\\udc00</error>]"); }
+  public void testEscapes16() throws IOException { doCodeTest("[\\udbff\\udfff-\\ud800\\udc00]"); }
   public void testEscapes17() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
-  public void testEscapes18() throws IOException { doCodeTest(/* fixme */"[<error descr=\"Illegal character range (to < from)\">z-a</error>]"); }
+  public void testEscapes18() throws IOException { doCodeTest("[z-a]"); }
   public void testEscapes19() throws IOException { doCodeTest("[a-z]"); }
   public void testEscapes20() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\Eb"); }
   public void testEscapes21() throws IOException { doCodeTest("(a\\Qabc?*+.))]][]\\Eb)"); }
-  public void testEscapes22() throws IOException { doCodeTest(/* fixme */"[\\Qabc?*+.)<warning descr=\"Duplicate character ')' in character class\">)</warning>]<warning descr=\"Duplicate character ']' in character class\">]</warning>[<warning descr=\"Duplicate character ']' in character class\">]</warning>\\E]"); }
+  public void testEscapes22() throws IOException { doCodeTest("[\\Qabc?*+.))]][]\\E]"); }
   public void testEscapes23() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
   public void testEscapes24() throws IOException { doCodeTest("\\Q\\j\\E"); }
   public void testEscapes25() throws IOException { doCodeTest("\\c0"); }
@@ -229,7 +229,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testNamedchars6() throws IOException { doCodeTest("[a-e]?d\\\\e"); }
   public void testNamedchars7() throws IOException { doCodeTest("((\\w+)/)*(\\w+)"); }
   public void testNamedchars8() throws IOException { doCodeTest("\\p{Digit}+"); }
-  public void testNamedchars9() throws IOException { doCodeTest(/* fixme */"[:xdig<warning descr=\"Duplicate character 'i' in character class\">i</warning>t<warning descr=\"Duplicate character ':' in character class\">:</warning>]+"); }
+  public void testNamedchars9() throws IOException { doCodeTest("[:xdigit:]+"); }
   public void testNamedchars10() throws IOException { doCodeTest("\\p{unknown}+"); }
 
   public void testBackrefs1() throws IOException { doCodeTest("(ac*)c*d[ac]*\\1"); }
@@ -240,7 +240,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testBackrefs6() throws IOException { doCodeTest("(.)\\11"); }
   public void testBackrefs7() throws IOException { doCodeTest("([ab]+)=\\2"); }
   public void testBackrefs8() throws IOException { doCodeTest("([ab]+)=\\3"); }
-  public void testBackrefs9() throws IOException { doCodeTest(/* fixme */"([ab]+=<warning descr=\"Back reference is nested into the capturing group it refers to\">\\1</warning>)"); }
+  public void testBackrefs9() throws IOException { doCodeTest("([ab]+=\\1)"); }
 
   public void testComplex1() throws IOException { doCodeTest("z(\\w\\s+(?:\\w\\s+\\w)+)z"); }
   public void testComplex2() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
@@ -266,10 +266,10 @@ public class RegExpParsingTest extends ParsingTestCase {
 
   public void testRegressions1() throws IOException { doCodeTest("("); }
   public void testRegressions2() throws IOException { doCodeTest("[^^]"); }
-  public void testRegressions3() throws IOException { doCodeTest(/* fixme */"a<error>)</error><error descr=\"Pattern expected\">b</error>"); }
-  public void testRegressions4() throws IOException { doCodeTest(/* fixme */"\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?(<error descr=\"Group name or number expected\">[</error><error descr=\"Pattern expected\">^</error><error descr=\"Pattern expected\">\\</error>s<error descr=\"Pattern expected\">\\</error>}<error descr=\"Pattern expected\">]</error><error descr=\"Dangling metacharacter\">+</error><error descr=\"Unmatched closing ')'\">)</error><error descr=\"Pattern expected\">\\</error>s<error descr=\"Dangling metacharacter\">*</error><error descr=\"Pattern expected\">\\</error>}<error descr=\"Dangling metacharacter\">?</error><error descr=\"Pattern expected\">\\</error>s<error descr=\"Dangling metacharacter\">*</error><error descr=\"Unmatched closing ')'\">)</error><error descr=\"Dangling metacharacter\">?</error><error descr=\"Pattern expected\">(</error><error descr=\"Pattern expected\">.</error><error descr=\"Dangling metacharacter\">*</error><error descr=\"Unmatched closing ')'\">)</error>"); }
+  public void testRegressions3() throws IOException { doCodeTest("a)b"); }
+  public void testRegressions4() throws IOException { doCodeTest("\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?([^\\s\\}]+)\\s*\\}?\\s*)?(.*)"); }
 
-  public void testOptions1() throws IOException { doCodeTest(/* fixme */"(?i<error descr=\"Unknown inline option flag\">Z</error>m)abc"); }
+  public void testOptions1() throws IOException { doCodeTest("(?iZm)abc"); }
   public void testOptions2() throws IOException { doCodeTest("(?idmsuxU)nice"); }
   public void testOptions3() throws IOException { doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
 
@@ -307,7 +307,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testRealLife7() throws IOException { doCodeTest("(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
   public void testRealLife8() throws IOException { doCodeTest("usd [+-]?[0-9]+.[0-9][0-9]"); }
   public void testRealLife9() throws IOException { doCodeTest("\\b(\\w+)(\\s+\\1)+\\b"); }
-  public void testRealLife10() throws IOException { doCodeTest(/* fixme */".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
+  public void testRealLife10() throws IOException { doCodeTest(".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
 
   public void testBug1() throws IOException { doCodeTest("[{][\\w\\.]*[}]"); }
   public void testBug2() throws IOException { doCodeTest("[a-z0-9!\\#$%&'*+/=?^_`{|}~-]+"); }
@@ -316,7 +316,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testBug5() throws IOException { doCodeTest("\\{"); }
   public void testBug6() throws IOException { doCodeTest("(<=\\s)-{3,}(?>\\s)"); }
   public void testBug7() throws IOException { doCodeTest("(?x)a\\ b\\ c"); }
-  public void testBug8() throws IOException { doCodeTest(/* fixme */"a<weak_warning descr=\"Redundant character escape\">\\ </weak_warning>b"); }
+  public void testBug8() throws IOException { doCodeTest("a\\ b"); }
   public void testBug9() throws IOException { doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
   public void testBug10() throws IOException { doCodeTest("\\h \\H \\v \\V"); }
 

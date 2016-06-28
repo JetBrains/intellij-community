@@ -1,74 +1,14 @@
 REGEXP_FILE
-  RegExpPatternImpl: <a\p{<>
-    RegExpBranchImpl: <a\p{<>
+  RegExpPatternImpl: <a\p{*}b>
+    RegExpBranchImpl: <a\p{*}b>
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
-      RegExpPropertyImpl: <\p{<>
+      RegExpPropertyImpl: <\p{*}>
         PsiElement(PROPERTY)('\p')
         PsiElement(LBRACE)('{')
         PsiErrorElement:Character family name expected
           <empty list>
-        PsiElement(BAD_CHARACTER)('<')
-        PsiErrorElement:Unclosed character family
-          <empty list>
-  PsiElement(NAME)('error')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)(' ')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('descr')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('=')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('"')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('Character')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)(' ')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('family')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)(' ')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('name')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)(' ')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('expected')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('"')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('>')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('*')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('<')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('/')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(NAME)('error')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(BAD_CHARACTER)('>')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(RBRACE)('}')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(CHARACTER)('b')
+        PsiElement(BAD_CHARACTER)('*')
+        PsiElement(RBRACE)('}')
+      RegExpCharImpl: <b>
+        PsiElement(CHARACTER)('b')
