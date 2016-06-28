@@ -17,6 +17,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.FormatRangesInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +25,19 @@ import java.util.List;
 public class FormatTextRanges {
 
   private final List<FormatTextRange> myRanges = new ArrayList<>();
+  private final FormatRangesInfo myHelper;
 
   public FormatTextRanges() {
+    myHelper = null;
   }
 
   public FormatTextRanges(TextRange range, boolean processHeadingWhitespace) {
+    myHelper = null;
     add(range, processHeadingWhitespace);
+  }
+  
+  public FormatTextRanges(FormatRangesInfo helper) {
+    myHelper = helper;
   }
 
   public void add(TextRange range, boolean processHeadingWhitespace) {
@@ -75,4 +83,9 @@ public class FormatTextRanges {
   public String toString() {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
+  
+  public boolean isOnInsertedLine(int offset) {
+    return myHelper != null && myHelper.isOnInsertedLine(offset);
+  }
+  
 }

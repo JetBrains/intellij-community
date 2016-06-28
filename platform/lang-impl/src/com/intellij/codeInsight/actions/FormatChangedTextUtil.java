@@ -33,10 +33,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.FormatRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -154,4 +156,11 @@ public class FormatChangedTextUtil {
   public boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
     return false;
   }
+  
+    
+  @Nullable
+  public FormatRangesInfo getChangedTextHelper(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+    return null;
+  }
+  
 }

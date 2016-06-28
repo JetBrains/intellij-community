@@ -165,15 +165,24 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    reformatText(file, ranges, null, true);
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull FormatRangesInfo helper) throws IncorrectOperationException {
+    reformatText(file, helper, null, true);
   }
 
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
     reformatText(file, ranges, editor, false);
   }
-
+  
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor, boolean reformatContext) throws IncorrectOperationException {
+    reformatText(file, new SimpleFormatRangesInfo(ranges), editor, reformatContext);
+  }
+
+  private void reformatText(@NotNull PsiFile file, 
+                            @NotNull FormatRangesInfo rangesInfo, 
+                            @Nullable Editor editor, 
+                            boolean reformatContext) throws IncorrectOperationException 
+  {
+    List<TextRange> ranges = rangesInfo.getRangesToFormat();
     if (ranges.isEmpty()) {
       return;
     }
@@ -228,7 +237,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       ));
     }
 
-    FormatTextRanges formatRanges = new FormatTextRanges();
+    FormatTextRanges formatRanges = new FormatTextRanges(rangesInfo);
     for (TextRange range : correctedRanges) {
       formatRanges.add(range, true);
     }

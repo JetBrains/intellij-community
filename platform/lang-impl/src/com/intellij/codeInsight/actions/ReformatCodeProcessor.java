@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.FormatRangesInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -51,7 +51,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.ReformatCodeProcessor");
 
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
-  private final Collection<TextRange> myRanges = new ArrayList<TextRange>();
+  private final Collection<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
@@ -110,11 +110,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
-    return new FutureTask<Boolean>(() -> {
+    return new FutureTask<>(() -> {
       FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
       try {
-        Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
-
         CharSequence before = null;
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
         if (getInfoCollector() != null) {
@@ -125,9 +123,13 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
 
         if (processChangedTextOnly) {
-          CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges);
+          FormatRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedTextHelper(file);
+          if (helper != null) {
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, helper);
+          }
         }
         else {
+          Collection<TextRange> ranges = getRangesToFormat(file);
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
         }
 
@@ -163,20 +165,16 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @NotNull
-  private Collection<TextRange> getRangesToFormat(boolean processChangedTextOnly, PsiFile file) throws FilesTooBigForDiffException {
+  private Collection<TextRange> getRangesToFormat(PsiFile file) {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
-
-    if (processChangedTextOnly) {
-      return FormatChangedTextUtil.getInstance().getChangedTextRanges(myProject, file);
-    }
-
+    
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
   }
 
   private static class CaretVisualPositionKeeper {
-    private final Map<Editor, Integer> myCaretRelativeVerticalPositions = new HashMap<Editor, Integer>();
+    private final Map<Editor, Integer> myCaretRelativeVerticalPositions = new HashMap<>();
     
     private CaretVisualPositionKeeper(@Nullable Document document) {
       if (document == null) return;

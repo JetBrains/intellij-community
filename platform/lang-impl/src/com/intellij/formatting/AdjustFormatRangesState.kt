@@ -47,6 +47,7 @@ package com.intellij.formatting
 
 import com.intellij.formatting.engine.State
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.codeStyle.FormatRangesInfo
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.util.containers.Stack
 
@@ -55,14 +56,26 @@ interface BlockProcessor {
   fun processCompositeBlock(block: Block)
 }
 
-class AdditionalRangesExtractor : BlockProcessor {
+class VcsAwareFormatRangesInfo(val formattingRanges: List<TextRange>,
+                               private val insertedRanges: List<TextRange>): FormatRangesInfo() 
+{
+  constructor(changedTextRange: TextRange): this(listOf(changedTextRange), emptyList())
+
+  override fun getRangesToFormat() = formattingRanges
+
+  override fun isOnInsertedLine(offset: Int) = insertedRanges.find { it.contains(offset) } != null
+  
+}
+
+    
+class AdditionalRangesExtractor(private val formatRanges: FormatTextRanges) : BlockProcessor {
   val extraRanges = mutableListOf<ExtraReformatRanges>()
 
   override fun processLeafBlock(block: Block) = Unit
 
   override fun processCompositeBlock(block: Block) {
     if (block is AbstractBlock) {
-      block.extraRangesToFormat?.let { extraRanges.add(it) }
+      block.getExtraRangesToFormat(formatRanges)?.let { extraRanges.add(it) }
     }
   }
 }
@@ -79,7 +92,7 @@ fun FormatTextRanges.mergeWith(extraRanges: ExtraReformatRanges) {
 class AdjustFormatRangesState(var currentRoot: Block,
                               val formatRanges: FormatTextRanges) : State() {
   
-  private val extractor = AdditionalRangesExtractor()
+  private val extractor = AdditionalRangesExtractor(formatRanges)
   private val state = Stack(currentRoot)
   
   init {

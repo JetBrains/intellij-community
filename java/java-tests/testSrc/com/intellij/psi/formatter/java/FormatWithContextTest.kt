@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 class FormatWithContextTest : AbstractJavaFormatterTest() {
 
   fun check(before: String, after: String) {
-    doTextTest(Action.REFORMAT_WITH_CONTEXT, before, after)
+    doTextTest(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, before, after)
   }
 
   override fun setUp() {

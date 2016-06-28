@@ -1284,11 +1284,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   
   @Nullable
   @Override
-  public ExtraReformatRanges getExtraRangesToFormat() {
+  public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
     if (!Registry.is("smart.reformat.vcs.changes")) return null;
 
-    if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement) {
-      return new ExtraReformatRanges(myNode.getTextRange());
+    int startOffset = getTextRange().getStartOffset();
+    if (ranges.isOnInsertedLine(startOffset)) {
+      if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement) {
+        return new ExtraReformatRanges(myNode.getTextRange());
+      }
     }
     
     return null;

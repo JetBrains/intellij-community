@@ -183,7 +183,7 @@ public abstract class AbstractBlock implements ASTBlock {
    * @return additional range to reformat, when this block if formatted
    */
   @Nullable
-  public ExtraReformatRanges getExtraRangesToFormat() {
+  public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
     return null;
   }
   
