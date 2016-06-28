@@ -18,6 +18,7 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,14 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
             final String typeText = type.getCanonicalText();
             final String message =
               InspectionsBundle.message("inspection.raw.variable.type.make.generic.text", variable.getName(), typeText);
-            holder.registerProblem(variable, message, new MyLocalQuickFix(message));
+            final PsiElement beforeInitializer =
+              PsiTreeUtil.skipSiblingsBackward(variable.getInitializer(), PsiWhiteSpace.class, PsiComment.class);
+            final ProblemDescriptor descriptor =
+              holder.getManager().createProblemDescriptor(variable.getTypeElement(),
+                                                          beforeInitializer != null ? beforeInitializer : variable.getTypeElement(),
+                                                          message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                          isOnTheFly, new MyLocalQuickFix(message));
+            holder.registerProblem(descriptor);
           }
         }
       }
@@ -96,7 +104,7 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
         final PsiTypeElement typeElement = variable.getTypeElement();
