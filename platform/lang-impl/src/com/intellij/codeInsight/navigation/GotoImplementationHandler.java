@@ -85,7 +85,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
     else {
       PsiElement container = getContainer(sourceElement);
-      ItemPresentation containerPresentation = container == null ? null : ((NavigationItem)container).getPresentation();
+      ItemPresentation containerPresentation = container == null || container instanceof PsiFile ? null : ((NavigationItem)container).getPresentation();
       String containerText = containerPresentation == null ? null : containerPresentation.getPresentableText();
       fullName = (containerText == null ? "" : containerText+".") + presentation.getPresentableText();
     }
