@@ -292,7 +292,6 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                             return first_arg_class.__name__ + "." + func_name
                 return func_name
             except:
-                import traceback
                 traceback.print_exc()
                 return func_name
 
