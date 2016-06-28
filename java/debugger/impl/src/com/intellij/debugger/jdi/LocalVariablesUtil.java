@@ -150,12 +150,13 @@ public class LocalVariablesUtil {
 
     com.sun.jdi.Method method = frameProxy.location().method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
+    final int firstArgsSlot = getFirstArgsSlot(method);
 
     // gather code variables names
-    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot);
+    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot, firstArgsSlot);
 
     // first add arguments
-    int slot = 0;
+    int slot = firstArgsSlot;
     List<String> typeNames = method.argumentTypeNames();
     List<Value> argValues = frameProxy.getArgumentValues();
     for (int i = 0; i < argValues.size(); i++) {
@@ -316,7 +317,9 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
+  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context,
+                                                     final int firstLocalsSlot,
+                                                     final int firstArgsSlot) {
     return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
       @Override
       public MultiMap<Integer, String> compute() {
@@ -326,7 +329,7 @@ public class LocalVariablesUtil {
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
             MultiMap<Integer, String> res = new MultiMap<>();
-            int slot = Math.max(0, firstLocalsSlot - getFirstLocalsSlot(method));
+            int slot = Math.max(0, firstArgsSlot + firstLocalsSlot - getFirstLocalsSlot(method));
             for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
               res.putValue(slot, parameter.getName());
               slot += getTypeSlotSize(parameter.getType());
@@ -496,8 +499,12 @@ public class LocalVariablesUtil {
     return 1;
   }
 
+  private static int getFirstArgsSlot(com.sun.jdi.Method method) {
+    return method.isStatic() ? 0 : 1;
+  }
+
   private static int getFirstLocalsSlot(com.sun.jdi.Method method) {
-    int firstLocalVariableSlot = method.isStatic() ? 0 : 1;
+    int firstLocalVariableSlot = getFirstArgsSlot(method);
     for (String type : method.argumentTypeNames()) {
       firstLocalVariableSlot += getTypeSlotSize(type);
     }
