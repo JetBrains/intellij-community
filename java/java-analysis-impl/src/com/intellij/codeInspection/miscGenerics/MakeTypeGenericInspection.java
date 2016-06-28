@@ -36,21 +36,6 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
       @Override
       public void visitVariable(PsiVariable variable) {
         super.visitVariable(variable);
-        visitVariableImpl(variable);
-      }
-
-      @Override
-      public void visitJavaToken(PsiJavaToken token) {
-        super.visitJavaToken(token);
-        if (token.getTokenType() == JavaTokenType.EQ) {
-          final PsiElement parent = token.getParent();
-          if (parent instanceof PsiVariable) {
-            visitVariableImpl((PsiVariable)parent);
-          }
-        }
-      }
-
-      private void visitVariableImpl(@NotNull PsiVariable variable) {
         if (variable.getTypeElement() != null) {
           final PsiType type = getSuggestedType(variable);
           if (type != null) {
