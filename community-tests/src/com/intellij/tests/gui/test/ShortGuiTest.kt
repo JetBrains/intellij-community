@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tests.gui
+package com.intellij.tests.gui.test
 
 import com.intellij.tests.gui.BelongsToTestGroups
+import com.intellij.tests.gui.fixtures.WelcomeFrameFixture
 import com.intellij.tests.gui.framework.GuiTestCase
-import com.intellij.tests.gui.framework.IdeGuiTest
 import com.intellij.tests.gui.framework.TestGroup
-import org.junit.Ignore
+import com.intellij.tests.gui.framework.createNewProject
+import org.junit.Assert
 import org.junit.Test
 
 /**
- * Created by karashevich on 21/06/16.
+ * Created by karashevich on 18/06/16.
  */
 @BelongsToTestGroups(TestGroup.PROJECT)
-class SimpleApplicationImportTest: GuiTestCase() {
+class ShortGuiTest: GuiTestCase() {
 
-  @Ignore
-  @Test @IdeGuiTest
-  fun testSimpleApplication(){
-    val app = importSimpleApplication()
-    app.waitForBackgroundTasksToFinish()
+  @Test
+  fun testJavaProject(){
+    val createNewProject = createNewProject()
+    val newProjectWizard = findNewProjectWizard()
+    with(newProjectWizard) {
+      clickCancel()
+    }
+    val find = WelcomeFrameFixture.find(myRobot)
+    Assert.assertNotNull(find)
   }
 }
+

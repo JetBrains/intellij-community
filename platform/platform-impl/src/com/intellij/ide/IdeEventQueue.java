@@ -51,6 +51,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -349,6 +350,11 @@ public class IdeEventQueue extends EventQueue {
       ourAppIsLoaded = true;
     }
     return loaded;
+  }
+
+  //Use for GuiTests to stop IdeEventQueue when application is disposed already
+  public static void applicationClose(){
+    ourAppIsLoaded = false;
   }
 
   @Override

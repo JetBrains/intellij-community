@@ -23,32 +23,19 @@ package com.intellij.tests.gui.framework;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.BasicRobot;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
@@ -61,7 +48,6 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
@@ -69,16 +55,15 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
-import static com.intellij.openapi.util.io.FileUtil.*;
+import static com.intellij.openapi.util.io.FileUtil.copyDir;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtilRt.delete;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 import static com.intellij.tests.gui.framework.GuiTestRunner.canRunGuiTests;
 import static com.intellij.tests.gui.framework.GuiTests.*;
 import static junit.framework.Assert.assertNotNull;
-import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
@@ -108,6 +93,7 @@ public abstract class GuiTestCase {
       // We currently do not support running UI tests in headless environments.
       return;
     }
+    System.setProperty("GuiTestMode", "true");
 
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
@@ -134,8 +120,6 @@ public abstract class GuiTestCase {
     ideSettings.USE_HTTP_PROXY = false;
     ideSettings.PROXY_HOST = "";
     ideSettings.PROXY_PORT = 80;
-
-    // TODO: setUpDefaultGeneralSettings();
   }
 
   @After
@@ -249,7 +233,6 @@ public abstract class GuiTestCase {
 
     IdeFrameFixture projectFrame = findIdeFrame(projectPath);
     //TODO: add wait to open project
-    //projectFrame.waitForGradleProjectSyncToFinish();
 
     return projectFrame;
   }
@@ -348,7 +331,6 @@ public abstract class GuiTestCase {
   }
 
 
-
   @NotNull
   protected File getMasterProjectDirPath(@NotNull String projectDirName) {
     return new File(getTestProjectsRootDirPath(), projectDirName);
@@ -393,11 +375,6 @@ public abstract class GuiTestCase {
       }
       delete(dotIdeaFolderPath);
     }
-  }
-
-  @AfterClass
-  public static void afterClass(){
-    //IdeTestApplication.disposeInstance();
   }
 
   @NotNull

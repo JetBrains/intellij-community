@@ -18,6 +18,7 @@ package com.intellij.tests.gui.framework;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.ide.BootstrapClassLoaderUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -25,7 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
@@ -113,7 +114,7 @@ public class IdeTestApplication implements Disposable {
     }
     String homeDirPath = toSystemDependentName(PathManager.getHomePath());
     assertThat(homeDirPath).isNotEmpty();
-    File rootDirPath = new File(homeDirPath, join("androidStudio", "gui-tests"));
+    File rootDirPath = new File(homeDirPath, join("community-tests", "gui-tests"));
     ensureExists(rootDirPath);
     return rootDirPath;
   }
@@ -147,8 +148,8 @@ public class IdeTestApplication implements Disposable {
 
     Class<?> pluginManagerClass = Class.forName("com.intellij.ide.plugins.PluginManager", true, myIdeClassLoader);
     method("start").withParameterTypes(String.class, String.class, String[].class)
-                   .in(pluginManagerClass)
-                   .invoke("com.intellij.idea.MainImpl", "start", args);
+      .in(pluginManagerClass)
+      .invoke("com.intellij.idea.MainImpl", "start", args);
   }
 
   // This method replaces BootstrapClassLoaderUtil.initClassLoader. The reason behind it is that when running UI tests the ClassLoader
@@ -256,15 +257,11 @@ public class IdeTestApplication implements Disposable {
     if (!isLoaded()) {
       return;
     }
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      if (application instanceof ApplicationEx) {
-        ((ApplicationEx)application).exit(true, true);
-      }
-      else {
-        application.exit();
-      }
-    }
+
+    IdeEventQueue.getInstance().flushQueue();
+    final Application application = ApplicationManager.getApplication();
+    ((ApplicationImpl)application).exit(true, true, false, false);
+
     ourInstance = null;
   }
 

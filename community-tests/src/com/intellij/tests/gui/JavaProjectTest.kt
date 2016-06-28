@@ -21,6 +21,7 @@ import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.tests.gui.framework.*
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import javax.swing.text.JTextComponent
@@ -32,6 +33,7 @@ import javax.swing.text.JTextComponent
 class JavaProjectTest: GuiTestCase() {
 
   @Test
+  @Ignore
   fun testJavaProject(){
     var locationFile: File? = null
     val projectName = "smoke-test"

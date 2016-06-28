@@ -16,7 +16,9 @@
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
@@ -37,6 +39,7 @@ import java.lang.reflect.Method;
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _LastInSuiteTest extends TestCase {
   public void testProjectLeak() throws Exception {
+    if (System.getProperty("GuiTestMode") == null || System.getProperty("GuiTestMode").equals("false")) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -71,6 +74,17 @@ public class _LastInSuiteTest extends TestCase {
     catch (AssertionError | Exception e) {
       captureMemorySnapshot();
       throw e;
+    }
+    else {
+      final Application application = ApplicationManager.getApplication();
+
+      application.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance().flushQueue();
+          ((ApplicationImpl)application).exit(true, true, false, false);
+        }
+      }, ModalityState.any());
     }
   }
 
