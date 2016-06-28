@@ -25,6 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.BaseOutputReader;
+import com.pty4j.unix.UnixPtyProcess;
+import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +70,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
+    setHasPty(process instanceof UnixPtyProcess || process instanceof WinPtyProcess);
   }
 
   @NotNull
