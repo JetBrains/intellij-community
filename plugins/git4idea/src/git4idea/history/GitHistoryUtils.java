@@ -657,21 +657,31 @@ public class GitHistoryUtils {
 
     @Nullable
     public GitLogRecord acceptLine(String s) {
-      final boolean lineEnd = s.startsWith(GitLogParser.RECORD_START);
-      if (lineEnd && (!myNotStarted)) {
+      final boolean recordStart = s.startsWith(GitLogParser.RECORD_START);
+      if (recordStart) {
+        s = s.substring(GitLogParser.RECORD_START.length());
+      }
+
+      if (myNotStarted) {
+        myBuffer.append(s);
+        myBuffer.append("\n");
+
+        myNotStarted = false;
+        return null;
+      }
+      else if (recordStart) {
         final String line = myBuffer.toString();
         myBuffer.setLength(0);
-        myBuffer.append(s.substring(GitLogParser.RECORD_START.length()));
+
+        myBuffer.append(s);
 
         return processResult(line);
       }
       else {
-        myBuffer.append(lineEnd ? s.substring(GitLogParser.RECORD_START.length()) : s);
+        myBuffer.append(s);
         myBuffer.append("\n");
+        return null;
       }
-      myNotStarted = false;
-
-      return null;
     }
 
     public GitLogRecord processLast() {
