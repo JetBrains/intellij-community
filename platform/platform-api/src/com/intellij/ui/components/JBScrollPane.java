@@ -100,13 +100,13 @@ public class JBScrollPane extends JScrollPane {
 
   @Deprecated
   public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new DefaultThumbPainter(
-    new RoundThumbPainter(2, .35f, .20f, Gray.xA6, Gray.x1A),
+    new RoundThumbPainter(1, .35f, .20f, Gray.xA6, Gray.x1A),
     new CachedValue("ide.scroll.thumb.mac.classic.darcula.alpha", "0.35", .35f),
     new CachedValue("ide.scroll.thumb.mac.classic.darcula.delta", "0.20", .20f),
     new CachedColor("ide.scroll.thumb.mac.classic.darcula.color", "#A6A6A6", Gray.xA6),
     new CachedColor("ide.scroll.thumb.mac.classic.darcula.border", "#1A1A1A", Gray.x1A));
   static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new DefaultThumbPainter(
-    new RoundThumbPainter(2, 0f, .55f, Gray.xA6, Gray.x1A),
+    new RoundThumbPainter(1, 0f, .55f, Gray.xA6, Gray.x1A),
     new CachedValue("ide.scroll.thumb.mac.overlay.darcula.alpha", "0.00", .00f),
     new CachedValue("ide.scroll.thumb.mac.overlay.darcula.delta", "0.55", .55f),
     new CachedColor("ide.scroll.thumb.mac.overlay.darcula.color", "#A6A6A6", Gray.xA6),
