@@ -55,7 +55,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
         future.get();
       }
       assertEquals(0, executor.shutdownNow().size());
-      assertTrue(executor.awaitTermination(N + N, TimeUnit.MILLISECONDS));
+      assertTrue(executor.awaitTermination(N + N + 100000, TimeUnit.MILLISECONDS));
       assertEquals(maxTasks, max.get());
       assertEquals(N, executed.get());
     }
@@ -93,7 +93,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
         future.get();
       }
       assertEquals(0, executor.shutdownNow().size());
-      assertTrue(executor.awaitTermination(N + N, TimeUnit.MILLISECONDS));
+      assertTrue(executor.awaitTermination(N + N+100000, TimeUnit.MILLISECONDS));
       assertEquals(maxTasks, max.get());
       assertEquals(N, executed.get());
     }
@@ -106,7 +106,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     Integer result = f1.get();
     assertEquals(42, result.intValue());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testEarlyCancelPreventsRunning() throws ExecutionException, InterruptedException {
@@ -126,7 +126,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertFalse(run.get());
     assertTrue(s1.isDone());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testStressWhenSomeTasksCallOtherTasksGet() throws ExecutionException, InterruptedException {
@@ -175,7 +175,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
       }
       finally {
         executor.shutdownNow();
-        assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+        assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
       }
 
       assertTrue("Max threads was: "+maxThreads+" but bound was: "+maxSimultaneousTasks, maxThreads.get() <= maxSimultaneousTasks);
@@ -202,7 +202,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals(expected.toString(), logs);
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
 
@@ -238,7 +238,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
     String logs = log.toString();
     assertEquals("", logs);
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
@@ -272,7 +272,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
     String logs = log.toString();
     assertEquals("", logs);
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
@@ -286,7 +286,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
         futures[i] = executor.submit(() -> log.append(" "));
       }
       executor.shutdown();
-      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
 
       String logs = log.toString();
       assertEquals(N, logs.length());
@@ -304,7 +304,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
     assertFalse(future.isDone());
     assertFalse(future.isCancelled());
-    assertTrue(executor2.awaitTermination(1000, TimeUnit.SECONDS));
+    assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
   }
