@@ -19,19 +19,17 @@ import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
+import com.intellij.ide.actions.ExitAction;
 import com.intellij.ide.actions.OpenFileAction;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -124,31 +122,20 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       application.addApplicationListener(new ApplicationAdapter() {
         @Override
         public void handleAbout(ApplicationEvent applicationEvent) {
-          AboutAction.showAbout();
+          AboutAction.perform(getProject());
           applicationEvent.setHandled(true);
         }
 
         @Override
         public void handlePreferences(ApplicationEvent applicationEvent) {
           Project project = getNotNullProject();
-          ShowSettingsUtilImpl showSettingsUtil = (ShowSettingsUtilImpl)ShowSettingsUtil.getInstance();
-          if (!showSettingsUtil.isAlreadyShown()) {
-            TransactionGuard.submitTransaction(project, () ->
-              showSettingsUtil.showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true)));
-          }
+          TransactionGuard.submitTransaction(project, () -> ShowSettingsAction.perform(project));
           applicationEvent.setHandled(true);
-        }
-
-        @NotNull
-        private Project getNotNullProject() {
-          Project project = getProject();
-          return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
         }
 
         @Override
         public void handleQuit(ApplicationEvent applicationEvent) {
-          ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-          TransactionGuard.submitTransaction(app, app::exit);
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), ExitAction::perform);
         }
 
         @Override
@@ -207,6 +194,12 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     @SuppressWarnings("deprecation")
     private static Project getProject() {
       return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    }
+
+    @NotNull
+    private static Project getNotNullProject() {
+      Project project = getProject();
+      return project != null ? project : ProjectManager.getInstance().getDefaultProject();
     }
   }
 }
