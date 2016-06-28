@@ -105,7 +105,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEnableLigaturesCheckbox.setBorder(null);
     panel.add(myEnableLigaturesCheckbox);
     JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
-    warningIcon.setToolTipText(ApplicationBundle.message("ligatures.jre.warning", ApplicationNamesInfo.getInstance().getProductName()));
+    warningIcon.setToolTipText(ApplicationBundle.message("ligatures.jre.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
     updateWarningIconVisibility(warningIcon);
     panel.add(warningIcon);
