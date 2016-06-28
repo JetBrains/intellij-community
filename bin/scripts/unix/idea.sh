@@ -199,4 +199,4 @@ if [ -x "$RESTARTER" ]; then
   "$RM" -f "$RESTARTER"
 fi
 
-exec "$0" "$@"
+exec "$0"
