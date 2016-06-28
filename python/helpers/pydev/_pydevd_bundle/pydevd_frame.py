@@ -1,3 +1,4 @@
+import inspect
 import linecache
 import os.path
 import re
@@ -266,6 +267,35 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             thread = None
 
     def manage_return_values(self, main_debugger, frame, event, arg):
+
+        def get_full_name_if_method(func_name):
+            # In the frame we have access to the code object, but not to the callable object,
+            # that's why we're trying to get the name of class for methods in such a tricky way:
+            # we are checking the first argument of the function (`self` or `cls` for methods).
+            try:
+                code_obj = frame.f_code
+                if len(code_obj.co_varnames) > 0:
+                    first_arg_name = code_obj.co_varnames[0]
+                    first_arg_obj = frame.f_locals[first_arg_name]
+                    if inspect.isclass(first_arg_obj):  # class method
+                        first_arg_class = first_arg_obj
+                    else:  # instance method
+                        first_arg_class = first_arg_obj.__class__
+                    if hasattr(first_arg_class, func_name):
+                        method = getattr(first_arg_class, func_name)
+                        func_code = None
+                        if hasattr(method, 'func_code'):  # Python2
+                            func_code = method.func_code
+                        elif hasattr(method, '__code__'):  # Python3
+                            func_code = method.__code__
+                        if func_code and func_code == code_obj:
+                            return first_arg_class.__name__ + "." + func_name
+                return func_name
+            except:
+                import traceback
+                traceback.print_exc()
+                return func_name
+
         try:
             if main_debugger.show_return_values:
                 if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
@@ -273,6 +303,7 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
                         if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
                             frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
+                        name = get_full_name_if_method(name)
                         frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
             if main_debugger.remove_return_values_flag:
                 # Showing return values was turned off, we should remove them from locals dict.
