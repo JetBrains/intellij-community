@@ -86,7 +86,7 @@ public class ResolveUtil {
   private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
-  public static final Key<PsiElement> DOCUMENTATION_DELEGATE = Key.create("groovy.documentation.delegate");
+  public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
 
   private ResolveUtil() {
   }

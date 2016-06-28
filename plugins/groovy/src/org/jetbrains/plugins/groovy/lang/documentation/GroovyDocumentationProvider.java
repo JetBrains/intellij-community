@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -381,13 +380,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element instanceof GrPropertyForCompletion) {
       element = ((GrPropertyForCompletion)element).getOriginalAccessor();
-    }
-
-    if (element != null) {
-      PsiElement delegate = element.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE);
-      if (delegate != null) {
-        return delegate;
-      }
     }
 
     return element;
