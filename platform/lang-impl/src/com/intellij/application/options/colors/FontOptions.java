@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -104,7 +105,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEnableLigaturesCheckbox.setBorder(null);
     panel.add(myEnableLigaturesCheckbox);
     JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
-    warningIcon.setToolTipText(ApplicationBundle.message("ligatures.jre.warning"));
+    warningIcon.setToolTipText(ApplicationBundle.message("ligatures.jre.warning", ApplicationNamesInfo.getInstance().getProductName()));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
     updateWarningIconVisibility(warningIcon);
     panel.add(warningIcon);
