@@ -147,7 +147,7 @@ public class GithubShareAction extends DumbAwareAction {
     final String description = shareDialog.getDescription();
     final String remoteName = shareDialog.getRemoteName();
 
-    new Task.Backgroundable(project, "Sharing project on GitHub...") {
+    new Task.Backgroundable(project, "Sharing Project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         // create GitHub repo (network)

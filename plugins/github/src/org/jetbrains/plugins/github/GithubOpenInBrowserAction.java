@@ -55,10 +55,10 @@ import static org.jetbrains.plugins.github.util.GithubUtil.LOG;
  * @date 12/10/10
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
-  public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
+  public static final String CANNOT_OPEN_IN_BROWSER = "Can't open in browser";
 
   protected GithubOpenInBrowserAction() {
-    super("Open on GitHub", "Open corresponding link in browser", GithubIcons.Github_icon);
+    super("Open on GitHub", "Open selected file in browser", GithubIcons.Github_icon);
   }
 
   @Override
@@ -184,7 +184,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Nullable
   private static String getCurrentFileRevisionHash(@NotNull final Project project, @NotNull final VirtualFile file) {
     final Ref<GitRevisionNumber> ref = new Ref<GitRevisionNumber>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Getting last revision", true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Getting Last Revision", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

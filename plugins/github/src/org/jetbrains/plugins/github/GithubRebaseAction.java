@@ -108,7 +108,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
     BasicAction.saveAll();
 
-    new Task.Backgroundable(project, "Rebasing GitHub fork...") {
+    new Task.Backgroundable(project, "Rebasing GitHub Fork...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         gitRepository.update();

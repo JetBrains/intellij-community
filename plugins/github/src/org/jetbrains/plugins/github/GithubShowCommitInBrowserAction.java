@@ -42,7 +42,7 @@ import java.util.List;
 
 public class GithubShowCommitInBrowserAction extends DumbAwareAction {
   public GithubShowCommitInBrowserAction() {
-    super("Open on GitHub", "Open the selected commit in browser", GithubIcons.Github_icon);
+    super("Open on GitHub", "Open selected commit in browser", GithubIcons.Github_icon);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class GithubShowCommitInBrowserAction extends DumbAwareAction {
     GithubFullPath userAndRepository = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
     if (userAndRepository == null) {
       GithubNotifications
-        .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
+        .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Can't extract info about repository: " + url);
       return;
     }
 
