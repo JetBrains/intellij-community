@@ -22,11 +22,20 @@ if [ ! -f "$DEV_IDEA_HOME/build/update.sh" ]; then
   exit 1
 fi
 
+JAVA_BIN="java"
+if [ -n "$JAVA_HOME" ]; then
+  JAVA_BIN="$JAVA_HOME/bin/java"
+  if [ ! -x "$JAVA_BIN" ]; then
+    echo "JAVA_HOME must point to a valid Java installation"
+    exit 1
+  fi
+fi
+
 echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
 ANT_CLASSPATH="$DEV_IDEA_HOME/build/lib/gant/lib/jps.jar"
-java -Xms64m -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
+$JAVA_BIN -Xms64m -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
  -lib "$ANT_CLASSPATH" -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME" $TARGET
 
 if [ "$?" != "0" ]; then
