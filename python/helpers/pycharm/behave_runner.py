@@ -148,13 +148,19 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 # Correct way is to use element.errormessage
                 # but assertions do not have trace there (due to Behave internals)
                 # do, we collect it manually
+                error_message = element.error_message
                 trace = ""
                 if isinstance(element.exception, AssertionError):
                     trace = u"".join([utils.to_unicode(l) for l in traceback.format_tb(element.exc_traceback)])
 
-                error_message = utils.to_unicode(element.error_message)
+                # May be empty https://github.com/behave/behave/issues/468 for some exceptions
+                if not trace and not error_message:
+                    error_message = traceback.format_exc()
+                if not error_message:
+                    # Format exception as last resort
+                    error_message = element.exception
 
-                self._test_failed(step_name, error_message, trace, duration=element.duration)
+                self._test_failed(step_name, utils.to_unicode(error_message), trace, duration=element.duration)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
             else:
