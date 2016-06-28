@@ -674,6 +674,7 @@ public class GitHistoryUtils {
         myBuffer.setLength(0);
 
         myBuffer.append(s);
+        myBuffer.append("\n");
 
         return processResult(line);
       }
