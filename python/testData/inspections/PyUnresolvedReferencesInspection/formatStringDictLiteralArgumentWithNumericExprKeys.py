@@ -1,1 +1,0 @@
-print ("first is %(<warning descr="Unresolved reference 'fst'">fst</warning>)s" % {1: "3"})

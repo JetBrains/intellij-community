@@ -1,0 +1,1 @@
+print(<warning descr="Mapping key \"foo\" is unused">"{foo}"</warning>.format(**{}))

@@ -1,0 +1,1 @@
+print (<warning descr="Mapping key \"fst\" is unused">"first is {fst}"</warning>.format(**{1: "3"})<EOLError descr="')' expected"></EOLError>
