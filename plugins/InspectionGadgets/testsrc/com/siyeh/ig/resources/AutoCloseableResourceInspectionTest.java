@@ -138,6 +138,19 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testScanner() {
+    doTest("import java.util.Scanner;" +
+           "class A {" +
+           "    void a() throws java.io.IOException {" +
+           "        try (Scanner scanner = new Scanner(\"\").useDelimiter(\"\\\\A\")) {" +
+           "            String sconf = scanner.next();" +
+           "            System.out.println(sconf);" +
+           "        }" +
+           "    }" +
+           "}" +
+           "");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();
@@ -147,9 +160,19 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
-      "public final class Formatter implements Closeable {" +
+      "public final class Formatter implements java.io.Closeable {" +
       "    public Formatter format(String format, Object ... args) {" +
       "      return this;" +
+      "    }" +
+      "}",
+      "package java.util;" +
+      "public final class Scanner implements java.io.Closeable {" +
+      "    public Scanner(String source) {}" +
+      "    public Scanner useDelimiter(String pattern) {" +
+      "         return this;" +
+      "    }" +
+      "    public String next() {" +
+      "        return this;" +
       "    }" +
       "}"
     };

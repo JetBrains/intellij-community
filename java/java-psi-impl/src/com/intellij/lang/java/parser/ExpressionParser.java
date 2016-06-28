@@ -850,20 +850,11 @@ public class ExpressionParser {
         ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(
           builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
         if (typeInfo != null) {
-          while (!builder.eof()) {
-            IElementType t = builder.getTokenType();
-            if (t == JavaTokenType.COMMA || t == JavaTokenType.ARROW) {
-              lambda = true;
-              break;
-            }
-            if (t == JavaTokenType.RPARENTH) {
-              lambda = builder.lookAhead(1) == JavaTokenType.ARROW;
-              break;
-            }
-            else if (t == JavaTokenType.LPARENTH || t == JavaTokenType.SEMICOLON || t == JavaTokenType.LBRACE || t == JavaTokenType.RBRACE) {
-              break;
-            }
-            builder.advanceLexer();
+          IElementType t = builder.getTokenType();
+          if (t == JavaTokenType.IDENTIFIER ||
+              t == JavaTokenType.THIS_KEYWORD ||
+              t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW) {
+            lambda = true;
           }
         }
         marker.rollbackTo();

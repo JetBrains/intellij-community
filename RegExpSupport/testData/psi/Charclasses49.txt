@@ -1,0 +1,17 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a[+*?]b>
+    RegExpBranchImpl: <a[+*?]b>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpClassImpl: <[+*?]>
+        PsiElement(CLASS_BEGIN)('[')
+        RegExpUnionImpl: <+*?>
+          RegExpCharImpl: <+>
+            PsiElement(CHARACTER)('+')
+          RegExpCharImpl: <*>
+            PsiElement(CHARACTER)('*')
+          RegExpCharImpl: <?>
+            PsiElement(CHARACTER)('?')
+        PsiElement(CLASS_END)(']')
+      RegExpCharImpl: <b>
+        PsiElement(CHARACTER)('b')
