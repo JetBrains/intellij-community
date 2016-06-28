@@ -310,6 +310,8 @@
     </extensionPoint>
 
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+
+    <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
