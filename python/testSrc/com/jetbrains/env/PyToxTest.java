@@ -113,6 +113,25 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
   /**
+   * Checks empty envs for all but 2.7
+   */
+  @Test
+  public void textToxOneInterpreter() throws Exception {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
+                                                     new MyTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py26", new InterpreterExpectations("", true)),
+                                                       Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
+                                                       Pair.create("py32", new InterpreterExpectations("", true)),
+                                                       Pair.create("py34", new InterpreterExpectations("", true))
+                                                     )
+                  )
+    );
+
+
+  }
+
+  /**
    * Big test which should run on any interpreter and check its output
    */
   @Test
@@ -183,6 +202,7 @@ public final class PyToxTest extends PyEnvTestCase {
           // Interpreter failed to run
           final String testOutput = getTestOutput(interpreterSuite.getChildren().get(0));
           if (testOutput.contains("InterpreterNotFound")) {
+            // Skipped with out of "skip_missing_interpreters = True"
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
             skippedInterpreters.add(interpreterName); // Interpreter does not exit
             continue;
@@ -194,6 +214,13 @@ public final class PyToxTest extends PyEnvTestCase {
                          expectations.myExpectedSuccess);
           continue;
         }
+
+        if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("SKIP")) {
+          // The only reason it may be skipped is it does not exist and skip_missing_interpreters = True
+          final String output = getTestOutput(interpreterSuite);
+          Assert.assertThat("Test marked skipped but not because interpreter not found", output, Matchers.containsString("InterpreterNotFound"));
+        }
+
 
         // Interpretr run success,
         //At least one interpreter tests should passed
