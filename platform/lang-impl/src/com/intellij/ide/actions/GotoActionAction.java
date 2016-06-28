@@ -26,6 +26,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -53,10 +54,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Set;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
@@ -122,6 +120,27 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               }
             }
             return getAdText();
+          }
+        });
+        myList.addMouseMotionListener(new MouseMotionAdapter() {
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            String description = getDescription(e);
+            ActionMenu.showDescriptionInStatusBar(description != null, myList, description);
+          }
+
+          @Nullable
+          private String getDescription(@NotNull MouseEvent e) {
+            int index = myList.locationToIndex(e.getPoint());
+            Object o = myList.getModel().getElementAt(index);
+            if (o instanceof GotoActionModel.MatchedValue) {
+              GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
+              if (mv.value instanceof GotoActionModel.ActionWrapper) {
+                AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
+                return action.getTemplatePresentation().getDescription();
+              }
+            }
+            return null;
           }
         });
       }
