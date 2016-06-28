@@ -18,10 +18,10 @@ package net.sf.cglib.proxy;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.util.ReflectionUtil;
+import net.sf.cglib.asm.$ClassVisitor;
+import net.sf.cglib.asm.$Label;
+import net.sf.cglib.asm.$Type;
 import net.sf.cglib.core.*;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -82,42 +82,42 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private static final String SET_STATIC_CALLBACKS_NAME = "CGLIB$SET_STATIC_CALLBACKS";
   private static final String CONSTRUCTED_FIELD = "CGLIB$CONSTRUCTED";
 
-  private static final Type FACTORY =
+  private static final $Type FACTORY =
     TypeUtils.parseType("net.sf.cglib.proxy.Factory");
-  private static final Type ILLEGAL_STATE_EXCEPTION =
+  private static final $Type ILLEGAL_STATE_EXCEPTION =
     TypeUtils.parseType("IllegalStateException");
-  private static final Type ILLEGAL_ARGUMENT_EXCEPTION =
+  private static final $Type ILLEGAL_ARGUMENT_EXCEPTION =
     TypeUtils.parseType("IllegalArgumentException");
-  private static final Type THREAD_LOCAL =
+  private static final $Type THREAD_LOCAL =
     TypeUtils.parseType("ThreadLocal");
-  private static final Type CALLBACK =
+  private static final $Type CALLBACK =
     TypeUtils.parseType("net.sf.cglib.proxy.Callback");
-  private static final Type CALLBACK_ARRAY =
-    Type.getType(Callback[].class);
+  private static final $Type CALLBACK_ARRAY =
+    $Type.getType(Callback[].class);
   private static final Signature CSTRUCT_NULL =
     TypeUtils.parseConstructor("");
   private static final Signature SET_THREAD_CALLBACKS =
-    new Signature(SET_THREAD_CALLBACKS_NAME, Type.VOID_TYPE, new Type[]{ CALLBACK_ARRAY });
+    new Signature(SET_THREAD_CALLBACKS_NAME, $Type.VOID_TYPE, new $Type[]{ CALLBACK_ARRAY });
   private static final Signature SET_STATIC_CALLBACKS =
-    new Signature(SET_STATIC_CALLBACKS_NAME, Type.VOID_TYPE, new Type[]{ CALLBACK_ARRAY });
+    new Signature(SET_STATIC_CALLBACKS_NAME, $Type.VOID_TYPE, new $Type[]{ CALLBACK_ARRAY });
   private static final Signature NEW_INSTANCE =
-    new Signature("newInstance", Constants.TYPE_OBJECT, new Type[]{ CALLBACK_ARRAY });
+    new Signature("newInstance", Constants.TYPE_OBJECT, new $Type[]{ CALLBACK_ARRAY });
   private static final Signature MULTIARG_NEW_INSTANCE =
-    new Signature("newInstance", Constants.TYPE_OBJECT, new Type[]{
+    new Signature("newInstance", Constants.TYPE_OBJECT, new $Type[]{
       Constants.TYPE_CLASS_ARRAY,
       Constants.TYPE_OBJECT_ARRAY,
       CALLBACK_ARRAY,
     });
   private static final Signature SINGLE_NEW_INSTANCE =
-    new Signature("newInstance", Constants.TYPE_OBJECT, new Type[]{ CALLBACK });
+    new Signature("newInstance", Constants.TYPE_OBJECT, new $Type[]{ CALLBACK });
   private static final Signature SET_CALLBACK =
-    new Signature("setCallback", Type.VOID_TYPE, new Type[]{ Type.INT_TYPE, CALLBACK });
+    new Signature("setCallback", $Type.VOID_TYPE, new $Type[]{ $Type.INT_TYPE, CALLBACK });
   private static final Signature GET_CALLBACK =
-    new Signature("getCallback", CALLBACK, new Type[]{ Type.INT_TYPE });
+    new Signature("getCallback", CALLBACK, new $Type[]{ $Type.INT_TYPE });
   private static final Signature SET_CALLBACKS =
-    new Signature("setCallbacks", Type.VOID_TYPE, new Type[]{ CALLBACK_ARRAY });
+    new Signature("setCallbacks", $Type.VOID_TYPE, new $Type[]{ CALLBACK_ARRAY });
   private static final Signature GET_CALLBACKS =
-    new Signature("getCallbacks", CALLBACK_ARRAY, new Type[0]);
+    new Signature("getCallbacks", CALLBACK_ARRAY, new $Type[0]);
   private static final Signature THREAD_LOCAL_GET =
     TypeUtils.parseSignature("Object get()");
   private static final Signature THREAD_LOCAL_SET =
@@ -136,7 +136,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     Object newInstance(String type,
                               String[] interfaces,
                               CallbackFilter filter,
-                              Type[] callbackTypes,
+                              $Type[] callbackTypes,
                               boolean useFactory,
                               boolean interceptDuringConstruction,
                               Long serialVersionUID);
@@ -145,7 +145,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private Class[] interfaces;
   private CallbackFilter filter;
   private Callback[] callbacks;
-  private Type[] callbackTypes;
+  private $Type[] callbackTypes;
   private boolean classOnly;
   private Class superclass;
   private Class[] argumentTypes;
@@ -328,7 +328,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       if (callbacks.length != callbackTypes.length) {
         throw new IllegalStateException("Lengths of callback and callback types array must be the same");
       }
-      Type[] check = CallbackInfo.determineTypes(callbacks);
+      $Type[] check = CallbackInfo.determineTypes(callbacks);
       for (int i = 0; i < check.length; i++) {
         if (!check[i].equals(callbackTypes[i])) {
           throw new IllegalStateException("Callback " + check[i] + " is not assignable to " + callbackTypes[i]);
@@ -429,7 +429,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     CollectionUtils.filter(methods, new VisibilityPredicate(superclass, true));
   }
 
-  public void generateClass(ClassVisitor v) throws Exception {
+  public void generateClass($ClassVisitor v) throws Exception {
     Class sc = (superclass == null) ? Object.class : superclass;
 
     if (TypeUtils.isFinal(sc.getModifiers())) {
@@ -461,21 +461,21 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.begin_class(Constants.V1_2,
                   Constants.ACC_PUBLIC,
                   getClassName(),
-                  Type.getType(sc),
+                  $Type.getType(sc),
                   (useFactory ?
                    TypeUtils.add(TypeUtils.getTypes(interfaces), FACTORY) :
                    TypeUtils.getTypes(interfaces)),
                   Constants.SOURCE_FILE);
     List constructorInfo = CollectionUtils.transform(constructors, MethodInfoTransformer.getInstance());
 
-    e.declare_field(Constants.ACC_PRIVATE, BOUND_FIELD, Type.BOOLEAN_TYPE, null);
+    e.declare_field(Constants.ACC_PRIVATE, BOUND_FIELD, $Type.BOOLEAN_TYPE, null);
     if (!interceptDuringConstruction) {
-      e.declare_field(Constants.ACC_PRIVATE, CONSTRUCTED_FIELD, Type.BOOLEAN_TYPE, null);
+      e.declare_field(Constants.ACC_PRIVATE, CONSTRUCTED_FIELD, $Type.BOOLEAN_TYPE, null);
     }
     e.declare_field(Constants.PRIVATE_FINAL_STATIC, THREAD_CALLBACKS_FIELD, THREAD_LOCAL, null);
     e.declare_field(Constants.PRIVATE_FINAL_STATIC, STATIC_CALLBACKS_FIELD, CALLBACK_ARRAY, null);
     if (serialVersionUID != null) {
-      e.declare_field(Constants.PRIVATE_FINAL_STATIC, Constants.SUID_FIELD_NAME, Type.LONG_TYPE, serialVersionUID);
+      e.declare_field(Constants.PRIVATE_FINAL_STATIC, Constants.SUID_FIELD_NAME, $Type.LONG_TYPE, serialVersionUID);
     }
 
     for (int i = 0; i < callbackTypes.length; i++) {
@@ -670,7 +670,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.load_this();
     e.load_arg(0);
     e.process_switch(keys, new ProcessSwitchCallback() {
-      public void processCase(int key, Label end) {
+      public void processCase(int key, $Label end) {
         e.getfield(getCallbackField(key));
         e.goTo(end);
       }
@@ -689,13 +689,13 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.load_arg(1);
     e.load_arg(0);
     e.process_switch(keys, new ProcessSwitchCallback() {
-      public void processCase(int key, Label end) {
+      public void processCase(int key, $Label end) {
         e.checkcast(callbackTypes[key]);
         e.putfield(getCallbackField(key));
         e.goTo(end);
       }
       public void processDefault() {
-        final Type type = Type.getType(AssertionError.class);
+        final $Type type = $Type.getType(AssertionError.class);
         e.new_instance(type);
         e.dup();
         e.invoke_constructor(type);
@@ -785,9 +785,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.dup();
     e.load_arg(0);
     EmitUtils.constructor_switch(e, constructors, new ObjectSwitchCallback() {
-      public void processCase(Object key, Label end) {
+      public void processCase(Object key, $Label end) {
         MethodInfo constructor = (MethodInfo)key;
-        Type types[] = constructor.getSignature().getArgumentTypes();
+        $Type types[] = constructor.getSignature().getArgumentTypes();
         for (int i = 0; i < types.length; i++) {
           e.load_arg(1);
           e.push(i);
@@ -871,7 +871,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         CodeEmitter e = EmitUtils.begin_method(ce, method);
         if (!interceptDuringConstruction &&
             !TypeUtils.isAbstract(method.getModifiers())) {
-          Label constructed = e.make_label();
+          $Label constructed = e.make_label();
           e.load_this();
           e.getfield(CONSTRUCTED_FIELD);
           e.if_jump(e.NE, constructed);
@@ -931,7 +931,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.load_this();
     e.getfield(getCallbackField(index));
     e.dup();
-    Label end = e.make_label();
+    $Label end = e.make_label();
     e.ifnonnull(end);
     e.pop(); // stack height
     e.load_this();
@@ -950,7 +950,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.checkcast_this();
     e.store_local(me);
 
-    Label end = e.make_label();
+    $Label end = e.make_label();
     e.load_local(me);
     e.getfield(BOUND_FIELD);
     e.if_jump(e.NE, end);
@@ -961,7 +961,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.getfield(THREAD_CALLBACKS_FIELD);
     e.invoke_virtual(THREAD_LOCAL, THREAD_LOCAL_GET);
     e.dup();
-    Label found_callback = e.make_label();
+    $Label found_callback = e.make_label();
     e.ifnonnull(found_callback);
     e.pop();
 
