@@ -1,7 +1,6 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -23,8 +22,8 @@ public class CreateAction extends PatchAction {
     if (!newerFile.isDirectory()) {
       writeExecutableFlag(patchOutput, newerFile);
       writeSymlinkFlag(patchOutput, newerFile);
-      if (isSymlink(newerFile)) {
-        patchOutput.write(getSymlinkTarget(newerFile).getBytes());
+      if (Utils.isSymlink(newerFile)) {
+        patchOutput.write(Utils.getSymlinkTarget(newerFile).getBytes());
       }
       else {
         Utils.copyFileToStream(newerFile, patchOutput);
@@ -32,36 +31,6 @@ public class CreateAction extends PatchAction {
     }
 
     patchOutput.closeEntry();
-  }
-
-  private static String getSymlinkTarget(File file) throws IOException {
-    String target = file.getCanonicalPath();
-    String link = file.getAbsolutePath();
-    String[] segments1 = link.split(Pattern.quote(File.separator));
-    String[] segments2 = target.split(Pattern.quote(File.separator));
-
-    int len1 = segments1.length;
-    int len2 = segments2.length;
-    int len = Math.min(len1, len2);
-    int start = 0;
-    for (; start < len; start++) {
-      if (!segments1[start].equals(segments2[start])) {
-        break;
-      }
-    }
-
-    StringBuilder result = new StringBuilder();
-    for (int i = start; i < len1 - 1; i++) {
-      result.append("..").append(File.separator);
-    }
-    while (start < len2) {
-      result.append(segments2[start]);
-      if (++start < len2) {
-        result.append(File.separator);
-      }
-    }
-
-    return result.toString();
   }
 
   @Override
