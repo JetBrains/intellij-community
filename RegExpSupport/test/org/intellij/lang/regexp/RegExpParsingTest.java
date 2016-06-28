@@ -31,7 +31,7 @@ public class RegExpParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/community/RegExpSupport/testData/";
+    return PathManager.getHomePath() + "/community/RegExpSupport/testData";
   }
 
   public void testSimple1() throws IOException { doCodeTest("|"); }
