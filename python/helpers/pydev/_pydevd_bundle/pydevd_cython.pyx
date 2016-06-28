@@ -195,6 +195,7 @@ cdef class PyDBAdditionalThreadInfo:
 #         PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
 # 
 # ENDIF
+import inspect
 import linecache
 import os.path
 import re
@@ -208,7 +209,7 @@ from _pydevd_bundle.pydevd_breakpoints import get_exception_breakpoint
 from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
     CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
-    dict_keys, dict_pop, RETURN_VALUES_PREFIX
+    dict_keys, dict_pop, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
@@ -463,22 +464,51 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
             thread = None
 
     def manage_return_values(self, main_debugger, frame, event, arg):
+
+        def get_full_name_if_method(func_name):
+            # In the frame we have access to the code object, but not to the callable object,
+            # that's why we're trying to get the name of class for methods in such a tricky way:
+            # we are checking the first argument of the function (`self` or `cls` for methods).
+            try:
+                code_obj = frame.f_code
+                if len(code_obj.co_varnames) > 0:
+                    first_arg_name = code_obj.co_varnames[0]
+                    first_arg_obj = frame.f_locals[first_arg_name]
+                    if inspect.isclass(first_arg_obj):  # class method
+                        first_arg_class = first_arg_obj
+                    else:  # instance method
+                        first_arg_class = first_arg_obj.__class__
+                    if hasattr(first_arg_class, func_name):
+                        method = getattr(first_arg_class, func_name)
+                        func_code = None
+                        if hasattr(method, 'func_code'):  # Python2
+                            func_code = method.func_code
+                        elif hasattr(method, '__code__'):  # Python3
+                            func_code = method.__code__
+                        if func_code and func_code == code_obj:
+                            return first_arg_class.__name__ + "." + func_name
+                return func_name
+            except:
+                traceback.print_exc()
+                return func_name
+
         try:
             if main_debugger.show_return_values:
                 if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
                     name = frame.f_code.co_name
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                        frame.f_back.f_locals[RETURN_VALUES_PREFIX + name] = arg
+                        if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
+                            frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
+                        name = get_full_name_if_method(name)
+                        frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
             if main_debugger.remove_return_values_flag:
                 # Showing return values was turned off, we should remove them from locals dict.
                 # The values can be in the current frame or in the back one
-                for var_name in dict_keys(frame.f_locals):
-                    if var_name.startswith(RETURN_VALUES_PREFIX):
-                        dict_pop(frame.f_locals, var_name)
+                if RETURN_VALUES_DICT in dict_keys(frame.f_locals):
+                    dict_pop(frame.f_locals, RETURN_VALUES_DICT)
                 if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
-                    for var_name in dict_keys(frame.f_back.f_locals):
-                        if var_name.startswith(RETURN_VALUES_PREFIX):
-                            dict_pop(frame.f_back.f_locals, var_name)
+                    if RETURN_VALUES_DICT in dict_keys(frame.f_back.f_locals):
+                        dict_pop(frame.f_back.f_locals, RETURN_VALUES_DICT)
                 main_debugger.remove_return_values_flag = False
         except:
             main_debugger.remove_return_values_flag = False
