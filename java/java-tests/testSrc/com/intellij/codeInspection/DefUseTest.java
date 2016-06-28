@@ -17,12 +17,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class DefUseTest extends InspectionTestCase {
+public class DefUseTest extends LightCodeInsightFixtureTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/defUse";
   }
 
   public void testSCR5144() { doTest(); }
@@ -37,6 +37,7 @@ public class DefUseTest extends InspectionTestCase {
   public void testOperatorAssignment() { doTest(); }
 
   private void doTest() {
-    doTest("defUse/" + getTestName(false), new DefUseInspection());
+    myFixture.enableInspections(new DefUseInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 }
