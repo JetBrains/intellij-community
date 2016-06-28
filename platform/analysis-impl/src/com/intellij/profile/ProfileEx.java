@@ -104,9 +104,6 @@ public abstract class ProfileEx implements Profile {
     serializeInto(element, true);
   }
 
-  public void profileChanged() {
-  }
-
   public boolean equals(Object o) {
     return this == o || o instanceof ProfileEx && myName.equals(((ProfileEx)o).myName);
   }

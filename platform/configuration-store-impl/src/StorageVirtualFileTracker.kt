@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -71,13 +70,13 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           }
           else {
             val path = event.path
-            storage = filePathToStorage[path]
+            storage = filePathToStorage.get(path)
             // we don't care about parent directory create (because it doesn't affect anything) and move (because it is not supported case),
             // but we should detect deletion - but again, it is not supported case. So, we don't check if some of registered storages located inside changed directory.
 
             // but if we have DirectoryBasedStorage, we check - if file located inside it
-            if (storage == null && hasDirectoryBasedStorages && StringUtilRt.endsWithIgnoreCase(path, FileStorageCoreUtil.DEFAULT_EXT)) {
-              storage = filePathToStorage[VfsUtil.getParentDir(path)]
+            if (storage == null && hasDirectoryBasedStorages && path.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true)) {
+              storage = filePathToStorage.get(VfsUtil.getParentDir(path))
             }
           }
 

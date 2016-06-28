@@ -32,9 +32,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
-import com.intellij.profile.ProfileEx
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.ui.UIUtil
@@ -66,9 +66,6 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
     }
   }
 
-//  private val nameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
-//  private val appNameToProfile = ConcurrentHashMap<String, InspectionProfileWrapper>()
-
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
@@ -93,6 +90,16 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
         val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
         profile.isProjectLevel = true
         return profile
+      }
+
+      override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+      override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
+        schemeRemoved(scheme)
+      }
+
+      override fun onSchemeAdded(scheme: InspectionProfileImpl) {
+        fireProfileChanged(scheme)
       }
     }, isUseOldFileNameSanitize = true)
 
@@ -130,6 +137,8 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstanceImpl(project).apply {
+        schemeManager.loadSchemes()
+
         val inspectionProfile = currentProfile
         val app = ApplicationManager.getApplication()
         val initInspectionProfilesRunnable = {
@@ -187,7 +196,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
         if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
           if (o.getAttributeValue("value").toBoolean()) {
             if (newState.projectProfile != null) {
-              (currentProfile as ProfileEx).convert(state, project)
+              currentProfile.convert(state, project)
             }
           }
           break

@@ -42,7 +42,14 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   override final fun <T : Scheme, MutableT : T> create(directoryName: String, processor: SchemeProcessor<T, MutableT>, presentableName: String?, roamingType: RoamingType, isUseOldFileNameSanitize: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
-    val manager = SchemeManagerImpl(path, processor, (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path), roamingType, componentManager, presentableName, isUseOldFileNameSanitize)
+    val manager = SchemeManagerImpl(path,
+                                    processor,
+                                    (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider,
+                                    pathToFile(path),
+                                    roamingType,
+                                    presentableName,
+                                    isUseOldFileNameSanitize,
+                                    componentManager?.messageBus)
     @Suppress("UNCHECKED_CAST")
     managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
     return manager

@@ -20,9 +20,9 @@ import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.MessageBus
 import javax.swing.SwingUtilities
 
-fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction (Computable { runnable.invoke() })
+inline fun <T> runWriteAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable.invoke() })
 
-fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction (Computable { runnable.invoke() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable.invoke() })
 
 inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
   val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)

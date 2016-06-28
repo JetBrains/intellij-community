@@ -46,7 +46,7 @@ import kotlin.concurrent.write
 private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
 
 /**
- * If componentManager not specified, storage will not add file tracker (see VirtualFileTracker)
+ * If componentManager not specified, storage will not add file tracker
  */
 open class StateStorageManagerImpl(private val rootTagName: String,
                                    private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,

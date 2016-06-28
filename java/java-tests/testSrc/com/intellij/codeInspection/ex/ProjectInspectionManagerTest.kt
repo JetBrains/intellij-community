@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.ex
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.configurationStore.loadAndUseProject
@@ -101,9 +102,9 @@ internal class ProjectInspectionManagerTest {
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       // cause to use app profile
-      val currentProfile = projectInspectionProfileManager.currentProfile
-      assertThat(currentProfile.isProjectLevel).isTrue()
       InspectionProfileImpl.initAndDo {
+        val currentProfile = projectInspectionProfileManager.currentProfile
+        assertThat(currentProfile.isProjectLevel).isTrue()
         currentProfile.disableTool("Convert2Diamond", project)
       }
 
@@ -113,11 +114,28 @@ internal class ProjectInspectionManagerTest {
       val file = inspectionDir.resolve("profiles_settings.xml")
 
       assertThat(file).doesNotExist()
-      assertThat(inspectionDir.resolve("Project_Default.xml").readText()).isEqualTo("""
-      <inspections profile_name="Project Default" version="1.0">
-        <option name="myName" value="Project Default" />
-        <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
-      </inspections>""".trimIndent())
+      val profileFile = inspectionDir.resolve("Project_Default.xml")
+      assertThat(profileFile.readText()).isEqualTo("""
+      <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="Project Default" />
+          <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+        </profile>
+      </component>""".trimIndent())
+
+      profileFile.write("""
+      <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="Project Default" />
+          <inspection_tool class="Convert2Diamond" enabled="false" level="ERROR" enabled_by_default="false" />
+        </profile>
+      </component>""".trimIndent())
+
+      project.baseDir.refresh(false, true)
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      InspectionProfileImpl.initAndDo {
+        assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
+      }
     }
   }
 }

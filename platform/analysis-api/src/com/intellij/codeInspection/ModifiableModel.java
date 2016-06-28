@@ -70,8 +70,6 @@ public interface ModifiableModel extends Profile {
 
   InspectionToolWrapper[] getInspectionTools(PsiElement element);
 
-  void copyFrom(@NotNull InspectionProfile profile);
-
   /**
    * @see InspectionProfile#getSingleTool()
    */

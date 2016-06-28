@@ -134,11 +134,15 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myView);
-    myView = null;
-    myUnusedToolWrapper = null;
-    myDataFlowToolWrapper = null;
-    super.tearDown();
+    try {
+      Disposer.dispose(myView);
+      myView = null;
+      myUnusedToolWrapper = null;
+      myDataFlowToolWrapper = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testOfflineWithInvalid() throws Exception {

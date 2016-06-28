@@ -79,11 +79,8 @@ public class InspectionToolRegistrar {
   private static void registerTools(@NotNull Collection<InspectionToolProvider> providers,
                                     @NotNull List<Factory<InspectionToolWrapper>> factories) {
     for (InspectionToolProvider provider : providers) {
-      Class[] classes = provider.getInspectionClasses();
-      for (final Class aClass : classes) {
-        Factory<InspectionToolWrapper> factory =
-          () -> wrapTool((InspectionProfileEntry)InspectionToolsRegistrarCore.instantiateTool(aClass));
-        factories.add(factory);
+      for (Class aClass : provider.getInspectionClasses()) {
+        factories.add(() -> wrapTool((InspectionProfileEntry)InspectionToolsRegistrarCore.instantiateTool(aClass)));
       }
     }
   }

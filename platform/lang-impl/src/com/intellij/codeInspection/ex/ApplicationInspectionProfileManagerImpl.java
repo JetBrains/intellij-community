@@ -113,7 +113,6 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
       @Override
       public void onSchemeAdded(@NotNull InspectionProfileImpl scheme) {
-        updateProfileImpl(scheme);
         fireProfileChanged(scheme);
         onProfilesChanged();
       }

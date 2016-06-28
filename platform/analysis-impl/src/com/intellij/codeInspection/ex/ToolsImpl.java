@@ -101,7 +101,7 @@ public class ToolsImpl implements Tools {
 
   @NotNull
   @Override
-  public InspectionToolWrapper getInspectionTool(PsiElement element) {
+  public InspectionToolWrapper getInspectionTool(@Nullable PsiElement element) {
     if (myTools != null) {
       final PsiFile containingFile = element == null ? null : element.getContainingFile();
       final Project project = containingFile == null ? null : containingFile.getProject();
@@ -178,10 +178,9 @@ public class ToolsImpl implements Tools {
     myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
     final InspectionToolWrapper toolWrapper = myDefaultState.getTool();
 
-    final List scopeElements = toolElement.getChildren(ProfileEx.SCOPE);
+    final List<Element> scopeElements = toolElement.getChildren(ProfileEx.SCOPE);
     final List<String> scopeNames = new ArrayList<String>();
-    for (Object sO : scopeElements) {
-      final Element scopeElement = (Element)sO;
+    for (Element scopeElement : scopeElements) {
       final String scopeName = scopeElement.getAttributeValue(ProfileEx.NAME);
       if (scopeName == null) {
         continue;

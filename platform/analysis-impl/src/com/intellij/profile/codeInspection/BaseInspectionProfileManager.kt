@@ -24,7 +24,6 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.project.Project
 import com.intellij.profile.Profile
 import com.intellij.profile.ProfileChangeAdapter
-import com.intellij.profile.ProfileEx
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 
@@ -34,7 +33,7 @@ internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
 abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProfileManager {
   protected abstract val schemeManager: SchemeManager<InspectionProfile>
 
-  protected val profileListeners = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
+  protected val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
   private val severityRegistrar = SeverityRegistrar(messageBus)
 
   override final fun getSeverityRegistrar() = severityRegistrar
@@ -64,7 +63,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
   }
 
   override final fun fireProfileChanged(profile: Profile) {
-    if (profile is ProfileEx) {
+    if (profile is InspectionProfileImpl) {
       profile.profileChanged()
     }
     for (adapter in profileListeners) {
@@ -78,7 +77,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  final fun addProfile(profile: Profile) {
+  fun addProfile(profile: Profile) {
     schemeManager.addScheme(profile as InspectionProfile)
   }
 
