@@ -154,6 +154,10 @@ public class RootIndex {
       }
     }
 
+    for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      Collection<VirtualFile> roots = provider.getAdditionalProjectLibrarySourceRoots(project);
+      info.libraryOrSdkSources.addAll(roots);
+    }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       Collections.addAll(info.excludedFromProject, policy.getExcludeRootsForProject());
     }
