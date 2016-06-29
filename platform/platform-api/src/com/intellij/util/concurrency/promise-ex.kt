@@ -47,3 +47,30 @@ private class CountDownConsumer<T>(@Volatile private var countDown: Int, private
     }
   }
 }
+
+fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
+  if (promises.isEmpty()) {
+    return resolvedPromise(null)
+  }
+  else if (promises.size == 1) {
+    return promises.first()
+  }
+
+  val totalPromise = AsyncPromise<T>()
+  val done = Consumer<T> { result -> totalPromise.setResult(result) }
+  val rejected = object : Consumer<Throwable> {
+    @Volatile private var toConsume = promises.size
+
+    override fun consume(throwable: Throwable) {
+      if (--toConsume <= 0) {
+        totalPromise.setError(totalError)
+      }
+    }
+  }
+
+  for (promise in promises) {
+    promise.done(done)
+    promise.rejected(rejected)
+  }
+  return totalPromise
+}
