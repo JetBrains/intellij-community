@@ -50,7 +50,8 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    String text = QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.size() > 1 ? "" : myCandidates.get(0).getName());
+    final List<PsiVariable> candidates = getOrFindCandidates();
+    String text = QuickFixBundle.message("add.method.qualifier.fix.text", candidates.size() > 1 ? "" : candidates.get(0).getName());
     if (myCandidates.size() > 1) {
       text += "...";
     }
