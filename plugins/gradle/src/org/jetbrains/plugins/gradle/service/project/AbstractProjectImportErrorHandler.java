@@ -64,10 +64,11 @@ public abstract class AbstractProjectImportErrorHandler {
       if (location == null) {
         location = getLocationFrom(rootCause);
       }
-      if (rootCause.getCause() == null || rootCause.getCause().getMessage() == null) {
+      Throwable cause = rootCause.getCause();
+      if (cause == null || cause.getMessage() == null && !(cause instanceof StackOverflowError)) {
         break;
       }
-      rootCause = rootCause.getCause();
+      rootCause = cause;
     }
     //noinspection ConstantConditions
     return Pair.create(rootCause, location);
