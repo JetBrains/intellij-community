@@ -1,4 +1,4 @@
-public class AssignTest { 
+class AssignTest {
     public static void main(String[] args) {
         int foo = 0;
  

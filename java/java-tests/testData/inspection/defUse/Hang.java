@@ -1,4 +1,22 @@
-public class DefUse {
+class DefUse {
+    interface JZlib {
+        int Z_NO_FLUSH = 0;
+        int Z_HUFFMAN_ONLY = 2;
+        int Z_FINISH = 4;
+    }
+
+    static class ZStream {
+        int avail_out;
+    }
+
+    int strategy, ins_h, strstart, match_start, hash_shift, hash_mask, hash_head, w_size, w_mask, max_lazy_match;
+    byte[] window;
+    short[] prev, head;
+    ZStream strm;
+
+    int longest_match(int cur_match) { throw new UnsupportedOperationException(); }
+    boolean _tr_tally(int dist, int lc) { throw new UnsupportedOperationException(); }
+    void flush_block_only(boolean eof) { throw new UnsupportedOperationException(); }
 
     private int deflate_fast(int flush, int lookahead, int match_length) {
         //    short hash_head = 0; // head of the hash chain

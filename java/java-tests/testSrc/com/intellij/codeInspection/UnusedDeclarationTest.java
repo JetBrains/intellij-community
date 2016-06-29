@@ -164,6 +164,10 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testMockedField() {
+    doTest();
+  }
+
   public void testConstructorCalls() {
     doTest();
   }

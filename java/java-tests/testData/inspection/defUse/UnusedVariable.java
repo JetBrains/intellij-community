@@ -1,4 +1,4 @@
-public class Foo {
+class Foo {
   public void foo() {
     int i;
   }

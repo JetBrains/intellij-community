@@ -61,6 +61,10 @@ public class MakeTypeGenericTest extends LightCodeInsightFixtureTestCase {
     doTest("Change type of list to java.util.List<java.lang.String>");
   }
 
+  public void testAtInitializer() {
+    assertIntentionNotAvailable("Change type of list to java.util.List<java.lang.String>");
+  }
+
   public void testImplementedRaw() {
     assertIntentionNotAvailable("Change type of");
   }

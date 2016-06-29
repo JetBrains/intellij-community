@@ -35,7 +35,7 @@ public class ProgressStripe extends JBPanel {
   private final NotNullComputable<MyLoadingDecorator> myCreateLoadingDecorator;
   protected MyLoadingDecorator myDecorator;
 
-  public ProgressStripe(@NotNull JComponent targetComponent, @NotNull JComponent toolbar, @NotNull Disposable parent, int startDelayMs) {
+  public ProgressStripe(@NotNull JComponent targetComponent, @NotNull Disposable parent, int startDelayMs) {
     super(new BorderLayout());
     myPanel = new JBPanel(new BorderLayout());
     myPanel.setOpaque(false);
@@ -44,7 +44,7 @@ public class ProgressStripe extends JBPanel {
     myCreateLoadingDecorator = () -> {
       Disposable disposable = Disposer.newDisposable();
       Disposer.register(parent, disposable);
-      return new MyLoadingDecorator(targetComponent, toolbar, myPanel, disposable, startDelayMs);
+      return new MyLoadingDecorator(targetComponent, myPanel, disposable, startDelayMs);
     };
     createLoadingDecorator();
   }
@@ -82,36 +82,13 @@ public class ProgressStripe extends JBPanel {
   private static class MyLoadingDecorator extends LoadingDecorator {
     @NotNull
     private final Disposable myDisposable;
-    @NotNull
-    private final JComponent myToolbar;
-    @NotNull
-    private final ComponentAdapter myListener;
-    private Box.Filler myFiller;
 
     public MyLoadingDecorator(@NotNull JComponent component,
-                              @NotNull JComponent toolbar,
                               @NotNull JPanel contentPanel,
                               @NotNull Disposable disposable,
                               int startDelayMs) {
       super(contentPanel, disposable, startDelayMs, false, ProgressStripeIcon.generateIcon(component));
       myDisposable = disposable;
-      myToolbar = toolbar;
-      myListener = new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          super.componentResized(e);
-          adjustFiller();
-        }
-      };
-      myToolbar.addComponentListener(myListener);
-      adjustFiller();
-    }
-
-    private void adjustFiller() {
-      if (myFiller != null && myToolbar.getHeight() != 0) {
-        Dimension dimension = new Dimension(0, myToolbar.getHeight() - ProgressStripeIcon.getHeight() / 2);
-        myFiller.changeShape(dimension, dimension, dimension);
-      }
     }
 
     public void startLoadingImmediately() {
@@ -124,8 +101,6 @@ public class ProgressStripe extends JBPanel {
 
       NonOpaquePanel result = new NonOpaquePanel();
       result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
-      myFiller = new Box.Filler(new Dimension(), new Dimension(), new Dimension());
-      result.add(myFiller);
       result.add(icon);
 
       parent.add(result, BorderLayout.NORTH);
@@ -134,7 +109,6 @@ public class ProgressStripe extends JBPanel {
     }
 
     public void dispose() {
-      myToolbar.removeComponentListener(myListener);
       Disposer.dispose(myDisposable);
     }
   }

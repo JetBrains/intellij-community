@@ -62,6 +62,7 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
+    <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
   </extensions>
 
   <extensionPoints>

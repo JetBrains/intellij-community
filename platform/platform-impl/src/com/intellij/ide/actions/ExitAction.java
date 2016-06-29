@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -19,16 +18,20 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 
 public class ExitAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
+    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
   }
 
   public void actionPerformed(AnActionEvent e) {
-    ApplicationManagerEx.getApplicationEx().exit();
+    perform();
+  }
+
+  public static void perform() {
+    ApplicationManager.getApplication().exit();
   }
 }

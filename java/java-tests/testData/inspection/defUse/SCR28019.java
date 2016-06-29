@@ -1,9 +1,10 @@
-import java.util.Stack;
+class AsynchronousImageLoader extends Thread {
+    interface Stack {
+        boolean isEmpty();
+        Object pop();
+    }
 
-public class AsynchronousImageLoader extends Thread {
-    private final Stack _tasks = new Stack();
-
-    private void threadBody() throws InterruptedException {
+    private void threadBody(Stack _tasks) throws InterruptedException {
         while (true) {
             final Runnable task;
             synchronized (this) {
