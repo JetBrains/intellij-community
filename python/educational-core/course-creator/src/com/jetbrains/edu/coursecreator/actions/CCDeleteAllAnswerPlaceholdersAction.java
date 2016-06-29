@@ -28,7 +28,7 @@ import java.util.List;
 
 public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
 
-  public static final String ACTION_NAME = "Delete All " + EduNames.PLACEHOLDER + "s";
+  public static final String ACTION_NAME = "Delete All " + EduNames.ANSWER_PLACEHOLDER + "s";
 
   public CCDeleteAllAnswerPlaceholdersAction() {
     super(ACTION_NAME);

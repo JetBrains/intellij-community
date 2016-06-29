@@ -54,19 +54,22 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
 
     final SelectionModel model = editor.getSelectionModel();
-    final int offset = model.getSelectionStart();
+    final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
 
     answerPlaceholder.setOffset(offset);
     answerPlaceholder.setUseLength(false);
 
-    String selectedText = model.getSelectedText();
-    answerPlaceholder.setPossibleAnswer(selectedText);
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : EduNames.PLACEHOLDER);
 
     CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
+    }
+
+    if (!model.hasSelection()) {
+      DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, EduNames.PLACEHOLDER));
     }
 
     TaskFile taskFile = state.getTaskFile();
@@ -147,7 +150,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     presentation.setVisible(true);
     if (canAddPlaceholder(state) || canDeletePlaceholder(state)) {
       presentation.setEnabled(true);
-      presentation.setText((state.getAnswerPlaceholder() == null ? "Add " : "Delete ") + EduNames.PLACEHOLDER);
+      presentation.setText((state.getAnswerPlaceholder() == null ? "Add " : "Delete ") + EduNames.ANSWER_PLACEHOLDER);
     }
   }
 
@@ -155,12 +158,13 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   private static boolean canAddPlaceholder(@NotNull CCState state) {
     Editor editor = state.getEditor();
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
-      return false;
+    if (selectionModel.hasSelection()) {
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+      return !arePlaceholdersIntersect(state.getTaskFile(), start, end);
     }
-    int start = selectionModel.getSelectionStart();
-    int end = selectionModel.getSelectionEnd();
-    return !arePlaceholdersIntersect(state.getTaskFile(), start, end);
+    int offset = editor.getCaretModel().getOffset();
+    return state.getTaskFile().getAnswerPlaceholder(offset) == null;
   }
 
   private static boolean canDeletePlaceholder(@NotNull CCState state) {
