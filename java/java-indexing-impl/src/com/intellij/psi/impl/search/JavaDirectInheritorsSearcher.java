@@ -28,10 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -82,7 +79,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     int groupStart = 0;
     boolean sameJarClassFound = false;
     String currentFQN = null;
-    for (int i = 0; i < cache.length +1; i++) {
+    boolean[] isOutOfScope = new boolean[cache.length]; // here we cache results of isInScope(scope, subClass) to avoid calculating it twice
+    for (int i = 0; i <= cache.length; i++) {
       ProgressManager.checkCanceled();
 
       PsiClass subClass = i == cache.length ? null : cache[i];
@@ -92,9 +90,12 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           return true;
         }
       }
+      if (i != cache.length && !isInScope(scope, subClass)) {
+        isOutOfScope[i] = true;
+        continue;
+      }
 
       String fqn = i == cache.length ? null : ApplicationManager.getApplication().runReadAction((Computable<String>)subClass::getQualifiedName);
-      if (i != cache.length && !isInScope(scope, subClass)) continue;
 
       if (currentFQN != null && Comparing.equal(fqn, currentFQN)) {
         VirtualFile currentJarFile = getJarFile(subClass);
@@ -113,8 +114,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         if (!sameJarClassFound) {
           for (int g=groupStart; g<i; g++) {
             ProgressManager.checkCanceled();
-            PsiClass anonSubClass = cache[g];
-            if (!consumer.process(anonSubClass)) return false;
+            if (isOutOfScope[g]) continue;
+            PsiClass subClassCandidate = cache[g];
+            if (!consumer.process(subClassCandidate)) return false;
           }
         }
         groupStart = i;
@@ -164,6 +166,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   @NotNull
   private static GlobalSearchScope toGlobal(@NotNull final SearchScope scope, @NotNull Project project) {
+    // todo
+    //GlobalSearchScopeUtil.toGlobalSearchScope(project, scope);
+
     if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
@@ -182,7 +187,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
-    final Map<String, Object> classes = new HashMap<>();
+    final Map<String, Object> classesWithFqn = new HashMap<>();
 
     processConcurrentlyIfTooMany(candidates,
        referenceList -> {
@@ -192,16 +197,16 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
            boolean isInheritor = candidate.isInheritor(baseClass, false);
            if (isInheritor) {
              String fqn = candidate.getQualifiedName();
-             synchronized (classes) {
-               Object value = classes.get(fqn);
+             synchronized (classesWithFqn) {
+               Object value = classesWithFqn.get(fqn);
                if (value == null) {
-                 classes.put(fqn, candidate);
+                 classesWithFqn.put(fqn, candidate);
                }
                else if (value instanceof PsiClass) {
                  List<PsiClass> list = new ArrayList<>();
                  list.add((PsiClass)value);
                  list.add(candidate);
-                 classes.put(fqn, list);
+                 classesWithFqn.put(fqn, list);
                }
                else {
                  @SuppressWarnings("unchecked")
@@ -216,7 +221,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
        });
 
     final List<PsiClass> result = new ArrayList<>();
-    for (Object value : classes.values()) {
+    for (Object value : classesWithFqn.values()) {
       if (value instanceof PsiClass) {
         result.add((PsiClass)value);
       }
