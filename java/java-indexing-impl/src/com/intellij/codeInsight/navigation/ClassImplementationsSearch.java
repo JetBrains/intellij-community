@@ -37,23 +37,23 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Def
   }
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<PsiElement> processor, SearchScope scope) {
-    if (!FunctionalExpressionSearch.search(psiClass, scope).forEach(new Processor<PsiFunctionalExpression>() {
-      @Override
-      public boolean process(PsiFunctionalExpression expression) {
-        return processor.process(expression);
-      }
-    })) {
-      return false;
-    }
-
     final boolean showInterfaces = Registry.is("ide.goto.implementation.show.interfaces");
-    return ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    if (!ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull PsiClass element) {
         if (!showInterfaces && element.isInterface()) {
           return true;
         }
         return processor.process(element);
       }
-    }));
+    }))) {
+      return false;
+    }
+
+    return FunctionalExpressionSearch.search(psiClass, scope).forEach(new Processor<PsiFunctionalExpression>() {
+      @Override
+      public boolean process(PsiFunctionalExpression expression) {
+        return processor.process(expression);
+      }
+    });
   }
 }
