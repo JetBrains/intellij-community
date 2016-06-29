@@ -1289,7 +1289,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     int startOffset = getTextRange().getStartOffset();
     if (ranges.isOnInsertedLine(startOffset)) {
-      if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement) {
+      if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement || myNode instanceof PsiWhileStatement) {
         return new ExtraReformatRanges(myNode.getTextRange());
       }
     }

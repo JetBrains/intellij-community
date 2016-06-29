@@ -86,6 +86,32 @@ class X {
 """
     )
   }
+  
+  fun `test while block`() {
+    myLineRange = TextRange(3, 3)
+    check(
+        """
+class X {
+    void test() {
+       while (true) {
+        int a = 2;
+        int b = 3;
+        }
+    }
+}
+""",
+        """
+class X {
+    void test() {
+        while (true) {
+            int a = 2;
+            int b = 3;
+        }
+    }
+}
+"""
+    )
+  }
 
 
 }
