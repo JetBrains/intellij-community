@@ -210,12 +210,21 @@ public class LazyParseableElement extends CompositeElement {
 
         AstPath.cacheNodePaths(this);
 
+        assertTextLengthIntact(text.length());
         myText = new SoftReference<CharSequence>(text);
       }
     }
     finally {
       DebugUtil.finishPsiModification();
     }
+  }
+
+  private void assertTextLengthIntact(int expected) {
+    int length = 0;
+    for (ASTNode node : getChildren(null)) {
+      length += node.getTextLength();
+    }
+    assert length == expected : "Text mismatch in " + getElementType();
   }
 
   @Override
