@@ -107,8 +107,21 @@ public class InspectionResultsViewComparator implements Comparator {
       final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
       final CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
       if (descriptor1 instanceof ProblemDescriptor && descriptor2 instanceof ProblemDescriptor) {
-        //TODO: Do not materialise lazy pointers
-        return ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
+        int diff = ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
+        if (diff != 0) {
+          return diff;
+        }
+        diff = ((ProblemDescriptor)descriptor1).getHighlightType().compareTo(((ProblemDescriptor)descriptor2).getHighlightType());
+        if (diff != 0) {
+          return diff;
+        }
+        diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor1).getStartElement(),
+                                                     ((ProblemDescriptor)descriptor2).getStartElement());
+        if (diff != 0) {
+          return diff;
+        }
+        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor2).getEndElement(),
+                                                     ((ProblemDescriptor)descriptor1).getEndElement());
       }
       if (descriptor1 != null && descriptor2 != null) {
         return descriptor1.getDescriptionTemplate().compareToIgnoreCase(descriptor2.getDescriptionTemplate());
