@@ -1,8 +1,11 @@
 <html>
 <body>
 This inspection reports stream API call chains which can be simplified.
-It allows to avoid creating redundant temporary objects without changing semantics.
-<br>
-For example, Collection.stream().forEach() can be replaced with Collection.forEach()
+It allows to avoid creating redundant temporary objects when traversing a collection.
+<p>
+For example, <b>Collection.stream().forEach()</b> can be replaced with <b>Collection.forEach()</b>.
+<p>
+Note that <b>forEachOrdered()</b> is a special case. While the traversal order of <b>Collection.forEach()</b> is usually the same as with
+<b>Collection.stream().forEachOrdered()</b>, specific implementations may override that. Please check the documentation on the collection's implementation.
 </body>
 </html>
