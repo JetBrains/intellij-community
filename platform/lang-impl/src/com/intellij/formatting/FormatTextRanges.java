@@ -84,6 +84,7 @@ public class FormatTextRanges {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
   
+  //todo it should be more tricky
   public boolean isOnInsertedLine(int offset) {
     return myHelper != null && myHelper.isOnInsertedLine(offset);
   }

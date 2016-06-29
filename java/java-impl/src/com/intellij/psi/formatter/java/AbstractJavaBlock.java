@@ -19,6 +19,8 @@ import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1288,13 +1290,53 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (!Registry.is("smart.reformat.vcs.changes")) return null;
 
     int startOffset = getTextRange().getStartOffset();
-    if (ranges.isOnInsertedLine(startOffset)) {
-      if (myNode instanceof PsiForStatement || myNode instanceof PsiIfStatement || myNode instanceof PsiWhileStatement) {
-        return new ExtraReformatRanges(myNode.getTextRange());
-      }
+    if (ranges.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
+      List<TextRange> extra = calculateExtraRanges(myNode);
+      return new ExtraReformatRanges(extra);
     }
     
     return null;
   }
-  
+
+  @NotNull
+  private List<TextRange> calculateExtraRanges(ASTNode node) {
+    Project project = getProject(node);
+    Document document = retrieveDocument(node, project);
+    TextRange range = node.getTextRange();
+    if (document != null) {
+      int startLine = document.getLineNumber(range.getStartOffset());
+      int endLine = document.getLineNumber(range.getEndOffset());
+      return extractIndentSpaces(document, startLine, endLine);
+    }
+
+    return ContainerUtil.newArrayList(myNode.getTextRange());
+  }
+
+  private static List<TextRange> extractIndentSpaces(Document document, int startLine, int endLine) {
+    List<TextRange> extra = ContainerUtil.newArrayList();
+
+    CharSequence chars = document.getCharsSequence();
+
+    for (int line = startLine + 1; line <= endLine; line++) {
+      int lineStartOffset = document.getLineStartOffset(line);
+      int lineEndOffset = document.getLineEndOffset(line);
+
+      int firstNonWsChar = CharArrayUtil.shiftForward(chars, lineStartOffset, lineEndOffset + 1, " \t");
+      if (firstNonWsChar <= lineEndOffset + 1) {
+        extra.add(new TextRange(lineStartOffset, firstNonWsChar));
+      }
+    }
+    
+    return extra;
+  }
+
+  private static Document retrieveDocument(@NotNull ASTNode node, @NotNull Project project) {
+    PsiFile file = node.getPsi().getContainingFile();
+    return PsiDocumentManager.getInstance(project).getDocument(file);
+  }
+
+  @NotNull
+  private static Project getProject(@NotNull ASTNode node) {
+    return node.getPsi().getProject();
+  }
 }
