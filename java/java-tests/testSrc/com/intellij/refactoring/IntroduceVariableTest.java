@@ -250,7 +250,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSubPrimitiveLiteral() {
-    doTest(new MockIntroduceVariableHandler("str", false, false, false, "boolean"));
+    doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testArrayFromVarargs() {
