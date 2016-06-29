@@ -49,6 +49,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -363,7 +364,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+    final PsiImportStaticStatement[] importStaticStatements = importList != null ? importList.getImportStaticStatements() : PsiImportStaticStatement.EMPTY_ARRAY;
     if (importStaticStatements.length > 0) {
       final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor);
 
