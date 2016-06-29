@@ -40,7 +40,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     public int compare(final PsiReference ref1, final PsiReference ref2) {
       boolean soft1 = ref1.isSoft();
       boolean soft2 = ref2.isSoft();
-      if (soft1 ^ soft2) return soft1 ? 1 : -1;
+      if (soft1 != soft2) return soft1 ? 1 : -1;
 
       boolean resolves1 = resolves(ref1);
       boolean resolves2 = resolves(ref2);
