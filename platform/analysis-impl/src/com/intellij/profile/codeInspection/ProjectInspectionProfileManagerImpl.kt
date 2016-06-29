@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
@@ -40,12 +41,10 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
-import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.function.Function
 
 const val PROFILE = "profile"
-const val SCOPES = "scopes"
 
 private const val VERSION = "1.0"
 private const val SCOPE = "scope"
@@ -178,24 +177,29 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   }
 
   @Synchronized override fun loadState(state: Element) {
-    try {
-      severityRegistrar.readExternal(state)
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
+    val data = state.getChild("settings")
+
+    val newState = State()
+
+    data?.let {
+      try {
+        severityRegistrar.readExternal(it)
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+
+      XmlSerializer.deserializeInto(newState, it)
     }
 
-    val profileKeys = THashSet<String>()
-    profileKeys.addAll(schemeManager.allSchemeNames)
-    val newState = State()
-    XmlSerializer.deserializeInto(newState, state)
     this.state = newState
-    if (state.getChild("version")?.getAttributeValue("value") != VERSION) {
-      for (o in state.getChildren("option")) {
+
+    if (data != null && data.getChild("version")?.getAttributeValue("value") != VERSION) {
+      for (o in data.getChildren("option")) {
         if (o.getAttributeValue("name") == "USE_PROJECT_LEVEL_SETTINGS") {
           if (o.getAttributeValue("value").toBoolean()) {
             if (newState.projectProfile != null) {
-              currentProfile.convert(state, project)
+              currentProfile.convert(data, project)
             }
           }
           break
@@ -205,14 +209,20 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   }
 
   @Synchronized override fun getState(): Element? {
-    val result = Element("state")
+    val result = Element("settings")
     XmlSerializer.serializeInto(this.state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
 
     severityRegistrar.writeExternal(result)
-    return result
+    if (JDOMUtil.isEmpty(result)) {
+      result.name = "state"
+      return result
+    }
+    else {
+      return Element("state").addContent(result)
+    }
   }
 
   override fun getScopesManager() = scopeManager

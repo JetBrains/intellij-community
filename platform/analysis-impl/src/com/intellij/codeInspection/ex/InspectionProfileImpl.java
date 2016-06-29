@@ -832,16 +832,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myDescription = description;
   }
 
-  @Override
   public void convert(@NotNull Element element, @NotNull Project project) {
-    initInspectionTools(project);
-    final Element scopes = element.getChild(ProjectInspectionProfileManagerImplKt.SCOPES);
+    final Element scopes = element.getChild("scopes");
     if (scopes == null) {
       return;
     }
-    final List children = scopes.getChildren(SCOPE);
-    for (Object s : children) {
-      Element scopeElement = (Element)s;
+
+    initInspectionTools(project);
+
+    for (Element scopeElement : scopes.getChildren(SCOPE)) {
       final String profile = scopeElement.getAttributeValue(ProjectInspectionProfileManagerImplKt.PROFILE);
       if (profile != null) {
         final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)getProfileManager().getProfile(profile);

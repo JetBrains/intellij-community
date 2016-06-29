@@ -15,7 +15,6 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImplKt;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -118,9 +117,6 @@ public abstract class ProfileEx implements Profile {
       return getName().compareToIgnoreCase(((Profile)o).getName());
     }
     return 0;
-  }
-
-  public void convert(@NotNull Element element, @NotNull Project project) {
   }
 
   @Override

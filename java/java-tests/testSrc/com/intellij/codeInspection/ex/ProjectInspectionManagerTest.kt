@@ -63,8 +63,10 @@ internal class ProjectInspectionManagerTest {
       projectInspectionProfileManager.setRootProfile(null)
       val doNotUseProjectProfileState = """
       <state>
-        <option name="USE_PROJECT_PROFILE" value="false" />
-        <version value="1.0" />
+        <settings>
+          <option name="USE_PROJECT_PROFILE" value="false" />
+          <version value="1.0" />
+        </settings>
       </state>""".trimIndent()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
 
@@ -74,8 +76,10 @@ internal class ProjectInspectionManagerTest {
       assertThat(file).exists()
       val doNotUseProjectProfileData = """
       <component name="InspectionProjectProfileManager">
-        <option name="USE_PROJECT_PROFILE" value="false" />
-        <version value="1.0" />
+        <settings>
+          <option name="USE_PROJECT_PROFILE" value="false" />
+          <version value="1.0" />
+        </settings>
       </component>""".trimIndent()
       assertThat(file.readText()).isEqualTo(doNotUseProjectProfileData)
 
