@@ -60,7 +60,7 @@ public class SplitTryWithMultipleResourcesInspection extends BaseInspection {
   private static void doFixImpl(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     final PsiResourceList resourceList = tryStatement.getResourceList();
-    if (resourceList == null) {
+    if (resourceList == null || resourceList.getResourceVariablesCount() <= 1) {
       return;
     }
     final StringBuilder newTryStatementText = new StringBuilder();
