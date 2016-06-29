@@ -195,7 +195,6 @@ cdef class PyDBAdditionalThreadInfo:
 #         PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
 # 
 # ENDIF
-import inspect
 import linecache
 import os.path
 import re
@@ -212,6 +211,7 @@ from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_th
     dict_keys, dict_pop, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
 try:
@@ -465,29 +465,15 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
 
     def manage_return_values(self, main_debugger, frame, event, arg):
 
-        def get_full_name_if_method(func_name):
-            # In the frame we have access to the code object, but not to the callable object,
-            # that's why we're trying to get the name of class for methods in such a tricky way:
-            # we are checking the first argument of the function (`self` or `cls` for methods).
+        def get_func_name(frame):
+            code_obj = frame.f_code
+            func_name = code_obj.co_name
             try:
-                code_obj = frame.f_code
-                if len(code_obj.co_varnames) > 0:
-                    first_arg_name = code_obj.co_varnames[0]
-                    first_arg_obj = frame.f_locals[first_arg_name]
-                    if inspect.isclass(first_arg_obj):  # class method
-                        first_arg_class = first_arg_obj
-                    else:  # instance method
-                        first_arg_class = first_arg_obj.__class__
-                    if hasattr(first_arg_class, func_name):
-                        method = getattr(first_arg_class, func_name)
-                        func_code = None
-                        if hasattr(method, 'func_code'):  # Python2
-                            func_code = method.func_code
-                        elif hasattr(method, '__code__'):  # Python3
-                            func_code = method.__code__
-                        if func_code and func_code == code_obj:
-                            return first_arg_class.__name__ + "." + func_name
-                return func_name
+                cls_name = get_clsname_for_code(code_obj, frame)
+                if cls_name is not None:
+                    return "%s.%s" % (cls_name, func_name)
+                else:
+                    return func_name
             except:
                 traceback.print_exc()
                 return func_name
@@ -495,11 +481,10 @@ class PyDBFrame: # No longer cdef because object was dying when only a reference
         try:
             if main_debugger.show_return_values:
                 if event == "return" and hasattr(frame, "f_code") and hasattr(frame.f_code, "co_name"):
-                    name = frame.f_code.co_name
                     if hasattr(frame, "f_back") and hasattr(frame.f_back, "f_locals"):
                         if RETURN_VALUES_DICT not in dict_keys(frame.f_back.f_locals):
                             frame.f_back.f_locals[RETURN_VALUES_DICT] = {}
-                        name = get_full_name_if_method(name)
+                        name = get_func_name(frame)
                         frame.f_back.f_locals[RETURN_VALUES_DICT][name] = arg
             if main_debugger.remove_return_values_flag:
                 # Showing return values was turned off, we should remove them from locals dict.
