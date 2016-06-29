@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.concurrency.Obsolescent
 import org.jetbrains.concurrency.ObsolescentAsyncFunction
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
@@ -43,7 +44,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
 
   override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = Promise.REJECTED
 
-  @Suppress("CAST_NEVER_SUCCEEDS")
+  @Suppress("UNCHECKED_CAST")
   override val variablesHost: VariablesHost<ValueManager>
     get() = childrenManager as VariablesHost<ValueManager>
 }
@@ -57,9 +58,7 @@ fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evalu
     }
 
     if (!properties.isEmpty()) {
-      Collections.sort(properties, object : Comparator<Variable> {
-        override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
-      })
+      Collections.sort(properties) { o1, o2 -> names.indexOf(o1.name) - names.indexOf(o2.name) }
     }
 
     properties.add(property)
@@ -80,6 +79,6 @@ fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evalu
         promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
       }
     }
-    return Promise.all<List<Variable>>(promises, properties)
+    return all(promises, properties)
   }
 }

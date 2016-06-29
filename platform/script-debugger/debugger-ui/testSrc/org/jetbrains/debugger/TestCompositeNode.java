@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncFunction;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.debugger.values.ObjectValue;
 
 import javax.swing.*;
@@ -115,7 +116,7 @@ public class TestCompositeNode implements XCompositeNode {
           }
           resultNodes.add(node);
           if (computeChildren) {
-            promises.add(node.loadContent(Conditions.<XValueGroup>alwaysFalse(), valueSubContentResolveCondition));
+            promises.add(node.loadContent(Conditions.alwaysFalse(), valueSubContentResolveCondition));
           }
         }
       }
@@ -142,7 +143,7 @@ public class TestCompositeNode implements XCompositeNode {
 
         resolveGroups(children.getBottomGroups(), content.bottomGroups, promises);
 
-        return Promise.all(promises, content);
+        return Promises.all(promises, content);
       }
     });
   }

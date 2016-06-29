@@ -80,15 +80,11 @@ inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwabl
 })
 
 
-fun resolvedPromise(): Promise<*> = Promise.DONE
-
-fun <T> resolvedPromise(result: T) = Promise.resolve(result)
-
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
 
 fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)
 
-@Suppress("CAST_NEVER_SUCCEEDS")
+@Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 
 val Promise<*>.isRejected: Boolean
@@ -119,7 +115,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   for (promise in promises) {
     promise.done { results.add(it) }
   }
-  return Promise.all(promises, results)
+  return all(promises, results)
 }
 
 fun createError(error: String, log: Boolean): RuntimeException = Promise.MessageError(error, log)
