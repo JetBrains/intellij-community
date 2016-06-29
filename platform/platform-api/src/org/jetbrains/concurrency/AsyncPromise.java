@@ -28,6 +28,7 @@ import java.util.List;
 public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   private static final Logger LOG = Logger.getInstance(AsyncPromise.class);
 
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static final RuntimeException OBSOLETE_ERROR = Promise.createError("Obsolete");
 
   private volatile Consumer<? super T> done;
@@ -292,6 +293,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
       return newConsumer;
     }
     else if (oldConsumer instanceof CompoundConsumer) {
+      //noinspection unchecked
       ((CompoundConsumer<T>)oldConsumer).add(newConsumer);
       return oldConsumer;
     }
