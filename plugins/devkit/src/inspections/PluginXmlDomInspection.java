@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mike
@@ -153,7 +154,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     String untilBuild = ideaVersion.getUntilBuild().getStringValue();
-    if (untilBuild != null) {
+    if (untilBuild != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
       Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
         holder.createProblem(ideaVersion.getUntilBuild(), "Don't use '" + matcher.group(2) + "' in 'until-build', use '*' instead",
@@ -167,6 +168,19 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         holder.createProblem(ideaVersion.getUntilBuild(), message, new CorrectUntilBuildAttributeFix(corrected));
       }
     }
+  }
+
+  private static final Pattern BASE_LINE_EXTRACTOR = Pattern.compile("(?:\\p{javaLetter}+-)?(\\d+)(?:\\..*)?");
+  private static final int FIRST_BRANCH_SUPPORTING_STAR = 131;
+
+  private static boolean isStarSupported(String buildNumber) {
+    if (buildNumber == null) return false;
+    Matcher matcher = BASE_LINE_EXTRACTOR.matcher(buildNumber);
+    if (matcher.matches()) {
+      int branch = Integer.parseInt(matcher.group(1));
+      return branch >= FIRST_BRANCH_SUPPORTING_STAR;
+    }
+    return false;
   }
 
   private static void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
