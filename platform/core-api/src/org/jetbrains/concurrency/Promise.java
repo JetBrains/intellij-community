@@ -152,7 +152,7 @@ public abstract class Promise<T> {
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
 
   @NotNull
   public abstract State getState();

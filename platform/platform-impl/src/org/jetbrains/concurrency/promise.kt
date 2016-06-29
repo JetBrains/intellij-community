@@ -25,7 +25,7 @@ private val rejectedPromise = Promise.reject<Any?>("rejected")
 // only internal usage
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
 
-abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : AsyncFunction<PARAM, RESULT>, Obsolescent {
+abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : Function<PARAM, Promise<RESULT>>, Obsolescent {
   override fun isObsolete() = node.isObsolete
 }
 
@@ -69,9 +69,9 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(AsyncFunction<T, kotlin.Any?> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<kotlin.Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
-  (return@AsyncFunction handler(param) as Promise<Any?>)
+  (return@Function handler(param) as Promise<Any?>)
 })
 
 

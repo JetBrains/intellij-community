@@ -18,10 +18,10 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
 import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -106,7 +106,7 @@ public class TestCompositeNode implements XCompositeNode {
     assert content == null;
 
     content = new Content();
-    return result.thenAsync(new AsyncFunction<XValueChildrenList, Content>() {
+    return result.thenAsync(new Function<XValueChildrenList, Promise<Content>>() {
       private void resolveGroups(@NotNull List<XValueGroup> valueGroups, @NotNull List<TestCompositeNode> resultNodes, @NotNull List<Promise<?>> promises) {
         for (XValueGroup group : valueGroups) {
           TestCompositeNode node = new TestCompositeNode(group);

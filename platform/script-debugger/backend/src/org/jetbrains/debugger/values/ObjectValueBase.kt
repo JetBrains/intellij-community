@@ -17,7 +17,7 @@ package org.jetbrains.debugger.values
 
 import com.intellij.util.SmartList
 import org.jetbrains.concurrency.Obsolescent
-import org.jetbrains.concurrency.ObsolescentAsyncFunction
+import org.jetbrains.concurrency.ObsolescentFunction
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.debugger.EvaluateContext
@@ -31,7 +31,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
   override val properties: Promise<List<Variable>>
     get() = childrenManager.get()
 
-  internal abstract inner class MyObsolescentAsyncFunction<PARAM, RESULT>(private val obsolescent: Obsolescent) : ObsolescentAsyncFunction<PARAM, RESULT> {
+  internal abstract inner class MyObsolescentAsyncFunction<PARAM, RESULT>(private val obsolescent: Obsolescent) : ObsolescentFunction<PARAM, Promise<RESULT>> {
     override fun isObsolete() = obsolescent.isObsolete || childrenManager.valueManager.isObsolete
   }
 
