@@ -56,15 +56,13 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
@@ -164,22 +162,34 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfile inspectionProfile;
+    final InspectionProfileImpl inspectionProfile;
     if (profile != null) {
-      inspectionProfile = (InspectionProfile)profile;
+      inspectionProfile = (InspectionProfileImpl)profile;
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-        @Override
-        public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
-          return resMap.containsKey(key.toString());
-        }
-
         @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
       };
+      final Set<String> alreadyEnabledTools = new THashSet<>();
+      for (Tools tools : inspectionProfile.getAllEnabledInspectionTools(project)) {
+        final String shortName = tools.getShortName();
+        if (resMap.containsKey(shortName)) {
+          alreadyEnabledTools.add(shortName);
+        }
+        else {
+          inspectionProfile.disableTool(shortName, project);
+        }
+      }
+      if (alreadyEnabledTools.size() != resMap.size()) {
+        for (String id : resMap.keySet()) {
+          if (!alreadyEnabledTools.contains(id)) {
+            inspectionProfile.enableTool(id, project);
+          }
+        }
+      }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);
   }
