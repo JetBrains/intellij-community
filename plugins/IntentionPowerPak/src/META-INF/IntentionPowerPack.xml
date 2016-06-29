@@ -497,11 +497,6 @@
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitTryWithMultipleResourcesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.try.statements</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.exceptions.ObscureThrownExceptionsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
