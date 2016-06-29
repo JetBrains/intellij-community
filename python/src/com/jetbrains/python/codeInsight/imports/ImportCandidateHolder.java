@@ -46,7 +46,7 @@ import java.util.List;
  * @author dcheryasov
  */
 // visibility is intentionally package-level
-class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
+public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
