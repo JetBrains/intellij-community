@@ -1598,19 +1598,27 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkReceiverType(parameter));
   }
 
+  @Override
+  public void visitModule(PsiJavaModule module) {
+    super.visitModule(module);
+    if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(module, Feature.MODULES));
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileName(module, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
+  }
+
   @Nullable
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 
   protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
-    myHolder = holder;
+    PsiFile file = holder.getContextFile();
+    JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(file);
 
-    final PsiFile file = holder.getContextFile();
+    myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaSdkVersion = ObjectUtils.notNull(JavaVersionService.getInstance().getJavaSdkVersion(file),
-                                           JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
-
+    myJavaSdkVersion = sdkVersion != null ? sdkVersion : JavaSdkVersion.fromLanguageLevel(myLanguageLevel);
   }
 }
