@@ -18,6 +18,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -69,7 +70,7 @@ public class StubResolver {
   private void findType(Symbol startScope, int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
     // looking up
     for (Symbol s = startScope; s != null; s = s.myOwner)
-      findMemberType(s, name, symbols, new HashSet<Symbol>());
+      findMemberType(s, name, symbols);
     // type from current package
     findIdentInPackage(startScope.pkg(), name, IndexTree.CLASS, symbols);
   }
@@ -79,7 +80,7 @@ public class StubResolver {
     if (receiver.isPackage())
       findIdentInPackage((Symbol.PackageSymbol)receiver, name, kind, symbols);
     else
-      findMemberType(receiver, name, symbols, new HashSet<Symbol>());
+      findMemberType(receiver, name, symbols);
   }
 
   private void findIdentInPackage(Symbol.PackageSymbol pck, int name, int kind, Set<Symbol> symbols) {
@@ -97,19 +98,34 @@ public class StubResolver {
     }
   }
 
-  private void findMemberType(Symbol s, int name, Set<Symbol> symbols, Set<Symbol> processed) throws IncompleteHierarchyException {
-    if (!processed.add(s)) {
-      return;
+  private void findMemberType(Symbol s, int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
+    if (s.isClass()) {
+      processInheritedMembers((Symbol.ClassSymbol)s, name, false, symbols, null);
+    } else {
+      processMembers(s.getMembers(), name, symbols, false);
     }
-    processMembers(s.getMembers(), name, symbols, false);
-    if (s.isClass())
-      findInheritedMemberType((Symbol.ClassSymbol)s, name, symbols, processed);
   }
 
-  private void findInheritedMemberType(Symbol.ClassSymbol c, int name, Set<Symbol> symbols, Set<Symbol> processed)
-    throws IncompleteHierarchyException {
-    for (Symbol.ClassSymbol st : c.getSuperClasses(myConnector))
-      findMemberType(st, name, symbols, processed);
+  private void processInheritedMembers(Symbol.ClassSymbol s,
+                                       int name,
+                                       boolean requireStatic,
+                                       Set<Symbol> symbols,
+                                       @Nullable Set<Symbol> processed) throws IncompleteHierarchyException {
+    processMembers(s.getMembers(), name, symbols, requireStatic);
+
+    @CompactArray(Symbol.ClassSymbol.class) Object supers = s.getSuperClasses(myConnector);
+    if (supers == null) return;
+
+    if (processed == null) processed = new HashSet<>();
+    if (!processed.add(s)) return;
+
+    if (supers instanceof Symbol.ClassSymbol) {
+      processInheritedMembers((Symbol.ClassSymbol)supers, name, requireStatic, symbols, processed);
+    } else if (supers instanceof Symbol.ClassSymbol[]) {
+      for (Symbol.ClassSymbol st : (Symbol.ClassSymbol[])supers) {
+        processInheritedMembers(st, name, requireStatic, symbols, processed);
+      }
+    }
   }
 
   private Symbol.ClassSymbol[] loadClass(@NotNull QualifiedName fqn) {
@@ -171,16 +187,7 @@ public class StubResolver {
 
   // handling of import static `tsym.name` as
   private void importNamedStatic(final Symbol.ClassSymbol tsym, final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
-    new Object() {
-      Set<Symbol> processed = new HashSet<Symbol>();
-      void importFrom(Symbol.ClassSymbol cs) throws IncompleteHierarchyException {
-        if (cs == null || !processed.add(cs))
-          return;
-        for (Symbol.ClassSymbol c : cs.getSuperClasses(myConnector))
-          importFrom(c);
-        processMembers(cs.getMembers(), name, symbols, true);
-      }
-    }.importFrom(tsym);
+    processInheritedMembers(tsym, name, true, symbols, null);
   }
 
   private static void processMembers(Symbol.ClassSymbol[] members, int name, Set<Symbol> symbols, boolean requireStatic) {
