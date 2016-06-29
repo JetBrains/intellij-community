@@ -75,6 +75,18 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  public void testPartialStringLiteralConvertibleToInt() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testStringLiteralConvertibleToInt() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testPartialStringLiteralQualified() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
