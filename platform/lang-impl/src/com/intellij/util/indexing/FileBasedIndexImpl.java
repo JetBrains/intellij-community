@@ -38,7 +38,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
@@ -118,10 +117,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
-
-  private static final int OK = 1;
-  private static final int REQUIRES_REBUILD = 2;
-  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new THashMap<ID<?, ?>, AtomicInteger>();
 
   private final MessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
@@ -521,8 +516,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         for (ID<?, ?> indexId : state.getIndexIDs()) {
           final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
           assert index != null;
-          if(ourRebuildStatus.get(indexId).get() != OK) {
-            doClearIndex(indexId); // if the index was scheduled for rebuild, only clean it
+          if (!RebuildStatus.isOk(indexId)) {
+            index.clear(); // if the index was scheduled for rebuild, only clean it
           }
           index.dispose();
         }
@@ -706,7 +701,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     try {
       if (isUpToDateCheckEnabled()) {
         try {
-          if (ourRebuildStatus.get(indexId).get() != OK) {
+          if (!RebuildStatus.isOk(indexId)) {
             throw new ProcessCanceledException();
           }
           forceUpdate(project, filter, restrictedFile);
@@ -1178,12 +1173,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
-    advanceIndexVersion(indexId);
-    doClearIndex(indexId);
+  void clearIndicesIfNecessary() {
+    for (ID<?, ?> indexId : getState().getIndexIDs()) {
+      try {
+        RebuildStatus.clearIndexIfNecessary(indexId, getIndex(indexId)::clear);
+      }
+      catch (StorageException e) {
+        requestRebuild(indexId);
+        LOG.error(e);
+      }
+    }
   }
 
-  private void doClearIndex(ID<?, ?> indexId) throws StorageException {
+  private void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
+    advanceIndexVersion(indexId);
+
     final UpdatableIndex<?, ?, FileContent> index = myState.getIndex(indexId);
     assert index != null : "Index with key " + indexId + " not found or not registered properly";
     index.clear();
@@ -1419,10 +1423,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public void requestRebuild(final ID<?, ?> indexId, final Throwable throwable) {
     cleanupProcessedFlag();
-    final AtomicInteger status = ourRebuildStatus.get(indexId);
-    boolean requiresRebuildWasSet = status.compareAndSet(OK, REQUIRES_REBUILD);
-
-    if (requiresRebuildWasSet) {
+    if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() && app.isReadAccessAllowed() && !app.isDispatchThread()) {
@@ -1438,34 +1439,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (!myInitialized) return;
       advanceIndexVersion(indexId);
 
-      final Runnable rebuildRunnable = () -> {
-        final Ref<Boolean> success = Ref.create(true);
-        new Task.Modal(null, "Updating index", false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            indicator.setIndeterminate(true);
-            try {
-              doClearIndex(indexId);
-            }
-            catch (StorageException e) {
-              success.set(false);
-              requestRebuild(indexId);
-              LOG.info(e);
-            }
-          }
-        }.queue();
-        if (success.get()) {
-          scheduleIndexRebuild("checkRebuild");
-          status.compareAndSet(REQUIRES_REBUILD, OK);
-        }
-      };
+      Runnable rebuildRunnable = () -> scheduleIndexRebuild("checkRebuild");
 
       if (myIsUnitTestMode) {
         rebuildRunnable.run();
       }
       else {
         // we do invoke later since we can have read lock acquired
-        //noinspection SSBasedInspection
         TransactionGuard.getInstance().submitTransactionLater(app, rebuildRunnable);
       }
     }
@@ -1646,12 +1626,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC)
     throws StorageException {
-    AtomicInteger rebuildStatus = ourRebuildStatus.get(indexId);
-    if (rebuildStatus == null) {
-      LOG.error("Problem updating " + indexId + " for " + inputId + "," + file + " with content:" + currentFC + ", initialized:" + myInitialized);
-      return;
-    }
-    if (rebuildStatus.get() == REQUIRES_REBUILD && !myIsUnitTestMode) {
+    if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
@@ -2356,7 +2331,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     public FileIndexDataInitialization(FileBasedIndexExtension[] extensions) {
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
         ID<?, ?> name = extension.getName();
-        ourRebuildStatus.put(name, new AtomicInteger(OK));
+        RebuildStatus.registerIndex(name);
 
         myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
 
@@ -2426,14 +2401,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myState = state; // memory barrier
         // check if rebuild was requested for any index during registration
         for (ID<?, ?> indexId : state.getIndexIDs()) {
-          if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
-            try {
-              clearIndex(indexId);
-            }
-            catch (StorageException e) {
-              requestRebuild(indexId);
-              LOG.error(e);
-            }
+          try {
+            RebuildStatus.clearIndexIfNecessary(indexId, () -> clearIndex(indexId));
+          }
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.error(e);
           }
         }
 
