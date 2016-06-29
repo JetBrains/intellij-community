@@ -35,10 +35,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class ConstructorReferencesSearchHelper {
+class ConstructorReferencesSearchHelper {
   private final PsiManager myManager;
 
-  public ConstructorReferencesSearchHelper(@NotNull PsiManager manager) {
+  ConstructorReferencesSearchHelper(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
@@ -48,14 +48,14 @@ public class ConstructorReferencesSearchHelper {
    * 2. Exception avoidance. Project is needed outside of read action (to run it via DumbService in the first place),
    *    and so getProject would fail with an assertion that read action is required but not present.
    */
-  public boolean processConstructorReferences(@NotNull final Processor<PsiReference> processor,
-                                              @NotNull final PsiMethod constructor,
-                                              @NotNull final PsiClass containingClass,
-                                              @NotNull final SearchScope searchScope,
-                                              @NotNull final Project project,
-                                              boolean ignoreAccessScope,
-                                              final boolean isStrictSignatureSearch,
-                                              @NotNull SearchRequestCollector collector) {
+  boolean processConstructorReferences(@NotNull final Processor<PsiReference> processor,
+                                       @NotNull final PsiMethod constructor,
+                                       @NotNull final PsiClass containingClass,
+                                       @NotNull final SearchScope searchScope,
+                                       @NotNull final Project project,
+                                       boolean ignoreAccessScope,
+                                       final boolean isStrictSignatureSearch,
+                                       @NotNull SearchRequestCollector collector) {
     final boolean[] constructorCanBeCalledImplicitly = new boolean[1];
     final boolean[] isEnum = new boolean[1];
     final boolean[] isUnder18 = new boolean[1];

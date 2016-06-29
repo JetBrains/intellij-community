@@ -59,14 +59,14 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
                                                         @NotNull final AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<PsiClass> processor) {
-    final Set<String> names = new THashSet<String>(10000);
+    final Set<String> names = new THashSet<>(10000);
     processClassNames(parameters.getProject(), scope, s -> {
       if (parameters.nameMatches(s)) {
         names.add(s);
       }
     });
 
-    List<String> sorted = new ArrayList<String>(names);
+    List<String> sorted = new ArrayList<>(names);
     Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
 
     return processClassesByNames(parameters.getProject(), scope, sorted, processor);
