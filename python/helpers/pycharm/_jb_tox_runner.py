@@ -81,27 +81,26 @@ class _MySession(tox_session.Session):
 
 
 class _Unit2(object):
-    def fix(self, command, dir_to_run, bin):
+    def fix(self, command,  bin):
         if command[0] == "unit2":
-            return [bin, os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
+            return [bin, os.path.join(helpers_dir, "utrunner.py")] + command[1:] + ["true"]
         elif command == ["python", "-m", "unittest", "discover"]:
-            return [bin, os.path.join(helpers_dir, "utrunner.py"), dir_to_run, "true"]
+            return [bin, os.path.join(helpers_dir, "utrunner.py"), "true"]
         return None
 
 
 class _PyTest(object):
-    def fix(self, command, dir_to_run, bin):
+    def fix(self, command, bin):
         if command[0] != "py.test":
             return None
-        normal_path = os.path.normpath(dir_to_run) + os.sep
-        return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", normal_path] + command[1:]
+        return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity"] + command[1:]
 
 
 class _Nose(object):
-    def fix(self, command, dir_to_run, bin):
+    def fix(self, command, bin):
         if command[0] != "nosetests":
             return None
-        return [bin, os.path.join(helpers_dir, "noserunner.py"), dir_to_run] + command[1:]
+        return [bin, os.path.join(helpers_dir, "noserunner.py")] + command[1:]
 
 
 _RUNNERS = [_Unit2(), _PyTest(), _Nose()]
@@ -116,10 +115,9 @@ for env, tmp_config in config.envconfigs.items():
         continue
     for fixer in _RUNNERS:
         _env = config.envconfigs[env]
-        dir_to_run = str(_env.changedir)
         for i, command in enumerate(commands):
             if command:
-                fixed_command = fixer.fix(command, dir_to_run, str(_env.envpython))
+                fixed_command = fixer.fix(command, str(_env.envpython))
                 if fixed_command:
                     commands[i] = fixed_command
     tmp_config.commands = commands

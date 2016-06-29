@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -46,7 +45,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Simply ensure tox runner works
    */
   @Test
-  public void testToxSimpleRun() throws IOException {
+  public void testToxSimpleRun() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSimpleRun/", 2,
                                                      new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -54,15 +53,15 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        Pair.create("py26", new InterpreterExpectations(
                                                          "AttributeError: 'module' object has no attribute 'skip'", false)),
                                                        Pair.create("py27", new InterpreterExpectations("", true))
-                                                     )
-    ));
+                                                     ),
+                                                     Integer.MAX_VALUE));
   }
 
   /**
    * Check tox nose runner
    */
   @Test
-  public void testToxNose() throws IOException {
+  public void testToxNose() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxNose/", 1,
                                                      new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -71,8 +70,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        // Does not support 3.4
                                                        Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
-                                                     )
-                  )
+                                                     ),
+                                                     Integer.MAX_VALUE)
     );
   }
 
@@ -80,7 +79,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox pytest runner
    */
   @Test
-  public void testToxPyTest() throws IOException {
+  public void testToxPyTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTest/", 1,
                                                      new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -89,8 +88,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        // Does not support 3.4
                                                        Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
-                                                     )
-                  )
+                                                     ),
+                                                     Integer.MAX_VALUE)
     );
   }
 
@@ -98,7 +97,7 @@ public final class PyToxTest extends PyEnvTestCase {
    * Check tox unit runner
    */
   @Test
-  public void testToxUnitTest() throws IOException {
+  public void testToxUnitTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxUnitTest/", 1,
                                                      new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -107,8 +106,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        // Does not support 3.4
                                                        Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
-                                                     )
-                  )
+                                                     ),
+                                                     Integer.MAX_VALUE)
     );
   }
 
@@ -124,18 +123,31 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
                                                        Pair.create("py32", new InterpreterExpectations("", true)),
                                                        Pair.create("py34", new InterpreterExpectations("", true))
-                                                     )
-                  )
+                                                     ),
+                                                     Integer.MAX_VALUE)
     );
+  }
 
 
+  /**
+   * Ensures test is not launched 2 times because folder added 2 times
+   */
+  @Test
+  public void testDoubleRun() throws Exception {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxDoubleRun/", 1,
+                                                     new MyTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py27", new InterpreterExpectations("", true))
+                                                     ),
+                                                     1)
+    );
   }
 
   /**
    * Big test which should run on any interpreter and check its output
    */
   @Test
-  public void testToxSuccessTest() throws IOException {
+  public void testToxSuccessTest() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSuccess/", 1,
                                                      new MyTestProcessRunner(),
                                                      Arrays.asList(
@@ -144,8 +156,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                        // Should have output
                                                        Pair.create("py32", new InterpreterExpectations("I am 3.2", true)),
                                                        Pair.create("py34", new InterpreterExpectations("I am 3.4", true))
-                                                     )
-                  )
+                                                     ),
+                                                     Integer.MAX_VALUE)
     );
   }
 
@@ -154,20 +166,23 @@ public final class PyToxTest extends PyEnvTestCase {
     @NotNull
     private final Map<String, InterpreterExpectations> myInterpreters = new HashMap<>();
     private final int myMinimumSuccessTestCount;
+    private final int myMaximumSuccessTestCount;
     @NotNull
     private final MyTestProcessRunner myRunner;
 
     /**
-     * @param relativeTestDataPath    TODO: DOC
      * @param minimumSuccessTestCount how many success tests should be
      * @param interpreterExpectations interpreter_name -] expected result
+     * @param maximumTestCount        max number of success tests
      */
     private MyPyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath,
                                            final int minimumSuccessTestCount,
                                            @NotNull final MyTestProcessRunner runner,
-                                           @NotNull final Collection<Pair<String, InterpreterExpectations>> interpreterExpectations) {
+                                           @NotNull final Iterable<Pair<String, InterpreterExpectations>> interpreterExpectations,
+                                           final int maximumTestCount) {
       super(relativeTestDataPath, SdkCreationType.EMPTY_SDK);
       myMinimumSuccessTestCount = minimumSuccessTestCount;
+      myMaximumSuccessTestCount = maximumTestCount;
       myRunner = runner;
       for (final Pair<String, InterpreterExpectations> interpreterExpectation : interpreterExpectations) {
         myInterpreters.put(interpreterExpectation.first, interpreterExpectation.second);
@@ -218,15 +233,20 @@ public final class PyToxTest extends PyEnvTestCase {
         if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("SKIP")) {
           // The only reason it may be skipped is it does not exist and skip_missing_interpreters = True
           final String output = getTestOutput(interpreterSuite);
-          Assert.assertThat("Test marked skipped but not because interpreter not found", output, Matchers.containsString("InterpreterNotFound"));
+          Assert.assertThat("Test marked skipped but not because interpreter not found", output,
+                            Matchers.containsString("InterpreterNotFound"));
         }
 
 
         // Interpretr run success,
         //At least one interpreter tests should passed
-        Assert.assertThat(String.format("No test passed, should %s at least", myMinimumSuccessTestCount),
-                          new SMRootTestsCounter(interpreterSuite.getRoot()).getPassedTestsCount(),
+        final int numberOfTests = new SMRootTestsCounter(interpreterSuite.getRoot()).getPassedTestsCount();
+        Assert.assertThat(String.format("Not enough test passed, should %s at least", myMinimumSuccessTestCount),
+                          numberOfTests,
                           Matchers.greaterThanOrEqualTo(myMinimumSuccessTestCount));
+        Assert.assertThat(String.format("Too many tests passed, should %s maximum", myMaximumSuccessTestCount),
+                          numberOfTests,
+                          Matchers.lessThanOrEqualTo(myMaximumSuccessTestCount));
 
         // Check expected output
         final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
@@ -265,9 +285,6 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
   private static final class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
-    /**
-     * @param testPath testPath relative to community path
-     */
     private MyTestProcessRunner() {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0);
     }
