@@ -304,7 +304,7 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
 
   @Override
   public void commandExecuted(boolean more) {
-    if (!more && !ipythonEnabled()) {
+    if (!more && !ipythonEnabled() && !myConsoleCommunication.isWaitingForInput()) {
       ordinaryPrompt();
     }
   }
