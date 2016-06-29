@@ -68,7 +68,12 @@ public class StaticInitializerReferencesSubClassInspection extends BaseJavaBatch
     scope.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof PsiClass || element instanceof PsiReferenceParameterList || element instanceof PsiTypeElement) return;
+        if (element instanceof PsiClass ||
+            element instanceof PsiReferenceParameterList ||
+            element instanceof PsiTypeElement ||
+            element instanceof PsiLambdaExpression) {
+          return;
+        }
 
         PsiClass targetClass = extractClass(element);
         if (targetClass != null && targetClass.isInheritor(baseClass, true) && !hasSingleInitializationPlace(targetClass)) {
