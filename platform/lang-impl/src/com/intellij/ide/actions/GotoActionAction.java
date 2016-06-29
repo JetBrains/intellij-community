@@ -108,6 +108,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             if (text != null && myDropdownPopup != null) {
               myDropdownPopup.setAdText(text, SwingConstants.LEFT);
             }
+
+            String description = getValueDescription(value);
+            ActionMenu.showDescriptionInStatusBar(true, myList, description);
           }
 
           @Nullable
@@ -125,24 +128,25 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         myList.addMouseMotionListener(new MouseMotionAdapter() {
           @Override
           public void mouseMoved(MouseEvent e) {
-            String description = getDescription(e);
-            ActionMenu.showDescriptionInStatusBar(description != null, myList, description);
-          }
-
-          @Nullable
-          private String getDescription(@NotNull MouseEvent e) {
             int index = myList.locationToIndex(e.getPoint());
-            Object o = myList.getModel().getElementAt(index);
-            if (o instanceof GotoActionModel.MatchedValue) {
-              GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)o;
-              if (mv.value instanceof GotoActionModel.ActionWrapper) {
-                AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
-                return action.getTemplatePresentation().getDescription();
-              }
-            }
-            return null;
+            if (index == -1) return;
+            Object value = myList.getModel().getElementAt(index);
+            String description = getValueDescription(value);
+            ActionMenu.showDescriptionInStatusBar(true, myList, description);
           }
         });
+      }
+
+      @Nullable
+      private String getValueDescription(@Nullable Object value) {
+        if (value instanceof GotoActionModel.MatchedValue) {
+          GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)value;
+          if (mv.value instanceof GotoActionModel.ActionWrapper) {
+            AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
+            return action.getTemplatePresentation().getDescription();
+          }
+        }
+        return null;
       }
 
       @NotNull
@@ -163,7 +167,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       public void setDisposed(boolean disposedFlag) {
         super.setDisposed(disposedFlag);
         Disposer.dispose(disposable);
-        
+
+        ActionMenu.showDescriptionInStatusBar(true, myList, null);
+
         for (ListSelectionListener listener : myList.getListSelectionListeners()) {
           myList.removeListSelectionListener(listener);
         }
