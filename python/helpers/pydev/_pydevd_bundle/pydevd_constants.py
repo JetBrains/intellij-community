@@ -52,6 +52,7 @@ if IS_JYTHON:
         IS_JYTH_LESS25 = True
 
 CYTHON_SUPPORTED = False
+GC_SUPPORTED = False
 
 try:
     import platform
@@ -60,6 +61,7 @@ except:
     pass
 else:
     if python_implementation == 'CPython':
+        GC_SUPPORTED = True
         # Only available for CPython!
         if (
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
