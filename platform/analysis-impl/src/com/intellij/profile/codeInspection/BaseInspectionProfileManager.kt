@@ -20,7 +20,9 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.options.LazySchemeProcessor
 import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.profile.Profile
 import com.intellij.profile.ProfileChangeAdapter
@@ -94,5 +96,16 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
   override fun updateProfile(profile: Profile) {
     schemeManager.addScheme(profile as InspectionProfile)
     fireProfileChanged(profile)
+  }
+}
+
+abstract class InspectionProfileProcessor : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
+  override final fun getState(scheme: InspectionProfile): SchemeState {
+    if (scheme is InspectionProfileImpl) {
+      return if (scheme.wasInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+    }
+    else {
+      return SchemeState.NON_PERSISTENT
+    }
   }
 }

@@ -303,44 +303,46 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
 
     Map<String, Boolean> diffMap = getDisplayLevelMap();
-    if (diffMap != null) {
-      diffMap = new TreeMap<>(diffMap);
-      for (String toolName : myInspectionsSettings.keySet()) {
-        diffMap.put(toolName, false);
+    if (diffMap == null) {
+      return;
+    }
+
+    diffMap = new TreeMap<>(diffMap);
+    for (String toolName : myInspectionsSettings.keySet()) {
+      diffMap.put(toolName, false);
+    }
+
+    for (String toolName : diffMap.keySet()) {
+      if (!myLockedProfile && diffMap.get(toolName).booleanValue()) {
+        markSettingsMerged(toolName, element);
+        continue;
       }
 
-      for (String toolName : diffMap.keySet()) {
-        if (!myLockedProfile && diffMap.get(toolName).booleanValue()) {
-          markSettingsMerged(toolName, element);
+      Element toolElement = myInspectionsSettings.get(toolName);
+      if (toolElement == null) {
+        ToolsImpl toolList = myTools.get(toolName);
+        LOG.assertTrue(toolList != null);
+        Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
+        inspectionElement.setAttribute(CLASS_TAG, toolName);
+        try {
+          toolList.writeExternal(inspectionElement);
+        }
+        catch (WriteExternalException e) {
+          LOG.error(e);
           continue;
         }
 
-        Element toolElement = myInspectionsSettings.get(toolName);
-        if (toolElement == null) {
-          ToolsImpl toolList = myTools.get(toolName);
-          LOG.assertTrue(toolList != null);
-          Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
-          inspectionElement.setAttribute(CLASS_TAG, toolName);
-          try {
-            toolList.writeExternal(inspectionElement);
-          }
-          catch (WriteExternalException e) {
-            LOG.error(e);
-            continue;
-          }
-
-          if (!areSettingsMerged(toolName, inspectionElement)) {
-            element.addContent(inspectionElement);
-          }
+        if (!areSettingsMerged(toolName, inspectionElement)) {
+          element.addContent(inspectionElement);
         }
-        else {
-          element.addContent(toolElement.clone());
-        }
+      }
+      else {
+        element.addContent(toolElement.clone());
       }
     }
   }
 
-  private void markSettingsMerged(String toolName, Element element) {
+  private void markSettingsMerged(@NotNull String toolName, @NotNull Element element) {
     //add marker if already merged but result is now default (-> empty node)
     final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
     if (!myInspectionsSettings.containsKey(mergedName)) {
@@ -549,12 +551,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     synchronized (myLock) {
       if (!myInitialized) {
-        myInitialized = initialize(project);
+        initialize(project);
       }
     }
   }
 
-  private boolean initialize(@Nullable Project project) {
+  private void initialize(@Nullable Project project) {
     SchemeDataHolder dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
@@ -574,16 +576,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       tools = createTools(project);
     }
     catch (ProcessCanceledException ignored) {
-      return false;
+      return;
     }
 
     final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
-    }
-
-    if (dataHolder != null) {
-      dataHolder.updateDigest();
     }
 
     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
@@ -598,14 +596,18 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     })));
     if (builder.isAcyclic()) {
-      final List<String> scopes = builder.getSortedNodes();
-      myScopesOrder = ArrayUtil.toStringArray(scopes);
+      myScopesOrder = ArrayUtil.toStringArray(builder.getSortedNodes());
     }
 
     if (mySource != null) {
       copyToolsConfigurations(mySource, project);
     }
-    return true;
+
+    myInitialized = true;
+    if (dataHolder != null) {
+      // should be only after set myInitialized
+      dataHolder.updateDigest();
+    }
   }
 
   public void addTool(@Nullable Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Map<String, List<String>> dependencies) {
@@ -936,12 +938,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private Map<String, Boolean> getDisplayLevelMap() {
     if (myBaseProfile == null) return null;
     if (myDisplayLevelMap == null) {
-      // Synchronizing on myExternalInfo as initInspectionTools() synchronizes on it internally.
       synchronized (myLock) {
         if (myDisplayLevelMap == null) {
           initInspectionTools(null);
-          TreeMap<String,Boolean> map = new TreeMap<>();
-          for (String toolId : myTools.keySet()) {
+          Set<String> names = myTools.keySet();
+          Map<String, Boolean> map = new THashMap<>(names.size());
+          for (String toolId : names) {
             map.put(toolId, toolSettingsAreEqual(toolId, myBaseProfile, this));
           }
           myDisplayLevelMap = map;

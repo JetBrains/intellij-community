@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.LazySchemeProcessor
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
@@ -85,7 +84,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
                            @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
 
   init {
-    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
+    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
       override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
         val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
         profile.isProjectLevel = true

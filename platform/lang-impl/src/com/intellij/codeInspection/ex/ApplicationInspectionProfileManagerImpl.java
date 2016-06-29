@@ -34,7 +34,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -85,7 +87,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
     myRegistrar = registrar;
     registerProvidedSeverities();
 
-    mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
+    mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new InspectionProfileProcessor() {
       @NotNull
       @Override
       public String getName(@NotNull Function<String, String> attributeProvider) {
@@ -98,17 +100,6 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
         return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
-      }
-
-      @NotNull
-      @Override
-      public SchemeState getState(@NotNull InspectionProfile scheme) {
-        if (!(scheme instanceof InspectionProfileImpl) || scheme.isProjectLevel()) {
-          return SchemeState.NON_PERSISTENT;
-        }
-        else {
-          return ((InspectionProfileImpl)scheme).wasInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
-        }
       }
 
       @Override
