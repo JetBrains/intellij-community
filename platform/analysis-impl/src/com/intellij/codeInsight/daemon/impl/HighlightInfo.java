@@ -185,7 +185,7 @@ public class HighlightInfo implements Segment {
         isLikeVariable(type.getAttributesKey())) {
       String text = element.getContainingFile().getText();
       String name = text.substring(startOffset, endOffset);
-      attributes = new RainbowHighlighter(colorsScheme).getAttributes(name, attributes);
+      attributes = new RainbowHighlighter(colorsScheme, null).getAttributes(name, attributes);
     }
     return attributes;
   }
