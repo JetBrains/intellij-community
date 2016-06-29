@@ -282,6 +282,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testFluentIterableFromAndParenthesises() {
+    doTestAllFile();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
 
