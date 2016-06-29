@@ -2,7 +2,6 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.PackageSymbol;
-import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +12,7 @@ import java.util.List;
 public class Symbols {
   public final PackageSymbol myRootPackage;
   protected final NameEnvironment myNameEnvironment = new NameEnvironment();
+  private final AnchorRepository myClassAnchors = new AnchorRepository();
 
   private List<ClassSymbol> myClassSymbols = new ArrayList<>(0x8000);
   // fullName -> PackageSymbol
@@ -63,21 +63,24 @@ public class Symbols {
     return (ClassSymbol[])cs;
   }
 
-  public ClassSymbol enterClass(ClassAnchor classAnchor, int flags, int shortName, Symbol owner, UnitInfo info, QualifiedName[] supers, StubHierarchyConnector connector) {
-    QualifiedName qualifiedName = myNameEnvironment.qualifiedName(owner, shortName);
-    StubClassAnchor stubClassAnchor = new StubClassAnchor(myClassSymbols.size(), classAnchor);
-    ClassSymbol c = new ClassSymbol(stubClassAnchor, flags, owner, qualifiedName, shortName, info, supers, connector);
+  ClassSymbol enterClass(int fileId,
+                         int stubId,
+                         int flags,
+                         int shortName,
+                         Symbol owner,
+                         UnitInfo info,
+                         @CompactArray(QualifiedName.class) Object supers,
+                         @Nullable QualifiedName qualifiedName) {
+    int anchorId = myClassAnchors.registerClass(fileId, stubId);
+    ClassSymbol c = new ClassSymbol(anchorId, flags, owner, shortName, info, supers);
     myClassSymbols.add(c);
-    putClassByName(c);
+    if (qualifiedName != null) {
+      putClassByName(c, qualifiedName.myId);
+    }
     return c;
   }
 
-  private void putClassByName(ClassSymbol classSymbol) {
-    QualifiedName name = classSymbol.myQualifiedName;
-    // anonymous class
-    if (name == null)
-      return;
-    int nameId = name.myId;
+  private void putClassByName(ClassSymbol classSymbol, int nameId) {
     ensureByNameCapacity(nameId);
     Object cs = myClassSymbolsByNameId[nameId];
     if (cs == null) {
@@ -113,6 +116,6 @@ public class Symbols {
   SingleClassHierarchy createHierarchy() {
     ClassSymbol[] array = myClassSymbols.toArray(ClassSymbol.EMPTY_ARRAY);
     myClassSymbols = null;
-    return new SingleClassHierarchy(array);
+    return new SingleClassHierarchy(array, myClassAnchors);
   }
 }

@@ -346,6 +346,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
+  public void consoleInputRequested() {
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
+      ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView().inputRequested();
+    }
+  }
+
   protected void afterConnect() {
   }
 
@@ -526,7 +533,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
             }
           }
-          if ((breakpoint != null) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
+          if ((breakpoint != null) && (breakpoint.getType().isSuspendThreadSupported()) &&
+              (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
             return true;
           }
         }
@@ -677,7 +685,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyStackFrame frame = currentFrame();
     PyDebugValue debugValue = var;
     if (var.isReturnedVal()) {
-      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + var.getName());
+      // return values are saved in dictionary on Python side, so the variable's name should be transformed
+      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + "[\"" + var.getName() + "\"]");
     }
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
   }
@@ -848,7 +857,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
         }
         if (breakpoint != null) {
-          if (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL) {
+          if ((breakpoint.getType().isSuspendThreadSupported()) && (breakpoint.getSuspendPolicy() == SuspendPolicy.ALL)) {
             suspendAllOtherThreads(threadInfo);
           }
         }

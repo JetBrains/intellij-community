@@ -16,6 +16,7 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -31,7 +32,9 @@ import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.CommandLinePatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,6 +105,15 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @Override
     protected HelperPackage getRunner() {
       return myState.getRunner();
+    }
+
+    @Override
+    public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
+      // Insane rerun tests with out of spec.
+      if (getTestSpecs().isEmpty()) {
+        throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
+      }
+      return super.execute(executor, patchers);
     }
 
     @NotNull

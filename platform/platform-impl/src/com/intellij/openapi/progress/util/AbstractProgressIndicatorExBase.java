@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -106,7 +106,14 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void enterModality() {
     if (myModalityProgress == this) {
-      GuiUtils.invokeLaterIfNeeded(this::doEnterModality, ModalityState.defaultModalityState());
+      ModalityState modalityState = ModalityState.defaultModalityState();
+      if (!myModalityEntered &&
+          !ApplicationManager.getApplication().isDispatchThread() &&
+          !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteSafeModality(modalityState)) {
+        // exceptions here should be assigned to Peter
+        LOG.error("Non-modal progress should be started in a write-safe context: an action or modality-aware invokeLater. See also TransactionGuard documentation.");
+      }
+      GuiUtils.invokeLaterIfNeeded(this::doEnterModality, modalityState);
     }
   }
 

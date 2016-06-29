@@ -15,7 +15,6 @@
  */
 package com.jetbrains.rest;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -26,7 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+
+import java.util.List;
 
 /**
  * User : catherine
@@ -45,15 +47,11 @@ public class RestPythonUtil {
         module = modules.length == 0 ? null : modules [0];
       }
       if (module != null) {
-        Sdk sdk = PythonSdkType.findPythonSdk(module);
+        final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          PyPackageManager manager = PyPackageManager.getInstance(sdk);
-          try {
-            final PyPackage sphinx = manager.findPackage("Sphinx", false);
-            presentation.setEnabled(sphinx != null);
-          }
-          catch (ExecutionException ignored) {
-          }
+          final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+          final PyPackage sphinx = packages != null ? PyPackageUtil.findPackage(packages, "Sphinx") : null;
+          presentation.setEnabled(sphinx != null);
         }
       }
     }

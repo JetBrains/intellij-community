@@ -225,6 +225,21 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         assert sourceSetMap != null;
         sourceSetMap.put(moduleId, Pair.create(sourceSetDataNode, sourceSet));
       }
+    } else {
+      try {
+        IdeaJavaLanguageSettings languageSettings = gradleModule.getJavaLanguageSettings();
+        if(languageSettings != null) {
+          if(languageSettings.getLanguageLevel() != null) {
+            mainModuleData.setSourceCompatibility(languageSettings.getLanguageLevel().toString());
+          }
+          if(languageSettings.getTargetBytecodeVersion() != null) {
+            mainModuleData.setTargetCompatibility(languageSettings.getTargetBytecodeVersion().toString());
+          }
+        }
+      }
+      catch (UnsupportedMethodException ignore) {
+        // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11
+      }
     }
 
     final ProjectData projectData = projectDataNode.getData();

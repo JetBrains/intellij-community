@@ -75,8 +75,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parseClassFromKeyword(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                        final boolean isAnnotation, final Context context) {
+  private PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder, PsiBuilder.Marker declaration, boolean isAnnotation, Context context) {
     final IElementType keywordTokenType = builder.getTokenType();
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();

@@ -1,0 +1,24 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a[b-&&[cd]]>
+    RegExpBranchImpl: <a[b-&&[cd]]>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpClassImpl: <[b-&&[cd]]>
+        PsiElement(CLASS_BEGIN)('[')
+        RegExpIntersectionImpl: <b-&&[cd]>
+          RegExpCharImpl: <b>
+            PsiElement(CHARACTER)('b')
+          RegExpCharImpl: <->
+            PsiElement(MINUS)('-')
+          PsiErrorElement:Illegal character range
+            <empty list>
+          PsiElement(ANDAND)('&&')
+          RegExpClassImpl: <[cd]>
+            PsiElement(CLASS_BEGIN)('[')
+            RegExpUnionImpl: <cd>
+              RegExpCharImpl: <c>
+                PsiElement(CHARACTER)('c')
+              RegExpCharImpl: <d>
+                PsiElement(CHARACTER)('d')
+            PsiElement(CLASS_END)(']')
+        PsiElement(CLASS_END)(']')

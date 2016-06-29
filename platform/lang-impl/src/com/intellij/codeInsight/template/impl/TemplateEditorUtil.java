@@ -60,7 +60,7 @@ public class TemplateEditorUtil {
   private static Document createDocument(CharSequence text, @Nullable TemplateContext context, Project project) {
     if (context != null) {
       for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-        if (context.isExplicitlyEnabled(type)) {
+        if (context.isEnabled(type)) {
           return type.createDocument(text, project);
         }
       }

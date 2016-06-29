@@ -135,10 +135,6 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (secondIsTag && myXmlFormattingPolicy.keepWhiteSpacesInsideTag((XmlTag)node2.getPsi()) && node2.textContains('\n')) {
-      return Spacing.getReadOnlySpacing();
-    }
-
     if (isXmlTagName(type1, type2)){
       final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
       return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());

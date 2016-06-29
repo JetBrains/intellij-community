@@ -52,7 +52,7 @@ import java.util.List;
  * you need to implement {@link #getEnvironmentToRerun(RunContentDescriptor)}, accept last run descriptor and return
  * {@link ExecutionEnvironment} to rerun (probably obtained from descriptor).
  * <p/>
- * It also has {@link #getAvailableRunnersForLastRun()} with list of strings that represents runner ids available for last run.
+ * It also has {@link #getAvailableRunnersForLastRun()} with list of runners that represents runner ids available for last run.
  *
  * @param <CONF_T> configuration class this runner supports
  * @author Ilya.Kazakevich
@@ -65,7 +65,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   private final Class<CONF_T> myExpectedConfigurationType;
 
   @NotNull
-  private final List<String> myAvailableRunnersForLastRun = new ArrayList<String>();
+  private final List<ProgramRunner<?>> myAvailableRunnersForLastRun = new ArrayList<>();
 
   /**
    * Environment to be used to run instead of factory. Used to rerun
@@ -75,7 +75,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   /**
    * Process descriptor of last run
    */
-  private RunContentDescriptor myLastProcessDescriptor;
+  protected RunContentDescriptor myLastProcessDescriptor;
 
   /**
    * @param configurationFactory      factory tp create configurations
@@ -114,7 +114,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     for (final ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
       for (final Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (runner.canRun(executor.getId(), executionEnvironment.getRunProfile())) {
-          myAvailableRunnersForLastRun.add(runner.getRunnerId());
+          myAvailableRunnersForLastRun.add(runner);
         }
       }
     }
@@ -222,7 +222,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    * Use it to check if desired runner (like debugger) exists
    */
   @NotNull
-  public final List<String> getAvailableRunnersForLastRun() {
+  public final List<ProgramRunner<?>> getAvailableRunnersForLastRun() {
     return Collections.unmodifiableList(myAvailableRunnersForLastRun);
   }
 }

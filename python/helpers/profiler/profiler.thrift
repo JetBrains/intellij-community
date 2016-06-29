@@ -11,7 +11,7 @@ struct FuncStat {
 
 struct Function {
    1: required FuncStat func_stat,
-   2: optional list<FuncStat> callers,    // list of functions called from the executed function.
+   2: required list<FuncStat> callers,    // list of functions called from the executed function.
 }
 
 

@@ -9,8 +9,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -26,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudyProjectComponent;
+import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -59,9 +58,9 @@ public class StudyProjectGenerator {
   private static final String COURSE_DESCRIPTION = "description";
   private static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  public StepicUser myUser;
+  @Nullable public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
-  private List<Integer> myEnrolledCoursesIds = new ArrayList<>(); 
+  private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
@@ -71,7 +70,7 @@ public class StudyProjectGenerator {
   public boolean isLoggedIn() {
     return myUser != null && !StringUtil.isEmptyOrSpaces(myUser.getPassword()) && !StringUtil.isEmptyOrSpaces(myUser.getEmail());
   }
-  
+
   public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
     myEnrolledCoursesIds = coursesIds;
   }
@@ -86,27 +85,29 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    StudyTaskManager.getInstance(project).setUser(myUser);
+    if (myUser != null) {
+      StudyTaskManager.getInstance(project).setUser(myUser);
+    }
     final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
+      Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
     final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
     StudyTaskManager.getInstance(project).setCourse(course);
-    ApplicationManager.getApplication().invokeLater(
-      () -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                    () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-                                                      course.setCourseDirectory(courseDirectory.getAbsolutePath());
-                                                      VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-                                                      StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
-                                                      openFirstTask(course, project);
-                                                    })));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
+      course.setCourseDirectory(courseDirectory.getAbsolutePath());
+      VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+      StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+      openFirstTask(course, project);
+    });
   }
 
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
+
     final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
     if (courseFile.exists()) {
       return readCourseFromCache(courseFile, false);
@@ -119,12 +120,21 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-    if (course != null) {
-      flushCourse(project, course);
-      course.initCourse(false);
-    }
-    return course;
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
+      @Override
+      public Course compute() throws RuntimeException {
+        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+        return execCancelable(() -> {
+
+          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+          if (course != null) {
+            flushCourse(project, course);
+            course.initCourse(false);
+          }
+          return course;
+        });
+      }
+    }, "Creating Course", true, project);
   }
 
   @Nullable
@@ -132,7 +142,7 @@ public class StudyProjectGenerator {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-      Gson gson = new GsonBuilder().create();
+      Gson gson = new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;
@@ -366,15 +376,13 @@ public class StudyProjectGenerator {
     return myCourses;
   }
 
+ @NotNull
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(new ThrowableComputable<List<CourseInfo>, RuntimeException>() {
-          @Override
-          public List<CourseInfo> compute() throws RuntimeException {
-            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-            return getCourses(force);
-          }
+        .runProcessWithProgressSynchronously(() -> {
+          ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+          return getCourses(force);
         }, progressTitle, true, project);
     }
     catch (RuntimeException e) {
@@ -482,7 +490,7 @@ public class StudyProjectGenerator {
   private static CourseInfo addCourse(List<CourseInfo> courses, File courseDir) {
     if (courseDir.isDirectory()) {
       File[] courseFiles = courseDir.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
-      if (courseFiles.length != 1) {
+      if (courseFiles == null || courseFiles.length != 1) {
         LOG.info("User tried to add course with more than one or without course files");
         return null;
       }
@@ -505,7 +513,7 @@ public class StudyProjectGenerator {
   private static CourseInfo getCourseInfo(File courseFile) {
     if (courseFile.isDirectory()) {
       File[] courseFiles = courseFile.listFiles((dir, name) -> name.equals(EduNames.COURSE_META_FILE));
-      if (courseFiles.length != 1) {
+      if (courseFiles == null || courseFiles.length != 1) {
         LOG.info("More than one or without course files");
         return null;
       }

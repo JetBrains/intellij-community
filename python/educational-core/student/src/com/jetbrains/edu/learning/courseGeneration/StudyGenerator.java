@@ -116,15 +116,15 @@ public class StudyGenerator {
       baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);
       File[] files = resourceRoot.listFiles(
         (dir, name) -> !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS));
-      for (File file : files) {
-        File dir = new File(baseDir.getPath(), file.getName());
-        if (file.isDirectory()) {
-          FileUtil.copyDir(file, dir);
-          continue;
+      if (files != null) {
+        for (File file : files) {
+          File dir = new File(baseDir.getPath(), file.getName());
+          if (file.isDirectory()) {
+            FileUtil.copyDir(file, dir);
+            continue;
+          }
+          FileUtil.copy(file, dir);
         }
-  
-        FileUtil.copy(file, dir);
-  
       }
     }
     catch (IOException e) {

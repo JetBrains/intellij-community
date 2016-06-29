@@ -63,7 +63,7 @@ public class ExtractClassHandler implements ElementsHandler {
     if (cannotRefactorMessage != null)  {
       CommonRefactoringUtil.showErrorHint(project, editor, 
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage, 
-                                          null, getHelpID());
+                                          ExtractClassProcessor.REFACTORING_NAME, getHelpID());
       return;
     }
     new ExtractClassDialog(containingClass, selectedMember).show();

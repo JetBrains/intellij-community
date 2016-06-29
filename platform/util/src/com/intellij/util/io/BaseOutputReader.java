@@ -52,7 +52,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
   private final Options myOptions;
   private final char[] myInputBuffer = new char[8192];
   private final StringBuilder myLineBuffer = new StringBuilder();
-  private boolean myCarry = false;
+  private boolean myCarry;
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(createInputStreamReader(inputStream, charset));
@@ -93,6 +93,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @return true if non-zero amount of data has been read
    * @throws IOException If an I/O error occurs
    */
+  @Override
   protected final boolean readAvailableNonBlocking() throws IOException {
     boolean read = false;
 
@@ -127,6 +128,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @return true if non-zero amount of data has been read, false if end of the stream is reached
    * @throws IOException If an I/O error occurs
    */
+  @Override
   protected final boolean readAvailableBlocking() throws IOException {
     boolean read = false;
 

@@ -238,6 +238,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpIntersection(RegExpIntersection intersection) {
+    if (intersection.getOperands().length == 0) {
+      myHolder.createErrorAnnotation(intersection, "Illegal empty intersection");
+    }
+  }
+
+  @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {

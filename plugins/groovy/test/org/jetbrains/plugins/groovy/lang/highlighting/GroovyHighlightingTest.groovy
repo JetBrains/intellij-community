@@ -2001,4 +2001,10 @@ def doParse() {
 }
 ''', GroovyAssignabilityCheckInspection
   }
+
+  void 'test unresolved anonymous base class'() {
+    testHighlighting '''
+def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>() {}
+'''
+  }
 }

@@ -1,12 +1,9 @@
 <component name="libraryTable">
   <library name="CGLIB">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/cglib-2.2.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cglib-nodep-3.2.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/cglib-src-2.2.2.jar!/src/proxy" />
-      <root url="jar://$PROJECT_DIR$/lib/src/cglib-src-2.2.2.jar!/src/test" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

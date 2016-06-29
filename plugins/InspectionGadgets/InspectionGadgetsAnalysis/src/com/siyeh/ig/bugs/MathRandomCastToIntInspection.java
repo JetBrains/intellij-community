@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,8 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("math.random.cast.to.int.problem.descriptor");
+    final PsiType type = (PsiType)infos[1];
+    return InspectionGadgetsBundle.message("math.random.cast.to.int.problem.descriptor", type.getPresentableText());
   }
 
   @Override
@@ -57,7 +58,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
-    if (JavaTokenType.ASTERISK != tokenType) {
+    if (JavaTokenType.ASTERISK != tokenType || polyadicExpression.getType() == null) {
       return null;
     }
     return new MathRandomCastToIntegerFix();
@@ -72,14 +73,16 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "math.random.cast.to.int.quickfix");
+      return InspectionGadgetsBundle.message("math.random.cast.to.int.quickfix");
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
+      PsiElement parent = element.getParent();
+      while (parent instanceof PsiPrefixExpression) {
+        parent = parent.getParent();
+      }
       if (!(parent instanceof PsiTypeCastExpression)) {
         return;
       }
@@ -93,8 +96,12 @@ public class MathRandomCastToIntInspection extends BaseInspection {
       if (operand == null) {
         return;
       }
+      final PsiType type = polyadicExpression.getType();
+      if (type == null) {
+        return;
+      }
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      newExpression.append("(int)(");
+      newExpression.append("(").append(type.getCanonicalText()).append(")(");
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (final PsiExpression expression : operands) {
         final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(expression);
@@ -123,7 +130,10 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
-      final PsiExpression operand = expression.getOperand();
+      PsiExpression operand = expression.getOperand();
+      while (operand instanceof PsiPrefixExpression) {
+        operand = ((PsiPrefixExpression)operand).getOperand();
+      }
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
       }
@@ -132,7 +142,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final PsiType type = castType.getType();
-      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      if (!(type instanceof PsiPrimitiveType) || PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type) || PsiType.BOOLEAN.equals(type)) {
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
@@ -154,7 +164,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
       if (!"java.lang.Math".equals(qualifiedName) && !"java.lang.StrictMath".equals(qualifiedName)) {
         return;
       }
-      registerError(methodCallExpression, expression);
+      registerError(methodCallExpression, expression, type);
     }
   }
 }

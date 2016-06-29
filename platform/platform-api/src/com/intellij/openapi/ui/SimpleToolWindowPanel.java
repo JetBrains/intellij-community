@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -105,8 +106,10 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
   }
 
   public List<AnAction> getActions(boolean originalProvider) {
-    ActionToolbar toolbar = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class).first();
-    return toolbar == null ? null : toolbar.getActions(originalProvider);
+    JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
+    if (toolbars.size() == 0)
+      return null;
+    return toolbars.flatten(toolbar -> toolbar.getActions(originalProvider)).toList();
   }
 
   public JComponent getComponent() {

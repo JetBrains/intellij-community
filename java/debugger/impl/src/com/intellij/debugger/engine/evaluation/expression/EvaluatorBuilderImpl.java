@@ -805,13 +805,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
         else {
-          myResult = new ReferenceEvaluator(name);
+          myResult = createFallbackEvaluator(new LocalVariableEvaluator(name, false),
+                                             new FieldEvaluator(new ThisEvaluator(), FieldEvaluator.TargetClassFilter.ALL, name));
         }
       }
     }
 
     private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
       return new Evaluator() {
+        private boolean myIsFallback;
         @Override
         public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
           try {
@@ -819,7 +821,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           catch (EvaluateException e) {
             try {
-              return fallback.evaluate(context);
+              Object res = fallback.evaluate(context);
+              myIsFallback = true;
+              return res;
             }
             catch (EvaluateException e1) {
               throw e;
@@ -829,7 +833,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         @Override
         public Modifier getModifier() {
-          return primary.getModifier();
+          return myIsFallback ? fallback.getModifier() : primary.getModifier();
         }
       };
     }
@@ -1089,7 +1093,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (psiMethod != null) {
         processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
-        argumentEvaluators = wrapVarargs(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         defaultInterfaceMethod = psiMethod.hasModifierProperty(PsiModifier.DEFAULT);
         mustBeVararg = psiMethod.isVarArgs();
       }
@@ -1319,7 +1322,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         if (constructor != null) {
           processBoxingConversions(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
-          argumentEvaluators = wrapVarargs(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
         }
 
         if (aClass != null && aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -1408,34 +1410,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       return new ExpressionEvaluatorImpl(myResult);
     }
-  }
-
-  private static Evaluator[] wrapVarargs(final PsiParameter[] declaredParams,
-                                         final PsiExpression[] actualArgumentExpressions,
-                                         final PsiSubstitutor methodResolveSubstitutor,
-                                         final Evaluator[] argumentEvaluators) {
-    int lastParam = declaredParams.length - 1;
-    if (lastParam >= 0 && declaredParams[lastParam].isVarArgs() && argumentEvaluators.length > lastParam) {
-      // only wrap if the first varargs parameter is null for now
-      if (!TypeConversionUtil.isNullType(actualArgumentExpressions[lastParam].getType())) {
-        return argumentEvaluators;
-      }
-      // do not wrap arrays twice
-      if (argumentEvaluators.length - lastParam == 1 && actualArgumentExpressions[lastParam].getType() instanceof PsiArrayType) {
-        return argumentEvaluators;
-      }
-      PsiEllipsisType declaredParamType = (PsiEllipsisType)methodResolveSubstitutor.substitute(declaredParams[lastParam].getType());
-      ArrayInitializerEvaluator varargArrayEvaluator =
-        new ArrayInitializerEvaluator(Arrays.copyOfRange(argumentEvaluators, lastParam, argumentEvaluators.length));
-      NewArrayInstanceEvaluator evaluator =
-        new NewArrayInstanceEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(declaredParamType.toArrayType())), null,
-                                      varargArrayEvaluator);
-      Evaluator[] res = new Evaluator[declaredParams.length];
-      System.arraycopy(argumentEvaluators, 0, res, 0, lastParam);
-      res[lastParam] = new DisableGC(evaluator);
-      return res;
-    }
-    return argumentEvaluators;
   }
 
   private static void processBoxingConversions(final PsiParameter[] declaredParams,

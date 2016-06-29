@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.checker;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactory;
-import com.jetbrains.python.console.PythonConsoleView;
+import com.jetbrains.edu.learning.ui.StudyTestResultsToolWindowFactoryKt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -128,9 +129,6 @@ public class StudyCheckUtils {
       if (document == null) {
         continue;
       }
-      if (!answerPlaceholder.isValid(document)) {
-        continue;
-      }
       StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
                                    virtualFile, document);
     }
@@ -153,10 +151,7 @@ public class StudyCheckUtils {
         EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
         for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
-          if (!answerPlaceholder.isValid(document)) {
-            continue;
-          }
-          final int start = answerPlaceholder.getRealStartOffset(document);
+          final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
@@ -190,29 +185,29 @@ public class StudyCheckUtils {
       if (virtualFile == null) {
         continue;
       }
-      EduUtils.flushWindows(taskFile, virtualFile, true);
+      EduUtils.flushWindows(taskFile, virtualFile);
     }
   }
 
   public static void showTestResultsToolWindow(@NotNull final Project project, @NotNull final String message, boolean solved) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow window = toolWindowManager.getToolWindow("Test Results");
+    ToolWindow window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
     if (window == null) {
-      toolWindowManager.registerToolWindow("Test Results", true, ToolWindowAnchor.BOTTOM);
-      window = toolWindowManager.getToolWindow("Test Results");
+      toolWindowManager.registerToolWindow(StudyTestResultsToolWindowFactoryKt.ID, true, ToolWindowAnchor.BOTTOM);
+      window = toolWindowManager.getToolWindow(StudyTestResultsToolWindowFactoryKt.ID);
       new StudyTestResultsToolWindowFactory().createToolWindowContent(project, window);
     }
 
     final Content[] contents = window.getContentManager().getContents();
     for (Content content : contents) {
       final JComponent component = content.getComponent();
-      if (component instanceof PythonConsoleView) {
-        ((PythonConsoleView)component).clear();
+      if (component instanceof ConsoleViewImpl) {
+        ((ConsoleViewImpl)component).clear();
         if (!solved) {
-          ((PythonConsoleView)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
+          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.ERROR_OUTPUT);
         }
         else {
-          ((PythonConsoleView)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
+          ((ConsoleViewImpl)component).print(message, ConsoleViewContentType.NORMAL_OUTPUT);
         }
         window.setAvailable(true, () -> {});
         window.show(() -> {});

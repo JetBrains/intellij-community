@@ -223,7 +223,8 @@ public class GitUpdateProcess {
         return !incomplete.get() && !compoundResult.isNull() && compoundResult.get().isSuccess();
       }
     });
-    return compoundResult.get();
+    // GitPreservingProcess#save may fail due index.lock presence
+    return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
   }
 
   @NotNull 

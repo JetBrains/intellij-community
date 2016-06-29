@@ -42,11 +42,11 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       final Editor editor = e.getEditor();
       final Point point = e.getMouseEvent().getPoint();
       final LogicalPosition pos = editor.xyToLogicalPosition(point);
-      final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.getDocument(), pos);
+      final AnswerPlaceholder answerPlaceholder = myTaskFile.getAnswerPlaceholder(editor.logicalPositionToOffset(pos));
       if (answerPlaceholder == null || answerPlaceholder.getSelected()) {
         return;
       }
-      int startOffset = answerPlaceholder.getRealStartOffset(editor.getDocument());
+      int startOffset = answerPlaceholder.getOffset();
       editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getRealLength());
       answerPlaceholder.setSelected(true);
     }
@@ -81,7 +81,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
 
         if (!taskFile.getAnswerPlaceholders().isEmpty()) {
           StudyNavigator.navigateToFirstAnswerPlaceholder(editor, taskFile);
-          boolean isStudyProject = EduNames.STUDY.equals(course.getCourseType());
+          boolean isStudyProject = EduNames.STUDY.equals(course.getCourseMode());
           StudyUtils.drawAllWindows(editor, taskFile);
           if (isStudyProject) {
             editor.addEditorMouseListener(new WindowSelectionListener(taskFile));

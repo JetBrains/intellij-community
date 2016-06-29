@@ -182,8 +182,11 @@ public class PatchApplier<BinaryType extends FilePatch> {
       // listeners finished, all 'legal' file additions/deletions with VCS are done
       trigger.processIt();
       LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
-      if (myStatus == ApplyPatchStatus.FAILURE || myStatus == ApplyPatchStatus.ABORT) {
-        suggestRollback(myProject, Collections.<PatchApplier>singletonList(PatchApplier.this), beforeLabel);
+      if (myStatus == ApplyPatchStatus.FAILURE) {
+        suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
+      }
+      else if (myStatus == ApplyPatchStatus.ABORT) {
+        rollbackUnderProgress(myProject, myProject.getBaseDir(), beforeLabel);
       }
       if(myShowNotification || !ApplyPatchStatus.SUCCESS.equals(myStatus)) {
         showApplyStatus(myProject, myStatus);
@@ -303,8 +306,11 @@ public class PatchApplier<BinaryType extends FilePatch> {
     directlyAffected.addAll(trigger.getAffected());
     final Consumer<Collection<FilePath>> mover = localChangeList == null ? null : createMover(project, localChangeList);
     refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, mover);
-    if (result == ApplyPatchStatus.FAILURE || result == ApplyPatchStatus.ABORT) {
+    if (result == ApplyPatchStatus.FAILURE) {
       suggestRollback(project, group, beforeLabel);
+    }
+    else if (result == ApplyPatchStatus.ABORT) {
+      rollbackUnderProgress(project, project.getBaseDir(), beforeLabel);
     }
     showApplyStatus(project, result);
     return result;
@@ -343,17 +349,16 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private static void rollbackUnderProgress(@NotNull final Project project,
                                             @NotNull final VirtualFile virtualFile,
                                             @NotNull final Label labelToRevert) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          labelToRevert.revert(project, virtualFile);
-        }
-        catch (LocalHistoryException e) {
-          VcsNotifier.getInstance(project)
-            .notifyImportantWarning("Rollback Failed", String.format("Try using local history dialog for %s and perform revert manually.",
-                                                                     virtualFile.getName()));
-        }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        labelToRevert.revert(project, virtualFile);
+        VcsNotifier.getInstance(project)
+          .notifyImportantWarning("Apply Patch Aborted", "All files changed during apply patch action were rolled back");
+      }
+      catch (LocalHistoryException e) {
+        VcsNotifier.getInstance(project)
+          .notifyImportantWarning("Rollback Failed", String.format("Try using local history dialog for %s and perform revert manually.",
+                                                                   virtualFile.getName()));
       }
     }, "Rollback Applied Changes...", true, project);
   }
@@ -444,7 +449,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
-    lfs.refreshFiles(indirectlyAffected, false, true, null);
     if (project.isDisposed()) return;
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);

@@ -83,14 +83,18 @@ public class CompareFilesAction extends BaseShowDiffAction {
     }
 
     if (files.length == 1) {
-      return files[0].isValid();
+      return isValidAndLocal(files[0]);
     }
     else if (files.length == 2) {
-      return files[0].isValid() && files[1].isValid();
+      return isValidAndLocal(files[0]) && isValidAndLocal(files[1]);
     }
     else {
       return false;
     }
+  }
+
+  private static boolean isValidAndLocal(VirtualFile file) {
+    return file.isValid() && file.isInLocalFileSystem();
   }
 
   @Nullable

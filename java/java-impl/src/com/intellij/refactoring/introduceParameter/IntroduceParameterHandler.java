@@ -771,6 +771,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         return datas.toArray(new VariableData[datas.size()]);
       }
 
+      @NotNull
       @Override
       public String getVisibility() {
         return PsiModifier.PUBLIC;

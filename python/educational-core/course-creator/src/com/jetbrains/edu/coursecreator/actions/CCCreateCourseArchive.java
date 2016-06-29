@@ -26,10 +26,7 @@ import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -80,7 +77,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) return;
     final VirtualFile baseDir = project.getBaseDir();
-    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, null, zipName);
+    VirtualFile archiveFolder = CCUtils.generateFolder(project, module, zipName);
     if (archiveFolder == null) {
       return;
     }
@@ -163,7 +160,11 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
   private static void resetTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
     for (Map.Entry<TaskFile, TaskFile> entry : savedTaskFiles.entrySet()) {
-      entry.getKey().setAnswerPlaceholders(entry.getValue().getAnswerPlaceholders());
+      List<AnswerPlaceholder> placeholders = entry.getValue().getAnswerPlaceholders();
+      for (AnswerPlaceholder placeholder : placeholders) {
+        placeholder.setUseLength(false);
+      }
+      entry.getKey().setAnswerPlaceholders(placeholders);
     }
   }
 

@@ -48,4 +48,9 @@ public interface Tools {
 
   @Nullable
   InspectionToolWrapper getEnabledTool(@Nullable PsiElement element);
+
+  @Nullable
+  default InspectionToolWrapper getEnabledTool(@Nullable PsiElement element, boolean includeDoNotShow) {
+    return getEnabledTool(element);
+  }
 }

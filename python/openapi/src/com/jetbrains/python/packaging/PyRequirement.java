@@ -152,9 +152,15 @@ public class PyRequirement {
   private static final String REQUIREMENT_NAME_REGEXP = "(?<" + NAME_GROUP + ">" + IDENTIFIER_REGEXP + ")";
 
   @NotNull
+  private static final String REQUIREMENT_EXTRAS_GROUP = "extras";
+
+  @NotNull
   private static final String REQUIREMENT_EXTRAS_REGEXP =
-    "(\\[" + IDENTIFIER_REGEXP +
-    "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*\\])?";
+    "(?<" + REQUIREMENT_EXTRAS_GROUP + ">" +
+    "\\[" +
+    IDENTIFIER_REGEXP + "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*" +
+    "\\]" +
+    ")?";
 
   @NotNull
   private static final String REQUIREMENT_VERSIONS_SPECS_GROUP = "versionspecs";
@@ -193,10 +199,13 @@ public class PyRequirement {
   private final String myName;
 
   @NotNull
+  private final List<PyRequirementVersionSpec> myVersionSpecs;
+
+  @NotNull
   private final List<String> myInstallOptions;
 
   @NotNull
-  private final List<PyRequirementVersionSpec> myVersionSpecs;
+  private final String myExtras;
 
   public PyRequirement(@NotNull String name) {
     this(name, Collections.emptyList());
@@ -210,9 +219,14 @@ public class PyRequirement {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
   }
 
+  public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions, @NotNull String extras) {
+    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions, extras);
+  }
+
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
     myName = name;
     myVersionSpecs = versionSpecs;
+    myExtras = "";
     myInstallOptions = Collections.singletonList(toString());
   }
 
@@ -220,11 +234,27 @@ public class PyRequirement {
     myName = name;
     myVersionSpecs = versionSpecs;
     myInstallOptions = Collections.unmodifiableList(installOptions);
+    myExtras = "";
+  }
+
+  public PyRequirement(@NotNull String name,
+                       @NotNull List<PyRequirementVersionSpec> versionSpecs,
+                       @NotNull List<String> installOptions,
+                       @NotNull String extras) {
+    myName = name;
+    myVersionSpecs = versionSpecs;
+    myInstallOptions = Collections.unmodifiableList(installOptions);
+    myExtras = extras;
   }
 
   @NotNull
   public String getName() {
     return myName;
+  }
+
+  @NotNull
+  public String getFullName() {
+    return myName + myExtras;
   }
 
   @NotNull
@@ -234,7 +264,7 @@ public class PyRequirement {
 
   @Override
   public String toString() {
-    return myName + StringUtil.join(myVersionSpecs, ",");
+    return myName + myExtras + StringUtil.join(myVersionSpecs, ",");
   }
 
   @Override
@@ -247,6 +277,7 @@ public class PyRequirement {
     if (!myName.equals(that.myName)) return false;
     if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
     if (!myInstallOptions.equals(that.myInstallOptions)) return false;
+    if (!myExtras.equals(that.myExtras)) return false;
 
     return true;
   }
@@ -256,6 +287,7 @@ public class PyRequirement {
     int result = myName.hashCode();
     result = 31 * result + myVersionSpecs.hashCode();
     result = 31 * result + myInstallOptions.hashCode();
+    result = 31 * result + myExtras.hashCode();
     return result;
   }
 
@@ -363,8 +395,17 @@ public class PyRequirement {
   private static PyRequirement parseRequirement(@NotNull String line) {
     final Matcher matcher = REQUIREMENT.matcher(line);
     if (matcher.matches()) {
+      final String name = matcher.group(NAME_GROUP);
       final List<PyRequirementVersionSpec> versionSpecs = parseVersionSpecs(matcher.group(REQUIREMENT_VERSIONS_SPECS_GROUP));
-      return new PyRequirement(matcher.group(NAME_GROUP), versionSpecs, calculateRequirementInstallOptions(matcher));
+      final List<String> installOptions = calculateRequirementInstallOptions(matcher);
+      final String extras = matcher.group(REQUIREMENT_EXTRAS_GROUP);
+
+      if (extras == null) {
+        return new PyRequirement(name, versionSpecs, installOptions);
+      }
+      else {
+        return new PyRequirement(name, versionSpecs, installOptions, extras);
+      }
     }
 
     return null;

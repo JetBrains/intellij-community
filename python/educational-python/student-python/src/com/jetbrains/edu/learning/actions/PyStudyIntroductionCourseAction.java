@@ -19,13 +19,9 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.newProject.actions.GenerateProjectCallback;
+import com.jetbrains.python.newProject.actions.PythonGenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -70,22 +66,18 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       if (introCourse == null) {
         return;
       }
-      final GenerateProjectCallback callback = new GenerateProjectCallback();
+      final PythonGenerateProjectCallback callback = new PythonGenerateProjectCallback();
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
       generator.setSelectedCourse(introCourse);
 
-      final Project project = ProjectManager.getInstance().getDefaultProject();
-      final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
-      Sdk sdk = sdks.isEmpty() ? null : sdks.iterator().next();
-      step.setSdk(sdk);
       callback.consume(step);
     }
   }
 
   @Nullable
-  private static CourseInfo getIntroCourseInfo(final List<CourseInfo> courses) {
+  private static CourseInfo getIntroCourseInfo(@NotNull final List<CourseInfo> courses) {
     for (CourseInfo courseInfo : courses) {
       if (INTRODUCTION_TO_PYTHON.equals(courseInfo.getName())) {
         return courseInfo;

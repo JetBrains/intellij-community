@@ -310,6 +310,8 @@
     </extensionPoint>
 
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+
+    <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -636,6 +638,10 @@
                      key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MakeTypeGeneric" bundle="messages.InspectionsBundle"
+                     key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.MakeTypeGenericInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
@@ -800,11 +806,12 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      displayName="Simplify stream API call chains"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
+                     displayName="Remove redundant lambda parameter types"/>
 
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>
@@ -823,10 +830,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
-      <category>Java/Control Flow</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
@@ -953,16 +956,8 @@
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.MakeTypeGenericAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
       <category>Java/Annotations</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
-      <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
@@ -1777,7 +1772,7 @@
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
-    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
+    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

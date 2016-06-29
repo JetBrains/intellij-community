@@ -69,6 +69,6 @@ class LiteralEvaluator implements Evaluator {
 
   @Override
   public String toString() {
-    return myValue.toString();
+    return myValue != null ? myValue.toString() : "null";
   }
 }

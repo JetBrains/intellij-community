@@ -1,0 +1,30 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a[bcd]*dcdcde>
+    RegExpBranchImpl: <a[bcd]*dcdcde>
+      RegExpCharImpl: <a>
+        PsiElement(CHARACTER)('a')
+      RegExpClosureImpl: <[bcd]*>
+        RegExpClassImpl: <[bcd]>
+          PsiElement(CLASS_BEGIN)('[')
+          RegExpUnionImpl: <bcd>
+            RegExpCharImpl: <b>
+              PsiElement(CHARACTER)('b')
+            RegExpCharImpl: <c>
+              PsiElement(CHARACTER)('c')
+            RegExpCharImpl: <d>
+              PsiElement(CHARACTER)('d')
+          PsiElement(CLASS_END)(']')
+        RegExpQuantifierImpl: <*>
+          PsiElement(STAR)('*')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: <c>
+        PsiElement(CHARACTER)('c')
+      RegExpCharImpl: <d>
+        PsiElement(CHARACTER)('d')
+      RegExpCharImpl: <e>
+        PsiElement(CHARACTER)('e')

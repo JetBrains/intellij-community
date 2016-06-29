@@ -35,12 +35,10 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashSet;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
@@ -107,7 +105,13 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
             allModules.retainAll(dependentModules);
           });
         if (!allModules.isEmpty()) {
-          configuration.setModule(allModules.iterator().next());
+          Module aModule = allModules.iterator().next();
+          for (Module module : survivedModules) {
+            if (allModules.contains(module)) {
+              aModule = module;
+            }
+          }
+          configuration.setModule(aModule);
         }
 
         return true;
@@ -145,6 +149,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return null;
     }
     final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return null;
+    }
     final String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName != null) {
       return Pair.create(qualifiedName, method.getName());

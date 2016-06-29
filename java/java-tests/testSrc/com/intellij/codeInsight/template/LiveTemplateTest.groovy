@@ -547,13 +547,13 @@ class Outer {
 
     assert template.templateContext.getOwnValue(stmtContext)
     assert !template.templateContext.getOwnValue(stmtContext.baseContextType)
-    template.templateContext.putValue(stmtContext, false)
-    template.templateContext.putValue(stmtContext.baseContextType, true)
+    template.templateContext.setEnabled(stmtContext, false)
+    template.templateContext.setEnabled(stmtContext.baseContextType, true)
     try {
       assert !(template in manager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
     } finally {
-      template.templateContext.putValue(stmtContext, true)
-      template.templateContext.putValue(stmtContext.baseContextType, false)
+      template.templateContext.setEnabled(stmtContext, true)
+      template.templateContext.setEnabled(stmtContext.baseContextType, false)
     }
   }
 
@@ -576,7 +576,7 @@ class Outer {
     copy.writeTemplateContext(write)
     assert write.children.size() == 2 : JDOMUtil.writeElement(write)
 
-    copy.putValue(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
+    copy.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
 
     write = new Element("context")
     copy.writeTemplateContext(write)
@@ -589,11 +589,32 @@ class Outer {
 
     def defContext = new TemplateContext()
     def commentContext = TemplateContextType.EP_NAME.findExtension(JavaCommentContextType)
-    defContext.putValue(commentContext, true)
+    defContext.setEnabled(commentContext, true)
 
     context.setDefaultContext(defContext)
     assert context.isEnabled(commentContext)
     assert !context.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+  }
+
+  public void "test adding new context to Other"() {
+    def defElement = JDOMUtil.loadDocument('''\
+<context>
+  <option name="OTHER" value="true"/>
+</context>''').rootElement
+    def context = new TemplateContext()
+    context.readTemplateContext(defElement)
+
+    def javaContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic)
+    context.setEnabled(javaContext, true)
+
+    def saved = new Element('context')
+    context.writeTemplateContext(saved)
+
+    context = new TemplateContext()
+    context.readTemplateContext(saved)
+
+    assert context.isEnabled(javaContext)
+    assert context.isEnabled(TemplateContextType.EP_NAME.findExtension(EverywhereContextType))
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {

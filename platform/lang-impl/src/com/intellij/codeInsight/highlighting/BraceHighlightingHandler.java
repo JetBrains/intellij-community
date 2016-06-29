@@ -489,9 +489,7 @@ public class BraceHighlightingHandler {
         }
       }
       else {
-        if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-          removeLineMarkers();
-        }
+        removeLineMarkers();
       }
 
       if (!scopeHighlighting) {

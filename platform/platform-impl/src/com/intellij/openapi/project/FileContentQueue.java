@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;
@@ -156,7 +157,11 @@ public class FileContentQueue {
         throw (InterruptedException)e;
       }
       else if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) {
-        LOG.info(e);
+        if (e instanceof FileNotFoundException) {
+          LOG.debug(e); // it is possible to not observe file system change until refresh finish, we handle missed file properly anyway
+        } else {
+          LOG.info(e);
+        }
       }
       else if (ApplicationManager.getApplication().isUnitTestMode()) {
         //noinspection CallToPrintStackTrace

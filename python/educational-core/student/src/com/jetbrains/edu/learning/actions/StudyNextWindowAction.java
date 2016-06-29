@@ -26,7 +26,7 @@ public class StudyNextWindowAction extends StudyWindowNavigationAction {
     List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
     if (StudyUtils.indexIsValid(index, windows)) {
       int newIndex = index + 1;
-        return newIndex == windows.size() ? windows.get(0) : windows.get(newIndex);
+      return windows.get(newIndex == windows.size() ? 0 : newIndex);
     }
     return null;
   }

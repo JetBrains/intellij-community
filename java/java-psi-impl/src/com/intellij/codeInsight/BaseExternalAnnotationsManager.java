@@ -398,7 +398,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   private static PsiAnnotation markAsExternalAnnotation(@NotNull PsiAnnotation annotation) {
     annotation.putUserData(EXTERNAL_ANNO_MARKER, Boolean.TRUE);
-    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
+    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
   }
 

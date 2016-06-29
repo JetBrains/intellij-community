@@ -10,6 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +31,7 @@ import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -55,6 +59,7 @@ public class EduAdaptiveStepicConnector {
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
+  private static final int CONNECTION_TIMEOUT = 60 * 1000;
 
   @Nullable
   public static Task getNextRecommendation(@NotNull final Project project, @NotNull Course course) {
@@ -65,6 +70,7 @@ public class EduAdaptiveStepicConnector {
         .build();
       final HttpGet request = new HttpGet(uri);
       setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+      setTimeout(request);
 
       final CloseableHttpResponse response = client.execute(request);
       final StatusLine statusLine = response.getStatusLine();
@@ -82,9 +88,9 @@ public class EduAdaptiveStepicConnector {
             lessonContainer = getFromStepic(EduStepicNames.LESSONS + lessonId, StepicWrappers.LessonContainer.class);
           if (lessonContainer.lessons.size() == 1) {
             final Lesson realLesson = lessonContainer.lessons.get(0);
-            course.getLessons().get(0).id = Integer.parseInt(lessonId);
+            course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
-            viewAllSteps(client, realLesson.id);
+            viewAllSteps(client, realLesson.getId());
 
             for (int stepId : realLesson.steps) {
               final StepicWrappers.Step step = getStep(stepId);
@@ -106,11 +112,40 @@ public class EduAdaptiveStepicConnector {
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
+
+      final String connectionMessages = "Connection problems, Please, try again";
+      final Balloon balloon =
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(connectionMessages, MessageType.ERROR, null)
+          .createBalloon();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (StudyUtils.getSelectedEditor(project) != null) {
+          StudyUtils.showCheckPopUp(project, balloon);
+        }
+      });
+      
     }
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
     }
     return null;
+  }
+
+  private static void setTimeout(HttpGet request) {
+    final RequestConfig requestConfig = RequestConfig.custom()
+      .setConnectionRequestTimeout(CONNECTION_TIMEOUT)
+      .setConnectTimeout(CONNECTION_TIMEOUT)
+      .setSocketTimeout(CONNECTION_TIMEOUT)
+      .build();
+    request.setConfig(requestConfig);
+  }
+
+  private static void setTimeout(HttpPost request) {
+    final RequestConfig requestConfig = RequestConfig.custom()
+      .setConnectionRequestTimeout(CONNECTION_TIMEOUT)
+      .setConnectTimeout(CONNECTION_TIMEOUT)
+      .setSocketTimeout(CONNECTION_TIMEOUT)
+      .build();
+    request.setConfig(requestConfig);
   }
 
   private static void viewAllSteps(CloseableHttpClient client, int lessonId) throws URISyntaxException, IOException {
@@ -152,9 +187,17 @@ public class EduAdaptiveStepicConnector {
     post.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
     final CloseableHttpClient client = getHttpClient(project);
     setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
-      return execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED;
+      if (execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+        return true;
+      }
+      else {
+        LOG.warn("Stepic returned non-201 status code: " + execute.getStatusLine().getStatusCode() + " " +
+                 EntityUtils.toString(execute.getEntity()));
+        return false;
+      }
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -169,8 +212,8 @@ public class EduAdaptiveStepicConnector {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
-        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().id),
-                                                   String.valueOf(user.id), reaction);
+        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
+                                                   String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         final Task task = getNextRecommendation(project, course);
 
@@ -246,6 +289,7 @@ public class EduAdaptiveStepicConnector {
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
+        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));        
       }
     }
   }
@@ -359,7 +403,7 @@ public class EduAdaptiveStepicConnector {
   public static Pair<Boolean, String> checkTask(@NotNull final Project project, @NotNull final Task task) {
     int attemptId = -1;
     try {
-      attemptId = getAttemptId(project, task, EduStepicNames.ATTEMPTS);
+      attemptId = getAttemptId(project, task);
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -405,6 +449,7 @@ public class EduAdaptiveStepicConnector {
         new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, text);
       final HttpPost httpPost = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
       setHeaders(httpPost, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+      setTimeout(httpPost);
       try {
         httpPost.setEntity(new StringEntity(new Gson().toJson(submissionToPostWrapper)));
       }
@@ -435,6 +480,7 @@ public class EduAdaptiveStepicConnector {
           .build();
         final HttpGet httpGet = new HttpGet(submissionURI);
         setHeaders(httpGet, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+        setTimeout(httpGet);
         final CloseableHttpResponse httpResponse = client.execute(httpGet);
         final String entity = EntityUtils.toString(httpResponse.getEntity());
         wrapper = new Gson().fromJson(entity, StepicWrappers.ResultSubmissionWrapper.class);
@@ -473,14 +519,15 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  private static int getAttemptId(@NotNull final Project project, @NotNull Task task, @NotNull final String attempts) throws IOException {
+  private static int getAttemptId(@NotNull final Project project, @NotNull Task task) throws IOException {
     final StepicWrappers.AttemptToPostWrapper attemptWrapper = new StepicWrappers.AttemptToPostWrapper(task.getStepicId());
 
-    final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + attempts);
+    final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
 
     final CloseableHttpClient client = getHttpClient(project);
     setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
     final String entity = EntityUtils.toString(httpResponse.getEntity());
     final StepicWrappers.AttemptContainer container =

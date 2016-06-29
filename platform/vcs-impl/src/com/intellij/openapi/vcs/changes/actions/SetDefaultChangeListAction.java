@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -47,10 +46,10 @@ public class SetDefaultChangeListAction extends AnAction implements DumbAware {
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final boolean visible =
       lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault();
-    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+    e.getPresentation().setEnabled(visible);
+    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       e.getPresentation().setVisible(visible);
-    else
-      e.getPresentation().setEnabled(visible);
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {

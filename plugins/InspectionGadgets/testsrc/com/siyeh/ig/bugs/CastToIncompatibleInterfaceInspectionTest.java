@@ -21,6 +21,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("CastToIncompatibleInterface")
 public class CastToIncompatibleInterfaceInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

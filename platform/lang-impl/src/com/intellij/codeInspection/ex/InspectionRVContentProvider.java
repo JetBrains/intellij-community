@@ -323,7 +323,7 @@ public abstract class InspectionRVContentProvider {
             final RefElementNode refElementNode = (RefElementNode)node;
             final RefEntity userObject = finalContainer.getRefEntity();
             final RefEntity object = refElementNode.getElement();
-            if (userObject == null || object == null || (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+            if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
               if (firstLevel.get()) {
                 result.set(refElementNode);
                 return false;

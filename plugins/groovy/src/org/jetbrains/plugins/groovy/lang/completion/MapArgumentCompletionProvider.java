@@ -24,6 +24,7 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,8 @@ import java.util.Map;
  */
 class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
+  // @formatter:off
+
   // [<caret>]
   // [<some values, initializers or named arguments>, <caret>]
   // foo <caret>
@@ -63,6 +66,8 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
   // [<caret> : ]
   // [<some values>, <caret> : ]
   public static final ElementPattern<PsiElement> IN_LABEL = PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(GrArgumentLabel.class);
+
+  // @formatter:on
 
   private MapArgumentCompletionProvider() {
   }
@@ -87,10 +92,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       result.stopHere();
     }
 
-    Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
-    if (map == null || map.isEmpty()) {
-      map = findOtherNamedArgumentsInFile(mapOrArgumentList);
-    }
+    final Map<String, NamedArgumentDescriptor> map = ContainerUtil.newHashMap(calculateNamedArguments(mapOrArgumentList));
 
     for (GrNamedArgument argument : getSiblingNamedArguments(mapOrArgumentList)) {
       map.remove(argument.getLabelName());
@@ -131,6 +133,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return parent.getParent().getParent();
   }
 
+  @NotNull
   private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
     final Map<String, NamedArgumentDescriptor> map = new HashMap<String, NamedArgumentDescriptor>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
@@ -163,6 +166,21 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
+  @NotNull
+  private static Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
+    Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
+
+    if ((map == null || map.isEmpty()) && mapOrArgumentList instanceof GrListOrMap) {
+      map = NamedArgumentUtilKt.getDescriptors((GrListOrMap)mapOrArgumentList);
+    }
+
+    if (map == null || map.isEmpty()) {
+      map = findOtherNamedArgumentsInFile(mapOrArgumentList);
+    }
+
+    return map;
+  }
+
   @Nullable
   private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
@@ -177,9 +195,6 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       if (argumentList.getParent() instanceof GrCall) {
         return GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders((GrCall)argumentList.getParent(), null, true);
       }
-    }
-    else if (mapOrArgumentList instanceof GrListOrMap) {
-      return NamedArgumentUtilKt.getDescriptors((GrListOrMap)mapOrArgumentList);
     }
 
     return Collections.emptyMap();

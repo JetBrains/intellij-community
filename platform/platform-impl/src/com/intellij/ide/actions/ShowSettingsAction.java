@@ -37,6 +37,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     if (SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);
@@ -48,10 +49,10 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
+    perform(project != null ? project : ProjectManager.getInstance().getDefaultProject());
+  }
 
+  public static void perform(@NotNull Project project) {
     final long startTime = System.nanoTime();
     SwingUtilities.invokeLater(() -> {
       final long endTime = System.nanoTime();

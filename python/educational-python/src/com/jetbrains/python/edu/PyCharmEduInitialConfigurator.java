@@ -56,10 +56,15 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
@@ -68,6 +73,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.inspections.PyPep8Inspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +83,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -201,7 +208,11 @@ public class PyCharmEduInitialConfigurator {
           @Override
           public void run() {
             if (project.isDisposed()) return;
+            updateInspectionsProfile();
+            openProjectStructure();
+          }
 
+          private void openProjectStructure() {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               int count = 0;
 
@@ -212,11 +223,23 @@ public class PyCharmEduInitialConfigurator {
                   return;
                 }
                 ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
-                if (toolWindow !=null && toolWindow.getType() != ToolWindowType.SLIDING) {
+                if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
                   toolWindow.activate(null);
                 }
               }
             });
+          }
+
+          private void updateInspectionsProfile() {
+            final String[] codes = new String[]{"W29", "E501"};
+            final VirtualFile baseDir = project.getBaseDir();
+            final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(baseDir);
+            if (directory != null) {
+              InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyToolSettings(
+                Key.<PyPep8Inspection>create(PyPep8Inspection.INSPECTION_SHORT_NAME), directory,
+                inspection -> Collections.addAll(inspection.ignoredErrors, codes)
+              );
+            }
           }
         });
       }

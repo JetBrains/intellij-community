@@ -37,7 +37,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -153,6 +156,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
   private boolean expandingAll;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
+  private Usage myOriginUsage;
 
   UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
@@ -271,7 +275,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       @Override
       public boolean isActionEnabled(boolean isExcludeAction) {
-        return true;
+        return getPresentation().isExcludeAvailable();
       }
 
       @Override
@@ -865,7 +869,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         Processor<Usage> processor = usage -> {
           if (searchHasBeenCancelled()) return false;
-          TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
+          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
 
           boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
@@ -1701,7 +1705,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       close();
 
       CommandProcessor.getInstance().executeCommand(
-        myProject, () -> myProcessRunnable.run(),
+        myProject, myProcessRunnable::run,
         myCommandName,
         null
       );
@@ -1723,5 +1727,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   public UsageTarget[] getTargets() {
     return myTargets;
+  }
+
+  /**
+   * The element the "find usages" action was invoked on.
+   * E.g. if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
+   */
+  public void setOriginUsage(@NotNull Usage usage) {
+    myOriginUsage = usage;
+  }
+
+  /** true if the {@param usage} points to the element the "find usages" action was invoked on */
+  public boolean isOriginUsage(@NotNull Usage usage) {
+    return
+      myOriginUsage instanceof UsageInfo2UsageAdapter &&
+      usage instanceof UsageInfo2UsageAdapter &&
+      ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(((UsageInfo2UsageAdapter)myOriginUsage).getUsageInfo());
   }
 }

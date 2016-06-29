@@ -12,7 +12,7 @@ import java.util.List;
  * and when project is being created
  */
 public class CourseInfo {
-  public static CourseInfo INVALID_COURSE = new CourseInfo();
+  public static final CourseInfo INVALID_COURSE = new CourseInfo();
 
   @SerializedName("title") private String myName;
   int id;
@@ -81,8 +81,8 @@ public class CourseInfo {
   public void setAuthors(List<StepicUser> authors) {
     myAuthors = authors;
     for (StepicUser author : authors) {
-      if (author.id > 0) {
-        instructors.add(author.id);
+      if (author.getId() > 0) {
+        instructors.add(author.getId());
       }
     }
   }

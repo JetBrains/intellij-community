@@ -242,7 +242,7 @@ public class StudyTwitterUtils {
    * Dialog wrapper class with DoNotAsl option for asking user to tweet.
    * */
   private static class TwitterDialogWrapper extends DialogWrapper {
-    private StudyTwitterUtils.TwitterDialogPanel myPanel;
+    private final StudyTwitterUtils.TwitterDialogPanel myPanel;
 
     TwitterDialogWrapper(@Nullable Project project, @NotNull StudyTwitterUtils.TwitterDialogPanel panel, DoNotAskOption doNotAskOption) {
       super(project);

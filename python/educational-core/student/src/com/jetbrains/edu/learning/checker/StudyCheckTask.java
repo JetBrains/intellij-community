@@ -17,12 +17,14 @@ import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +37,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected final VirtualFile myTaskDir;
   protected final StudyTaskManager myTaskManger;
   private final StudyStatus myStatusBeforeCheck;
-  private Ref<Boolean> myCheckInProcess;
+  private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
+  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -49,7 +52,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     myTask = studyState.getTask();
     myTaskDir = studyState.getTaskDir();
     myTaskManger = StudyTaskManager.getInstance(myProject);
-    myStatusBeforeCheck = myTaskManger.getStatus(myTask);
+    myStatusBeforeCheck = myTask.getStatus();
   }
 
   @Override
@@ -67,18 +70,20 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   @Override
   public void onCancel() {
-    myTaskManger.setStatus(myTask, myStatusBeforeCheck);
+    myTask.setStatus(myStatusBeforeCheck);
     clearState();
   }
 
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    if (course != null && course.isAdaptive()) {
-      checkForAdaptiveCourse(indicator);
-    }
-    else {
-      checkForEduCourse(indicator);
+    if (course != null) {
+      if (course.isAdaptive()) {
+        checkForAdaptiveCourse(indicator);
+      }
+      else {
+        checkForEduCourse(indicator);
+      }
     }
   }
 
@@ -93,7 +98,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         onTaskFailed(testsOutput.getMessage());
       }
       runAfterTaskCheckedActions();
-      postAttemptToStepic(testsOutput);
+      final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
+        postAttemptToStepic(testsOutput);
+      }
     }
   }
 
@@ -112,7 +120,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       String stderr = output.getStderr();
       if (!stderr.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+                                                          StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                               MessageType.WARNING.getPopupBackground(),
                                                                                               myProject));
         //log error output of tests
@@ -143,7 +151,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           runAfterTaskCheckedActions();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp("Failed to launch checking",
+          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
                                                                                                     MessageType.WARNING
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
@@ -156,9 +164,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void onTaskFailed(String message) {
-    myTaskManger.setStatus(myTask, StudyStatus.Failed);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-
+    myTask.setStatus(StudyStatus.Failed);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
@@ -175,9 +182,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   protected void onTaskSolved(String message) {
-    myTaskManger.setStatus(myTask, StudyStatus.Solved);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-
+    myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
@@ -210,8 +216,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final String login = studySettings.getLogin();
-    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : studySettings.getPassword();
+    final StepicUser user = studySettings.getUser();
+    if (user == null) return;
+    final String login = user.getEmail();
+    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }

@@ -59,3 +59,5 @@ fun isUnderTransformation(clazz: PsiClass?): Boolean {
     false
   }
 }
+
+fun isUnderAnyTransformation() = ourTransformationContext.get().isNotEmpty()

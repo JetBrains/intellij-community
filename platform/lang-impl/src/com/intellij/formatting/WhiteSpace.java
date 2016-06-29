@@ -110,15 +110,11 @@ public class WhiteSpace {
    * @param model                 formatting model that is used to access to the underlying document text
    * @param options               indent formatting options
    */
-  public void append(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
+  public void changeEndOffset(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
     final int oldEndOffset = myEnd;
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
-      myRangesAssert.assertInvalidRanges(myStart,
-        newEndOffset,
-        model,
-        "some block intersects with whitespace"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, newEndOffset, model, "some block intersects with whitespace");
     }
 
     myEnd = newEndOffset;
@@ -127,14 +123,9 @@ public class WhiteSpace {
     myInitial = model.getText(range);
 
     if (!coveredByBlock(model)) {
-      myRangesAssert.assertInvalidRanges(myStart,
-        myEnd,
-        model,
-        "nonempty text is not covered by block"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, myEnd, model, "nonempty text is not covered by block");
     }
 
-    // There is a possible case that this method is called more than once on the same object. We want to
     if (newEndOffset > oldEndOffset) {
       refreshStateOnEndOffsetIncrease(newEndOffset, oldEndOffset, options.TAB_SIZE);
     } else {

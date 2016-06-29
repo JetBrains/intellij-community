@@ -158,6 +158,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	link.attrs.href
 		&	link.attrs.rel
+		&	link.attrs.as?
 		&	link.attrs.integrity?
 		&	shared-hyperlink.attrs.hreflang?
 		&	shared-hyperlink.attrs.media?
@@ -178,6 +179,24 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute rel {
 				w:link-rel
 			}
+		link.attrs.as =
+			attribute as {
+				string ""
+			|	string "document"
+			|	string "embed"
+			|	string "font"
+			|	string "image"
+			|	string "manifest"
+			|	string "media"
+			|	string "object"
+			|	string "report"
+			|	string "script"
+			|	string "serviceworker"
+			|	string "sharedworker"
+			|	string "style"
+			|	string "worker"
+			|	string "xslt"
+			}
 		link.attrs.integrity =
 			attribute integrity {
 				common.data.integrity
@@ -190,6 +209,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( empty )
 		
 	common.elem.metadata |= link.elem
+	common.elem.phrasing |= link.elem
+	common.elem.flow |= link.elem
 
 ## Global Style: <style>
 
@@ -221,25 +242,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.anything )
 		
 	common.elem.metadata |= style.elem
-
-## Scoped Style: <style scoped>
-
-	style.elem.scoped =
-		element style { style.inner & style.scoped.attrs }
-	style.scoped.attrs =
-		(	common.attrs
-		&	style.attrs.type?
-		&	style.attrs.media?
-		&	style.attrs.scoped
-		#	style.attrs.title included in common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
-		)
-		style.attrs.scoped =
-			attribute scoped {
-				w:string "scoped" | w:string ""
-			}
 
 ## Name-Value Metadata: <meta name>
 

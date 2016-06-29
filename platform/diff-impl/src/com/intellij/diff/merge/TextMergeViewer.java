@@ -18,7 +18,7 @@ package com.intellij.diff.merge;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
-import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
@@ -363,8 +363,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           return ContainerUtil.map(documents, Document::getImmutableCharSequence);
         });
 
-        List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
-                                                                      ComparisonPolicy.DEFAULT, indicator);
+        ComparisonManager manager = ComparisonManager.getInstance();
+        List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                     ComparisonPolicy.DEFAULT, indicator);
 
         List<MergeConflictType> conflictTypes = ReadAction.compute(() -> {
           indicator.checkCanceled();

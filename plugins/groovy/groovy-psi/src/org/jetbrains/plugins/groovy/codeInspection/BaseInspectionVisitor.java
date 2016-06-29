@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -31,20 +31,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisitor {
+public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
   private BaseInspection inspection = null;
   private ProblemsHolder problemsHolder = null;
   private boolean onTheFly = false;
 
-  public void setInspection(BaseInspection inspection) {
+  void initialize(BaseInspection inspection, ProblemsHolder problemsHolder, boolean onTheFly) {
     this.inspection = inspection;
-  }
-
-  public void setProblemsHolder(ProblemsHolder problemsHolder) {
     this.problemsHolder = problemsHolder;
-  }
-
-  public void setOnTheFly(boolean onTheFly) {
     this.onTheFly = onTheFly;
   }
 
@@ -124,10 +118,6 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     if (!onTheFly &&
         inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return null;
-    }
-    final GroovyFix[] fixes = inspection.buildFixes(location);
-    if (fixes != null) {
-      return fixes;
     }
     final GroovyFix fix = inspection.buildFix(location);
     if (fix == null) {

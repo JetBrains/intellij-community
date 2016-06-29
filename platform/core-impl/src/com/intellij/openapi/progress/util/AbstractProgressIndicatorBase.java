@@ -168,12 +168,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public synchronized void pushState() {
-    if (myTextStack == null) myTextStack = new Stack<String>(2);
-    myTextStack.push(myText);
-    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
-    myFractionStack.add(myFraction);
-    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
-    myText2Stack.push(myText2);
+    getTextStack().push(myText);
+    getFractionStack().add(myFraction);
+    getText2Stack().push(myText2);
   }
 
   @Override

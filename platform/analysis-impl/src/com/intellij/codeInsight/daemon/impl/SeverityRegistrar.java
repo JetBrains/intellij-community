@@ -73,6 +73,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     registerStandard(HighlightInfoType.INFO, HighlightSeverity.INFO);
     registerStandard(HighlightInfoType.WEAK_WARNING, HighlightSeverity.WEAK_WARNING);
     registerStandard(HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER, HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    STANDARD_SEVERITIES.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
   }
 
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {

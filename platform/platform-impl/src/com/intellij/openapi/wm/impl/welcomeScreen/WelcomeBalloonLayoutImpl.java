@@ -154,6 +154,13 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     }
   }
 
+  @Override
+  public void queueRelayout() {
+    if (myVisible) {
+      layoutPopup();
+    }
+  }
+
   private void layoutPopup() {
     Dimension layeredSize = myLayeredPane.getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());

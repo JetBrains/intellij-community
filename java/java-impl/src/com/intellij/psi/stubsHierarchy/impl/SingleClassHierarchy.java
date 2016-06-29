@@ -25,9 +25,14 @@ import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Compact representation of total hierarchy of JVM classes.
@@ -36,21 +41,20 @@ public class SingleClassHierarchy extends ClassHierarchy {
   private final BitSet myCoveredFiles;
   private final BitSet myAmbiguousSupers;
   private final BitSet myAnonymous;
-  private final List<StubClassAnchor> myCoveredClasses;
-  private final StubClassAnchor[] myClassAnchors;
-  private final StubClassAnchor[] myClassAnchorsByFileIds;
+  private final AnchorRepository myClassAnchors;
+  private final int[] myClassAnchorsByFileIds;
   private int[] mySubtypes;
   private int[] mySubtypeStarts;
 
-  public SingleClassHierarchy(ClassSymbol[] classSymbols) {
+  public SingleClassHierarchy(ClassSymbol[] classSymbols, AnchorRepository classAnchors) {
+    classAnchors.trimToSize();
+    myClassAnchors = classAnchors;
     myCoveredFiles = calcCoveredFiles(classSymbols);
-    myClassAnchors = ContainerUtil.map2Array(classSymbols, StubClassAnchor.class, symbol -> symbol.myClassAnchor);
-    myClassAnchorsByFileIds = mkByFileId(myClassAnchors);
+    myClassAnchorsByFileIds = mkByFileId();
     excludeUncoveredFiles(classSymbols);
     connectSubTypes(classSymbols);
     myAmbiguousSupers = calcAmbiguousSupers(classSymbols);
     myAnonymous = calcAnonymous(classSymbols);
-    myCoveredClasses = Collections.unmodifiableList(ContainerUtil.filter(myClassAnchors, this::isCovered));
   }
 
   @NotNull
@@ -58,7 +62,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     BitSet ambiguousSupers = new BitSet();
     for (ClassSymbol symbol : classSymbols) {
       if (!symbol.isHierarchyIncomplete() && symbol.hasAmbiguousSupers()) {
-        ambiguousSupers.set(symbol.myClassAnchor.myId);
+        ambiguousSupers.set(symbol.myAnchorId);
       }
     }
     return ambiguousSupers;
@@ -69,20 +73,21 @@ public class SingleClassHierarchy extends ClassHierarchy {
     BitSet answer = new BitSet();
     for (ClassSymbol symbol : classSymbols) {
       if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NamesEnumerator.NO_NAME) {
-        answer.set(symbol.myClassAnchor.myId);
+        answer.set(symbol.myAnchorId);
       }
     }
     return answer;
   }
 
   @NotNull
-  private static BitSet calcCoveredFiles(ClassSymbol[] classSymbols) {
+  private BitSet calcCoveredFiles(ClassSymbol[] classSymbols) {
     BitSet problematicFiles = new BitSet();
     BitSet coveredFiles = new BitSet();
     for (ClassSymbol symbol : classSymbols) {
-      coveredFiles.set(symbol.myClassAnchor.myFileId);
+      int fileId = myClassAnchors.getFileId(symbol.myAnchorId);
+      coveredFiles.set(fileId);
       if (symbol.isHierarchyIncomplete()) {
-        problematicFiles.set(symbol.myClassAnchor.myFileId);
+        problematicFiles.set(fileId);
       }
     }
     coveredFiles.andNot(problematicFiles);
@@ -96,13 +101,13 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @Override
   @NotNull
   public List<StubClassAnchor> getCoveredClasses() {
-    return myCoveredClasses;
+    return ContainerUtil.filter(getAllClasses(), this::isCovered);
   }
 
   @Override
   @NotNull
   public List<StubClassAnchor> getAllClasses() {
-    return Collections.unmodifiableList(Arrays.asList(myClassAnchors));
+    return IntStream.range(0, myClassAnchors.size()).boxed().map(myClassAnchors::getAnchor).collect(Collectors.toList());
   }
 
   @NotNull
@@ -131,7 +136,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     }
     StubClassAnchor[] result = new StubClassAnchor[length];
     for (int i = 0; i < length; i++) {
-      result[i] = myClassAnchors[mySubtypes[start + i]];
+      result[i] = myClassAnchors.getAnchor(mySubtypes[start + i]);
     }
     return result;
   }
@@ -149,7 +154,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @NotNull
   @Override
   public GlobalSearchScope restrictToUncovered(@NotNull GlobalSearchScope scope) {
-    if (myCoveredClasses.isEmpty()) {
+    if (myCoveredFiles.isEmpty()) {
       return scope;
     }
 
@@ -165,21 +170,26 @@ public class SingleClassHierarchy extends ClassHierarchy {
     };
   }
 
-  private static StubClassAnchor[] mkByFileId(final StubClassAnchor[] classAnchors) {
-    StubClassAnchor[] result = new StubClassAnchor[classAnchors.length];
-    StubClassAnchor lastProcessedAnchor = null;
-    int i = 0;
-    for (StubClassAnchor classAnchor : classAnchors) {
-      if (lastProcessedAnchor == null || lastProcessedAnchor.myFileId != classAnchor.myFileId) {
+  @NotNull
+  private Integer[] getAnchorsFromDistinctFiles() {
+    if (myClassAnchors.size() == 0) return new Integer[0];
+
+    Integer[] result = new Integer[myClassAnchors.size()];
+    result[0] = 0;
+    int i = 1;
+    for (int classAnchor = 1; classAnchor < result.length; classAnchor++) {
+      if (myClassAnchors.getFileId(classAnchor - 1) != myClassAnchors.getFileId(classAnchor)) {
         result[i++] = classAnchor;
       }
-      lastProcessedAnchor = classAnchor;
     }
-    // compacting
-    result = Arrays.copyOf(result, i);
+    return Arrays.copyOf(result, i);
+  }
 
-    Arrays.sort(result, Comparator.comparing(a -> a.myFileId));
-    return result;
+  private int[] mkByFileId() {
+    // using a boxed array since there seems to be no easy way to sort int[] with custom comparator
+    Integer[] ids = getAnchorsFromDistinctFiles();
+    Arrays.sort(ids, (a1, a2) -> Integer.compare(myClassAnchors.getFileId(a1), myClassAnchors.getFileId(a2)));
+    return ArrayUtils.toPrimitive(ids);
   }
 
   private void connectSubTypes(ClassSymbol[] classSymbols) {
@@ -198,7 +208,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     for (int subTypeId = 0; subTypeId < classSymbols.length; subTypeId++) {
       ClassSymbol subType = classSymbols[subTypeId];
       for (ClassSymbol superType : subType.rawSuperClasses()) {
-        int superTypeId = superType.myClassAnchor.myId;
+        int superTypeId = superType.myAnchorId;
         subtypes[starts[superTypeId] + filled[superTypeId]] = subTypeId;
         filled[superTypeId] += 1;
       }
@@ -210,7 +220,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
 
   private void excludeUncoveredFiles(ClassSymbol[] classSymbols) {
     for (ClassSymbol symbol : classSymbols) {
-      if (!isCovered(symbol.myClassAnchor)) {
+      if (!myCoveredFiles.get(myClassAnchors.getFileId(symbol.myAnchorId))) {
         symbol.markHierarchyIncomplete();
       }
     }
@@ -220,8 +230,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
     int[] sizes = new int[classSymbols.length];
     for (ClassSymbol subType : classSymbols) {
       for (ClassSymbol superType : subType.rawSuperClasses()) {
-        int superTypeId = superType.myClassAnchor.myId;
-        sizes[superTypeId] += 1;
+        sizes[superType.myAnchorId] += 1;
       }
     }
     return sizes;
@@ -236,31 +245,29 @@ public class SingleClassHierarchy extends ClassHierarchy {
   }
 
   private StubClassAnchor forPsiClass(int fileId, PsiClass psiClass) {
-    StubClassAnchor anchor = getFirst(fileId, myClassAnchorsByFileIds);
-    if (anchor == null) {
+    int id = getFirst(fileId);
+    if (id == -1) {
       return null;
     }
-    int id = anchor.myId;
-    while (id < myClassAnchors.length) {
-      StubClassAnchor candidate = myClassAnchors[id];
-      if (candidate.myFileId != fileId)
-        return null;
-      if (psiClass.isEquivalentTo(candidate.retrieveClass(psiClass.getProject())))
-        return candidate;
+    while (id < myClassAnchors.size() && myClassAnchors.getFileId(id) == fileId) {
+      if (psiClass.isEquivalentTo(myClassAnchors.retrieveClass(psiClass.getProject(), id))) {
+        return myClassAnchors.getAnchor(id);
+      }
       id++;
     }
     return null;
   }
 
-  private static StubClassAnchor getFirst(int fileId, StubClassAnchor[] byFileIds) {
+  private int getFirst(int fileId) {
     int lo = 0;
-    int hi = byFileIds.length - 1;
+    int hi = myClassAnchorsByFileIds.length - 1;
     while (lo <= hi) {
       int mid = lo + (hi - lo) / 2;
-      if      (fileId < byFileIds[mid].myFileId) hi = mid - 1;
-      else if (fileId > byFileIds[mid].myFileId) lo = mid + 1;
-      else return byFileIds[mid];
+      int midFileId = myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]);
+      if      (fileId < midFileId) hi = mid - 1;
+      else if (fileId > midFileId) lo = mid + 1;
+      else return myClassAnchorsByFileIds[mid];
     }
-    return null;
+    return -1;
   }
 }

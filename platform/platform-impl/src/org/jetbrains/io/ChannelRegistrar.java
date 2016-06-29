@@ -16,69 +16,97 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.*;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.ChannelGroupFuture;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.concurrent.Future;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ChannelHandler.Sharable
 public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelRegistrar.class);
 
-  private final ChannelGroup openChannels = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE, true);
+  private final AtomicReference<ServerChannel> serverChannel = new AtomicReference<>();
+  private final Set<Channel> clientChannels = ContainerUtil.newConcurrentSet();
+
   private boolean isEventLoopGroupOwner;
 
   public boolean isEmpty() {
-    return openChannels.isEmpty();
+    return serverChannel.get() == null && clientChannels.isEmpty();
   }
 
-  public void add(@NotNull Channel serverChannel, boolean isOwnEventLoopGroup) {
+  public void setServerChannel(@NotNull Channel channel, boolean isOwnEventLoopGroup) {
+    boolean isSet = serverChannel.compareAndSet(null, (ServerChannel)channel);
+    LOG.assertTrue(isSet);
+
     this.isEventLoopGroupOwner = isOwnEventLoopGroup;
-    assert serverChannel instanceof ServerChannel;
-    openChannels.add(serverChannel);
   }
 
   @Override
-  public void channelActive(ChannelHandlerContext context) throws Exception {
-    // we don't need to remove channel on close - ChannelGroup do it
-    openChannels.add(context.channel());
+  public void channelActive(@NotNull ChannelHandlerContext context) throws Exception {
+    clientChannels.add(context.channel());
 
     super.channelActive(context);
   }
 
-  @NotNull
-  public Future<?> close() {
-    return close(isEventLoopGroupOwner);
+  @Override
+  public void channelInactive(@NotNull ChannelHandlerContext context) throws Exception {
+    clientChannels.remove(context.channel());
+
+    super.channelInactive(context);
   }
 
-  @NotNull
-  private Future<?> close(boolean shutdownEventLoopGroup) {
-    EventLoopGroup eventLoopGroup = null;
-    if (shutdownEventLoopGroup) {
-      for (Channel channel : openChannels) {
-        if (channel instanceof ServerChannel) {
-          eventLoopGroup = channel.eventLoop().parent();
-          break;
-        }
-      }
+  public void close() {
+    close(isEventLoopGroupOwner);
+  }
+
+  private void close(boolean shutdownEventLoopGroup) {
+    ServerChannel serverChannel = this.serverChannel.get();
+    if (serverChannel == null) {
+      LOG.assertTrue(clientChannels.isEmpty());
+      return;
+    }
+    else if (!this.serverChannel.compareAndSet(serverChannel, null)) {
+      return;
     }
 
-    Future<?> result;
+    EventLoopGroup eventLoopGroup = shutdownEventLoopGroup ? serverChannel.eventLoop().parent() : null;
     try {
       long start = System.currentTimeMillis();
-      Object[] channels = openChannels.toArray(new Channel[]{});
-      ChannelGroupFuture groupFuture = openChannels.close();
-      // server channels are closed in first turn, so, small timeout is relatively ok
-      if (!groupFuture.awaitUninterruptibly(10, TimeUnit.SECONDS)) {
-        LOG.warn("Cannot close all channels for 10 seconds, channels: " + Arrays.toString(channels));
+      Channel[] clientChannels = this.clientChannels.toArray(new Channel[]{});
+      this.clientChannels.clear();
+
+      final CountDownLatch countDown = new CountDownLatch(clientChannels.length + 1);
+      GenericFutureListener<ChannelFuture> listener = new GenericFutureListener<ChannelFuture>() {
+        @Override
+        public void operationComplete(@NotNull ChannelFuture future) throws Exception {
+          try {
+            Throwable cause = future.cause();
+            if (cause != null) {
+              LOG.warn(cause);
+            }
+          }
+          finally {
+            countDown.countDown();
+          }
+        }
+      };
+      serverChannel.close().addListener(listener);
+      for (Channel channel : clientChannels) {
+        channel.close().addListener(listener);
       }
-      result = groupFuture;
+
+      try {
+        countDown.await(5, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.warn("Cannot close all channels for 10 seconds, channels: " + Arrays.toString(clientChannels));
+      }
 
       long duration = System.currentTimeMillis() - start;
       if (duration > 1000) {
@@ -87,9 +115,8 @@ public final class ChannelRegistrar extends ChannelInboundHandlerAdapter {
     }
     finally {
       if (eventLoopGroup != null) {
-        result = eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
+        eventLoopGroup.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
       }
     }
-    return result;
   }
 }

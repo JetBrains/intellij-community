@@ -805,6 +805,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testLocalVariableModifierList() throws Exception {
+    doTest();
+  }
+
+  public void testLocalVariableAnnotationsOrder()  throws Exception {
+    doTest();
+  }
+
+  public void testMethodAnnotations() throws Exception {
+    doTest();
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

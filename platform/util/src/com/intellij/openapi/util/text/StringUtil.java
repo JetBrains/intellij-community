@@ -2115,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
+           ? text.subSequence(0, length / 2) + "\u2026" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 

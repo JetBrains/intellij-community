@@ -89,8 +89,8 @@ public class TestStubHierarchyAction extends InheritanceAction {
 
       if (!stubSupers.containsAll(psiSupers)) {
         psiSupers.removeAll(stubSupers);
-        LOG.info("Inconsistent hierarchy for " + classInfo(subClass) +
-                 "\n  missing " + psiSupers.size() + ": " + StringUtil.join(psiSupers, TestHierarchy::classInfo, ", ")
+        throw new AssertionError("Inconsistent hierarchy for " + classInfo(subClass) +
+                  "\n  missing " + psiSupers.size() + ": " + StringUtil.join(psiSupers, TestHierarchy::classInfo, ", ")
         );
       }
     }

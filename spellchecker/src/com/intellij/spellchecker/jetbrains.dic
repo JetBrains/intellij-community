@@ -610,6 +610,7 @@ sybase
 symlink
 symlinks
 sysdate
+sysroot
 systimestamp
 tablespace
 taglib
@@ -627,6 +628,7 @@ toggleable
 tokenize
 tokenizer
 toolchain
+toolchains
 tooltip
 tooltips
 toplink

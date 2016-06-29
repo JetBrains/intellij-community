@@ -176,7 +176,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
     Editor editor = openTextEditor(true);
     Segment marker = getFirstSegment();
-    editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    if (marker != null) {
+      editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+    }
   }
 
   @Override
@@ -184,7 +186,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!isValid()) return;
 
     Segment marker = getFirstSegment();
-    SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    if (marker != null) {
+      SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    }
   }
 
   private Segment getFirstSegment() {

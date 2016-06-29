@@ -30,23 +30,21 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NullUtils;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,9 +324,25 @@ public abstract class EditorComposite implements Disposable {
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
       wrapper.setBorder(createTopBottomSideBorder(top));
-      container.add(wrapper);
+      container.add(wrapper, calcComponentInsertionIndex(component, container));
     }
     container.revalidate();
+  }
+
+  private static int calcComponentInsertionIndex(@NotNull JComponent newComponent, @NotNull JComponent container) {
+    for (int i = 0, max = container.getComponentCount(); i < max; i++) {
+      Component childWrapper = container.getComponent(i);
+      Component childComponent = childWrapper instanceof Wrapper ? ((Wrapper)childWrapper).getTargetComponent() : childWrapper;
+      boolean weighted1 = newComponent instanceof Weighted;
+      boolean weighted2 = childComponent instanceof Weighted;
+      if (!weighted2) continue;
+      if (!weighted1) return i;
+
+      double w1 = ((Weighted)newComponent).getWeight();
+      double w2 = ((Weighted)childComponent).getWeight();
+      if (w1 < w2) return i;
+    }
+    return -1;
   }
 
   public void setDisplayName(@NotNull FileEditor editor, @NotNull String name) {
@@ -490,10 +504,9 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher.install(myComponent);
   }
 
-  private static class TopBottomPanel extends JPanel {
+  private static class TopBottomPanel extends JBPanelWithEmptyText {
     private TopBottomPanel() {
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      setName("editor-part");
     }
 
     @Override
@@ -502,10 +515,6 @@ public abstract class EditorComposite implements Disposable {
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
 
-    @Override
-    protected Graphics getComponentGraphics(Graphics graphics) {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-    }
   }
 
   @NotNull

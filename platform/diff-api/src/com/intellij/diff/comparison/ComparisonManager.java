@@ -17,6 +17,7 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,16 @@ public abstract class ComparisonManager {
   public abstract List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                                        @NotNull CharSequence text2,
                                                        @NotNull List<LineFragment> lineFragments,
+                                                       @NotNull ComparisonPolicy policy,
+                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
+  /**
+   * Compare three texts by-line (LEFT - BASE - RIGHT)
+   */
+  @NotNull
+  public abstract List<MergeLineFragment> compareLines(@NotNull CharSequence text1,
+                                                       @NotNull CharSequence text2,
+                                                       @NotNull CharSequence text3,
                                                        @NotNull ComparisonPolicy policy,
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 

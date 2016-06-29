@@ -33,6 +33,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated See {@link com.intellij.diff.comparison.ComparisonManager}
+ * <p>
+ * might produce wrong results - IDEA-75504
+ */
+@Deprecated
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
   @NotNull private final ComparisonPolicy myComparisonPolicy;

@@ -1605,6 +1605,7 @@
 
     <refactoring.introduceParameterObject language="Groovy"
                                           implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
+    <documentationDelegateProvider implementation="org.jetbrains.plugins.groovy.lang.documentation.GrLightDocumentationDelegateProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

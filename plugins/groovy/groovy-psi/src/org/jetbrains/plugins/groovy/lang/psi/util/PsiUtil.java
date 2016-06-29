@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -181,10 +180,7 @@ public class PsiUtil {
                                                                                 PsiElement place,
                                                                                 final boolean eraseParameterTypes) {
     if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
-
-    GrClosureSignature signature = eraseParameterTypes
-                                   ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method)
-                                   : GrClosureSignatureUtil.createSignature(method, substitutor);
+    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
 
     //check for default constructor
     if (method.isConstructor()) {
