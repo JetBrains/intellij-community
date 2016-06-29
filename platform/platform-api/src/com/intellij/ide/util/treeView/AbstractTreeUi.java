@@ -939,7 +939,7 @@ public class AbstractTreeUi {
       return update.get();
     }
     catch (IndexNotReadyException e) {
-      warnOnIndexNotReady();
+      warnOnIndexNotReady(e);
       return false;
     }
   }
@@ -1619,7 +1619,7 @@ public class AbstractTreeUi {
       });
     }
     catch (IndexNotReadyException e) {
-      warnOnIndexNotReady();
+      warnOnIndexNotReady(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     finally {
@@ -1651,10 +1651,10 @@ public class AbstractTreeUi {
     return passOne.get();
   }
 
-  private void warnOnIndexNotReady() {
+  private void warnOnIndexNotReady(IndexNotReadyException e) {
     if (!myWasEverIndexNotReady) {
       myWasEverIndexNotReady = true;
-      LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
+      LOG.error("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure(), e);
     }
   }
 
