@@ -195,6 +195,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return result.toArray(new PsiFile[result.size()]);
   }
 
+  public static void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @NotNull IdFilter filter) {
+    FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
+  }
+
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
