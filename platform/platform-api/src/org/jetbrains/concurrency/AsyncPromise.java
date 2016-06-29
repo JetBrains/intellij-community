@@ -95,7 +95,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @SuppressWarnings("SynchronizeOnThis")
   private static final class CompoundConsumer<T> implements Consumer<T> {
-    private List<Consumer<? super T>> consumers = new ArrayList<Consumer<? super T>>();
+    private List<Consumer<? super T>> consumers = new ArrayList<>();
 
     public CompoundConsumer(@NotNull Consumer<? super T> c1, @NotNull Consumer<? super T> c2) {
       synchronized (this) {
@@ -144,27 +144,19 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     }
 
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
-    addHandlers(new Consumer<T>() {
-      @Override
-      public void consume(T result) {
-        try {
-          if (fulfilled instanceof Obsolescent && ((Obsolescent)fulfilled).isObsolete()) {
-            promise.setError(OBSOLETE_ERROR);
-          }
-          else {
-            promise.setResult(fulfilled.fun(result));
-          }
+    addHandlers(result -> {
+      try {
+        if (fulfilled instanceof Obsolescent && ((Obsolescent)fulfilled).isObsolete()) {
+          promise.setError(OBSOLETE_ERROR);
         }
-        catch (Throwable e) {
-          promise.setError(e);
+        else {
+          promise.setResult(fulfilled.fun(result));
         }
       }
-    }, new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        promise.setError(error);
+      catch (Throwable e) {
+        promise.setError(e);
       }
-    });
+    }, promise::setError);
     return promise;
   }
 
@@ -184,22 +176,14 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         return;
     }
 
-    addHandlers(new Consumer<T>() {
-      @Override
-      public void consume(T result) {
-        try {
-          child.setResult(result);
-        }
-        catch (Throwable e) {
-          child.setError(e);
-        }
+    addHandlers(result -> {
+      try {
+        child.setResult(result);
       }
-    }, new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        child.setError(error);
+      catch (Throwable e) {
+        child.setError(e);
       }
-    });
+    }, child::setError);
   }
 
   @Override
@@ -216,33 +200,22 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
     }
 
     final AsyncPromise<SUB_RESULT> promise = new AsyncPromise<SUB_RESULT>();
-    final Consumer<Throwable> rejectedHandler = new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        promise.setError(error);
+    final Consumer<Throwable> rejectedHandler = promise::setError;
+    addHandlers(result -> {
+      try {
+        fulfilled.fun(result)
+          .done(subResult -> {
+            try {
+              promise.setResult(subResult);
+            }
+            catch (Throwable e) {
+              promise.setError(e);
+            }
+          })
+          .rejected(rejectedHandler);
       }
-    };
-    addHandlers(new Consumer<T>() {
-      @Override
-      public void consume(T result) {
-        try {
-          fulfilled.fun(result)
-            .done(new Consumer<SUB_RESULT>() {
-              @Override
-              public void consume(SUB_RESULT result) {
-                try {
-                  promise.setResult(result);
-                }
-                catch (Throwable e) {
-                  promise.setError(e);
-                }
-              }
-            })
-            .rejected(rejectedHandler);
-        }
-        catch (Throwable e) {
-          promise.setError(e);
-        }
+      catch (Throwable e) {
+        promise.setError(e);
       }
     }, rejectedHandler);
     return promise;
@@ -250,7 +223,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public Promise<T> processed(@NotNull final AsyncPromise<? super T> fulfilled) {
+  public Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled) {
     switch (state) {
       case PENDING:
         break;
@@ -263,22 +236,14 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
         return this;
     }
 
-    addHandlers(new Consumer<T>() {
-      @Override
-      public void consume(T result) {
-        try {
-          fulfilled.setResult(result);
-        }
-        catch (Throwable e) {
-          fulfilled.setError(e);
-        }
+    addHandlers(result -> {
+      try {
+        fulfilled.setResult(result);
       }
-    }, new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        fulfilled.setError(error);
+      catch (Throwable e) {
+        fulfilled.setError(e);
       }
-    });
+    }, fulfilled::setError);
     return this;
   }
 
@@ -335,13 +300,11 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
     Consumer<? super Throwable> rejected = this.rejected;
     clearHandlers();
-    if (rejected != null) {
-      if (!isObsolete(rejected)) {
-        rejected.consume(error);
-      }
-    }
-    else {
+    if (rejected == null) {
       Promise.logError(LOG, error);
+    }
+    else if (!isObsolete(rejected)) {
+      rejected.consume(error);
     }
     return true;
   }
@@ -352,14 +315,9 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  public Promise<T> processed(@NotNull final Consumer<? super T> processed) {
+  public Promise<T> processed(@NotNull Consumer<? super T> processed) {
     done(processed);
-    rejected(new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        processed.consume(null);
-      }
-    });
+    rejected(error -> processed.consume(null));
     return this;
   }
 }
