@@ -1281,16 +1281,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   public SyntheticCodeBlock createCodeBlockBlock(final List<Block> localResult, final Indent indent, final int childrenIndent) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), myJavaSettings, indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
-    return result;
+    return result;  
   }
   
   @Nullable
   @Override
   public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
-    if (!Registry.is("smart.reformat.vcs.changes")) return null;
-
-    int startOffset = getTextRange().getStartOffset();
-    if (ranges.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
+    if (Registry.is("smart.reformat.vcs.changes") && ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
       List<TextRange> extra = calculateExtraRanges(myNode);
       return new ExtraReformatRanges(extra);
     }
@@ -1299,36 +1296,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @NotNull
-  private List<TextRange> calculateExtraRanges(ASTNode node) {
-    Project project = getProject(node);
-    Document document = retrieveDocument(node, project);
-    TextRange range = node.getTextRange();
+  private List<TextRange> calculateExtraRanges(@NotNull ASTNode node) {
+    Document document = retrieveDocument(node, getProject(node));
     if (document != null) {
-      int startLine = document.getLineNumber(range.getStartOffset());
-      int endLine = document.getLineNumber(range.getEndOffset());
-      return extractIndentSpaces(document, startLine, endLine);
+      TextRange ranges = node.getTextRange();
+      return new IndentRangesCalculator(document, ranges).calcIndentRanges();
     }
 
     return ContainerUtil.newArrayList(myNode.getTextRange());
   }
-
-  private static List<TextRange> extractIndentSpaces(Document document, int startLine, int endLine) {
-    List<TextRange> extra = ContainerUtil.newArrayList();
-
-    CharSequence chars = document.getCharsSequence();
-
-    for (int line = startLine + 1; line <= endLine; line++) {
-      int lineStartOffset = document.getLineStartOffset(line);
-      int lineEndOffset = document.getLineEndOffset(line);
-
-      int firstNonWsChar = CharArrayUtil.shiftForward(chars, lineStartOffset, lineEndOffset + 1, " \t");
-      if (firstNonWsChar <= lineEndOffset + 1) {
-        extra.add(new TextRange(lineStartOffset, firstNonWsChar));
-      }
-    }
-    
-    return extra;
-  }
+  
 
   private static Document retrieveDocument(@NotNull ASTNode node, @NotNull Project project) {
     PsiFile file = node.getPsi().getContainingFile();
