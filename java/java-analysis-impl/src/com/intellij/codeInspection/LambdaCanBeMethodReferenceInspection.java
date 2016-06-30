@@ -518,13 +518,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           replace = replace.replace(cast);
         }
 
-        PsiElement anchor = PsiTreeUtil.getParentOfType(replace, PsiStatement.class);
-        if (anchor == null) {
-          anchor = replace;
-        }
-        for (PsiComment comment : comments) {
-          anchor.getParent().addBefore(comment, anchor);
-        }
+        AnonymousCanBeLambdaInspection.restoreComments(comments, replace);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
       }
     }

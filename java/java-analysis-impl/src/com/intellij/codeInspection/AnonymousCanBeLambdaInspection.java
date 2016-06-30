@@ -254,6 +254,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiCodeBlock body = method.getBody();
       if (body == null) return null;
 
+      final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass, body);
       final Project project = element.getProject();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
@@ -277,12 +278,12 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         .giveUniqueNames(project, elementFactory, lambdaExpression,
                          usedLocalNames, variables.toArray(new PsiVariable[variables.size()]));
 
-      final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(
-        lambdaExpression.getBody());
+      final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression.getBody());
       if (singleExpr != null) {
         lambdaExpression.getBody().replace(singleExpr);
       }
       ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
+      restoreComments(comments, lambdaExpression);
 
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       if (forceIgnoreTypeCast) {
@@ -308,6 +309,16 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       return (PsiExpression)javaCodeStyleManager.shortenClassReferences(typeCast);
     }
     return null;
+  }
+
+  private static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiAnonymousClass anonymousClass, PsiCodeBlock body) {
+    final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
+    for (Iterator<PsiComment> iterator = psiComments.iterator(); iterator.hasNext(); ) {
+      if (PsiTreeUtil.isAncestor(body, iterator.next(), false)) {
+        iterator.remove();
+      }
+    }
+    return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
   }
 
   private static void collectLocalVariablesDefinedInsideLambda(PsiLambdaExpression lambdaExpression,
@@ -450,6 +461,16 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       }
     }
     return false;
+  }
+
+  public static void restoreComments(Collection<PsiComment> comments, PsiElement lambda) {
+    PsiElement anchor = PsiTreeUtil.getParentOfType(lambda, PsiStatement.class, PsiField.class);
+    if (anchor == null) {
+      anchor = lambda;
+    }
+    for (PsiComment comment : comments) {
+      anchor.getParent().addBefore(comment, anchor);
+    }
   }
 
   private static class ForbiddenRefsChecker extends JavaRecursiveElementWalkingVisitor {
