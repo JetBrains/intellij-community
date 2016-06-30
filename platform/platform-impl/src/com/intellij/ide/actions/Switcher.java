@@ -314,7 +314,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+      descriptions.setBorder(JBUI.Borders.empty(1, 4));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
@@ -341,7 +341,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                                                                 || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
-      toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
         @NotNull
@@ -548,7 +548,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(filesRenderer);
-      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+      files.setBorder(JBUI.Borders.empty(5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);
