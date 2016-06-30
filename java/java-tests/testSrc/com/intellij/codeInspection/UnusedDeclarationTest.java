@@ -143,6 +143,11 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testUnusedEnum() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest();
+  }
+
   public void testJunitEntryPoint() {
     doTest();
   }
@@ -156,6 +161,10 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   }
 
   public void testJunitEntryPointCustomRunWith() {
+    doTest();
+  }
+
+  public void testMockedField() {
     doTest();
   }
 

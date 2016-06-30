@@ -140,14 +140,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       return true;
     }
 
-    PsiType inferenceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(inferredType);
-    PsiType existingMethodReturnType = method.getReturnType();
-    if (existingMethodReturnType == null ||
-        inferenceMethodReturnType != null &&
-        !PsiType.VOID.equals(inferenceMethodReturnType) && !TypeConversionUtil.isAssignable(existingMethodReturnType, inferenceMethodReturnType)) {
-      return true;
-    }
-
     final ForbiddenRefsChecker checker = new ForbiddenRefsChecker(method, aClass);
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);

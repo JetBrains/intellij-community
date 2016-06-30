@@ -83,19 +83,30 @@ public class ExternalJavaDocAction extends AnAction {
 
   public static void showExternalJavadoc(PsiElement element, PsiElement originalElement, String docUrl, DataContext dataContext) {
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    if (provider instanceof ExternalDocumentationHandler && 
+    if (provider instanceof ExternalDocumentationHandler &&
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
     final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<String> urls = StringUtil.isEmptyOrSpaces(docUrl) 
+      List<String> urls = StringUtil.isEmptyOrSpaces(docUrl)
                                 ? ApplicationManager.getApplication().runReadAction((Computable<List<String>>)() -> 
                                                                                       provider.getUrlFor(element, originalElement))
                                 : Collections.singletonList(docUrl);
-      
+      if (provider instanceof ExternalDocumentationProvider && urls != null && urls.size() > 1) {
+        for (String url : urls) {
+          List<String> thisUrlList = Collections.singletonList(url);
+          String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, thisUrlList);
+          if (doc != null) {
+            urls = thisUrlList;
+            break;
+          }
+        }
+      }
+      final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (ContainerUtil.isEmpty(urls)) {
+        if (ContainerUtil.isEmpty(finalUrls)) {
           if (element != null && provider instanceof ExternalDocumentationProvider) {
             ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
@@ -103,12 +114,12 @@ public class ExternalJavaDocAction extends AnAction {
             }
           }
         }
-        else if (urls.size() == 1) {
-          BrowserUtil.browse(urls.get(0));
+        else if (finalUrls.size() == 1) {
+          BrowserUtil.browse(finalUrls.get(0));
         }
         else {
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root",
-                                                                                     ArrayUtil.toStringArray(urls)) {
+                                                                                     ArrayUtil.toStringArray(finalUrls)) {
             @Override
             public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
               BrowserUtil.browse(selectedValue);

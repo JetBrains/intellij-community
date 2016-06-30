@@ -20,6 +20,7 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -104,7 +105,12 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
   @Override
   public TextAttributesKey getTextAttributesKey() {
-    return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
+    try {
+      return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
+    }
+    catch (IndexNotReadyException ignore) {
+      return null; // do not show deprecated elements while indexing
+    }
   }
 
   private boolean isDeprecated(){

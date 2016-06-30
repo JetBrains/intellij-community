@@ -18,11 +18,11 @@ package com.intellij.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import net.sf.cglib.asm.$ClassVisitor;
+import net.sf.cglib.asm.$Label;
+import net.sf.cglib.asm.$Type;
 import net.sf.cglib.core.*;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
 
 import java.lang.reflect.Modifier;
 
@@ -34,7 +34,7 @@ public class InstanceofCheckerGenerator {
 
   static {
     try {
-      ClassGenerator.class.getDeclaredMethod("generateClass", ClassVisitor.class);
+      ClassGenerator.class.getDeclaredMethod("generateClass", $ClassVisitor.class);
     }
     catch (NoSuchMethodException e) {
       throw new IllegalStateException("Incorrect cglib version in the classpath, source=" + PathManager.getJarPathForClass(ClassGenerator.class));
@@ -106,24 +106,24 @@ public class InstanceofCheckerGenerator {
     }
 
     @Override
-    public void generateClass(ClassVisitor classVisitor) throws Exception {
+    public void generateClass($ClassVisitor classVisitor) throws Exception {
       ClassEmitter cv = new ClassEmitter(classVisitor);
 
       cv.visit(Constants.V1_2, Modifier.PUBLIC, "com/intellij/util/InstanceofChecker$$$$$" + myCheckedClass.getName().replace('.', '$'), null, toInternalName(Object.class), new String[]{toInternalName(Condition.class)});
       cv.visitSource(Constants.SOURCE_FILE, null);
       final Signature signature = new Signature("<init>", "()V");
-      final CodeEmitter cons = cv.begin_method(Modifier.PUBLIC, signature, new Type[0]);
+      final CodeEmitter cons = cv.begin_method(Modifier.PUBLIC, signature, new $Type[0]);
       cons.load_this();
       cons.dup();
       cons.super_invoke_constructor(signature);
       cons.return_value();
       cons.end_method();
 
-      final CodeEmitter e = cv.begin_method(Modifier.PUBLIC, new Signature("value", "(L" + toInternalName(Object.class) + ";)Z"), new Type[0]);
+      final CodeEmitter e = cv.begin_method(Modifier.PUBLIC, new Signature("value", "(L" + toInternalName(Object.class) + ";)Z"), new $Type[0]);
       e.load_arg(0);
-      e.instance_of(Type.getType(myCheckedClass));
+      e.instance_of($Type.getType(myCheckedClass));
 
-      Label fail = e.make_label();
+      $Label fail = e.make_label();
       e.if_jump(CodeEmitter.EQ, fail);
       e.push(true);
       e.return_value();

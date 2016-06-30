@@ -86,7 +86,7 @@ public class ResolveUtil {
   private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
-  public static final Key<PsiElement> DOCUMENTATION_DELEGATE = Key.create("groovy.documentation.delegate");
+  public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
 
   private ResolveUtil() {
   }
@@ -755,7 +755,7 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull PsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
-    return getMethodCandidates(thisType, methodName, place, true, false, false, argumentTypes);
+    return getMethodCandidates(thisType, methodName, place, true, false, argumentTypes);
   }
 
   @NotNull
@@ -764,7 +764,6 @@ public class ResolveUtil {
                                                           @NotNull PsiElement place,
                                                           boolean resolveClosures,
                                                           boolean allVariants,
-                                                          boolean byShape,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
     thisType = TypesUtil.boxPrimitiveType(thisType, place.getManager(), place.getResolveScope());

@@ -183,7 +183,7 @@ public class InspectionApplication {
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
       if (!myRunWithEditorSettings) {
-        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log message", inspectionProfile.getName()));
+        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log.message", inspectionProfile.getName()));
       }
 
       InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);

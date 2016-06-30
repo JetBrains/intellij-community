@@ -18,7 +18,6 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInspection.*;
@@ -37,7 +36,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -372,7 +370,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
-    if (RefUtil.isImplicitUsage(element)) return true;
+    if (isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
       if (entryPointsManager.isEntryPoint(element)) {
@@ -387,6 +385,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
     return false;
+  }
+
+  private static boolean isImplicitUsage(PsiElement element) {
+    return element instanceof PsiField ? RefUtil.isImplicitRead(element)
+                                       : RefUtil.isImplicitUsage(element);
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
@@ -417,11 +420,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-    for (ImplicitUsageProvider provider : implicitUsageProviders) {
-      if (provider.isImplicitUsage(element)) return true;
-    }
-    return false;
+    return isImplicitUsage(element);
   }
 
   public boolean isGlobalEnabledInEditor() {

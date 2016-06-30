@@ -95,6 +95,9 @@
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
+    <extensionPoint name="rainbowProvider"
+                    interface="com.intellij.codeInsight.daemon.RainbowProvider"/>
+
     <extensionPoint name="implicitUsageProvider"
                     interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
@@ -282,6 +285,7 @@
     <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory"/>
     <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"/>
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>

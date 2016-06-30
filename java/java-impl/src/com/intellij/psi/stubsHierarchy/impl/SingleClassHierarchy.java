@@ -18,7 +18,6 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
@@ -113,10 +112,6 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @NotNull
   @Override
   public SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull PsiClass psiClass) {
-    PsiElement original = psiClass.getOriginalElement();
-    if (original instanceof PsiClass) {
-      psiClass = (PsiClass)original;
-    }
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return StubClassAnchor.EMPTY_ARRAY;
 

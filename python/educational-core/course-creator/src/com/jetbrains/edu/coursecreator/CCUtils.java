@@ -224,7 +224,8 @@ public class CCUtils {
       Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
       Document document = FileDocumentManager.getInstance().getDocument(child);
       if (document == null || patternDocument == null) {
-        return;
+        LOG.info("pattern file for " +  child.getPath() + " not found");
+        continue;
       }
       DocumentUtil.writeInRunUndoTransparentAction(() -> {
         patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());

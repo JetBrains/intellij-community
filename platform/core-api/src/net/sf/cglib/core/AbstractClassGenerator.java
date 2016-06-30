@@ -16,7 +16,7 @@
 package net.sf.cglib.core;
 
 import com.intellij.reference.SoftReference;
-import org.objectweb.asm.ClassReader;
+import net.sf.cglib.asm.$ClassReader;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -217,7 +217,7 @@ implements ClassGenerator
                         }
                         if (gen == null) {
                             byte[] b = strategy.generate(this);
-                            String className = ClassNameReader.getClassName(new ClassReader(b));
+                            String className = ClassNameReader.getClassName(new $ClassReader(b));
                             getClassNameCache(loader).add(className);
                             gen = ReflectUtils.defineClass(className, b, loader);
                         }

@@ -1,0 +1,9 @@
+REGEXP_FILE
+  RegExpPatternImpl: <[^^]>
+    RegExpBranchImpl: <[^^]>
+      RegExpClassImpl: <[^^]>
+        PsiElement(CLASS_BEGIN)('[')
+        PsiElement(CARET)('^')
+        RegExpCharImpl: <^>
+          PsiElement(CARET)('^')
+        PsiElement(CLASS_END)(']')

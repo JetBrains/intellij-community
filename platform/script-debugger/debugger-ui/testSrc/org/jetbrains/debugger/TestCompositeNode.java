@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package org.jetbrains.debugger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Function;
 import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.debugger.values.ObjectValue;
 
 import javax.swing.*;
@@ -105,7 +106,7 @@ public class TestCompositeNode implements XCompositeNode {
     assert content == null;
 
     content = new Content();
-    return result.thenAsync(new AsyncFunction<XValueChildrenList, Content>() {
+    return result.thenAsync(new Function<XValueChildrenList, Promise<Content>>() {
       private void resolveGroups(@NotNull List<XValueGroup> valueGroups, @NotNull List<TestCompositeNode> resultNodes, @NotNull List<Promise<?>> promises) {
         for (XValueGroup group : valueGroups) {
           TestCompositeNode node = new TestCompositeNode(group);
@@ -115,7 +116,7 @@ public class TestCompositeNode implements XCompositeNode {
           }
           resultNodes.add(node);
           if (computeChildren) {
-            promises.add(node.loadContent(Conditions.<XValueGroup>alwaysFalse(), valueSubContentResolveCondition));
+            promises.add(node.loadContent(Conditions.alwaysFalse(), valueSubContentResolveCondition));
           }
         }
       }
@@ -142,7 +143,7 @@ public class TestCompositeNode implements XCompositeNode {
 
         resolveGroups(children.getBottomGroups(), content.bottomGroups, promises);
 
-        return Promise.all(promises, content);
+        return Promises.all(promises, content);
       }
     });
   }

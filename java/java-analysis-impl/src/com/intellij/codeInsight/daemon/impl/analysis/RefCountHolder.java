@@ -222,26 +222,6 @@ class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
-    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
-
-    Collection<PsiReference> array;
-    synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.get(method);
-    }
-
-    if (!array.isEmpty()) {
-      for (PsiReference reference : array) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiMethodReferenceExpression) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;

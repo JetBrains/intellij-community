@@ -328,18 +328,19 @@ public class DiffUtil {
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
-    if (actions.length == 0) return;
-    if (group.getChildrenCount() != 0) group.addSeparator();
-
-    for (AnAction action : actions) {
-      if (action != null) group.add(action);
-    }
+    addActionBlock(group, Arrays.asList(actions));
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, @Nullable List<? extends AnAction> actions) {
     if (actions == null || actions.isEmpty()) return;
-    if (group.getChildrenCount() != 0) group.addSeparator();
-    group.addAll(actions);
+    group.addSeparator();
+
+    AnAction[] children = group.getChildren(null);
+    for (AnAction action : actions) {
+      if (!ArrayUtil.contains(action, children)) {
+        group.add(action);
+      }
+    }
   }
 
   @NotNull

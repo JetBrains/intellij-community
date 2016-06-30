@@ -1,6 +1,8 @@
 package com.jetbrains.edu.learning.stepic;
 
-import com.google.gson.*;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -297,6 +299,9 @@ public class EduStepicConnector {
           info.addAuthor(author);
         }
 
+        String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
+        info.setName(name.trim());
+        
         result.add(info);
       }
     }

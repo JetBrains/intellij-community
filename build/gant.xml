@@ -37,7 +37,6 @@
        <include name="protobuf*.jar"/>
        <include name="netty*.jar"/>
        <include name="asm-all.jar"/>
-       <include name="asm-commons.jar"/>
        <include name="jgoodies-forms.jar"/>
        <include name="guava*.jar"/>
        <include name="picocontainer.jar"/>

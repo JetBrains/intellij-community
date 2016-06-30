@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ public class JavaDocInfoGenerator {
     if (fragment != null && targetElement instanceof PsiClass) {
       if (fragment.contains("-") || fragment.contains("(")) {
         for (PsiMethod method : ((PsiClass)targetElement).getMethods()) {
-          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method);
+          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method, true);
           if (signatures.contains(fragment)) {
             targetElement = method;
             fragment = null;
@@ -2223,9 +2223,14 @@ public class JavaDocInfoGenerator {
     if (aClass == null) {
       return null;
     }
-    
+
+    Pair<T, InheritDocProvider<T>> delegate = findInheritDocTagInDelegate(aMethod, loc);
+    if (delegate != null) {
+      return delegate;
+    }
+
     if (aClass instanceof PsiAnonymousClass) {
-      return searchDocTagInSupers(new PsiClassType[] {((PsiAnonymousClass)aClass).getBaseClassType()}, aMethod, loc, visitedClasses);
+      return searchDocTagInSupers(new PsiClassType[]{((PsiAnonymousClass)aClass).getBaseClassType()}, aMethod, loc, visitedClasses);
     }
 
     PsiClassType[] implementsTypes = aClass.getImplementsListTypes();
@@ -2239,14 +2244,44 @@ public class JavaDocInfoGenerator {
     return searchDocTagInSupers(extendsTypes, aMethod, loc, visitedClasses);
   }
 
-  @Nullable private <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc) {
-    PsiClass aClass = method.getContainingClass();
+  @Nullable
+  private <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInDelegate(PsiMethod method, DocTagLocator<T> loc) {
+    PsiMethod delegateMethod = findDelegateMethod(method);
+    if (delegateMethod == null) return null;
 
+    PsiClass containingClass = delegateMethod.getContainingClass();
+    if (containingClass == null) return null;
+
+    T tag = loc.find(delegateMethod, getDocComment(delegateMethod));
+    if (tag == null) return null;
+
+    return Pair.create(tag, new InheritDocProvider<T>() {
+      @Override
+      public Pair<T, InheritDocProvider<T>> getInheritDoc() {
+        return findInheritDocTag(delegateMethod, loc);
+      }
+
+      @Override
+      public PsiClass getElement() {
+        return containingClass;
+      }
+    });
+  }
+
+  @Nullable
+  private static PsiMethod findDelegateMethod(@NotNull PsiMethod method) {
+    PsiDocCommentOwner delegate = DocumentationDelegateProvider.findDocumentationDelegate(method);
+    return delegate instanceof PsiMethod ? (PsiMethod)delegate : null;
+  }
+
+  @Nullable
+  private <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc) {
+    PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
 
     return findInheritDocTagInClass(method, aClass, loc, new HashSet<PsiClass>());
   }
-  
+
   private static class ParamInfo {
     private final String name;
     private final PsiDocTag docTag;

@@ -182,6 +182,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setMovable(true).
       setCancelCallback(() -> {
         HintUpdateSupply.hideHint(list);
+        final ListBackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        if (task != null) {
+          return task.cancelTask();
+        }
         return true;
       }).
       setCouldPin(popup1 -> {

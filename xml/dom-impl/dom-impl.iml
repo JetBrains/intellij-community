@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="dom-openapi" exported="" />
-    <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" exported="" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="util" />

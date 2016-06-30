@@ -1,6 +1,6 @@
 package org.groovy.debug.hotswap;
 
-import org.objectweb.asm.*;
+import com.tonicsystems.jarjar.asm.*;
 
 import java.lang.String;
 import java.lang.instrument.ClassFileTransformer;

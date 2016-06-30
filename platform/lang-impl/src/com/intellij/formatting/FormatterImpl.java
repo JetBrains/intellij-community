@@ -22,7 +22,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -393,17 +392,17 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public void formatAroundRange(final FormattingModel model,
-                                final CodeStyleSettings settings,
-                                final TextRange textRange,
-                                final FileType fileType) {
+  public void formatAroundRange(FormattingModel model,
+                                CodeStyleSettings settings,
+                                PsiFile file,
+                                TextRange textRange) {
     disableFormatting();
     try {
       validateModel(model);
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        documentModel, block, settings, settings.getIndentOptions(fileType), null
+        documentModel, block, settings, settings.getIndentOptionsByFile(file), null
       );
       LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
       while (tokenBlock != null) {

@@ -1,3 +1,3 @@
-public @interface Observer {
+@interface Observer {
     String value();
 }

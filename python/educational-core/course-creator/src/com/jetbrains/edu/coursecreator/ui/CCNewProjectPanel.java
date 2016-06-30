@@ -27,6 +27,7 @@ public class CCNewProjectPanel {
     myAuthorField.getDocument().addDocumentListener(new MyValidator());
 
     myDescription.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myDescription.setFont(myAuthorField.getFont());
   }
 
   public CCNewProjectPanel(String name, String author, String description) {

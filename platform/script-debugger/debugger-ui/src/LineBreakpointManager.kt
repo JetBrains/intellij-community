@@ -26,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -113,7 +114,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
         promises.add(breakpointManager.remove(vmBreakpoint))
       }
     }
-    return Promise.all(promises)
+    return all(promises)
   }
 
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>, locations: List<Location>, promiseRef: Ref<Promise<out Breakpoint>>? = null) {
@@ -233,11 +234,11 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
   }
 
   fun clearRunToLocationBreakpoints(vm: Vm) {
-    var breakpoints = synchronized (lock) {
+    val breakpoints = synchronized (lock) {
       if (runToLocationBreakpoints.isEmpty) {
         return@clearRunToLocationBreakpoints
       }
-      var breakpoints = runToLocationBreakpoints.toArray<Breakpoint>(arrayOfNulls<Breakpoint>(runToLocationBreakpoints.size))
+      val breakpoints = runToLocationBreakpoints.toArray<Breakpoint>(arrayOfNulls<Breakpoint>(runToLocationBreakpoints.size))
       runToLocationBreakpoints.clear()
       breakpoints
     }

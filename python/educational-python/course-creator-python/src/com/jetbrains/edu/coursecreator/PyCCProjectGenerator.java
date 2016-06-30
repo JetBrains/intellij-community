@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
@@ -63,6 +64,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
                                      @NotNull final String name, @NotNull final String[] authors,
                                      @NotNull final String description) {
     final Course course = getCourse(project, name, authors, description);
+    EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;

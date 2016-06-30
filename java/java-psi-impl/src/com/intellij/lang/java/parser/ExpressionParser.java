@@ -505,7 +505,7 @@ public class ExpressionParser {
     }
 
     if (tokenType == JavaTokenType.LPARENTH) {
-      final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder, null);
+      final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
       if (lambda != null) {
         return lambda;
       }
@@ -553,7 +553,7 @@ public class ExpressionParser {
 
     if (tokenType == JavaTokenType.IDENTIFIER) {
       if (builder.lookAhead(1) == JavaTokenType.ARROW) {
-        return parseLambdaExpression(builder, false, null);
+        return parseLambdaExpression(builder, false);
       }
 
       final PsiBuilder.Marker refExpr;
@@ -818,7 +818,7 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseLambdaAfterParenth(final PsiBuilder builder, @Nullable final PsiBuilder.Marker typeList) {
+  private PsiBuilder.Marker parseLambdaAfterParenth(final PsiBuilder builder) {
     final boolean isLambda;
     final boolean isTyped;
 
@@ -843,28 +843,23 @@ public class ExpressionParser {
         isTyped = false;
       }
       else {
-        boolean arrow = false;
+        boolean lambda = false;
 
-        final PsiBuilder.Marker marker = builder.mark();
-        while (!builder.eof()) {
-          builder.advanceLexer();
-          final IElementType tokenType = builder.getTokenType();
-          if (tokenType == JavaTokenType.ARROW) {
-            arrow = true;
-            break;
-          }
-          if (tokenType == JavaTokenType.RPARENTH) {
-            arrow = builder.lookAhead(1) == JavaTokenType.ARROW;
-            break;
-          }
-          else if (tokenType == JavaTokenType.LPARENTH || tokenType == JavaTokenType.SEMICOLON ||
-                   tokenType == JavaTokenType.LBRACE || tokenType == JavaTokenType.RBRACE) {
-            break;
+        PsiBuilder.Marker marker = builder.mark();
+        builder.advanceLexer();
+        ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(
+          builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+        if (typeInfo != null) {
+          IElementType t = builder.getTokenType();
+          if (t == JavaTokenType.IDENTIFIER ||
+              t == JavaTokenType.THIS_KEYWORD ||
+              t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW) {
+            lambda = true;
           }
         }
         marker.rollbackTo();
 
-        isLambda = arrow;
+        isLambda = lambda;
         isTyped = true;
       }
     }
@@ -873,12 +868,12 @@ public class ExpressionParser {
       isTyped = false;
     }
 
-    return isLambda ? parseLambdaExpression(builder, isTyped, typeList) : null;
+    return isLambda ? parseLambdaExpression(builder, isTyped) : null;
   }
 
   @Nullable
-  private PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final boolean typed, @Nullable final PsiBuilder.Marker typeList) {
-    final PsiBuilder.Marker start = typeList != null ? typeList.precede() : builder.mark();
+  private PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final boolean typed) {
+    final PsiBuilder.Marker start = builder.mark();
 
     myParser.getDeclarationParser().parseLambdaParameterList(builder, typed);
 

@@ -88,9 +88,9 @@ public class BoundedTaskExecutorTest extends TestCase {
       }
 
       executor.shutdown();
-      assertTrue(executor.awaitTermination(N + 5000, TimeUnit.MILLISECONDS));
+      assertTrue(executor.awaitTermination(N + 50000, TimeUnit.MILLISECONDS));
       backendExecutor.shutdownNow();
-      assertTrue(backendExecutor.awaitTermination(1, TimeUnit.SECONDS));
+      assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
       assertEquals(maxTasks, max.get());
       assertEquals(N, executed.get());
     }
@@ -104,7 +104,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     Integer result = f1.get();
     assertEquals(42, result.intValue());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -127,7 +127,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertFalse(run.get());
     assertTrue(s1.isDone());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -199,7 +199,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals(expected.toString(), logs);
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -345,7 +345,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       assertTrue(futures[i].isDone());
     }
 
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
@@ -380,7 +380,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
     String logs = log.toString();
     assertEquals(StringUtil.repeat(" ",N), logs);
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
@@ -434,7 +434,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       assertTrue("Must create no more than "+nMaxThreads+" workers but got: "+workers,
                  workers.size() <= nMaxThreads);
       executor.shutdownNow();
-      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     }
   }
 
@@ -465,7 +465,7 @@ public class BoundedTaskExecutorTest extends TestCase {
         });
       }
       executor.shutdown();
-      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
 
       for (Future future : futures) {
         assertTrue(future.isDone());
@@ -482,7 +482,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
     assertFalse(future.isDone());
     assertFalse(future.isCancelled());
-    assertTrue(executor2.awaitTermination(10, TimeUnit.SECONDS));
+    assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
   }
