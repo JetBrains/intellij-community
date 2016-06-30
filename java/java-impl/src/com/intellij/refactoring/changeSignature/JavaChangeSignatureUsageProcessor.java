@@ -1002,7 +1002,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           LOG.error(e);
         }
       }
-      
+
       checkContract(conflictDescriptions, myChangeInfo.getMethod());
 
       for (UsageInfo usageInfo : usagesSet) {
@@ -1104,7 +1104,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           prototype.getParameterList().add(param);
         }
 
-        ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflicts);
+        ConflictsUtil.checkMethodConflicts(method.getContainingClass(), myChangeInfo.isGenerateDelegate() ? null : method, prototype, conflicts);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
