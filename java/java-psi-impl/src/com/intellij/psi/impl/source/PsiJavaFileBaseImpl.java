@@ -108,6 +108,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public void setPackageName(final String packageName) throws IncorrectOperationException {
+    if (PsiUtil.isModuleFile(this)) {
+      throw new IncorrectOperationException("Cannot set package name for module declarations");
+    }
+
     final PsiPackageStatement packageStatement = getPackageStatement();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (packageStatement != null) {
@@ -119,10 +123,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         packageStatement.delete();
       }
     }
-    else {
-      if (!packageName.isEmpty()) {
-        addBefore(factory.createPackageStatement(packageName), getFirstChild());
-      }
+    else if (!packageName.isEmpty()) {
+      addBefore(factory.createPackageStatement(packageName), getFirstChild());
     }
   }
 
@@ -472,6 +474,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @NotNull
   public LanguageLevel getLanguageLevel() {
     return LANGUAGE_LEVEL_KEY.getValue(this);
+  }
+
+  @Nullable
+  @Override
+  public PsiJavaModule getModuleDeclaration() {
+    return null;
   }
 
   @Override

@@ -1281,4 +1281,8 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
   }
+
+  public static boolean isModuleFile(@NotNull PsiFile file) {
+    return file instanceof PsiJavaFile && ((PsiJavaFile)file).getModuleDeclaration() != null;
+  }
 }

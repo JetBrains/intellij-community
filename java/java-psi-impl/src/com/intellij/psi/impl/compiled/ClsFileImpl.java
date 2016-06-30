@@ -256,6 +256,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return level;
   }
 
+  @Nullable
+  @Override
+  public PsiJavaModule getModuleDeclaration() {
+    return null;
+  }
+
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw cannotModifyException(this);
