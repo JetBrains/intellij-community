@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.AstPath;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.reference.SoftReference;
@@ -56,6 +57,7 @@ class AstPathPsiMap {
     for (MyReference reference : myMap.values()) {
       StubBasedPsiElementBase<?> psi = SoftReference.dereference(reference);
       if (psi != null) {
+        DebugUtil.onInvalidated(psi);
         psi.setSubstrateRef(SubstrateRef.createInvalidRef(psi));
       }
     }
