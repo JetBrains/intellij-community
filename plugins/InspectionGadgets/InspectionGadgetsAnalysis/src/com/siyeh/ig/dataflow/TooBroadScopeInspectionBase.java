@@ -105,8 +105,8 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return false;
       }
       else if (!m_allowConstructorAsInitializer) {
-        // constructors located in java.* packages probably have no non-local side effects
-        if (!ClassUtils.isImmutable(type) && !type.getCanonicalText().startsWith("java.")) {
+        // constructors located in library packages probably have no non-local side effects
+        if (!ClassUtils.isImmutable(type) && !LibraryUtil.isTypeInLibrary(type)) {
           return false;
         }
       }
@@ -141,6 +141,21 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : polyadicExpression.getOperands()) {
         if (!isMoveable(operand)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      // methods located in library packages probably have no non-local side effects
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (!(method instanceof PsiCompiledElement)) {
+        return false;
+      }
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      for (PsiExpression argument : argumentList.getExpressions()){
+        if (!isMoveable(argument)) {
           return false;
         }
       }
