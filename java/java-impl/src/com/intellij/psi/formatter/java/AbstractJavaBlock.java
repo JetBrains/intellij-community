@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -1287,7 +1286,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   @Override
   public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
-    if (Registry.is("smart.reformat.vcs.changes") && ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
+    if (ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
       List<TextRange> extra = calculateExtraRanges(myNode);
       return new ExtraReformatRanges(extra);
     }
