@@ -93,6 +93,8 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
                         @NotNull final ProcessListener processListener,
                         @NotNull final String tempWorkingPath)
     throws ExecutionException {
+    ensureConsoleOk(myConsole);
+
     // Do not create new environment from factory, if child provided environment to rerun
     final ExecutionEnvironment executionEnvironment =
       // TODO: RENAME
@@ -134,6 +136,21 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         myLastProcessDescriptor = descriptor;
       }
     });
+  }
+
+  /**
+   * {@link PyProcessWithConsoleTestTask#createProcessRunner()} should always return new runner.
+   * But some buggy code returns runner from prev. rerun with stale project in console.
+   * This code checks it.
+   */
+  private static void ensureConsoleOk(@Nullable final ConsoleViewImpl console) {
+    if (console == null) { // Not set yet
+      return;
+    }
+    if (console.getProject().isDisposed()) {
+      throw new AssertionError(
+        "=== Console is stale. Make sure you did not cache and reuse runner from prev. run. See this method doc for more info === ");
+    }
   }
 
   @NotNull

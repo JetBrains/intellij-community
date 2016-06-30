@@ -158,7 +158,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     assert scriptParams != null;
     getRunner().addToGroup(scriptParams, cmd);
     addBeforeParameters(cmd);
-    scriptParams.addParameters(getTestSpecs());
+    myConfiguration.addTestSpecsAsParameters(scriptParams, getTestSpecs());
     addAfterParameters(cmd);
   }
 
