@@ -1153,7 +1153,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
 
-    assert rootNode.textMatches(myText) : rootNode.getElementType();
+    assert rootNode.getTextLength() == myText.length() : rootNode.getElementType();
 
     return rootNode;
   }

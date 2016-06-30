@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.ConcurrentMap
@@ -90,7 +91,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
         promises.add(doClearBreakpoint(b))
       }
     }
-    return Promise.all(promises)
+    return all(promises)
   }
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>

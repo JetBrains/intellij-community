@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 public abstract class Promise<T> {
   public static final Promise<Void> DONE = new DonePromise<Void>(null);
@@ -68,40 +67,6 @@ public abstract class Promise<T> {
     else {
       return new RejectedPromise<T>(error);
     }
-  }
-
-  @NotNull
-  public static Promise<?> all(@NotNull Collection<Promise<?>> promises) {
-    if (promises.size() == 1) {
-      return promises instanceof List ? ((List<Promise<?>>)promises).get(0) : promises.iterator().next();
-    }
-    else {
-      return all(promises, null);
-    }
-  }
-
-  @NotNull
-  public static <T> Promise<T> all(@NotNull Collection<Promise<?>> promises, @Nullable T totalResult) {
-    if (promises.isEmpty()) {
-      //noinspection unchecked
-      return (Promise<T>)DONE;
-    }
-
-    final AsyncPromise<T> totalPromise = new AsyncPromise<T>();
-    Consumer done = new CountDownConsumer<T>(promises.size(), totalPromise, totalResult);
-    Consumer<Throwable> rejected = new Consumer<Throwable>() {
-      @Override
-      public void consume(Throwable error) {
-        totalPromise.setError(error);
-      }
-    };
-
-    for (Promise<?> promise : promises) {
-      //noinspection unchecked
-      promise.done(done);
-      promise.rejected(rejected);
-    }
-    return totalPromise;
   }
 
   public static <T> Promise<T> any(@NotNull final Collection<Promise<T>> promises, @NotNull final String totalError) {
@@ -187,7 +152,7 @@ public abstract class Promise<T> {
   public abstract <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   @NotNull
-  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull AsyncFunction<? super T, SUB_RESULT> done);
+  public abstract <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
 
   @NotNull
   public abstract State getState();

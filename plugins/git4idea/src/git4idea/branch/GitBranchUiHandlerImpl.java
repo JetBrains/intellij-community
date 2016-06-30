@@ -17,6 +17,8 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -149,12 +151,9 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                   @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
                                                   @NotNull final String baseBranch) {
     final AtomicBoolean forceDelete = new AtomicBoolean();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch));
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> forceDelete.set(
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch)),
+      ModalityState.defaultModalityState());
     return forceDelete.get();
   }
 

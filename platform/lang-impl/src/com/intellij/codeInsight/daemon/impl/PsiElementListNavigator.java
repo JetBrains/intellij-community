@@ -144,6 +144,9 @@ public class PsiElementListNavigator {
       }).
       setCancelCallback(() -> {
         HintUpdateSupply.hideHint(list);
+        if (listUpdaterTask != null) {
+          return listUpdaterTask.cancelTask();
+        }
         return true;
       });
     final Ref<UsageView> usageView = new Ref<UsageView>();

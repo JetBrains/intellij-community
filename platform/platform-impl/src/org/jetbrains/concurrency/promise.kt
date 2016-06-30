@@ -25,7 +25,7 @@ private val rejectedPromise = Promise.reject<Any?>("rejected")
 // only internal usage
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
 
-abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : AsyncFunction<PARAM, RESULT>, Obsolescent {
+abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : Function<PARAM, Promise<RESULT>>, Obsolescent {
   override fun isObsolete() = node.isObsolete
 }
 
@@ -69,9 +69,9 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(AsyncFunction<T, kotlin.Any?> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<kotlin.Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
-  (return@AsyncFunction handler(param) as Promise<Any?>)
+  (return@Function handler(param) as Promise<Any?>)
 })
 
 
@@ -80,15 +80,11 @@ inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwabl
 })
 
 
-fun resolvedPromise(): Promise<*> = Promise.DONE
-
-fun <T> resolvedPromise(result: T) = Promise.resolve(result)
-
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
 
 fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)
 
-@Suppress("CAST_NEVER_SUCCEEDS")
+@Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 
 val Promise<*>.isRejected: Boolean
@@ -119,7 +115,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   for (promise in promises) {
     promise.done { results.add(it) }
   }
-  return Promise.all(promises, results)
+  return all(promises, results)
 }
 
 fun createError(error: String, log: Boolean): RuntimeException = Promise.MessageError(error, log)

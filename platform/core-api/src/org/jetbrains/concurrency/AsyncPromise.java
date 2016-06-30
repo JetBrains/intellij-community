@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,7 +203,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
 
   @Override
   @NotNull
-  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull final AsyncFunction<? super T, SUB_RESULT> fulfilled) {
+  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull final Function<? super T, Promise<SUB_RESULT>> fulfilled) {
     switch (state) {
       case PENDING:
         break;

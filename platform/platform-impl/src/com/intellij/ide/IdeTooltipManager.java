@@ -38,6 +38,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -57,6 +58,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
+  private static final String CUSTOM_TOOLTIP = "custom.tooltip";
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
@@ -177,7 +179,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     String tooltipText = comp.getToolTipText(me);
-    if (tooltipText == null || tooltipText.trim().isEmpty()) return;
+    if ((tooltipText == null || tooltipText.trim().isEmpty()) && getCustomTooltip(comp) == null) return;
 
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
@@ -199,27 +201,38 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private void queueShow(final JComponent c, final MouseEvent me, final boolean toCenter, int shift, int posChangeX, int posChangeY) {
-    String aText = String.valueOf(c.getToolTipText(me));
-    final IdeTooltip tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
-      @Override
-      protected boolean beforeShow() {
-        myCurrentEvent = me;
+    IdeTooltip tooltip = getCustomTooltip(c);
+    if (tooltip == null) {
+      String aText = String.valueOf(c.getToolTipText(me));
+      tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
+        @Override
+        protected boolean beforeShow() {
+          myCurrentEvent = me;
 
-        if (!c.isShowing()) return false;
+          if (!c.isShowing()) return false;
 
-        String text = c.getToolTipText(myCurrentEvent);
-        if (text == null || text.trim().isEmpty()) return false;
+          String text = c.getToolTipText(myCurrentEvent);
+          if (text == null || text.trim().isEmpty()) return false;
 
-        JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
+          JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
-        final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
-        final Wrapper wrapper = new Wrapper(pane);
-        setTipComponent(wrapper);
-        return true;
-      }
-    }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+          final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
+          final Wrapper wrapper = new Wrapper(pane);
+          setTipComponent(wrapper);
+          return true;
+        }
+      }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+    }
 
     show(tooltip, false);
+  }
+
+  public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
+    component.putClientProperty(CUSTOM_TOOLTIP, tooltip);
+  }
+
+  public IdeTooltip getCustomTooltip(JComponent component) {
+    return ObjectUtils.tryCast(component.getClientProperty(CUSTOM_TOOLTIP), IdeTooltip.class);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
