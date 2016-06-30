@@ -16,8 +16,6 @@
 package com.intellij.ide;
 
 import com.apple.eawt.Application;
-import com.apple.eawt.ApplicationAdapter;
-import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ExitAction;
 import com.intellij.ide.actions.OpenFileAction;
@@ -50,6 +48,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -121,53 +120,35 @@ public class MacOSApplicationProvider implements ApplicationComponent {
   }
 
   private static class Worker {
-    @SuppressWarnings("deprecation")
     public static void initMacApplication() {
-      Application application = new Application();
-      application.addApplicationListener(new ApplicationAdapter() {
-        @Override
-        public void handleAbout(ApplicationEvent applicationEvent) {
-          AboutAction.perform(getProject());
-          applicationEvent.setHandled(true);
-        }
-
-        @Override
-        public void handlePreferences(ApplicationEvent applicationEvent) {
-          Project project = getNotNullProject();
-          submit(() -> ShowSettingsAction.perform(project));
-          applicationEvent.setHandled(true);
-        }
-
-        @Override
-        public void handleQuit(ApplicationEvent applicationEvent) {
-          submit(ExitAction::perform);
-        }
-
-        @Override
-        public void handleOpenFile(ApplicationEvent applicationEvent) {
-          Project project = getProject();
-          String filename = applicationEvent.getFilename();
-          if (filename == null) return;
-
-          submit(() -> {
-            File file = new File(filename);
-            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-              IdeaApplication.getInstance().setPerformProjectLoad(false);
-              return;
-            }
-            if (project != null && file.exists()) {
-              OpenFileAction.openFile(filename, project);
-              applicationEvent.setHandled(true);
-            }
-          });
-        }
+      Application application = Application.getApplication();
+      application.setAboutHandler(event -> AboutAction.perform(getProject()));
+      application.setPreferencesHandler(event -> {
+        Project project = getNotNullProject();
+        submit(() -> ShowSettingsAction.perform(project));
       });
-
-      application.addAboutMenuItem();
-      application.addPreferencesMenuItem();
-      application.setEnabledAboutMenu(true);
-      application.setEnabledPreferencesMenu(true);
-
+      application.setQuitHandler((event, response) -> {
+        submit(ExitAction::perform);
+        response.cancelQuit();
+      });
+      application.setOpenFileHandler(event -> {
+        Project project = getProject();
+        List<File> list = event.getFiles();
+        LOG.debug("MacMenu: files found ", list.size());
+        if (list.isEmpty()) return;
+        File file = list.get(0);
+        submit(() -> {
+          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+            LOG.debug("MacMenu: load project for ", file);
+            IdeaApplication.getInstance().setPerformProjectLoad(false);
+            return;
+          }
+          if (project != null && file.exists()) {
+            LOG.debug("MacMenu: open file ", file);
+            OpenFileAction.openFile(file.getAbsolutePath(), project);
+          }
+        });
+      });
       installAutoUpdateMenu();
     }
 
@@ -208,6 +189,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     }
 
     private static void submit(@NotNull Runnable task) {
+      LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread());
       if (!ENABLED.get()) return;
 
       Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();
