@@ -196,9 +196,6 @@
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CompareToUsesNonFinalVariableInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CovariantCompareTo" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.compareto.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.CovariantCompareToInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CovariantEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CovariantEqualsInspection"/>
