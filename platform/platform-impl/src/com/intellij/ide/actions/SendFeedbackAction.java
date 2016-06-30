@@ -43,7 +43,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
   public static void launchBrowser(@Nullable Project project) {
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    boolean eap = true;//appInfo.isEAP();
+    boolean eap = appInfo.isEAP();
     String urlTemplate = eap ? appInfo.getEAPFeedbackUrl() : appInfo.getReleaseFeedbackUrl();
     urlTemplate = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
