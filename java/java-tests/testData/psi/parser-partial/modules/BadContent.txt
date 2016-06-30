@@ -1,6 +1,6 @@
 PsiJavaFile:BadContent.java
   PsiJavaModule:X
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:X('X')

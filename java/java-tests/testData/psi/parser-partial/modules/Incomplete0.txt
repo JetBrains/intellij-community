@@ -1,4 +1,4 @@
 PsiJavaFile:Incomplete0.java
-  PsiJavaToken:MODULE('module')
+  PsiKeyword:module('module')
   PsiErrorElement:Identifier expected
     <empty list>

@@ -1,6 +1,6 @@
 PsiJavaFile:Uses0.java
   PsiJavaModule:M
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:M('M')
@@ -8,7 +8,7 @@ PsiJavaFile:Uses0.java
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')
     PsiUsesStatement
-      PsiJavaToken:USES('uses')
+      PsiKeyword:uses('uses')
       PsiErrorElement:Class reference expected
         <empty list>
     PsiWhiteSpace(' ')

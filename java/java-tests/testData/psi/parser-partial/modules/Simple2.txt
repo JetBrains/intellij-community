@@ -2,7 +2,7 @@ PsiJavaFile:Simple2.java
   PsiComment(C_STYLE_COMMENT)('/* comment */')
   PsiWhiteSpace('\n')
   PsiJavaModule:X
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:X('X')

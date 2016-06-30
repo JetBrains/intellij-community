@@ -1,6 +1,6 @@
 PsiJavaFile:Name0.java
   PsiJavaModule:A.
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:A('A')

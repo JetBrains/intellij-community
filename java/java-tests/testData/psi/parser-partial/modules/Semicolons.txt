@@ -1,6 +1,6 @@
 PsiJavaFile:Semicolons.java
   PsiJavaModule:M
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:M('M')

@@ -1,6 +1,6 @@
 PsiJavaFile:Exports6.java
   PsiJavaModule:M
-    PsiJavaToken:MODULE('module')
+    PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
       PsiIdentifier:M('M')
@@ -8,14 +8,14 @@ PsiJavaFile:Exports6.java
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')
     PsiExportsStatement
-      PsiJavaToken:EXPORTS('exports')
+      PsiKeyword:exports('exports')
       PsiWhiteSpace(' ')
       PsiJavaCodeReferenceElement:pkg
         PsiIdentifier:pkg('pkg')
         PsiReferenceParameterList
           <empty list>
       PsiWhiteSpace(' ')
-      PsiJavaToken:TO('to')
+      PsiKeyword:to('to')
       PsiWhiteSpace(' ')
       PsiJavaModuleReference
         PsiIdentifier:A('A')
