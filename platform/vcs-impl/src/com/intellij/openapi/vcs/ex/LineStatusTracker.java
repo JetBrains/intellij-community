@@ -398,9 +398,19 @@ public class LineStatusTracker {
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
+    private int myWriteActionDepth = 0;
+
+    @Override
+    public void writeActionStarted(@NotNull Object action) {
+      myWriteActionDepth++;
+    }
+
     @Override
     public void writeActionFinished(@NotNull Object action) {
-      updateRanges();
+      myWriteActionDepth = Math.max(myWriteActionDepth - 1, 0);
+      if (myWriteActionDepth == 0) {
+        updateRanges();
+      }
     }
   }
 
