@@ -497,7 +497,8 @@
 
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
-    <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
+    <!-- Android Studio: disable Groovy script producer - we don't want this to be offered for random .gradle files, esp. build.gradle -->
+    <!-- <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/> -->
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
