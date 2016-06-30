@@ -356,7 +356,7 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(),
+    LOG.assertTrue(ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isReadAccessAllowed(),
                    "Network shouldn't be accessed in EDT or inside read action");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();

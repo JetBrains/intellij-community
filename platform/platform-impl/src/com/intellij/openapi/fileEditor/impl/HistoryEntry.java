@@ -105,7 +105,11 @@ final class HistoryEntry {
 
     HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, disposable);
     for (int i = 0; i < providers.length; i++) {
-      entry.putState(providers[i], states[i]);
+      FileEditorProvider provider = providers[i];
+      FileEditorState state = states[i];
+      if (provider != null && state != null) {
+        entry.putState(provider, state);
+      }
     }
     return entry;
   }
