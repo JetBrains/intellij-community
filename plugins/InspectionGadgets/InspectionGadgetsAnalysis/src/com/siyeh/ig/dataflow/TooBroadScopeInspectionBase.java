@@ -26,11 +26,8 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.*;
 import com.intellij.psi.util.FileTypeUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,6 +127,9 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return false;
       }
       final PsiVariable variable = (PsiVariable)target;
+      if (!ClassUtils.isImmutable(variable.getType()) && !CollectionUtils.isEmptyArray(variable)) {
+        return false;
+      }
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
