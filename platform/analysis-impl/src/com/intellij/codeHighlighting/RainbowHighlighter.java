@@ -15,10 +15,8 @@
  */
 package com.intellij.codeHighlighting;
 
-import com.intellij.codeInsight.daemon.RainbowProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -30,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +37,6 @@ public class RainbowHighlighter {
   private final float[] myFloats;
   @NotNull private final EditorColorsScheme myColorsScheme;
   @NotNull private final Color myDefaultBackground;
-
-  private static final HashSet<Language> BY_PASS_LANGUAGES = new HashSet<Language>();
-  static {
-    RainbowProvider.initRainbow();
-  }
 
   public RainbowHighlighter(@Nullable EditorColorsScheme colorsScheme, @Nullable Color background) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
@@ -58,14 +50,6 @@ public class RainbowHighlighter {
 
   public static boolean isRainbowEnabled() {
     return Registry.is("editor.rainbow.identifiers", false);
-  }
-
-  public static void registerByPassLanguage(@NotNull Language language) {
-    BY_PASS_LANGUAGES.add(language);
-  }
-
-  public static boolean isByPassLanguage(@Nullable Language language) {
-    return BY_PASS_LANGUAGES.contains(language);
   }
 
   @NotNull

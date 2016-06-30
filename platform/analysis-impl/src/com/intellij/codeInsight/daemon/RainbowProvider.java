@@ -25,25 +25,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class RainbowProvider {
-  static ExtensionPointName<RainbowProvider> EP_NAME = ExtensionPointName.create("com.intellij.rainbowProvider");
+public interface RainbowProvider {
+  ExtensionPointName<RainbowProvider> EP_NAME = ExtensionPointName.create("com.intellij.rainbowProvider");
 
   @NotNull
-  public static RainbowProvider[] getRainbowFileProcessors() {
+  static RainbowProvider[] getRainbowFileProcessors() {
     return Extensions.getExtensions(EP_NAME);
   }
 
-  public static void initRainbow() {
-    for (RainbowProvider processor : getRainbowFileProcessors()) {
-      processor.init();
-    }
-  }
+  boolean isValidContext(@NotNull final PsiFile file);
 
-  public abstract void init();
-
-  public abstract boolean isValidContext(@NotNull final PsiFile file);
-
-  public abstract List<HighlightInfo> getHighlights(@NotNull PsiFile file,
-                                                    @NotNull RainbowHighlighter highlighter,
-                                                    @NotNull ProgressIndicator progress);
+  List<HighlightInfo> getHighlights(@NotNull PsiFile file,
+                                    @NotNull RainbowHighlighter highlighter,
+                                    @NotNull ProgressIndicator progress);
 }
