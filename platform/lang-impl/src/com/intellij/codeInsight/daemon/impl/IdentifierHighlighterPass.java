@@ -107,11 +107,17 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     } else {
       PsiReference ref = TargetElementUtil.findReference(myEditor);
       if (ref instanceof PsiPolyVariantReference) {
+        if (!ref.getElement().isValid()) {
+          throw new PsiInvalidElementAccessException(ref.getElement(), "Invalid element in " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
+        }
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
         if (results.length > 0) {
           for (ResolveResult result : results) {
             PsiElement target = result.getElement();
             if (target != null) {
+              if (!target.isValid()) {
+                throw new PsiInvalidElementAccessException(target, "Invalid element returned from " + ref + " of " + ref.getClass() + "; editor=" + myEditor);
+              }
               highlightTargetUsages(target);
             }
           }
