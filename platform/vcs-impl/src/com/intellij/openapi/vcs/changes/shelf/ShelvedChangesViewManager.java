@@ -94,10 +94,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private boolean myUpdatePending = false;
   private Runnable myPostUpdateRunnable = null;
 
-  public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
-  public static DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
-  public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
-  public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
+  public static final DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
+  public static final DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
+  public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
+  public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
   private final Map<Couple<String>, String> myMoveRenameInfo;
@@ -114,11 +114,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         myUpdatePending = true;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            updateChangesContent();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(() -> updateChangesContent(), ModalityState.NON_MODAL);
       }
     });
     myMoveRenameInfo = new HashMap<Couple<String>, String>();
@@ -171,12 +167,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
-    startupManager.registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        updateChangesContent();
-      }
-    });
+    startupManager.registerPostStartupActivity(this::updateChangesContent);
   }
 
   public void projectClosed() {
@@ -297,16 +288,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void activateView(final ShelvedChangeList list) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        if (list != null) {
-          TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, list));
-        }
-        myContentManager.setSelectedContent(myContent);
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-        if (!window.isVisible()) {
-          window.activate(null);
-        }
+    Runnable runnable = () -> {
+      if (list != null) {
+        TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, list));
+      }
+      myContentManager.setSelectedContent(myContent);
+      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      if (!window.isVisible()) {
+        window.activate(null);
       }
     };
     if (myUpdatePending) {
