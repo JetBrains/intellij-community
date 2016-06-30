@@ -56,13 +56,15 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
@@ -173,22 +175,8 @@ public class ViewOfflineResultsAction extends AnAction {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
       };
-      final Set<String> alreadyEnabledTools = new THashSet<>();
-      for (Tools tools : inspectionProfile.getAllEnabledInspectionTools(project)) {
-        final String shortName = tools.getShortName();
-        if (resMap.containsKey(shortName)) {
-          alreadyEnabledTools.add(shortName);
-        }
-        else {
-          inspectionProfile.disableTool(shortName, project);
-        }
-      }
-      if (alreadyEnabledTools.size() != resMap.size()) {
-        for (String id : resMap.keySet()) {
-          if (!alreadyEnabledTools.contains(id)) {
-            inspectionProfile.enableTool(id, project);
-          }
-        }
+      for (String id : resMap.keySet()) {
+        inspectionProfile.enableTool(id, project);
       }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);
