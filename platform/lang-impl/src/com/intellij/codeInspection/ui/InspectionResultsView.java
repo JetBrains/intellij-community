@@ -357,8 +357,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return createToolbar(group);
   }
 
-  private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent();
+  private JComponent createToolbar(final DefaultActionGroup specialGroup) {
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false);
+    toolbar.setTargetComponent(this);
+    return toolbar.getComponent();
   }
 
   @Override
