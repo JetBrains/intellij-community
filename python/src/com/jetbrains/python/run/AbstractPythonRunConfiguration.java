@@ -469,4 +469,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public boolean isCompileBeforeLaunchAddedByDefault() {
     return false;
   }
+
+  /**
+   * Adds test specs (like method, class, script, etc) to list of runner parameters.
+   */
+  public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
+    // By default we simply add them as arguments
+    paramsGroup.addParameters(testSpecs);
+  }
 }
