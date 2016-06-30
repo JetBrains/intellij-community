@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -38,7 +39,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -58,7 +58,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
-  private static final String CUSTOM_TOOLTIP = "custom.tooltip";
+  private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
@@ -228,11 +228,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
-    component.putClientProperty(CUSTOM_TOOLTIP, tooltip);
+    UIUtil.putClientProperty(component, CUSTOM_TOOLTIP, tooltip);
   }
 
   public IdeTooltip getCustomTooltip(JComponent component) {
-    return ObjectUtils.tryCast(component.getClientProperty(CUSTOM_TOOLTIP), IdeTooltip.class);
+    return UIUtil.getClientProperty(component, CUSTOM_TOOLTIP);
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
