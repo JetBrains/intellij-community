@@ -1186,17 +1186,17 @@ binding.setVariable("layoutUpdater", { String target ->
     jar("updater.jar") {
       module("updater")
     }
-    zip("sdk-patcher.zip") {
-      dir("sdk-patcher") {
-        def updaterModule = findModule("updater-ui")
-        def urls = updaterModule.getContentRootsList().getUrls()
-        def uri = new URI(urls.get(0))
-        fileset(file: "${uri.getPath()}/source.properties")
-        jar("patcher.jar") {
-          module("updater-ui")
-          module("updater")
-        }
-      }
+    // The SDK updater is a zip containing a jar and source.properties
+    // We'll make the complete jar in build.xml, but here we create the inital part and move source.properties into place
+    dir("sdk-patcher") {
+      def updaterModule = findModule("updater-ui")
+      def urls = updaterModule.getContentRootsList().getUrls()
+      def uri = new URI(urls.get(0))
+      fileset(file: "${uri.getPath()}/source.properties")
+    }
+    jar("patcher-partial.jar") {
+      module("updater-ui")
+      module("updater")
     }
   }
 })
