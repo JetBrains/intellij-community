@@ -814,9 +814,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         if (file.isPhysical() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
           VirtualFile vFile = viewProvider.getVirtualFile();
           LOG.error("Write action expected" +
+                    "; document=" + document +
                     "; file=" + file + " of " + file.getClass() +
                     "; file.valid=" + file.isValid() +
                     "; file.eventSystemEnabled=" + viewProvider.isEventSystemEnabled() +
+                    "; viewProvider=" + viewProvider + " of " + viewProvider.getClass() +
                     "; language=" + file.getLanguage() +
                     "; vFile=" + vFile + " of " + vFile.getClass() +
                     "; free-threaded=" + PsiDocumentManagerBase.isFreeThreaded(vFile));
