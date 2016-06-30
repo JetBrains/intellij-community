@@ -87,7 +87,6 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
       myDeadCodeInspection = tool == null ? new UnusedDeclarationInspectionBase() : tool;
     }
-    //private final Set<PsiClass> childMembersAreUsedOutsideMyPackage = ContainerUtil.newConcurrentSet();
     private final TObjectIntHashMap<PsiClass> maxSuggestedLevelForChildMembers = new TObjectIntHashMap<>();
 
     @Override
@@ -121,10 +120,6 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       log(member.getName() + ": effective level is '" + PsiUtil.getAccessModifier(suggestedLevel) + "'");
 
       if (suggestedLevel < currentLevel) {
-        //if (suggestedLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL && member instanceof PsiClass && childMembersAreUsedOutsideMyPackage.contains(member)) {
-        //  log(member.getName() + "  children used outside my package; ignore");
-        //  return; // e.g. some public method is used outside my package (without importing class)
-        //}
         if (member instanceof PsiClass) {
           int memberMaxLevel;
           synchronized (maxSuggestedLevelForChildMembers) {
@@ -228,20 +223,12 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       if (!(psiFile instanceof PsiJavaFile)) {
         log("     refd from " + psiFile.getName() + "; set to public");
         maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
-        //if (memberClass != null) {
-        //  childMembersAreUsedOutsideMyPackage.add(memberClass);
-        //}
         return false; // referenced from XML, has to be public
       }
-      //int offset = info.getNavigationOffset();
-      //if (offset == -1) return true;
       @PsiUtil.AccessLevel
       int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
       log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
       maxLevel.getAndAccumulate(level, Math::max);
-      //if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
-      //  childMembersAreUsedOutsideMyPackage.add(memberClass);
-      //}
 
       return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
