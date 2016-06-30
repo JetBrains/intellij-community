@@ -106,12 +106,68 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final KeyProcessorContext myContext = new KeyProcessorContext();
   private final IdeEventQueue myQueue;
 
+  class NoSecondKeystrokeKeyEvent extends KeyEvent {
+    public NoSecondKeystrokeKeyEvent(Component source, int id, long when, int modifiers,
+                    int keyCode, char keyChar, int keyLocation) {
+      super(source, id, when, modifiers, keyCode, keyChar, keyLocation);
+    }
+    public NoSecondKeystrokeKeyEvent(KeyEvent e, int id, int key_code, int key_location) {
+      super(e.getComponent(), id, System.currentTimeMillis(), e.getModifiers(), key_code, e.getKeyChar(), key_location);
+    }
+  }
+  private KeyEvent myFirstKeyEvent = null;
+  private KeyEvent myWrongSecondKeyEvent = null;
+  private void emitFirstKeyEvent() {
+    IdeEventQueue.getInstance().postEvent(new NoSecondKeystrokeKeyEvent(myFirstKeyEvent, KeyEvent.KEY_PRESSED,
+                                                                        myFirstKeyEvent.getKeyCode(), KeyEvent.KEY_LOCATION_UNKNOWN));
+    IdeEventQueue.getInstance().postEvent(new NoSecondKeystrokeKeyEvent(myFirstKeyEvent, KeyEvent.KEY_TYPED,
+                                                                        0, KeyEvent.KEY_LOCATION_UNKNOWN));
+    IdeEventQueue.getInstance().postEvent(new NoSecondKeystrokeKeyEvent(myFirstKeyEvent, KeyEvent.KEY_RELEASED,
+                                                                        myFirstKeyEvent.getKeyCode(), KeyEvent.KEY_LOCATION_UNKNOWN));
+  }
+  private void emitWrongSecondKeyEvent() {
+    Component component = myWrongSecondKeyEvent.getComponent();
+    int modifiers = myWrongSecondKeyEvent.getModifiers();
+    int key_code = myWrongSecondKeyEvent.getKeyCode();
+    char key_char = myWrongSecondKeyEvent.getKeyChar();
+    int key_location = myWrongSecondKeyEvent.getKeyLocation();
+    IdeEventQueue.getInstance().postEvent(new KeyEvent(component, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+                                                       modifiers, key_code, key_char,
+                                                       key_location));
+    IdeEventQueue.getInstance().postEvent(new KeyEvent(component, KeyEvent.KEY_TYPED, System.currentTimeMillis(),
+                                                       modifiers, 0, key_char,
+                                                       KeyEvent.KEY_LOCATION_UNKNOWN));
+    IdeEventQueue.getInstance().postEvent(new KeyEvent(component, KeyEvent.KEY_RELEASED, System.currentTimeMillis(),
+                                                       modifiers, key_code, key_char,
+                                                       key_location));
+  }
+  private void emitKeyEvents() {
+    try {
+      if (!Registry.is("actionSystem.emitFirstKeystrokeWhenTimeout")) {
+        return;
+      }
+      if (myFirstKeyEvent == null || myFirstKeyEvent.getModifiers() != 0) {
+        return;
+      }
+      emitFirstKeyEvent();
+      if (myWrongSecondKeyEvent == null || myWrongSecondKeyEvent.getModifiers() != 0) {
+        return;
+      }
+      emitWrongSecondKeyEvent();
+    }
+    finally {
+      myFirstKeyEvent = null;
+      myWrongSecondKeyEvent = null;
+    }
+  }
+
   private final Alarm mySecondStrokeTimeout = new Alarm();
   private final Runnable mySecondStrokeTimeoutRunnable = () -> {
     if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
       resetState();
       final DataContext dataContext = myContext.getDataContext();
       StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
+      emitKeyEvents();
     }
   };
 
@@ -334,6 +390,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       setState(KeyState.STATE_INIT);
       Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
       StatusBar.Info.set(null, project);
+      emitKeyEvents();
       return false;
     }
 
@@ -347,6 +404,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // consume the wrong second stroke and keep on waiting
     if (myContext.getActions().isEmpty()) {
+      // wrong second key event, save it
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myWrongSecondKeyEvent = e;
+      }
       return true;
     }
 
@@ -438,6 +499,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;
+      if (keyStroke.getModifiers() == 0) {
+        myFirstKeyEvent = e;
+      }
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -766,6 +830,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (!each.isKeyboard()) continue;
 
       if (each.startsWith(sc)) {
+        if (myContext.getInputEvent() instanceof NoSecondKeystrokeKeyEvent &&
+            each instanceof KeyboardShortcut &&
+            ((KeyboardShortcut)each).getSecondKeyStroke() != null) {
+          continue;
+        }
+
         if (!myContext.getActions().contains(action)) {
           myContext.getActions().add(action);
         }
