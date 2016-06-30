@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2006
- * Time: 15:11:11
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
@@ -96,7 +90,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private final Project myProject;
   private final ShelfTree myTree;
   private Content myContent = null;
-  private final ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
+  private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private boolean myUpdatePending = false;
   private Runnable myPostUpdateRunnable = null;
 
@@ -531,58 +525,82 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  private class MyChangeListDeleteProvider implements DeleteProvider {
-    public void deleteElement(@NotNull DataContext dataContext) {
-      //noinspection unchecked
-      final List<ShelvedChangeList> shelvedChangeLists = getLists(dataContext);
-      if (shelvedChangeLists.isEmpty()) return;
-      String message = (shelvedChangeLists.size() == 1)
-        ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists.get(0).DESCRIPTION)
-        : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.size());
-      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (rc != Messages.OK) return;
-      for(ShelvedChangeList changeList: shelvedChangeLists) {
-        ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
-      }
-    }
+  private class MyShelveDeleteProvider implements DeleteProvider {
 
-    public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      //noinspection unchecked
-      return ! getLists(dataContext).isEmpty();
-    }
-
-    private List<ShelvedChangeList> getLists(final DataContext dataContext) {
-      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
-      final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
-
-      final List<ShelvedChangeList> shelvedChangeLists = (shelved == null && recycled == null) ?
-                                                         Collections.<ShelvedChangeList>emptyList() : new ArrayList<ShelvedChangeList>();
-      if (shelved != null) {
-        ContainerUtil.addAll(shelvedChangeLists, shelved);
-      }
-      if (recycled != null) {
-        ContainerUtil.addAll(shelvedChangeLists, recycled);
-      }
-      return shelvedChangeLists;
-    }
-  }
-
-  private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(@NotNull DataContext dataContext) {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
-      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
-      if (shelved == null || (shelved.length != 1)) return;
-      final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
-      final List<ShelvedBinaryFile> binaryFiles = SHELVED_BINARY_FILE_KEY.getData(dataContext);
 
-      final ShelvedChangeList list = shelved[0];
+      List<ShelvedChangeList> shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType(myTree, ShelvedChangeList.class);
+      ArrayList<ShelvedChangeList> shelvedListsFromChanges = ContainerUtil.newArrayList(getLists(dataContext));
+      // filter changes
+      shelvedListsFromChanges.removeAll(shelvedListsToDelete);
+      List<ShelvedChange> filteredChanges = getFilteredChanges(shelvedListsToDelete, SHELVED_CHANGE_KEY.getData(dataContext));
+      List<ShelvedBinaryFile> filteredBinaries = getFilteredBinaries(shelvedListsToDelete, SHELVED_BINARY_FILE_KEY.getData(dataContext));
 
-      final String message = VcsBundle.message("shelve.changes.delete.files.from.list", (changes == null ? 0 : changes.size()) +
-                                                                                        (binaryFiles == null ? 0 : binaryFiles.size()));
-      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelve.changes.delete.files.from.list.title"), Messages.getWarningIcon());
+      int changeListSize = shelvedListsToDelete.size();
+      int fileListSize = filteredBinaries.size() + filteredChanges.size();
+      if (fileListSize == 0 && changeListSize == 0) return;
+
+      String message = VcsBundle.message("shelve.changes.delete.items.confirm", constructDeleteFilesInfoMessage(fileListSize),
+                                         changeListSize != 0 && fileListSize != 0 ? " and " : "",
+                                         constructShelvedListInfoMessage(changeListSize, ContainerUtil.getFirstItem(shelvedListsToDelete)));
+      int rc = Messages
+        .showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"),
+                            CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
       if (rc != Messages.OK) return;
+      for (ShelvedChangeList changeList : shelvedListsToDelete) {
+        ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
+      }
+      for (ShelvedChangeList list : shelvedListsFromChanges) {
+        removeChangesFromChangeList(project, list, filteredChanges, filteredBinaries);
+      }
+    }
 
+    private List<ShelvedBinaryFile> getFilteredBinaries(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                        @Nullable List<ShelvedBinaryFile> binaryFiles) {
+      if (binaryFiles == null) return Collections.emptyList();
+      List<ShelvedBinaryFile> result = new ArrayList<>(binaryFiles);
+      for (ShelvedChangeList list : listsToDelete) {
+        result.removeAll(list.getBinaryFiles());
+      }
+      return result;
+    }
+
+    @NotNull
+    private List<ShelvedChange> getFilteredChanges(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                   @Nullable List<ShelvedChange> shelvedChanges) {
+      if (shelvedChanges == null) return Collections.emptyList();
+      List<ShelvedChange> result = new ArrayList<>(shelvedChanges);
+      for (ShelvedChangeList list : listsToDelete) {
+        result.removeAll(list.getChanges(myProject));
+      }
+      return result;
+    }
+
+    @NotNull
+    private String constructShelvedListInfoMessage(int size, @Nullable ShelvedChangeList first) {
+      if (size == 0) return "";
+      String message;
+      if (size == 1 && first != null) {
+        message = "one shelved changelist named [" + first.DESCRIPTION + "]";
+      }
+      else {
+        message = size + " shelved " + StringUtil.pluralize("changelist", size);
+      }
+      return message + " with all changes inside";
+    }
+
+    @NotNull
+    private String constructDeleteFilesInfoMessage(int size) {
+      if (size == 0) return "";
+      return (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size);
+    }
+
+    private void removeChangesFromChangeList(@NotNull Project project,
+                                             @NotNull ShelvedChangeList list,
+                                             @NotNull List<ShelvedChange> changes,
+                                             @NotNull List<ShelvedBinaryFile> binaryFiles) {
       final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<ShelvedBinaryFile>(list.getBinaryFiles());
       final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges(project));
 
@@ -597,11 +615,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           patches.add(change.loadFilePatch(myProject, commitContext));
         }
         catch (IOException e) {
-          //noinspection ThrowableInstanceNeverThrown
           exceptions.add(new VcsException(e));
         }
         catch (PatchSyntaxException e) {
-          //noinspection ThrowableInstanceNeverThrown
           exceptions.add(new VcsException(e));
         }
       }
@@ -610,47 +626,28 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
       if (! exceptions.isEmpty()) {
         String title = list.DESCRIPTION == null ? "" : list.DESCRIPTION;
-        title = title.substring(0, Math.min(10, list.DESCRIPTION.length()));
+        title = title.substring(0, Math.min(10, title.length()));
         AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, "Deleting files from '" + title + "'");
       }
     }
 
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
+      return !getLists(dataContext).isEmpty();
+    }
+
+    private List<ShelvedChangeList> getLists(@NotNull final DataContext dataContext) {
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
-      if (shelved == null || (shelved.length != 1)) return false;
-      final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
-      if (changes != null && (! changes.isEmpty())) return true;
-      final List<ShelvedBinaryFile> binaryFiles = SHELVED_BINARY_FILE_KEY.getData(dataContext);
-      return (binaryFiles != null && (! binaryFiles.isEmpty()));
-    }
-  }
+      final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
 
-  private class ShelvedChangeDeleteProvider implements DeleteProvider {
-    private final List<DeleteProvider> myProviders;
-
-    private ShelvedChangeDeleteProvider() {
-      myProviders = Arrays.asList(new MyChangesDeleteProvider(), new MyChangeListDeleteProvider());
-    }
-
-    @Nullable
-    private DeleteProvider selectDelegate(final DataContext dataContext) {
-      for (DeleteProvider provider : myProviders) {
-        if (provider.canDeleteElement(dataContext)) {
-          return provider;
-        }
+      final List<ShelvedChangeList> shelvedChangeLists = (shelved == null && recycled == null) ?
+                                                         Collections.emptyList() : new ArrayList<ShelvedChangeList>();
+      if (shelved != null) {
+        ContainerUtil.addAll(shelvedChangeLists, shelved);
       }
-      return null;
-    }
-
-    public void deleteElement(@NotNull DataContext dataContext) {
-      final DeleteProvider delegate = selectDelegate(dataContext);
-      if (delegate != null) {
-        delegate.deleteElement(dataContext);
+      if (recycled != null) {
+        ContainerUtil.addAll(shelvedChangeLists, recycled);
       }
-    }
-
-    public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return selectDelegate(dataContext) != null;
+      return shelvedChangeLists;
     }
   }
 }
