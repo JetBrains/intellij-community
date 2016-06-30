@@ -36,7 +36,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   }
 
   public void testDelayedWorks() throws InterruptedException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
@@ -96,7 +96,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   }
 
   public void testMustNotBeAbleToShutdown() {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     try {
       service.shutdown();
       fail();
@@ -143,7 +143,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   }
 
   public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws InterruptedException, ExecutionException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     // pre-start one thread
     Future<?> future = service.submit(EmptyRunnable.getInstance());
@@ -181,13 +181,13 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   }
 
   public void testDelayedTasksThatFiredAtTheSameTimeAreExecutedConcurrently() throws InterruptedException, ExecutionException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     int delay = 500;
 
     int N = 20;
     List<? extends Future<?>> futures =
-      ContainerUtil.map(Collections.nCopies(N, ""), s -> service.schedule(()-> {
+      ContainerUtil.map(Collections.nCopies(N, ""), __ -> service.schedule(()-> {
         log.add(new LogInfo(0));
         TimeoutUtil.sleep(10 * 1000);
       }
@@ -206,8 +206,8 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
   }
 
-  public void testAwaitTermination() throws InterruptedException, ExecutionException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService();
+  public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException, ExecutionException {
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
 
     int N = 20;
@@ -219,9 +219,11 @@ public class AppScheduledExecutorServiceTest extends TestCase {
         }, delay, TimeUnit.MILLISECONDS
       ));
     TimeoutUtil.sleep(delay);
-    while (!service.delayQueue.isEmpty()) {
+    long start = System.currentTimeMillis();
+    while (!service.delayQueue.isEmpty() && System.currentTimeMillis() < start + 20000) {
       // wait till all tasks transferred to backend
     }
+    assertTrue(service.delayQueue.toString(), service.delayQueue.isEmpty());
     service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(20, TimeUnit.SECONDS));
 
