@@ -118,8 +118,11 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
     }
 
-    return new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
-                                  propagateParametersMethods, propagateExceptionsMethods);
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setRefactoringId(REFACTORING_ID);
+    return javaChangeInfo;
   }
 
   @NotNull
@@ -151,6 +154,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ConflictsInTestsException.isTestIgnore()) return true;
         throw new ConflictsInTestsException(conflictDescriptions.values());
       }
       if (myPrepareSuccessfulSwingThreadCallback != null) {

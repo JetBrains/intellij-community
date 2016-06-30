@@ -32,6 +32,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -1001,6 +1003,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
 
+      final boolean[] toRemove = myChangeInfo.toRemoveParm();
+      final String refactoringId = ((JavaChangeInfoImpl)myChangeInfo).getRefactoringId();
+      //introduce parameter object deletes parameters but replaces their usages with generated code
+      final boolean simpleChangeSignature = ChangeSignatureProcessorBase.REFACTORING_ID.equals(refactoringId);
+      if (simpleChangeSignature) {
+        checkParametersToDelete(myChangeInfo.getMethod(), toRemove, conflictDescriptions);
+      }
       checkContract(conflictDescriptions, myChangeInfo.getMethod());
 
       for (UsageInfo usageInfo : usagesSet) {
@@ -1010,13 +1019,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
-            final boolean[] toRemove = myChangeInfo.toRemoveParm();
             if (toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
           }
           else if (prototype != null && baseMethod == myChangeInfo.getMethod()) {
             ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflictDescriptions);
+            if (simpleChangeSignature) {
+              checkParametersToDelete(method, toRemove, conflictDescriptions);
+            }
           }
 
           checkContract(conflictDescriptions, method);
@@ -1027,6 +1038,19 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
 
       return conflictDescriptions;
+    }
+
+    private static void checkParametersToDelete(PsiMethod method, boolean[] toRemove, MultiMap<PsiElement, String> conflictDescriptions) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        final LocalSearchScope searchScope = new LocalSearchScope(body);
+        for (int i = 0; i < toRemove.length; i++) {
+          if (toRemove[i] && ReferencesSearch.search(parameters[i], searchScope).findFirst() != null) {
+            conflictDescriptions.putValue(parameters[i], StringUtil.capitalize(RefactoringUIUtil.getDescription(parameters[i], true)) + " is used in method body");
+          }
+        }
+      }
     }
 
     private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {

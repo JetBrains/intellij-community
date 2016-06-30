@@ -69,6 +69,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
 
+  private String myRefactoringId = null;
+
   /**
    * @param newExceptions null if not changed
    */
@@ -199,6 +201,14 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (isNameChanged) {
       newNameIdentifier = factory.createIdentifier(newName);
     }
+  }
+
+  public String getRefactoringId() {
+    return myRefactoringId;
+  }
+
+  public void setRefactoringId(String refactoringId) {
+    myRefactoringId = refactoringId;
   }
 
   protected void fillOldParams(PsiMethod method) {
