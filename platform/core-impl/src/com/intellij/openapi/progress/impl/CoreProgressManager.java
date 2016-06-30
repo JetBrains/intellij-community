@@ -313,20 +313,50 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         runProcessWithProgressSynchronously(task, null);
       }
       else {
-        new TaskRunnable(task, new EmptyProgressIndicator()).run();
+        runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.defaultModalityState());
       }
     }
     else if (task.isModal()) {
-      runProcessWithProgressSynchronously(task.asModal(), null);
+      runSynchronously(task.asModal());
     }
     else {
       final Task.Backgroundable backgroundable = task.asBackgroundable();
       if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
-        runProcessWithProgressSynchronously(task, null);
+        runSynchronously(task);
       }
       else {
-        runProcessWithProgressAsynchronously(backgroundable);
+        runAsynchronously(backgroundable);
       }
+    }
+  }
+
+  private void runSynchronously(@NotNull final Task task) {
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        runProcessWithProgressSynchronously(task, null);
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    }
+  }
+
+  private void runAsynchronously(@NotNull final Task.Backgroundable task) {
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        runProcessWithProgressAsynchronously(task);
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.defaultModalityState());
     }
   }
 
@@ -339,7 +369,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
                                                         @NotNull final ProgressIndicator progressIndicator,
                                                         @Nullable final Runnable continuation) {
-    return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.NON_MODAL);
+    return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.defaultModalityState());
   }
 
   @NotNull
@@ -406,6 +436,43 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
     finishTask(task, !result, exceptionRef.get());
     return result;
+  }
+
+  public void runProcessWithProgressInCurrentThread(@NotNull final Task task,
+                                                    @NotNull final ProgressIndicator progressIndicator,
+                                                    @NotNull final ModalityState modalityState) {
+    if (progressIndicator instanceof Disposable) {
+      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
+    }
+
+    final Runnable process = new TaskRunnable(task, progressIndicator);
+
+    boolean processCanceled = false;
+    Exception exception = null;
+    try {
+      runProcess(process, progressIndicator);
+    }
+    catch (ProcessCanceledException e) {
+      processCanceled = true;
+    }
+    catch (Exception e) {
+      exception = e;
+    }
+
+    final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+    final Exception finalException = exception;
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      finishTask(task, finalCanceled, finalException);
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          finishTask(task, finalCanceled, finalException);
+        }
+      }, modalityState);
+    }
   }
 
   static void finishTask(@NotNull Task task, boolean canceled, @Nullable Exception exception) {

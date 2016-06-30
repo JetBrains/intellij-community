@@ -541,6 +541,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
           panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
+        panel.setToolTipText(presentation.getDescription());
 
         Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction));
         String shortcutText = KeymapUtil.getPreferredShortcutText(

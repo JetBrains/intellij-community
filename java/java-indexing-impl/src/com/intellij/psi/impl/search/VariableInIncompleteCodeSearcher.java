@@ -50,24 +50,21 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     PsiElement[] elements = ((LocalSearchScope)scope).getScope();
     if (elements.length == 0) return;
 
-    PsiSearchHelper.SERVICE.getInstance(p.getProject()).processElementsWithWord(new TextOccurenceProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-        for (PsiElement child = element.findElementAt(offsetInElement); child != null; child = child.getParent()) {
-          if (!name.equals(child.getText())) {
-            break;
-          }
-          if (child instanceof PsiJavaCodeReferenceElement) {
-            final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)child;
-            if (!ref.isQualified() &&
-                !(ref.getParent() instanceof PsiMethodCallExpression) &&
-                ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
-              consumer.process(ref);
-            }
+    PsiSearchHelper.SERVICE.getInstance(p.getProject()).processElementsWithWord((element, offsetInElement) -> {
+      for (PsiElement child = element.findElementAt(offsetInElement); child != null; child = child.getParent()) {
+        if (!name.equals(child.getText())) {
+          break;
+        }
+        if (child instanceof PsiJavaCodeReferenceElement) {
+          final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)child;
+          if (!ref.isQualified() &&
+              !(ref.getParent() instanceof PsiMethodCallExpression) &&
+              ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+            consumer.process(ref);
           }
         }
-        return true;
       }
+      return true;
     }, scope, name, UsageSearchContext.ANY, true);
   }
 }

@@ -478,7 +478,7 @@ public class GithubCreatePullRequestWorker {
   public void createPullRequest(@NotNull final BranchInfo branch,
                                 @NotNull final String title,
                                 @NotNull final String description) {
-    new Task.Backgroundable(myProject, "Creating pull request...") {
+    new Task.Backgroundable(myProject, "Creating Pull Request...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         LOG.info("Pushing current branch");

@@ -23,13 +23,13 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Language-dependent implementation need to be inherited from this class and
- */
 public class RainbowIdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public RainbowIdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
+                                                                 TextEditorHighlightingPassRegistrar.Anchor.BEFORE,
+                                                                 Pass.UPDATE_FOLDING,
+                                                                 false, false);
   }
 
   @Override
@@ -41,29 +41,9 @@ public class RainbowIdentifierHighlighterPassFactory extends AbstractProjectComp
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    if (RainbowHighlighter.isRainbowEnabled() && isValidContext(file, editor)) {
-      return getRainbowPass(file, editor);
+    if (RainbowHighlighter.isRainbowEnabled()) {
+      return new RainbowIdentifierHighlighterPass(file, editor);
     }
-
     return null;
-  }
-
-  /**
-   * Need to be rewritten in language-dependent implementation.
-   * Default implementation colors all identifiers in [PsiReference] and [PsiNameIdentifierOwner] elements.
-   */
-  @NotNull
-  protected RainbowIdentifierHighlighterPass getRainbowPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return new RainbowIdentifierHighlighterPass(file, editor);
-  }
-
-  /**
-   * Need to be rewritten in language-dependent implementation.
-   * For example:
-   *    return file instanceof JavaFile;
-   * Default implementation works for any language.
-   */
-  protected boolean isValidContext(@NotNull final PsiFile file, @NotNull Editor editor) {
-    return true;
   }
 }

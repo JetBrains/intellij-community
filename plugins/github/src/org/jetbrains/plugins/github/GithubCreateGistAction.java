@@ -74,10 +74,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
-      GithubUtil.setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GithubUtil.setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override
@@ -118,6 +118,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
+        if (contents.isEmpty()) return;
+
         String gistUrl =
           createGist(project, authHolder, indicator, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
@@ -236,6 +238,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static List<FileContent> getContentFromFile(@NotNull final VirtualFile file, @NotNull Project project, @Nullable String prefix) {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
+    }
+    if (file.getFileType().isBinary()) {
+      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't upload binary file: " + file);
+      return Collections.emptyList();
     }
     String content = ReadAction.compute(() -> {
       try {

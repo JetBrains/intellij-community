@@ -482,22 +482,12 @@
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitMultiCatchIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.try.statements</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.exceptions.ReplaceArmWithTryFinallyIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.exceptions.MergeNestedTryStatementsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.try.statements</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitTryWithMultipleResourcesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>

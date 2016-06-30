@@ -38,7 +38,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,6 @@ import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.LOG;
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,96 +54,84 @@ import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
  * @date 12/10/10
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
-  public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
+  public static final String CANNOT_OPEN_IN_BROWSER = "Can't open in browser";
 
   protected GithubOpenInBrowserAction() {
-    super("Open on GitHub", "Open corresponding link in browser", GithubIcons.Github_icon);
+    super("Open on GitHub", "Open selected file in browser", GithubIcons.Github_icon);
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
 
-    final GitRepository gitRepository = manager.getRepositoryForFile(virtualFile);
+    GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile);
     if (gitRepository == null) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isUnversioned(virtualFile)) {
-      setVisibleEnabled(e, true, false);
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
     Change change = changeListManager.getChange(virtualFile);
     if (change != null && change.getType() == Change.Type.NEW) {
-      setVisibleEnabled(e, true, false);
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+  public void actionPerformed(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (virtualFile == null || project == null || project.isDisposed()) {
       return;
     }
 
-    String urlToOpen = getGithubUrl(project, virtualFile, editor);
-    if (urlToOpen != null) {
-      BrowserUtil.browse(urlToOpen);
-    }
-  }
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile);
+    assert repository != null;
 
-  @Nullable
-  private static String getGithubUrl(@NotNull Project project, @NotNull VirtualFile virtualFile, @Nullable Editor editor) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    final GitRepository repository = manager.getRepositoryForFile(virtualFile);
-    if (repository == null) {
-      StringBuilder details = new StringBuilder("file: " + virtualFile.getPresentableUrl() + "; Git repositories: ");
-      for (GitRepository repo : manager.getRepositories()) {
-        details.append(repo.getPresentableUrl()).append("; ");
-      }
-      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find git repository", details.toString());
-      return null;
-    }
-
-    final String githubRemoteUrl = GithubUtil.findGithubRemoteUrl(repository);
+    String githubRemoteUrl = GithubUtil.findGithubRemoteUrl(repository);
     if (githubRemoteUrl == null) {
       GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find github remote");
-      return null;
+      return;
     }
 
     String relativePath = VfsUtilCore.getRelativePath(virtualFile, repository.getRoot());
     if (relativePath == null) {
       GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root",
                                     "Root: " + repository.getRoot().getPresentableUrl() + ", file: " + virtualFile.getPresentableUrl());
-      return null;
+      return;
     }
 
     String hash = getCurrentFileRevisionHash(project, virtualFile);
-    if (hash != null) {
-      return makeUrlToOpen(editor, relativePath, hash, githubRemoteUrl);
+    if (hash == null) {
+      GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't get last revision.");
+      return;
     }
 
-    GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't get last revision.");
-    return null;
+    String url = makeUrlToOpen(editor, relativePath, hash, githubRemoteUrl);
+    if (url != null) {
+      BrowserUtil.browse(url);
+    }
   }
 
   @Nullable
@@ -153,11 +139,10 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
                                       @NotNull String relativePath,
                                       @NotNull String branch,
                                       @NotNull String githubRemoteUrl) {
-    final StringBuilder builder = new StringBuilder();
-    final String githubRepoUrl = GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
-    if (githubRepoUrl == null) {
-      return null;
-    }
+    StringBuilder builder = new StringBuilder();
+    String githubRepoUrl = GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
+    if (githubRepoUrl == null) return null;
+
     if (StringUtil.isEmptyOrSpaces(relativePath)) {
       builder.append(githubRepoUrl).append("/tree/").append(branch);
     }
@@ -182,8 +167,8 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Nullable
   private static String getCurrentFileRevisionHash(@NotNull final Project project, @NotNull final VirtualFile file) {
-    final Ref<GitRevisionNumber> ref = new Ref<GitRevisionNumber>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Getting last revision", true) {
+    final Ref<GitRevisionNumber> ref = new Ref<>();
+    ProgressManager.getInstance().run(new Task.Modal(project, "Getting Last Revision", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

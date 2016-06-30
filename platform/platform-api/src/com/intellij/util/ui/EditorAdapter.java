@@ -57,21 +57,18 @@ public class EditorAdapter {
   private final Editor myEditor;
 
   private final Alarm myFlushAlarm = new Alarm();
-  private final Collection<Line> myLines = new ArrayList<Line>();
+  private final Collection<Line> myLines = new ArrayList<>();
   private final Project myProject;
   private final boolean myScrollToTheEndOnAppend;
-
-  private final Runnable myFlushDeferredRunnable = () -> flushStoredLines();
 
   private synchronized void flushStoredLines() {
     Collection<Line> lines;
     synchronized (myLines) {
-      lines = new ArrayList<Line>(myLines);
+      lines = new ArrayList<>(myLines);
       myLines.clear();
     }
     ApplicationManager.getApplication().runWriteAction(writingCommand(lines));
   }
-
 
   public EditorAdapter(@NotNull Editor editor, Project project, boolean scrollToTheEndOnAppend) {
     myEditor = editor;
@@ -90,13 +87,13 @@ public class EditorAdapter {
     }
 
     if (myFlushAlarm.isEmpty()) {
-      myFlushAlarm.addRequest(myFlushDeferredRunnable, 200, ModalityState.NON_MODAL);
+      myFlushAlarm.addRequest(this::flushStoredLines, 200, ModalityState.NON_MODAL);
     }
   }
 
-  private Runnable writingCommand(final Collection<Line> lines) {
+  @NotNull
+  private Runnable writingCommand(@NotNull Collection<Line> lines) {
     final Runnable command = () -> {
-
       Document document = myEditor.getDocument();
 
       StringBuilder buffer = new StringBuilder();
@@ -104,8 +101,8 @@ public class EditorAdapter {
         buffer.append(line.getValue());
       }
       int endBefore = document.getTextLength();
-      int endBeforeLine = endBefore;
       document.insertString(endBefore, buffer.toString());
+      int endBeforeLine = endBefore;
       for (Line line : lines) {
         myEditor.getMarkupModel()
             .addRangeHighlighter(endBeforeLine, Math.min(document.getTextLength(), endBeforeLine + line.getValue().length()), HighlighterLayer.ADDITIONAL_SYNTAX,

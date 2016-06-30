@@ -22,6 +22,7 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
     final PsiMethod method = (PsiMethod)element;
     final PsiManager[] manager = new PsiManager[1];
     PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Override
       public PsiClass compute() {
         if (!method.isConstructor()) return null;
         PsiClass aClass = method.getContainingClass();

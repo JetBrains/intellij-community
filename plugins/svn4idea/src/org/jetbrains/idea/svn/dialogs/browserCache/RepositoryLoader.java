@@ -94,13 +94,7 @@ class RepositoryLoader extends Loader {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator() {
-          @NotNull
-          @Override
-          public ModalityState getModalityState() {
-            return state;
-          }
-        });
+        ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator(state));
       }
     });
   }

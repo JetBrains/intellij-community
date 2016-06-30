@@ -122,6 +122,9 @@ if __name__ == "__main__":
     all = unittest.TestSuite()
     pure_unittest = True
 
+    if len(sys.argv) == 2:  # If folder not provided, we need pretend folder is current
+     sys.argv.insert(1, ".")
+
   options = {}
   for arg in sys.argv[1:-1]:
     arg = arg.strip()

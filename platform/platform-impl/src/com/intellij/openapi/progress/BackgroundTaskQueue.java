@@ -17,7 +17,6 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -148,45 +147,11 @@ public class BackgroundTaskQueue {
     ModalityState modalityState = data.modalityState;
     if (modalityState == null) modalityState = ModalityState.NON_MODAL;
 
-    boolean processCanceled = false;
-    Exception exception = null;
-    try {
-      synchronized (TEST_TASK_LOCK) {
-        task.run(indicator);
-      }
-    }
-    catch (ProcessCanceledException e) {
-      processCanceled = true;
-    }
-    catch (Exception e) {
-      exception = e;
-    }
+    ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();
 
-    final boolean finalCanceled = processCanceled || indicator.isCanceled();
-    final Exception finalException = exception;
-    Runnable finishTask = () -> {
-      try {
-        if (finalException != null) {
-          task.onError(finalException);
-        }
-        else if (finalCanceled) {
-          task.onCancel();
-        }
-        else {
-          task.onSuccess();
-        }
-      }
-      finally {
-        task.onFinished();
-      }
-    };
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      finishTask.run();
-    }
-    else {
-      application.invokeLater(finishTask, modalityState);
+    // prohibit simultaneous execution from different threads
+    synchronized (TEST_TASK_LOCK) {
+      pm.runProcessWithProgressInCurrentThread(task, indicator, modalityState);
     }
   }
 }

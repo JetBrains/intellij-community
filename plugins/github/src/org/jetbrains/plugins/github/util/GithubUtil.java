@@ -445,11 +445,6 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  public static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
-    e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(enabled);
-  }
-
   @NotNull
   public static String getErrorTextFromException(@NotNull Exception e) {
     if (e instanceof UnknownHostException) {

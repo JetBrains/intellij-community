@@ -37,8 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousInspection.class.getName());
@@ -123,7 +122,7 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
       final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringChangeUtil
         .createThisExpression(lambdaExpression.getManager(), thisClass);
       ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, thisAccessExpr);
-      final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
+      final Set<PsiExpression> replacements = new HashSet<>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitClass(PsiClass aClass) {}
@@ -132,7 +131,7 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
         public void visitSuperExpression(PsiSuperExpression expression) {
           super.visitSuperExpression(expression);
           if (expression.getQualifier() == null) {
-            replacements.put(expression, psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression));
+            replacements.add(expression);
           }
         }
 
@@ -141,14 +140,23 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
           super.visitMethodCallExpression(expression);
           if (thisAccessExpr != null) {
             final PsiMethod psiMethod = expression.resolveMethod();
-            if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && expression.getMethodExpression().getQualifierExpression() == null) {
-              replacements.put(expression, psiElementFactory.createExpressionFromText(thisAccessExpr.getText() + "." + expression.getText(), expression));
+            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+            if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && methodExpression.getQualifierExpression() == null) {
+              replacements.add(expression);
             }
           }
         }
       });
-      for (PsiElement psiElement : replacements.keySet()) {
-        psiElement.replace(replacements.get(psiElement));
+      for (PsiExpression expression : replacements) {
+        if (expression instanceof PsiSuperExpression) {
+          expression.replace(psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression));
+        }
+        else if (expression instanceof PsiMethodCallExpression) {
+          ((PsiMethodCallExpression)expression).getMethodExpression().setQualifierExpression(thisAccessExpr);
+        }
+        else {
+          LOG.error("Unexpected expression");
+        }
       }
     }
   }

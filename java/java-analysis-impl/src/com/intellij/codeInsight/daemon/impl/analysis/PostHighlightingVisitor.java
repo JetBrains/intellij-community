@@ -406,12 +406,6 @@ class PostHighlightingVisitor {
                                              @NotNull PsiIdentifier identifier,
                                              @NotNull ProgressIndicator progress) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter, progress)) {
-      //parameter is defined by functional interface
-      final PsiElement declarationScope = parameter.getDeclarationScope();
-      if (declarationScope instanceof PsiMethod &&
-          myRefCountHolder.isReferencedByMethodReference((PsiMethod)declarationScope, myLanguageLevel)) {
-        return null;
-      }
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
       return UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     }

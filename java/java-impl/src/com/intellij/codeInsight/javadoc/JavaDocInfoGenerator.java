@@ -71,7 +71,6 @@ import java.util.regex.Pattern;
 public class JavaDocInfoGenerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoGenerator");
 
-  @NonNls private static final Pattern ourNotDot      = Pattern.compile("[^.]");
   @NonNls private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
   @NonNls private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"",
                                                                               Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -1408,8 +1407,7 @@ public class JavaDocInfoGenerator {
       return "";
     }
 
-    //noinspection ReplaceAllDot
-    return "../" + ourNotDot.matcher(qName).replaceAll("").replaceAll(".", "../");
+    return StringUtil.repeat("../", StringUtil.countChars(qName, '.') + 1);
   }
 
   private void generateValue(StringBuilder buffer,

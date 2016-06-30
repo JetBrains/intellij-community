@@ -158,6 +158,11 @@ public class GroovycOutputParser {
                                    ? BuildMessage.Kind.WARNING
                                    : BuildMessage.Kind.INFO;
 
+        if (StringUtil.isEmpty(url) || "null".equals(url)) {
+          url = null;
+          message = "While compiling " + myChunk.getPresentableShortName() + ": " + message;
+        }
+
         CompilerMessage compilerMessage = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Message: " + compilerMessage);
@@ -227,7 +232,7 @@ public class GroovycOutputParser {
       if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
         messages.add(reportNoGroovy());
       } else {
-        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, msg));
+        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, "While compiling " + myChunk.getPresentableShortName() + ":" + msg));
       }
 
     }

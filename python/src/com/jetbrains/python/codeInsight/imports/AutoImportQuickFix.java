@@ -200,8 +200,9 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     Collections.sort(myImports);
   }
 
-  public int getCandidatesCount() {
-    return myImports.size();
+  @NotNull
+  public List<ImportCandidateHolder> getCandidates() {
+    return Collections.unmodifiableList(myImports);
   }
 
   public boolean hasOnlyFunctions() {

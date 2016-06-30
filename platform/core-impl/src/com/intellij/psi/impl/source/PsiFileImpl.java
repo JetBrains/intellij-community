@@ -73,7 +73,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private boolean myInvalidated;
   private volatile boolean myAstLoaded;
   private volatile boolean myUseStrongRefs;
-  private AstPathPsiMap myRefToPsi = new AstPathPsiMap();
+  private AstPathPsiMap myRefToPsi;
   private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<FileElement>();
   protected final PsiManagerEx myManager;
   private volatile Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
@@ -87,6 +87,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFileImpl(@NotNull FileViewProvider provider ) {
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = provider;
+    myRefToPsi = new AstPathPsiMap(getProject());
   }
 
   public void setContentElementType(final IElementType contentElementType) {
@@ -482,7 +483,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     PsiFileImpl clone = BlockSupportImpl.getFileCopy(this, providerCopy);
     copyCopyableDataTo(clone);
 
-    clone.myRefToPsi = new AstPathPsiMap();
+    clone.myRefToPsi = new AstPathPsiMap(getProject());
     if (getTreeElement() != null) {
       // not set by provider in clone
       final FileElement treeClone = (FileElement)calcTreeElement().clone();
@@ -776,7 +777,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.myRefToPsi = new AstPathPsiMap();
+    clone.myRefToPsi = new AstPathPsiMap(getProject());
     clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;

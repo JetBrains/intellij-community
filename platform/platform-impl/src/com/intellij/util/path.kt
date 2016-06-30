@@ -59,7 +59,7 @@ fun Path.delete() {
   }
 }
 
-fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
+fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree (this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
     file.delete()
     return FileVisitResult.CONTINUE
