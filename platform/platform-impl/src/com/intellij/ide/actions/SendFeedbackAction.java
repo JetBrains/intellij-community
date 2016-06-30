@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,9 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
   private static String getDescription() {
     StringBuilder sb = new StringBuilder("\n\n");
+    sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
+    sb.append("JRE ");
     sb.append(javaVersion);
     String archDataModel = System.getProperty("sun.arch.data.model");
     if (archDataModel != null) {
@@ -64,7 +67,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     if (javaVendor != null) {
       sb.append(" ").append(javaVendor);
     }
-    sb.append(", ").append(System.getProperty("os.name"));
+    sb.append(", OS ").append(System.getProperty("os.name"));
     String osArch = System.getProperty("os.arch");
     if (osArch != null) {
       sb.append("(").append(osArch).append(")");
@@ -79,16 +82,15 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       }
     }
     if (!GraphicsEnvironment.isHeadless()) {
+      sb.append(", screens ");
       GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-      sb.append(" (");
       for (int i = 0; i < devices.length; i++) {
         if (i > 0) sb.append(", ");
         GraphicsDevice device = devices[i];
         Rectangle bounds = device.getDefaultConfiguration().getBounds();
         sb.append(bounds.width).append("x").append(bounds.height);
       }
-      if (UIUtil.isRetina()) sb.append(" R");
-      sb.append(")");
+      if (UIUtil.isRetina()) sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
     }
     return sb.toString();
   }
