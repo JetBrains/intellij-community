@@ -119,7 +119,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount() {
-    return isLeaf() ? 1 : super.getProblemCount();
+    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) ? 0 : 1 : super.getProblemCount();
   }
 
   @Override
