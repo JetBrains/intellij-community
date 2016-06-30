@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -259,7 +258,8 @@ class FindInProjectTask {
   @NotNull
   private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
-    final GlobalSearchScope globalCustomScope = customScope == null ? null : toGlobal(customScope);
+    final GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope,
+                                                                                                                       myProject);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
@@ -314,7 +314,7 @@ class FindInProjectTask {
     final EnumContentIterator iterator = new EnumContentIterator();
 
     if (customScope instanceof LocalSearchScope) {
-      for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
+      for (VirtualFile file : GlobalSearchScopeUtil.getLocalScopeFiles((LocalSearchScope)customScope)) {
         iterator.processFile(file);
       }
     }
@@ -367,37 +367,6 @@ class FindInProjectTask {
     return true;
   }
 
-  @NotNull
-  private GlobalSearchScope toGlobal(@NotNull final SearchScope scope) {
-    if (scope instanceof GlobalSearchScope) {
-      return (GlobalSearchScope)scope;
-    }
-    return ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        return GlobalSearchScope.filesScope(myProject, getLocalScopeFiles((LocalSearchScope)scope));
-      }
-    });
-  }
-
-  @NotNull
-  private static Set<VirtualFile> getLocalScopeFiles(@NotNull final LocalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
-      @Override
-      public Set<VirtualFile> compute() {
-        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
-        for (PsiElement element : scope.getScope()) {
-          PsiFile file = element.getContainingFile();
-          if (file != null) {
-            ContainerUtil.addIfNotNull(files, file.getVirtualFile());
-            ContainerUtil.addIfNotNull(files, file.getNavigationElement().getContainingFile().getVirtualFile());
-          }
-        }
-        return files;
-      }
-    });
-  }
-
   private boolean canRelyOnIndices() {
     if (DumbService.isDumb(myProject)) return false;
 
@@ -441,7 +410,8 @@ class FindInProjectTask {
       }
     }
 
-    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
+    final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(myProject, myFindModel),
+                                                                              myProject);
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();

@@ -28,7 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -40,9 +43,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -165,24 +170,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   @NotNull
-  private static GlobalSearchScope toGlobal(@NotNull final SearchScope scope, @NotNull Project project) {
-    // todo
-    //GlobalSearchScopeUtil.toGlobalSearchScope(project, scope);
-
-    if (scope instanceof GlobalSearchScope) {
-      return (GlobalSearchScope)scope;
-    }
-    Set<VirtualFile> files = Arrays.stream(((LocalSearchScope)scope).getScope()).map(PsiUtil::getVirtualFile).collect(Collectors.toSet());
-    return GlobalSearchScope.filesScope(project, files);
-  }
-
-  @NotNull
   private static PsiClass[] calculateDirectSubClasses(@NotNull Project project,
                                                       @NotNull PsiClass baseClass,
                                                       @NotNull String baseClassName,
                                                       @NotNull SearchScope useScope) {
     DumbService dumbService = DumbService.getInstance(project);
-    GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(() -> StubHierarchyInheritorSearcher.restrictScope(toGlobal(useScope, project)));
+    GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
+      () -> StubHierarchyInheritorSearcher.restrictScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
       dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
