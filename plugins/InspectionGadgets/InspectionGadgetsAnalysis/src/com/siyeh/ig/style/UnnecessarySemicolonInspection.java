@@ -114,6 +114,12 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
       super.visitImportList(list);
     }
 
+    @Override
+    public void visitModule(PsiJavaModule module) {
+      findTopLevelSemicolons(module);
+      super.visitModule(module);
+    }
+
     private void findTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {

@@ -16,11 +16,20 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspectionTest extends LightInspectionTestCase {
   public void testUnnecessarySemicolon() { doTest(); }
+  public void testModuleInfo() { doNamedTest("module-info"); }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
+  }
 
   @Nullable
   @Override
