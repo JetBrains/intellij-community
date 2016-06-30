@@ -181,7 +181,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
 
   /**
-   * @return process runner to be used to run process and fetch console
+   * @return process runner to be used to run process and fetch console.
+   * <strong>Always</strong> create new runner, to prevent stale artifacts on reruns.
    */
   @NotNull
   protected abstract T createProcessRunner() throws Exception;
