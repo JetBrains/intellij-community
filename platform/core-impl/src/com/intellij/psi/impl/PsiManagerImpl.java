@@ -56,7 +56,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean myTreeChangeEventIsFiring = false;
+  private boolean myTreeChangeEventIsFiring;
 
   private boolean myIsDisposed;
 
