@@ -24,8 +24,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -991,7 +989,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
       MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
-      addMethodConflicts(conflictDescriptions);
+      final PsiMethod prototype = addMethodConflicts(conflictDescriptions);
       Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(refUsages.get()));
       RenameUtil.removeConflictUsages(usagesSet);
       if (myChangeInfo.isVisibilityChanged()) {
@@ -1016,6 +1014,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             if (toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
+          }
+          else if (prototype != null && baseMethod == myChangeInfo.getMethod()) {
+            ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflictDescriptions);
           }
 
           checkContract(conflictDescriptions, method);
@@ -1075,15 +1076,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
 
-    private void addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+    private PsiMethod addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
       String newMethodName = myChangeInfo.getNewName();
       try {
-        PsiMethod prototype;
         final PsiMethod method = myChangeInfo.getMethod();
-        if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
+        if (!StdLanguages.JAVA.equals(method.getLanguage())) return null;
         PsiManager manager = method.getManager();
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
+        PsiMethod prototype;
         if (returnType != null) {
           prototype = factory.createMethod(newMethodName, returnType.getType(method, manager));
         }
@@ -1105,10 +1106,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
 
         ConflictsUtil.checkMethodConflicts(method.getContainingClass(), myChangeInfo.isGenerateDelegate() ? null : method, prototype, conflicts);
+        return prototype;
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+      return null;
     }
   }
 
