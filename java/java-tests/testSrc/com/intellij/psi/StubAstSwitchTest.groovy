@@ -116,11 +116,14 @@ class A {
     Object field = new B() {
       void foo(Object o) {
       }
+
+      class MyInner extends Inner {}
     };
 }
 
 class B {
   void foo(Object o) {}
+  static class Inner {}
 }
 """)
     assert !file.contentsLoaded
@@ -138,6 +141,8 @@ class B {
     assert !file.contentsLoaded
 
     assert bClass == override.containingClass.superClass
+    assert bClass.innerClasses[0] == override.containingClass.innerClasses[0].superClass
+    assert !file.contentsLoaded
   }
 
   public void "test AST can be gc-ed and recreated"() {
