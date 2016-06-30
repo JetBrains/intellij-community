@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -53,7 +54,7 @@ public class FileParser {
                         @NotNull final TokenSet importListStoppers,
                         @NotNull final AbstractBundle bundle,
                         @NotNull final String errorMessageKey) {
-    if ("module".equals(builder.getTokenText())) {
+    if (PsiKeyword.MODULE.equals(builder.getTokenText())) {
       ModuleParser.parseModule(builder);
       return;
     }

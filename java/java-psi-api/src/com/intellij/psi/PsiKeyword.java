@@ -75,6 +75,7 @@ public interface PsiKeyword extends PsiJavaToken {
   String FALSE = "false";
   String NULL = "null";
 
+  String MODULE = "module";
   String REQUIRES = "requires";
   String EXPORTS = "exports";
   String USES = "uses";
