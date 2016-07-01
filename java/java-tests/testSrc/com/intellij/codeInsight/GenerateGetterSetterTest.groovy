@@ -57,6 +57,7 @@ class Foo {
     myFixture.configureByText 'a.java', '''
 class Foo {
     boolean isStateForceMailField;
+    boolean isic;
 
     <caret>
 }
@@ -65,9 +66,14 @@ class Foo {
     myFixture.checkResult '''
 class Foo {
     boolean isStateForceMailField;
+    boolean isic;
 
     public boolean isStateForceMailField() {
         return isStateForceMailField;
+    }
+
+    public boolean isIsic() {
+        return isic;
     }
 }
 '''
