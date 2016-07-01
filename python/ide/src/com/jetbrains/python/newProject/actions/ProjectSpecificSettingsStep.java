@@ -181,7 +181,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
               return false;
             }
             if (!PyPackageUtil.hasManagement(packages)) {
-              warningList.add("Python packaging tools and " + warningList);
+              warningList.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
             }
           } else {
             warningList.add(frameworkName + " is not installed on the selected interpreter");
