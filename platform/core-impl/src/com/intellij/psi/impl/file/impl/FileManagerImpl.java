@@ -147,9 +147,14 @@ public class FileManagerImpl implements FileManager {
 
   public void forceReload(@NotNull VirtualFile vFile) {
     LanguageSubstitutors.cancelReparsing(vFile);
-    if (findCachedViewProvider(vFile) == null) {
+    FileViewProvider viewProvider = findCachedViewProvider(vFile);
+    if (viewProvider == null) {
       return;
     }
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    // since the document doesn't change we need to tell everybody something has changed
+    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+
     setViewProvider(vFile, null);
 
     VirtualFile dir = vFile.getParent();
@@ -178,13 +183,13 @@ public class FileManagerImpl implements FileManager {
     if (myInitialized) {
       myConnection.disconnect();
     }
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     clearViewProviders();
 
     myDisposed = true;
   }
 
   private void clearViewProviders() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     DebugUtil.startPsiModification("clearViewProviders");
     try {
       for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
@@ -200,7 +205,13 @@ public class FileManagerImpl implements FileManager {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    clearViewProviders();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        clearViewProviders();
+      }
+    });
+
     myVFileToPsiDirMap.clear();
     ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
   }
