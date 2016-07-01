@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +160,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
     else {
       // traverse subtree to select accepted children
-      return TreeTraversal.GUIDED_TRAVERSAL.traversal(node, tree).intercept(meta.createChildrenGuide(node));
+      return TreeTraversal.GUIDED_TRAVERSAL(meta.createChildrenGuide(node)).traversal(node, tree);
     }
   }
 
@@ -246,21 +245,14 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard.append(c));
     }
 
-    Function.Mono<TreeTraversal.GuidedIt<T>> createChildrenGuide(final T parent) {
-      final Condition<? super T> expand = buildExpandConditionForChildren(parent);
-      class G implements Consumer<TreeTraversal.GuidedIt<T>>, Function.Mono<TreeTraversal.GuidedIt<T>> {
-
+    TreeTraversal.GuidedIt.Guide<T> createChildrenGuide(final T parent) {
+      return new TreeTraversal.GuidedIt.Guide<T>() {
+        final Condition<? super T> expand = buildExpandConditionForChildren(parent);
         @Override
-        public TreeTraversal.GuidedIt<T> fun(TreeTraversal.GuidedIt<T> it) {
-          return it.setGuide(this);
+        public void guide(TreeTraversal.GuidedIt<T> guidedIt) {
+          doPerformChildrenGuidance(guidedIt, expand);
         }
-
-        @Override
-        public void consume(TreeTraversal.GuidedIt<T> it) {
-          doPerformChildrenGuidance(it, expand);
-        }
-      }
-      return new G();
+      };
     }
 
     private void doPerformChildrenGuidance(TreeTraversal.GuidedIt<T> it, Condition<? super T> expand) {
