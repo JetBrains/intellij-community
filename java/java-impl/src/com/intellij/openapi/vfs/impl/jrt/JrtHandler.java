@@ -60,7 +60,9 @@ class JrtHandler extends ArchiveHandler {
         fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", getFile().getPath()));
       }
       else {
-        URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
+        File file = new File(getFile(), "jrt-fs.jar");
+        if (!file.exists()) throw new IOException("Missing provider: " + file);
+        URL url = file.toURI().toURL();
         ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
         fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
       }
