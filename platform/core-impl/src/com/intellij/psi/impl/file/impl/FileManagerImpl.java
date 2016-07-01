@@ -152,8 +152,6 @@ public class FileManagerImpl implements FileManager {
       return;
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    // since the document doesn't change we need to tell everybody something has changed
-    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
 
     setViewProvider(vFile, null);
 
