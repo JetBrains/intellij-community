@@ -205,7 +205,6 @@ public class QuickDocOnMouseOverManager {
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile instanceof PsiCompiledFile) psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
     if (psiFile == null) {
       closeQuickDocIfPossible();
       return;

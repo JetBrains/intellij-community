@@ -130,17 +130,12 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (project == null) return null;
 
     Document document = editor.getDocument();
-    PsiFile file = getFile(project, document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
     offset = adjustOffset(file, document, offset);
 
     return file.findReferenceAt(offset);
-  }
-
-  private static PsiFile getFile(Project project, Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    return file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file;
   }
 
   /**
@@ -233,7 +228,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
 
     Document document = editor.getDocument();
-    PsiFile file = getFile(project, document);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
     offset = adjustOffset(file, document, offset);
