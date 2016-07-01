@@ -81,25 +81,27 @@ abstract class ComponentStoreImpl : IComponentStore {
       settingsSavingComponents.add(component)
     }
 
-    @Suppress("DEPRECATION")
-    if (!(component is JDOMExternalizable || component is PersistentStateComponent<*>)) {
-      return
-    }
-
-    val componentNameIfStateExists: String?
     var componentName = ""
     try {
-      componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
+      @Suppress("DEPRECATION")
+      if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
         componentName = stateSpec.name
         doAddComponent(componentName, component)
-        @Suppress("UNCHECKED_CAST")
-        initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
+        if (initPersistentComponent(stateSpec, component, null, false) && service) {
+          // if not service, so, component manager will check it later for all components
+          project?.let {
+            val app = ApplicationManager.getApplication()
+            if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
+              notifyUnknownMacros(this, it, componentName)
+            }
+          }
+        }
       }
-      else {
+      else if (component is JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
         @Suppress("DEPRECATION")
-        initJdomExternalizable(component as JDOMExternalizable, componentName)
+        initJdomExternalizable(component, componentName)
       }
     }
     catch (e: ProcessCanceledException) {
@@ -108,15 +110,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     catch (e: Exception) {
       LOG.error("Cannot init ${componentName} component state", e)
       return
-    }
-
-    // if not service, so, component manager will check it later for all components
-    if (componentNameIfStateExists != null && service) {
-      val project = this.project
-      val app = ApplicationManager.getApplication()
-      if (project != null && !app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-        notifyUnknownMacros(this, project, componentNameIfStateExists)
-      }
     }
   }
 
@@ -249,9 +242,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun <T: Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
+  private fun <T: Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
     if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
-      return null
+      return false
     }
 
     val name = stateSpec.name
@@ -299,7 +292,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         finally {
           stateGetter?.close()
         }
-        return name
+        return true
       }
     }
 
@@ -307,7 +300,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (defaultState != null) {
       component.loadState(defaultState)
     }
-    return name
+    return true
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
