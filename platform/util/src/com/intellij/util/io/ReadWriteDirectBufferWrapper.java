@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -94,14 +95,12 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     try {
       if (fileContext == null) fileContext = new FileContext(myFile);
 
-      if (fileContext.myFile != null) {
-        final FileChannel channel = fileContext.myFile.getChannel();
+      final FileChannel channel = fileContext.myFile.getChannel();
 
-        channel.position(myPosition);
-        buffer.rewind();
-        channel.write(buffer);
-        myDirty = false;
-      }
+      channel.position(myPosition);
+      buffer.rewind();
+      channel.write(buffer);
+      myDirty = false;
     }
     catch (IOException e) {
       LOG.error(e);
@@ -116,8 +115,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
     Disposable disposable = doFlush(null, buffer);
     if (disposable != null) {
-      //noinspection SSBasedInspection
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
   }
 }
