@@ -21,7 +21,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
@@ -225,7 +224,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
     rootPanel.add(pane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(rootPanel, new TypeSafeDataProviderAdapter(myTree));
+    DataManager.registerDataProvider(rootPanel, myTree);
 
     return rootPanel;
   }
@@ -306,36 +305,37 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  private class ShelfTree extends Tree implements TypeSafeDataProvider {
-    public void calcData(DataKey key, DataSink sink) {
-      if (key == SHELVED_CHANGELIST_KEY) {
+  private class ShelfTree extends Tree implements DataProvider {
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (SHELVED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 
         if (changeLists.size() > 0) {
-          sink.put(SHELVED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
+          return changeLists.toArray(new ShelvedChangeList[changeLists.size()]);
         }
       }
-      else if (key == SHELVED_RECYCLED_CHANGELIST_KEY) {
+      else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(true);
 
         if (changeLists.size() > 0) {
-          sink.put(SHELVED_RECYCLED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
+          return changeLists.toArray(new ShelvedChangeList[changeLists.size()]);
         }
       }
-      else if (key == SHELVED_CHANGE_KEY) {
-        sink.put(SHELVED_CHANGE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
+      else if (SHELVED_CHANGE_KEY.is(dataId)) {
+        return TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
       }
-      else if (key == SHELVED_BINARY_FILE_KEY) {
-        sink.put(SHELVED_BINARY_FILE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class));
+      else if (SHELVED_BINARY_FILE_KEY.is(dataId)) {
+        return TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class);
       }
-      else if (key == VcsDataKeys.HAVE_SELECTED_CHANGES) {
-        sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, getSelectionCount() > 0);
-        /*List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
-        final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);*/
-      } else if (key == VcsDataKeys.CHANGES) {
+      else if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
+        return getSelectionCount() > 0;
+      }
+      else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         final List<ShelvedBinaryFile> shelvedBinaryFiles = TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class);
-        if (! shelvedChanges.isEmpty() || ! shelvedBinaryFiles.isEmpty()) {
+        if (!shelvedChanges.isEmpty() || !shelvedBinaryFiles.isEmpty()) {
           final List<Change> changes = new ArrayList<Change>(shelvedChanges.size() + shelvedBinaryFiles.size());
           for (ShelvedChange shelvedChange : shelvedChanges) {
             changes.add(shelvedChange.getChange(myProject));
@@ -343,14 +343,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           for (ShelvedBinaryFile binaryFile : shelvedBinaryFiles) {
             changes.add(binaryFile.createChange(myProject));
           }
-          sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+          return changes.toArray(new Change[changes.size()]);
         }
         else {
           final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
           final List<Change> changes = new ArrayList<Change>();
-          for(ShelvedChangeList changeList: changeLists) {
+          for (ShelvedChangeList changeList : changeLists) {
             shelvedChanges = changeList.getChanges(myProject);
-            for(ShelvedChange shelvedChange: shelvedChanges) {
+            for (ShelvedChange shelvedChange : shelvedChanges) {
               changes.add(shelvedChange.getChange(myProject));
             }
             final List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
@@ -358,12 +358,13 @@ public class ShelvedChangesViewManager implements ProjectComponent {
               changes.add(file.createChange(myProject));
             }
           }
-          sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+          return changes.toArray(new Change[changes.size()]);
         }
       }
-      else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
-        sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
-      } else if (CommonDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
+      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return myDeleteProvider;
+      }
+      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         List<ShelvedChange> shelvedChanges = new ArrayList<ShelvedChange>(TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
         final ArrayDeque<Navigatable> navigatables = new ArrayDeque<Navigatable>();
         final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
@@ -371,7 +372,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           shelvedChanges.addAll(changeList.getChanges(myProject));
         }
         for (final ShelvedChange shelvedChange : shelvedChanges) {
-          if (shelvedChange.getBeforePath() != null && ! FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
+          if (shelvedChange.getBeforePath() != null && !FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
             final NavigatableAdapter navigatable = new NavigatableAdapter() {
               @Override
               public void navigate(boolean requestFocus) {
@@ -384,9 +385,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
             navigatables.add(navigatable);
           }
         }
-
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
+        return navigatables.toArray(new Navigatable[navigatables.size()]);
       }
+      return null;
     }
 
     private Set<ShelvedChangeList> getSelectedLists(final boolean recycled) {
