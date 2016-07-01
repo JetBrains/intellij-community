@@ -708,12 +708,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  protected boolean isRunInEdt() {
-    return true;
-  }
-
   protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
-    if (isRunInEdt()) {
+    if (runInDispatchThread()) {
       EdtTestUtil.runInEdtAndWait(runnable);
     }
     else {
