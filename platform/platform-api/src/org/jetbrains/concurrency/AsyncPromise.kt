@@ -24,7 +24,7 @@ import java.util.*
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-val OBSOLETE_ERROR = Promise.createError("Obsolete")
+private val OBSOLETE_ERROR = Promise.createError("Obsolete")
 
 open class AsyncPromise<T> : Promise<T>(), Getter<T> {
   @Volatile private var done: Consumer<in T>? = null
@@ -92,7 +92,7 @@ open class AsyncPromise<T> : Promise<T>(), Getter<T> {
     addHandlers(Consumer({ result ->
                            promise.catchError {
                              if (fulfilled is Obsolescent && fulfilled.isObsolete) {
-                               promise.setError(OBSOLETE_ERROR)
+                               promise.cancel()
                              }
                              else {
                                promise.setResult(fulfilled.`fun`(result))
@@ -186,6 +186,10 @@ open class AsyncPromise<T> : Promise<T>(), Getter<T> {
     return setError(Promise.createError(error))
   }
 
+  fun cancel() {
+    setError(OBSOLETE_ERROR)
+  }
+
   open fun setError(error: Throwable): Boolean {
     if (state != Promise.State.PENDING) {
       return false
@@ -271,5 +275,10 @@ inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
     return null
   }
 }
+
+private val cancelledPromise = RejectedPromise<Any?>(OBSOLETE_ERROR)
+
+@Suppress("CAST_NEVER_SUCCEEDS")
+fun <T> cancelledPromise(): Promise<T> = cancelledPromise as Promise<T>
 
 fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)

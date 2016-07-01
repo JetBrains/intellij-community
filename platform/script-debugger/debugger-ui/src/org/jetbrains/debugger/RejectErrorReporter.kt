@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,13 @@ package org.jetbrains.debugger
 
 import com.intellij.util.Consumer
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.concurrency.OBSOLETE_ERROR
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.rpc.LOG
 
 class RejectErrorReporter @JvmOverloads constructor(private val session: XDebugSession, private val description: String? = null) : Consumer<Throwable> {
   override fun consume(error: Throwable) {
-    Promise.logError(LOG, error)
-    if (error !== OBSOLETE_ERROR) {
-      session.reportError((if (description == null) "" else "$description: ") + error.message)
+    if (Promise.logError(LOG, error)) {
+      session.reportError("${if (description == null) "" else "$description: "}${error.message}")
     }
   }
 }

@@ -69,17 +69,8 @@ public abstract class Promise<T> {
   @NotNull
   public static Promise<Void> wrapAsVoid(@NotNull ActionCallback asyncResult) {
     final AsyncPromise<Void> promise = new AsyncPromise<Void>();
-    asyncResult.doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        promise.setResult(null);
-      }
-    }).doWhenRejected(new Consumer<String>() {
-      @Override
-      public void consume(String error) {
-        promise.setError(createError(error == null ? "Internal error" : error));
-      }
-    });
+    asyncResult.doWhenDone(() -> promise.setResult(null)).doWhenRejected(
+      error -> promise.setError(createError(error == null ? "Internal error" : error)));
     return promise;
   }
 
@@ -91,12 +82,7 @@ public abstract class Promise<T> {
       public void consume(T result) {
         promise.setResult(result);
       }
-    }).doWhenRejected(new Consumer<String>() {
-      @Override
-      public void consume(String error) {
-        promise.setError(error);
-      }
-    });
+    }).doWhenRejected(promise::setError);
     return promise;
   }
 
@@ -146,16 +132,20 @@ public abstract class Promise<T> {
   /**
    * Log error if not message error
    */
-  public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
+  public static boolean logError(@NotNull Logger logger, @NotNull Throwable e) {
     if (e instanceof MessageError) {
       ThreeState log = ((MessageError)e).log;
       if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication().isUnitTestMode())) {
         logger.error(e);
+        return true;
       }
     }
     else if (!(e instanceof ProcessCanceledException)) {
       logger.error(e);
+      return true;
     }
+
+    return false;
   }
 
   public abstract void notify(@NotNull AsyncPromise<? super T> child);
