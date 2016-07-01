@@ -87,23 +87,26 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val componentNameIfStateExists: String?
+    var componentName = ""
     try {
       componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
-        doAddComponent(stateSpec.name, component)
+        componentName = stateSpec.name
+        doAddComponent(componentName, component)
         @Suppress("UNCHECKED_CAST")
         initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
       }
       else {
+        componentName = ComponentManagerImpl.getComponentName(component)
         @Suppress("DEPRECATION")
-        initJdomExternalizable(component as JDOMExternalizable)
+        initJdomExternalizable(component as JDOMExternalizable, componentName)
       }
     }
     catch (e: ProcessCanceledException) {
       throw e
     }
     catch (e: Exception) {
-      LOG.error(e)
+      LOG.error("Cannot init ${componentName} component state", e)
       return
     }
 
@@ -213,8 +216,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable): String? {
-    val componentName = ComponentManagerImpl.getComponentName(component)
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
     doAddComponent(componentName, component)
 
     if (loadPolicy != StateLoadPolicy.LOAD) {
