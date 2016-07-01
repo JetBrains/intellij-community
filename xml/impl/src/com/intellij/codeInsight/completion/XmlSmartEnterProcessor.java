@@ -121,10 +121,10 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         }
         else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
           final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
+          final String text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
 
           doc.insertString(insertionOffset, text2insert);
-          caretTo = insertionOffset + (text2insert.length() > 2 ? 1 : text2insert.length());
+          caretTo = insertionOffset + text2insert.indexOf('>') + 1;
         }
 
         commitChanges(project, editor, psiFile, caretTo, null);
