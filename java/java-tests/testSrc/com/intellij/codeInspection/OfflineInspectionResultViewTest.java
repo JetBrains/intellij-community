@@ -152,7 +152,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "    -<default>\n" +
                                            "     -Test\n" +
                                            "      -m()\n" +
-                                           "       Identical qualifier and argument to 'equals()' call\n" +
+                                           "       'equals()' called on itself\n" +
                                            "     -null\n" +
                                            "      Identical qualifier and argument to <code>equals()</code> call\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
@@ -190,10 +190,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "    -<default>\n" +
                                            "     -Test\n" +
                                            "      -m()\n" +
-                                           "       Identical qualifier and argument to 'equals()' call\n" +
+                                           "       'equals()' called on itself\n" +
                                            "     -Test2\n" +
                                            "      -m123()\n" +
-                                           "       Identical qualifier and argument to 'equals()' call\n"
+                                           "       'equals()' called on itself\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
                                            + "   -" + getModule().toString() + "\n"
                                            + "    -<default>\n"
@@ -218,9 +218,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + " -Probable bugs\n"
                                            + "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
-                                           "    Identical qualifier and argument to 'equals()' call\n" +
+                                           "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
-                                           "    Identical qualifier and argument to 'equals()' call\n"
+                                           "    'equals()' called on itself\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
                                            + "   -Test\n"
                                            + "    " + varMessage("j") + "\n"
@@ -248,9 +248,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            + " -Probable bugs\n"
                                            + "  -" + myDataFlowToolWrapper + "\n" +
                                            "   -Test\n" +
-                                           "    Identical qualifier and argument to 'equals()' call\n" +
+                                           "    'equals()' called on itself\n" +
                                            "   -Test2\n" +
-                                           "    Identical qualifier and argument to 'equals()' call\n"
+                                           "    'equals()' called on itself\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
                                            + "   -Test\n"
                                            + "    " + varMessage("j") + "\n"
