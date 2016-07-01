@@ -26,6 +26,8 @@ import javax.swing.tree.MutableTreeNode;
 public interface ExclusionHandler<T extends MutableTreeNode> {
   DataKey<ExclusionHandler> EXCLUSION_HANDLER = DataKey.create("tree.exclusion.handler");
 
+  boolean isNodeExclusionAvailable(@NotNull T node);
+
   boolean isNodeExcluded(@NotNull T node);
 
   void excludeNode(@NotNull T node);
