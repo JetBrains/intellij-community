@@ -26,7 +26,7 @@ import com.sun.jna.platform.win32.WinNT;
 /**
  * @author Alexey.Ushakov
  */
-public class WinProcessManager {
+class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() {}
@@ -81,7 +81,7 @@ public class WinProcessManager {
       String output = FileUtil.loadTextAndClose(p.getInputStream());
       int res = p.waitFor();
 
-      if (res != 0 && (process == null || isAlive(process))) {
+      if (res != 0 && (process == null || process.isAlive())) {
         LOG.warn(StringUtil.join(cmdArray, " ") + " failed: " + output);
         return false;
       }
@@ -95,15 +95,5 @@ public class WinProcessManager {
       LOG.warn(e);
     }
     return false;
-  }
-
-  // todo replace with Process.isAlive when available (in 1.8)
-  private static boolean isAlive(Process process) {
-    try {
-      process.exitValue();
-      return false;
-    } catch(IllegalThreadStateException e) {
-      return true;
-    }
   }
 }
