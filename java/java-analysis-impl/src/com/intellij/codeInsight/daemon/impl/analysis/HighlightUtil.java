@@ -1521,6 +1521,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     else {
       aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, false)) {
+        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+      }
     }
     if (aClass == null) return null;
 
