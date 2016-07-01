@@ -572,10 +572,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (size == 0) return "";
       String message;
       if (size == 1 && first != null) {
-        message = "one shelved changelist named [" + first.DESCRIPTION + "]";
+        message = "<b> one shelved changelist</b> named [<b>" + first.DESCRIPTION + "</b>]";
       }
       else {
-        message = size + " shelved " + StringUtil.pluralize("changelist", size);
+        message = "<b>" + size + " shelved " + StringUtil.pluralize("changelist", size) + "</b>";
       }
       return message + " with all changes inside";
     }
@@ -583,7 +583,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     @NotNull
     private String constructDeleteFilesInfoMessage(int size) {
       if (size == 0) return "";
-      return (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size);
+      return "<b>" + (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size) + "</b>";
     }
 
     private void removeChangesFromChangeList(@NotNull Project project,
