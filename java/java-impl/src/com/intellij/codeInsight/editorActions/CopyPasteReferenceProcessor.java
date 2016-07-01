@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,6 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
       return Collections.emptyList();
     }
 
-    if (file instanceof PsiCompiledFile) {
-      file = ((PsiCompiledFile) file).getDecompiledPsiFile();
-    }
     if (!(file instanceof PsiClassOwner)) {
       return Collections.emptyList();
     }
@@ -183,14 +180,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     if (array.isEmpty()) return;
 
     Object[] selectedObjects = ArrayUtil.toObjectArray(array);
-    Arrays.sort(
-      selectedObjects,
-      (o1, o2) -> {
-        String fqName1 = getFQName(o1);
-        String fqName2 = getFQName(o2);
-        return fqName1.compareToIgnoreCase(fqName2);
-      }
-    );
+    Arrays.sort(selectedObjects, (o1, o2) -> getFQName(o1).compareToIgnoreCase(getFQName(o2)));
 
     RestoreReferencesDialog dialog = new RestoreReferencesDialog(project, selectedObjects);
     dialog.show();
