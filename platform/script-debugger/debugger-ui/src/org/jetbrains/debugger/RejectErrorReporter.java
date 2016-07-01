@@ -13,34 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.Consumer;
-import com.intellij.xdebugger.XDebugSession;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.rpc.CommandProcessorKt;
+import com.intellij.util.Consumer
+import com.intellij.xdebugger.XDebugSession
+import org.jetbrains.concurrency.OBSOLETE_ERROR
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.rpc.LOG
 
-public final class RejectErrorReporter implements Consumer<Throwable> {
-  private final XDebugSession session;
-  private final String description;
-
-  public RejectErrorReporter(@NotNull XDebugSession session) {
-    this(session, null);
-  }
-
-  public RejectErrorReporter(@NotNull XDebugSession session, @Nullable String description) {
-    this.session = session;
-    this.description = description;
-  }
-
-  @Override
-  public void consume(Throwable error) {
-    Promise.logError(CommandProcessorKt.getLOG(), error);
-    if (error != AsyncPromise.OBSOLETE_ERROR) {
-      session.reportError((description == null ? "" : description + ": ") + error.getMessage());
+class RejectErrorReporter @JvmOverloads constructor(private val session: XDebugSession, private val description: String? = null) : Consumer<Throwable> {
+  override fun consume(error: Throwable) {
+    Promise.logError(LOG, error)
+    if (error !== OBSOLETE_ERROR) {
+      session.reportError((if (description == null) "" else "$description: ") + error.message)
     }
   }
 }
