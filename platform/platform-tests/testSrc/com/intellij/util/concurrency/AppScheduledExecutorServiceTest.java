@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
   private static class LogInfo {
@@ -223,7 +224,11 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     while (!service.delayQueue.isEmpty() && System.currentTimeMillis() < start + 20000) {
       // wait till all tasks transferred to backend
     }
-    assertTrue(service.delayQueue.toString(), service.delayQueue.isEmpty());
+    List<SchedulingWrapper.MyScheduledFutureTask> queuedTasks = new ArrayList<>(service.delayQueue);
+    if (!queuedTasks.isEmpty()) {
+      String s = queuedTasks.stream().map(BoundedTaskExecutor::info).collect(Collectors.toList()).toString();
+      fail("Queued tasks left: "+s + ";\n"+queuedTasks);
+    }
     service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(20, TimeUnit.SECONDS));
 
