@@ -114,6 +114,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
+    var errors: MutableList<Throwable>? = null
+
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(components.keys)
@@ -122,7 +124,17 @@ abstract class ComponentStoreImpl : IComponentStore {
       val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components.get(name)!!, name)
+
+        try {
+          commitComponent(externalizationSession, components.get(name)!!, name)
+        }
+        catch (e: Throwable) {
+          if (errors == null) {
+            errors = SmartList<Throwable>()
+          }
+          errors.add(Exception("Cannot get ${name} component state", e))
+        }
+
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -136,7 +148,6 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    var errors: MutableList<Throwable>? = null
     for (settingsSavingComponent in settingsSavingComponents) {
       try {
         settingsSavingComponent.save()
@@ -190,10 +201,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
     @Suppress("DEPRECATION")
     if (component is PersistentStateComponent<*>) {
-      val state = component.state
-      if (state != null) {
+      component.state?.let {
         val stateSpec = StoreUtil.getStateSpec(component)
-        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, state)
+        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, it)
       }
     }
     else if (component is JDOMExternalizable) {

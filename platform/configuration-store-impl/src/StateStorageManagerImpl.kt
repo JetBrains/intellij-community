@@ -149,11 +149,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
                          @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
-    if (normalizedCollapsedPath.isEmpty()) {
-      throw Exception("Normalized path is empty, raw path '$collapsedPath'")
+    val key: String
+    if (storageClass == StateStorage::class.java) {
+      if (normalizedCollapsedPath.isEmpty()) {
+        throw Exception("Normalized path is empty, raw path '$collapsedPath'")
+      }
+      key = normalizedCollapsedPath
     }
-
-    val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
+    else {
+      key = storageClass.name!!
+    }
     storageLock.withLock {
       var storage = storages[key]
       if (storage == null) {
