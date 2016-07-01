@@ -18,9 +18,11 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -101,7 +103,7 @@ public class TestDiscoverySearchHelper {
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-    return new HashSet<>(ContainerUtil.filter(patterns, fqn -> psiFacade.findClass(fqn, searchScope) != null));
+    return new HashSet<>(ContainerUtil.filter(patterns, fqn -> ReadAction.compute(() -> psiFacade.findClass(StringUtil.getPackageName(fqn, ','), searchScope) != null)));
   }
 
   private static void collectPatterns(final Project project,
