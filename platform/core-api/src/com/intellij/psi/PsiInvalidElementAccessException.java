@@ -83,10 +83,14 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     }
   }
 
-  public PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
+  private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
     myElementReference = new SoftReference<PsiElement>(null);
     myMessage = "Element " + node.getClass() + " of type " + node.getElementType() + (message == null ? "" : "; " + message);
     myDiagnostic = createAttachments(findInvalidationTrace(node));
+  }
+
+  public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable String message) {
+    return new PsiInvalidElementAccessException(node, message);
   }
 
   @NotNull
