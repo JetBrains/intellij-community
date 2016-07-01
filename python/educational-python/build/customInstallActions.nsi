@@ -1,7 +1,7 @@
 !include "TextFunc.nsh"
 !include x64.nsh
 
-!define INSTALL_OPTION_ELEMENTS 9
+!define INSTALL_OPTION_ELEMENTS 8
 !define PYTHON_VERSIONS 4
 
 ${StrTok}
