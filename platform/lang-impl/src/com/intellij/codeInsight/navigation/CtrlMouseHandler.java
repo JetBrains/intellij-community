@@ -571,6 +571,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           return PsiUtilCore.toPsiElementArray(found);
         }
       }.searchImplementations(editor, element, offset);
+      if (targetElements == null) {
+        return null;
+      }
       if (targetElements.length > 1) {
         PsiElement elementAtPointer = file.findElementAt(offset);
         if (elementAtPointer != null) {
