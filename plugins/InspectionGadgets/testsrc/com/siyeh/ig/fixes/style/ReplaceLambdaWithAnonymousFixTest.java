@@ -87,6 +87,10 @@ public class ReplaceLambdaWithAnonymousFixTest extends IGQuickFixesTestCase {
     doTest();
   }
 
+  public void testQualifyThisAndSuperInside() throws Exception {
+    doTest();
+  }
+
   public void testStaticCalls() {
     doTest();
   }

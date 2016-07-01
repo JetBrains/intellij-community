@@ -1521,6 +1521,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     else {
       aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, false)) {
+        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+      }
     }
     if (aClass == null) return null;
 
@@ -2981,7 +2984,8 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
     RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
-    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs");
+    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
+    MODULES(LanguageLevel.JDK_1_9, "feature.modules");
 
     private final LanguageLevel level;
     private final String key;

@@ -73,9 +73,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
       try {
-        Object trace = recursiveInvocation ? null :
-                       element instanceof PsiFile ? getInvalidationTrace(element) :
-                       findInvalidationTrace(element.getNode());
+        Object trace = recursiveInvocation ? null : getPsiInvalidationTrace(element);
         myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
         if (trace == null) {
           myDiagnostic = Attachment.EMPTY_ARRAY;
@@ -89,6 +87,12 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
         element.putUserData(REPORTING_EXCEPTION, null);
       }
     }
+  }
+
+  @Nullable
+  private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
+    Object trace = getInvalidationTrace(element);
+    return trace != null || element instanceof PsiFile ? trace : findInvalidationTrace(element.getNode());
   }
 
   private static String getMessageWithReason(@NotNull PsiElement element,

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -99,7 +99,9 @@ public class TestDiscoverySearchHelper {
       });
     }
 
-    return patterns;
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    return new HashSet<>(ContainerUtil.filter(patterns, fqn -> psiFacade.findClass(fqn, searchScope) != null));
   }
 
   private static void collectPatterns(final Project project,

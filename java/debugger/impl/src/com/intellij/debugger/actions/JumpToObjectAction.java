@@ -21,6 +21,8 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -32,6 +34,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
@@ -96,7 +103,35 @@ public class JumpToObjectAction extends DebuggerAction{
       }
       if(type instanceof ClassType) {
         final ClassType clsType = (ClassType)type;
-        final Location location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+        Location lambdaLocation = null;
+        if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
+          List<Method> notConstructorMethods = ContainerUtil.filter(clsType.methods(), m -> !m.isConstructor());
+          if (notConstructorMethods.size() == 1) {
+            AtomicReference<Location> locationRef = new AtomicReference<>();
+            MethodBytecodeUtil.visit(clsType, notConstructorMethods.get(0), new MethodVisitor(Opcodes.ASM5) {
+              @Override
+              public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                ReferenceType cls = ContainerUtil.getFirstItem(clsType.virtualMachine().classesByName(owner));
+                if (cls != null) {
+                  Method method = ContainerUtil.getFirstItem(cls.methodsByName(name));
+                  if (method != null) {
+                    try {
+                      Location loc = ContainerUtil.getFirstItem(method.allLineLocations());
+                      if (loc != null) {
+                        locationRef.set(loc);
+                      }
+                    }
+                    catch (AbsentInformationException e) {
+                      LOG.debug(e);
+                    }
+                  }
+                }
+              }
+            });
+            lambdaLocation = locationRef.get();
+          }
+        }
+        final Location location = lambdaLocation != null ? lambdaLocation : ContainerUtil.getFirstItem(clsType.allLineLocations());
         if (location != null) {
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
             @Override
@@ -118,10 +153,7 @@ public class JumpToObjectAction extends DebuggerAction{
         }
       }
     }
-    catch (ClassNotPreparedException e) {
-      LOG.debug(e);
-    }
-    catch (AbsentInformationException e) {
+    catch (ClassNotPreparedException | AbsentInformationException e) {
       LOG.debug(e);
     }
     return null;

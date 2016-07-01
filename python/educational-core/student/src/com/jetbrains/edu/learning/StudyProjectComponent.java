@@ -35,6 +35,7 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
@@ -82,6 +83,7 @@ public class StudyProjectComponent implements ProjectComponent {
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
               registerShortcuts();
+              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
             }
           }
         });

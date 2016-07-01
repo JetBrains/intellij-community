@@ -150,13 +150,12 @@ public class LocalVariablesUtil {
 
     com.sun.jdi.Method method = frameProxy.location().method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
-    final int firstArgsSlot = getFirstArgsSlot(method);
 
     // gather code variables names
-    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot, firstArgsSlot);
+    MultiMap<Integer, String> namesMap = calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot);
 
     // first add arguments
-    int slot = firstArgsSlot;
+    int slot = getFirstArgsSlot(method);
     List<String> typeNames = method.argumentTypeNames();
     List<Value> argValues = frameProxy.getArgumentValues();
     for (int i = 0; i < argValues.size(); i++) {
@@ -317,9 +316,7 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context,
-                                                     final int firstLocalsSlot,
-                                                     final int firstArgsSlot) {
+  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
     return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
       @Override
       public MultiMap<Integer, String> compute() {
@@ -329,7 +326,7 @@ public class LocalVariablesUtil {
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
             MultiMap<Integer, String> res = new MultiMap<>();
-            int slot = Math.max(0, firstArgsSlot + firstLocalsSlot - getFirstLocalsSlot(method));
+            int slot = Math.max(0, firstLocalsSlot - getParametersStackSize(method));
             for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
               res.putValue(slot, parameter.getName());
               slot += getTypeSlotSize(parameter.getType());
@@ -481,11 +478,8 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiElement method) {
+  private static int getParametersStackSize(PsiElement method) {
     int startSlot = 0;
-    if (method instanceof PsiModifierListOwner) {
-      startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
-    }
     for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
       startSlot += getTypeSlotSize(parameter.getType());
     }

@@ -156,7 +156,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = () -> {
-          root.flush();
           deleteTempFiles();
           clear();
         };

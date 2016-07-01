@@ -81,7 +81,7 @@ public abstract class ProgressStripeIcon implements Icon {
 
   private static class StripeIcon extends ProgressStripeIcon {
     private static final double ALPHA = 0.8;
-    private static final JBColor BG_COLOR = new JBColor(ColorUtil.withAlpha(Gray._165, ALPHA), ColorUtil.withAlpha(Gray._88, ALPHA));
+    private static final JBColor BG_COLOR = new JBColor(ColorUtil.withAlpha(Gray._165, ALPHA), ColorUtil.withAlpha(Gray._110, ALPHA));
     private static final int WIDTH = 16;
 
     private StripeIcon(@NotNull JComponent component, int shift) {
@@ -119,8 +119,8 @@ public abstract class ProgressStripeIcon implements Icon {
     private static final double ALPHA = 0.5;
     private static final Color DARK_BLUE = new Color(0x4d9ff8);
     private static final Color DARK_GRAY = Gray._165;
-    private static final Color LIGHT_BLUE = ColorUtil.withAlpha(DARK_BLUE, ALPHA);
-    private static final Color LIGHT_GRAY = ColorUtil.withAlpha(DARK_GRAY, ALPHA);
+    private static final Color LIGHT_BLUE = ColorUtil.withAlpha(new Color(0x90c2f8), ALPHA);
+    private static final Color LIGHT_GRAY = ColorUtil.withAlpha(new Color(0xdbdbdb), ALPHA);
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 2;
 

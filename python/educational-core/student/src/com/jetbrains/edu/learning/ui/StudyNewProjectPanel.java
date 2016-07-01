@@ -105,6 +105,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myDescriptionPane.setEnabled(true);
     myAuthorLabel.setEnabled(true);
     myDescriptionPane.setPreferredSize(new Dimension(150, 100));
+    myDescriptionPane.setFont(coursesCombo.getFont());
     myInfoPanel.add(myAuthorLabel);
     myInfoPanel.add(myDescriptionPane);
     myInfoPanel.setBorder(BorderFactory.createLineBorder(new JBColor(10067616, 10067616)));

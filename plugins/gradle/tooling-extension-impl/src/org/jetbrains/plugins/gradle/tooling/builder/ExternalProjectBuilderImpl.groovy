@@ -463,23 +463,26 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
         if(copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            if (action.hasProperty('val$filterType') && action.hasProperty('val$properties')) {
+            if (action.hasProperty('val$filterType')) {
               //noinspection GrUnresolvedAccess
               def filterType = (action?.val$filterType as Class).name
               def filter = [filterType: filterType] as DefaultExternalFilter
-              //noinspection GrUnresolvedAccess
-              def props = action?.val$properties
-              if (props) {
-                if ('org.apache.tools.ant.filters.ExpandProperties'.equals(filterType) && props['project']) {
-                  if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
-                }
-                else {
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+
+              if(action.hasProperty('val$properties')) {
+                //noinspection GrUnresolvedAccess
+                def props = action?.val$properties
+                if (props) {
+                  if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
+                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
+                  }
+                  else {
+                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+                  }
                 }
               }
               filterReaders << filter
             }
-            else if (action.class.simpleName.equals('RenamingCopyAction') && action.hasProperty('transformer')) {
+            else if (action.class.simpleName == 'RenamingCopyAction' && action.hasProperty('transformer')) {
               //noinspection GrUnresolvedAccess
               if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
                 //noinspection GrUnresolvedAccess

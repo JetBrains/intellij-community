@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -51,14 +54,13 @@ public class VcsInitialization implements Disposable {
 
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (project.isDisposed()) return;
-      Task task = new Task.Backgroundable(myProject, "VCS Initialization") {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          execute();
-        }
-      };
-
-      myFuture = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task.asBackgroundable(), myIndicator, null);
+      myFuture = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+        new Task.Backgroundable(myProject, "VCS Initialization") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            execute();
+          }
+        }, myIndicator, null);
     });
   }
 
@@ -81,6 +83,10 @@ public class VcsInitialization implements Disposable {
     synchronized (myLock) {
       list = myList;
       myInitStarted = true; // list would not be modified starting from this point
+      Future<?> future = myFuture;
+      if (future != null && future.isCancelled() || ProgressManager.getGlobalProgressIndicator().isCanceled()) {
+        return;
+      }
     }
     Collections.sort(list, (o1, o2) -> o1.getFirst().getOrder() - o2.getFirst().getOrder());
     for (Pair<VcsInitObject, Runnable> pair : list) {
@@ -93,7 +99,6 @@ public class VcsInitialization implements Disposable {
   void waitForInitialized() {
     try {
       myFuture.get();
-      myFuture = null;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -111,10 +116,13 @@ public class VcsInitialization implements Disposable {
     Future<?> future = myFuture;
     if (future != null) {
       future.cancel(false);
-      try {
-        future.get();
+      // have to wait for task completion to avoid running it in background for closed project
+      long start = System.currentTimeMillis();
+      while (myIndicator.isRunning() && System.currentTimeMillis() < start + 10000) {
+        TimeoutUtil.sleep(10);
       }
-      catch (Exception ignored) {
+      if (myIndicator.isRunning()) {
+        LOG.error("Failed to wait for completion if VCS initialization. ", new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
       }
     }
   }

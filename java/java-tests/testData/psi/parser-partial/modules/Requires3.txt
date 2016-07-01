@@ -1,0 +1,21 @@
+PsiJavaFile:Requires3.java
+  PsiJavaModule:M
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiRequiresStatement
+      PsiKeyword:requires('requires')
+      PsiErrorElement:Identifier expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiErrorElement:Module statement expected
+      PsiKeyword:private('private')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:X('X')
+    PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

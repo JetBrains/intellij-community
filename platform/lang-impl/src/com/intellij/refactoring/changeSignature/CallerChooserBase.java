@@ -275,8 +275,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private void getSelectedMethodsInner(final MethodNodeBase<M> node, final Set<M> allMethods) {
     if (node.isChecked()) {
       M method = node.getMethod();
-      final M[] superMethods = findDeepestSuperMethods(method);
-      if (superMethods.length == 0) {
+      final M[] superMethods = method == myMethod ? null : findDeepestSuperMethods(method);
+      if (superMethods == null || superMethods.length == 0) {
         allMethods.add(method);
       }
       else {

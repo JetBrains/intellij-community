@@ -1,8 +1,7 @@
 <component name="libraryTable">
   <library name="Mocks">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/dev/easymock.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/dev/easymockclassextension.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/easymock-3.4.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
@@ -10,6 +9,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/easymock-3.4-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />

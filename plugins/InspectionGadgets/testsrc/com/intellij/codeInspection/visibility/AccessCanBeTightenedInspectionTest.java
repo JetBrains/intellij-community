@@ -21,7 +21,17 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ReflectionUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 
+@SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
+  @Override
+  protected LocalInspectionTool getInspection() {
+    VisibilityInspection inspection = new VisibilityInspection();
+    inspection.SUGGEST_PRIVATE_FOR_INNERS = true;
+    inspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    inspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    return inspection.getSharedLocalInspectionTool();
+  }
+
   public void testSimple() {
     doTest("import java.util.*;\n" +
            "class C {\n" +
@@ -187,12 +197,29 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     myFixture.checkHighlighting();
   }
 
-  @Override
-  protected LocalInspectionTool getInspection() {
-    VisibilityInspection inspection = new VisibilityInspection();
-    inspection.SUGGEST_PRIVATE_FOR_INNERS = true;
-    inspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
-    inspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
-    return inspection.getSharedLocalInspectionTool();
+  public void testInnerClassIsUnusedButItsMethodsAre() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/Outer.java",
+      "package x;\n" +
+      "class Outer {\n" +
+      "    static Inner makeInner() {\n" +
+      "        return new Inner();\n" +
+      "    }\n" +
+      "\n" +
+      "    static class Inner {\n" +
+      "        void frob() {}\n" +
+      "    }\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("x/Consumer.java",
+      "package x;\n" +
+      "public class Consumer {\n" +
+      "    public void doIt() {\n" +
+      "        Outer.makeInner().frob();\n" +
+      "    }\n" +
+      "}" +
+      "");
+    myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
+    myFixture.checkHighlighting();
   }
 }

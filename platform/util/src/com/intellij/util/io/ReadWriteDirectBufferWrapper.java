@@ -56,13 +56,16 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     final RandomAccessFile myFile;
 
     FileContext(final File file) throws IOException {
-      myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, FileNotFoundException>() {
+      myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, IOException>() {
         @Nullable
         @Override
-        public RandomAccessFile execute(boolean finalAttempt) throws FileNotFoundException {
+        public RandomAccessFile execute(boolean finalAttempt) throws IOException {
           try {
             return new RandomAccessFile(file, RW);
           } catch (FileNotFoundException ex) {
+            if (!file.getParentFile().exists()) {
+              throw new IOException("Parent file doesn't exist:" + file);
+            }
             if (!finalAttempt) return null;
             throw ex;
           }
@@ -91,12 +94,14 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     try {
       if (fileContext == null) fileContext = new FileContext(myFile);
 
-      final FileChannel channel = fileContext.myFile.getChannel();
+      if (fileContext.myFile != null) {
+        final FileChannel channel = fileContext.myFile.getChannel();
 
-      channel.position(myPosition);
-      buffer.rewind();
-      channel.write(buffer);
-      myDirty = false;
+        channel.position(myPosition);
+        buffer.rewind();
+        channel.write(buffer);
+        myDirty = false;
+      }
     }
     catch (IOException e) {
       LOG.error(e);
@@ -109,7 +114,10 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     final ByteBuffer buffer = getCachedBuffer();
     if (buffer == null || !isDirty()) return;
 
-    //noinspection SSBasedInspection
-    doFlush(null, buffer).dispose();
+    Disposable disposable = doFlush(null, buffer);
+    if (disposable != null) {
+      //noinspection SSBasedInspection
+      disposable.dispose();
+    }
   }
 }

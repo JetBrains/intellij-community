@@ -266,5 +266,7 @@
 
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
+
+    <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/>
   </extensionPoints>
 </idea-plugin>

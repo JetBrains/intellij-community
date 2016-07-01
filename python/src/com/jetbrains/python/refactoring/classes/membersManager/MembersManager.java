@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Moves members between classes via its plugins (managers).
@@ -251,7 +252,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
    */
   @NotNull
   protected static <T extends PyElement> Collection<T> fetchElements(@NotNull final Collection<PyMemberInfo<T>> memberInfos) {
-    return Collections2.transform(memberInfos, new PyMemberExtractor<T>());
+    return memberInfos.stream().map(o -> o.getMember()).filter(o -> o != null).collect(Collectors.toList());
   }
 
   /**
@@ -332,13 +333,6 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   @NotNull
   protected abstract Collection<PyElement> getDependencies(@NotNull MultiMap<PyClass, PyElement> usedElements);
 
-  private static class PyMemberExtractor<T extends PyElement> implements Function<PyMemberInfo<T>, T> {
-    @SuppressWarnings("NullableProblems") //IDEA-120100
-    @Override
-    public T apply(@NotNull final PyMemberInfo<T> input) {
-      return input.getMember();
-    }
-  }
 
   private static class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final PyElement myPyElement;

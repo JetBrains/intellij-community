@@ -63,7 +63,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(() -> p.getEffectiveSearchScope());
+    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(p::getEffectiveSearchScope);
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }

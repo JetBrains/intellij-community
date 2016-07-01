@@ -16,8 +16,6 @@
 package com.intellij.ide;
 
 import com.apple.eawt.Application;
-import com.apple.eawt.ApplicationAdapter;
-import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ExitAction;
 import com.intellij.ide.actions.OpenFileAction;
@@ -30,9 +28,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.Component;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
@@ -47,12 +48,15 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
+  private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
   private static final Callback IMPL = new Callback() {
     @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
@@ -116,53 +120,35 @@ public class MacOSApplicationProvider implements ApplicationComponent {
   }
 
   private static class Worker {
-    @SuppressWarnings("deprecation")
     public static void initMacApplication() {
-      Application application = new Application();
-      application.addApplicationListener(new ApplicationAdapter() {
-        @Override
-        public void handleAbout(ApplicationEvent applicationEvent) {
-          AboutAction.perform(getProject());
-          applicationEvent.setHandled(true);
-        }
-
-        @Override
-        public void handlePreferences(ApplicationEvent applicationEvent) {
-          Project project = getNotNullProject();
-          TransactionGuard.submitTransaction(project, () -> ShowSettingsAction.perform(project));
-          applicationEvent.setHandled(true);
-        }
-
-        @Override
-        public void handleQuit(ApplicationEvent applicationEvent) {
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), ExitAction::perform);
-        }
-
-        @Override
-        public void handleOpenFile(ApplicationEvent applicationEvent) {
-          Project project = getProject();
-          String filename = applicationEvent.getFilename();
-          if (filename == null) return;
-
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-            File file = new File(filename);
-            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-              IdeaApplication.getInstance().setPerformProjectLoad(false);
-              return;
-            }
-            if (project != null && file.exists()) {
-              OpenFileAction.openFile(filename, project);
-              applicationEvent.setHandled(true);
-            }
-          });
-        }
+      Application application = Application.getApplication();
+      application.setAboutHandler(event -> AboutAction.perform(getProject()));
+      application.setPreferencesHandler(event -> {
+        Project project = getNotNullProject();
+        submit(() -> ShowSettingsAction.perform(project));
       });
-
-      application.addAboutMenuItem();
-      application.addPreferencesMenuItem();
-      application.setEnabledAboutMenu(true);
-      application.setEnabledPreferencesMenu(true);
-
+      application.setQuitHandler((event, response) -> {
+        submit(ExitAction::perform);
+        response.cancelQuit();
+      });
+      application.setOpenFileHandler(event -> {
+        Project project = getProject();
+        List<File> list = event.getFiles();
+        LOG.debug("MacMenu: files found ", list.size());
+        if (list.isEmpty()) return;
+        File file = list.get(0);
+        submit(() -> {
+          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+            LOG.debug("MacMenu: load project for ", file);
+            IdeaApplication.getInstance().setPerformProjectLoad(false);
+            return;
+          }
+          if (project != null && file.exists()) {
+            LOG.debug("MacMenu: open file ", file);
+            OpenFileAction.openFile(file.getAbsolutePath(), project);
+          }
+        });
+      });
       installAutoUpdateMenu();
     }
 
@@ -200,6 +186,24 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     private static Project getNotNullProject() {
       Project project = getProject();
       return project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    }
+
+    private static void submit(@NotNull Runnable task) {
+      LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread());
+      if (!ENABLED.get()) return;
+
+      Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();
+      if (component == null || IdeKeyEventDispatcher.isModalContext(component)) return;
+
+      ENABLED.set(false);
+      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+        try {
+          task.run();
+        }
+        finally {
+          ENABLED.set(true);
+        }
+      });
     }
   }
 }

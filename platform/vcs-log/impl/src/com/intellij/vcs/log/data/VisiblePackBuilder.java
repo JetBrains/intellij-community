@@ -213,7 +213,7 @@ class VisiblePackBuilder {
     Set<VirtualFile> visibleRoots =
       VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
 
-    Collection<CommitId> logs = ContainerUtil.newArrayList();
+    Collection<CommitId> commits = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       final VirtualFile root = entry.getKey();
 
@@ -230,10 +230,10 @@ class VisiblePackBuilder {
       }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
-      logs.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));
+      commits.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));
     }
 
-    return logs;
+    return commits;
   }
 
   @NotNull

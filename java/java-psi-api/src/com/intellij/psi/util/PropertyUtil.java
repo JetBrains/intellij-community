@@ -298,7 +298,7 @@ public class PropertyUtil {
   }
 
   @Nullable
-  public static String getPropertyName(@NonNls String methodName) {
+  public static String getPropertyName(@NonNls @NotNull String methodName) {
     return StringUtil.getPropertyName(methodName);
   }
 

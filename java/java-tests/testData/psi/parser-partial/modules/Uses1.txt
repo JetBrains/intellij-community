@@ -1,0 +1,20 @@
+PsiJavaFile:Uses1.java
+  PsiJavaModule:M
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiUsesStatement
+      PsiKeyword:uses('uses')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:C
+        PsiIdentifier:C('C')
+        PsiReferenceParameterList
+          <empty list>
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

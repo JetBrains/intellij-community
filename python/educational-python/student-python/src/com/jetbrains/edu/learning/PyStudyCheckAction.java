@@ -21,6 +21,7 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
   public static final String ACTION_ID = "PyCheckAction";
   
   public void check(@NotNull Project project) {
+    EduUsagesCollector.taskChecked();
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
       final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
       if (selectedEditor == null) return;

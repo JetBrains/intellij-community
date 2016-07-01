@@ -17,6 +17,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.FormatRangesInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,27 +25,25 @@ import java.util.List;
 public class FormatTextRanges {
 
   private final List<FormatTextRange> myRanges = new ArrayList<>();
+  private final FormatRangesInfo myHelper;
 
   public FormatTextRanges() {
+    myHelper = null;
   }
 
   public FormatTextRanges(TextRange range, boolean processHeadingWhitespace) {
+    myHelper = null;
     add(range, processHeadingWhitespace);
+  }
+  
+  public FormatTextRanges(FormatRangesInfo helper) {
+    myHelper = helper;
   }
 
   public void add(TextRange range, boolean processHeadingWhitespace) {
     myRanges.add(new FormatTextRange(range, processHeadingWhitespace));
   }
 
-  /**
-   * Batches {@link FormatTextRange#isWhitespaceReadOnly(TextRange)} operation for all aggregated ranges.
-   * <p/>
-   * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
-   *
-   * @param range     range to check
-   * @return               <code>true</code> if given range doesn't have intersections with all aggregated ranges;
-   *                             <code>false</code> if given range intersects at least one of aggregated ranges
-   */
   public boolean isWhitespaceReadOnly(TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isWhitespaceReadOnly(range)) {
@@ -54,16 +53,6 @@ public class FormatTextRanges {
     return true;
   }
 
-  /**
-   * Batches {@link FormatTextRange#isReadOnly(TextRange, boolean)} operation for all aggregated ranges.
-   * <p/>
-   * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
-   *
-   * @param range                 range to check
-   * @param rootIsRightBlock      flag to use during {@link FormatTextRange#isReadOnly(TextRange, boolean)} processing
-   * @return                      <code>true</code> if given range doesn't have intersections with all aggregated ranges;
-   *                              <code>false</code> if given range intersects at least one of aggregated ranges
-   */
   public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isReadOnly(range, rootIsRightBlock)) {
@@ -94,4 +83,10 @@ public class FormatTextRanges {
   public String toString() {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
+  
+  public boolean isInsertedBlock(Block block) {
+    int offset = block.getTextRange().getStartOffset();
+    return myHelper != null && myHelper.isOnInsertedLine(offset);
+  }
+  
 }

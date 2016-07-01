@@ -26,7 +26,7 @@ public abstract class State {
     }
   }
 
-  public boolean isDone() {
+  public final boolean isDone() {
     return myDone;
   }
 

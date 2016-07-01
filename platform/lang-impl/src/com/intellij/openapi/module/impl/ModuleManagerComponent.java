@@ -68,7 +68,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
         long t = System.currentTimeMillis();
         loadModules(myModuleModel);
         t = System.currentTimeMillis() - t;
-        LOG.info(myModuleModel.getModules().length + " module(s) loaded in " + t + " ms");
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info(myModuleModel.getModules().length + " module(s) loaded in " + t + " ms");
+        }
       }
     });
 

@@ -43,11 +43,12 @@ public class TestContent extends Content {
 
   @Override
   public boolean equals(Object o) {
+    if (!(o instanceof Content)) return false;
     return Arrays.equals(myData, ((Content)o).getBytes());
   }
 
   @Override
   public int hashCode() {
-    return myData.hashCode();
+    return Arrays.hashCode(myData);
   }
 }

@@ -37,7 +37,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -312,7 +314,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       };
 
-      descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+      descriptions.setBorder(JBUI.Borders.empty(1, 4));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
@@ -339,7 +341,7 @@ public class Switcher extends AnAction implements DumbAware {
                                                                                                 || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null, mySpeedSearch);
       }
 
-      toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
+      toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
         @NotNull
@@ -403,7 +405,9 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = 0; i < len; i++) {
-          if (isPinnedMode() && selectedFiles.contains(recentFiles[i])) {
+          if (isPinnedMode()
+              && selectedFiles.contains(recentFiles[i])
+              && UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
             continue;
           }
 
@@ -420,8 +424,10 @@ public class Switcher extends AnAction implements DumbAware {
           if (add) {
             filesData.add(info);
             if (!firstRecentMarked) {
-              firstRecentMarked = true;
               selectionIndex = filesData.size() - 1;
+              if (selectionIndex != 0 || UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+                firstRecentMarked = true;
+              }
             }
           }
         }
@@ -542,7 +548,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(filesRenderer);
-      files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+      files.setBorder(JBUI.Borders.empty(5));
       files.addKeyListener(this);
       ScrollingUtil.installActions(files);
       files.addMouseListener(this);

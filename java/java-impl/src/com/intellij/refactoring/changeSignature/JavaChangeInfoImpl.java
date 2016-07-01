@@ -69,6 +69,8 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
 
+  private boolean myCheckUnusedParameter = false;
+
   /**
    * @param newExceptions null if not changed
    */
@@ -199,6 +201,15 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (isNameChanged) {
       newNameIdentifier = factory.createIdentifier(newName);
     }
+  }
+
+  @Override
+  public boolean checkUnusedParameter() {
+    return myCheckUnusedParameter;
+  }
+
+  public void setCheckUnusedParameter() {
+    myCheckUnusedParameter = true;
   }
 
   protected void fillOldParams(PsiMethod method) {

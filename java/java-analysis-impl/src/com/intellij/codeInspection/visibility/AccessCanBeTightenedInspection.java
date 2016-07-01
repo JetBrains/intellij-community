@@ -34,10 +34,10 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -87,7 +87,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
       myDeadCodeInspection = tool == null ? new UnusedDeclarationInspectionBase() : tool;
     }
-    private final Set<PsiClass> childMembersAreUsedOutsideMyPackage = ContainerUtil.newConcurrentSet();
+    private final TObjectIntHashMap<PsiClass> maxSuggestedLevelForChildMembers = new TObjectIntHashMap<>();
 
     @Override
     public void visitClass(PsiClass aClass) {
@@ -105,48 +105,79 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private void checkMember(@NotNull final PsiMember member) {
-      if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.NATIVE)) return;
-      if (member instanceof PsiMethod && member instanceof SyntheticElement  || !member.isPhysical()) return;
+      final PsiClass memberClass = member.getContainingClass();
+      PsiModifierList memberModifierList = member.getModifierList();
+      if (memberModifierList == null) return;
+      int currentLevel = PsiUtil.getAccessLevel(memberModifierList);
+      int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
+      if (memberClass != null) {
+        synchronized (maxSuggestedLevelForChildMembers) {
+          int prevMax = maxSuggestedLevelForChildMembers.get(memberClass);
+          maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
+        }
+      }
+
+      log(member.getName() + ": effective level is '" + PsiUtil.getAccessModifier(suggestedLevel) + "'");
+
+      if (suggestedLevel < currentLevel) {
+        if (member instanceof PsiClass) {
+          int memberMaxLevel;
+          synchronized (maxSuggestedLevelForChildMembers) {
+            memberMaxLevel = maxSuggestedLevelForChildMembers.get((PsiClass)member);
+          }
+          if (memberMaxLevel > suggestedLevel) {
+            // a class can't have visibility less than its members
+            return;
+          }
+        }
+        PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() : ContainerUtil.find(
+          memberModifierList.getChildren(),
+          element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
+        assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
+        String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
+        myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+      }
+    }
+
+    private int suggestLevel(@NotNull PsiMember member, PsiClass memberClass, int currentLevel) {
+      if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.NATIVE)) return currentLevel;
+      if (member instanceof PsiMethod && member instanceof SyntheticElement || !member.isPhysical()) return currentLevel;
 
       if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
         if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) {
           log(member.getName() + " overrides");
-          return; // overrides
+          return currentLevel; // overrides
         }
         if (MethodUtils.isOverridden(method)) {
           log(member.getName() + " overridden");
-          return;
+          return currentLevel;
         }
       }
-      if (member instanceof PsiEnumConstant) return;
+      if (member instanceof PsiEnumConstant) return currentLevel;
       if (member instanceof PsiClass && (member instanceof PsiAnonymousClass ||
                                          member instanceof PsiTypeParameter ||
                                          member instanceof PsiSyntheticClass ||
                                          PsiUtil.isLocalClass((PsiClass)member))) {
-        return;
+        return currentLevel;
       }
-      final PsiClass memberClass = member.getContainingClass();
       if (memberClass != null && (memberClass.isInterface() || memberClass.isEnum() || memberClass.isAnnotationType() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
-        return;
+        return currentLevel;
       }
       final PsiFile memberFile = member.getContainingFile();
       Project project = memberFile.getProject();
 
       if (myDeadCodeInspection.isEntryPoint(member)) {
         log(member.getName() +" is entry point");
-        return;
+        return currentLevel;
       }
 
-      PsiModifierList memberModifierList = member.getModifierList();
-      if (memberModifierList == null) return;
-      final int currentLevel = PsiUtil.getAccessLevel(memberModifierList);
-      final AtomicInteger maxLevel = new AtomicInteger(PsiUtil.ACCESS_LEVEL_PRIVATE);
-      final AtomicBoolean foundUsage = new AtomicBoolean();
       PsiDirectory memberDirectory = memberFile.getContainingDirectory();
       final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
       log(member.getName()+ ": checking effective level for "+member);
 
+      AtomicInteger maxLevel = new AtomicInteger(PsiUtil.ACCESS_LEVEL_PRIVATE);
+      AtomicBoolean foundUsage = new AtomicBoolean();
       boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
         PsiElement element = info.getElement();
         if (element == null) return true;
@@ -165,29 +196,20 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if (!foundUsage.get()) {
         log(member.getName() + " unused; ignore");
-        return; // do not propose private for unused method
+        return currentLevel; // do not propose private for unused method
       }
 
-      int max = maxLevel.get();
-      if (max == PsiUtil.ACCESS_LEVEL_PRIVATE && memberClass == null) {
-        max = suggestPackageLocal(member);
+      int suggestedLevel = maxLevel.get();
+      if (suggestedLevel == PsiUtil.ACCESS_LEVEL_PRIVATE && memberClass == null) {
+        suggestedLevel = suggestPackageLocal(member);
       }
 
-      String maxModifier = PsiUtil.getAccessModifier(max);
-      log(member.getName() + ": effective level is '" + maxModifier + "'");
+      String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
+      log(member.getName() + ": effective level is '" + suggestedModifier + "'");
 
-      if (max < currentLevel) {
-        if (max == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL && member instanceof PsiClass && childMembersAreUsedOutsideMyPackage.contains(member)) {
-          log(member.getName() + "  children used outside my package; ignore");
-          return; // e.g. some public method is used outside my package (without importing class)
-        }
-        PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() : ContainerUtil.find(
-          memberModifierList.getChildren(),
-          element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
-        assert toHighlight != null : member +" ; " + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; "+ memberModifierList.getText();
-        myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(maxModifier), new ChangeModifierFix(maxModifier));
-      }
+      return suggestedLevel;
     }
+
 
     private boolean handleUsage(@NotNull PsiMember member,
                                 @Nullable PsiClass memberClass,
@@ -201,20 +223,12 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       if (!(psiFile instanceof PsiJavaFile)) {
         log("     refd from " + psiFile.getName() + "; set to public");
         maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
-        if (memberClass != null) {
-          childMembersAreUsedOutsideMyPackage.add(memberClass);
-        }
         return false; // referenced from XML, has to be public
       }
-      //int offset = info.getNavigationOffset();
-      //if (offset == -1) return true;
       @PsiUtil.AccessLevel
       int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
       log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
       maxLevel.getAndAccumulate(level, Math::max);
-      if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
-        childMembersAreUsedOutsideMyPackage.add(memberClass);
-      }
 
       return level != PsiUtil.ACCESS_LEVEL_PUBLIC;
     }

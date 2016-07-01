@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
@@ -77,38 +79,43 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final String localName = local.getName();
 
-    final Query<PsiReference> query = ReferencesSearch.search(local, local.getUseScope());
-    if (query.findFirst() == null){
-      LOG.assertTrue(refExpr == null);
-      String message = RefactoringBundle.message("variable.is.never.used", localName);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-      return;
-    }
-
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class);
     final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
     final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
-    query.forEach(psiReference -> {
-      final PsiElement element = psiReference.getElement();
-      PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
-      while (innerClass != containingClass && innerClass != null) {
-        final PsiClass parentPsiClass = PsiTreeUtil.getParentOfType(innerClass, PsiClass.class, true);
-        if (parentPsiClass == containingClass) {
-          if (innerClass instanceof PsiLambdaExpression) {
-            if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
-              innerClassesWithUsages.add(element);
-              innerClass = parentPsiClass;
-              continue;
-            }
-          }
-          innerClassesWithUsages.add(innerClass);
-          innerClassUsages.add(element);
-        }
-        innerClass = parentPsiClass;
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class);
+    final Query<PsiReference> query = ReferencesSearch.search(local, local.getUseScope());
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      if (query.findFirst() == null){
+        LOG.assertTrue(refExpr == null);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String message = RefactoringBundle.message("variable.is.never.used", localName);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        }, ModalityState.NON_MODAL);
+        return;
       }
-      return true;
-    });
+      query.forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        PsiElement innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);
+        while (innerClass != containingClass && innerClass != null) {
+          final PsiClass parentPsiClass = PsiTreeUtil.getParentOfType(innerClass, PsiClass.class, true);
+          if (parentPsiClass == containingClass) {
+            if (innerClass instanceof PsiLambdaExpression) {
+              if (PsiTreeUtil.isAncestor(innerClass, local, false)) {
+                innerClassesWithUsages.add(element);
+                innerClass = parentPsiClass;
+                continue;
+              }
+            }
+            innerClassesWithUsages.add(innerClass);
+            innerClassUsages.add(element);
+          }
+          innerClass = parentPsiClass;
+        }
+        return true;
+      });
 
+    }, "Find Usages", true, project)) {
+      return;
+    }
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
     if (containerBlock == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage("Variable is declared outside a code block");
@@ -116,9 +123,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final PsiExpression defToInline = innerClassesWithUsages.isEmpty()
-                                      ? getDefToInline(local, refExpr, containerBlock)
-                                      : getDefToInline(local, innerClassesWithUsages.get(0), containerBlock);
+    final PsiExpression defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock);
     if (defToInline == null){
       final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
@@ -150,7 +155,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         }
 
         if (refExpr != null && inlineLocalDialog.isInlineThis()) {
-          refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
+          refsToInlineList = Collections.singletonList(refExpr);
           inlineAll.set(false);
         }
       }

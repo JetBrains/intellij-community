@@ -1122,6 +1122,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
+        fireAfterWriteActionFinished(clazz);
       }
     }
   }
@@ -1261,6 +1262,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void fireWriteActionFinished(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
+  }
+
+  private void fireAfterWriteActionFinished(@NotNull Class action) {
+    myDispatcher.getMulticaster().afterWriteActionFinished(action);
   }
 
   @Override

@@ -34,16 +34,16 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
     return processDeepestSuperMethods(method, consumer);
   }
 
-  public static boolean processDeepestSuperMethods(PsiMethod method, Processor<PsiMethod> consumer) {
-    final Set<PsiMethod> methods = new THashSet<PsiMethod>();
+  public static boolean processDeepestSuperMethods(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> consumer) {
+    final Set<PsiMethod> methods = new THashSet<>();
     methods.add(method);
     return findDeepestSuperOrSelfSignature(method, methods, null, consumer);
   }
 
-  private static boolean findDeepestSuperOrSelfSignature(final PsiMethod method,
-                                                         Set<PsiMethod> set,
+  private static boolean findDeepestSuperOrSelfSignature(@NotNull PsiMethod method,
+                                                         @NotNull Set<PsiMethod> set,
                                                          Set<PsiMethod> guard,
-                                                         Processor<PsiMethod> processor) {
+                                                         @NotNull Processor<PsiMethod> processor) {
     if (guard != null && !guard.add(method)) return true;
     PsiMethod[] supers = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
       @Override
@@ -57,7 +57,7 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
     }
     for (PsiMethod superMethod : supers) {
       if (guard == null) {
-        guard = new THashSet<PsiMethod>();
+        guard = new THashSet<>();
         guard.add(method);
       }
       if (!findDeepestSuperOrSelfSignature(superMethod, set, guard, processor)) return false;

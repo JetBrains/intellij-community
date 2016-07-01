@@ -163,22 +163,20 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfile inspectionProfile;
+    final InspectionProfileImpl inspectionProfile;
     if (profile != null) {
-      inspectionProfile = (InspectionProfile)profile;
+      inspectionProfile = (InspectionProfileImpl)profile;
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-        @Override
-        public boolean isToolEnabled(@Nullable final HighlightDisplayKey key, PsiElement element) {
-          return key != null && resMap.containsKey(key.toString());
-        }
-
         @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
           return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
         }
       };
+      for (String id : resMap.keySet()) {
+        inspectionProfile.enableTool(id, project);
+      }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);
   }

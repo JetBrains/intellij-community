@@ -15,6 +15,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,16 +37,16 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     if (!studyState.isValid()) {
       return;
     }
-    Task nextTask = getTargetTask(studyState.getTask());
-    if (nextTask == null) {
+    Task targetTask = getTargetTask(studyState.getTask());
+    if (targetTask == null) {
       return;
     }
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
       FileEditorManager.getInstance(project).closeFile(file);
     }
-    int nextTaskIndex = nextTask.getIndex();
-    int lessonIndex = nextTask.getLesson().getIndex();
-    Map<String, TaskFile> nextTaskFiles = nextTask.getTaskFiles();
+    int nextTaskIndex = targetTask.getIndex();
+    int lessonIndex = targetTask.getLesson().getIndex();
+    Map<String, TaskFile> nextTaskFiles = targetTask.getTaskFiles();
     VirtualFile projectDir = project.getBaseDir();
     String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
     if (projectDir == null) {
@@ -64,7 +65,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
       ProjectView.getInstance(project).select(taskDir, taskDir, false);
       return;
     }
-
+    EduUsagesCollector.taskNavigation();
     VirtualFile shouldBeActive = getFileToActivate(project, nextTaskFiles, taskDir);
 
     updateProjectView(project, shouldBeActive);

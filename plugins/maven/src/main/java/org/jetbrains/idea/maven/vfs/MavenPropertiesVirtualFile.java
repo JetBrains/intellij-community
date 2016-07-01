@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -109,7 +110,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
 
   @Override
   public long getModificationStamp() {
-    return myContent.hashCode();
+    return Arrays.hashCode(myContent);
   }
 
   @Override

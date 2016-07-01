@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +68,6 @@ public class InitialInfoBuilder {
   private LeafBlockWrapper                 myFirstTokenBlock;
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
-  private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
   private boolean                          myInsideFormatRestrictingTag;
 
   private InitialInfoBuilder(final Block rootBlock,
@@ -163,34 +161,25 @@ public class InitialInfoBuilder {
     myCurrentWhiteSpace.changeEndOffset(blockStartOffset, myModel, myOptions);
 
     collectAlignments(rootBlock);
-    
-    ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
-    try {
-      if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
-        myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
-      }
-      
-      if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock)
-          || myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock))
-      {
-        final List<Block> subBlocks = rootBlock.getSubBlocks();
-        if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
-          final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
-          if (!subBlocks.isEmpty()) {
-            wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
-          }
-          return wrapper;
+
+    if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock) || shouldCollectAlignmentsAround(rootBlock)) {
+      final List<Block> subBlocks = rootBlock.getSubBlocks();
+      if (subBlocks.isEmpty()) {
+        final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
+        if (!subBlocks.isEmpty()) {
+          wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
         }
-        return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
+        return wrapper;
       }
-      else {
-        //block building is skipped
-        return buildLeafBlock(rootBlock, parent, true, index, parentBlock);
-      }
+      return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
     }
-    finally {
-      myReadOnlyBlockInformationProvider = previousProvider;
+    else {
+      return buildLeafBlock(rootBlock, parent, true, index, parentBlock);
     }
+  }
+
+  private boolean shouldCollectAlignmentsAround(Block rootBlock) {
+    return myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock);
   }
 
   private void collectAlignments(Block rootBlock) {
