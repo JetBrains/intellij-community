@@ -157,20 +157,21 @@ def get_clsname_for_code(code, frame):
         func_name = code.co_name
         if len(code.co_varnames) > 0:
             first_arg_name = code.co_varnames[0]
-            first_arg_obj = frame.f_locals[first_arg_name]
-            if inspect.isclass(first_arg_obj):  # class method
-                first_arg_class = first_arg_obj
-            else:  # instance method
-                first_arg_class = first_arg_obj.__class__
-            if hasattr(first_arg_class, func_name):
-                method = getattr(first_arg_class, func_name)
-                func_code = None
-                if hasattr(method, 'func_code'):  # Python2
-                    func_code = method.func_code
-                elif hasattr(method, '__code__'):  # Python3
-                    func_code = method.__code__
-                if func_code and func_code == code:
-                    clsname = first_arg_class.__name__
+            if first_arg_name in frame.f_locals:
+                first_arg_obj = frame.f_locals[first_arg_name]
+                if inspect.isclass(first_arg_obj):  # class method
+                    first_arg_class = first_arg_obj
+                else:  # instance method
+                    first_arg_class = first_arg_obj.__class__
+                if hasattr(first_arg_class, func_name):
+                    method = getattr(first_arg_class, func_name)
+                    func_code = None
+                    if hasattr(method, 'func_code'):  # Python2
+                        func_code = method.func_code
+                    elif hasattr(method, '__code__'):  # Python3
+                        func_code = method.__code__
+                    if func_code and func_code == code:
+                        clsname = first_arg_class.__name__
     return clsname
 
 
