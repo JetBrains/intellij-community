@@ -17,6 +17,8 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -55,30 +57,46 @@ public class VcsLogFullDetailsIndex implements Disposable {
   }
 
   @NotNull
+  public TIntHashSet getCommitsWithAnyKey(@NotNull Set<Integer> keys) throws StorageException {
+    TIntHashSet result = new TIntHashSet();
+
+    for (Integer key : keys) {
+      iterateCommitIds(key, result::add);
+    }
+
+    return result;
+  }
+
+  @NotNull
   public TIntHashSet getCommitsWithAllKeys(@NotNull Set<Integer> keys) throws StorageException {
-    TIntHashSet result = null;
+    Ref<TIntHashSet> result = new Ref<>(null);
 
     for (Integer key : keys) {
       TIntHashSet newResult = new TIntHashSet();
-      ValueContainer<Void> data = myMapReduceIndex.getData(key);
-
-      ValueContainer.ValueIterator<Void> valueIt = data.getValueIterator();
-      while (valueIt.hasNext()) {
-        valueIt.next();
-        ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
-        while (inputIt.hasNext()) {
-          int id = inputIt.next();
-          if (result == null || result.contains(id)) {
-            newResult.add(id);
-          }
+      iterateCommitIds(key, integer -> {
+        if (result.get() == null || result.get().contains(integer)) {
+          newResult.add(integer);
         }
-      }
+      });
 
-      result = newResult;
+      result.set(newResult);
     }
 
-    if (result == null) return new TIntHashSet();
-    return result;
+    if (result.get() == null) return new TIntHashSet();
+    return result.get();
+  }
+
+  private void iterateCommitIds(int key, @NotNull Consumer<Integer> consumer) throws StorageException {
+    ValueContainer<Void> data = myMapReduceIndex.getData(key);
+
+    ValueContainer.ValueIterator<Void> valueIt = data.getValueIterator();
+    while (valueIt.hasNext()) {
+      valueIt.next();
+      ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
+      while (inputIt.hasNext()) {
+        consumer.consume(inputIt.next());
+      }
+    }
   }
 
   public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {

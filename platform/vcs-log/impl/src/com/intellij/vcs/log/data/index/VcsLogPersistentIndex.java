@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,10 +36,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.*;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitDetailsGetter;
 import com.intellij.vcs.log.data.InMemoryMap;
+import com.intellij.vcs.log.data.TroveUtil;
+import com.intellij.vcs.log.data.VcsUserRegistryImpl;
+import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -59,9 +67,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
   @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsUserRegistryImpl myUserRegistry;
+  @NotNull private final Set<VirtualFile> myRoots;
 
   @NotNull private final PersistentMap<Integer, String> myMessagesIndex;
   @Nullable private final VcsLogMessagesTrigramIndex myTrigramIndex;
+  @Nullable private final VcsLogUserIndex myUserIndex;
 
   @NotNull private TIntHashSet myCommitsToIndex = new TIntHashSet();
 
@@ -75,28 +86,34 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myProject = project;
     myDetailsGetter = detailsGetter;
     myFatalErrorsConsumer = fatalErrorsConsumer;
+    myRoots = providers.keySet();
+
+    myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
 
     String logId = PersistentUtil.calcLogId(myProject, providers);
 
-    myMessagesIndex = createIndex(EnumeratorStringDescriptor.INSTANCE, "messages", logId, 0);
-
-    VcsLogMessagesTrigramIndex trigramIndex;
-    try {
-      trigramIndex = new VcsLogMessagesTrigramIndex(logId, disposableParent);
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(e);
-      trigramIndex = null;
-    }
-    myTrigramIndex = trigramIndex;
+    myMessagesIndex = createMap(EnumeratorStringDescriptor.INSTANCE, "messages", logId, 0);
+    myTrigramIndex = createIndex(() -> new VcsLogMessagesTrigramIndex(logId, this));
+    myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, this));
 
     Disposer.register(disposableParent, this);
   }
 
+  @Nullable
+  private <I extends VcsLogFullDetailsIndex> I createIndex(@NotNull ThrowableComputable<I, IOException> computable) {
+    try {
+      return computable.compute();
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(e);
+    }
+    return null;
+  }
+
   @NotNull
-  private <V> PersistentMap<Integer, V> createIndex(@NotNull KeyDescriptor<V> descriptor,
-                                                    @NotNull String kind,
-                                                    @NotNull String logId, int version) {
+  private <V> PersistentMap<Integer, V> createMap(@NotNull KeyDescriptor<V> descriptor,
+                                                  @NotNull String kind,
+                                                  @NotNull String logId, int version) {
     try {
       return PersistentUtil.createPersistentHashMap(descriptor, kind, logId, version);
     }
@@ -141,10 +158,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         myMessagesIndex.put(index, detail.getFullMessage());
         if (myTrigramIndex != null) myTrigramIndex.update(index, detail);
+        if (myUserIndex != null) myUserIndex.update(index, detail);
       }
       myMessagesIndex.force();
       if (myTrigramIndex != null) myTrigramIndex.flush();
-    } catch (IOException | StorageException e) {
+      if (myUserIndex != null) myUserIndex.flush();
+    }
+    catch (IOException | StorageException e) {
       myFatalErrorsConsumer.consume(e);
     }
   }
@@ -152,6 +172,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public boolean isIndexed(int commit) {
     try {
       return myMessagesIndex.get(commit) != null &&
+             (myUserIndex == null || myUserIndex.isIndexed(commit)) &&
              (myTrigramIndex == null || myTrigramIndex.isIndexed(commit));
     }
     catch (IOException e) {
@@ -199,6 +220,19 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @NotNull
+  private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
+    if (myUserIndex != null) {
+      try {
+        return myUserIndex.getCommitsForUsers(users);
+      }
+      catch (IOException | StorageException e) {
+        myFatalErrorsConsumer.consume(e);
+      }
+    }
+    return new TIntHashSet();
+  }
+
+  @NotNull
   public TIntHashSet filterMessages(@NotNull String text) {
     if (myTrigramIndex != null) {
       try {
@@ -239,7 +273,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
     for (VcsLogDetailsFilter filter : filters) {
-      if (!(filter instanceof VcsLogTextFilter)) {
+      if (!((filter instanceof VcsLogTextFilter && myTrigramIndex != null) ||
+            (filter instanceof VcsLogUserFilterImpl && myUserIndex != null))) {
         return false;
       }
     }
@@ -252,9 +287,42 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     Set<Integer> result = ContainerUtil.newHashSet();
 
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
+    VcsLogUserFilterImpl userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilterImpl.class);
+
+    TIntHashSet filteredByMessage;
     if (textFilter != null) {
-      filterMessages(textFilter.getText()).forEach(value -> {
-        result.add(value);
+      filteredByMessage = filterMessages(textFilter.getText());
+    }
+    else {
+      filteredByMessage = null;
+    }
+
+    TIntHashSet filteredByUser;
+    if (userFilter != null) {
+      Set<VcsUser> users = ContainerUtil.newHashSet();
+      for (VirtualFile root : myRoots) {
+        users.addAll(userFilter.getUsers(root));
+      }
+
+      filteredByUser = filterUsers(users);
+    }
+    else {
+      filteredByUser = null;
+    }
+
+    if (filteredByMessage == null) {
+      if (filteredByUser != null) {
+        filteredByUser.forEach(value -> {
+          result.add(value);
+          return true;
+        });
+      }
+    }
+    else {
+      filteredByMessage.forEach(value -> {
+        if (filteredByUser != null && filteredByUser.contains(value)) {
+          result.add(value);
+        }
         return true;
       });
     }

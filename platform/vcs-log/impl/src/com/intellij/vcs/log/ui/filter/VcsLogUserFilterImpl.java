@@ -60,6 +60,15 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   }
 
   @NotNull
+  public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
+    Set<VcsUser> result = ContainerUtil.newHashSet();
+    for (String user : myUsers) {
+      result.addAll(getUsers(root, user));
+    }
+    return result;
+  }
+
+  @NotNull
   private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
     Set<VcsUser> users = ContainerUtil.newHashSet();
     if (ME.equals(name)) {
