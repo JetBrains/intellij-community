@@ -39,12 +39,6 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   private OutputLineSplitter mySplitter;
   final Map<Key, List<String>> myOutput = new THashMap<Key, List<String>>();
 
-
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
