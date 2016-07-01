@@ -200,6 +200,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void onDone(boolean isExcludeAction) {
         if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          myTree.revalidate();
+          myTree.repaint();
+        } else {
           myTree.queueUpdate();
         }
         syncRightPanel();
