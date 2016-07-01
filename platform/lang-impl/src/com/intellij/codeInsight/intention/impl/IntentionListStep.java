@@ -196,10 +196,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
     for (IntentionAction option : options) {
-      if (!option.isAvailable(myProject, containingEditor, containingFile)) {
-        // if option is not applicable in injected fragment, check in host file context
-        if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
-          continue;
+      if (containingFile != null && containingEditor != null && myEditor != null) {
+        if (!ShowIntentionActionsHandler.availableFor(containingFile, containingEditor, option)) {
+          //if option is not applicable in injected fragment, check in host file context
+          if (containingEditor == myEditor || !ShowIntentionActionsHandler.availableFor(myFile, myEditor, option)) {
+            continue;
+          }
+        }
+      }
+      else {
+        if (!option.isAvailable(myProject, containingEditor, containingFile)) {
+          // if option is not applicable in injected fragment, check in host file context
+          if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
+            continue;
+          }
         }
       }
       IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
