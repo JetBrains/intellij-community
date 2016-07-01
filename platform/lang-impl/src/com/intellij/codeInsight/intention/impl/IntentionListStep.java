@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
@@ -289,6 +290,16 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   private static Icon getIcon(IntentionAction optionIntention) {
     return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
+  }
+
+  @VisibleForTesting
+  public Map<IntentionAction, List<IntentionAction>> getActionsWithSubActions() {
+    Map<IntentionAction, List<IntentionAction>> result = ContainerUtil.newLinkedHashMap();
+    for (IntentionActionWithTextCaching action : getValues()) {
+      List<IntentionActionWithTextCaching> subActions = getSubStep(action, action.getToolName()).getValues();
+      result.put(action.getAction(), ContainerUtil.map(subActions, IntentionActionWithTextCaching::getAction));
+    }
+    return result;
   }
 
   @Override
