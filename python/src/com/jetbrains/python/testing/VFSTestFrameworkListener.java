@@ -42,7 +42,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -102,9 +104,16 @@ public class VFSTestFrameworkListener {
   }
 
   public void updateAllTestFrameworks(@NotNull Sdk sdk) {
-    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.PY_TEST);
-    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.NOSE_TEST);
-    checkFrameworkInstalledAndUpdateSettings(sdk, PyNames.AT_TEST);
+    final Map<String, Boolean> whichInstalled = checkTestFrameworksInstalled(sdk, PyNames.PY_TEST, PyNames.NOSE_TEST, PyNames.AT_TEST);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (Map.Entry<String, Boolean> entry : whichInstalled.entrySet()) {
+        final Boolean installed = entry.getValue();
+        if (installed != null) {
+          //noinspection ConstantConditions
+          setTestFrameworkInstalled(installed, sdk.getHomePath(), entry.getKey());
+        }
+      }
+    });
   }
 
   private void scheduleTestFrameworkCheck(@NotNull Sdk sdk, @NotNull String testPackageName) {
@@ -129,19 +138,27 @@ public class VFSTestFrameworkListener {
    */
   @Contract("null, _ -> null")
   private Boolean checkTestFrameworkInstalled(@Nullable Sdk sdk, @NotNull String testPackageName) {
+    return checkTestFrameworksInstalled(sdk, testPackageName).get(testPackageName);
+  }
+
+  @NotNull
+  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testPackageNames) {
+    final Map<String, Boolean> result = new HashMap<>();
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
-      return null;
+      return result;
     }
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     final boolean refreshed = PyPackageUtil.updatePackagesSynchronouslyWithGuard(manager, myIsUpdating);
     if (refreshed) {
       final List<PyPackage> packages = manager.getPackages();
       if (packages != null) {
-        return PyPackageUtil.findPackage(packages, testPackageName) != null;
+        for (String name : testPackageNames) {
+          result.put(name, PyPackageUtil.findPackage(packages, name) != null);
+        }
       }
     }
-    return null;
+    return result;
   }
 
   private void setPyTestInstalled(boolean installed, @NotNull String sdkHome) {
