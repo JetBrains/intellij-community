@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.formatter.IndentRangesCalculator
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.assertj.core.api.Assertions.assertThat
 

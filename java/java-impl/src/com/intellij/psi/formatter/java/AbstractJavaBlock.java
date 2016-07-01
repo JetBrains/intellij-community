@@ -19,8 +19,6 @@ import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1281,38 +1279,5 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), myJavaSettings, indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
     return result;  
-  }
-  
-  @Nullable
-  @Override
-  public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
-    if (ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
-      List<TextRange> extra = calculateExtraRanges(myNode);
-      return new ExtraReformatRanges(extra);
-    }
-    
-    return null;
-  }
-
-  @NotNull
-  private List<TextRange> calculateExtraRanges(@NotNull ASTNode node) {
-    Document document = retrieveDocument(node, getProject(node));
-    if (document != null) {
-      TextRange ranges = node.getTextRange();
-      return new IndentRangesCalculator(document, ranges).calcIndentRanges();
-    }
-
-    return ContainerUtil.newArrayList(myNode.getTextRange());
-  }
-  
-
-  private static Document retrieveDocument(@NotNull ASTNode node, @NotNull Project project) {
-    PsiFile file = node.getPsi().getContainingFile();
-    return PsiDocumentManager.getInstance(project).getDocument(file);
-  }
-
-  @NotNull
-  private static Project getProject(@NotNull ASTNode node) {
-    return node.getPsi().getProject();
   }
 }
