@@ -68,7 +68,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
-  public void _testConflictForUsedParametersInMethodBody() throws Exception {
+  public void testConflictForUsedParametersInMethodBody() throws Exception {
     try {
       doTest(null, new ParameterInfoImpl[0], true);
       fail("Conflict expected");
