@@ -1004,9 +1004,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
 
       final boolean[] toRemove = myChangeInfo.toRemoveParm();
-      final String refactoringId = ((JavaChangeInfoImpl)myChangeInfo).getRefactoringId();
+      //final String refactoringId = ((JavaChangeInfoImpl)myChangeInfo).getRefactoringId();
       //introduce parameter object deletes parameters but replaces their usages with generated code
-      final boolean simpleChangeSignature = ChangeSignatureProcessorBase.REFACTORING_ID.equals(refactoringId);
+      final boolean simpleChangeSignature = false;//ChangeSignatureProcessorBase.REFACTORING_ID.equals(refactoringId);
       if (simpleChangeSignature) {
         checkParametersToDelete(myChangeInfo.getMethod(), toRemove, conflictDescriptions);
       }
