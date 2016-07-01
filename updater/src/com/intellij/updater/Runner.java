@@ -21,8 +21,9 @@ public class Runner {
 
   public static void main(String[] args) throws Exception {
 
-    String jarFile = getArgument(args, "jar");
-    jarFile = jarFile == null ? resolveJarFile() : jarFile;
+    boolean includeJar = !Arrays.asList(args).contains("--no_jar");
+    String jarFile = includeJar ? getArgument(args, "jar") : null;
+    jarFile = includeJar && jarFile == null ? resolveJarFile() : jarFile;
 
     if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
@@ -202,7 +203,10 @@ public class Runner {
       "                                      hashAlgorithm can be any MessageDigest algorithm (MD5, SHA-1, SHA-256), or \n" +
       "                                      \"crc\" (the default).\n" +
       "    --large_files: Support large files. When encountering a large file, a slightly less-efficient but faster\n" +
-      "                   diffing algorithm will be used.");
+      "                   diffing algorithm will be used.\n" +
+      "    --jar=<jar file>: Include the specified patcher code in the generated patch instead of the currently-running\n" +
+      "                      patcher jar.\n" +
+      "    --no_jar: Do not include the patcher code in the generated patch.");
   }
 
   private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
@@ -217,17 +221,19 @@ public class Runner {
       FileOutputStream fileOut = new FileOutputStream(spec.getPatchFile());
       try {
         ZipOutputWrapper out = new ZipOutputWrapper(fileOut);
-        ZipInputStream in = new ZipInputStream(new FileInputStream(new File(spec.getJarFile())));
-        try {
-          ZipEntry e;
-          while ((e = in.getNextEntry()) != null) {
-            out.zipEntry(e, in);
+        String jarFile = spec.getJarFile();
+        if (jarFile != null) {
+          ZipInputStream in = new ZipInputStream(new FileInputStream(new File(jarFile)));
+          try {
+            ZipEntry e;
+            while ((e = in.getNextEntry()) != null) {
+              out.zipEntry(e, in);
+            }
+          }
+          finally {
+            in.close();
           }
         }
-        finally {
-          in.close();
-        }
-
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
