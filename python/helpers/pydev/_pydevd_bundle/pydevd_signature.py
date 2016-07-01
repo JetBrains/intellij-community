@@ -169,17 +169,18 @@ def create_signature_message(signature):
 def send_signature_call_trace(dbg, frame, filename):
     if dbg.signature_factory and dbg.signature_factory.is_in_scope(filename):
         signature = dbg.signature_factory.create_signature(frame)
-        if dbg.signature_factory.cache is not None:
-            if not dbg.signature_factory.cache.is_in_cache(signature):
-                dbg.signature_factory.cache.add(signature)
+        if signature is not None:
+            if dbg.signature_factory.cache is not None:
+                if not dbg.signature_factory.cache.is_in_cache(signature):
+                    dbg.signature_factory.cache.add(signature)
+                    dbg.writer.add_command(create_signature_message(signature))
+                    return True
+                else:
+                    # we don't send signature if it is cached
+                    return False
+            else:
                 dbg.writer.add_command(create_signature_message(signature))
                 return True
-            else:
-                # we don't send signature if it is cached
-                return False
-        else:
-            dbg.writer.add_command(create_signature_message(signature))
-            return True
     return False
 
 
