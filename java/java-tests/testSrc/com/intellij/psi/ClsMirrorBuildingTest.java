@@ -156,7 +156,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(path, psiFile);
     for (int i = 0; i < psiFile.getTextLength(); i++) {
       PsiElement element = psiFile.findElementAt(i);
-      assertTrue(i + ":" + element, element == null || element instanceof ClsElementImpl && !(element instanceof PsiFile));
+      assertTrue(i + ":" + element, element != null && !(element instanceof ClsElementImpl));
     }
   }
 
