@@ -95,9 +95,6 @@
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
-    <extensionPoint name="rainbowProvider"
-                    interface="com.intellij.codeInsight.daemon.RainbowProvider"/>
-
     <extensionPoint name="implicitUsageProvider"
                     interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 

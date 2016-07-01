@@ -19,7 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.RainbowProvider;
+import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -187,19 +187,15 @@ public class HighlightInfo implements Segment {
         isLikeVariable(type.getAttributesKey())) {
       String text = element.getContainingFile().getText();
       String name = text.substring(startOffset, endOffset);
-      attributes = new RainbowHighlighter(colorsScheme, null).getAttributes(name, attributes);
+      attributes = new RainbowHighlighter(colorsScheme).getAttributes(name, attributes);
     }
     return attributes;
   }
 
   @Contract("null -> false")
   public static boolean isByPass(@Nullable PsiElement element) {
-    if (element == null) return false;
-    PsiFile containingFile = element.getContainingFile();
-    for (RainbowProvider processor : RainbowProvider.getRainbowFileProcessors()) {
-      if (processor.isValidContext(containingFile)) return true;
-    }
-    return false;
+    return element != null
+           && RainbowVisitor.existsPassSuitableForFile(element.getContainingFile());
   }
 
   @Contract("null -> false")
