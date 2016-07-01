@@ -20,25 +20,20 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class RainbowVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
-
-  @NotNull
-  protected abstract PsiRecursiveElementWalkingVisitor getVisitor(@NotNull final RainbowHighlighter highlighter);
+  private RainbowHighlighter myRainbowHighlighter;
 
   @NotNull
   @Override
   public abstract HighlightVisitor clone();
 
-  @Override
-  public void visit(@NotNull PsiElement element) {
-    RainbowHighlighter highlighter = new RainbowHighlighter(myHolder.getColorsScheme());
-    element.accept(getVisitor(highlighter));
+  @NotNull
+  protected RainbowHighlighter getHighlighter() {
+    return myRainbowHighlighter;
   }
 
   @Override
@@ -46,14 +41,14 @@ public abstract class RainbowVisitor implements HighlightVisitor {
                          boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {
-    if (RainbowHighlighter.isRainbowEnabled()) {
-      myHolder = holder;
-      try {
-        action.run();
-      }
-      finally {
-        myHolder = null;
-      }
+    myHolder = holder;
+    myRainbowHighlighter = new RainbowHighlighter(myHolder.getColorsScheme());
+    try {
+      action.run();
+    }
+    finally {
+      myHolder = null;
+      myRainbowHighlighter = null;
     }
     return true;
   }
