@@ -30,7 +30,7 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @NotNull
   @Override
   public Promise<T> done(@NotNull Consumer<? super T> done) {
-    if (!AsyncPromise.isObsolete(done)) {
+    if (!AsyncPromiseKt.isObsolete(done)) {
       done.consume(result);
     }
     return this;

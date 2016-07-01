@@ -15,7 +15,7 @@
  */
 package org.jetbrains.debugger.values
 
-import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.OBSOLETE_ERROR
 import org.jetbrains.concurrency.Obsolescent
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
@@ -45,9 +45,9 @@ abstract class ValueManager() : Obsolescent {
   }
 
   companion object {
-    val OBSOLETE_CONTEXT_PROMISE = rejectedPromise<Any?>(AsyncPromise.OBSOLETE_ERROR)
+    val OBSOLETE_CONTEXT_PROMISE = rejectedPromise<Any?>(OBSOLETE_ERROR)
 
-    @Suppress("CAST_NEVER_SUCCEEDS")
+    @Suppress("UNCHECKED_CAST")
     fun <T> reject() = OBSOLETE_CONTEXT_PROMISE as Promise<T>
   }
 }
