@@ -1174,6 +1174,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   void clearIndicesIfNecessary() {
+    waitUntilIndicesAreInitialized();
     for (ID<?, ?> indexId : getState().getIndexIDs()) {
       try {
         RebuildStatus.clearIndexIfNecessary(indexId, getIndex(indexId)::clear);
