@@ -939,7 +939,7 @@ public class JBScrollPane extends JScrollPane {
       if (myDrawColor != null) {
         g.setColor(myDrawColor);
         if (UIUtil.isRetina(g)) {
-          g.draw(new RoundRectangle2D.Double(.5 + x, .5 + y, width - 1, height - 1, arc, arc));
+          g.drawRoundRect(x, y, width, height, arc, arc);
         }
         else {
           g.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
