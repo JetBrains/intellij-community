@@ -15,12 +15,36 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+
 /**
  * @author Pavel.Dolgov
  */
 public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQuickFixParameterizedTestCase {
 
+  private boolean myFinalLocals;
+
   public void test() throws Exception { doAllTests(); }
+
+  @Override
+  protected void beforeActionStarted(String testName, String contents) {
+    super.beforeActionStarted(testName, contents);
+    if (testName.startsWith("Final")) {
+      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+      myFinalLocals = codeStyleSettings.GENERATE_FINAL_LOCALS;
+      codeStyleSettings.GENERATE_FINAL_LOCALS = true;
+    }
+  }
+
+  @Override
+  protected void afterActionCompleted(String testName, String contents) {
+    if (testName.startsWith("Final")) {
+      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+      codeStyleSettings.GENERATE_FINAL_LOCALS = myFinalLocals;
+    }
+    super.afterActionCompleted(testName, contents);
+  }
 
   @Override
   protected String getBasePath() {
