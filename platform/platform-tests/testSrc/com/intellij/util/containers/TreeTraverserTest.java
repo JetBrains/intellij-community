@@ -18,7 +18,10 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.PairFunction;
+import com.intellij.util.Processor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +35,22 @@ import static com.intellij.openapi.util.Conditions.not;
  */
 public class TreeTraverserTest extends TestCase {
 
+
+  /**
+   * <pre>
+   *                   --- 5
+   *           ---  2  --- 6
+   *         /         --- 7
+   *       /
+   *     /          --- 8
+   *   1   ---  3   --- 9
+   *     \          --- 10
+   *      \
+   *       \           --- 11
+   *         ---  4    --- 12
+   *                   --- 13
+   * </pre>
+   */
   private static Map<Integer, Collection<Integer>> numbers() {
     return ContainerUtil.<Integer, Collection<Integer>>immutableMapBuilder().
       put(1, Arrays.asList(2, 3, 4)).
@@ -469,24 +488,19 @@ public class TreeTraverserTest extends TestCase {
   // GuidedTraversal ----------------------------------------------
 
   @NotNull
-  private static Function.Mono<TreeTraversal.GuidedIt<Integer>> initGuide(@NotNull final TreeTraversal traversal) {
-    return new Function.Mono<TreeTraversal.GuidedIt<Integer>>() {
+  private static TreeTraversal.GuidedIt.Guide<Integer> newGuide(@NotNull final TreeTraversal traversal) {
+    return new TreeTraversal.GuidedIt.Guide<Integer>() {
       @Override
-      public TreeTraversal.GuidedIt<Integer> fun(TreeTraversal.GuidedIt<Integer> it) {
-        return it.setGuide(new Consumer<TreeTraversal.GuidedIt<Integer>>() {
-          @Override
-          public void consume(TreeTraversal.GuidedIt<Integer> it) {
-            if (traversal == TreeTraversal.PRE_ORDER_DFS) {
-              it.queueNext(it.curChild).result(it.curChild);
-            }
-            else if (traversal == TreeTraversal.POST_ORDER_DFS) {
-              it.queueNext(it.curChild).result(it.curChild == null ? it.curParent : null);
-            }
-            else if (traversal == TreeTraversal.PLAIN_BFS) {
-              it.queueLast(it.curChild).result(it.curChild);
-            }
-          }
-        });
+      public void guide(@NotNull TreeTraversal.GuidedIt<Integer> it) {
+        if (traversal == TreeTraversal.PRE_ORDER_DFS) {
+          it.queueNext(it.curChild).result(it.curChild);
+        }
+        else if (traversal == TreeTraversal.POST_ORDER_DFS) {
+          it.queueNext(it.curChild).result(it.curChild == null ? it.curParent : null);
+        }
+        else if (traversal == TreeTraversal.PLAIN_BFS) {
+          it.queueLast(it.curChild).result(it.curChild);
+        }
       }
     };
   }
@@ -498,7 +512,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   private static void verifyGuidedTraversal(TreeTraversal traversal) {
-    assertEquals(numTraverser2(TreeTraversal.GUIDED_TRAVERSAL).fun(1).intercept(initGuide(traversal)).toList(),
+    assertEquals(numTraverser2(TreeTraversal.GUIDED_TRAVERSAL(newGuide(traversal))).fun(1).toList(),
                  numTraverser2(traversal).fun(1).toList());
   }
 
