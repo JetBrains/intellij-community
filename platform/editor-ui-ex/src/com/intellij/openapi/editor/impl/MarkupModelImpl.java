@@ -145,7 +145,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     if (BitUtil.isSet(changeStatus, RangeHighlighterImpl.CHANGED_MASK)) {
       fireAttributesChanged(highlighter, 
                             BitUtil.isSet(changeStatus, RangeHighlighterImpl.RENDERERS_CHANGED_MASK),
-                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FONT_STYLE_CHANGED_MASK));
+                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FONT_STYLE_OR_COLOR_CHANGED_MASK));
     }
   }
 
@@ -219,9 +219,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
     for (MarkupModelListener listener : myListeners) {
-      listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged);
+      listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
     }
   }
 
