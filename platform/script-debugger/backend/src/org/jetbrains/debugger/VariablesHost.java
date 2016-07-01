@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromiseKt;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.debugger.values.ValueManager;
@@ -35,7 +36,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
       @NotNull
       @Override
       public Promise load(@NotNull VariablesHost host) {
-        return host.valueManager.isObsolete() ? ValueManager.Companion.reject() : host.load();
+        return host.valueManager.isObsolete() ? AsyncPromiseKt.cancelledPromise() : host.load();
       }
     };
 

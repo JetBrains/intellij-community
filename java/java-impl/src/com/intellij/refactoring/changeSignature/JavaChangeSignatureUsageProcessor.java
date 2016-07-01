@@ -1004,10 +1004,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
 
       final boolean[] toRemove = myChangeInfo.toRemoveParm();
-      final String refactoringId = ((JavaChangeInfoImpl)myChangeInfo).getRefactoringId();
       //introduce parameter object deletes parameters but replaces their usages with generated code
-      final boolean simpleChangeSignature = ChangeSignatureProcessorBase.REFACTORING_ID.equals(refactoringId);
-      if (simpleChangeSignature) {
+      final boolean checkUnusedParameter = myChangeInfo.checkUnusedParameter();
+      if (checkUnusedParameter) {
         checkParametersToDelete(myChangeInfo.getMethod(), toRemove, conflictDescriptions);
       }
       checkContract(conflictDescriptions, myChangeInfo.getMethod());
@@ -1025,7 +1024,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           }
           else if (prototype != null && baseMethod == myChangeInfo.getMethod()) {
             ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflictDescriptions);
-            if (simpleChangeSignature) {
+            if (checkUnusedParameter) {
               checkParametersToDelete(method, toRemove, conflictDescriptions);
             }
           }

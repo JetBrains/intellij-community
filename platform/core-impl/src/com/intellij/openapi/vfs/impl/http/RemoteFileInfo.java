@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 public interface RemoteFileInfo {
   void addDownloadingListener(@NotNull FileDownloadingListener listener);
@@ -35,7 +34,4 @@ public interface RemoteFileInfo {
   RemoteFileState getState();
 
   void cancelDownloading();
-
-  @NotNull
-  Promise<VirtualFile> download();
 }

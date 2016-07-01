@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter.java
+package com.intellij.psi.formatter
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 
-class IndentRangesCalculator(private val document: Document, 
+class IndentRangesCalculator(private val document: Document,
                              private val textRange: TextRange) 
 {
   private val startOffset = textRange.startOffset

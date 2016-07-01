@@ -121,7 +121,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     final JavaChangeInfoImpl javaChangeInfo =
       new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
                              propagateParametersMethods, propagateExceptionsMethods);
-    javaChangeInfo.setRefactoringId(REFACTORING_ID);
+    javaChangeInfo.setCheckUnusedParameter();
     return javaChangeInfo;
   }
 

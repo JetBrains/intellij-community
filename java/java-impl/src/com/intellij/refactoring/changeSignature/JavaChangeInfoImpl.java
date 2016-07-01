@@ -69,7 +69,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateParametersMethods;
   final Set<PsiMethod> propagateExceptionsMethods;
 
-  private String myRefactoringId = null;
+  private boolean myCheckUnusedParameter = false;
 
   /**
    * @param newExceptions null if not changed
@@ -203,12 +203,13 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
   }
 
-  public String getRefactoringId() {
-    return myRefactoringId;
+  @Override
+  public boolean checkUnusedParameter() {
+    return myCheckUnusedParameter;
   }
 
-  public void setRefactoringId(String refactoringId) {
-    myRefactoringId = refactoringId;
+  public void setCheckUnusedParameter() {
+    myCheckUnusedParameter = true;
   }
 
   protected void fillOldParams(PsiMethod method) {

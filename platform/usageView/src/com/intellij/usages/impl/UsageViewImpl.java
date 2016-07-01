@@ -106,7 +106,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final ExclusionHandler<Node> myExclusionHandler;
+  private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
@@ -253,21 +253,26 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       runnable.run();
       return true;
     }, o -> isDisposed || project.isDisposed(), 200);
-    myExclusionHandler = new ExclusionHandler<Node>() {
+    myExclusionHandler = new ExclusionHandler<DefaultMutableTreeNode>() {
       @Override
-      public boolean isNodeExcluded(@NotNull Node node) {
-        return node.isDataExcluded();
+      public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
+        return node instanceof UsageNode;
       }
 
       @Override
-      public void excludeNode(@NotNull Node node) {
+      public boolean isNodeExcluded(@NotNull DefaultMutableTreeNode node) {
+        return ((UsageNode)node).isDataExcluded();
+      }
+
+      @Override
+      public void excludeNode(@NotNull DefaultMutableTreeNode node) {
         final HashSet<Usage> usages = new HashSet<>();
         collectUsages(node, usages);
         excludeUsages(usages.toArray(new Usage[usages.size()]));
       }
 
       @Override
-      public void includeNode(@NotNull Node node) {
+      public void includeNode(@NotNull DefaultMutableTreeNode node) {
         final HashSet<Usage> usages = new HashSet<>();
         collectUsages(node, usages);
         includeUsages(usages.toArray(new Usage[usages.size()]));

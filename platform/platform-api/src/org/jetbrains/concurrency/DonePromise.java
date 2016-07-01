@@ -15,67 +15,76 @@
  */
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-class RejectedPromise<T> extends Promise<T> {
-  private final Throwable error;
+class DonePromise<T> extends Promise<T> implements Getter<T> {
+  private final T result;
 
-  public RejectedPromise(@NotNull Throwable error) {
-    this.error = error;
+  public DonePromise(T result) {
+    this.result = result;
   }
 
   @NotNull
   @Override
   public Promise<T> done(@NotNull Consumer<? super T> done) {
+    if (!AsyncPromiseKt.isObsolete(done)) {
+      done.consume(result);
+    }
     return this;
   }
 
   @NotNull
   @Override
   public Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled) {
-    fulfilled.setError(error);
+    fulfilled.setResult(result);
+    return this;
+  }
+
+  @Override
+  public Promise<T> processed(@NotNull Consumer<? super T> processed) {
+    done(processed);
     return this;
   }
 
   @NotNull
   @Override
   public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
-    if (!AsyncPromise.isObsolete(rejected)) {
-      rejected.consume(error);
-    }
-    return this;
-  }
-
-  @Override
-  public RejectedPromise<T> processed(@NotNull Consumer<? super T> processed) {
-    processed.consume(null);
     return this;
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
+      return Promise.reject("obsolete");
+    }
+    else {
+      return Promise.resolve(done.fun(result));
+    }
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+    return done.fun(result);
   }
 
   @NotNull
   @Override
   public State getState() {
-    return State.REJECTED;
+    return State.FULFILLED;
+  }
+
+  @Override
+  public T get() {
+    return result;
   }
 
   @Override
   public void notify(@NotNull AsyncPromise<? super T> child) {
-    child.setError(error);
+    child.setResult(result);
   }
 }

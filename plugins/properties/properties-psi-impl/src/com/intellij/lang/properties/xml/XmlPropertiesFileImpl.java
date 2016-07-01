@@ -46,6 +46,8 @@ import java.util.*;
  *         Date: 7/26/11
  */
 public class XmlPropertiesFileImpl extends XmlPropertiesFile {
+  public static final String ENTRY_TAG_NAME = "entry";
+
   private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;
 
@@ -62,7 +64,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
       XmlTag rootTag = myFile.getRootTag();
       final List<IProperty> propertiesOrder = new ArrayList<IProperty>();
       if (rootTag != null) {
-        XmlTag[] entries = rootTag.findSubTags("entry");
+        XmlTag[] entries = rootTag.findSubTags(ENTRY_TAG_NAME);
         for (XmlTag entry : entries) {
           XmlProperty property = new XmlProperty(entry, this);
           propertiesOrder.add(property);

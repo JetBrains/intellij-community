@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.util
+package org.jetbrains.debugger
 
+import com.intellij.util.Consumer
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.rpc.LOG
 
-// have to use package "com.intellij.xdebugger.util" to avoid package clash
-fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
-  Promise.logError(LOG, it)
-  if (it != AsyncPromise.OBSOLETE_ERROR) {
-    reportError("${if (description == null) "" else description + ": "}${it.message}")
+class RejectErrorReporter @JvmOverloads constructor(private val session: XDebugSession, private val description: String? = null) : Consumer<Throwable> {
+  override fun consume(error: Throwable) {
+    if (Promise.logError(LOG, error)) {
+      session.reportError("${if (description == null) "" else "$description: "}${error.message}")
+    }
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
@@ -195,10 +196,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
     for (IntentionAction option : options) {
-      if (!option.isAvailable(myProject, containingEditor, containingFile)) {
-        // if option is not applicable in injected fragment, check in host file context
-        if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
-          continue;
+      if (containingFile != null && containingEditor != null && myEditor != null) {
+        if (!ShowIntentionActionsHandler.availableFor(containingFile, containingEditor, option)) {
+          //if option is not applicable in injected fragment, check in host file context
+          if (containingEditor == myEditor || !ShowIntentionActionsHandler.availableFor(myFile, myEditor, option)) {
+            continue;
+          }
+        }
+      }
+      else {
+        if (!option.isAvailable(myProject, containingEditor, containingFile)) {
+          // if option is not applicable in injected fragment, check in host file context
+          if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
+            continue;
+          }
         }
       }
       IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
@@ -289,6 +300,16 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   private static Icon getIcon(IntentionAction optionIntention) {
     return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
+  }
+
+  @VisibleForTesting
+  public Map<IntentionAction, List<IntentionAction>> getActionsWithSubActions() {
+    Map<IntentionAction, List<IntentionAction>> result = ContainerUtil.newLinkedHashMap();
+    for (IntentionActionWithTextCaching action : getValues()) {
+      List<IntentionActionWithTextCaching> subActions = getSubStep(action, action.getToolName()).getValues();
+      result.put(action.getAction(), ContainerUtil.map(subActions, IntentionActionWithTextCaching::getAction));
+    }
+    return result;
   }
 
   @Override

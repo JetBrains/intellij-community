@@ -19,12 +19,16 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.IndentRangesCalculator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +188,34 @@ public abstract class AbstractBlock implements ASTBlock {
    */
   @Nullable
   public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
+    if (ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
+      List<TextRange> extra = calculateExtraRanges(myNode);
+      return new ExtraReformatRanges(extra);
+    }
+    
     return null;
+  }
+
+  @NotNull
+  private List<TextRange> calculateExtraRanges(@NotNull ASTNode node) {
+    Document document = retrieveDocument(node, getProject(node));
+    if (document != null) {
+      TextRange ranges = node.getTextRange();
+      return new IndentRangesCalculator(document, ranges).calcIndentRanges();
+    }
+
+    return ContainerUtil.newArrayList(myNode.getTextRange());
+  }
+  
+
+  private static Document retrieveDocument(@NotNull ASTNode node, @NotNull Project project) {
+    PsiFile file = node.getPsi().getContainingFile();
+    return PsiDocumentManager.getInstance(project).getDocument(file);
+  }
+
+  @NotNull
+  private static Project getProject(@NotNull ASTNode node) {
+    return node.getPsi().getProject();
   }
   
 }

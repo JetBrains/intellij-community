@@ -82,8 +82,6 @@ inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwabl
 
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
 
-fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)
-
 @Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 
@@ -95,16 +93,6 @@ val Promise<*>.isPending: Boolean
 
 val Promise<*>.isFulfilled: Boolean
   get() = state == Promise.State.FULFILLED
-
-inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
-  try {
-    return runnable()
-  }
-  catch (e: Throwable) {
-    setError(e)
-    return null
-  }
-}
 
 fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   if (promises.isEmpty()) {
