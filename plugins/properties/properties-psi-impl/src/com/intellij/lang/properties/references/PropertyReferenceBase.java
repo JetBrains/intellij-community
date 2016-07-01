@@ -21,9 +21,11 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
+import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
@@ -187,6 +189,9 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   private static boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {
       return true;
+    }
+    if (element instanceof PomTargetPsiElement) {
+      return ((PomTargetPsiElement)element).getTarget() instanceof XmlProperty;
     }
     if (element instanceof XmlTag && ((XmlTag)element).getName().equals(XmlPropertiesFileImpl.ENTRY_TAG_NAME)) {
       return PropertiesImplUtil.isPropertiesFile(element.getContainingFile());
