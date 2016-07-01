@@ -232,7 +232,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
   return true
 }
 
-fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
+private fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
   if (a == a2) {
     return true
   }
