@@ -20,11 +20,13 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +41,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.references.PropertyReferenceBase");
+  private static final Logger LOG = Logger.getInstance(PropertyReferenceBase.class);
   protected final String myKey;
   protected final PsiElement myElement;
   protected boolean mySoft;
@@ -114,6 +115,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public boolean isReferenceTo(PsiElement element) {
+    if (!isProperty(element)) return false;
     for (ResolveResult result : multiResolve(false)) {
       final PsiElement el = result.getElement();
       if (el != null && el.isEquivalentTo(element)) return true;
@@ -180,5 +182,15 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private static boolean isProperty(PsiElement element) {
+    if (element instanceof IProperty) {
+      return true;
+    }
+    if (element instanceof XmlTag && ((XmlTag)element).getName().equals(XmlPropertiesFileImpl.ENTRY_TAG_NAME)) {
+      return PropertiesImplUtil.isPropertiesFile(element.getContainingFile());
+    }
+    return false;
   }
 }
