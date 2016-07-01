@@ -164,6 +164,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     add(mySplitter, BorderLayout.CENTER);
     myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
       @Override
+      public boolean isNodeExclusionAvailable(@NotNull InspectionTreeNode node) {
+        return true;
+      }
+
+      @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
         return node.isExcluded(myExcludedInspectionTreeNodesManager);
       }
