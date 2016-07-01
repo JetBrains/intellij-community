@@ -138,11 +138,13 @@ public class MacOSApplicationProvider implements ApplicationComponent {
         if (list.isEmpty()) return;
         File file = list.get(0);
         submit(() -> {
+          LOG.debug("MacMenu: try to open file");
           if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
             LOG.debug("MacMenu: load project for ", file);
             IdeaApplication.getInstance().setPerformProjectLoad(false);
             return;
           }
+          LOG.debug("MacMenu: project = ", project);
           if (project != null && file.exists()) {
             LOG.debug("MacMenu: open file ", file);
             OpenFileAction.openFile(file.getAbsolutePath(), project);
@@ -189,7 +191,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     }
 
     private static void submit(@NotNull Runnable task) {
-      LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread());
+      LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread(), "; ENABLED = ", ENABLED.get());
       if (!ENABLED.get()) return;
 
       Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();

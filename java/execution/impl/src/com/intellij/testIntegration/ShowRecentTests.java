@@ -16,6 +16,7 @@
 package com.intellij.testIntegration;
 
 import com.intellij.execution.TestStateStorage;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,8 @@ import java.util.Map;
 
 public class ShowRecentTests extends AnAction {
   private static final int TEST_LIMIT = Integer.MAX_VALUE;
-  
+  private static final String ID = "show.recent.tests.action";
+
   private static Date getSinceDate() {
     return new Date(System.currentTimeMillis() - Time.DAY);
   }
@@ -44,6 +46,8 @@ public class ShowRecentTests extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+
+    UsageTrigger.trigger(ID);
 
     final TestStateStorage testStorage = TestStateStorage.getInstance(project);
     final TestLocator testLocator = new TestLocator(project);
