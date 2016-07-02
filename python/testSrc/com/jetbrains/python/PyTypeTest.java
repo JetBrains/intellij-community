@@ -1065,6 +1065,20 @@ public class PyTypeTest extends PyTestCase {
                     "expr = func()");
   }
 
+  // PY-19967
+  public void testInheritedNamedTupleReplace() {
+    PyExpression expr = parseExpr("from collections import namedtuple\n" +
+                                  "class MyClass(namedtuple('T', 'a b c')):\n" +
+                                  "    def get_foo(self):\n" +
+                                  "        return self.a\n" +
+                                  "\n" +
+                                  "inst = MyClass(1,2,3)\n" +
+                                  "expr = inst._replace(a=2)\n");
+    doTest("MyClass",
+           expr,
+           TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
