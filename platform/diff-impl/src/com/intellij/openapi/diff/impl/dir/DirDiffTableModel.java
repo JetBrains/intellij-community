@@ -222,13 +222,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final ModalityState modalityState = ModalityState.current();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      EmptyProgressIndicator indicator = new EmptyProgressIndicator() {
-        @NotNull
-        @Override
-        public ModalityState getModalityState() {
-          return modalityState;
-        }
-      };
+      EmptyProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         try {
           if (myDisposed) return;

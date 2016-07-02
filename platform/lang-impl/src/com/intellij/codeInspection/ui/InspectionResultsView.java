@@ -164,6 +164,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     add(mySplitter, BorderLayout.CENTER);
     myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
       @Override
+      public boolean isNodeExclusionAvailable(@NotNull InspectionTreeNode node) {
+        return true;
+      }
+
+      @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
         return node.isExcluded(myExcludedInspectionTreeNodesManager);
       }
@@ -195,6 +200,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void onDone(boolean isExcludeAction) {
         if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          myTree.revalidate();
+          myTree.repaint();
+        } else {
           myTree.queueUpdate();
         }
         syncRightPanel();
@@ -357,8 +365,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return createToolbar(group);
   }
 
-  private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent();
+  private JComponent createToolbar(final DefaultActionGroup specialGroup) {
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false);
+    toolbar.setTargetComponent(this);
+    return toolbar.getComponent();
   }
 
   @Override

@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -296,56 +297,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
-    List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    descriptors.addAll(intentions.intentionsToShow);
-    descriptors.addAll(intentions.errorFixesToShow);
-    descriptors.addAll(intentions.inspectionFixesToShow);
-    descriptors.addAll(intentions.guttersToShow);
-
-    final int fileOffset = editor.getCaretModel().getOffset();
-    PsiElement hostElement = file.getViewProvider().findElementAt(fileOffset, file.getLanguage());
-    PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(file, fileOffset);
-
-    PsiFile injectedFile = injectedElement != null ? injectedElement.getContainingFile() : null;
-    Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
 
     List<IntentionAction> result = new ArrayList<IntentionAction>();
+    IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
+    for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
+      result.add(entry.getKey());
+      result.addAll(entry.getValue());
+    }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
         HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
-        final IntentionAction action = actionInGroup.getAction();
-
-        if (ShowIntentionActionsHandler.availableFor(file, editor, action)
-            ||
-            injectedElement != null && hostElement != injectedElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action)) {
-          descriptors.add(actionInGroup);
-        }
-      }
-    }
-
-    // add all intention options for simplicity
-    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
-      result.add(descriptor.getAction());
-
-      if (injectedElement != null && injectedElement != hostElement) {
-        List<IntentionAction> options = descriptor.getOptions(injectedElement, injectedEditor);
-        if (options != null) {
-          for (IntentionAction option : options) {
-            if (ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, option)) {
-              result.add(option);
-            }
-          }
-        }
-      }
-
-      if (hostElement != null) {
-        List<IntentionAction> options = descriptor.getOptions(hostElement, editor);
-        if (options != null) {
-          for (IntentionAction option : options) {
-            if (ShowIntentionActionsHandler.availableFor(file, editor, option)) {
-              result.add(option);
+        if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
+          result.add(actionInGroup.getAction());
+          List<IntentionAction> options = actionInGroup.getOptions(file, editor);
+          if (options != null) {
+            for (IntentionAction subAction : options) {
+              if (subAction.isAvailable(file.getProject(), editor, file)) {
+                result.add(subAction);
+              }
             }
           }
         }
@@ -1315,7 +1286,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-        configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.<String>emptyList(), getTestRootDisposable());
+        configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.emptyList(), getTestRootDisposable());
 
         DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
         daemonCodeAnalyzer.prepareForTest();

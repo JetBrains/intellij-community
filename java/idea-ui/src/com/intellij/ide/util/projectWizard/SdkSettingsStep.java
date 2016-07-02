@@ -56,9 +56,15 @@ public class SdkSettingsStep extends ModuleWizardStep {
   private final JPanel myJdkPanel;
 
   public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
-                           @NotNull Condition<SdkTypeId> sdkFilter) {
+                         @NotNull Condition<SdkTypeId> sdkTypeIdFilter) {
 
-    this(settingsStep.getContext(), moduleBuilder, sdkFilter);
+    this(settingsStep, moduleBuilder, sdkTypeIdFilter, null);
+  }
+
+  public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
+                           @NotNull Condition<SdkTypeId> sdkTypeIdFilter, @Nullable Condition<Sdk> sdkFilter) {
+
+    this(settingsStep.getContext(), moduleBuilder, sdkTypeIdFilter, sdkFilter);
     if (!isEmpty()) {
       settingsStep.addSettingsField(getSdkFieldLabel(settingsStep.getContext().getProject()), myJdkPanel);
     }
@@ -66,7 +72,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   public SdkSettingsStep(WizardContext context,
                          @NotNull ModuleBuilder moduleBuilder,
-                         @NotNull Condition<SdkTypeId> sdkFilter) {
+                         @NotNull Condition<SdkTypeId> sdkTypeIdFilter,
+                         @Nullable Condition<Sdk> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
     myWizardContext = context;
@@ -74,7 +81,11 @@ public class SdkSettingsStep extends ModuleWizardStep {
     Project project = myWizardContext.getProject();
     myModel.reset(project);
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkFilter, sdkFilter, false);
+    if (sdkFilter == null) {
+      sdkFilter = JdkComboBox.getSdkFilter(sdkTypeIdFilter);
+    }
+
+    myJdkComboBox = new JdkComboBox(myModel, sdkFilter, sdkTypeIdFilter, false);
     myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
@@ -91,7 +102,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       }
     });
 
-    Sdk sdk = getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkFilter);
+    Sdk sdk = getPreselectedSdk(project, component.getValue(selectedJdkProperty), sdkTypeIdFilter);
     myJdkComboBox.setSelectedJdk(sdk);
 
     JButton button = new JButton("Ne\u001Bw...");
@@ -103,7 +114,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
     myJdkPanel.add(myJdkComboBox, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     myJdkPanel.add(myJdkComboBox.getSetUpButton(), new GridBagConstraints(1, 0, 1, 1, 0, 0, WEST, NONE, JBUI.insetsLeft(4), 0, 0));
     if (myJdkComboBox.getItemCount() == 0) {
-      SdkType type = ContainerUtil.find(SdkType.getAllTypes(), sdkFilter);
+      SdkType type = ContainerUtil.find(SdkType.getAllTypes(), sdkTypeIdFilter);
       if (type != null && type.getDownloadSdkUrl() != null) {
         HyperlinkLabel label = new HyperlinkLabel("Download " + type.getPresentableName());
         label.setHyperlinkTarget(type.getDownloadSdkUrl());

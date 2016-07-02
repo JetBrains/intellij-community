@@ -449,7 +449,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
-    lfs.refreshFiles(indirectlyAffected, false, true, null);
     if (project.isDisposed()) return;
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);

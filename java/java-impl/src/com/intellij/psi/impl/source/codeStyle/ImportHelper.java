@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,9 @@ public class ImportHelper{
   }
 
   public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    PsiImportList oldList = file.getImportList();
+    if (oldList == null) return null;
+
     // Java parser works in a way that comments may be included to the import list, e.g.:
     //     import a;
     //     /* comment */
@@ -98,8 +101,8 @@ public class ImportHelper{
       codeStyleManager.reformat(dummyFile);
 
       PsiImportList newImportList = dummyFile.getImportList();
+      assert newImportList != null : dummyFile.getText();
       PsiImportList result = (PsiImportList)newImportList.copy();
-      PsiImportList oldList = file.getImportList();
       if (oldList.isReplaceEquivalent(result)) return null;
       if (!nonImports.isEmpty()) {
         PsiElement firstPrevious = newImportList.getPrevSibling();
@@ -431,6 +434,7 @@ public class ImportHelper{
 
     try {
       PsiImportList importList = file.getImportList();
+      assert importList != null : file;
       PsiImportStatement statement = useOnDemand ? factory.createImportStatementOnDemand(packageName) : factory.createImportStatement(refClass);
       importList.add(statement);
       if (useOnDemand) {

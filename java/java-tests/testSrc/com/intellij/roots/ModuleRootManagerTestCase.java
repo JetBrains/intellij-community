@@ -139,6 +139,6 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getAsmJar() {
-    return getJarFromLibDir("asm.jar");
+    return getJarFromLibDir("asm-all.jar");
   }
 }

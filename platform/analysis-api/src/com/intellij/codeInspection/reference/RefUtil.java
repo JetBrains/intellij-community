@@ -41,11 +41,27 @@ public class RefUtil {
     return false;
   }
 
+  public static boolean isImplicitRead(PsiElement element) {
+    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    for (ImplicitUsageProvider provider : implicitUsageProviders) {
+      if (provider.isImplicitRead(element)) return true;
+    }
+    return false;
+  }
+
   public static boolean contains(RefEntity element, @NotNull Collection<RefEntity> entities){
     for (RefEntity refEntity : entities) {
       if (Comparing.equal(refEntity, element)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  public static boolean isWriteImplicitly(PsiElement element) {
+    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    for (ImplicitUsageProvider provider : implicitUsageProviders) {
+      if (provider.isImplicitWrite(element)) return true;
     }
     return false;
   }

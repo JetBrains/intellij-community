@@ -287,7 +287,8 @@ def start_console_server(host, port, interpreter):
             server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
+        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+        sys.stderr.flush()
         raise
 
     # Tell UMD the proper default namespace

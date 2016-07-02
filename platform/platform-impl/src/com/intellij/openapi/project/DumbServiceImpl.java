@@ -46,7 +46,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
@@ -64,6 +66,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private boolean myUpdateFinishedQueued;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
+  private final Set<Object> myQueuedEquivalences = new HashSet<>();
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<>(5);
 
   /**
@@ -99,6 +102,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myUpdatesQueue.clear();
+    myQueuedEquivalences.clear();
     myRunWhenSmartQueue.clear();
     for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
       cancelTask(task);
@@ -187,6 +191,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Runnable runnable = () -> {
       if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (!myQueuedEquivalences.add(task.getEquivalenceObject())) {
+        Disposer.dispose(task);
         return;
       }
 
@@ -493,6 +502,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
 
         DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
+        myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
         ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
         if (indicator.isCanceled()) {
           Disposer.dispose(queuedTask);

@@ -71,13 +71,7 @@ public class BackgroundTaskUtil {
                                                     final int waitMillis,
                                                     final boolean forceEDT) {
     final ModalityState modality = ModalityState.current();
-    final ProgressIndicator indicator = new EmptyProgressIndicator() {
-      @NotNull
-      @Override
-      public ModalityState getModalityState() {
-        return modality;
-      }
-    };
+    final ProgressIndicator indicator = new EmptyProgressIndicator(modality);
 
     final Semaphore semaphore = new Semaphore(0);
     final AtomicReference<Runnable> resultRef = new AtomicReference<Runnable>();
@@ -164,13 +158,7 @@ public class BackgroundTaskUtil {
   public static ProgressIndicator executeOnPooledThread(@NotNull final Consumer<ProgressIndicator> task,
                                                         @NotNull Disposable parent,
                                                         final ModalityState modalityState) {
-    final ProgressIndicator indicator = new EmptyProgressIndicator() {
-      @NotNull
-      @Override
-      public ModalityState getModalityState() {
-        return modalityState;
-      }
-    };
+    final ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
 
     final Disposable disposable = new Disposable() {
       @Override

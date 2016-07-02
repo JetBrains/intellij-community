@@ -74,6 +74,10 @@ public class JavaGenericsUtil {
       return true;
     }
 
+    if (type instanceof PsiCapturedWildcardType) {
+      return isReifiableType(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+
     return false;
   }
 
@@ -127,6 +131,9 @@ public class JavaGenericsUtil {
     if (castType instanceof PsiClassType) {
       final PsiClassType castClassType = (PsiClassType)castType;
       operandType = operandType.getDeepComponentType();
+      if (operandType instanceof PsiCapturedWildcardType) {
+        operandType = ((PsiCapturedWildcardType)operandType).getUpperBound();
+      }
 
       if (!(operandType instanceof PsiClassType)) return false;
       final PsiClassType operandClassType = (PsiClassType)operandType;

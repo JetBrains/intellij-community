@@ -56,6 +56,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -481,6 +482,7 @@ public class FindDialog extends DialogWrapper {
       }
 
       final AtomicInteger resultsCount = new AtomicInteger();
+      final AtomicInteger resultsFilesCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
 
@@ -493,10 +495,19 @@ public class FindDialog extends DialogWrapper {
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+          Ref<VirtualFile> lastUsageFileRef = new Ref<VirtualFile>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
             final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
             usage.getPresentation().getIcon(); // cache icon
+
+            VirtualFile file = lastUsageFileRef.get();
+            VirtualFile usageFile = info.getVirtualFile();
+            if (file == null || !file.equals(usageFile)) {
+              resultsFilesCount.incrementAndGet();
+              lastUsageFileRef.set(usageFile);
+            }
+
             ApplicationManager.getApplication().invokeLater(() -> {
               model.addRow(new Object[]{usage});
               if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
@@ -505,13 +516,23 @@ public class FindDialog extends DialogWrapper {
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
           }, processPresentation, filesToScanInitially);
+
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             return new Continuation(() -> {
               if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
                 int occurrences = resultsCount.get();
+                int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");
+                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+
+                myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX,
+                                     PREVIEW_TITLE +
+                                     " (" + (foundAllUsages ? Integer.valueOf(occurrences) : occurrences + "+") +
+                                     UIBundle.message("message.matches", occurrences) +
+                                     " in " + (foundAllUsages ? Integer.valueOf(filesWithOccurrences) : filesWithOccurrences + "+") +
+                                     UIBundle.message("message.files", filesWithOccurrences) +
+                                     ")");
               }
             }, state);
           }

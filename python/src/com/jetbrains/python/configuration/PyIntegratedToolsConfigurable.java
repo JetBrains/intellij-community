@@ -169,7 +169,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().testInstalled(true, sdk.getHomePath(), name);
+              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(), name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }

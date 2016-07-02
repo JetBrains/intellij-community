@@ -16,10 +16,12 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class StubHierarchyInheritorSearcher extends QueryExecutorBase<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.StubHierarchyInheritorSearcher");
   public StubHierarchyInheritorSearcher() {
     super(true);
   }
@@ -54,6 +57,11 @@ public class StubHierarchyInheritorSearcher extends QueryExecutorBase<PsiClass, 
     if (!(p.getScope() instanceof GlobalSearchScope) || !isSearching()) return;
 
     PsiClass base = p.getClassToProcess();
+    PsiElement original = base.getOriginalElement();
+    if (original instanceof PsiClass) {
+      base = (PsiClass)original;
+    }
+
     GlobalSearchScope scope = (GlobalSearchScope)p.getScope();
     ClassHierarchy hierarchy = HierarchyService.getHierarchy(base.getProject());
     for (SmartClassAnchor anchor : hierarchy.getDirectSubtypeCandidates(base)) {

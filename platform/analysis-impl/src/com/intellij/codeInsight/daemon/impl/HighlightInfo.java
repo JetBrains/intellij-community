@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -48,6 +49,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,7 +183,7 @@ public class HighlightInfo implements Segment {
     TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
     if (element != null &&
         RainbowHighlighter.isRainbowEnabled() &&
-        !RainbowHighlighter.isByPassLanguage(element.getLanguage()) &&
+        !isByPass(element) &&
         isLikeVariable(type.getAttributesKey())) {
       String text = element.getContainingFile().getText();
       String name = text.substring(startOffset, endOffset);
@@ -190,6 +192,13 @@ public class HighlightInfo implements Segment {
     return attributes;
   }
 
+  @Contract("null -> false")
+  public static boolean isByPass(@Nullable PsiElement element) {
+    return element != null
+           && RainbowVisitor.existsPassSuitableForFile(element.getContainingFile());
+  }
+
+  @Contract("null -> false")
   private static boolean isLikeVariable(TextAttributesKey key) {
     if (key == null) return false;
     TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();

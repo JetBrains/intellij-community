@@ -626,4 +626,9 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @Override
+  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

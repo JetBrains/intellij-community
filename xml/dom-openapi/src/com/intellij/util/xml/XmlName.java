@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,7 @@ public class XmlName implements Comparable<XmlName> {
     final XmlName xmlName = (XmlName)o;
 
     if (!myLocalName.equals(xmlName.myLocalName)) return false;
-    if (Comparing.equal(myNamespaceKey, xmlName.myNamespaceKey)) return true;
-
-    if (myNamespaceKey != null ? !myNamespaceKey.equals(xmlName.myNamespaceKey) : xmlName.myNamespaceKey != null) return false;
-
-    return true;
+    return Comparing.equal(myNamespaceKey, xmlName.myNamespaceKey);
   }
 
   public int hashCode() {

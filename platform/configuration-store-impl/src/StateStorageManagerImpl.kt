@@ -132,8 +132,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.path, storageSpec.roamingType,
-          JavaAnnotationHelperForKotlin.getStorageClass(storageSpec), JavaAnnotationHelperForKotlin.getStateSplitterClass(storageSpec))
+  override final fun getStateStorage(storageSpec: Storage): StateStorage {
+    return getOrCreateStorage(storageSpec.path, storageSpec.roamingType,
+                              JavaAnnotationHelperForKotlin.getStorageClass(storageSpec),
+                              JavaAnnotationHelperForKotlin.getStateSplitterClass(storageSpec))
+  }
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
@@ -146,7 +149,16 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
                          @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
-    val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
+    val key: String
+    if (storageClass == StateStorage::class.java) {
+      if (normalizedCollapsedPath.isEmpty()) {
+        throw Exception("Normalized path is empty, raw path '$collapsedPath'")
+      }
+      key = normalizedCollapsedPath
+    }
+    else {
+      key = storageClass.name!!
+    }
     storageLock.withLock {
       var storage = storages[key]
       if (storage == null) {

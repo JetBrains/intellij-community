@@ -215,14 +215,13 @@ public abstract class SourcePosition implements Navigatable{
     @Nullable
     protected PsiElement calcPsiElement() {
       // currently PsiDocumentManager does not store documents for mirror file, so we store original file
-      PsiFile origPsiFile = getFile();
-      final PsiFile psiFile = origPsiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)origPsiFile).getDecompiledPsiFile() : origPsiFile;
+      PsiFile psiFile = getFile();
       int lineNumber = getLine();
       if(lineNumber < 0) {
         return psiFile;
       }
 
-      final Document document = getDocument(origPsiFile);
+      final Document document = getDocument(getFile());
       if (document == null) {
         return null;
       }

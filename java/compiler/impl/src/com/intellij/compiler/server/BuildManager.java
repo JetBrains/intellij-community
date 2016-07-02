@@ -1150,9 +1150,9 @@ public class BuildManager implements Disposable {
 
     final List<String> launcherCp = new ArrayList<String>();
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
+    launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     launcherCp.add(compilerPath);
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
-    launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
 

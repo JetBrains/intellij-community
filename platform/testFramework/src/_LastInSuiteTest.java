@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -63,13 +64,14 @@ public class _LastInSuiteTest extends TestCase {
       @Override
       public void run() {
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-        application.setDisposeInProgress(true);
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
         System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+        System.out.println("ProcessIOExecutorService threads created: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
+
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 

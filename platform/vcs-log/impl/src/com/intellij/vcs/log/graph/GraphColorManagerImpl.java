@@ -135,7 +135,14 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
       }
 
       VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);
-      return refs1.contains(bestRef) ? -1 : 1;
+      if (refs1.contains(bestRef)) {
+        if (refs2.contains(bestRef)) {
+          LOG.error(
+            "Different heads " + myHashGetter.fun(head1) + " and " + myHashGetter.fun(head2) + " contain the same reference " + bestRef);
+        }
+        return -1;
+      }
+      return 1;
     }
   }
 }

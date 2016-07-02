@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
                                                 @Nullable StringBuilder processingInfoStorage)
   {
     if (type.equals("imports")) {
-      if (!(file instanceof PsiJavaFile)) return null;
-      return ((PsiJavaFile)file).getImportList();
+      return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImportList() : null;
     }
     else if (type.equals("method")) {
       String name = tokenizer.nextToken();

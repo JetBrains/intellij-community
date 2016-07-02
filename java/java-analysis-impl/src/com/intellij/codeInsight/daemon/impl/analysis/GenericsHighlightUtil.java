@@ -753,7 +753,9 @@ public class GenericsHighlightUtil {
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",
                                                      JavaHighlightUtil.formatType(expression.getType()));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNotIterableForEachLoopFix(expression));
+      return highlightInfo;
     }
     return null;
   }

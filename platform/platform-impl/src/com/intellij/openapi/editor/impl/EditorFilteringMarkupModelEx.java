@@ -123,8 +123,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
-    myDelegate.fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged);
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
+    myDelegate.fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
   }
 
   @Override

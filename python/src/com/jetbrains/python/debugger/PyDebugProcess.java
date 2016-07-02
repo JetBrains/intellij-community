@@ -685,7 +685,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyStackFrame frame = currentFrame();
     PyDebugValue debugValue = var;
     if (var.isReturnedVal()) {
-      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + var.getName());
+      // return values are saved in dictionary on Python side, so the variable's name should be transformed
+      debugValue = var.setName(PyDebugValue.RETURN_VALUES_PREFIX + "[\"" + var.getName() + "\"]");
     }
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
   }

@@ -241,35 +241,11 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   }
   
   protected void doUp() {
-    doMove(true);
+    TableUtil.moveSelectedItemsUp(myTable);
   }
 
   protected void doDown() {
-    doMove(false);
-  }
-
-  protected void doMove(boolean up) {
-    if (myTable.isEditing()) {
-      myTable.getCellEditor().stopCellEditing();
-    }
-    
-    final int[] selected = myTable.getSelectedRows();
-    if (selected == null || selected.length == 0) return;
-    Arrays.sort(selected);
-
-    for (int i = up ? 0 : selected.length - 1; (up ? i < selected.length : i >= 0); i += up ? 1 : -1) {
-      int each = selected[i];
-      T tmp = myData.get(each + (up ? -1 : 1));
-      myData.set(each + (up ? -1 : 1), myData.get(each));
-      myData.set(each, tmp);
-    }
-    
-    myTableModel.fireTableDataChanged();
-    
-    for (int each : selected) {
-      int i = each + (up ? -1 : 1);
-      myTable.addRowSelectionInterval(i, i);
-    }
+    TableUtil.moveSelectedItemsDown(myTable);
   }
 
   public void setData(List<T> data) {

@@ -196,9 +196,6 @@
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CompareToUsesNonFinalVariableInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CovariantCompareTo" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.compareto.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.CovariantCompareToInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CovariantEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CovariantEqualsInspection"/>
@@ -1089,7 +1086,7 @@
                      implementationClass="com.siyeh.ig.inheritance.TypeParameterExtendsFinalClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection" cleanupTool="true"/>
 
     <!--group.names.initialization.issues-->
@@ -2555,6 +2552,14 @@
                      key="replace.method.ref.with.lambda.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ReplaceMethodRefWithLambdaInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SplitTryWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="split.try.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.exceptions.SplitTryWithMultipleResourcesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SplitMultiCatch" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="split.try.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.exceptions.SplitMultiCatchInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

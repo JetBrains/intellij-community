@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +52,7 @@ public class PagedFileStorage implements Forceable {
 
   static {
     final int lower = 100;
-    final int upper = /*SystemInfo.is64Bit ? 500 :*/ 200;
+    final int upper = SystemInfo.is64Bit ? 500 : 200;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
     final long max = maxDirectMemory() - 2 * BUFFER_SIZE;

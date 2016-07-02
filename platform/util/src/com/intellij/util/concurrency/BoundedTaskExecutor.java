@@ -16,16 +16,13 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.Patches;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,13 +71,15 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   // for diagnostics
   static Object info(Runnable info) {
     Object task = info;
+    String extra = null;
     if (task instanceof FutureTask) {
+      extra = ((FutureTask)task).isCancelled() ? " (future cancelled)" : ((FutureTask)task).isDone() ? " (future done)" : null;
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Runnable.class, "task"), task);
     }
-    return task;
+    return extra == null ? task : task == null ? extra : task.getClass() + extra;
   }
 
   @Override
@@ -106,24 +105,18 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return myShutdown;
   }
 
+  // can be executed even after shutdown
   private static class LastTask extends FutureTask<Void> {
-    LastTask() {
-      super(EmptyRunnable.getInstance(), null);
+    LastTask(@NotNull Runnable runnable) {
+      super(runnable, null);
     }
   }
+
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    if (!isShutdown()) throw new IllegalStateException("you must call shutdown() first");
-    return executeLastTask(this, timeout, unit);
-  }
-
-  // return true if executed, false if timed out
-  private static boolean executeLastTask(@NotNull Executor executor, long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    LastTask task = new LastTask();
-    executor.execute(task);
+    if (!isShutdown()) throw new IllegalStateException("you must call shutdown() or shutdownNow() first");
     try {
-      task.get(timeout, unit);
-      return true;
+      waitAllTasksExecuted(timeout, unit);
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e.getCause());
@@ -131,6 +124,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     catch (TimeoutException e) {
       return false;
     }
+    return true;
   }
 
   @Override
@@ -192,38 +186,33 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     return null;
   }
 
-  private void runFirstTaskThenPollAndRunRest(@NotNull Runnable first, long status) {
-    // we are back inside backend executor, no need to call .execute() - just run synchronously
-    Runnable task = first;
-    do {
-      try {
-        task.run();
-      }
-      catch (Error ignored) {
-        // exception will be stored in this FutureTask status
-      }
-      catch (RuntimeException ignored) {
-        // exception will be stored in this FutureTask status
-      }
-      task = pollOrGiveUp(status);
-    }
-    while (task != null);
-  }
-
-  private void wrapAndExecute(@NotNull final Runnable task, final long status) {
+  private void wrapAndExecute(@NotNull final Runnable firstTask, final long status) {
     try {
-      final AtomicReference<Runnable> firstTask = new AtomicReference<Runnable>(task);
+      final AtomicReference<Runnable> currentTask = new AtomicReference<Runnable>(firstTask);
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          runFirstTaskThenPollAndRunRest(firstTask.get(), status);
-          firstTask.set(null);
+          // we are back inside backend executor, no need to call .execute() - just run synchronously
+          Runnable task = currentTask.get();
+          do {
+            currentTask.set(task);
+            try {
+              task.run();
+            }
+            catch (Error ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            catch (RuntimeException ignored) {
+              // exception will be stored in this FutureTask status
+            }
+            task = pollOrGiveUp(status);
+          }
+          while (task != null);
         }
 
         @Override
         public String toString() {
-          Runnable runnable = firstTask.get();
-          return runnable == null ? super.toString() : runnable.toString();
+          return String.valueOf(info(currentTask.get()));
         }
       });
     }
@@ -237,34 +226,33 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  @TestOnly
-  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
     // and wait for them all to finish
-    final Runnable wait = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          started.countDown();
-          readyToFinish.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
-        return submit(wait);
+        final LastTask wait = new LastTask(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              started.countDown();
+              readyToFinish.await();
+            }
+            catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        });
+        execute(wait);
+        return wait;
       }
     });
     try {
       if (!started.await(timeout, unit)) {
-        throw new RuntimeException("Interrupted by timeout. " + this +
-                                   "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
+        throw new TimeoutException("Interrupted by timeout. " + this);
       }
     }
     catch (InterruptedException e) {

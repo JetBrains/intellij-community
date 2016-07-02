@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,6 +53,7 @@ import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.apache.http.HttpStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -68,8 +71,6 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
-
 /**
  * @author oleg
  */
@@ -83,10 +84,10 @@ public class GithubShareAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   // get gitRepository
@@ -149,7 +150,7 @@ public class GithubShareAction extends DumbAwareAction {
     final String description = shareDialog.getDescription();
     final String remoteName = shareDialog.getRemoteName();
 
-    new Task.Backgroundable(project, "Sharing project on GitHub...") {
+    new Task.Backgroundable(project, "Sharing Project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         // create GitHub repo (network)
@@ -405,7 +406,7 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements TypeSafeDataProvider {
+  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements DataProvider {
     @NotNull private final Project myProject;
     private CommitMessage myCommitMessagePanel;
 
@@ -442,11 +443,13 @@ public class GithubShareAction extends DumbAwareAction {
       return myCommitMessagePanel.getComment();
     }
 
+    @Nullable
     @Override
-    public void calcData(DataKey key, DataSink sink) {
-      if (key == VcsDataKeys.COMMIT_MESSAGE_CONTROL) {
-        sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, myCommitMessagePanel);
+    public Object getData(@NonNls String dataId) {
+      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
+        return myCommitMessagePanel;
       }
+      return null;
     }
 
     @Override

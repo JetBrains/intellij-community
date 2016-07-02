@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
@@ -20,6 +21,9 @@ public abstract class FileIndexBase implements FileIndex {
 
   @NotNull
   protected DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWindow) {
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
     return myDirectoryIndex.getInfoForFile(file);
   }
 

@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -95,7 +94,7 @@ public class TypesUtil {
                                                                       @NotNull GroovyPsiElement place,
                                                                       PsiType[] argumentTypes,
                                                                       boolean incompleteCode) {
-    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, true, incompleteCode, false, argumentTypes);
+    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, true, incompleteCode, argumentTypes);
   }
 
 

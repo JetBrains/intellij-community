@@ -44,15 +44,16 @@ public class BlockIndentOptions {
   @NotNull
   public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull AbstractBlockWrapper block) {
     final Language language = block.getLanguage();
-    if (language == null) {
-      return myIndentOptions;
+    if (language != null) {
+      final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
+      if (commonSettings != null) {
+        final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
+        if (result != null) {
+          return result;
+        }
+      }
     }
-    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
-    if (commonSettings == null) {
-      return myIndentOptions;
-    }
-    final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
-    return result == null ? myIndentOptions : result;
+    return myIndentOptions;
   }
   
   public int getRightMargin() {

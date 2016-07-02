@@ -379,19 +379,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter, areRenderersInvolved(highlighter), 
-                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
+                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter, areRenderersInvolved(highlighter), 
-                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
+                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
-        
+
         if (myUseNewRendering && renderersChanged) {
           updateGutterSize();
         }
@@ -413,7 +413,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        if (myUseNewRendering && start != end) {
+        if (myUseNewRendering && start != end && fontStyleOrColorChanged) {
           myView.invalidateRange(start, end);
         }
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
@@ -5455,7 +5455,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
       boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
       boolean newAvailable = filter == null || filter.value(highlighter);
-      if (oldAvailable != newAvailable) myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, false);
+      if (oldAvailable != newAvailable) {
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
+                                                EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+      }
     }
   }
 

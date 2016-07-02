@@ -49,10 +49,10 @@ public class RemoveInitializerFix implements LocalQuickFix {
     sideEffectAwareRemove(project, (PsiExpression)psiInitializer, psiInitializer, variable);
   }
 
-  protected static void sideEffectAwareRemove(Project project,
-                                              PsiExpression psiInitializer,
-                                              PsiElement elementToDelete,
-                                              PsiVariable variable) {
+  public static void sideEffectAwareRemove(Project project,
+                                           PsiExpression psiInitializer,
+                                           PsiElement elementToDelete,
+                                           PsiVariable variable) {
     if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return;
 
     final PsiElement declaration = variable.getParent();
@@ -82,7 +82,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
         if (parent instanceof PsiExpressionStatement) {
           parent.replace(statementFromText);
         } else {
-          declaration.getParent().addAfter(statementFromText, declaration);
+          declaration.getParent().addBefore(statementFromText, declaration);
           elementToDelete.delete();
         }
       }

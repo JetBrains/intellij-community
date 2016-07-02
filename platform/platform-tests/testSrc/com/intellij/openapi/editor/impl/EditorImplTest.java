@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -385,6 +386,20 @@ public class EditorImplTest extends AbstractEditorTest {
         document.setInBulkUpdate(false);
       }
     }.execute();
+    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+    assertEquals(1, highlighters.length);
+    assertEquals(7, highlighters[0].getStartOffset());
+    assertEquals(8, highlighters[0].getEndOffset());
+  }
+
+  public void testChangingHighlightersAfterClearingFoldingsDuringFoldingBatchUpdate() throws Exception {
+    initText("abc\n\ndef");
+    addCollapsedFoldRegion(2, 6, "...");
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+      ((FoldingModelEx)myEditor.getFoldingModel()).clearFoldRegions();
+      myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
+                                                    HighlighterTargetArea.EXACT_RANGE);
+    });
     RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());

@@ -86,17 +86,9 @@ public class BoundedTaskExecutorTest extends TestCase {
           }
         });
       }
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        try {
-          executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
 
-      assertEquals(0, executor.shutdownNow().size());
-      assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(N + 50000, TimeUnit.MILLISECONDS));
       backendExecutor.shutdownNow();
       assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
       assertEquals(maxTasks, max.get());
@@ -112,7 +104,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     Integer result = f1.get();
     assertEquals(42, result.intValue());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -135,7 +127,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertFalse(run.get());
     assertTrue(s1.isDone());
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -143,54 +135,42 @@ public class BoundedTaskExecutorTest extends TestCase {
   public void testStressWhenSomeTasksCallOtherTasksGet() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
-      final Disposable myDisposable = Disposer.newDisposable();
-      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks, myDisposable);
+      BoundedTaskExecutor executor = new BoundedTaskExecutor(backendExecutor, maxSimultaneousTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger maxThreads = new AtomicInteger();
 
-      try {
-        int N = 5000;
-        Future[] futures = new Future[N];
-        Random random = new Random();
-        for (int i = 0; i < N; i++) {
-          final int finalI = i;
-          final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-          futures[i] = executor.submit(() -> {
-            maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
+      int N = 5000;
+      Future[] futures = new Future[N];
+      Random random = new Random();
+      for (int i = 0; i < N; i++) {
+        final int finalI = i;
+        final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
+        futures[i] = executor.submit(() -> {
+          maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
 
-            try {
-              int r = random.nextInt(finalMaxSimultaneousTasks);
-              int prev = finalI - r;
-              if (prev < finalI && prev >= 0) {
-                try {
-                  futures[prev].get();
-                }
-                catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              }
-              TimeoutUtil.sleep(r);
-            }
-            finally {
-              running.decrementAndGet();
-            }
-          });
-        }
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
           try {
-            executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
+            int r = random.nextInt(finalMaxSimultaneousTasks);
+            int prev = finalI - r;
+            if (prev < finalI && prev >= 0) {
+              try {
+                futures[prev].get();
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+            TimeoutUtil.sleep(r);
           }
-          catch (Exception e) {
-            throw new RuntimeException(e);
+          finally {
+            running.decrementAndGet();
           }
         });
-        for (Future future : futures) {
-          assertTrue(future.isDone());
-        }
       }
-      finally {
-        Disposer.dispose(myDisposable);
-        assertTrue(executor.isShutdown());
+
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+      for (Future future : futures) {
+        assertTrue(future.isDone());
       }
 
       assertTrue("Max threads was: "+maxThreads+" but bound was: "+maxSimultaneousTasks, maxThreads.get() <= maxSimultaneousTasks);
@@ -219,7 +199,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     String logs = log.toString();
     assertEquals(expected.toString(), logs);
     executor.shutdownNow();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     backendExecutor.shutdownNow();
     assertTrue(backendExecutor.awaitTermination(100, TimeUnit.SECONDS));
   }
@@ -365,7 +345,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       assertTrue(futures[i].isDone());
     }
 
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testShutdownMustDisableSubmit() throws ExecutionException, InterruptedException {
@@ -400,7 +380,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
     String logs = log.toString();
     assertEquals(StringUtil.repeat(" ",N), logs);
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
@@ -454,7 +434,7 @@ public class BoundedTaskExecutorTest extends TestCase {
       assertTrue("Must create no more than "+nMaxThreads+" workers but got: "+workers,
                  workers.size() <= nMaxThreads);
       executor.shutdownNow();
-      assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     }
   }
 
@@ -468,22 +448,30 @@ public class BoundedTaskExecutorTest extends TestCase {
   }
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
-    ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
-    int N = 100000;
-    StringBuffer log = new StringBuffer(N*4);
+    for (int maxTasks=1; maxTasks<10; maxTasks++) {
+      System.out.println("maxTasks = " + maxTasks);
+      ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, maxTasks);
+      int N = 1000;
+      StringBuffer log = new StringBuffer(N*4);
 
-    Future[] futures = new Future[N];
-    for (int i = 0; i < N; i++) {
-      futures[i] = executor.submit(() -> log.append(" "));
-    }
-    executor.shutdown();
-    assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+      Future[] futures = new Future[N];
+      for (int i = 0; i < N; i++) {
+        int finalI = i;
+        futures[i] = executor.submit(() -> {
+          if (finalI < 100) {
+            TimeoutUtil.sleep(2);
+          }
+          return log.append(" ");
+        });
+      }
+      executor.shutdown();
+      assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
 
-    String logs = log.toString();
-    assertEquals(StringUtil.repeat(" ",N), logs);
-    for (Future future : futures) {
-      assertTrue(future.isDone());
-      assertTrue(!future.isCancelled());
+      for (Future future : futures) {
+        assertTrue(future.isDone());
+        assertTrue(!future.isCancelled());
+      }
+      assertEquals(N, log.length());
     }
   }
 
@@ -494,7 +482,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertFalse(executor2.awaitTermination(1, TimeUnit.SECONDS));
     assertFalse(future.isDone());
     assertFalse(future.isCancelled());
-    assertTrue(executor2.awaitTermination(10, TimeUnit.SECONDS));
+    assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
   }

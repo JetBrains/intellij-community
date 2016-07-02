@@ -27,6 +27,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -71,6 +72,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
     createCourseArchive(project, module, myZipName, myLocationDir, true);
+    EduUsagesCollector.createdCourseArchive();
   }
 
   public static void createCourseArchive(final Project project, Module module, String zipName, String locationDir, boolean showMessage) {

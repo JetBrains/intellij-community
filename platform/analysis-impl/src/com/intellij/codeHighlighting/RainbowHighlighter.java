@@ -15,27 +15,30 @@
  */
 package com.intellij.codeHighlighting;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class RainbowHighlighter {
   private final float[] myFloats;
-  private static final HashSet<Language> BY_PASS_LANGUAGES = new HashSet<Language>();
+  @NotNull private final TextAttributesScheme myColorsScheme;
 
-  public RainbowHighlighter(@NotNull TextAttributesScheme colorsScheme) {
-    float[] components = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT).getForegroundColor().getRGBColorComponents(null);
+  public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
+    myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
+    float[] components = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT).getForegroundColor().getRGBColorComponents(null);
     myFloats = Color.RGBtoHSB((int)(255 * components[0]), (int)(255 * components[0]), (int)(255 * components[0]), null);
   }
 
@@ -46,27 +49,29 @@ public class RainbowHighlighter {
     return Registry.is("editor.rainbow.identifiers", false);
   }
 
-  public static void registerByPassLanguage(@NotNull Language language) {
-    BY_PASS_LANGUAGES.add(language);
-  }
-
-  public static boolean isByPassLanguage(@Nullable Language language) {
-    return BY_PASS_LANGUAGES.contains(language);
-  }
-
   @NotNull
   public TextAttributes getAttributes(@NotNull String name, @NotNull TextAttributes origin) {
     int hash = StringHash.murmur(name, 0);
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
     //System.out.println("name = " + name + " \tv=" + v);
-    final Color color = Color.getHSBColor(v, 0.7f, myFloats[2] + .3f);
 
-    return TextAttributes.fromFlyweight(origin
-                                          .getFlyweight()
-                                          .withForeground(color)
-    //fixme: uta: foreground color is not activated for local variables without background color reset
-                                          .withBackground(UIManager.getColor("EditorPane.background"))
-    );
+    return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(Color.getHSBColor(v, 0.7f, myFloats[2] + .3f)));
   }
+
+  public HighlightInfo getInfo(
+    @Nullable String nameKey,
+    @Nullable PsiElement id,
+    @Nullable TextAttributesKey colorKey) {
+
+    if (id == null || nameKey == null || StringUtil.isEmpty(nameKey)) return null;
+    if (colorKey == null) colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
+    final TextAttributes attributes = getAttributes(nameKey, myColorsScheme.getAttributes(colorKey));
+    return HighlightInfo
+      .newHighlightInfo(RAINBOW_ELEMENT)
+      .textAttributes(attributes)
+      .range(id)
+      .create();
+  }
+
 }

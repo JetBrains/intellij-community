@@ -28,17 +28,17 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.function.Consumer;
 
 /**
  * @author Dmitry Batkovich
  */
 public class InspectionTreeHtmlWriter {
+  private static final String ERROR_COLOR = "ffabab";
+  private static final String WARNING_COLOR = "f2f794";
+
   private final InspectionTree myTree;
   private final String myOutputDir;
   private final StringBuffer myBuilder = new StringBuffer();
@@ -126,26 +126,26 @@ public class InspectionTreeHtmlWriter {
     else if (node instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
       String warningLevelName = "";
-      Color color = null;
+      String color = null;
       if (descriptor instanceof ProblemDescriptorBase) {
         final InspectionToolWrapper tool = ((ProblemDescriptionNode)node).getToolWrapper();
-        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getID());
-        if (key != null) {
-
-          HighlightSeverity severity = myProfile.getErrorLevel(key, ((ProblemDescriptorBase)descriptor).getStartElement()).getSeverity();
-          final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-          final Icon icon = level.getIcon();
-          if (icon instanceof HighlightDisplayLevel.SingleColorIcon) {
-            color = ((HighlightDisplayLevel.SingleColorIcon)icon).getColor();
-          }
-          warningLevelName = level.getName();
+        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+        HighlightSeverity severity = myProfile.getErrorLevel(key, ((ProblemDescriptorBase)descriptor).getStartElement()).getSeverity();
+        final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+        if (HighlightDisplayLevel.ERROR.equals(level)) {
+          color = ERROR_COLOR;
         }
+        else if (HighlightDisplayLevel.WARNING.equals(level)) {
+          color = WARNING_COLOR;
+        }
+        warningLevelName = level.getName();
       }
 
       final StringBuilder sb = new StringBuilder();
-      sb.append("<span style=\"margin:1px;background:#");
+      sb.append("<span style=\"margin:1px;");
       if (color != null) {
-        UIUtil.appendColor(color, sb);
+        sb.append("background:#");
+        sb.append(color);
       }
       sb.append("\">");
       sb.append(warningLevelName);

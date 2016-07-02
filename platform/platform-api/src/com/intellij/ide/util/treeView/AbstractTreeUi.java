@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,8 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.WorkerThread;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
@@ -49,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -96,7 +94,10 @@ public class AbstractTreeUi {
   private TreeExpansionListener myExpansionListener;
   private MySelectionListener mySelectionListener;
 
-  private WorkerThread myWorker = null;
+  private final QueueProcessor<Runnable> myWorker = new QueueProcessor<Runnable>(runnable -> {
+    runnable.run();
+    TimeoutUtil.sleep(1);
+  });
   private final Set<Runnable> myActiveWorkerTasks = new HashSet<Runnable>();
 
   private ProgressIndicator myProgress;
@@ -455,10 +456,8 @@ public class AbstractTreeUi {
       disposeNode(getRootNode());
       myElementToNodeMap.clear();
       getUpdater().cancelAllRequests();
-      if (myWorker != null) {
-        myWorker.dispose(true);
-        clearWorkerTasks();
-      }
+      myWorker.clear();
+      clearWorkerTasks();
       TREE_NODE_WRAPPER.setValue(null);
       if (myProgress != null) {
         myProgress.cancel();
@@ -468,7 +467,6 @@ public class AbstractTreeUi {
 
       myTree = null;
       setUpdater(null);
-      myWorker = null;
       myTreeStructure = null;
       myBuilder.releaseUi();
       myBuilder = null;
@@ -941,7 +939,7 @@ public class AbstractTreeUi {
       return update.get();
     }
     catch (IndexNotReadyException e) {
-      warnOnIndexNotReady();
+      warnOnIndexNotReady(e);
       return false;
     }
   }
@@ -1529,6 +1527,11 @@ public class AbstractTreeUi {
         }
 
         final Object element = getElementFor(node);
+        if (element == null) {
+          debug("null element for node " + node);
+          result.set(new Pair<Boolean, LoadedChildren>(true, null));
+          return;
+        }
 
         addToUpdatingChildren(node);
 
@@ -1616,7 +1619,7 @@ public class AbstractTreeUi {
       });
     }
     catch (IndexNotReadyException e) {
-      warnOnIndexNotReady();
+      warnOnIndexNotReady(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     finally {
@@ -1648,10 +1651,10 @@ public class AbstractTreeUi {
     return passOne.get();
   }
 
-  private void warnOnIndexNotReady() {
+  private void warnOnIndexNotReady(IndexNotReadyException e) {
     if (!myWasEverIndexNotReady) {
       myWasEverIndexNotReady = true;
-      LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
+      LOG.error("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure(), e);
     }
   }
 
@@ -1724,7 +1727,7 @@ public class AbstractTreeUi {
             }
           }
         }
-        return Promise.all(promises);
+        return Promises.all(promises);
       }
     }, pass, node);
   }
@@ -3441,18 +3444,8 @@ public class AbstractTreeUi {
       execute(pooledThreadRunnable);
     }
     else {
-      if (myWorker == null || myWorker.isDisposed()) {
-        myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
-        myWorker.start();
-        myWorker.addTaskFirst(pooledThreadRunnable);
-        myWorker.dispose(false);
-      }
-      else {
-        myWorker.addTaskFirst(pooledThreadRunnable);
-      }
+      myWorker.addFirst(pooledThreadRunnable);
     }
-
-
     return result;
   }
 
@@ -4732,11 +4725,7 @@ public class AbstractTreeUi {
     myUnbuiltNodes.clear();
     myUpdateFromRootRequested = true;
 
-    if (myWorker != null) {
-      Disposer.dispose(myWorker);
-      myWorker = null;
-    }
-
+    myWorker.clear();
     myTree.invalidate();
 
     state.restore(null);

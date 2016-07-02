@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -90,6 +94,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
       }
     }
 
+    final FileType[] types = reference.getFileReferenceSet().getSuitableFileTypes();
     final THashSet<PsiElement> set = new THashSet<PsiElement>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
     final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
 
@@ -99,6 +104,10 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
       Object item = reference.createLookupItem(candidate);
       if (item == null) {
         item = FileInfoManager.getFileLookupItem(candidate);
+      }
+      if (candidate instanceof PsiFile && item instanceof LookupElement &&
+          types.length > 0 && ArrayUtil.contains(((PsiFile)candidate).getFileType(), types)) {
+        item = PrioritizedLookupElement.withPriority((LookupElement)item, Double.MAX_VALUE);
       }
       variants[i] = item;
     }

@@ -319,6 +319,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("pluginWith9999InUntilBuild.xml");
   }
 
+  public void testPluginForOldIdeWith9999InUntilBuild() {
+    myFixture.testHighlighting("pluginForOldIdeWith9999InUntilBuild.xml");
+  }
+
   public void testPluginWith10000InUntilBuild()  {
     myFixture.testHighlighting("pluginWith10000InUntilBuild.xml");
   }

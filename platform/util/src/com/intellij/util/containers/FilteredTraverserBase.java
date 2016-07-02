@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +62,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         return children(t);
       }
     };
-    return traversal.traversal(getRoots(), adjusted).filter(meta.filter.AND());
+    return traversal.traversal(getRoots(), adjusted).filter(meta.filter.AND);
   }
 
   @NotNull
@@ -157,11 +156,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return JBIterable.empty();
     }
     else if (meta.regard.next == null && meta.forceDisregard.next == null) {
-      return JBIterable.from(tree.fun(node)).filter(not(meta.forceIgnore.OR()));
+      return JBIterable.from(tree.fun(node)).filter(not(meta.forceIgnore.OR));
     }
     else {
       // traverse subtree to select accepted children
-      return TreeTraversal.GUIDED_TRAVERSAL.traversal(node, tree).intercept(meta.createChildrenGuide(node));
+      return TreeTraversal.GUIDED_TRAVERSAL(meta.createChildrenGuide(node)).traversal(node, tree);
     }
   }
 
@@ -246,21 +245,14 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return new Meta<T>(roots, traversal, expand, regard, this.filter, forceIgnore, forceDisregard.append(c));
     }
 
-    Function.Mono<TreeTraversal.GuidedIt<T>> createChildrenGuide(final T parent) {
-      final Condition<? super T> expand = buildExpandConditionForChildren(parent);
-      class G implements Consumer<TreeTraversal.GuidedIt<T>>, Function.Mono<TreeTraversal.GuidedIt<T>> {
-
+    TreeTraversal.GuidedIt.Guide<T> createChildrenGuide(final T parent) {
+      return new TreeTraversal.GuidedIt.Guide<T>() {
+        final Condition<? super T> expand = buildExpandConditionForChildren(parent);
         @Override
-        public TreeTraversal.GuidedIt<T> fun(TreeTraversal.GuidedIt<T> it) {
-          return it.setGuide(this);
+        public void guide(TreeTraversal.GuidedIt<T> guidedIt) {
+          doPerformChildrenGuidance(guidedIt, expand);
         }
-
-        @Override
-        public void consume(TreeTraversal.GuidedIt<T> it) {
-          doPerformChildrenGuidance(it, expand);
-        }
-      }
-      return new G();
+      };
     }
 
     private void doPerformChildrenGuidance(TreeTraversal.GuidedIt<T> it, Condition<? super T> expand) {
@@ -296,7 +288,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
           c = c.next;
         }
       }
-      return copy == null ? Condition.FALSE : copy.OR();
+      return copy == null ? Condition.FALSE : copy.OR;
     }
 
     private static final Meta<?> EMPTY = new Meta<Object>(
@@ -326,37 +318,33 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return new Cond<T>(impl, this);
     }
 
-    private boolean valueAnd(T t) {
+    boolean valueAnd(T t) {
       for (Cond<T> c = this; c != null; c = c.next) {
         if (!c.impl.value(t)) return false;
       }
       return true;
     }
 
-    private boolean valueOr(T t) {
+    boolean valueOr(T t) {
       for (Cond<T> c = this; c != null; c = c.next) {
         if (c.impl.value(t)) return true;
       }
       return false;
     }
 
-    Condition<? super T> OR() {
-      return new Condition<T>() {
-        @Override
-        public boolean value(T t) {
-          return valueOr(t);
-        }
-      };
-    }
+    final Condition<? super T> OR = new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return valueOr(t);
+      }
+    };
 
-    Condition<? super T> AND() {
-      return new Condition<T>() {
-        @Override
-        public boolean value(T t) {
-          return valueAnd(t);
-        }
-      };
-    }
+    final Condition<? super T> AND = new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return valueAnd(t);
+      }
+    };
 
     @Override
     public String toString() {

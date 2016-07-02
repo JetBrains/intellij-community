@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,13 +126,7 @@ public class BraceHighlightingHandler {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
         final PsiFile injected;
         try {
-          if (psiFile instanceof PsiCompiledFile) {
-            injected = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
-          }
-          else if (psiFile instanceof PsiCompiledElement ||
-                   psiFile instanceof PsiBinaryFile ||
-                   !isValidEditor(editor) ||
-                   !isValidFile(psiFile)) {
+          if (psiFile instanceof PsiBinaryFile || !isValidEditor(editor) || !isValidFile(psiFile)) {
             injected = null;
           }
           else {
@@ -489,9 +483,7 @@ public class BraceHighlightingHandler {
         }
       }
       else {
-        if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-          removeLineMarkers();
-        }
+        removeLineMarkers();
       }
 
       if (!scopeHighlighting) {

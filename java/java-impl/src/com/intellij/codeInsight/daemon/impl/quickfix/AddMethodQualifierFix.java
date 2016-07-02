@@ -50,8 +50,12 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    String text = QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.size() > 1 ? "" : myCandidates.get(0).getName());
-    if (myCandidates.size() > 1) {
+    final List<PsiVariable> candidates = getOrFindCandidates();
+    if (candidates.isEmpty()) {
+      return getFamilyName();
+    }
+    String text = QuickFixBundle.message("add.method.qualifier.fix.text", candidates.size() > 1 ? "" : candidates.get(0).getName());
+    if (candidates.size() > 1) {
       text += "...";
     }
     return text;
@@ -60,7 +64,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("add.method.qualifier.fix.family");
   }
 
   @Override
@@ -107,7 +111,7 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   @TestOnly
   public List<PsiVariable> getCandidates() {
-    return myCandidates;
+    return getOrFindCandidates();
   }
 
   @Override
@@ -115,8 +119,8 @@ public class AddMethodQualifierFix implements IntentionAction {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) {
       return;
     }
-    if (myCandidates.size() == 1 || UNIT_TEST_MODE) {
-      qualify(myCandidates.get(0), editor);
+    if (getOrFindCandidates().size() == 1 || UNIT_TEST_MODE) {
+      qualify(getOrFindCandidates().get(0), editor);
     }
     else {
       chooseAndQualify(editor);
@@ -125,7 +129,7 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   private void chooseAndQualify(final Editor editor) {
     final BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), myCandidates) {
+      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), getOrFindCandidates()) {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {

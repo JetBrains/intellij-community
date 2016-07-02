@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public abstract class JavaCodeStyleManager {
    * file if an Optimize Imports operation was performed on it.
    *
    * @param file the file to calculate the import list for.
-   * @return the calculated import list.
+   * @return the calculated import list, or {@code null} when the file has no import list.
    */
   public abstract PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file);
 

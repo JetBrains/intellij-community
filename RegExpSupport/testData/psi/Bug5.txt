@@ -1,0 +1,5 @@
+REGEXP_FILE
+  RegExpPatternImpl: <\{>
+    RegExpBranchImpl: <\{>
+      RegExpCharImpl: <\{>
+        PsiElement(ESC_CHARACTER)('\{')

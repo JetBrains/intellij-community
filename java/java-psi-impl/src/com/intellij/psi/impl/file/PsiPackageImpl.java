@@ -421,9 +421,4 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public boolean hasModifierProperty(@NonNls @NotNull final String name) {
     return false;
   }
-
-  @Override
-  public PsiQualifiedNamedElement getContainer() {
-    return getParentPackage();
-  }
 }

@@ -26,11 +26,8 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.*;
 import com.intellij.psi.util.FileTypeUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,8 +105,8 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return false;
       }
       else if (!m_allowConstructorAsInitializer) {
-        // constructors located in java.* packages probably have no non-local side effects
-        if (!ClassUtils.isImmutable(type) && !type.getCanonicalText().startsWith("java.")) {
+        // constructors located in library packages probably have no non-local side effects
+        if (!ClassUtils.isImmutable(type) && !LibraryUtil.isTypeInLibrary(type)) {
           return false;
         }
       }
@@ -130,6 +127,9 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return false;
       }
       final PsiVariable variable = (PsiVariable)target;
+      if (!ClassUtils.isImmutable(variable.getType()) && !CollectionUtils.isEmptyArray(variable)) {
+        return false;
+      }
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
@@ -141,6 +141,21 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : polyadicExpression.getOperands()) {
         if (!isMoveable(operand)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      // methods located in library packages probably have no non-local side effects
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (!(method instanceof PsiCompiledElement)) {
+        return false;
+      }
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      for (PsiExpression argument : argumentList.getExpressions()){
+        if (!isMoveable(argument)) {
           return false;
         }
       }

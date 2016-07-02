@@ -401,7 +401,6 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       // TODO ("      _-------_  _ _      " - "      _  _ _      ").trim()
       ("      _-------_  _ _      " - "      _  _ _      ").default()
       ("      _       _--_-_------" - "      _--_-_      ").trim()
-      ("      _-------_  _ _      " - "      _  _ _      ").ignore()
       testAll()
     }
 
@@ -417,6 +416,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       ("     _------_ _     " - "     _ _     ").default() // result after second step correction
+      ("     _      _-_-----" - "     _-_     ").ignore()  // result looks strange because of 'diff.unimportant.line.char.count'
       testAll()
     }
   }
@@ -429,12 +429,11 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  fun `test ignore whitespace policy applies two-step correction`() {
+  fun `test ignore whitespace policy does not applies two-step correction`() {
     lines() {
       ("1_ _  1" - "  1")
       ("-_-_   " - "   ").default()
       (" _-_---" - "   ").trim()
-      ("-_-_   " - "   ").ignore()
       testAll()
     }
 
@@ -452,7 +451,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  fun `test regression - second step correction should be performed if there are no ambigous matchings`() {
+  fun `test regression - second step correction should be performed if there are no ambiguous matchings`() {
     lines {
       ("}_ }" - " }_}")
       ("-_--" - "--_-").default()
@@ -480,6 +479,23 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       (" X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_ X" - "X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X_X ")
       ("--_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_-_--" - "-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _--").default()
       ("  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _-_-_-_-_--" - " _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - second step correction should search for matchings in its prefix`() {
+    lines() {
+      ("Z_X_Z_X __Y" - "X__Y")
+      ("-_ _-_--__ " - " __ ").default()
+      ("-_-_-_  __ " - " __ ").trim()
+      testAll()
+    }
+
+    // do not break other IW-matchings during second step
+    lines() {
+      ("Z_X_K_Z_X __Y" - "K _X__Y")
+      ("-_-_-_-_--__ " - "--_-__ ").default()
+      ("-_-_ _-_  __ " - "  _ __ ").trim()
       testAll()
     }
   }

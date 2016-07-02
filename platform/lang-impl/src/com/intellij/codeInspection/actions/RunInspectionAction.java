@@ -40,26 +40,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,7 +140,7 @@ public class RunInspectionAction extends GotoActionBase {
       project, analysisScope, module != null ? module.getName() : null,
       true, options, psiElement) {
 
-      private InheritOptionsForToolPanel myToolOptionsPanel;
+      private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 
       @Nullable
       @Override
@@ -158,8 +150,9 @@ public class RunInspectionAction extends GotoActionBase {
           JPanel additionPanel = new JPanel();
           additionPanel.setLayout(new BoxLayout(additionPanel, BoxLayout.Y_AXIS));
           additionPanel.add(fileFilter);
-          myToolOptionsPanel = new InheritOptionsForToolPanel((InspectionProfileImpl)currentProfile, toolWrapper.getShortName(), project);
-          additionPanel.add(myToolOptionsPanel);
+          myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);//new InheritOptionsForToolPanel(toolWrapper.getShortName(), project);
+          additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
+          additionPanel.add(myUpdatedSettingsToolWrapper.getTool().createOptionsPanel());
           return additionPanel;
         } else {
           return fileFilter;
@@ -186,7 +179,7 @@ public class RunInspectionAction extends GotoActionBase {
       }
 
       private InspectionToolWrapper getToolWrapper() {
-        return myToolOptionsPanel == null ? toolWrapper : myToolOptionsPanel.getSelectedWrapper();
+        return myUpdatedSettingsToolWrapper == null ? toolWrapper : myUpdatedSettingsToolWrapper;
       }
 
       @NotNull
@@ -228,69 +221,16 @@ public class RunInspectionAction extends GotoActionBase {
     dialog.showAndGet();
   }
 
-  private static class InheritOptionsForToolPanel extends JPanel {
-    private final ProfilesComboBox myProfilesComboBox;
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final FactoryMap<InspectionProfile, Pair<InspectionToolWrapper, JComponent>> myProfile2ModifiedWrapper;
-
-    public InheritOptionsForToolPanel(final InspectionProfileImpl initial, final String toolShortName, final Project project) {
-      myProfile2ModifiedWrapper = new FactoryMap<InspectionProfile, Pair<InspectionToolWrapper, JComponent>>() {
-        @Nullable
-        @Override
-        protected Pair<InspectionToolWrapper, JComponent> create(InspectionProfile profile) {
-          InspectionToolWrapper tool = profile.getInspectionTool(toolShortName, project);
-          LOGGER.assertTrue(tool != null);
-          final Element options = new Element("copy");
-          tool.getTool().writeSettings(options);
-          tool = tool.createCopy();
-          try {
-            tool.getTool().readSettings(options);
-          }
-          catch (InvalidDataException e) {
-            throw new RuntimeException(e);
-          }
-          return Pair.create(tool, tool.getTool().createOptionsPanel());
-        }
-      };
-      JPanel settingsAnchor = new JPanel(new BorderLayout());
-      myProfilesComboBox = new ProfilesComboBox() {
-        @Override
-        protected void onProfileChosen(InspectionProfileImpl inspectionProfile) {
-          settingsAnchor.removeAll();
-          settingsAnchor.add(myProfile2ModifiedWrapper.get(inspectionProfile).getSecond(), BorderLayout.CENTER);
-          settingsAnchor.invalidate();
-          settingsAnchor.validate();
-          settingsAnchor.repaint();
-        }
-
-        @Override
-        protected boolean isProjectLevel(InspectionProfileImpl p) {
-          return p.isProjectLevel();
-        }
-
-        @NotNull
-        @Override
-        protected String getProfileName(InspectionProfileImpl p) {
-          return p.getName();
-        }
-      };
-
-      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
-      add(LabeledComponent.create(myProfilesComboBox, "Profile:", BorderLayout.WEST));
-      add(Box.createVerticalStrut(JBUI.scale(10)));
-      add(settingsAnchor);
-
-      final List<Profile> profiles = new ArrayList<>();
-      profiles.addAll(InspectionProfileManager.getInstance().getProfiles());
-      profiles.addAll(InspectionProjectProfileManager.getInstance(project).getProfiles());
-      myProfilesComboBox.reset(profiles);
-      myProfilesComboBox.selectProfile(initial);
+  private static InspectionToolWrapper copyToolWithSettings(@NotNull final InspectionToolWrapper tool) {
+    final Element options = new Element("copy");
+    tool.getTool().writeSettings(options);
+    final InspectionToolWrapper copiedTool = tool.createCopy();
+    try {
+      copiedTool.getTool().readSettings(options);
     }
-
-    @NotNull
-    public InspectionToolWrapper getSelectedWrapper() {
-      return myProfile2ModifiedWrapper.get((InspectionProfileImpl)myProfilesComboBox.getSelectedItem()).getFirst();
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
     }
+    return copiedTool;
   }
 }

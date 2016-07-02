@@ -334,7 +334,7 @@ public class StudySerializationUtils {
             for (Map.Entry<String, JsonElement> taskFile : taskObject.getAsJsonObject(TASK_FILES).entrySet()) {
               String name = taskFile.getKey();
               String filePath = FileUtil.join(myCourseFile.getParent(), EduNames.LESSON + lessonIndex, EduNames.TASK + taskIndex, name);
-              VirtualFile resourceFile = LocalFileSystem.getInstance().findFileByIoFile(new File(filePath));
+              VirtualFile resourceFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
               if (resourceFile == null) {
                 continue;
               }

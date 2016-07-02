@@ -40,7 +40,7 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public class CompletionServiceImpl extends CompletionService{
+public final class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;

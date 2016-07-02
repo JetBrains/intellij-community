@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,29 +26,19 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 public class AboutAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
+    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     e.getPresentation().setDescription("Show information about " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    Window window = WindowManager.getInstance().suggestParentWindow(project);
-    showAboutDialog(window);
+    perform(e.getData(CommonDataKeys.PROJECT));
   }
 
-  public static void showAbout() {
-    @SuppressWarnings("deprecation") Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    Window window = WindowManager.getInstance().suggestParentWindow(project);
-    showAboutDialog(window);
-  }
-
-  private static void showAboutDialog(@Nullable Window window) {
-    AboutPopup.show(window);
+  public static void perform(@Nullable Project project) {
+    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project));
   }
 }

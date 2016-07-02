@@ -19,6 +19,7 @@ import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.BitUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -125,13 +126,14 @@ public abstract class Symbol {
       return BitUtil.isSet(myFlags, CONNECT_STARTED);
     }
 
-    @NotNull
-    ClassSymbol[] getSuperClasses(StubHierarchyConnector connector) throws IncompleteHierarchyException {
+    @Nullable
+    @CompactArray(ClassSymbol.class)
+    Object getSuperClasses(StubHierarchyConnector connector) throws IncompleteHierarchyException {
       connect(connector);
       if (isHierarchyIncomplete()) {
         throw IncompleteHierarchyException.INSTANCE;
       }
-      return rawSuperClasses();
+      return mySuperClasses;
     }
 
     @NotNull

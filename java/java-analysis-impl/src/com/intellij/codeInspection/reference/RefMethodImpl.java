@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -426,24 +427,19 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public String getName() {
     if (isValid()) {
-      final String[] result = new String[1];
-      final Runnable runnable = () -> {
+      return ReadAction.compute(() -> {
         PsiMethod psiMethod = (PsiMethod) getElement();
         if (psiMethod instanceof SyntheticElement) {
-          result[0] = psiMethod.getName();
+          return psiMethod.getName();
         }
         else {
-          result[0] = PsiFormatUtil.formatMethod(psiMethod,
+          return PsiFormatUtil.formatMethod(psiMethod,
                                                  PsiSubstitutor.EMPTY,
                                                  PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                  PsiFormatUtilBase.SHOW_TYPE
           );
         }
-      };
-
-      ApplicationManager.getApplication().runReadAction(runnable);
-
-      return result[0];
+      });
     } else {
       return super.getName();
     }
@@ -451,16 +447,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public String getExternalName() {
-    final String[] result = new String[1];
-    final Runnable runnable = () -> {
+    return ReadAction.compute(() -> {
       final PsiMethod psiMethod = (PsiMethod)getElement();
       LOG.assertTrue(psiMethod != null);
-      result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
-    };
-
-    ApplicationManager.getApplication().runReadAction(runnable);
-
-    return result[0];
+      return PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
+    });
   }
 
   @Nullable
@@ -686,4 +677,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS_MASK);
   }
 
+  private static String extractMethodName(String methodSignature) {
+    final String returnTypeAndName = methodSignature.substring(0, methodSignature.indexOf('('));
+    return returnTypeAndName.substring(returnTypeAndName.indexOf(' ') + 1);
+  }
 }

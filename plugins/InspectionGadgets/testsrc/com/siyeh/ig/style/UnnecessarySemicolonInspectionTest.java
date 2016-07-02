@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,25 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UnnecessarySemicolonInspectionTest extends IGInspectionTestCase {
+public class UnnecessarySemicolonInspectionTest extends LightInspectionTestCase {
+  public void testUnnecessarySemicolon() { doTest(); }
+  public void testModuleInfo() { doNamedTest("module-info"); }
+
+  @NotNull
   @Override
-  protected Sdk getTestProjectSdk() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    return IdeaTestUtil.getMockJdk17();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
   }
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessary_semicolon",
-           new UnnecessarySemicolonInspection());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessarySemicolonInspection();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package com.intellij.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -189,6 +192,41 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>" +
       " Visit the \"<code>/login</code>\" URL." +
       "</body></html>"
+
+    assert doc == expected
+  }
+
+  public void testMethodToMethodDelegate() {
+    DocumentationDelegateProvider provider = {
+      if (it instanceof PsiMethod && it.name == 'foo') {
+        JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)
+      }
+    }
+    PlatformTestUtil.registerExtension DocumentationDelegateProvider.EP_NAME, provider, testRootDisposable
+
+    configure '''\
+class Foo {
+  /**
+  * Some doc
+  */
+  void foo() {}
+}
+
+class Bar {
+  void fo<caret>o() {}
+}
+'''
+    def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+    def doc = new JavaDocumentationProvider().generateDoc(method, null)
+
+    String expected = "<html><head>$STYLE_BLOCK</head><body>" +
+                      "<small><b><a href=\"psi_element://Bar\"><code>Bar</code></a></b></small>" +
+                      "<PRE>void&nbsp;<b>foo</b>()</PRE>" +
+                      "<DD><DL><DT>" +
+                      "<b>Description copied from class:</b>&nbsp;<a href=\"psi_element://Foo\"><code>Foo</code></a><br>" +
+                      "\n    Some doc\n  " +
+                      "</DD></DL></DD>" +
+                      "</body></html>"
 
     assert doc == expected
   }

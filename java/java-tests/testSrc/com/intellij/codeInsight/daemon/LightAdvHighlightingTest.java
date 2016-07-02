@@ -222,13 +222,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnusedParamsOfPublicMethodDisabled() {
     UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
     assertNotNull(tool);
-    boolean oldVal = tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS;
+    String oldVal = tool.getParameterVisibility();
     try {
-      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
+      tool.setParameterVisibility(PsiModifier.PRIVATE);
       doTest(true, false);
     }
     finally {
-      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = oldVal;
+      tool.setParameterVisibility(oldVal);
     }
   }
 

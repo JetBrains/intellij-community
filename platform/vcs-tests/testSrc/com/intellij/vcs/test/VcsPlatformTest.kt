@@ -88,7 +88,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     // we don't need a module in Git tests
   }
 
-  override fun isRunInEdt(): Boolean {
+  override fun runInDispatchThread(): Boolean {
     return false
   }
 

@@ -1278,8 +1278,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   public SyntheticCodeBlock createCodeBlockBlock(final List<Block> localResult, final Indent indent, final int childrenIndent) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), myJavaSettings, indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
-    return result;
+    return result;  
   }
-
-
 }

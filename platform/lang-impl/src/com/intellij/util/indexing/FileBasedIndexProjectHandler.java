@@ -20,7 +20,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -38,7 +37,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +139,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       return null;
     }
 
-    return new DumbModeTask() {
+    return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         final Collection<VirtualFile> files = index.getFilesToUpdate(project);

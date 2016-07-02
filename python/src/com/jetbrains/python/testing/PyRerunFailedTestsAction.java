@@ -26,9 +26,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.HelperPackage;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   protected PyRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -131,6 +134,11 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
             }
           }
         }
+      }
+      if (specs.isEmpty()) {
+        final List<String> locations = failedTests.stream().map(AbstractTestProxy::getLocationUrl).collect(Collectors.toList());
+        Logger.getInstance(FailedPythonTestCommandLineStateBase.class).warn(
+          String.format("Can't resolve specs for the following tests: %s", StringUtil.join(locations, ", ")));
       }
       return specs;
     }

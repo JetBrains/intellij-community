@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.util.Consumer
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.cancelledPromise
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.ValueManager
 
@@ -25,14 +25,10 @@ abstract class DeclarativeScope<VALUE_MANAGER : ValueManager>(type: Scope.Type, 
 
   protected fun loadScopeObjectProperties(value: ObjectValue): Promise<List<Variable>> {
     if (childrenManager.valueManager.isObsolete) {
-      return ValueManager.reject()
+      return cancelledPromise()
     }
 
-    return value.properties.done(object : Consumer<List<Variable>> {
-      override fun consume(variables: List<Variable>) {
-        childrenManager.updateCacheStamp()
-      }
-    })
+    return value.properties.done { childrenManager.updateCacheStamp() }
   }
 
   override fun getVariablesHost() = childrenManager

@@ -1,7 +1,6 @@
 package com.siyeh.igtest.dataflow.scope;
 
-import java.util.ArrayList;
-import java.util.Collection; import java.util.List;
+import java.util.*;
 
 public class TooBroadScope
 {
@@ -140,5 +139,26 @@ public class TooBroadScope
         System.out.println();
         System.out.println();
         System.out.println(yes);
+    }
+
+    private final Map<String, String> important = new HashMap<>();
+    public void processImportant() {
+        final HashMap copy = new HashMap(important);
+        important.clear();
+        System.out.println();
+        System.out.println(copy);
+    }
+
+    private final String[] EMPTY = {};
+    void abc() {
+        String[] <warning descr="Scope of variable 'strings' is too broad">strings</warning> = EMPTY;
+        System.out.println();
+        System.out.println();
+        System.out.println(strings);
+
+        List<String> <warning descr="Scope of variable 'list' is too broad">list</warning> = new ArrayList<>(Arrays.asList(EMPTY));
+        System.out.println();
+        System.out.println();
+        System.out.println(list);
     }
 }

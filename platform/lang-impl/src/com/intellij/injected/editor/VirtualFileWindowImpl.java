@@ -56,4 +56,9 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
   public String toString() {
     return "VirtualFileWindow in " + myDelegate.getPresentableUrl();
   }
+
+  @Override
+  public VirtualFile getParent() {
+    return myDelegate.getParent();
+  }
 }

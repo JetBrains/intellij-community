@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,8 +80,8 @@ public abstract class ProgressStripeIcon implements Icon {
   }
 
   private static class StripeIcon extends ProgressStripeIcon {
-    private static final JBColor BG_COLOR = new JBColor(Gray._165, Gray._88);
-    private static final JBColor FG_COLOR = new JBColor(Gray._255, Gray._128);
+    private static final double ALPHA = 0.8;
+    private static final JBColor BG_COLOR = new JBColor(ColorUtil.withAlpha(Gray._165, ALPHA), ColorUtil.withAlpha(Gray._110, ALPHA));
     private static final int WIDTH = 16;
 
     private StripeIcon(@NotNull JComponent component, int shift) {
@@ -95,9 +96,6 @@ public abstract class ProgressStripeIcon implements Icon {
     @Override
     protected void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
       g2.setColor(BG_COLOR);
-      g2.fillRect(x + shift, y, JBUI.scale(WIDTH), JBUI.scale(HEIGHT));
-
-      g2.setColor(FG_COLOR);
 
       Path2D.Double path = new Path2D.Double();
       int height = JBUI.scale(HEIGHT);
@@ -118,11 +116,13 @@ public abstract class ProgressStripeIcon implements Icon {
   // this icon is not used under darcula
   @SuppressWarnings("UseJBColor")
   private static class GradientIcon extends ProgressStripeIcon {
+    private static final double ALPHA = 0.5;
     private static final Color DARK_BLUE = new Color(0x4d9ff8);
     private static final Color DARK_GRAY = Gray._165;
-    private static final Color LIGHT_BLUE = new Color(0x90c2f8);
-    private static final Color LIGHT_GRAY = new Color(0xdbdbdb);
+    private static final Color LIGHT_BLUE = ColorUtil.withAlpha(new Color(0x90c2f8), ALPHA);
+    private static final Color LIGHT_GRAY = ColorUtil.withAlpha(new Color(0xdbdbdb), ALPHA);
     private static final int GRADIENT = 128;
+    private static final int GRADIENT_HEIGHT = 2;
 
     private GradientIcon(@NotNull JComponent component, int shift) {
       super(component, shift);
@@ -147,6 +147,11 @@ public abstract class ProgressStripeIcon implements Icon {
       g2.fill(new Rectangle(x + shift, y, JBUI.scale(GRADIENT), getIconHeight()));
       g2.setPaint(new GradientPaint(x + shift + JBUI.scale(GRADIENT), y, light, x + shift + 2 * JBUI.scale(GRADIENT), y, dark));
       g2.fill(new Rectangle(x + shift + JBUI.scale(GRADIENT), y, JBUI.scale(GRADIENT), getIconHeight()));
+    }
+
+    @Override
+    public int getIconHeight() {
+      return JBUI.scale(GRADIENT_HEIGHT);
     }
   }
 

@@ -17,8 +17,11 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -58,20 +61,41 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         return false;
       }
     }.searchImplementations(editor, source, offset);
+    if (targets == null) return null;
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
     return gotoData;
   }
 
+
+  private static PsiElement getContainer(PsiElement refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+      final PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
   @Override
   @NotNull
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
-    return CodeInsightBundle.message("goto.implementation.chooserTitle", name, length, finished ? "" : " so far");
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+    ItemPresentation presentation = ((NavigationItem)sourceElement).getPresentation();
+    String fullName;
+    if (presentation == null) {
+      fullName = name;
+    }
+    else {
+      PsiElement container = getContainer(sourceElement);
+      ItemPresentation containerPresentation = container == null || container instanceof PsiFile ? null : ((NavigationItem)container).getPresentation();
+      String containerText = containerPresentation == null ? null : containerPresentation.getPresentableText();
+      fullName = (containerText == null ? "" : containerText+".") + presentation.getPresentableText();
+    }
+    return CodeInsightBundle.message("goto.implementation.chooserTitle", fullName, length, finished ? "" : " so far");
   }
 
   @NotNull
   @Override
-  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.findUsages.title", name, length);
   }
 

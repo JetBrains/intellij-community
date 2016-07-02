@@ -125,7 +125,7 @@ public class IterationState {
   private final boolean myReverseIteration;
 
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters,
-                        boolean useOnlyFontAffectingHighlighters, boolean useFoldRegions, boolean iterateBackwards) {
+                        boolean useOnlyFontOrForegroundAffectingHighlighters, boolean useFoldRegions, boolean iterateBackwards) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
     myStartOffset = start;
@@ -178,10 +178,10 @@ public class IterationState {
     myCaretRowEndsWithSoftWrap = editor.getSoftWrapModel().getSoftWrap(myCaretRowEnd) != null;
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
-    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontAffectingHighlighters);
+    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
-    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontAffectingHighlighters);
+    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     myEndOffset = myStartOffset;
 
@@ -194,7 +194,7 @@ public class IterationState {
     private final RangeHighlighterEx[] highlighters;
 
     private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, 
-                             final boolean onlyFullLine, final boolean onlyFontAffecting) {
+                             final boolean onlyFullLine, final boolean onlyFontOrForegroundAffecting) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
@@ -204,8 +204,8 @@ public class IterationState {
                                                             protected boolean accept(RangeHighlighterEx ex) {
                                                               return (!onlyFullLine || 
                                                                       ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
-                                                                     (!onlyFontAffecting ||
-                                                                      EditorUtil.attributesImpactFontStyle(ex.getTextAttributes()));
+                                                                     (!onlyFontOrForegroundAffecting ||
+                                                                      EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes()));
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);

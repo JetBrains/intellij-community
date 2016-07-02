@@ -165,7 +165,15 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
-    return (selectedObjects.size() == 1 && (type == CommonActionsPanel.Buttons.EDIT || type == CommonActionsPanel.Buttons.REMOVE)) &&
+    if (selectedObjects.size() >= 1 && type == CommonActionsPanel.Buttons.REMOVE) {
+      for (Object selectedObject : selectedObjects) {
+        if (!(((AbstractTreeNode)selectedObject).getValue() instanceof BreakpointItem)) {
+          return false; // Not all selected items are breakpoints
+        }
+      }
+      return true;
+    }
+    return selectedObjects.size() == 1 && type == CommonActionsPanel.Buttons.EDIT &&
            ((AbstractTreeNode)selectedObjects.iterator().next()).getValue() instanceof BreakpointItem;
   }
 
@@ -179,15 +187,18 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       bounds = tree.getVisibleRect().intersection(bounds);
     }
     Point whereToShow = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
-    BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
     switch (type) {
       case EDIT:
+        BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
         DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
-        if (debuggerSupport == null) return;
+        if (debuggerSupport == null || breakpointItem == null) return;
         debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem);
         break;
       case REMOVE:
-        breakpointItem.removed(myProject);
+        for (Object selectedObject : selectedObjects) {
+          BreakpointItem removeBreakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObject).getValue();
+          removeBreakpointItem.removed(myProject);
+        }
         break;
       default: break;
     }

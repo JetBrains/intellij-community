@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
@@ -209,6 +208,14 @@ public class XmlCompletionContributor extends CompletionContributor {
     final PsiElement at = file.findElementAt(offset);
     if (at != null && at.getNode().getElementType() == XmlTokenType.XML_NAME && at.getParent() instanceof XmlAttribute) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, at.getTextRange().getEndOffset());
+    }
+    if (at != null && at.getParent() instanceof XmlAttributeValue) {
+      final int end = at.getParent().getTextRange().getEndOffset();
+      final Document document = context.getEditor().getDocument();
+      final int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+      if (lineEnd < end) {
+        context.setReplacementOffset(lineEnd);
+      }
     }
   }
 }

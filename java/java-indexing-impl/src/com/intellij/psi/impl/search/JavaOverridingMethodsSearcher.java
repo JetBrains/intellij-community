@@ -116,11 +116,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
-    Collection<PsiMethod> result = new LinkedHashSet<>();
-
     Application application = ApplicationManager.getApplication();
     final PsiClass containingClass = application.runReadAction((Computable<PsiClass>)method::getContainingClass);
     assert containingClass != null;
+    Collection<PsiMethod> result = new LinkedHashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
       PsiMethod found = application.runReadAction((Computable<PsiMethod>)() -> findOverridingMethod(project, inheritor, method, containingClass));
       if (found != null) {

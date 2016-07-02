@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaHighlightingLexer extends LayeredLexer {
+  private boolean myAtStart = true;
+  private boolean myModuleInfo = false;
+
   public JavaHighlightingLexer(@NotNull LanguageLevel languageLevel) {
     super(JavaParserDefinition.createLexer(languageLevel));
 
@@ -41,5 +46,28 @@ public class JavaHighlightingLexer extends LayeredLexer {
     htmlLexer.setHasNoEmbeddments(true);
     docLexer.registerLayer(htmlLexer, JavaDocTokenType.DOC_COMMENT_DATA);
     registerSelfStoppingLayer(docLexer, new IElementType[]{JavaDocElementType.DOC_COMMENT}, IElementType.EMPTY_ARRAY);
+  }
+
+  @Override
+  public IElementType getTokenType() {
+    IElementType t = super.getTokenType();
+
+    if (myAtStart && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(t)) {
+      myAtStart = false;
+      myModuleInfo = t == JavaTokenType.IDENTIFIER && PsiKeyword.MODULE.equals(getTokenText());
+    }
+
+    if (myModuleInfo && t == JavaTokenType.IDENTIFIER) {
+      String text = getTokenText();
+      if (PsiKeyword.MODULE.equals(text)) t = JavaTokenType.MODULE_KEYWORD;
+      else if (PsiKeyword.REQUIRES.equals(text)) t = JavaTokenType.REQUIRES_KEYWORD;
+      else if (PsiKeyword.EXPORTS.equals(text)) t = JavaTokenType.EXPORTS_KEYWORD;
+      else if (PsiKeyword.USES.equals(text)) t = JavaTokenType.USES_KEYWORD;
+      else if (PsiKeyword.PROVIDES.equals(text)) t = JavaTokenType.PROVIDES_KEYWORD;
+      else if (PsiKeyword.TO.equals(text)) t = JavaTokenType.TO_KEYWORD;
+      else if (PsiKeyword.WITH.equals(text)) t = JavaTokenType.WITH_KEYWORD;
+    }
+
+    return t;
   }
 }

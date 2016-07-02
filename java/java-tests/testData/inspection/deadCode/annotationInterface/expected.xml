@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>  
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>5</line>
+    <description>Method is never used.</description>
+  </problem>
 </problems>
 

@@ -23,6 +23,7 @@ import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.*;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
@@ -488,7 +489,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
       //noinspection TestOnlyProblems
-      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics()
+               + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
+      );
     }
   }
 
@@ -1119,6 +1122,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
+        fireAfterWriteActionFinished(clazz);
       }
     }
   }
@@ -1258,6 +1262,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void fireWriteActionFinished(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
+  }
+
+  private void fireAfterWriteActionFinished(@NotNull Class action) {
+    myDispatcher.getMulticaster().afterWriteActionFinished(action);
   }
 
   @Override

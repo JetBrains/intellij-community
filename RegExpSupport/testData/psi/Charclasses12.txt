@@ -1,0 +1,8 @@
+REGEXP_FILE
+  RegExpPatternImpl: <[&&]>
+    RegExpBranchImpl: <[&&]>
+      RegExpClassImpl: <[&&]>
+        PsiElement(CLASS_BEGIN)('[')
+        RegExpIntersectionImpl: <&&>
+          PsiElement(ANDAND)('&&')
+        PsiElement(CLASS_END)(']')
