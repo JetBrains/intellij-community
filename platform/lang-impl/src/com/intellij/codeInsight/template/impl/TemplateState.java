@@ -856,7 +856,12 @@ public class TemplateState implements Disposable {
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
-    String oldText = myDocument.getCharsSequence().subSequence(start, end).toString();
+    TextRange range = TextRange.create(start, end);
+    if (!TextRange.from(0, myDocument.getCharsSequence().length()).contains(range)) {
+      LOG.error("Diagnostic for EA-54980. Can't extract " + range + " range. " + presentTemplate(myTemplate), 
+                AttachmentFactory.createAttachment(myDocument));
+    }
+    String oldText = range.subSequence(myDocument.getCharsSequence()).toString();
 
     if (!oldText.equals(newValue)) {
       mySegments.setNeighboursGreedy(segmentNumber, false);
