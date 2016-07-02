@@ -430,10 +430,11 @@ public class PyTypeChecker {
   }
 
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
-    if (superClass == null || subClass == null || subClass.isSubclass(superClass, null) || PyABCUtil.isSubclass(subClass, superClass)) {
-      return true;
-    }
-    else if (PyUtil.hasUnresolvedAncestors(subClass, context)) {
+    if (superClass == null ||
+        subClass == null ||
+        subClass.isSubclass(superClass, context) ||
+        (superClass.getName() != null && PyABCUtil.isSubclass(subClass, superClass.getName(), true, context)) ||
+        PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
     else {
