@@ -49,13 +49,4 @@ public interface PsiQualifiedNamedElement extends PsiNamedElement {
   @Nullable
   @NonNls
   String getName();
-
-  /**
-   * Returns container of the element.
-   *
-   * @return container of the element
-   */
-  @Deprecated
-  @Nullable
-  PsiQualifiedNamedElement getContainer();
 }
