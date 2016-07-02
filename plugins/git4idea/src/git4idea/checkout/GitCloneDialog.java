@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -43,13 +42,10 @@ public class GitCloneDialog extends CloneDvcsDialog {
     myGit = ServiceManager.getService(Git.class);
   }
 
-  protected boolean test(@NotNull String url) {
+  @NotNull
+  protected TestResult test(@NotNull String url) {
     GitCommandResult result = myGit.lsRemote(myProject, new File("."), url);
-    boolean success = result.success();
-    if (!success) {
-      Messages.showErrorDialog(myProject, result.getErrorOutputAsJoinedString(), "Couldn't Connect to " + url);
-    }
-    return success;
+    return result.success() ? TestResult.SUCCESS : new TestResult(result.getErrorOutputAsJoinedString());
   }
 
   @NotNull

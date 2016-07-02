@@ -24,7 +24,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,9 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author Nadya Zabrodina
- */
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 public abstract class CloneDvcsDialog extends DialogWrapper {
   /**
    * The pattern for SSH URL-s in form [user@]host:path
@@ -181,25 +179,22 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void test() {
     myTestURL = getCurrentUrlText();
-    boolean testResult = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Boolean, RuntimeException>() {
-      @Override
-      public Boolean compute() {
-        return test(myTestURL);
-      }
-    }, DvcsBundle.message("clone.testing", myTestURL), true, myProject);
-
-    if (testResult) {
+    TestResult testResult = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> test(myTestURL), DvcsBundle.message("clone.testing", myTestURL), true, myProject);
+    if (testResult.isSuccess()) {
       Messages.showInfoMessage(myTestButton, DvcsBundle.message("clone.test.success.message", myTestURL),
                                DvcsBundle.getString("clone.test.connection.title"));
       myTestResult = Boolean.TRUE;
     }
     else {
+      Messages.showErrorDialog(myProject, assertNotNull(testResult.getError()), "Repository Test Failed");
       myTestResult = Boolean.FALSE;
     }
     updateButtons();
   }
 
-  protected abstract boolean test(@NotNull String url);
+  @NotNull
+  protected abstract TestResult test(@NotNull String url);
 
   @NotNull
   protected abstract DvcsRememberedInputs getRememberedInputs();
@@ -364,5 +359,23 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return myRootPanel;
+  }
+
+  protected static class TestResult {
+    @NotNull public static final TestResult SUCCESS = new TestResult(null);
+    @Nullable private final String myErrorMessage;
+
+    public TestResult(@Nullable String errorMessage) {
+      myErrorMessage = errorMessage;
+    }
+
+    public boolean isSuccess() {
+      return myErrorMessage == null;
+    }
+
+    @Nullable
+    public String getError() {
+      return myErrorMessage;
+    }
   }
 }

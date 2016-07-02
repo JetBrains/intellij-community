@@ -52,11 +52,12 @@ public class HgCloneDialog extends CloneDvcsDialog {
     return ServiceManager.getService(HgRememberedInputs.class);
   }
 
+  @NotNull
   @Override
-  protected boolean test(@NotNull final String url) {
+  protected TestResult test(@NotNull final String url) {
     HgIdentifyCommand identifyCommand = new HgIdentifyCommand(myProject);
     identifyCommand.setSource(url);
     HgCommandResult result = identifyCommand.execute(ModalityState.stateForComponent(getRootPane()));
-    return result != null && result.getExitValue() == 0;
+    return result != null && result.getExitValue() == 0 ? TestResult.SUCCESS : new TestResult(result.getRawError());
   }
 }
