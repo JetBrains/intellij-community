@@ -94,6 +94,17 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     setOKButtonText(DvcsBundle.getString("clone.button"));
   }
 
+  @Override
+  protected void doOKAction() {
+    File parent = new File(getParentDirectory());
+    if (parent.exists() && parent.isDirectory() && parent.canWrite() || parent.mkdirs()) {
+      super.doOKAction();
+      return;
+    }
+    setErrorText("Couldn't create " + parent + "<br/>Check your access rights");
+    setOKActionEnabled(false);
+  }
+
   @NotNull
   public String getSourceRepositoryURL() {
     return getCurrentUrlText();
@@ -212,11 +223,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     File file = new File(myParentDirectory.getText(), myDirectoryName.getText());
     if (file.exists()) {
       setErrorText(DvcsBundle.message("clone.destination.exists.error", file));
-      setOKActionEnabled(false);
-      return false;
-    }
-    else if (!file.getParentFile().exists()) {
-      setErrorText(DvcsBundle.message("clone.parent.missing.error", file.getParent()));
       setOKActionEnabled(false);
       return false;
     }
