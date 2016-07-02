@@ -221,7 +221,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       return false;
     }
     File file = new File(myParentDirectory.getText(), myDirectoryName.getText());
-    if (file.exists()) {
+    if (file.exists() && (!file.isDirectory()) || !ArrayUtil.isEmpty(file.list())) {
       setErrorText(DvcsBundle.message("clone.destination.exists.error", file));
       setOKActionEnabled(false);
       return false;
