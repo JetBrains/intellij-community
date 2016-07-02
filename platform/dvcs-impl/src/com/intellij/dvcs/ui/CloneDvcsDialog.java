@@ -16,6 +16,8 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -92,6 +94,13 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlLabel.setText(DvcsBundle.message("clone.repository.url", displayName));
     myRepositoryUrlLabel.setDisplayedMnemonic('R');
     setOKButtonText(DvcsBundle.getString("clone.button"));
+
+    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+      @Override
+      public void onFrameActivated() {
+        updateButtons();
+      }
+    }, getDisposable());
   }
 
   @Override
