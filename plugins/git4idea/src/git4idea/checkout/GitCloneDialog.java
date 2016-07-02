@@ -19,9 +19,11 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +44,12 @@ public class GitCloneDialog extends CloneDvcsDialog {
   }
 
   protected boolean test(@NotNull String url) {
-    return myGit.lsRemote(myProject, new File("."), url).success();
+    GitCommandResult result = myGit.lsRemote(myProject, new File("."), url);
+    boolean success = result.success();
+    if (!success) {
+      Messages.showErrorDialog(myProject, result.getErrorOutputAsJoinedString(), "Couldn't Connect to " + url);
+    }
+    return success;
   }
 
   @NotNull
