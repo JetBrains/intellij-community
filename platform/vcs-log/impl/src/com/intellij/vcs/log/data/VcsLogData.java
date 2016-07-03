@@ -72,6 +72,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
+  @NotNull private final VcsLogIndex myIndex;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -86,10 +87,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
+    myIndex = new VcsLogPersistentIndex(myProject, myHashMap, logProviders, myDetailsGetter, myFatalErrorsConsumer, this);
 
     myRefresher =
-      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
-                              dataPack -> fireDataPackChangeEvent(dataPack), e -> {
+      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, myTopCommitsDetailsCache,
+                              this::fireDataPackChangeEvent, e -> {
         if (!(e instanceof ProcessCanceledException)) {
           LOG.error(e);
         }
@@ -134,7 +136,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VisiblePackBuilder createVisiblePackBuilder() {
-    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter);
+    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter, myIndex);
   }
 
   @Override
@@ -289,5 +291,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public TopCommitsCache getTopCommitsCache() {
     return myTopCommitsDetailsCache;
+  }
+
+  @NotNull
+  public VcsLogIndex getIndex() {
+    return myIndex;
   }
 }

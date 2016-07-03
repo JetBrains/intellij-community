@@ -44,15 +44,18 @@ class VisiblePackBuilder {
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
+  @NotNull private final VcsLogIndex myIndex;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogStorage hashMap,
                      @NotNull TopCommitsCache topCommitsDetailsCache,
-                     @NotNull DataGetter<VcsFullCommitDetails> detailsGetter) {
+                     @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
+                     @NotNull VcsLogIndex index) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
     myLogProviders = providers;
+    myIndex = index;
   }
 
   @NotNull
@@ -67,29 +70,35 @@ class VisiblePackBuilder {
 
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), dataPack.getLogProviders().keySet(), filters);
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
-    Collection<CommitId> matchingCommits = null;
+    Set<Integer> matchingCommits = null;
     boolean canRequestMore = false;
     if (!detailsFilters.isEmpty()) {
-      if (commitCount == CommitCountStage.INITIAL) {
-        matchingCommits = filterInMemory(dataPack.getPermanentGraph(), detailsFilters, matchingHeads);
-        if (matchingCommits.size() < commitCount.getCount()) {
-          commitCount = commitCount.next();
-          matchingCommits = null;
-        }
+      if (myIndex.canFilter(detailsFilters)) {
+        matchingCommits = myIndex.filter(detailsFilters);
+        canRequestMore = false;
       }
+      else {
+        if (commitCount == CommitCountStage.INITIAL) {
+          matchingCommits = getMatchedCommitIndex(filterInMemory(dataPack.getPermanentGraph(), detailsFilters, matchingHeads));
+          if (matchingCommits.size() < commitCount.getCount()) {
+            commitCount = commitCount.next();
+            matchingCommits = null;
+          }
+        }
 
-      if (matchingCommits == null) {
-        try {
-          matchingCommits = getFilteredDetailsFromTheVcs(myLogProviders, filters, commitCount.getCount());
+        if (matchingCommits == null) {
+          try {
+            matchingCommits = getMatchedCommitIndex(getFilteredDetailsFromTheVcs(myLogProviders, filters, commitCount.getCount()));
+          }
+          catch (VcsException e) {
+            //TODO show an error balloon or something else for non-ea guys.
+            matchingCommits = Collections.emptySet();
+            LOG.error(e);
+          }
         }
-        catch (VcsException e) {
-          // TODO show an error balloon or something else for non-ea guys.
-          matchingCommits = Collections.emptyList();
-          LOG.error(e);
-        }
+
+        canRequestMore = matchingCommits.size() >= commitCount.getCount(); // from VCS: only "==", but from memory can be ">"
       }
-
-      canRequestMore = matchingCommits.size() >= commitCount.getCount(); // from VCS: only "==", but from memory can be ">"
     }
 
     VisibleGraph<Integer> visibleGraph;
@@ -97,7 +106,7 @@ class VisiblePackBuilder {
       visibleGraph = EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, getMatchedCommitIndex(matchingCommits));
+      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, matchingCommits);
     }
     return Pair.create(new VisiblePack(dataPack, visibleGraph, canRequestMore, filters), commitCount);
   }

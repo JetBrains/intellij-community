@@ -156,7 +156,7 @@ class VisiblePackBuilderTest {
           return null
         }
       }
-      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter)
+      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
@@ -243,6 +243,22 @@ class VisiblePackBuilderTest {
     override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
 
     override fun flush() {
+    }
+  }
+
+  class EmptyIndex : VcsLogIndex {
+    override fun canFilter(filters: MutableList<VcsLogDetailsFilter>): Boolean {
+      return false
+    }
+
+    override fun scheduleIndex() {
+    }
+
+    override fun markForIndexing(index: Int) {
+    }
+
+    override fun filter(detailsFilters: MutableList<VcsLogDetailsFilter>): MutableSet<Int> {
+      throw UnsupportedOperationException()
     }
   }
 }

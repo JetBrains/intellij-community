@@ -69,4 +69,16 @@ public class PersistentUtil {
     return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
                                          storageFile);
   }
+
+  @NotNull
+  public static <V> PersistentHashMap<Integer, V> createPersistentHashMap(@NotNull DataExternalizer<V> externalizer,
+                                                                          @NotNull String storageKind,
+                                                                          @NotNull String logId,
+                                                                          int version) throws IOException {
+    File storageFile = getStorageFile(storageKind, logId, version);
+
+    return IOUtil
+      .openCleanOrResetBroken(() -> new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), externalizer, Page.PAGE_SIZE),
+                              storageFile);
+  }
 }
