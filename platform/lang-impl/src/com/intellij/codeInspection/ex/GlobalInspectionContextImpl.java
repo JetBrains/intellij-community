@@ -120,7 +120,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     myTreeState = treeState;
   }
 
-  public synchronized void addView(@NotNull InspectionResultsView view,
+  public void addView(@NotNull InspectionResultsView view,
                                    @NotNull String title,
                                    boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
