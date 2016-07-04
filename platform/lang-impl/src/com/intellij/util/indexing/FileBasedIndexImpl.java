@@ -806,6 +806,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
            : processValuesInScope(indexId, dataKey, false, filter, idFilter, processor);
   }
 
+  public <K, V> long getIndexModificationStamp(ID<K, V> indexId, @NotNull Project project) {
+    UpdatableIndex<K, V, FileContent> index = getState().getIndex(indexId);
+    if (index instanceof MapReduceIndex) {
+      ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
+      return ((MapReduceIndex)index).getModificationStamp();
+    }
+    return -1;
+  }
+
   public interface IdValueProcessor<V> {
     /**
      * @param fileId the id of the file that the value came from
