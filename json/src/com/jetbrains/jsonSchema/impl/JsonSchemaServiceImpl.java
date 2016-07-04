@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -99,7 +98,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
         for (JsonSchemaProviderFactory factory : factories) {
           final List<JsonSchemaFileProvider> providers = factory.getProviders(project);
           for (JsonSchemaFileProvider provider : providers) {
-            mySchemaFiles.add(provider.getSchemaFile());
+            final VirtualFile schemaFile = provider.getSchemaFile();
+            if (schemaFile != null) {
+              mySchemaFiles.add(schemaFile);
+            }
           }
         }
         initialized = true;
