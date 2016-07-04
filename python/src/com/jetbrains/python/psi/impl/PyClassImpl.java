@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1276,18 +1276,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private void fillSuperClassesNoSwitchToAst(@NotNull final TypeEvalContext context,
                                              @Nullable final PyClassStub stub,
                                              @NotNull final List<PyClassLikeType> result) {
-    final List<QualifiedName> qualifiedNames;
-    if (stub != null) {
-      qualifiedNames = Arrays.asList(stub.getSuperClasses());
-    }
-    else {
-      qualifiedNames = PyClassElementType.getSuperClassQNames(this);
-    }
-
+    final Map<QualifiedName, QualifiedName> superClasses = stub != null
+                                                           ? stub.getSuperClasses()
+                                                           : PyClassElementType.getSuperClassQNames(this);
 
     final PsiFile file = getContainingFile();
     if (file instanceof PyFile) {
-      for (QualifiedName name : qualifiedNames) {
+      for (QualifiedName name : superClasses.keySet()) {
         result.add(name != null ? classTypeFromQName(name, (PyFile)file, context) : null);
       }
     }

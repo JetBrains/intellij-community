@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -53,10 +55,10 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
-    final List<QualifiedName> superClasses = getSuperClassQNames(psi);
+    final Map<QualifiedName, QualifiedName> superClasses = getSuperClassQNames(psi);
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
     return new PyClassStubImpl(psi.getName(), parentStub,
-                               superClasses.toArray(new QualifiedName[superClasses.size()]),
+                               superClasses,
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(docStringExpression),
@@ -64,25 +66,53 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   @NotNull
-  public static List<QualifiedName> getSuperClassQNames(@NotNull final PyClass pyClass) {
-    final PyExpression[] exprs = pyClass.getSuperClassExpressions();
-    List<QualifiedName> superClasses = new ArrayList<QualifiedName>();
-    for (PyExpression expression : exprs) {
-      if (expression instanceof PyKeywordArgument) {
-        continue;
+  public static Map<QualifiedName, QualifiedName> getSuperClassQNames(@NotNull final PyClass pyClass) {
+    final Map<QualifiedName, QualifiedName> result = new LinkedHashMap<>();
+
+    Arrays
+      .stream(pyClass.getSuperClassExpressions())
+      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
+      .map(PyClassImpl::unfoldClass)
+      .forEach(expression -> result.put(PyPsiUtils.asQualifiedName(expression), resolveOriginalSuperClassQName(expression)));
+
+    return result;
+  }
+
+  @Nullable
+  private static QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
+    if (superClassExpression instanceof PyReferenceExpression) {
+      final PyReferenceExpression reference = (PyReferenceExpression)superClassExpression;
+      final String referenceName = reference.getName();
+
+      if (referenceName == null) {
+        return PyPsiUtils.asQualifiedName(superClassExpression);
       }
-      expression = PyClassImpl.unfoldClass(expression);
-      superClasses.add(PyPsiUtils.asQualifiedName(expression));
+
+      final PyResolveProcessor processor = new PyResolveProcessor(referenceName, true);
+      PyResolveUtil.scopeCrawlUp(processor, reference, referenceName, null);
+
+      final Optional<QualifiedName> qualifiedName = processor.getElements().stream()
+        .filter(PyImportElement.class::isInstance)
+        .map(PyImportElement.class::cast)
+        .filter(element -> element.getAsName() != null)
+        .map(PyImportElement::getImportedQName)
+        .findAny();
+
+      if (qualifiedName.isPresent()) {
+        return qualifiedName.get();
+      }
     }
-    return superClasses;
+
+    return PyPsiUtils.asQualifiedName(superClassExpression);
   }
 
   public void serialize(@NotNull final PyClassStub pyClassStub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(pyClassStub.getName());
-    final QualifiedName[] classes = pyClassStub.getSuperClasses();
-    dataStream.writeByte(classes.length);
-    for (QualifiedName s : classes) {
-      QualifiedName.serialize(s, dataStream);
+    final Map<QualifiedName, QualifiedName> superClasses = pyClassStub.getSuperClasses();
+    dataStream.writeByte(superClasses.size());
+    for (Map.Entry<QualifiedName, QualifiedName> entry : superClasses.entrySet()) {
+      QualifiedName.serialize(entry.getKey(), dataStream);
+      QualifiedName.serialize(entry.getValue(), dataStream);
     }
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
@@ -94,9 +124,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     int superClassCount = dataStream.readByte();
-    QualifiedName[] superClasses = new QualifiedName[superClassCount];
+    Map<QualifiedName, QualifiedName> superClasses = new LinkedHashMap<>();
     for (int i = 0; i < superClassCount; i++) {
-      superClasses[i] = QualifiedName.deserialize(dataStream);
+      superClasses.put(QualifiedName.deserialize(dataStream), QualifiedName.deserialize(dataStream));
     }
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
     List<String> slots = PyFileElementType.readNullableList(dataStream);
@@ -115,7 +145,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(pyClass)) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
-    for (QualifiedName s : stub.getSuperClasses()) {
+    for (QualifiedName s : stub.getSuperClasses().values()) {
       if (s != null) {
         String className = s.getLastComponent();
         if (className != null) {

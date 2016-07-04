@@ -25,7 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
@@ -35,6 +37,7 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
+import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -43,10 +46,7 @@ import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -581,5 +581,53 @@ public class PyStubsTest extends PyTestCase {
 
     assertEquals(expectedName, namedTupleType.getName());
     assertEquals(expectedFields, namedTupleType.getElementNames());
+  }
+
+  // PY-19461
+  public void testInheritorsWhenSuperClassImportedWithAs() {
+    final PyFile file1 = getTestFile("inheritorsWhenSuperClassImportedWithAs/a.py");
+    final PyFile file2 = getTestFile("inheritorsWhenSuperClassImportedWithAs/b.py");
+
+    final Project project = myFixture.getProject();
+
+    final Collection<PyClass> classes =
+      StubIndex.getElements(PySuperClassIndex.KEY, "C", project, ProjectScope.getAllScope(project), PyClass.class);
+
+    assertEquals(1, classes.size());
+    assertEquals("D", classes.iterator().next().getName());
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
+  }
+
+  // PY-19461
+  public void testAncestorsWhenSuperClassImportedWithAs() {
+    final PyFile file1 = getTestFile("inheritorsWhenSuperClassImportedWithAs/a.py");
+    final PyFile file2 = getTestFile("inheritorsWhenSuperClassImportedWithAs/b.py");
+
+    final PyClass pyClass = file2.findTopLevelClass("D");
+    assertNotNull(pyClass);
+
+    final Map<QualifiedName, QualifiedName> superClasses = pyClass.getStub().getSuperClasses();
+    assertEquals(1, superClasses.size());
+    assertEquals(QualifiedName.fromComponents("C"), superClasses.get(QualifiedName.fromComponents("C2")));
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
+  }
+
+  public void testAncestorsWhenSuperClassImportedWithQName() {
+    final PyFile file1 = getTestFile("ancestorsWhenSuperClassImportedWithQName/a.py");
+    final PyFile file2 = getTestFile("ancestorsWhenSuperClassImportedWithQName/b.py");
+
+    final PyClass pyClass = file2.findTopLevelClass("B");
+    assertNotNull(pyClass);
+
+    final Map<QualifiedName, QualifiedName> superClasses = pyClass.getStub().getSuperClasses();
+    assertEquals(1, superClasses.size());
+    assertEquals(QualifiedName.fromDottedString("A.A"), superClasses.get(QualifiedName.fromDottedString("A.A")));
+
+    assertNotParsed(file1);
+    assertNotParsed(file2);
   }
 }
