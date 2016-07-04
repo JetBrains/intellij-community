@@ -17,10 +17,35 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.apache.tools.ant.Project
+import org.codehaus.gant.GantBinding
+
 /**
  * @author nik
  */
 class BuildUtils {
+  static void addToClassPath(String path, AntBuilder ant) {
+    def classLoader = (GroovyClassLoader)BuildUtils.class.classLoader
+    if (new File(path).exists()) {
+      ant.project.log("'$path' added to classpath", Project.MSG_INFO)
+      classLoader.addClasspath(path)
+    }
+    else {
+      ant.project.log("Cannot add to classpath: $path doesn't exist", Project.MSG_WARN)
+    }
+  }
+
+  static void doLayout(GantBinding binding, Closure body) {
+    def script = new Script(binding) {
+      @Override
+      Object run() {
+        return body()
+      }
+    }
+    body.delegate = script
+    script.run()
+  }
+
   static String replaceAll(String text, Map<String, String> replacements, String marker = "__") {
     replacements.each {
       text = StringUtil.replace(text, "$marker$it.key$marker", it.value)

@@ -18,6 +18,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 /**
  * @author nik
  */
@@ -53,8 +55,8 @@ class WinExeInstallerBuilder {
 
     if (bundleJre) {
       ant.copy(todir: "$box/bin") {
-        fileset(dir: "${buildContext.paths.winJre}/jre/bin") {
-          include(name: "msvcr71.dll")
+        fileset(dir: "${buildContext.paths.winJre}/jre") {
+          include(name: "**/msvcr71.dll")
         }
       }
     }
@@ -66,6 +68,10 @@ class WinExeInstallerBuilder {
         exclude(name: "paths*")
         exclude(name: "version*")
       }
+    }
+    if (SystemInfoRt.isLinux) {
+      File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
+      ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
     }
 
     ant.nsis(instfile: "$box/nsiconf/idea_win.nsh", uninstfile: "$box/nsiconf/unidea_win.nsh") {
@@ -120,10 +126,10 @@ class WinExeInstallerBuilder {
 
   private void prepareConfigurationFiles(String box, String winDistPath) {
     new File(box, "nsiconf/paths.nsi").text = """
-!define IMAGES_LOCATION "${buildContext.productProperties.windows.installerImagesPath}"
-!define PRODUCT_PROPERTIES_FILE "$winDistPath/bin/idea.properties"
+!define IMAGES_LOCATION "${toSystemDependentName(buildContext.productProperties.windows.installerImagesPath)}"
+!define PRODUCT_PROPERTIES_FILE "${toSystemDependentName("$winDistPath/bin/idea.properties")}"
 !define PRODUCT_VM_OPTIONS_NAME ${buildContext.fileNamePrefix}*.exe.vmoptions
-!define PRODUCT_VM_OPTIONS_FILE "$winDistPath/bin/\${PRODUCT_VM_OPTIONS_NAME}"
+!define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
     String fullProductName = buildContext.productProperties.fullNameIncludingEdition ?: buildContext.applicationInfo.productName

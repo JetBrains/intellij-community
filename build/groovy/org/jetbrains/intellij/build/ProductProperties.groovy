@@ -24,8 +24,6 @@ public abstract class ProductProperties {
   String appInfoModule
   String customInspectScriptName
 
-  abstract def String appInfoFile()
-
   /**
    * Return {@code true} if tools.jar from JDK must be added to IDE's classpath
    */
@@ -35,7 +33,8 @@ public abstract class ProductProperties {
 
   abstract def String systemSelector(ApplicationInfoProperties applicationInfo)
 
-  String additionalIDEPropertiesFilePath
+  List<String> additionalIDEPropertiesFilePaths = []
+  List<String> additionalDirectoriesWithLicenses = []
   String exe_launcher_properties
   String exe64_launcher_properties
   String platformPrefix = null
@@ -59,17 +58,20 @@ public abstract class ProductProperties {
   String relativeAndroidHome
   String relativeAndroidToolsBaseHome
 
-  boolean includeYourkitAgentInEAP = false
-  boolean buildUpdater = false
+  /**
+   * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin' directories of Windows, Linux and Mac OS X distributions
+   */
+  String yourkitAgentBinariesDirectoryPath
+  boolean enableYourkitAgentInEAP = false
   List<String> excludedPlugins = []
 
-  def customLayout(targetDirectory) {}
+  void customLayout(BuildContext context, String targetDirectory) {}
 
-  def customWinLayout(targetDirectory) {}
+  void customWinLayout(BuildContext context, String targetDirectory) {}
 
-  def customLinLayout(targetDirectory) {}
+  void customLinLayout(BuildContext context, String targetDirectory) {}
 
-  def customMacLayout(targetDirectory) {}
+  void customMacLayout(BuildContext context, String targetDirectory) {}
 
   String icon128
   String ico
@@ -83,6 +85,7 @@ public abstract class ProductProperties {
 class WindowsProductProperties {
   boolean includeBatchLauncher = true
   boolean bundleJre = true
+  boolean buildZipWithBundledOracleJre = false
   boolean associateIpr = true
   /**
    * Path to a directory containing images for installer: logo.bpm, headerlogo.bpm, install.icon, uninstall.ico
@@ -100,7 +103,7 @@ class MacProductProperties {
   String docTypes = null
   List<String> urlSchemes = []
   List<String> architectures = ["x86_64"]
-  boolean includeYourkitAgentInEAP = true
+  boolean enableYourkitAgentInEAP = true
   List<String> extraMacBins = []
   String bundleIdentifier
 
@@ -108,6 +111,11 @@ class MacProductProperties {
    * Path to an image which will be injected into .dmg file
    */
   String dmgImagePath
+
+  /**
+   * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
+   */
+  String dmgImagePathForEAP = null
 }
 
 class LinuxProductProperties {

@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.apache.tools.ant.BuildException
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.jps.gant.LayoutInfo
+import org.jetbrains.intellij.build.IdeaCommunityBuilder
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
@@ -31,92 +26,17 @@ requireProperty("out", "$home/out")
 // with mysterious errors
 String out = new File(out).getCanonicalPath()
 
-private BuildContext createBuildContext(String out, BuildOptions options = new BuildOptions()) {
-  def classesRootPropertyName = "intellij.build.additional.classes.root"
-  def additionalClassesRoot = System.getProperty(classesRootPropertyName)
-  def classLoader = (GroovyClassLoader)this.class.classLoader
-  if (additionalClassesRoot != null) {
-    if (new File(additionalClassesRoot).exists()) {
-      projectBuilder.info("'$additionalClassesRoot' added to classpath.")
-      classLoader.addClasspath(additionalClassesRoot)
-    }
-    else {
-      projectBuilder.warning("'$classesRootPropertyName' property specifies non-existing file: $additionalClassesRoot")
-    }
-  }
-  def productPropertiesClassName = System.getProperty("intellij.build.product.properties.class", "org.jetbrains.intellij.build.IdeaCommunityProperties")
-  def productPropertiesClass
-  try {
-    productPropertiesClass = Class.forName(productPropertiesClassName, true, classLoader)
-  }
-  catch (ClassNotFoundException e) {
-    throw new BuildException("Cannot load product properties class '$productPropertiesClassName'. Specify its root with '$classesRootPropertyName' property.", e)
-  }
-  def productProperties = (ProductProperties)productPropertiesClass.newInstance([home].toArray())
-//todo[nik] construct buildOutputRoot automatically based on product name
-  BuildContext.createContext(ant, projectBuilder, project, global, home, home, "$out/release", productProperties, options)
-}
-
-private static void compileModules(BuildContext buildContext) {
-  BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
-}
-
 target(compile: "Compile project") {
-  compileModules(createBuildContext(out))
+  new IdeaCommunityBuilder(home, out, binding).compileModules()
 }
 
 target('default': 'The default target') {
-  def buildContext = createBuildContext(out)
-  def tasks = BuildTasks.create(buildContext)
-  tasks.cleanOutput()
-  compileModules(buildContext)
-  tasks.buildSearchableOptions("resources-en", ["community-main"], [])
-
-  layoutAll(buildContext, true)
-  if (productProperties.buildUpdater) {
-    // Generate updater.jar from the updater module (patch updater)
-    layoutUpdater(out)
-  }
-  tasks.zipProjectSources()
+  new IdeaCommunityBuilder(home, out, binding).buildDistributions()
 }
 
-//todo[nik] do we really need this target? updates.xml calls layout.gant directly
+//todo[nik] do we really need this target? update.xml calls layout.gant directly
 target('build-dist-jars' : 'Target to build jars from locally compiled classes') {
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
-  def buildContext = createBuildContext(out, options)
-  def tasks = BuildTasks.create(buildContext)
-  tasks.cleanOutput()
-  compileModules(buildContext)
-  tasks.buildSearchableOptions("resources-en", ["community-main"], [])
-  layoutAll(buildContext)
-}
-
-def layoutAll(BuildContext buildContext, buildJps = false) {
-  def layouts = includeFile("$buildContext.paths.communityHome/build/scripts/layouts.gant")
-  def tasks = BuildTasks.create(buildContext)
-  LayoutInfo info = layouts.layoutFull(buildContext)
-
-  buildContext.messages.block("Build intellij-core") {
-    String coreArtifactDir = "$buildContext.paths.artifacts/core"
-    buildContext.ant.mkdir(dir: coreArtifactDir)
-    layouts.layout_core(buildContext.paths.projectHome, coreArtifactDir)
-    buildContext.notifyArtifactBuilt(coreArtifactDir)
-
-    def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
-    ant.zip(destfile: intellijCoreZip) {
-      fileset(dir: coreArtifactDir)
-    }
-    buildContext.notifyArtifactBuilt(intellijCoreZip)
-  }
-  if (buildJps) {
-    buildContext.messages.block("Build standalone JPS") {
-      String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-      layouts.layoutJps(buildContext.paths.communityHome, jpsArtifactDir, buildContext.fullBuildNumber, {})
-      buildContext.notifyArtifactBuilt(jpsArtifactDir)
-    }
-  }
-
-  tasks.buildDistributions()
-  return info
+  new IdeaCommunityBuilder(home, out, binding, options).buildDistJars()
 }

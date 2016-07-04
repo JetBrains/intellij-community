@@ -876,14 +876,16 @@ binding.setVariable("signExecutableFiles", { String binDir ->
 })
 
 binding.setVariable("bundledJDKs"){
-  bundledJDK(false)
+  bundledJDK(false, paths.sandbox)
 }
 
 binding.setVariable("bundledJDK64s"){
-  bundledJDK(true)
+  bundledJDK(true, paths.sandbox)
 }
 
-private bundledJDK(boolean win64) {
+binding.setVariable("prepareBundledJDKs", { String targetDir -> bundledJDK(false, targetDir)})
+
+private bundledJDK(boolean win64, String targetDir) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.oracle.win", "jdk8u")
@@ -895,11 +897,11 @@ private bundledJDK(boolean win64) {
     def jdkDir = new File("${home}/build/jdk/win")
     if (p("jdk.oracle.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.oracle.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
-      extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
+      extractRedistJre(winJDK, "$targetDir/jdk.oracle.win/jre")
     }
     if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
-      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win/jre")
+      extractRedistJre(winCustomJDKx32, "$targetDir/jdk.win/jre")
     }
     jdkDir = new File("${home}/build/jdk/mac")
     if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
@@ -908,7 +910,7 @@ private bundledJDK(boolean win64) {
     jdkDir = new File("${home}/build/jdk/linux")
     if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
-      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux/jre")
+      extractRedistJre(linuxJDK, "$targetDir/jdk.linux/jre")
     }
   }
 }

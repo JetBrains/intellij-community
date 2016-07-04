@@ -285,8 +285,6 @@ def layoutFull(BuildContext context) {
     }
   }
 
-  context.productProperties.customLayout(targetDirectory)
-
   reorder(home, targetDirectory)
   return info
 }

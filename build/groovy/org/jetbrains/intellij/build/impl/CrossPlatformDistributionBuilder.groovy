@@ -31,7 +31,7 @@ class CrossPlatformDistributionBuilder {
       def executableName = buildContext.fileNamePrefix
       def zipDir = "$buildContext.paths.temp/cross-platform-zip"
       buildContext.ant.copy(todir: "$zipDir/bin/win") {
-        fileset(dir: "$linuxDistPath/bin") {
+        fileset(dir: "$winDistPath/bin") {
           include(name: "idea.properties")
         }
       }

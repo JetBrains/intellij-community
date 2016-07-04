@@ -139,8 +139,8 @@ class BuildTasksImpl extends BuildTasks {
     File originalFile = new File("$buildContext.paths.communityHome/bin/idea.properties")
 
     String text = originalFile.text
-    if (buildContext.productProperties.additionalIDEPropertiesFilePath != null) {
-      text += "\n" + new File(buildContext.productProperties.additionalIDEPropertiesFilePath).text
+    buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
+      text += "\n" + new File(it).text
     }
 
     //todo[nik] introduce special systemSelectorWithoutVersion instead?
@@ -186,13 +186,12 @@ idea.fatal.error.notification=disabled
     }
     buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
       fileset(dir: "$buildContext.paths.communityHome/license")
+      buildContext.productProperties.additionalDirectoriesWithLicenses.each {
+        fileset(dir: it)
+      }
     }
 
-    //todo[nik] these seems to be required for IDEA CE only
-    buildContext.ant.copy(todir: "$buildContext.paths.distAll") {
-      fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
-      fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
-    }
+    buildContext.productProperties.customLayout(buildContext, buildContext.paths.distAll)
   }
 
   @Override

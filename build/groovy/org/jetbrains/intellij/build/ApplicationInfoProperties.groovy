@@ -21,11 +21,12 @@ class ApplicationInfoProperties {
   final String majorVersion
   final String minorVersion
   final String shortProductName
+  final String minorVersionMainPart
   final String productName
   final String companyName
   final boolean isEAP
 
-  @SuppressWarnings("GrUnresolvedAccess")
+  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   ApplicationInfoProperties(String appInfoXmlPath) {
     def root = new XmlParser().parse(new File(appInfoXmlPath))
     majorVersion = root.version.first().@major
@@ -33,6 +34,7 @@ class ApplicationInfoProperties {
     shortProductName = root.names.first().@product
     productName = root.names.first().@fullname
     companyName = root.company.first().@name
+    minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
   }
 }

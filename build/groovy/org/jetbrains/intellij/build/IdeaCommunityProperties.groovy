@@ -25,7 +25,7 @@ class IdeaCommunityProperties extends ProductProperties {
     code = "IC"
     appInfoModule = "community-resources"
     fullNameIncludingEdition = "IntelliJ IDEA Community Edition"
-    additionalIDEPropertiesFilePath = "$home/build/conf/ideaCE.properties"
+    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
     exe_launcher_properties = "$home/build/conf/ideaCE-launcher.properties"
     exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
     maySkipAndroidPlugin = true
@@ -42,7 +42,7 @@ class IdeaCommunityProperties extends ProductProperties {
 
     mac.helpId = "IJ"
     mac.urlSchemes = ["idea"]
-    mac.includeYourkitAgentInEAP = false
+    mac.enableYourkitAgentInEAP = false
     mac.bundleIdentifier = "com.jetbrains.intellij.ce"
     mac.dmgImagePath = "$home/build/conf/mac/communitydmg.png"
   }
@@ -52,11 +52,15 @@ class IdeaCommunityProperties extends ProductProperties {
     return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
   }
 
-  def String appInfoFile() {
-    "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
+  @Override
+  void customLayout(BuildContext buildContext, String targetDirectory) {
+    buildContext.ant.copy(todir: targetDirectory) {
+      fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
+      fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
+    }
   }
 
-  def String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC$applicationInfo.majorVersion" }
+  def String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   def String macAppRoot(ApplicationInfoProperties applicationInfo, String buildNumber) {
     applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"

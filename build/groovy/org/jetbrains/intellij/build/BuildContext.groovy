@@ -115,10 +115,16 @@ abstract class BuildPaths {
   String temp
 
   /**
+   * Path to a directory containing JDK (currently Java 8) which is used to compile the project
+   */
+  String jdkHome
+
+  /**
    * Path to a directory containing distribution of JRE for Windows which will be bundled with the product
    */
   String winJre
 
+  String oracleWinJre
   /**
    * Path to a directory containing distribution of JRE for Linux which will be bundled with the product
    */

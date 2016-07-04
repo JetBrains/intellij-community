@@ -32,9 +32,10 @@ import org.jetbrains.jps.util.JpsPathUtil
  */
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
-  private final underTeamCity
+  private final boolean underTeamCity
   final List<String> outputDirectoriesToKeep = []
 
+//todo[nik] construct buildOutputRoot automatically based on product name
   BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                    BuildOptions options, MacHostProperties macHostProperties, SignTool signTool) {
@@ -49,9 +50,16 @@ class BuildContextImpl extends BuildContext {
     underTeamCity = System.getProperty("teamcity.buildType.id") != null
     messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
 
-    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot)
+    def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
+    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
 
-    loadProject()
+    if (project.modules.isEmpty()) {
+      loadProject()
+    }
+    else {
+      //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance
+      messages.info("Skipping loading project because it's already loaded")
+    }
     def appInfoFile = findApplicationInfoInSources()
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
 
@@ -65,13 +73,14 @@ class BuildContextImpl extends BuildContext {
 
   private void loadProject() {
     def projectHome = paths.projectHome
-    JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
-    JdkUtils.defineJdk(global, "1.8", JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def bundledKotlinPath = "$paths.communityHome/build/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
       messages.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
     }
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", bundledKotlinPath)
+
+    JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
+    JdkUtils.defineJdk(global, "1.8", paths.jdkHome)
 
     checkOptions()
     projectBuilder.buildIncrementally = options.incrementalCompilation
@@ -140,7 +149,7 @@ class BuildContextImpl extends BuildContext {
   @Override
   File findApplicationInfoInSources() {
     JpsModule module = findApplicationInfoModule()
-    def appInfoRelativePath = "idea/${productProperties.platformPrefix}ApplicationInfo.xml"
+    def appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
     def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
     if (appInfoFile == null) {
       messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
@@ -201,13 +210,15 @@ class BuildContextImpl extends BuildContext {
 }
 
 class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot) {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
     this.communityHome = new File(communityHome).canonicalPath
     this.projectHome = new File(projectHome).canonicalPath
     this.buildOutputRoot = new File(buildOutputRoot).canonicalPath
+    this.jdkHome = new File(jdkHome).canonicalPath
     artifacts = "${this.buildOutputRoot}/artifacts"
     distAll = "$buildOutputRoot/dist.all"
     temp = "$buildOutputRoot/temp"
+    oracleWinJre = "$buildOutputRoot/jdk.oracle.win"
     winJre = "$buildOutputRoot/jdk.win"
     linuxJre = "$buildOutputRoot/jdk.linux"
   }

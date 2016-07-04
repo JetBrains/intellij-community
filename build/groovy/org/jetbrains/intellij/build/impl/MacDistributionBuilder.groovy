@@ -48,7 +48,7 @@ class MacDistributionBuilder {
 """
     Map<String, String> customIdeaProperties = ["idea.jre.check": "$buildContext.productProperties.toolsJarRequired"];
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
-    buildContext.productProperties.customMacLayout(macDistPath)
+    buildContext.productProperties.customMacLayout(buildContext, macDistPath)
     def macZipPath = buildMacZip()
     if (buildContext.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
@@ -57,6 +57,7 @@ class MacDistributionBuilder {
     else {
       buildContext.executeStep("Build dmg artifact for Mac OS X", BuildOptions.MAC_DMG_STEP) {
         MacDmgBuilder.signAndBuildDmg(buildContext, buildContext.macHostProperties, macZipPath)
+        buildContext.ant.delete(file: macZipPath)
       }
     }
   }
@@ -66,6 +67,11 @@ class MacDistributionBuilder {
     def macProductProperties = buildContext.productProperties.mac
     buildContext.ant.copy(todir: "$target/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/mac")
+      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
+        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
+          include(name: "libyjpagent.jnilib")
+        }
+      }
     }
 
     buildContext.ant.copy(todir: target) {
@@ -114,8 +120,8 @@ class MacDistributionBuilder {
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
     String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64)} -XX:+UseCompressedOops"
-    if (buildContext.applicationInfo.isEAP && buildContext.productProperties.includeYourkitAgentInEAP && macProductProperties.includeYourkitAgentInEAP) {
-      ideaVmOptions += VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
+    if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macProductProperties.enableYourkitAgentInEAP) {
+      ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }
     new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
@@ -293,7 +299,9 @@ class MacDistributionBuilder {
        "apple.laf.useScreenMenuBar"            : "true",
        "apple.awt.graphics.UseQuartz"          : "true",
        "apple.awt.fullscreencapturealldisplays": "false"]
-    if (buildContext.productProperties.platformPrefix != null) {
+    if (buildContext.productProperties.platformPrefix != null
+//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
+      && buildContext.productProperties.platformPrefix != "Idea") {
       properties["idea.platform.prefix"] = buildContext.productProperties.platformPrefix
     }
 

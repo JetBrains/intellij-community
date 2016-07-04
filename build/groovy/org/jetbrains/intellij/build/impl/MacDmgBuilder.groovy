@@ -72,8 +72,8 @@ class MacDmgBuilder {
   private void buildDmg(String targetFileName) {
     buildContext.messages.progress("Building ${targetFileName}.dmg")
     def dmgImageCopy = "$artifactsPath/${buildContext.fullBuildNumber}.png"
-    //todo[nik] IDEA have special dmgImage for EAPs
-    ant.copy(file: buildContext.productProperties.mac.dmgImagePath, tofile: dmgImageCopy)
+    def dmgImagePath = (buildContext.applicationInfo.isEAP ? buildContext.productProperties.mac.dmgImagePathForEAP : null) ?: buildContext.productProperties.mac.dmgImagePath
+    ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
     ftpAction("put") {
       ant.fileset(file: dmgImageCopy)
     }

@@ -33,6 +33,11 @@ class LinuxDistributionBuilder {
   void layoutUnix(File ideaProperties) {
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
+      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
+        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
+          include(name: "libyjpagent-linux*.so")
+        }
+      }
     }
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -43,7 +48,7 @@ class LinuxDistributionBuilder {
     unixScripts()
     unixVMOptions()
     unixReadme()
-    buildContext.productProperties.customLinLayout(unixDistPath)
+    buildContext.productProperties.customLinLayout(buildContext, unixDistPath)
     buildTarGz(false)
     if (new File(buildContext.paths.linuxJre).exists()) {
       buildTarGz(true)
@@ -99,7 +104,7 @@ class LinuxDistributionBuilder {
       def fileName = "${buildContext.fileNamePrefix}${it.fileSuffix}.vmoptions"
       //todo[nik] why we don't add yourkit agent on unix?
       def options = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, null) + " -Dawt.useSystemAAFontSettings=lcd"
-      new File(unixDistPath, "bin/$fileName").text = options.replace(' ', '\n')
+      new File(unixDistPath, "bin/$fileName").text = options.replace(' ', '\n') + "\n"
     }
   }
 

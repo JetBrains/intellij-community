@@ -34,6 +34,11 @@ class WindowsDistributionBuilder {
   void layoutWin(File ideaProperties) {
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win")
+      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
+        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
+          include(name: "yjpagent*.dll")
+        }
+      }
     }
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
@@ -45,8 +50,18 @@ class WindowsDistributionBuilder {
     winVMOptions()
     buildWinLauncher(JvmArchitecture.x32)
     buildWinLauncher(JvmArchitecture.x64)
-    buildContext.productProperties.customWinLayout(winDistPath)
-    buildWinZip()
+    buildContext.productProperties.customWinLayout(buildContext, winDistPath)
+    def customJrePath = buildContext.productProperties.windows.bundleJre && new File(buildContext.paths.winJre).exists() ? buildContext.paths.winJre : null
+    buildWinZip(customJrePath, ".win")
+    String oracleJrePath = buildContext.paths.oracleWinJre
+    if (buildContext.productProperties.windows.buildZipWithBundledOracleJre) {
+      if (new File(oracleJrePath, "jre").exists()) {
+        buildWinZip(oracleJrePath, "-oracle-win")
+      }
+      else {
+        buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE: ${oracleJrePath}/jre doesn't exist")
+      }
+    }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       new WinExeInstallerBuilder(buildContext).buildInstaller(winDistPath)
@@ -100,9 +115,9 @@ class WindowsDistributionBuilder {
   //todo[nik] rename
   private void winVMOptions() {
     JvmArchitecture.values().each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.includeYourkitAgentInEAP ? buildContext.systemSelector : null
+      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.fileNamePrefix}${it.fileSuffix}.exe.vmoptions"
-      new File(winDistPath, "bin/$fileName").text = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, yourkitSessionName).replace(' ', '\n')
+      new File(winDistPath, "bin/$fileName").text = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, yourkitSessionName).replace(' ', '\n') + "\n"
     }
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
@@ -146,13 +161,13 @@ class WindowsDistributionBuilder {
     }
   }
 
-  private void buildWinZip() {
-    buildContext.messages.block("Build Windows .zip distribution") {
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.archiveName(buildContext.buildNumber)}.win.zip"
+  private void buildWinZip(String pathToJreToBundle, String zipNameSuffix) {
+    buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.archiveName(buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = buildContext.productProperties.winAppRoot(buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
-      if (buildContext.productProperties.windows.bundleJre && new File(buildContext.paths.winJre).exists()) {
-        dirs += buildContext.paths.winJre
+      if (pathToJreToBundle != null) {
+        dirs += pathToJreToBundle
       }
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {

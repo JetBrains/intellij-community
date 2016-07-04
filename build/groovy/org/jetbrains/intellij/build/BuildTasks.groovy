@@ -49,7 +49,7 @@ abstract class BuildTasks {
 
   abstract void cleanOutput()
 
-  abstract void compileProjectAndTests(List<String> includingTestsInModules = [])
+  abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
   public static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
