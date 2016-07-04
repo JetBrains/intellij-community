@@ -161,7 +161,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   // under lock
   private void wakeUpQueue() {
     if (!isDisposed && !documentsToCommit.isEmpty()) {
-      executor.execute(ProgressManager.getInstance().longProcess("Commit documents", this));
+      executor.execute(this);
     }
   }
 
