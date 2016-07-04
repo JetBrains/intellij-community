@@ -37,17 +37,16 @@ public class MakeTypeGenericInspection extends BaseJavaBatchLocalInspectionTool 
       @Override
       public void visitVariable(PsiVariable variable) {
         super.visitVariable(variable);
-        if (variable.getTypeElement() != null) {
+        final PsiTypeElement variableTypeElement = variable.getTypeElement();
+        if (variableTypeElement != null && variableTypeElement.isPhysical()) {
           final PsiType type = getSuggestedType(variable);
           if (type != null) {
             final String typeText = type.getCanonicalText();
-            final String message =
-              InspectionsBundle.message("inspection.raw.variable.type.make.generic.text", variable.getName(), typeText);
-            final PsiElement beforeInitializer =
-              PsiTreeUtil.skipSiblingsBackward(variable.getInitializer(), PsiWhiteSpace.class, PsiComment.class);
+            final String message = InspectionsBundle.message("inspection.raw.variable.type.make.generic.text", variable.getName(), typeText);
+            final PsiElement beforeInitializer = PsiTreeUtil.skipSiblingsBackward(variable.getInitializer(), PsiWhiteSpace.class, PsiComment.class);
+            final PsiElement endElement = beforeInitializer != null && beforeInitializer.isPhysical() ? beforeInitializer : variableTypeElement;
             final ProblemDescriptor descriptor =
-              holder.getManager().createProblemDescriptor(variable.getTypeElement(),
-                                                          beforeInitializer != null ? beforeInitializer : variable.getTypeElement(),
+              holder.getManager().createProblemDescriptor(variableTypeElement, endElement,
                                                           message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                           isOnTheFly, new MyLocalQuickFix(message));
             holder.registerProblem(descriptor);
