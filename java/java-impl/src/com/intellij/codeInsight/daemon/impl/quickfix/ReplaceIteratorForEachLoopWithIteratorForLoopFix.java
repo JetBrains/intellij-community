@@ -42,14 +42,14 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
   @NotNull
   @Override
   public String getText() {
-    return "Replace 'for each' loop with iterator 'for' loop";
+    return getFamilyName();
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return "Replace 'for each' loop with iterator 'for' loop";
   }
 
   @Override
@@ -112,9 +112,11 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     newForLoop = (PsiForStatement)styleManager.reformat(newForLoop);
 
     if (forEachBody instanceof PsiBlockStatement) {
-      final PsiStatement[] statements = ((PsiBlockStatement)forEachBody).getCodeBlock().getStatements();
-      for (int i = statements.length - 1; i >= 0; i--) {
-        newBodyBlock.addAfter(statements[i], newFirstStatement);
+      final PsiCodeBlock bodyCodeBlock = ((PsiBlockStatement)forEachBody).getCodeBlock();
+      final PsiElement firstBodyElement = bodyCodeBlock.getFirstBodyElement();
+      final PsiElement lastBodyElement = bodyCodeBlock.getLastBodyElement();
+      if (firstBodyElement != null && lastBodyElement != null) {
+        newBodyBlock.addRangeAfter(firstBodyElement, lastBodyElement, newFirstStatement);
       }
     }
     else if (forEachBody != null && !(forEachBody instanceof PsiEmptyStatement)) {

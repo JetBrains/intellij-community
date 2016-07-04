@@ -28,9 +28,9 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQ
   public void test() throws Exception { doAllTests(); }
 
   @Override
-  protected void beforeActionStarted(String testName, String contents) {
-    super.beforeActionStarted(testName, contents);
-    if (testName.startsWith("Final")) {
+  protected void setUp() throws Exception {
+    super.setUp();
+    if (getTestName(false).startsWith("Final")) {
       final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
       myFinalLocals = codeStyleSettings.GENERATE_FINAL_LOCALS;
       codeStyleSettings.GENERATE_FINAL_LOCALS = true;
@@ -38,12 +38,16 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFixTest extends LightQ
   }
 
   @Override
-  protected void afterActionCompleted(String testName, String contents) {
-    if (testName.startsWith("Final")) {
-      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
-      codeStyleSettings.GENERATE_FINAL_LOCALS = myFinalLocals;
+  protected void tearDown() throws Exception {
+    try {
+      if (getTestName(false).startsWith("Final")) {
+        final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+        codeStyleSettings.GENERATE_FINAL_LOCALS = myFinalLocals;
+      }
     }
-    super.afterActionCompleted(testName, contents);
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
