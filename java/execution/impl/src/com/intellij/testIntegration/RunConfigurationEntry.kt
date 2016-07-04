@@ -16,72 +16,76 @@
 package com.intellij.testIntegration
 
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.testframework.TestIconMapper
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.ERROR_INDEX
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.FAILED_INDEX
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiElement
 import java.util.*
+import javax.swing.Icon
+
 
 interface RecentTestsPopupEntry {
-  val runDate: Date
-  val magnitude: TestStateInfo.Magnitude
+  val icon: Icon?
   val presentation: String
-
-  val testsUrls: List<String>
-
-  fun run(runner: RecentTestRunner)
-
-  open fun navigatableElement(locator: TestLocator): PsiElement? = null
+  val runDate: Date
   
-  fun getEntriesToShow(): List<RecentTestsPopupEntry>
+  val failed: Boolean
+
+  fun accept(visitor: TestEntryVisitor)
 }
 
-open class SingleTestEntry(val url: String, 
-                           override val magnitude: TestStateInfo.Magnitude, 
-                           override val runDate: Date) : RecentTestsPopupEntry 
+
+abstract class TestEntryVisitor {
+  open fun visitTest(test: SingleTestEntry) = Unit
+  open fun visitSuite(suite: SuiteEntry) = Unit
+  open fun visitRunConfiguration(configuration: RunConfigurationEntry) = Unit
+}
+
+class SingleTestEntry(val url: String,
+                      override val runDate: Date,
+                      private val magnitude: TestStateInfo.Magnitude) : RecentTestsPopupEntry 
 {
 
   override val presentation = VirtualFileManager.extractPath(url)
-  override val testsUrls = listOf(url)
-
-  override fun run(runner: RecentTestRunner) {
-    runner.run(url)
+  override val icon = TestIconMapper.getIcon(magnitude)
+  
+  override val failed = magnitude == ERROR_INDEX || magnitude == FAILED_INDEX
+  
+  var suite: SuiteEntry? = null
+  
+  override fun accept(visitor: TestEntryVisitor) {
+    visitor.visitTest(this)
   }
-
-  override fun navigatableElement(locator: TestLocator) = locator.getLocation(url)?.psiElement
-
-  override fun getEntriesToShow(): List<RecentTestsPopupEntry> = listOf(this)
   
 }
 
-class SuiteEntry(url: String, magnitude: TestStateInfo.Magnitude, runDate: Date) : SingleTestEntry(url, magnitude, runDate) {
-  
-  private val tests = hashSetOf<SingleTestEntry>()
 
-  override val testsUrls: List<String>
-    get() = tests.fold(listOf<String>(), { acc, testEntry -> acc + testEntry.testsUrls })
-  
-  val suiteName = VirtualFileManager.extractPath(url)
-  
-  val failedTests: List<SingleTestEntry>
-    get() = tests.filter { it.magnitude == FAILED_INDEX || it.magnitude == ERROR_INDEX }
-  
-  fun addTest(info: SingleTestEntry) = tests.add(info)
+class SuiteEntry(val suiteUrl: String, override val runDate: Date) : RecentTestsPopupEntry {
 
-  override val presentation = suiteName
-
-  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
-    val failed = failedTests
-    if (failed.size > 0) {
-      return failed.sortedByDescending { it.runDate } + this
+  val tests = hashSetOf<SingleTestEntry>()
+  val suiteName = VirtualFileManager.extractPath(suiteUrl)
+  
+  var runConfiguration: RunConfigurationEntry? = null
+  
+  override val presentation = VirtualFileManager.extractPath(suiteUrl)
+  override val icon = AllIcons.RunConfigurations.Junit
+  
+  override val failed: Boolean
+    get() {
+      return tests.find { it.failed } != null
     }
-    return listOf(this)
-  }
   
-  override val magnitude: TestStateInfo.Magnitude by lazy {
-    tests.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
+  fun addTest(test: SingleTestEntry) {
+    tests.add(test)
+    test.suite = this
   }
-  
+
+  override fun accept(visitor: TestEntryVisitor) {
+    visitor.visitSuite(this)
+  }
+
 }
 
 
@@ -93,34 +97,28 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
     addSuite(initial)
   }
 
-  fun addSuite(s: SuiteEntry) = suites.add(s)
+  override val runDate: Date
+    get() {
+      return suites.minBy { it.runDate }!!.runDate
+    }
+  
+  
+  override val failed: Boolean
+    get() {
+      return suites.find { it.failed } != null
+    }
 
-  override val runDate = suites.map { it.runDate }.min()!!
-
-  override val magnitude: TestStateInfo.Magnitude by lazy {
-    suites.find { it.magnitude != PASSED_INDEX && it.magnitude != COMPLETE_INDEX }?.magnitude ?: PASSED_INDEX
+  fun addSuite(suite: SuiteEntry) {
+    suites.add(suite)
+    suite.runConfiguration = this
   }
 
   override val presentation = runSettings.name
 
-  override val testsUrls: List<String>
-    get() = suites.fold(listOf<String>(), { list, suite -> list + suite.testsUrls })
-  
-  override fun run(runner: RecentTestRunner) {
-    runner.run(runSettings)
-  }
+  override val icon = AllIcons.RunConfigurations.Junit
 
-  override fun getEntriesToShow(): List<RecentTestsPopupEntry> {
-    if (suites.size == 1) {
-      return suites[0].getEntriesToShow()
-    }
-    
-    return suites
-        .filter { it.failedTests.size > 0}
-        .sortedByDescending { it.runDate }
-        .fold(listOf<RecentTestsPopupEntry>(), { popupList, currentEntry ->
-          popupList + currentEntry.getEntriesToShow()
-        }) + this
+  override fun accept(visitor: TestEntryVisitor) {
+    visitor.visitRunConfiguration(this)
   }
   
 }
