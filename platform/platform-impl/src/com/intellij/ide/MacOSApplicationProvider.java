@@ -122,32 +122,34 @@ public class MacOSApplicationProvider implements ApplicationComponent {
   private static class Worker {
     public static void initMacApplication() {
       Application application = Application.getApplication();
-      application.setAboutHandler(event -> AboutAction.perform(getProject()));
+      application.setAboutHandler(event -> AboutAction.perform(getProject(false)));
       application.setPreferencesHandler(event -> {
-        Project project = getNotNullProject();
-        submit(() -> ShowSettingsAction.perform(project));
+        Project project = getProject(true);
+        submit("Preferences", () -> ShowSettingsAction.perform(project));
       });
       application.setQuitHandler((event, response) -> {
-        submit(ExitAction::perform);
+        submit("Quit", ExitAction::perform);
         response.cancelQuit();
       });
       application.setOpenFileHandler(event -> {
-        Project project = getProject();
+        Project project = getProject(false);
         List<File> list = event.getFiles();
-        LOG.debug("MacMenu: files found ", list.size());
         if (list.isEmpty()) return;
-        File file = list.get(0);
-        submit(() -> {
-          LOG.debug("MacMenu: try to open file");
-          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-            LOG.debug("MacMenu: load project for ", file);
-            IdeaApplication.getInstance().setPerformProjectLoad(false);
-            return;
+        submit("OpenFile", () -> {
+          for (File file : list) {
+            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+              LOG.debug("MacMenu: load project from ", file);
+              IdeaApplication.getInstance().setPerformProjectLoad(false);
+              return;
+            }
           }
-          LOG.debug("MacMenu: project = ", project);
-          if (project != null && file.exists()) {
-            LOG.debug("MacMenu: open file ", file);
-            OpenFileAction.openFile(file.getAbsolutePath(), project);
+          if (project != null) {
+            for (File file : list) {
+              if (file.exists()) {
+                LOG.debug("MacMenu: open file ", file);
+                OpenFileAction.openFile(file.getAbsolutePath(), project);
+              }
+            }
           }
         });
       });
@@ -179,33 +181,49 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
-    @SuppressWarnings("deprecation")
-    private static Project getProject() {
-      return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    private static Project getProject(boolean useDefault) {
+      @SuppressWarnings("deprecation")
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      if (project == null) {
+        LOG.debug("MacMenu: no project in data context");
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        project = projects.length > 0 ? projects[0] : null;
+        if (project == null && useDefault) {
+          LOG.debug("MacMenu: use default project instead");
+          project = ProjectManager.getInstance().getDefaultProject();
+        }
+      }
+      LOG.debug("MacMenu: project = ", project);
+      return project;
     }
 
-    @NotNull
-    private static Project getNotNullProject() {
-      Project project = getProject();
-      return project != null ? project : ProjectManager.getInstance().getDefaultProject();
-    }
-
-    private static void submit(@NotNull Runnable task) {
+    private static void submit(@NotNull String name, @NotNull Runnable task) {
       LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread(), "; ENABLED = ", ENABLED.get());
-      if (!ENABLED.get()) return;
-
-      Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();
-      if (component == null || IdeKeyEventDispatcher.isModalContext(component)) return;
-
-      ENABLED.set(false);
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-        try {
-          task.run();
+      if (!ENABLED.get()) {
+        LOG.debug("MacMenu: disabled");
+      }
+      else {
+        Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();
+        if (component == null) {
+          LOG.debug("MacMenu: no focused component");
         }
-        finally {
-          ENABLED.set(true);
+        else if (IdeKeyEventDispatcher.isModalContext(component)) {
+          LOG.debug("MacMenu: component in modal context");
         }
-      });
+        else {
+          ENABLED.set(false);
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            try {
+              LOG.debug("MacMenu: init ", name);
+              task.run();
+            }
+            finally {
+              LOG.debug("MacMenu: done ", name);
+              ENABLED.set(true);
+            }
+          });
+        }
+      }
     }
   }
 }
