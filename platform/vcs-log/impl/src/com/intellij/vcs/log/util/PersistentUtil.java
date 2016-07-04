@@ -45,7 +45,7 @@ public class PersistentUtil {
   }
 
   @NotNull
-  private static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
+  public static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
     File subdir = new File(LOG_CACHE, storageKind);
     String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
     final File mapFile = new File(subdir, safeLogId + "." + version);
