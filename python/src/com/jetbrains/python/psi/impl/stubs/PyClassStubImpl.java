@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,26 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.PyClass;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
  */
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final String myName;
-  private final QualifiedName[] mySuperClasses;
+  private final Map<QualifiedName, QualifiedName> mySuperClasses;
   @Nullable private final QualifiedName myMetaClass;
   private final List<String> mySlots;
   private final String myDocString;
 
-  public PyClassStubImpl(final String name, StubElement parentStub, final QualifiedName[] superClasses, @Nullable QualifiedName metaClass,
-                         final List<String> slots, String docString, IStubElementType stubElementType) {
+  public PyClassStubImpl(final String name, StubElement parentStub, final Map<QualifiedName, QualifiedName> superClasses,
+                         @Nullable QualifiedName metaClass, final List<String> slots, String docString, IStubElementType stubElementType) {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
@@ -49,7 +50,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     return myName;
   }
 
-  public QualifiedName[] getSuperClasses() {
+  public Map<QualifiedName, QualifiedName> getSuperClasses() {
     return mySuperClasses;
   }
 
