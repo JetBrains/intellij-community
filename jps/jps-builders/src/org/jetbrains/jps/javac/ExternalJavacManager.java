@@ -326,7 +326,7 @@ public class ExternalJavacManager {
   private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-      JavacProcessDescriptor descriptor = ctx.channel().attr(SESSION_DESCRIPTOR).get();
+      JavacProcessDescriptor descriptor = ctx.channel().attr(SESSION_DESCRIPTOR).getAndRemove();
       if (descriptor != null) {
         descriptor.setDone();
       }
