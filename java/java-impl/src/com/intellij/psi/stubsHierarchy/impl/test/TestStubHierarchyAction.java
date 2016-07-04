@@ -23,13 +23,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,12 +81,46 @@ public class TestStubHierarchyAction extends InheritanceAction {
     }
 
     private void compareSupers(ProgressIndicator indicator, MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy) {
-      List<? extends SmartClassAnchor> anchors = hierarchy.getCoveredClasses();
-      for (int i = 0; i < anchors.size(); i++) {
-        indicator.setFraction(i * 1.0 / anchors.size());
-        SmartClassAnchor anchor = anchors.get(i);
-        compareSupers(anchor, supers.get(anchor));
+      List<VirtualFile> covered = getCoveredFiles(indicator, hierarchy);
+      for (int i = 0; i < covered.size(); i++) {
+        indicator.setFraction(i * 1.0 / covered.size());
+        checkFile(supers, hierarchy, covered.get(i));
       }
+    }
+
+    private void checkFile(MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy, VirtualFile vFile) {
+      for (StubElement<?> element : getStubTree(vFile).getPlainListFromAllRoots()) {
+        Object psi = element.getPsi();
+        if (psi instanceof PsiClass && !(psi instanceof PsiTypeParameter)) {
+          SmartClassAnchor anchor = hierarchy.findAnchor((PsiClass)psi);
+          if (anchor == null) {
+            throw new AssertionError("Class not indexed: " + psi + " in " + vFile);
+          }
+          compareSupers(anchor, supers.get(anchor));
+        }
+      }
+    }
+
+    @NotNull
+    private List<VirtualFile> getCoveredFiles(ProgressIndicator indicator, ClassHierarchy hierarchy) {
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
+      GlobalSearchScope uncovered = hierarchy.restrictToUncovered(allScope);
+      List<VirtualFile> covered = new ArrayList<>();
+      FileBasedIndex.getInstance().iterateIndexableFiles(file -> {
+        if (!file.isDirectory() && allScope.contains(file) && !uncovered.contains(file)) {
+          covered.add(file);
+        }
+        return true;
+      }, myProject, indicator);
+      return covered;
+    }
+
+    @NotNull
+    private StubTree getStubTree(VirtualFile vFile) {
+      PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)PsiManager.getInstance(myProject).findFile(vFile);
+      assert psiFile != null : "No PSI for " + vFile;
+      StubTree stubTree = psiFile.getStubTree();
+      return stubTree != null ? stubTree : ((PsiFileImpl)psiFile).calcStubTree();
     }
 
     private void compareSupers(final SmartClassAnchor anchor, final Collection<SmartClassAnchor> superAnchors) {
