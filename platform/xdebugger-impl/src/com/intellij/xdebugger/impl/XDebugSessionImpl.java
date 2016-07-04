@@ -775,7 +775,7 @@ public class XDebugSessionImpl implements XDebugSession {
     updateExecutionPosition();
 
     if (myShowTabOnSuspend.compareAndSet(true, false)) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
         initSessionTab(null);
         showSessionTab();
       });
