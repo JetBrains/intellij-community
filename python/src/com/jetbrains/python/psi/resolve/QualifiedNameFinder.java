@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -30,7 +31,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,8 +142,13 @@ public class QualifiedNameFinder {
         if (initPy == null) {
           break;
         }
-        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).getElementNamed(((PsiNamedElement)toplevel).getName()))) {
-          virtualFile = dir.getVirtualFile();
+        if (initPy instanceof PyFile) {
+          //noinspection ConstantConditions
+          final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
+          final PsiElement finalTopLevel = toplevel;
+          if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
+            virtualFile = dir.getVirtualFile();
+          }
         }
         dir = dir.getParentDirectory();
       }
