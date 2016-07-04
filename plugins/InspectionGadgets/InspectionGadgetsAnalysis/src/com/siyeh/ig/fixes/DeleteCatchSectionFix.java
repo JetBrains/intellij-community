@@ -18,10 +18,9 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,7 +52,7 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiParameter)) {
@@ -75,7 +74,7 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
       final boolean keepBlock;
       if (containingElement instanceof PsiCodeBlock) {
         final PsiCodeBlock parentBlock = (PsiCodeBlock)containingElement;
-        keepBlock = VariableSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock);
+        keepBlock = DeclarationSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock);
       }
       else {
         keepBlock = true;

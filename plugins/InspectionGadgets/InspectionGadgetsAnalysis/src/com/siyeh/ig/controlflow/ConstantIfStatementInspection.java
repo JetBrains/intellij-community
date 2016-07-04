@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantIfStatementInspection extends BaseInspection {
@@ -116,7 +116,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
         final PsiCodeBlock block =
           ((PsiBlockStatement)branch).getCodeBlock();
         final boolean hasConflicts =
-          VariableSearchUtils.containsConflictingDeclarations(
+          DeclarationSearchUtils.containsConflictingDeclarations(
             block, parentBlock);
         if (hasConflicts) {
           final String elseText = branch.getText();

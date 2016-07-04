@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +71,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
         return;
       }
       final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class);
-      if (parentCodeBlock == null || !VariableSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
+      if (parentCodeBlock == null || !DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
         final PsiElement first = tryBlock.getFirstBodyElement();
         final PsiElement last = tryBlock.getLastBodyElement();
         if (first != null && last != null) {

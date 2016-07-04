@@ -25,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariableSearchUtils {
+public class DeclarationSearchUtils {
 
-  private VariableSearchUtils() {}
+  private DeclarationSearchUtils() {}
 
   public static boolean variableNameResolvesToTarget(
     @NotNull String variableName, @NotNull PsiVariable target,
