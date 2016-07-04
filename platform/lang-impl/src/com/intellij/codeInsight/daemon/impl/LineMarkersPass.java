@@ -112,6 +112,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     myMarkers = mergeLineMarkers(lineMarkers, myEditor);
   }
 
+  @NotNull
   static List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers, @Nullable Editor editor) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<>();
     final Iterator<LineMarkerInfo> iterator = markers.iterator();
@@ -126,7 +127,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
 
     if (forMerge.isEmpty() || editor == null) return markers;
 
-    final List<LineMarkerInfo> result = new ArrayList<>(markers);
+    List<LineMarkerInfo> result = new ArrayList<>(markers);
     TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<>();
     for (MergeableLineMarkerInfo info : forMerge) {
       int line = editor.getDocument().getLineNumber(info.startOffset);
@@ -146,11 +147,13 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     return result;
   }
 
+  @NotNull
   public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull final Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.INSTANCE.allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     final LineMarkerSettings settings = LineMarkerSettings.getSettings();
-    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor) || settings.isEnabled((LineMarkerProviderDescriptor)provider));
+    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor)
+                                                       || settings.isEnabled((LineMarkerProviderDescriptor)provider));
   }
 
   @Override
