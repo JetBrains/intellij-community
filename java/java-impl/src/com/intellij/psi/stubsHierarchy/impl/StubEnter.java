@@ -96,10 +96,7 @@ public class StubEnter {
   }
 
   private ClassSymbol classEnter(IndexTree.ClassDecl tree, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
-    int flags = checkFlags(tree.myMods, owner);
-    if (info.getType() == IndexTree.BYTECODE) {
-      flags |= IndexTree.COMPILED;
-    }
+    int flags = checkFlags(tree.myMods, owner, info.getType() == IndexTree.BYTECODE);
 
     int name = tree.myName;
     @QNameId int qname = name == NameEnvironment.NO_NAME || ownerName < 0 ? -1
@@ -155,11 +152,18 @@ public class StubEnter {
     uncompleted = null;
   }
 
-  public static int checkFlags(long flags, Symbol owner) {
+  private static int checkFlags(long flags, Symbol owner, boolean compiled) {
     int mask = 0;
     if (owner.isClass() && (owner.myOwner.isPackage() || owner.isStatic())) {
-      if ((flags & (IndexTree.INTERFACE | IndexTree.ENUM | IndexTree.STATIC)) != 0 )
+      if ((flags & (IndexTree.INTERFACE | IndexTree.ENUM | IndexTree.STATIC)) != 0) {
         mask |= IndexTree.STATIC;
+      }
+    }
+    if ((flags & IndexTree.SUPERS_UNRESOLVED) != 0) {
+      mask |= IndexTree.SUPERS_UNRESOLVED;
+    }
+    if (compiled) {
+      mask |= IndexTree.COMPILED;
     }
     return mask;
   }
