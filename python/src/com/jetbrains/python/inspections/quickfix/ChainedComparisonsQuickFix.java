@@ -145,14 +145,18 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
 
   @NotNull
   private static PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
-    final PsiElement operator = expression.getPsiOperator();
-    final PyExpression right = expression.getRightExpression();
-    PyExpression left = expression.getLeftExpression();
-    if (isComparisonExpression(left)) {
-      left = invertExpression((PyBinaryExpression)left, elementGenerator);
+    if (isComparisonExpression(expression)) {
+      final PyExpression left = expression.getLeftExpression();
+      final PyExpression right = expression.getRightExpression();
+
+      final String newOperator = invertOperator(assertNotNull(expression.getPsiOperator()));
+      final PyExpression newRight = isComparisonExpression(left) ? invertExpression((PyBinaryExpression)left, elementGenerator) : left;
+
+      return elementGenerator.createBinaryExpression(newOperator, right, newRight);
     }
-    final String newOperator = invertOperator(assertNotNull(operator));
-    return elementGenerator.createBinaryExpression(newOperator, right, left);
+    else {
+      return expression;
+    }
   }
 
   @NotNull
