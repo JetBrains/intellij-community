@@ -15,33 +15,21 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import java.util.Arrays;
-
-public final class QualifiedName {
-  public static final QualifiedName[] EMPTY_ARRAY = new QualifiedName[0];
-
-  // unique id of this full name
+final class QualifiedName {
   public final int myId;
-  // ids of parts of this name
-  public final int[] myComponents;
 
-  QualifiedName(int id, int[] components) {
+  QualifiedName(int id) {
     this.myId = id;
-    this.myComponents = components;
   }
 
   public boolean isEmpty() {
-    return myComponents.length == 0;
+    return myId == 0;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o instanceof QualifiedName) {
-      QualifiedName other = (QualifiedName)o;
-      return myId == other.myId && Arrays.equals(myComponents, other.myComponents);
-    }
-    return false;
+    return o instanceof QualifiedName && myId == ((QualifiedName)o).myId;
   }
 
   @Override

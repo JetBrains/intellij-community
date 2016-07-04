@@ -71,7 +71,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   private static BitSet calcAnonymous(ClassSymbol[] classSymbols) {
     BitSet answer = new BitSet();
     for (ClassSymbol symbol : classSymbols) {
-      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NamesEnumerator.NO_NAME) {
+      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NameEnvironment.NO_NAME) {
         answer.set(symbol.myAnchorId);
       }
     }

@@ -74,9 +74,9 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
-    final QualifiedName myQualifiedName;
+    @QNameId final int myQualifiedName;
 
-    public PackageSymbol(Symbol owner, QualifiedName fullname, int name) {
+    public PackageSymbol(Symbol owner, @QNameId int fullname, int name) {
       super(IndexTree.PACKAGE, owner, name);
       myQualifiedName = fullname;
     }
@@ -186,7 +186,7 @@ public abstract class Symbol {
     @CompactArray(ClassSymbol.class) private Object myMembers = null;
 
     MemberSymbol(Symbol owner) {
-      super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
+      super(IndexTree.MEMBER, owner, NameEnvironment.NO_NAME);
     }
 
     MemberSymbol(int flags, Symbol owner, int name) {

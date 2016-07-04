@@ -38,10 +38,8 @@ public class StubEnter {
   }
 
   void unitEnter(IndexTree.Unit unit, int fileId) {
-    PackageSymbol pkg = unit.myPackageName.length > 0
-                        ? mySymbols.enterPackage(myNameEnvironment.myNamesEnumerator.getFullName(unit.myPackageName, true))
-                        : mySymbols.myRootPackage;
-    enter(unit.myDecls, UnitInfo.mkUnitInfo(unit.myUnitType, internImports(unit)), pkg, pkg.myQualifiedName, fileId);
+    @QNameId int pkgName = unit.myPackageName.length > 0 ? myNameEnvironment.internQualifiedName(unit.myPackageName) : 0;
+    enter(unit.myDecls, UnitInfo.mkUnitInfo(unit.myUnitType, internImports(unit)), mySymbols.enterPackage(pkgName), pkgName, fileId);
   }
 
   private long[] internImports(IndexTree.Unit unit) {
@@ -53,17 +51,17 @@ public class StubEnter {
   }
 
   private long processImport(IndexTree.Import anImport) {
-    QualifiedName fullname = myNameEnvironment.myNamesEnumerator.getFullName(anImport.myFullname, true);
+    int fullname = myNameEnvironment.internQualifiedName(anImport.myFullname);
     return Imports.mkImport(fullname, anImport.myStaticImport, anImport.myOnDemand, anImport.myAlias);
   }
 
-  private void enter(IndexTree.ClassDecl[] trees, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName, int fileId) {
+  private void enter(IndexTree.ClassDecl[] trees, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
     for (IndexTree.ClassDecl tree : trees) {
       enter(tree, info, owner, ownerName, fileId);
     }
   }
 
-  private ClassSymbol[] enter(IndexTree.Decl[] trees, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName, int fileId) {
+  private ClassSymbol[] enter(IndexTree.Decl[] trees, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
     ClassSymbol[] members = new ClassSymbol[trees.length];
     int i = 0;
     for (IndexTree.Decl tree : trees) {
@@ -81,7 +79,7 @@ public class StubEnter {
     return members;
   }
 
-  private ClassSymbol enter(IndexTree.Decl tree, UnitInfo info, Symbol owner, QualifiedName ownerName, int fileId) {
+  private ClassSymbol enter(IndexTree.Decl tree, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
     if (tree instanceof IndexTree.ClassDecl) {
       return classEnter((IndexTree.ClassDecl)tree, info, owner, ownerName, fileId);
     }
@@ -92,20 +90,20 @@ public class StubEnter {
     return null;
   }
 
-  private void memberEnter(IndexTree.MemberDecl tree, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName, int fileId) {
+  private void memberEnter(IndexTree.MemberDecl tree, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
     MemberSymbol mc = new MemberSymbol(owner);
     mc.setMembers(enter(tree.myDecls, info, mc, ownerName, fileId));
   }
 
-  private ClassSymbol classEnter(IndexTree.ClassDecl tree, UnitInfo info, Symbol owner, @Nullable QualifiedName ownerName, int fileId) {
+  private ClassSymbol classEnter(IndexTree.ClassDecl tree, UnitInfo info, Symbol owner, @QNameId int ownerName, int fileId) {
     int flags = checkFlags(tree.myMods, owner);
     if (info.getType() == IndexTree.BYTECODE) {
       flags |= IndexTree.COMPILED;
     }
 
     int name = tree.myName;
-    QualifiedName qname = name == NamesEnumerator.NO_NAME || ownerName == null ? null
-                                                                               : myNameEnvironment.qualifiedName(ownerName, name, true);
+    @QNameId int qname = name == NameEnvironment.NO_NAME || ownerName < 0 ? -1
+                                                                          : myNameEnvironment.qualifiedName(ownerName, name);
     @CompactArray(QualifiedName.class) Object supers = internSupers(tree.myMods, tree.mySupers);
     ClassSymbol classSymbol = mySymbols.enterClass(fileId, tree.myStubId, flags, name, owner, info, supers, qname);
 
@@ -122,7 +120,7 @@ public class StubEnter {
   @CompactArray(QualifiedName.class)
   private Object internSupers(int flags, int[][] superNames) {
     if (BitUtil.isSet(flags, IndexTree.ANNOTATION)) {
-      return myNameEnvironment.annotation;
+      return myNameEnvironment.java_lang_annotation_Annotation;
     }
 
     boolean isEnum = BitUtil.isSet(flags, IndexTree.ENUM);
@@ -130,12 +128,12 @@ public class StubEnter {
       return isEnum ? myNameEnvironment.java_lang_Enum : null;
     }
     if (superNames.length == 1 && !isEnum) {
-      return myNameEnvironment.concat(superNames[0], true);
+      return new QualifiedName(myNameEnvironment.internQualifiedName(superNames[0]));
     }
 
     QualifiedName[] array = new QualifiedName[superNames.length + (isEnum ? 1 : 0)];
     for (int i = 0; i < superNames.length; i++) {
-      array[i] = myNameEnvironment.concat(superNames[i], true);
+      array[i] = new QualifiedName(myNameEnvironment.internQualifiedName(superNames[i]));
     }
     if (isEnum) {
       array[array.length - 1] = myNameEnvironment.java_lang_Enum;

@@ -33,7 +33,7 @@ public class Translator {
 
   private static long[] createDefaultJavaImports(NameEnvironment nameEnvironment) {
     return new long[]{
-      Imports.mkImport(nameEnvironment.fromString("java.lang", true), false, true, 0)
+      Imports.mkImport(nameEnvironment.fromString("java.lang"), false, true, 0)
     };
   }
 
@@ -48,14 +48,14 @@ public class Translator {
 
   private static long[] createDefaultGroovyImports(NameEnvironment nameEnvironment) {
     return new long[] {
-      Imports.mkImport(nameEnvironment.fromString("java.lang", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.util", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.io", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.net", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("groovy.lang", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("groovy.util", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.math.BigInteger", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.math.BigDecimal", true), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.lang"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.util"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.io"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.net"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("groovy.lang"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("groovy.util"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.math.BigInteger"), false, true, 0),
+      Imports.mkImport(nameEnvironment.fromString("java.math.BigDecimal"), false, true, 0),
     };
   }
 

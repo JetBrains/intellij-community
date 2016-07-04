@@ -30,11 +30,7 @@ public class Imports {
     return (int)(importMask >>> 32);
   }
 
-  public static QualifiedName getFullName(long importMask, NameEnvironment nameEnvironment) {
-    return nameEnvironment.qualifiedName(getFullNameId(importMask));
-  }
-
-  private static int getFullNameId(long importMask) {
+  static int getFullNameId(long importMask) {
     int fullNameId = (int)importMask;
     fullNameId &= mask;
     return fullNameId;
@@ -48,8 +44,8 @@ public class Imports {
     return BitUtil.isSet(importMask, staticMask);
   }
 
-  public static long mkImport(QualifiedName fullname, boolean importStatic, boolean onDemand, int alias) {
-    long lower = fullname.myId;
+  public static long mkImport(@QNameId int fullname, boolean importStatic, boolean onDemand, int alias) {
+    long lower = fullname;
     if (importStatic) lower |= staticMask;
     if (onDemand) lower |= onDemandMask;
     return (((long)alias) << 32) | lower;

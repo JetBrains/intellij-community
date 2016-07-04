@@ -16,60 +16,71 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TLongIntHashMap;
 
-import java.util.Arrays;
-
-public class NameEnvironment extends UserDataHolderBase {
+class NameEnvironment extends UserDataHolderBase {
   public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
-  public final QualifiedName empty;
-  public final QualifiedName java_lang;
+  public static final int NO_NAME = 0;
+  @QNameId public final int java_lang;
   public final QualifiedName java_lang_Enum;
-  public final QualifiedName annotation;
-  public final NamesEnumerator myNamesEnumerator;
+  public final QualifiedName java_lang_annotation_Annotation;
 
-  public NameEnvironment() {
-    myNamesEnumerator = new NamesEnumerator();
-    empty = myNamesEnumerator.getFullName(new int[]{}, true);
-    java_lang = fromString("java.lang", true);
-    java_lang_Enum = fromString("java.lang.Enum", true);
-    annotation = fromString("java.lang.annotation.Annotation", true);
+  private final TIntArrayList mySuffixes = new TIntArrayList();
+  private final TIntArrayList myStems = new TIntArrayList();
+  private final TLongIntHashMap myConcatenations = new TLongIntHashMap();
+
+  NameEnvironment() {
+    mySuffixes.add(0);
+    myStems.add(0);
+
+    java_lang = fromString("java.lang");
+    java_lang_Enum = new QualifiedName(fromString(CommonClassNames.JAVA_LANG_ENUM));
+    java_lang_annotation_Annotation = new QualifiedName(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
   }
 
-  @Nullable
-  public QualifiedName fromString(String s, boolean create) {
-    return myNamesEnumerator.getFullName(IndexTree.hashQualifiedName(s), create);
+  @QNameId
+  int fromString(String s) {
+    return internQualifiedName(IndexTree.hashQualifiedName(s));
   }
 
-  public QualifiedName prefix(QualifiedName name) {
-    if (name.myComponents.length <= 1) {
-      return empty;
+  @QNameId int prefixId(@QNameId int nameId) {
+    return myStems.get(nameId);
+  }
+
+  @ShortName int shortName(@QNameId int id) {
+    return mySuffixes.get(id);
+  }
+
+  @QNameId int findExistingName(@QNameId int stemId, @ShortName int suffix) {
+    int existing = myConcatenations.get(pack(stemId, suffix));
+    return existing > 0 ? existing : -1;
+  }
+
+  @QNameId int internQualifiedName(@ShortName int[] qname) {
+    int id = 0;
+    for (int shortName : qname) {
+      id = qualifiedName(id, shortName);
     }
-    return myNamesEnumerator.getFullName(Arrays.copyOf(name.myComponents, name.myComponents.length - 1), true);
+    return id;
   }
 
-  public QualifiedName qualifiedName(int id) {
-    return myNamesEnumerator.qualifiedName(id);
+  @QNameId int qualifiedName(@QNameId int prefix, @ShortName int shortName) {
+    int existing = findExistingName(prefix, shortName);
+    return existing >= 0 ? existing : addName(prefix, shortName);
   }
 
-  public int shortName(QualifiedName name) {
-    int[] ids = name.myComponents;
-    return ids[ids.length - 1];
+  private int addName(@QNameId int stemId, @ShortName int suffix) {
+    int newId = mySuffixes.size();
+    mySuffixes.add(suffix);
+    myStems.add(stemId);
+    myConcatenations.put(pack(stemId, suffix), newId);
+    return newId;
   }
 
-  public QualifiedName qualifiedName(QualifiedName prefix, int shortName, boolean create) {
-    if (shortName == NamesEnumerator.NO_NAME)
-      return null;
-    if (prefix == null || prefix.isEmpty())
-      return myNamesEnumerator.getFullName(new int[]{shortName}, create);
-
-    int[] ids = Arrays.copyOf(prefix.myComponents, prefix.myComponents.length + 1);
-    ids[ids.length - 1] = shortName;
-    return myNamesEnumerator.getFullName(ids, create);
-  }
-
-  QualifiedName concat(int[] ids, boolean create) {
-    return myNamesEnumerator.getFullName(ids, create);
+  private static long pack(@QNameId int stemId, @ShortName int suffix) {
+    return ((long)suffix << 32) + stemId;
   }
 }
