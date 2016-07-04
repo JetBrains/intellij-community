@@ -54,7 +54,7 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
 
   protected static boolean hasContent(VirtualFile file) {
-    return ! (file instanceof VirtualFileWithoutContent);
+    return !(file instanceof VirtualFileWithoutContent);
   }
 
   @Nullable
