@@ -48,18 +48,10 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     now = Date()
   }
   
-  fun `test show suites without run configuration`() {
-    data.addTest("Test.x".test(), PASSED_INDEX, now, null)
-    data.addSuite("Test".suite(), PASSED_INDEX, now, null)
-    
-    val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(1)
-  }
-
   fun `test all tests passed`() {
     data.addTest("Test.textXXX".test(), PASSED_INDEX, now, allTests)
-    data.addSuite("Test".suite(), PASSED_INDEX, now, allTests)
-    data.addSuite("JFSDTest".suite(), PASSED_INDEX, now, allTests)
+    data.addSuite("Test".suite(), now, allTests)
+    data.addSuite("JFSDTest".suite(), now, allTests)
     data.addTest("Test.textYYY".test(), PASSED_INDEX, now, allTests)
     data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), PASSED_INDEX, now, allTests)
     data.addTest("Test.textZZZ".test(), PASSED_INDEX, now, allTests)
@@ -73,8 +65,8 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
 
   fun `test if one failed in run configuration show failed suite`() {
-    data.addSuite("JFSDTest".suite(), FAILED_INDEX, now, allTests)
-    data.addSuite("Test".test(), PASSED_INDEX, now, allTests)
+    data.addSuite("JFSDTest".suite(), now, allTests)
+    data.addSuite("Test".suite(), now, allTests)
 
     data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
     data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
@@ -83,28 +75,21 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     
     val tests = data.getTestsToShow()
 
-    assertThat(tests).hasSize(3)
+    assertThat(tests).hasSize(1)
     
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
-    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
-    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[2].presentation).isEqualTo("all tests")
-    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
+    assertThat(tests[0].failed).isEqualTo(true)
   }
   
   
   fun `test if configuration with single test show failed test`() {
-    data.addSuite("JFSDTest".suite(), FAILED_INDEX, now, allTests)
+    data.addSuite("JFSDTest".suite(), now, allTests)
     data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
     data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
     
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(2)
+    assertThat(tests).hasSize(1)
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
-    assertThat(tests[1].presentation).isEqualTo("JFSDTest")
   }
   
   

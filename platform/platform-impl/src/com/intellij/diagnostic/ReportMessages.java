@@ -27,5 +27,5 @@ import com.intellij.notification.NotificationGroup;
 public class ReportMessages {
 
   public static final String ERROR_REPORT = DiagnosticBundle.message("error.report.title");
-  public static final NotificationGroup GROUP = new NotificationGroup(ERROR_REPORT, NotificationDisplayType.BALLOON, true);
+  public static final NotificationGroup GROUP = new NotificationGroup(ERROR_REPORT, NotificationDisplayType.BALLOON, false);
 }

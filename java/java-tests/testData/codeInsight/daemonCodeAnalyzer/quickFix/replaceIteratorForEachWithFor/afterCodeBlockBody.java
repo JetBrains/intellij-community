@@ -6,6 +6,7 @@ public class CodeBlockBody {
         for (Iterator<Integer> it2 = it1; it2.hasNext(); ) {
             Integer integer = it2.next();
             System.out.println(integer + " a");
+            // a comment
             System.out.println(integer + " b");
         }
     }

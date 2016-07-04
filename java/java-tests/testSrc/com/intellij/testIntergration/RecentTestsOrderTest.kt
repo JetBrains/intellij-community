@@ -37,11 +37,11 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
   }
   
   fun addPassedSuite(suiteUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addSuite(suiteUrl, PASSED_INDEX, date, runConfiguration)
+    data.addSuite(suiteUrl, date, runConfiguration)
   }
   
   fun addFailedSuite(suiteUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addSuite(suiteUrl, FAILED_INDEX, date, runConfiguration)
+    data.addSuite(suiteUrl, date, runConfiguration)
   }
   
   fun addPassedTest(testUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
@@ -57,11 +57,11 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     val test1 = "MySingleTest.test1".test()
     
     data.addTest(test1, PASSED_INDEX, now, allTests)
-    data.addSuite(suite, PASSED_INDEX, now, allTests)
+    data.addSuite(suite, now, allTests)
     
     val testsToShow = data.getTestsToShow()
     assertThat(testsToShow).hasSize(1)
-    assertThat(testsToShow[0].presentation).isEqualTo("MySingleTest")
+    assertThat(testsToShow[0].presentation).isEqualTo("all tests")
   }
   
   fun `test run configuration with multiple suites shows run configuration name`() {
@@ -90,13 +90,10 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     addFailedTest(test)
     
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(2)
+    assertThat(tests).hasSize(1)
     
     assertThat(tests[0].presentation).isEqualTo("SingleTest.test")
-    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[1].presentation).isEqualTo("SingleTest")
-    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
+    assertThat(tests[0].failed).isEqualTo(true)
   }
   
   fun `test show failed suite and test in run configuration`() {
@@ -111,41 +108,29 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     addPassedSuite("PassedSuite".suite())
     
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(3)
+    assertThat(tests).hasSize(1)
     
     assertThat(tests[0].presentation).isEqualTo("SingleTest.test")
-    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[1].presentation).isEqualTo("SingleTest")
-    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
-    
-    assertThat(tests[2].presentation).isEqualTo("all tests")
-    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
+    assertThat(tests[0].failed).isEqualTo(true)
   }
 
   fun `test single test run doesn't override suite status`() {
     val singleTestConfig = mockConfiguration("single test", "Junit.single test")
 
     val newNow = Date(now.time + 100000)
-    //current single test run
-    addFailedSuite("Test".suite(), newNow, singleTestConfig)
-    addFailedTest("Test.testOK".test(), newNow, singleTestConfig)
 
     //previous all suite run
-    addPassedTest("Test.testOK".test(), now, allTests)
     addFailedTest("Test.testFailed".test(), now, allTests)
 
+    //current single test run
+    addPassedSuite("Test".suite(), newNow, singleTestConfig)
+    addPassedTest("Test.testOK".test(), newNow, singleTestConfig)
+    
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(3)
+    assertThat(tests).hasSize(2)
 
-    assertThat(tests[0].presentation).isEqualTo("Test.testOK")
-    assertThat(tests[0].magnitude).isEqualTo(FAILED_INDEX)
-
+    assertThat(tests[0].presentation).isEqualTo("single test")
     assertThat(tests[1].presentation).isEqualTo("Test.testFailed")
-    assertThat(tests[1].magnitude).isEqualTo(FAILED_INDEX)
-
-    assertThat(tests[2].presentation).isEqualTo("Test")
-    assertThat(tests[2].magnitude).isEqualTo(FAILED_INDEX)
   }
 
 
@@ -156,18 +141,15 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
     
     //previous all suite run
     addPassedTest("Test.testOK".test(), now, allTests)
-    addFailedTest("Test.testFailed".test(), now, allTests)
     
     //current single test run
     addFailedSuite("Test".suite(), newNow, singleTestConfig)
-    addFailedTest("Test.testOK".test(), newNow, singleTestConfig)
+    addFailedTest("Test.testFailed".test(), newNow, singleTestConfig)
 
     val tests = data.getTestsToShow()
-    assertThat(tests).hasSize(3)
+    assertThat(tests).hasSize(1)
 
-    assertThat(tests[0].presentation).isEqualTo("Test.testOK")
-    assertThat(tests[1].presentation).isEqualTo("Test.testFailed")
-    assertThat(tests[2].presentation).isEqualTo("Test")
+    assertThat(tests[0].presentation).isEqualTo("Test.testFailed")
   }
   
 }

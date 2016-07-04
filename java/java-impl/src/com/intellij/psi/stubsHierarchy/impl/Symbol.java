@@ -85,7 +85,6 @@ public abstract class Symbol {
   /** A class for class symbols
    */
   public static class ClassSymbol extends MemberSymbol {
-    private static final int HIERARCHY_INCOMPLETE = 1 << 20;
     private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
@@ -101,8 +100,10 @@ public abstract class Symbol {
                 @CompactArray(QualifiedName.class) Object supers) {
       super(flags | IndexTree.CLASS, owner, name);
       this.myAnchorId = anchorId;
-      this.mySuperClasses = supers;
-      this.myUnitInfo = unitInfo;
+
+      boolean incomplete = isHierarchyIncomplete();
+      this.mySuperClasses = incomplete ? null : supers;
+      this.myUnitInfo = incomplete ? null : unitInfo;
     }
 
     @Override
@@ -150,7 +151,7 @@ public abstract class Symbol {
 
     void markHierarchyIncomplete() {
       setSupers(Collections.emptySet());
-      myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
+      myFlags = BitUtil.set(myFlags, IndexTree.SUPERS_UNRESOLVED, true);
     }
 
     void setSupers(Set<ClassSymbol> supers) {
@@ -161,7 +162,7 @@ public abstract class Symbol {
     }
 
     boolean isHierarchyIncomplete() {
-      return BitUtil.isSet(myFlags, HIERARCHY_INCOMPLETE);
+      return BitUtil.isSet(myFlags, IndexTree.SUPERS_UNRESOLVED);
     }
 
     boolean hasAmbiguousSupers() {

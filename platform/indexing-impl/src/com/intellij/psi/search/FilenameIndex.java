@@ -80,7 +80,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
+    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
   }
 
   public static String[] getAllFilenames(Project project) {

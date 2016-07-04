@@ -89,7 +89,6 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
                                   @NotNull final PsiFile usageFile, boolean addImport) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
-    //TODO: invalid qualifier after PyUtil.removeQualifier(element), to be fixed by east825
     if (qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
       PyUtil.removeQualifier(element);
       return;
