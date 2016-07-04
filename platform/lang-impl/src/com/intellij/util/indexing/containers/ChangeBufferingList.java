@@ -79,10 +79,10 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public void remove(int value) {
+    ensureCapacity(1);
     if (checkSet != null) checkSet.remove(value);
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
-      ensureCapacity(1);
       addChange(-value);
     }
     else {
