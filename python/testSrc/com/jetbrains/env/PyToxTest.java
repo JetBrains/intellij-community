@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
 import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
@@ -361,6 +363,18 @@ public final class PyToxTest extends PyEnvTestCase {
 
     private MyTestProcessRunner(final int timesToRerunFailedTests) {
       super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, timesToRerunFailedTests);
+    }
+
+    @Override
+    protected void configurationCreatedAndWillLaunch(@NotNull PyToxConfiguration configuration) throws IOException {
+      super.configurationCreatedAndWillLaunch(configuration);
+
+      // To help tox with all interpreters, we add all our environments to path
+      // Envs should have binaries like "python2.7" (with version included),
+      // and tox will find em: see tox_get_python_executable @ interpreters.py
+      final String join = StringUtil.join(getPythonRoots(), File.pathSeparator);
+      configuration.getEnvs().put("PATH", join);
+
     }
   }
 
