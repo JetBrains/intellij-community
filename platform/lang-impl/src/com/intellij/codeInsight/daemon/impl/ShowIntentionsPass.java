@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -311,7 +312,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, psiElement, offset, intentions);
+    if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
+      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, psiElement, offset, intentions);
+    }
 
     final int line = hostDocument.getLineNumber(offset);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
