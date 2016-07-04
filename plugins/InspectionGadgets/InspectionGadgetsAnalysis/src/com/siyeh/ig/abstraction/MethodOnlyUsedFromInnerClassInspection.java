@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2012 Bas Leijdekkers
+ * Copyright 2005-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,15 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,17 +179,10 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     }
 
     public boolean isOnlyAccessedFromInnerClass() {
-      final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-      final PsiSearchHelper.SearchCostResult searchCost =
-        searchHelper.isCheapEnoughToSearch(method.getName(), method.getResolveScope(), null, progressIndicator);
-      if (searchCost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
-          searchCost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
-        return onlyAccessedFromInnerClass;
+      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
+        return false;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(method);
-      query.forEach(this);
+      ReferencesSearch.search(method).forEach(this);
       return onlyAccessedFromInnerClass;
     }
 
