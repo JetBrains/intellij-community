@@ -40,10 +40,7 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
@@ -164,7 +161,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   // under lock
   private void wakeUpQueue() {
     if (!isDisposed && !documentsToCommit.isEmpty()) {
-      executor.execute(this);
+      executor.execute(ProgressManager.getInstance().longProcess("Commit documents", this));
     }
   }
 
@@ -182,6 +179,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return;
+    if (psiFile instanceof PsiCompiledFile) {
+      throw new IllegalArgumentException("Can't commit ClsFile: "+psiFile);
+    }
 
     doQueue(project, document, getAllFileNodes(psiFile), reason, currentModalityState);
   }
