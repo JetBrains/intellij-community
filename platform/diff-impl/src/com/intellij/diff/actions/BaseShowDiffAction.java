@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,10 @@ abstract class BaseShowDiffAction extends AnAction implements DumbAware {
   }
 
   protected abstract boolean isAvailable(@NotNull AnActionEvent e);
+
+  protected static boolean hasContent(VirtualFile file) {
+    return ! (file instanceof VirtualFileWithoutContent);
+  }
 
   @Nullable
   protected abstract DiffRequest getDiffRequest(@NotNull AnActionEvent e);
