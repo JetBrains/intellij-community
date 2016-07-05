@@ -398,6 +398,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myEditor.recalculateSizeAndRepaint();
     myEditor.getGutterComponentEx().updateSize();
     myEditor.getGutterComponentEx().repaint();
+    myEditor.invokeDelayedErrorStripeRepaint();
 
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
       // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded

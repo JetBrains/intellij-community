@@ -416,11 +416,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myUseNewRendering && start != end) {
           myView.invalidateRange(start, end);
         }
-        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        }
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
         if (errorStripeNeedsRepaint) {
-          ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+          if (myFoldingModel.isInBatchFoldingOperation()) {
+            myErrorStripeNeedsRepaint = true;
+          }
+          else {
+            myMarkupModel.repaint(start, end);
+          }
         }
 
         if (!myUseNewRendering && renderersChanged) {
@@ -1917,6 +1924,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myImmediatePainter.beforeUpdate(e);
+  }
+
+  void invokeDelayedErrorStripeRepaint() {
+    if (myErrorStripeNeedsRepaint) {
+      myMarkupModel.repaint(-1, -1);
+      myErrorStripeNeedsRepaint = false;
+    }
   }
 
   private void changedUpdate(DocumentEvent e) {
