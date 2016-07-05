@@ -121,7 +121,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.TRACK_DARK_PAINTER : JBScrollPane.TRACK_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Track.DARCULA : ScrollPainter.Track.DEFAULT;
     if (!isTrackExpandable() && Registry.is("ide.scroll.background.wide")) {
       p.paint(g, x, y, width, height, myTrackAnimator.myValue);
       return; // temporary registry key for designer
@@ -130,7 +130,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
+    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
     paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 

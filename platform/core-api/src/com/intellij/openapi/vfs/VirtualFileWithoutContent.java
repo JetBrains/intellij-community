@@ -16,7 +16,10 @@
 package com.intellij.openapi.vfs;
 
 /**
- * @author Irina.Chernushina on 7/4/2016.
+ * An interface to mark virtual files for which {@link VirtualFile#contentsToByteArray} and {@link VirtualFile#getInputStream}
+ * operations do not make sense and would likely result in {@link UnsupportedOperationException}.
+ *
+ * @author Irina.Chernushina
+ * @since 2016.3
  */
-public interface VirtualFileWithoutContent {
-}
+public interface VirtualFileWithoutContent { }

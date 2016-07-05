@@ -36,11 +36,11 @@ import java.lang.annotation.Target;
 }
 
 /**
- * int id of a qualified name in a {@link NameEnvironment}
+ * int hash of a qualified name by {@link NameEnvironment}
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE_USE)
-@interface QNameId { }
+@interface QNameHash { }
 
 /**
  * int hash of a qualified name part, produced by {@link IndexTree#hashIdentifier(String)}

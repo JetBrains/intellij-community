@@ -16,46 +16,17 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
 
 class Imports {
-  public final static long[] EMPTY_ARRAY = ArrayUtil.EMPTY_LONG_ARRAY;
-
-  public static final int onDemandMask = 1 << 29;
-  public static final int staticMask = 1 << 30;
-
-  public static int mask = ~(onDemandMask | staticMask);
-
-  public static int getAlias(long importMask) {
-    return (int)(importMask >>> 32);
-  }
-
-  static int getFullNameId(long importMask) {
-    int fullNameId = (int)importMask;
-    fullNameId &= mask;
-    return fullNameId;
-  }
-
-  public static boolean isOnDemand(long importMask) {
-    return BitUtil.isSet(importMask, onDemandMask);
-  }
-
-  public static boolean isStatic(long importMask) {
-    return BitUtil.isSet(importMask, staticMask);
-  }
-
-  public static long mkImport(@QNameId int fullname, boolean importStatic, boolean onDemand, int alias) {
-    long lower = fullname;
-    if (importStatic) lower |= staticMask;
-    if (onDemand) lower |= onDemandMask;
-    return (((long)alias) << 32) | lower;
-  }
+  public final static Import[] EMPTY_ARRAY = new Import[0];
+  private final TIntObjectHashMap<Import> myNonStaticPackageImports = new TIntObjectHashMap<>();
 
   private final static int IS_STATIC = 1;
   private final static int IS_ON_DEMAND = 2;
@@ -68,9 +39,9 @@ class Imports {
     }
   }
 
-  static long[] readImports(UnitInputStream in) throws IOException {
+  Import[] readImports(UnitInputStream in) throws IOException {
     int importCount = DataInputOutputUtil.readINT(in);
-    long[] imports = importCount == 0 ? EMPTY_ARRAY : new long[importCount];
+    Import[] imports = importCount == 0 ? EMPTY_ARRAY : new Import[importCount];
     for (int i = 0; i < importCount; i++) {
       imports[i] = readImport(in);
     }
@@ -90,12 +61,81 @@ class Imports {
     }
   }
 
-  private static long readImport(UnitInputStream in) throws IOException {
-    int fullname = in.names.readQualifiedName(in);
+  private Import readImport(UnitInputStream in) throws IOException {
+    int qualifier = 0;
+    int len = DataInputOutputUtil.readINT(in);
+    for (int i = 0; i < len - 1; i++) {
+      qualifier = in.names.qualifiedName(qualifier, in.readInt());
+    }
+    int lastId = in.readInt();
     int flags = in.readByte();
-    return mkImport(fullname,
-                    BitUtil.isSet(flags, IS_STATIC), BitUtil.isSet(flags, IS_ON_DEMAND),
-                    BitUtil.isSet(flags, HAS_ALIAS) ? in.readInt() : 0);
+    int alias = BitUtil.isSet(flags, HAS_ALIAS) ? in.readInt() : 0;
+
+    boolean onDemand = BitUtil.isSet(flags, IS_ON_DEMAND);
+    boolean isStatic = BitUtil.isSet(flags, IS_STATIC);
+
+    int shortName;
+    if (onDemand) {
+      shortName = 0;
+      qualifier = in.names.qualifiedName(qualifier, lastId);
+    } else {
+      shortName = lastId;
+    }
+
+    return obtainImport(qualifier, shortName, alias, isStatic);
   }
 
+  private Import obtainImport(int qualifier, int shortName, int alias, boolean isStatic) {
+    boolean shouldIntern = shortName == 0 && alias == 0 && !isStatic;
+    if (shouldIntern) {
+      Import existing = myNonStaticPackageImports.get(qualifier);
+      if (existing != null) {
+        return existing;
+      }
+    }
+
+    Import anImport = alias != 0 ? new AliasedImport(qualifier, shortName, isStatic, alias) : new Import(qualifier, shortName, isStatic);
+    if (shouldIntern) {
+      myNonStaticPackageImports.put(qualifier, anImport);
+    }
+    return anImport;
+  }
+}
+
+class Import {
+  @QNameHash final int qualifier;
+  @ShortName final int importedName; // 0 for on-demand
+  final boolean isStatic;
+
+  Import(@QNameHash int qualifier, @ShortName int importedName, boolean isStatic) {
+    this.qualifier = qualifier;
+    this.importedName = importedName;
+    this.isStatic = isStatic;
+  }
+
+  boolean isOnDemand() {
+    return importedName == 0;
+  }
+
+  @ShortName int getAlias() {
+    return 0;
+  }
+
+}
+
+class AliasedImport extends Import {
+  private final @ShortName int alias;
+
+  AliasedImport(@QNameHash int qualifier,
+                @ShortName int importedName,
+                boolean isStatic,
+                @ShortName int alias) {
+    super(qualifier, importedName, isStatic);
+    this.alias = alias;
+  }
+
+  @Override
+  int getAlias() {
+    return alias;
+  }
 }

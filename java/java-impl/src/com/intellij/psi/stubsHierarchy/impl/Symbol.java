@@ -27,10 +27,10 @@ import java.util.*;
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
  * but other {@link MemberSymbol}s are also sometimes needed for working with anonymous or local classes.
  */
-public abstract class Symbol {
-  public int myFlags;
-  public int myShortName;
-  public final Symbol myOwner;
+abstract class Symbol {
+  int myFlags;
+  @ShortName final int myShortName;
+  final Symbol myOwner;
 
   public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
@@ -45,10 +45,6 @@ public abstract class Symbol {
 
   ClassSymbol[] getMembers() {
     return ClassSymbol.EMPTY_ARRAY;
-  }
-
-  public boolean isStatic() {
-    return BitUtil.isSet(myFlags, IndexTree.STATIC);
   }
 
   public boolean isPackage() {
@@ -72,9 +68,9 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
-    @QNameId final int myQualifiedName;
+    @QNameHash final int myQualifiedName;
 
-    public PackageSymbol(Symbol owner, @QNameId int fullname, int name) {
+    public PackageSymbol(Symbol owner, @QNameHash int fullname, int name) {
       super(IndexTree.PACKAGE, owner, name);
       myQualifiedName = fullname;
     }

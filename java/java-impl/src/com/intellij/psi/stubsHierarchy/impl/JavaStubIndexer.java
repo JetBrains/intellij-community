@@ -19,11 +19,9 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.compiled.ClassFileDecompilers;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
@@ -35,6 +33,7 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,14 +80,14 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
         }
       }
     }
-    ArrayList<Import> importList = new ArrayList<Import>();
+    ArrayList<IndexTree.Import> importList = new ArrayList<>();
     for (StubElement<?> el : javaFileStub.getChildrenStubs()) {
       if (el instanceof PsiImportListStub) {
         processImport((PsiImportListStub) el, importList, usedNames);
       }
     }
     ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
-    Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(new Import[importList.size()]);
+    IndexTree.Import[] imports = importList.isEmpty() ? IndexTree.Import.EMPTY_ARRAY : importList.toArray(new IndexTree.Import[importList.size()]);
     byte type = javaFileStub.isCompiled() ? IndexTree.BYTECODE : IndexTree.JAVA;
     return new Unit(javaFileStub.getPackageName(), type, imports, classes);
   }
@@ -143,7 +142,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
       }
 
     }
-    int flags = translateFlags(classStub, accessModifiers);
+    int flags = translateFlags(classStub);
     if (classStub.isAnonymousInQualifiedNew()) {
       flags |= IndexTree.SUPERS_UNRESOLVED;
     }
@@ -152,31 +151,21 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);
   }
 
-  private static int translateFlags(PsiClassStubImpl<?> classStub, int accessModifiers) {
+  private static int translateFlags(PsiClassStubImpl<?> classStub) {
     int flags = 0;
-    if (classStub.isInterface()) {
-      flags |= IndexTree.INTERFACE;
-    }
-    if (classStub.isEnum()) {
-      flags |= IndexTree.ENUM;
-    }
-    if (classStub.isAnnotationType()) {
-      flags |= IndexTree.ANNOTATION;
-    }
-    if (ModifierFlags.hasModifierProperty(PsiModifier.STATIC, accessModifiers)) {
-      flags |= IndexTree.STATIC;
-    }
+    flags = BitUtil.set(flags, IndexTree.ENUM, classStub.isEnum());
+    flags = BitUtil.set(flags, IndexTree.ANNOTATION, classStub.isAnnotationType());
     return flags;
   }
 
-  private static void processImport(PsiImportListStub el, List<Import> imports, Set<String> namesCache) {
+  private static void processImport(PsiImportListStub el, List<IndexTree.Import> imports, Set<String> namesCache) {
     for (StubElement<?> importElem : el.getChildrenStubs()) {
       PsiImportStatementStub imp = (PsiImportStatementStub)importElem;
       String importReferenceText = imp.getImportReferenceText();
       if (importReferenceText != null) {
         String fullName = PsiNameHelper.getQualifiedClassName(importReferenceText, true);
         if (imp.isOnDemand() || namesCache.contains(shortName(fullName))) {
-          imports.add(new Import(fullName, imp.isStatic(), imp.isOnDemand(), null));
+          imports.add(new IndexTree.Import(fullName, imp.isStatic(), imp.isOnDemand(), null));
         }
       }
     }
