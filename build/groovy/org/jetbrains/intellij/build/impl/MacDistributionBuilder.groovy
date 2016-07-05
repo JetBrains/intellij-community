@@ -96,7 +96,7 @@ class MacDistributionBuilder {
     String fullName = buildContext.applicationInfo.productName
 
     //todo[nik] why do we put vm options to separate places (some into Info.plist, some into vmoptions file)?
-    String vmOptions = "-Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none"
+    String vmOptions = "-Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments}".trim()
 
     //todo[nik] improve
     String minor = buildContext.applicationInfo.minorVersion

@@ -66,7 +66,7 @@ class LinuxDistributionBuilder {
 
     String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
-    def jvmArgs = buildContext.productProperties.ideJvmArgs
+    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
       jvmArgs = "$jvmArgs -Didea.jre.check=true".trim()

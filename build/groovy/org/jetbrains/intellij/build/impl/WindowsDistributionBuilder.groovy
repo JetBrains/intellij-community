@@ -77,7 +77,7 @@ class WindowsDistributionBuilder {
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
-    def jvmArgs = buildContext.productProperties.ideJvmArgs
+    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
       jvmArgs = "$jvmArgs -Didea.jre.check=true".trim()

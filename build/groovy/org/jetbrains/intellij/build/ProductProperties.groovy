@@ -50,6 +50,12 @@ public abstract class ProductProperties {
   boolean toolsJarRequired = false
 
   /**
+   * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
+   * //todo[nik] currently it isn't included into *.exe Windows launchers
+   */
+  String additionalIdeJvmArguments = ""
+
+  /**
    * @return name of the product which will be shown in Windows Installer
    */
   String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
@@ -83,7 +89,6 @@ public abstract class ProductProperties {
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
-  String ideJvmArgs = ""
   boolean maySkipAndroidPlugin
   String relativeAndroidHome
   String relativeAndroidToolsBaseHome
