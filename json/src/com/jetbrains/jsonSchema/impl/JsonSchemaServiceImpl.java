@@ -208,7 +208,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       initialized = false;
       mySchemaFiles.clear();
     }
-    JsonSchemaFileTypeManager.getInstance().reset(myProject);
+    JsonSchemaFileTypeManager.getInstance().reset();
   }
 
   @Nullable
