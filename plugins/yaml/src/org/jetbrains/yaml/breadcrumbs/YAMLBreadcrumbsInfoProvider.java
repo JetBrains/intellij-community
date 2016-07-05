@@ -56,11 +56,11 @@ public class YAMLBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
       return ((YAMLKeyValue)e).getKeyText() + ':';
     }
     if (e instanceof YAMLSequenceItem) {
-      final YAMLSequence parent = (YAMLSequence)e.getParent();
-      if (parent == null) {
+      final PsiElement parent = e.getParent();
+      if (!(parent instanceof YAMLSequence)) {
         return "Item";
       }
-      final List<YAMLSequenceItem> items = parent.getItems();
+      final List<YAMLSequenceItem> items = ((YAMLSequence)parent).getItems();
       return "Item " + getIndexOf(items, e);
     }
     if (e instanceof YAMLScalar) {
