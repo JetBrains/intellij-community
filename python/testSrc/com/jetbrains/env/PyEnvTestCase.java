@@ -347,7 +347,9 @@ public abstract class PyEnvTestCase {
 
     @Override
     public void processWarn(final String message, final Throwable t, @NotNull final org.apache.log4j.Logger logger) {
-      myExceptions.add(t);
+      if (t != null) {
+        myExceptions.add(t);
+      }
     }
 
     @Override
@@ -355,7 +357,9 @@ public abstract class PyEnvTestCase {
                              final Throwable t,
                              final String[] details,
                              @NotNull final org.apache.log4j.Logger logger) {
-      myExceptions.add(t);
+      if (t != null) {
+        myExceptions.add(t);
+      }
     }
   }
 }
