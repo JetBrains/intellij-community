@@ -60,7 +60,7 @@ abstract class QualifiedName {
   }
 
   static class Interned extends QualifiedName {
-    @QNameId final int id;
+    @QNameHash final int id;
 
     Interned(int id) {
       this.id = id;
@@ -71,7 +71,7 @@ abstract class QualifiedName {
       throws IncompleteHierarchyException {
       Symbol.ClassSymbol[] candidates = resolver.findGlobalType(id);
       if (candidates.length == 0) {
-        throw new IncompleteHierarchyException();
+        throw IncompleteHierarchyException.INSTANCE;
       }
 
       Collections.addAll(result, candidates);

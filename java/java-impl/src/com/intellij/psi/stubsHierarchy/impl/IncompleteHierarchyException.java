@@ -22,6 +22,9 @@ class IncompleteHierarchyException extends Exception {
   @SuppressWarnings("ThrowableInstanceNeverThrown")
   public static final IncompleteHierarchyException INSTANCE = new IncompleteHierarchyException();
 
+  private IncompleteHierarchyException() {
+  }
+
   @Override
   public synchronized Throwable fillInStackTrace() {
     return this;
