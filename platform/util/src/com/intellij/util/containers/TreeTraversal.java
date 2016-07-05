@@ -149,7 +149,7 @@ public abstract class TreeTraversal {
   public static abstract class GuidedIt<T> extends It<T> {
 
     public interface Guide<T> {
-      void guide(GuidedIt<T> guidedIt);
+      void guide(@NotNull GuidedIt<T> guidedIt);
     }
 
     @Nullable
@@ -158,9 +158,9 @@ public abstract class TreeTraversal {
     public Iterable<? extends T> curChildren;
     public boolean curNoChildren;
 
-    public abstract GuidedIt<T> queueNext(T child);
-    public abstract GuidedIt<T> result(T node);
-    public abstract GuidedIt<T> queueLast(T child);
+    public abstract GuidedIt<T> queueNext(@Nullable T child);
+    public abstract GuidedIt<T> result(@Nullable T node);
+    public abstract GuidedIt<T> queueLast(@Nullable T child);
 
     protected GuidedIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
