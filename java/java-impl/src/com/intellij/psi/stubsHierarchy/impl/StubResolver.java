@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,11 +46,10 @@ public class StubResolver {
       return result;
     }
 
-    int k = processPackages ? IndexTree.CLASS | IndexTree.PACKAGE : IndexTree.CLASS;
     Set<Symbol> prev = resolveBase(sym, prefix, true);
     Set<Symbol> result = new HashSet<>();
     for (Symbol symbol : prev) {
-      selectSym(symbol, shortName, k, result);
+      selectSym(symbol, shortName, processPackages, result);
     }
     if (result.isEmpty()) {
       throw IncompleteHierarchyException.INSTANCE;
@@ -79,30 +76,26 @@ public class StubResolver {
     for (Symbol s = startScope; s != null; s = s.myOwner)
       findMemberType(s, name, symbols);
     // type from current package
-    findIdentInPackage(startScope.pkg(), name, IndexTree.CLASS, symbols);
+    findIdentInPackage(startScope.pkg(), name, false, symbols);
   }
 
   // resolving `receiver.name`
-  private void selectSym(Symbol receiver, @ShortName int name, int kind, Set<Symbol> symbols) throws IncompleteHierarchyException {
+  private void selectSym(Symbol receiver, @ShortName int name, boolean processPackages, Set<Symbol> symbols) throws IncompleteHierarchyException {
     if (receiver.isPackage())
-      findIdentInPackage((Symbol.PackageSymbol)receiver, name, kind, symbols);
+      findIdentInPackage((Symbol.PackageSymbol)receiver, name, processPackages, symbols);
     else
       findMemberType(receiver, name, symbols);
   }
 
-  private void findIdentInPackage(Symbol.PackageSymbol pck, @ShortName int name, int kind, Set<Symbol> symbols) {
+  private void findIdentInPackage(Symbol.PackageSymbol pck, @ShortName int name, boolean processPackages, Set<Symbol> symbols) {
     @QNameId int fullname = mySymbols.myNameEnvironment.findExistingName(pck.myQualifiedName, name);
     if (fullname < 0) {
       return;
     }
-    if (BitUtil.isSet(kind, IndexTree.PACKAGE)) {
-      Symbol.PackageSymbol pkg = mySymbols.getPackage(fullname);
-      if (pkg != null)
-        symbols.add(pkg);
+    if (processPackages) {
+      ContainerUtil.addIfNotNull(symbols, mySymbols.getPackage(fullname));
     }
-    if (BitUtil.isSet(kind, IndexTree.CLASS)) {
-      Collections.addAll(symbols, findGlobalType(fullname));
-    }
+    Collections.addAll(symbols, findGlobalType(fullname));
   }
 
   private void findMemberType(Symbol s, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
