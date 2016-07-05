@@ -4224,7 +4224,6 @@
 		<module>_abcoll</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
-		<module>_bz2</module>
 		<module>_collections_abc</module>
 		<module>_compression</module>
 		<module>_fileio</module>
@@ -4589,7 +4588,6 @@
 		<module>__main__</module>
 		<module>_abcoll</module>
 		<module>_bytesio</module>
-		<module>_bz2</module>
 		<module>_compression</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
