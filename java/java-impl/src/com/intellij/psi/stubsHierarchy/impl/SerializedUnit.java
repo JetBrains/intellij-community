@@ -105,7 +105,7 @@ class SerializedUnit {
   private static void enterUnit(UnitInputStream in) throws IOException {
     PackageSymbol pkg = in.stubEnter.readPackageName(in);
     byte type = in.readByte();
-    long[] imports = type == IndexTree.BYTECODE ? Imports.EMPTY_ARRAY : Imports.readImports(in);
+    Import[] imports = type == IndexTree.BYTECODE ? Imports.EMPTY_ARRAY : in.stubEnter.imports.readImports(in);
     UnitInfo unitInfo = UnitInfo.mkUnitInfo(type, imports);
 
     int classCount = DataInputOutputUtil.readINT(in);
@@ -128,7 +128,7 @@ class SerializedUnit {
     int stubId = DataInputOutputUtil.readINT(in);
     int mods = DataInputOutputUtil.readINT(in);
     @ShortName int name = in.readInt();
-    @CompactArray(QualifiedName.class) Object superNames = readSupers(in, info.getType() == IndexTree.BYTECODE);
+    @CompactArray(QualifiedName.class) Object superNames = readSupers(in, info.isCompiled());
 
     @QNameId int qname = in.names.memberQualifiedName(ownerName, name);
     ClassSymbol symbol = in.stubEnter.classEnter(info, owner, stubId, mods, name, superNames, qname, in.fileId);

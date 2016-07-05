@@ -137,39 +137,32 @@ public class StubResolver {
   }
 
   private void findGlobalType(UnitInfo info, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
-    for (long anImport : Translator.getDefaultImports(info.getType(), myNameEnvironment))
+    for (Import anImport : Translator.getDefaultImports(info.type, myNameEnvironment))
       handleImport(anImport, name, symbols);
-    for (long anImport : info.getImports())
+    for (Import anImport : info.imports)
       handleImport(anImport, name, symbols);
   }
 
-  public void handleImport(long tree, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
-    @QNameId int fullname = Imports.getFullNameId(tree);
-    if (Imports.isOnDemand(tree)) {
-      if (Imports.isStatic(tree)) {
-        for (Symbol.ClassSymbol p : findGlobalType(fullname))
+  public void handleImport(Import anImport, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
+    if (anImport.isOnDemand()) {
+      if (anImport.isStatic) {
+        for (Symbol.ClassSymbol p : findGlobalType(anImport.qualifier))
           importNamedStatic(p, name, symbols);
       }
       else {
-        importAll(fullname, name, symbols);
+        importAll(anImport.qualifier, name, symbols);
       }
     }
     else {
-      @QNameId int prefix = myNameEnvironment.prefixId(fullname);
-      if (prefix == 0) {
-        return;
-      }
-      @ShortName int shortName = myNameEnvironment.shortName(fullname);
-      @ShortName int alias = Imports.getAlias(tree);
-      boolean shouldImport = ((alias & name) == name) || shortName == name;
-      if (!shouldImport)
-        return;
-      if (Imports.isStatic(tree)) {
-          for (Symbol.ClassSymbol s : findGlobalType(prefix))
-            importNamedStatic(s, shortName, symbols);
+      @ShortName int importedName = anImport.getAlias() != 0 ? anImport.getAlias() : anImport.importedName;
+      if (name != importedName) return;
+
+      if (anImport.isStatic) {
+          for (Symbol.ClassSymbol s : findGlobalType(anImport.qualifier))
+            importNamedStatic(s, anImport.importedName, symbols);
       }
       else {
-        Collections.addAll(symbols, findGlobalType(fullname));
+        Collections.addAll(symbols, findGlobalType(myNameEnvironment.qualifiedName(anImport.qualifier, anImport.importedName)));
       }
     }
   }

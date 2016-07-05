@@ -30,6 +30,7 @@ import static com.intellij.psi.stubsHierarchy.impl.Symbol.PackageSymbol;
 
 public class StubEnter {
   final NameEnvironment myNameEnvironment;
+  final Imports imports = new Imports();
   private final Symbols mySymbols;
   private final StubHierarchyConnector myStubHierarchyConnector;
 
@@ -60,7 +61,7 @@ public class StubEnter {
                          @ShortName int name,
                          @CompactArray(QualifiedName.class) Object superNames,
                          @QNameId int qname, int fileId) throws IOException {
-    int flags = checkFlags(mods, owner, info.getType() == IndexTree.BYTECODE);
+    int flags = checkFlags(mods, info.isCompiled());
     @CompactArray(QualifiedName.class) Object supers = handleSpecialSupers(mods, superNames);
 
     ClassSymbol classSymbol = mySymbols.enterClass(fileId, stubId, flags, name, owner, info, supers, qname);
@@ -100,7 +101,7 @@ public class StubEnter {
     uncompleted = null;
   }
 
-  private static int checkFlags(long flags, Symbol owner, boolean compiled) {
+  private static int checkFlags(long flags, boolean compiled) {
     int mask = 0;
     if ((flags & IndexTree.SUPERS_UNRESOLVED) != 0) {
       mask |= IndexTree.SUPERS_UNRESOLVED;

@@ -19,7 +19,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TLongIntHashMap;
 
 import java.io.DataInput;
@@ -33,14 +32,9 @@ class NameEnvironment extends UserDataHolderBase {
   public final QualifiedName java_lang_Enum;
   public final QualifiedName java_lang_annotation_Annotation;
 
-  private final TIntArrayList mySuffixes = new TIntArrayList();
-  private final TIntArrayList myStems = new TIntArrayList();
   private final TLongIntHashMap myConcatenations = new TLongIntHashMap();
 
   NameEnvironment() {
-    mySuffixes.add(0);
-    myStems.add(0);
-
     java_lang = fromString("java.lang");
     java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
     java_lang_annotation_Annotation = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
@@ -49,14 +43,6 @@ class NameEnvironment extends UserDataHolderBase {
   @QNameId
   int fromString(String s) {
     return internQualifiedName(IndexTree.hashQualifiedName(s));
-  }
-
-  @QNameId int prefixId(@QNameId int nameId) {
-    return myStems.get(nameId);
-  }
-
-  @ShortName int shortName(@QNameId int id) {
-    return mySuffixes.get(id);
   }
 
   @QNameId int findExistingName(@QNameId int stemId, @ShortName int suffix) {
@@ -94,9 +80,7 @@ class NameEnvironment extends UserDataHolderBase {
   }
 
   private int addName(@QNameId int stemId, @ShortName int suffix) {
-    int newId = mySuffixes.size();
-    mySuffixes.add(suffix);
-    myStems.add(stemId);
+    int newId = myConcatenations.size();
     myConcatenations.put(pack(stemId, suffix), newId);
     return newId;
   }
