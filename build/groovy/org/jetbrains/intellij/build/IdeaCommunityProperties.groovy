@@ -20,56 +20,85 @@ package org.jetbrains.intellij.build
  */
 class IdeaCommunityProperties extends ProductProperties {
   IdeaCommunityProperties(String home) {
-    prefix = "idea"
+    baseFileName = "idea"
     platformPrefix = "Idea"
-    code = "IC"
-    appInfoModule = "community-resources"
-    fullNameIncludingEdition = "IntelliJ IDEA Community Edition"
+    productCode = "IC"
+    applicationInfoModule = "community-resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
-    exe_launcher_properties = "$home/build/conf/ideaCE-launcher.properties"
-    exe64_launcher_properties = "$home/build/conf/ideaCE64-launcher.properties"
     maySkipAndroidPlugin = true
     relativeAndroidHome = "android"
     relativeAndroidToolsBaseHome = "android/tools-base"
     toolsJarRequired = true
-
-    icon128 = "$home/platform/icons/src/icon_CE_128.png"
-    ico = "$home/platform/icons/src/idea_CE.ico"
-
-    windows.bundleJre = true
-    windows.installerImagesPath = "$home/build/conf/ideaCE/win/images"
-    windows.fileAssociations = [".java", ".groovy", ".kt"]
-
-    mac.helpId = "IJ"
-    mac.urlSchemes = ["idea"]
-    mac.enableYourkitAgentInEAP = false
-    mac.bundleIdentifier = "com.jetbrains.intellij.ce"
-    mac.dmgImagePath = "$home/build/conf/mac/communitydmg.png"
   }
 
   @Override
-  String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
-    return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
+    "IntelliJ IDEA Community Edition"
   }
 
   @Override
-  void customLayout(BuildContext buildContext, String targetDirectory) {
+  void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
     }
   }
 
-  def String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+  @Override
+  WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
+    return new WindowsDistributionCustomizer() {
+      {
+        icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
+        installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
+        fileAssociations = [".java", ".groovy", ".kt"]
+        exe_launcher_properties = "$projectHome/build/conf/ideaCE-launcher.properties"
+        exe64_launcher_properties = "$projectHome/build/conf/ideaCE64-launcher.properties"
+      }
 
-  def String macAppRoot(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"
-                          : "IntelliJ IDEA CE.app/Contents"
+      @Override
+      String rootDirectoryName(String buildNumber) { "" }
+
+      @Override
+      String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
+        "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+      }
+    }
   }
 
-  def String winAppRoot(String buildNumber) { "" }
+  @Override
+  LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
+    return new LinuxDistributionCustomizer() {
+      {
+        iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+      }
 
-  def String linuxAppRoot(String buildNumber) { "idea-IC-$buildNumber" }
+      @Override
+      String rootDirectoryName(String buildNumber) { "idea-IC-$buildNumber" }
+    }
+  }
 
-  def String archiveName(String buildNumber) { "ideaIC-$buildNumber" }
+  @Override
+  MacDistributionCustomizer createMacCustomizer(String projectHome) {
+    return new MacDistributionCustomizer() {
+      {
+        helpId = "IJ"
+        urlSchemes = ["idea"]
+        enableYourkitAgentInEAP = false
+        bundleIdentifier = "com.jetbrains.intellij.ce"
+        dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
+      }
+
+      @Override
+      String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"
+                              : "IntelliJ IDEA CE.app/Contents"
+      }
+    }
+  }
+
+  @Override
+  String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+
+  @Override
+  String baseArtifactName(String buildNumber) { "ideaIC-$buildNumber" }
 }

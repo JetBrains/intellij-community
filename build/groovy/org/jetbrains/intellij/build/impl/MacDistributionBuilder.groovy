@@ -32,14 +32,14 @@ class MacDistributionBuilder {
   }
 
   public layoutMac(File ideaPropertiesFile) {
-    def docTypes = buildContext.productProperties.mac.docTypes ?: """
+    def docTypes = buildContext.macDistributionCustomizer.docTypes ?: """
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${buildContext.fileNamePrefix}.icns</string>
+        <string>${buildContext.productProperties.baseFileName}.icns</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -48,7 +48,7 @@ class MacDistributionBuilder {
 """
     Map<String, String> customIdeaProperties = ["idea.jre.check": "$buildContext.productProperties.toolsJarRequired"];
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
-    buildContext.productProperties.customMacLayout(buildContext, macDistPath)
+    buildContext.macDistributionCustomizer.copyAdditionalFiles(buildContext, macDistPath)
     def macZipPath = buildMacZip()
     if (buildContext.macHostProperties == null) {
       buildContext.messages.info("A Mac OS build agent isn't configured, dmg artifact won't be produced")
@@ -64,7 +64,7 @@ class MacDistributionBuilder {
 
   private void layoutMacApp(File ideaPropertiesFile, Map<String, String> customIdeaProperties, String docTypes) {
     String target = macDistPath
-    def macProductProperties = buildContext.productProperties.mac
+    def macCustomizer = buildContext.macDistributionCustomizer
     buildContext.ant.copy(todir: "$target/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/mac")
       if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
@@ -78,11 +78,11 @@ class MacDistributionBuilder {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/mac/Contents")
     }
 
-    String executable = buildContext.fileNamePrefix
+    String executable = buildContext.productProperties.baseFileName
     String icns = "idea.icns" //todo[nik] rename to more generic name?
-    String helpId = macProductProperties.helpId
+    String helpId = macCustomizer.helpId
     String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-    String customIcns = buildContext.productProperties.icns
+    String customIcns = buildContext.macDistributionCustomizer.icnsPath
     if (customIcns != null) {
       buildContext.ant.delete(file: "$target/Resources/idea.icns")
       buildContext.ant.copy(file: customIcns, todir: "$target/Resources")
@@ -120,7 +120,7 @@ class MacDistributionBuilder {
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
     String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64)} -XX:+UseCompressedOops"
-    if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macProductProperties.enableYourkitAgentInEAP) {
+    if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
       ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }
     new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
@@ -130,12 +130,12 @@ class MacDistributionBuilder {
     String archsString = """
     <key>LSArchitecturePriority</key>
     <array>"""
-    macProductProperties.architectures.each {
+    macCustomizer.architectures.each {
       archsString += "<string>$it</string>"
     }
     archsString += "</array>\n"
 
-    List<String> urlSchemes = macProductProperties.urlSchemes
+    List<String> urlSchemes = macCustomizer.urlSchemes
     String urlSchemesString = ""
     if (urlSchemes.size() > 0) {
       urlSchemesString += """
@@ -167,7 +167,7 @@ class MacDistributionBuilder {
       replacefilter(token: "@@icns@@", value: icns)
       replacefilter(token: "@@bundle_name@@", value: fullName)
       replacefilter(token: "@@product_state@@", value: EAP)
-      replacefilter(token: "@@bundle_identifier@@", value: macProductProperties.bundleIdentifier)
+      replacefilter(token: "@@bundle_identifier@@", value: macCustomizer.bundleIdentifier)
       replacefilter(token: "@@year@@", value: "$todayYear")
       replacefilter(token: "@@company_name@@", value: buildContext.applicationInfo.companyName)
       replacefilter(token: "@@min_year@@", value: "2000")
@@ -179,7 +179,7 @@ class MacDistributionBuilder {
       replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
-      replacefilter(token: "@@min_osx@@", value: macProductProperties.minOSXVersion)
+      replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
     }
 
     if (executable != "idea") {
@@ -190,8 +190,8 @@ class MacDistributionBuilder {
       replacefilter(token: "@@product_full@@", value: fullName)
       replacefilter(token: "@@script_name@@", value: executable)
     }
-    String inspectScript = buildContext.productProperties.customInspectScriptName
-    if (inspectScript != null && inspectScript != "inspect") {
+    String inspectScript = buildContext.productProperties.inspectScriptName
+    if (inspectScript != "inspect") {
       buildContext.ant.move(file: "$target/bin/inspect.sh", tofile: "$target/bin/${inspectScript}.sh")
     }
 
@@ -201,10 +201,10 @@ class MacDistributionBuilder {
 
   private String buildMacZip() {
     return buildContext.messages.block("Build zip archive for Mac OS") {
-      def extraBins = buildContext.productProperties.mac.extraMacBins
+      def extraBins = buildContext.macDistributionCustomizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      def zipRoot = buildContext.productProperties.macAppRoot(buildContext.applicationInfo, buildContext.buildNumber)
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.archiveName(buildContext.buildNumber)}.mac.zip"
+      def zipRoot = buildContext.macDistributionCustomizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.buildNumber)}.mac.zip"
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
@@ -293,7 +293,7 @@ class MacDistributionBuilder {
       ["CVS_PASSFILE"                          : "~/.cvspass",
        "com.apple.mrj.application.live-resize" : "false",
        "idea.paths.selector"                   : buildContext.systemSelector,
-       "idea.executable"                       : buildContext.fileNamePrefix,
+       "idea.executable"                       : buildContext.productProperties.baseFileName,
        "java.endorsed.dirs"                    : "",
        "idea.smooth.progress"                  : "false",
        "apple.laf.useScreenMenuBar"            : "true",

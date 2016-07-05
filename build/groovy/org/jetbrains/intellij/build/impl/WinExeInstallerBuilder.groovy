@@ -39,7 +39,7 @@ class WinExeInstallerBuilder {
     }
 
     String communityHome = buildContext.paths.communityHome
-    String outFileName = buildContext.productProperties.archiveName(buildContext.buildNumber)
+    String outFileName = buildContext.productProperties.baseArtifactName(buildContext.buildNumber)
     buildContext.messages.progress("Building Windows installer $outFileName")
     ant.taskdef(name: "nsis", classname: "com.intellij.internalUtilities.ant.NsiFiles", classpath: "$communityHome/build/lib/NsiFiles.jar")
 
@@ -47,7 +47,7 @@ class WinExeInstallerBuilder {
     ant.mkdir(dir: "$box/bin")
     ant.mkdir(dir: "$box/nsiconf")
 
-    def bundleJre = buildContext.productProperties.windows.bundleJre
+    def bundleJre = buildContext.windowsDistributionCustomizer.bundleJre
     if (bundleJre && !new File(buildContext.paths.winJre).exists()) {
       buildContext.messages.info("JRE won't be bundled with Windows installer because JRE directory doesn't exist: ${buildContext.paths.winJre}")
       bundleJre = false
@@ -99,7 +99,7 @@ class WinExeInstallerBuilder {
     if (SystemInfoRt.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " /DIPR=\"${buildContext.productProperties.windows.associateIpr}\"" +
+                        " /DIPR=\"${buildContext.windowsDistributionCustomizer.associateIpr}\"" +
                         " /DOUT_FILE=\"${outFileName}\"" +
                         " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
@@ -109,7 +109,7 @@ class WinExeInstallerBuilder {
                         " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
                         " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                         " -DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " -DIPR=\"${buildContext.productProperties.windows.associateIpr}\"" +
+                        " -DIPR=\"${buildContext.windowsDistributionCustomizer.associateIpr}\"" +
                         " -DOUT_FILE=\"${outFileName}\"" +
                         " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
@@ -125,28 +125,29 @@ class WinExeInstallerBuilder {
   }
 
   private void prepareConfigurationFiles(String box, String winDistPath) {
+    def productProperties = buildContext.productProperties
     new File(box, "nsiconf/paths.nsi").text = """
-!define IMAGES_LOCATION "${toSystemDependentName(buildContext.productProperties.windows.installerImagesPath)}"
+!define IMAGES_LOCATION "${toSystemDependentName(buildContext.windowsDistributionCustomizer.installerImagesPath)}"
 !define PRODUCT_PROPERTIES_FILE "${toSystemDependentName("$winDistPath/bin/idea.properties")}"
-!define PRODUCT_VM_OPTIONS_NAME ${buildContext.fileNamePrefix}*.exe.vmoptions
+!define PRODUCT_VM_OPTIONS_NAME ${productProperties.baseFileName}*.exe.vmoptions
 !define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
-    String fullProductName = buildContext.productProperties.fullNameIncludingEdition ?: buildContext.applicationInfo.productName
-    def extensionsList = buildContext.productProperties.windows.fileAssociations
+    String fullProductName = productProperties.fullNameIncludingEdition(buildContext.applicationInfo)
+    def extensionsList = buildContext.windowsDistributionCustomizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "JetBrains"
 !define MUI_PRODUCT  "$fullProductName"
 !define PRODUCT_FULL_NAME "$fullProductName"
-!define PRODUCT_EXE_FILE "${buildContext.fileNamePrefix}.exe"
-!define PRODUCT_EXE_FILE_64 "${buildContext.fileNamePrefix}64.exe"
+!define PRODUCT_EXE_FILE "${productProperties.baseFileName}.exe"
+!define PRODUCT_EXE_FILE_64 "${productProperties.baseFileName}64.exe"
 !define PRODUCT_ICON_FILE "install.ico"
 !define PRODUCT_UNINST_ICON_FILE "uninstall.ico"
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
-!define UNINSTALL_WEB_PAGE "${buildContext.productProperties.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
+!define UNINSTALL_WEB_PAGE "${buildContext.windowsDistributionCustomizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDEA build has been installed
 ; set to 1 for release build

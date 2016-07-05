@@ -28,7 +28,7 @@ class CrossPlatformDistributionBuilder {
 
   void buildCrossPlatformZip(String winDistPath, String linuxDistPath, String macDistPath) {
     buildContext.messages.block("Building cross-platform zip") {
-      def executableName = buildContext.fileNamePrefix
+      def executableName = buildContext.productProperties.baseFileName
       def zipDir = "$buildContext.paths.temp/cross-platform-zip"
       buildContext.ant.copy(todir: "$zipDir/bin/win") {
         fileset(dir: "$winDistPath/bin") {
@@ -55,7 +55,7 @@ class CrossPlatformDistributionBuilder {
         mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
       }
 
-      String targetPath = "$buildContext.paths.artifacts/$buildContext.fileNamePrefix${buildContext.fullBuildNumber}.zip"
+      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseFileName}${buildContext.fullBuildNumber}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")

@@ -43,7 +43,7 @@ class BuildOptions {
   static final SCRAMBLING_STEP = "scramble"
 
   /**
-   * Pass 'true' to this system property to produce an additional dmg archive for Mac OS X without bundled JRE
+   * Pass 'true' to this system property to produce an additional dmg archive for Mac OS without bundled JRE
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))

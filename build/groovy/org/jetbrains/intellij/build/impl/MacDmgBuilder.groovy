@@ -52,7 +52,7 @@ class MacDmgBuilder {
       dmgBuilder.doSignAndBuildDmg(macZipPath, true)
     }
     else {
-      buildContext.messages.info("Skipping building Mac OS X distribution with bundled JRE because JRE archive doesn't exist: $buildContext.paths.macJreTarGz")
+      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive doesn't exist: $buildContext.paths.macJreTarGz")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, false)
@@ -61,7 +61,7 @@ class MacDmgBuilder {
 
   private void doSignAndBuildDmg(String macZipPath, boolean bundleJre) {
     def suffix = bundleJre ? "" : "-no-jdk"
-    String targetFileName = buildContext.productProperties.archiveName(buildContext.buildNumber) + suffix
+    String targetFileName = buildContext.productProperties.baseArtifactName(buildContext.buildNumber) + suffix
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: macZipPath, tofile: sitFilePath)
     ftpAction("mkdir") {}
@@ -72,7 +72,7 @@ class MacDmgBuilder {
   private void buildDmg(String targetFileName) {
     buildContext.messages.progress("Building ${targetFileName}.dmg")
     def dmgImageCopy = "$artifactsPath/${buildContext.fullBuildNumber}.png"
-    def dmgImagePath = (buildContext.applicationInfo.isEAP ? buildContext.productProperties.mac.dmgImagePathForEAP : null) ?: buildContext.productProperties.mac.dmgImagePath
+    def dmgImagePath = (buildContext.applicationInfo.isEAP ? buildContext.macDistributionCustomizer.dmgImagePathForEAP : null) ?: buildContext.macDistributionCustomizer.dmgImagePath
     ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
     ftpAction("put") {
       ant.fileset(file: dmgImageCopy)

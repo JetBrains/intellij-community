@@ -44,6 +44,9 @@ class BuildContextImpl extends BuildContext {
     this.project = project
     this.global = global
     this.productProperties = productProperties
+    windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
+    linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
+    macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
     this.options = options
     this.macHostProperties = macHostProperties
     this.signTool = signTool
@@ -64,9 +67,8 @@ class BuildContextImpl extends BuildContext {
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
 
     buildNumber = System.getProperty("build.number") ?: readSnapshotBuildNumber()
-    fullBuildNumber = "$productProperties.code-$buildNumber"
+    fullBuildNumber = "$productProperties.productCode-$buildNumber"
     systemSelector = productProperties.systemSelector(applicationInfo)
-    fileNamePrefix = productProperties.prefix
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }
@@ -159,9 +161,9 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   JpsModule findApplicationInfoModule() {
-    def module = findModule(productProperties.appInfoModule)
+    def module = findModule(productProperties.applicationInfoModule)
     if (module == null) {
-      messages.error("Cannot find module '$productProperties.appInfoModule' containing ApplicationInfo.xml file")
+      messages.error("Cannot find module '$productProperties.applicationInfoModule' containing ApplicationInfo.xml file")
     }
     return module
   }

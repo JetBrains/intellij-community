@@ -33,6 +33,9 @@ abstract class BuildContext {
   ApplicationInfoProperties applicationInfo
   JpsGantProjectBuilder projectBuilder
   ProductProperties productProperties
+  WindowsDistributionCustomizer windowsDistributionCustomizer
+  LinuxDistributionCustomizer linuxDistributionCustomizer
+  MacDistributionCustomizer macDistributionCustomizer
   MacHostProperties macHostProperties
   BuildOptions options
   SignTool signTool
@@ -49,14 +52,9 @@ abstract class BuildContext {
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
-   * without spaces with added major version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
+   * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
   String systemSelector
-
-  /**
-   * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
-   */
-  String fileNamePrefix
 
   /**
    * Names of JARs inside IDE_HOME/lib directory which need to be added to bootclasspath to start the IDE
@@ -131,7 +129,7 @@ abstract class BuildPaths {
   String linuxJre
 
   /**
-   * Path to a .tar.gz archive containing distribution of JRE for Mac OS X which will be bundled with the product
+   * Path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
    */
   String macJreTarGz
 }

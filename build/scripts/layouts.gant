@@ -164,7 +164,7 @@ def layoutFull(BuildContext context) {
         module("resources")
         module("platform-resources")
 
-        def appInfoModule = context.productProperties.appInfoModule
+        def appInfoModule = context.productProperties.applicationInfoModule
         if ("community-resources" == appInfoModule) {
           module("community-resources") {
             if (patchedApplicationInfo != null) {

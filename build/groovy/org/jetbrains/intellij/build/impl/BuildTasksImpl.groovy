@@ -191,7 +191,7 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    buildContext.productProperties.customLayout(buildContext, buildContext.paths.distAll)
+    buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
   }
 
   @Override
@@ -212,7 +212,7 @@ idea.fatal.error.notification=disabled
     }
 
     MacDistributionBuilder macBuilder = null
-    buildContext.executeStep("Build Mac OS X distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
+    buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
       macBuilder = new MacDistributionBuilder(buildContext)
       macBuilder.layoutMac(propertiesFile)
     }

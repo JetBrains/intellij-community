@@ -19,37 +19,67 @@ package org.jetbrains.intellij.build
  * @author nik
  */
 public abstract class ProductProperties {
-  String prefix
-  String code
-  String appInfoModule
-  String customInspectScriptName
+  /**
+   * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
+   */
+  String baseFileName
 
   /**
-   * Return {@code true} if tools.jar from JDK must be added to IDE's classpath
+   * Two-letter product code (e.g. 'IC' for IntelliJ IDEA Community Edition), will be used to produce the full build number
+   */
+  String productCode
+
+  /**
+   * Value of 'idea.platform.prefix' property. It's also used as prefix for 'ApplicationInfo.xml' product descriptor.
+   */
+  String platformPrefix
+
+  /**
+   * Name of the module containing ${platformPrefix}ApplicationInfo.xml product descriptor in 'idea' package
+   */
+  String applicationInfoModule
+
+  /**
+   * Name of the sh/bat script (without extension) which will contain the commands to run IDE in 'offline inspections' mode
+   */
+  String inspectScriptName = "inspect"
+
+  /**
+   * {@code true} if tools.jar from JDK must be added to IDE's classpath
    */
   boolean toolsJarRequired = false
 
-  String fullNameIncludingEdition = null
+  /**
+   * @return name of the product which will be shown in Windows Installer
+   */
+  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
 
-  abstract def String systemSelector(ApplicationInfoProperties applicationInfo)
+  /**
+   * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
+   * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
+   */
+  abstract String systemSelector(ApplicationInfoProperties applicationInfo)
 
+  /**
+   * Paths to properties files the content of which should be appended to idea.properties file
+   */
   List<String> additionalIDEPropertiesFilePaths = []
+
+  /**
+   * Paths to directories the content of which should be added to 'license' directory of IDE distribution
+   */
   List<String> additionalDirectoriesWithLicenses = []
-  String exe_launcher_properties
-  String exe64_launcher_properties
-  String platformPrefix = null
 
-  abstract def String macAppRoot(ApplicationInfoProperties applicationInfo, String buildNumber)
+  /**
+   * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
+   */
+  abstract String baseArtifactName(String buildNumber)
 
-  abstract def String winAppRoot(String buildNumber)
+  abstract WindowsDistributionCustomizer createWindowsCustomizer(String projectHome)
 
-  abstract def String linuxAppRoot(String buildNumber)
+  abstract LinuxDistributionCustomizer createLinuxCustomizer(String projectHome)
 
-  abstract def String archiveName(String buildNumber)
-
-  String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
-    return null
-  }
+  abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
@@ -59,65 +89,17 @@ public abstract class ProductProperties {
   String relativeAndroidToolsBaseHome
 
   /**
-   * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin' directories of Windows, Linux and Mac OS X distributions
+   * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
+   * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
    */
-  String yourkitAgentBinariesDirectoryPath
+  String yourkitAgentBinariesDirectoryPath = null
   boolean enableYourkitAgentInEAP = false
+
   List<String> excludedPlugins = []
 
-  void customLayout(BuildContext context, String targetDirectory) {}
-
-  void customWinLayout(BuildContext context, String targetDirectory) {}
-
-  void customLinLayout(BuildContext context, String targetDirectory) {}
-
-  void customMacLayout(BuildContext context, String targetDirectory) {}
-
-  String icon128
-  String ico
-  String icns
-
-  WindowsProductProperties windows = new WindowsProductProperties()
-  MacProductProperties mac = new MacProductProperties()
-  LinuxProductProperties linux = new LinuxProductProperties()
-}
-
-class WindowsProductProperties {
-  boolean includeBatchLauncher = true
-  boolean bundleJre = true
-  boolean buildZipWithBundledOracleJre = false
-  boolean associateIpr = true
   /**
-   * Path to a directory containing images for installer: logo.bpm, headerlogo.bpm, install.icon, uninstall.ico
+   * Override this method to copy additional files to distributions of all operating systems.
    */
-  String installerImagesPath
-  /**
-   * List of file extensions (starting with dot) which need to be associated with the product
-   */
-  List<String> fileAssociations = []
-}
-
-class MacProductProperties {
-  String minOSXVersion = "10.8"
-  String helpId = ""
-  String docTypes = null
-  List<String> urlSchemes = []
-  List<String> architectures = ["x86_64"]
-  boolean enableYourkitAgentInEAP = true
-  List<String> extraMacBins = []
-  String bundleIdentifier
-
-  /**
-   * Path to an image which will be injected into .dmg file
-   */
-  String dmgImagePath
-
-  /**
-   * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
-   */
-  String dmgImagePathForEAP = null
-}
-
-class LinuxProductProperties {
-  List<String> extraLinuxBins = []
+  void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+  }
 }
