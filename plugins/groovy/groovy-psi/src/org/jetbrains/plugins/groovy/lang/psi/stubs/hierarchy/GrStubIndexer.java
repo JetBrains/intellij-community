@@ -26,6 +26,7 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
@@ -38,7 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class GrStubIndexer extends StubHierarchyIndexer {
   @Override
@@ -152,18 +156,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
 
   private static int translateFlags(GrTypeDefinitionStub classStub) {
     int flags = 0;
-    if (classStub.isInterface()) {
-      flags |= IndexTree.INTERFACE;
-    }
-    if (classStub.isEnum()) {
-      flags |= IndexTree.ENUM;
-    }
-    if (classStub.isAnnotationType()) {
-      flags |= IndexTree.ANNOTATION;
-    }
-    if (GrStubUtils.isGroovyStaticMemberStub(classStub)) {
-      flags |= IndexTree.STATIC;
-    }
+    flags = BitUtil.set(flags, IndexTree.ENUM, classStub.isEnum());
+    flags = BitUtil.set(flags, IndexTree.ANNOTATION, classStub.isAnnotationType());
     return flags;
   }
 

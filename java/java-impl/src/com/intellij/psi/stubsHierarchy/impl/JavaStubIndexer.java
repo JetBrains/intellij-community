@@ -19,11 +19,9 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.compiled.ClassFileDecompilers;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
@@ -35,6 +33,7 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,18 +153,8 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
 
   private static int translateFlags(PsiClassStubImpl<?> classStub, int accessModifiers) {
     int flags = 0;
-    if (classStub.isInterface()) {
-      flags |= IndexTree.INTERFACE;
-    }
-    if (classStub.isEnum()) {
-      flags |= IndexTree.ENUM;
-    }
-    if (classStub.isAnnotationType()) {
-      flags |= IndexTree.ANNOTATION;
-    }
-    if (ModifierFlags.hasModifierProperty(PsiModifier.STATIC, accessModifiers)) {
-      flags |= IndexTree.STATIC;
-    }
+    flags = BitUtil.set(flags, IndexTree.ENUM, classStub.isEnum());
+    flags = BitUtil.set(flags, IndexTree.ANNOTATION, classStub.isAnnotationType());
     return flags;
   }
 

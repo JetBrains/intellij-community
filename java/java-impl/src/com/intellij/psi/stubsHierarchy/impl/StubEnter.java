@@ -101,11 +101,6 @@ public class StubEnter {
 
   private static int checkFlags(long flags, Symbol owner, boolean compiled) {
     int mask = 0;
-    if (owner.isClass() && (owner.myOwner.isPackage() || owner.isStatic())) {
-      if ((flags & (IndexTree.INTERFACE | IndexTree.ENUM | IndexTree.STATIC)) != 0) {
-        mask |= IndexTree.STATIC;
-      }
-    }
     if ((flags & IndexTree.SUPERS_UNRESOLVED) != 0) {
       mask |= IndexTree.SUPERS_UNRESOLVED;
     }

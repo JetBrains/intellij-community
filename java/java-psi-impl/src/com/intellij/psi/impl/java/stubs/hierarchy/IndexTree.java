@@ -29,11 +29,8 @@ import java.util.List;
 public class IndexTree {
   public static final boolean STUB_HIERARCHY_ENABLED = Registry.is("java.hierarchy.service");
 
-  @SuppressWarnings("PointlessBitwiseExpression")
-  public final static int PACKAGE = 1 << 0;
+  public final static int PACKAGE = 1;
   public final static int CLASS = 1 << 1;
-  public static final int STATIC       = 1 << 3;
-  public static final int INTERFACE    = 1 << 4;
   public static final int ANNOTATION   = 1 << 5;
   public static final int ENUM         = 1 << 6;
   public static final int COMPILED     = 1 << 7;
@@ -45,14 +42,14 @@ public class IndexTree {
   public static final byte GROOVY = 2;
 
   public static int hashIdentifier(@Nullable String s) {
-    if (s == null) return 0;
+    if (StringUtil.isEmpty(s)) return 0;
 
     // not using String.hashCode because this way there's less collisions for short package names like 'com'
     int hash = 0;
     for (int i = 0; i < s.length(); i++) {
       hash = hash * 239 + s.charAt(i);
     }
-    return hash;
+    return hash == 0 ? 1 : hash;
   }
 
   public static int[] hashQualifiedName(@NotNull String qName) {

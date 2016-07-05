@@ -100,18 +100,17 @@ public class StubResolver {
 
   private void findMemberType(Symbol s, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
     if (s.isClass()) {
-      processInheritedMembers((Symbol.ClassSymbol)s, name, false, symbols, null);
+      processInheritedMembers((Symbol.ClassSymbol)s, name, symbols, null);
     } else {
-      processMembers(s.getMembers(), name, symbols, false);
+      processMembers(s.getMembers(), name, symbols);
     }
   }
 
   private void processInheritedMembers(Symbol.ClassSymbol s,
                                        @ShortName int name,
-                                       boolean requireStatic,
                                        Set<Symbol> symbols,
                                        @Nullable Set<Symbol> processed) throws IncompleteHierarchyException {
-    processMembers(s.getMembers(), name, symbols, requireStatic);
+    processMembers(s.getMembers(), name, symbols);
 
     @CompactArray(Symbol.ClassSymbol.class) Object supers = s.getSuperClasses(myConnector);
     if (supers == null) return;
@@ -120,10 +119,10 @@ public class StubResolver {
     if (!processed.add(s)) return;
 
     if (supers instanceof Symbol.ClassSymbol) {
-      processInheritedMembers((Symbol.ClassSymbol)supers, name, requireStatic, symbols, processed);
+      processInheritedMembers((Symbol.ClassSymbol)supers, name, symbols, processed);
     } else if (supers instanceof Symbol.ClassSymbol[]) {
       for (Symbol.ClassSymbol st : (Symbol.ClassSymbol[])supers) {
-        processInheritedMembers(st, name, requireStatic, symbols, processed);
+        processInheritedMembers(st, name, symbols, processed);
       }
     }
   }
@@ -180,34 +179,25 @@ public class StubResolver {
 
   // handling of import static `tsym.name` as
   private void importNamedStatic(final Symbol.ClassSymbol tsym, @ShortName final int name, final Set<Symbol> symbols) throws IncompleteHierarchyException {
-    processInheritedMembers(tsym, name, true, symbols, null);
+    processInheritedMembers(tsym, name, symbols, null);
   }
 
-  private static void processMembers(Symbol.ClassSymbol[] members, @ShortName int name, Set<Symbol> symbols, boolean requireStatic) {
+  private static void processMembers(Symbol.ClassSymbol[] members, @ShortName int name, Set<Symbol> symbols) {
     int index = getIndex(name, members);
     if (index < 0) return;
 
     // elem
-    Symbol.ClassSymbol member = members[index];
-    if (!requireStatic || member.isStatic()) {
-      symbols.add(member);
-    }
+    symbols.add(members[index]);
     // on the left
     int i = index - 1;
     while (i >= 0 && members[i].myShortName == name) {
-      member = members[i];
-      if (!requireStatic || member.isStatic()) {
-        symbols.add(member);
-      }
+      symbols.add(members[i]);
       i--;
     }
     // on the right
     i = index + 1;
     while (i < members.length && members[i].myShortName == name) {
-      member = members[i];
-      if (!requireStatic || member.isStatic()) {
-        symbols.add(member);
-      }
+      symbols.add(members[i]);
       i++;
     }
   }
