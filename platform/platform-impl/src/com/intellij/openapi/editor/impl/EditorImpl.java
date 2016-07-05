@@ -5726,8 +5726,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    private boolean mySelectionTweaked;
-
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
       requestFocus();
@@ -5769,7 +5767,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       clearDraggedRange();
 
 
-      mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
@@ -5827,9 +5824,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMultiSelectionInProgress = false;
 
       myDragOnGutterSelectionStartLine = -1;
-      if (!mySelectionTweaked) {
-        tweakSelectionIfNecessary(e);
-      }
       if (e.isConsumed()) {
         return;
       }
@@ -5929,10 +5923,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
             eventArea == EditorMouseEventArea.ANNOTATIONS_AREA ||
             eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          if (tweakSelectionIfNecessary(e)) {
-            mySelectionTweaked = true;
-          }
-          else {
+          if (!tweakSelectionIfNecessary(e)) {
             myGutterComponent.mousePressed(e);
           }
           if (e.isConsumed()) return false;

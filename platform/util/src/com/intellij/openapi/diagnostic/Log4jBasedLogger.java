@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class Log4jBasedLogger extends Logger {
   protected final org.apache.log4j.Logger myLogger;
 
-  public Log4jBasedLogger(org.apache.log4j.Logger delegate) {
+  public Log4jBasedLogger(@NotNull org.apache.log4j.Logger delegate) {
     myLogger = delegate;
   }
 

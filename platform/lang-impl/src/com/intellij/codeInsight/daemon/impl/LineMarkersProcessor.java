@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * @author cdr
  */
+@FunctionalInterface
 interface LineMarkersProcessor {
   void addLineMarkers(@NotNull List<PsiElement> elements,
                       @NotNull List<LineMarkerProvider> providers,

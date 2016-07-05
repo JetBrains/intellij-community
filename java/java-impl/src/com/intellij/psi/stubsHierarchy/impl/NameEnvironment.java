@@ -18,8 +18,13 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongIntHashMap;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 class NameEnvironment extends UserDataHolderBase {
   public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
@@ -65,6 +70,22 @@ class NameEnvironment extends UserDataHolderBase {
       id = qualifiedName(id, shortName);
     }
     return id;
+  }
+
+  /**
+   * @see SerializedUnit#writeQualifiedName(DataOutput, int[])
+   */
+  @QNameId int readQualifiedName(DataInput in) throws IOException {
+    int id = 0;
+    int len = DataInputOutputUtil.readINT(in);
+    for (int i = 0; i < len; i++) {
+      id = qualifiedName(id, in.readInt());
+    }
+    return id;
+  }
+
+  int memberQualifiedName(@QNameId int ownerName, @ShortName int name) {
+    return name == NO_NAME || ownerName < 0 ? -1 : qualifiedName(ownerName, name);
   }
 
   @QNameId int qualifiedName(@QNameId int prefix, @ShortName int shortName) {

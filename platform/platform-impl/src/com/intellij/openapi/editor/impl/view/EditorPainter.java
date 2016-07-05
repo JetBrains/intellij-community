@@ -707,11 +707,17 @@ class EditorPainter implements TextDrawingCallback {
       float startX = ranges.get(i);
       float endX = ranges.get(i + 1);
       if (startX == endX) {
-        endX++;
+        if (startX > 0) {
+          startX--;
+        }
+        else {
+          endX++;
+        }
       }
       else {
         endX--;
       }
+      ranges.set(i, startX);
       ranges.set(i + 1, endX);
     }
     return ranges;

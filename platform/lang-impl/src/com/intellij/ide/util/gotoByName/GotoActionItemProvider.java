@@ -86,8 +86,9 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
-      .transform(actionId -> {
-        AnAction action = myActionManager.getAction(actionId);
+      .transform(myActionManager::getAction)
+      .filter(Condition.NOT_NULL)
+      .transform(action -> {
         ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
         return new MatchedValue(wrapper, pattern) {
           @Nullable

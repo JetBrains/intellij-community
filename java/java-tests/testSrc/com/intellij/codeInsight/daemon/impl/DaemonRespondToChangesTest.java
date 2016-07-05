@@ -848,10 +848,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
+    StringBuffer log = new StringBuffer();
     final LineMarkerProvider provider = new LineMarkerProvider() {
       @Nullable
       @Override
       public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+        log.append("getLineMarkerInfo(" + element + ")\n");
         if (element instanceof PsiComment) {
           return new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null,
                                       GutterIconRenderer.Alignment.LEFT);
@@ -867,22 +869,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
 
-    assertEmpty(highlightErrors());
+    try {
+      List<HighlightInfo> infos = highlightErrors();
+      log.append("infos: " + infos + "\n");
+      assertEmpty(infos);
 
-    List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
 
-    type(' ');
-    assertEmpty(highlightErrors());
+      type(' ');
+      infos = highlightErrors();
+      log.append("infos: " + infos + "\n");
+      assertEmpty(infos);
 
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
 
-    backspace();
-    assertEmpty(highlightErrors());
+      backspace();
+      infos = highlightErrors();
+      log.append("infos: " + infos + "\n");
+      assertEmpty(infos);
 
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
+    }
+    catch (AssertionError e) {
+      System.err.println("Log:\n"+log);
+      throw e;
+    }
   }
 
   public void testWhenTypingOverWrongReferenceItsColorChangesToBlackAndOnlyAfterHighlightingFinishedItReturnsToRed() throws Throwable {
@@ -1533,7 +1547,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReactivityPerformance() throws Throwable {
-    List<Thread> watchers = new ArrayList<>();
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     type(' ');
@@ -1547,6 +1560,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
     System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
+    List<Thread> watchers = new ArrayList<>();
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
       final int finalI = i;

@@ -30,9 +30,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
-  private File myCanonicalDir;
-  private File myCanonicalFile;
-  private VirtualFile myCanonicalVFile;
+  private File myNonContentDir;
+  private File myNonContentFile;
+  private VirtualFile myNonContentVFile;
+  
   private File myContentDir;
   private VirtualFile myContentVDir;
   private File myLibraryDir;
@@ -46,12 +47,12 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myCanonicalDir = FileUtil.createTempDirectory("canonical", null);
-    myCanonicalFile = new File(myCanonicalDir, "foo.txt");
-    assertTrue(myCanonicalFile.createNewFile());
+    myNonContentDir = FileUtil.createTempDirectory("nonContent", null);
+    myNonContentFile = new File(myNonContentDir, "foo.txt");
+    assertTrue(myNonContentFile.createNewFile());
 
-    myCanonicalVFile = VfsUtil.findFileByIoFile(myCanonicalFile, true);
-    assertNotNull(myCanonicalVFile);
+    myNonContentVFile = VfsUtil.findFileByIoFile(myNonContentFile, true);
+    assertNotNull(myNonContentVFile);
 
     myContentDir = FileUtil.createTempDirectory("content", null);
     myContentVDir = VfsUtil.findFileByIoFile(myContentDir, true);
@@ -65,7 +66,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
   }
 
   public void testNoFilesInContent() throws Exception {
-    assertEquals(myCanonicalVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
 
   public void testLinkedDirInContent() throws Exception {
@@ -78,48 +79,48 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
 
   public void doTestLinkedDirInProjectRoots(boolean content) throws Exception {
     String linkedPath = (content ? myContentDir : myLibraryDir).getPath() + "/linked";
-    IoTestUtil.createSymLink(myCanonicalDir.getPath(), linkedPath, true);
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath, true);
     
-    VirtualFile linkedVFile = VfsUtil.findFileByIoFile(new File(linkedPath, myCanonicalFile.getName()), true);
+    VirtualFile linkedVFile = VfsUtil.findFileByIoFile(new File(linkedPath, myNonContentFile.getName()), true);
     
-    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
 
   // not supported
   public void _testLinkedFileInSources() throws Exception {
     String linkedPath = myContentDir.getPath() + "/linked.txt";
-    IoTestUtil.createSymLink(myCanonicalVFile.getPath(), linkedPath, true);
+    IoTestUtil.createSymLink(myNonContentVFile.getPath(), linkedPath, true);
     
     VirtualFile linkedVFile = VfsUtil.findFileByIoFile(new File(linkedPath), true);
-    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
   
   public void testFileWithTheSameNotButNotLinked() throws Exception {
     new WriteAction<Object>() {
       @Override
       protected void run(@NotNull Result<Object> result) throws Throwable {
-        myContentVDir.createChildData(this, myCanonicalFile.getName());
+        myContentVDir.createChildData(this, myNonContentFile.getName());
       }
     }.execute();
 
-    assertEquals(myCanonicalVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
 
   public void testWhenSeveralLinkedAlwaysReturnTheSameFile() throws Exception {
     String linkedPath1 = myContentDir.getPath() + "/linked1";
-    IoTestUtil.createSymLink(myCanonicalDir.getPath(), linkedPath1, true);
-    VirtualFile linkedVFile1 = VfsUtil.findFileByIoFile(new File(linkedPath1, myCanonicalFile.getName()), true);
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath1, true);
+    VirtualFile linkedVFile1 = VfsUtil.findFileByIoFile(new File(linkedPath1, myNonContentFile.getName()), true);
     assertNotNull(linkedVFile1);
 
     String linkedPath2 = myContentDir.getPath() + "/linked2";
-    IoTestUtil.createSymLink(myCanonicalDir.getPath(), linkedPath2, true);
-    VirtualFile linkedVFile2 = VfsUtil.findFileByIoFile(new File(linkedPath2, myCanonicalFile.getName()), true);
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath2, true);
+    VirtualFile linkedVFile2 = VfsUtil.findFileByIoFile(new File(linkedPath2, myNonContentFile.getName()), true);
     assertNotNull(linkedVFile2);
 
-    VirtualFile found = ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile);
+    VirtualFile found = ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile);
     assertTrue(found.equals(linkedVFile1) || found.equals(linkedVFile2));
     for(int i = 0; i  < 10; i++) {
-      assertEquals("try: " + i, found, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+      assertEquals("try: " + i, found, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
     }
   }
 
@@ -133,15 +134,33 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
 
   private void doTestLinkedAndCanonicalUnderRoot(boolean content) throws InterruptedException, IOException {
     String linkedPath = myContentDir.getPath() + "/linked";
-    IoTestUtil.createSymLink(myCanonicalDir.getPath(), linkedPath, true);
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath, true);
 
-    VirtualFile linkedVFile = VfsUtil.findFileByIoFile(new File(linkedPath, myCanonicalFile.getName()), true);
-    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    VirtualFile linkedVFile = VfsUtil.findFileByIoFile(new File(linkedPath, myNonContentFile.getName()), true);
+    assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
     if(content) {
-      PsiTestUtil.addContentRoot(getModule(), myCanonicalVFile.getParent());
+      PsiTestUtil.addContentRoot(getModule(), myNonContentVFile.getParent());
     } else {
-      PsiTestUtil.addLibrary(getModule(), myCanonicalVFile.getParent().getPath());
+      PsiTestUtil.addLibrary(getModule(), myNonContentVFile.getParent().getPath());
     }
-    assertEquals(myCanonicalVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myCanonicalVFile));
+    assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
+  }
+
+  public void testLinkedFileNotUnderTheContentRoot() throws Exception {
+    File nonContentDir = FileUtil.createTempDirectory("nonContent2", null);
+    String nonContentLinkedPath = nonContentDir + "/linked";
+
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), nonContentLinkedPath, true);
+    VirtualFile nonContentLinkedVFile = VfsUtil.findFileByIoFile(new File(nonContentLinkedPath, myNonContentFile.getName()), true);
+    
+    assertEquals(nonContentLinkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), nonContentLinkedVFile));
+
+    String contentLinkedPath = myContentDir + "/linked";
+    IoTestUtil.createSymLink(myNonContentDir.getPath(), contentLinkedPath, true);
+    VirtualFile contentLinkedVFile = VfsUtil.findFileByIoFile(new File(contentLinkedPath, myNonContentFile.getName()), true);
+    
+    assertEquals(contentLinkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
+    assertEquals(contentLinkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), nonContentLinkedVFile));
+    assertEquals(contentLinkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), contentLinkedVFile));
   }
 }

@@ -61,12 +61,18 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
                                       "bar: asjdjkas,\n" +
                                       "baz: [foo: qoo, boo: fo<caret>o, doo: 123]\n" +
                                       "}\n" +
+                                      "---\n" +
+                                      "foo: \n" +
+                                      "  bar:\n" +
+                                      "- av<caret>r\n" +
                                       "...";
-  private static final String OUTPUT = "[Document 1/2;null][items:;null][Item 2/2;null][descrip:;null][High Heeled \"Ruby\" S...;null]\n" +
+  private static final String OUTPUT = "[Document 1/3;null][items:;null][Item 2/2;null][descrip:;null][High Heeled \"Ruby\" S...;null]\n" +
                                        "------\n" +
-                                       "[Document 1/2;null][specialDelivery:;null][Follow the Yellow Br...;null]\n" +
+                                       "[Document 1/3;null][specialDelivery:;null][Follow the Yellow Br...;null]\n" +
                                        "------\n" +
-                                       "[Document 2/2;null][baz:;null][Item 2/3;null][boo:;null][foo;null]";
+                                       "[Document 2/3;null][baz:;null][Item 2/3;null][boo:;null][foo;null]\n" +
+                                       "------\n" +
+                                       "[Document 3/3;null][foo:;null][Item;null][avr;null]";
 
   public void testAll() {
     myFixture.configureByText(YAMLFileType.YML, INPUT);
