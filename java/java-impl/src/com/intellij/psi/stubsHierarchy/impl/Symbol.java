@@ -68,9 +68,9 @@ abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
-    @QNameId final int myQualifiedName;
+    @QNameHash final int myQualifiedName;
 
-    public PackageSymbol(Symbol owner, @QNameId int fullname, int name) {
+    public PackageSymbol(Symbol owner, @QNameHash int fullname, int name) {
       super(IndexTree.PACKAGE, owner, name);
       myQualifiedName = fullname;
     }

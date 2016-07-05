@@ -69,9 +69,7 @@ public class StubResolver {
     findGlobalType(info, name, result);
 
     if (processPackages) {
-      @QNameId int nameId = myNameEnvironment.findExistingName(0, name);
-      Symbol.PackageSymbol pkg = nameId < 0 ? null : mySymbols.getPackage(nameId);
-      ContainerUtil.addIfNotNull(result, pkg);
+      ContainerUtil.addIfNotNull(result, mySymbols.getPackage(name));
     }
     return result;
   }
@@ -93,10 +91,7 @@ public class StubResolver {
   }
 
   private void findIdentInPackage(Symbol.PackageSymbol pck, @ShortName int name, boolean processPackages, Set<Symbol> symbols) {
-    @QNameId int fullname = mySymbols.myNameEnvironment.findExistingName(pck.myQualifiedName, name);
-    if (fullname < 0) {
-      return;
-    }
+    @QNameHash int fullname = mySymbols.myNameEnvironment.qualifiedName(pck.myQualifiedName, name);
     if (processPackages) {
       ContainerUtil.addIfNotNull(symbols, mySymbols.getPackage(fullname));
     }
@@ -132,8 +127,8 @@ public class StubResolver {
     }
   }
 
-  public Symbol.ClassSymbol[] findGlobalType(@QNameId int nameId) {
-    return mySymbols.loadClass(nameId);
+  public Symbol.ClassSymbol[] findGlobalType(@QNameHash int nameId) {
+    return mySymbols.getClassSymbols(nameId);
   }
 
   private void findGlobalType(UnitInfo info, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
@@ -168,11 +163,8 @@ public class StubResolver {
   }
 
   // handling of `import prefix.*`
-  private void importAll(@QNameId int prefix, @ShortName int suffix, final Set<Symbol> symbols) {
-    @QNameId int fullname = myNameEnvironment.findExistingName(prefix, suffix);
-    if (fullname >= 0) {
-      Collections.addAll(symbols, findGlobalType(fullname));
-    }
+  private void importAll(@QNameHash int prefix, @ShortName int suffix, final Set<Symbol> symbols) {
+    Collections.addAll(symbols, findGlobalType(myNameEnvironment.qualifiedName(prefix, suffix)));
   }
 
   // handling of import static `tsym.name` as

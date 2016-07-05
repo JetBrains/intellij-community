@@ -103,11 +103,11 @@ class Imports {
 }
 
 class Import {
-  @QNameId final int qualifier;
+  @QNameHash final int qualifier;
   @ShortName final int importedName; // 0 for on-demand
   final boolean isStatic;
 
-  Import(@QNameId int qualifier, @ShortName int importedName, boolean isStatic) {
+  Import(@QNameHash int qualifier, @ShortName int importedName, boolean isStatic) {
     this.qualifier = qualifier;
     this.importedName = importedName;
     this.isStatic = isStatic;
@@ -126,10 +126,10 @@ class Import {
 class AliasedImport extends Import {
   private final @ShortName int alias;
 
-  public AliasedImport(@QNameId int qualifier,
-                       @ShortName int importedName,
-                       boolean isStatic,
-                       @ShortName int alias) {
+  AliasedImport(@QNameHash int qualifier,
+                @ShortName int importedName,
+                boolean isStatic,
+                @ShortName int alias) {
     super(qualifier, importedName, isStatic);
     this.alias = alias;
   }

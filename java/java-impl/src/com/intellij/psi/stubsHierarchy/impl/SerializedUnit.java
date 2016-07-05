@@ -69,7 +69,7 @@ class SerializedUnit {
   /**
    * @see NameEnvironment#readQualifiedName(DataInput)
    */
-  static void writeQualifiedName(DataOutput out, @QNameId int[] array) throws IOException {
+  static void writeQualifiedName(DataOutput out, @QNameHash int[] array) throws IOException {
     DataInputOutputUtil.writeINT(out, array.length);
     for (int i : array) {
       out.writeInt(i);
@@ -124,13 +124,13 @@ class SerializedUnit {
     writeMembers(out, value.myDecls);
   }
 
-  private static ClassSymbol readClassDecl(UnitInputStream in, UnitInfo info, Symbol owner, @QNameId int ownerName) throws IOException {
+  private static ClassSymbol readClassDecl(UnitInputStream in, UnitInfo info, Symbol owner, @QNameHash int ownerName) throws IOException {
     int stubId = DataInputOutputUtil.readINT(in);
     int mods = DataInputOutputUtil.readINT(in);
     @ShortName int name = in.readInt();
     @CompactArray(QualifiedName.class) Object superNames = readSupers(in, info.isCompiled());
 
-    @QNameId int qname = in.names.memberQualifiedName(ownerName, name);
+    @QNameHash int qname = in.names.memberQualifiedName(ownerName, name);
     ClassSymbol symbol = in.stubEnter.classEnter(info, owner, stubId, mods, name, superNames, qname, in.fileId);
 
     readMembers(in, info, qname, symbol);
@@ -173,7 +173,7 @@ class SerializedUnit {
 
   private static void readMembers(UnitInputStream in,
                                   UnitInfo info,
-                                  @QNameId int ownerName,
+                                  @QNameHash int ownerName,
                                   MemberSymbol symbol) throws IOException {
     int memberCount = DataInputOutputUtil.readINT(in);
     if (memberCount == 0) return;
@@ -197,7 +197,7 @@ class SerializedUnit {
     }
   }
 
-  private static ClassSymbol readDecl(UnitInputStream in, UnitInfo info, Symbol owner, @QNameId int ownerName) throws IOException {
+  private static ClassSymbol readDecl(UnitInputStream in, UnitInfo info, Symbol owner, @QNameHash int ownerName) throws IOException {
     if (in.readBoolean()) {
       return readClassDecl(in, info, owner, ownerName);
     }

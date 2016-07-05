@@ -19,7 +19,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TLongIntHashMap;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,11 +27,9 @@ import java.io.IOException;
 class NameEnvironment extends UserDataHolderBase {
   public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
   public static final int NO_NAME = 0;
-  @QNameId public final int java_lang;
+  @QNameHash final int java_lang;
   public final QualifiedName java_lang_Enum;
   public final QualifiedName java_lang_annotation_Annotation;
-
-  private final TLongIntHashMap myConcatenations = new TLongIntHashMap();
 
   NameEnvironment() {
     java_lang = fromString("java.lang");
@@ -40,19 +37,9 @@ class NameEnvironment extends UserDataHolderBase {
     java_lang_annotation_Annotation = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
   }
 
-  @QNameId
-  int fromString(String s) {
-    return internQualifiedName(IndexTree.hashQualifiedName(s));
-  }
-
-  @QNameId int findExistingName(@QNameId int stemId, @ShortName int suffix) {
-    int existing = myConcatenations.get(pack(stemId, suffix));
-    return existing > 0 ? existing : -1;
-  }
-
-  @QNameId int internQualifiedName(@ShortName int[] qname) {
+  @QNameHash int fromString(String s) {
     int id = 0;
-    for (int shortName : qname) {
+    for (int shortName : IndexTree.hashQualifiedName(s)) {
       id = qualifiedName(id, shortName);
     }
     return id;
@@ -61,7 +48,7 @@ class NameEnvironment extends UserDataHolderBase {
   /**
    * @see SerializedUnit#writeQualifiedName(DataOutput, int[])
    */
-  @QNameId int readQualifiedName(DataInput in) throws IOException {
+  @QNameHash int readQualifiedName(DataInput in) throws IOException {
     int id = 0;
     int len = DataInputOutputUtil.readINT(in);
     for (int i = 0; i < len; i++) {
@@ -70,22 +57,13 @@ class NameEnvironment extends UserDataHolderBase {
     return id;
   }
 
-  int memberQualifiedName(@QNameId int ownerName, @ShortName int name) {
-    return name == NO_NAME || ownerName < 0 ? -1 : qualifiedName(ownerName, name);
+  int memberQualifiedName(@QNameHash int ownerName, @ShortName int name) {
+    return name == NO_NAME || ownerName == 0 ? 0 : qualifiedName(ownerName, name);
   }
 
-  @QNameId int qualifiedName(@QNameId int prefix, @ShortName int shortName) {
-    int existing = findExistingName(prefix, shortName);
-    return existing >= 0 ? existing : addName(prefix, shortName);
+  @QNameHash int qualifiedName(@QNameHash int prefix, @ShortName int shortName) {
+    int hash = prefix * 31 + shortName;
+    return hash == 0 ? 1 : hash;
   }
 
-  private int addName(@QNameId int stemId, @ShortName int suffix) {
-    int newId = myConcatenations.size();
-    myConcatenations.put(pack(stemId, suffix), newId);
-    return newId;
-  }
-
-  private static long pack(@QNameId int stemId, @ShortName int suffix) {
-    return ((long)suffix << 32) + stemId;
-  }
 }

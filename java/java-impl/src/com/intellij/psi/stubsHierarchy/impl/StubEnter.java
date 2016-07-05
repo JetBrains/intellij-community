@@ -60,7 +60,7 @@ public class StubEnter {
                          int mods,
                          @ShortName int name,
                          @CompactArray(QualifiedName.class) Object superNames,
-                         @QNameId int qname, int fileId) throws IOException {
+                         @QNameHash int qname, int fileId) throws IOException {
     int flags = checkFlags(mods, info.isCompiled());
     @CompactArray(QualifiedName.class) Object supers = handleSpecialSupers(mods, superNames);
 
