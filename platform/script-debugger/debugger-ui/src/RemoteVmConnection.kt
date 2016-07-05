@@ -135,6 +135,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Page to Debug")
+      .setCancelOnWindowDeactivation(false)
       .setItemChoosenCallback {
         @Suppress("UNCHECKED_CAST")
         val value = list.selectedValue as T
