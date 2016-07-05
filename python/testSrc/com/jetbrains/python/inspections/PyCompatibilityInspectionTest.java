@@ -172,6 +172,10 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnderscoreBz2Module() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
