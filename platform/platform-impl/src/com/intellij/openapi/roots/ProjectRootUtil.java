@@ -30,11 +30,14 @@ public class ProjectRootUtil {
 
     if (scope.contains(forFile)) return forFile;
 
+    VirtualFile canonicalForFile = forFile.getCanonicalFile();
+    if (canonicalForFile == null) canonicalForFile = forFile; 
+    
     Collection<VirtualFile> projectFiles =
-      FilenameIndex.getVirtualFilesByName(project, forFile.getName(), true, scope);
+      FilenameIndex.getVirtualFilesByName(project, canonicalForFile.getName(), true, scope);
 
     for (VirtualFile eachContentFile : projectFiles) {
-      if (forFile.equals(eachContentFile.getCanonicalFile())) return eachContentFile;
+      if (canonicalForFile.equals(eachContentFile.getCanonicalFile())) return eachContentFile;
     }
     
     return forFile;
