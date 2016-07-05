@@ -47,10 +47,6 @@ abstract class WindowsDistributionCustomizer {
    */
   List<String> fileAssociations = []
 
-  //todo[nik] generate these files automatically instead
-  String exe_launcher_properties
-  String exe64_launcher_properties
-
   /**
    * Name of the root directory in Windows .zip archive
    */

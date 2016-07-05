@@ -37,4 +37,6 @@ class ApplicationInfoProperties {
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
   }
+
+  public String getUpperCaseProductName() { shortProductName.toUpperCase() }
 }

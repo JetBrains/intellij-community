@@ -51,8 +51,6 @@ class IdeaCommunityProperties extends ProductProperties {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = [".java", ".groovy", ".kt"]
-        exe_launcher_properties = "$projectHome/build/conf/ideaCE-launcher.properties"
-        exe64_launcher_properties = "$projectHome/build/conf/ideaCE64-launcher.properties"
       }
 
       @Override

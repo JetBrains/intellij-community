@@ -71,16 +71,14 @@ class WindowsDistributionBuilder {
   //todo[nik] rename
   private void winScripts() {
     String fullName = buildContext.applicationInfo.productName
-    String productUpperCase = buildContext.applicationInfo.shortProductName.toUpperCase()
     //todo[nik] looks like names without .exe were also supported, do we need this?
     String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
-    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
+    def jvmArgs = getAdditionalJvmArguments()
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
-      jvmArgs = "$jvmArgs -Didea.jre.check=true".trim()
     }
 
     def batName = "${buildContext.productProperties.baseFileName}.bat"
@@ -89,7 +87,7 @@ class WindowsDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: productUpperCase)
+        filter(token: "product_uc", value: buildContext.applicationInfo.upperCaseProductName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
@@ -112,6 +110,14 @@ class WindowsDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
   }
 
+  private String getAdditionalJvmArguments() {
+    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
+    if (buildContext.productProperties.toolsJarRequired) {
+      return "$jvmArgs -Didea.jre.check=true".trim()
+    }
+    return jvmArgs
+  }
+
   //todo[nik] rename
   private void winVMOptions() {
     JvmArchitecture.values().each {
@@ -126,14 +132,36 @@ class WindowsDistributionBuilder {
   private void buildWinLauncher(JvmArchitecture arch) {
     buildContext.messages.block("Build Windows executable ${arch.name()}") {
       String exeFileName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}.exe"
-      def launcherPropertiesPath = "${buildContext.paths.temp}/launcher.properties"
-      //todo[nik] generate launcher.properties file automatically
-      def launcherPropertiesTemplatePath = arch == JvmArchitecture.x32 ? buildContext.windowsDistributionCustomizer.exe_launcher_properties
-                                                                       : buildContext.windowsDistributionCustomizer.exe64_launcher_properties
+      def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
+      def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
+      def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
+      String vmOptions
+      if (buildContext.productProperties.platformPrefix != null
+//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
+        && buildContext.productProperties.platformPrefix != "Idea") {
+        vmOptions = "-Didea.platform.prefix=${buildContext.productProperties.platformPrefix}"
+      }
+      else {
+        vmOptions = ""
+      }
 
-      BuildUtils.copyAndPatchFile(launcherPropertiesTemplatePath, launcherPropertiesPath,
-                                  ["PRODUCT_PATHS_SELECTOR": buildContext.systemSelector,
-                                   "IDE-NAME": buildContext.applicationInfo.shortProductName.toUpperCase()])
+      vmOptions = "$vmOptions -Didea.paths.selector=${buildContext.systemSelector} ${getAdditionalJvmArguments()}".trim()
+      def productName = buildContext.applicationInfo.upperCaseProductName //todo[nik] use '.productName' instead
+
+      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
+      new File(launcherPropertiesPath).text = """
+IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
+IDS_JDK_ENV_VAR=${upperCaseProductName}_JDK${jdkEnvVarSuffix}
+IDS_APP_TITLE=${productName} Launcher
+IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector
+IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
+IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
+IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
+IDS_PROPS_ENV_VAR=${upperCaseProductName}_PROPERTIES
+IDS_VM_OPTIONS_ENV_VAR=${upperCaseProductName}${arch.fileSuffix}_VM_OPTIONS
+IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
+IDS_VM_OPTIONS=$vmOptions
+""".trim()
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"

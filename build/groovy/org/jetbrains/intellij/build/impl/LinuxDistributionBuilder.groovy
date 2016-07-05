@@ -61,7 +61,6 @@ class LinuxDistributionBuilder {
   private void unixScripts() {
     String name = "${buildContext.productProperties.baseFileName}.sh"
     String fullName = buildContext.applicationInfo.productName
-    String productUpperCase = buildContext.applicationInfo.shortProductName.toUpperCase()
     String vmOptionsFileName = buildContext.productProperties.baseFileName
 
     String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
@@ -77,7 +76,7 @@ class LinuxDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: productUpperCase)
+        filter(token: "product_uc", value: buildContext.applicationInfo.upperCaseProductName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)

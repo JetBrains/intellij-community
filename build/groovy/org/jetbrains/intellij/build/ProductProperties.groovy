@@ -51,7 +51,6 @@ public abstract class ProductProperties {
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
-   * //todo[nik] currently it isn't included into *.exe Windows launchers
    */
   String additionalIdeJvmArguments = ""
 
