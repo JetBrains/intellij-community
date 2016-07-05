@@ -30,7 +30,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       else {
         studyToolWindow = new StudySwingToolWindow();
       }
-      studyToolWindow.init(project);
+      studyToolWindow.init(project, true);
       final ContentManager contentManager = toolWindow.getContentManager();
       final Content content = contentManager.getFactory().createContent(studyToolWindow, null, false);
       contentManager.addContent(content);

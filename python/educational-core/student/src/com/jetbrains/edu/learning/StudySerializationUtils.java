@@ -16,6 +16,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -64,6 +65,8 @@ public class StudySerializationUtils {
     public static final String MY_LINE = "myLine";
     public static final String MY_START = "myStart";
     public static final String MY_LENGTH = "myLength";
+    public static final String HINTS = "hints";
+    public static final String HINT = "hint";
     public static final String AUTHOR_TITLED = "Author";
     public static final String FIRST_NAME = "first_name";
     public static final String SECOND_NAME = "second_name";
@@ -181,6 +184,7 @@ public class StudySerializationUtils {
               taskStatus = addStatus(outputter, placeholderTextToStatus, taskStatus, placeholder);
               addOffset(document, placeholder);
               addInitialState(document, placeholder);
+              addHints(placeholder);
             }
           }
           if (taskStatus != null) {
@@ -220,6 +224,15 @@ public class StudySerializationUtils {
       int start = getAsInt(placeholder, START);
       int offset = document.getLineStartOffset(line) + start;
       addChildWithName(placeholder, OFFSET, offset);
+    }
+
+    public static void addHints(@NotNull Element placeholder) throws StudyUnrecognizedFormatException {
+      final String hint = getChildWithName(placeholder, HINT).getAttribute(VALUE).getValue();
+      Element listElement = new Element(LIST);
+      final Element hintElement = new Element(OPTION);
+      hintElement.setAttribute(VALUE, hint);
+      listElement.setContent(hintElement);
+      addChildWithName(placeholder, HINTS, listElement);
     }
 
     public static int getAsInt(Element element, String name) throws StudyUnrecognizedFormatException {
