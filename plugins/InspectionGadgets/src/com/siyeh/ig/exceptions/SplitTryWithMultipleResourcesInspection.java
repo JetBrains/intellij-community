@@ -112,7 +112,7 @@ public class SplitTryWithMultipleResourcesInspection extends BaseInspection {
     @Override
     public void visitKeyword(PsiKeyword keyword) {
       super.visitKeyword(keyword);
-      if (isOnTheFly() && isAcceptable(keyword)) {
+      if (isOnTheFly() && keyword.getTokenType() == JavaTokenType.TRY_KEYWORD && isAcceptable(keyword)) {
         registerError(keyword);
       }
     }
