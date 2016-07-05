@@ -29,23 +29,6 @@ public class StubHierarchyConnector {
     myResolve = new StubResolver(symbols, this);
   }
 
-  private void resolveName(Symbol.ClassSymbol place, QualifiedName name, Set<Symbol.ClassSymbol> result) throws IncompleteHierarchyException {
-    if (place.isCompiled()) {
-      Symbol.ClassSymbol[] candidates = myResolve.findGlobalType(name.myId);
-      if (candidates.length == 0) {
-        throw new IncompleteHierarchyException();
-      }
-
-      Collections.addAll(result, candidates);
-    } else {
-      for (Symbol symbol : myResolve.resolveBase(place, name.myId, false)) {
-        if (symbol instanceof Symbol.ClassSymbol) {
-          result.add((Symbol.ClassSymbol)symbol);
-        }
-      }
-    }
-  }
-
   void connect(Symbol sym) {
     Symbol.ClassSymbol c = (Symbol.ClassSymbol) sym;
 
@@ -65,10 +48,10 @@ public class StubHierarchyConnector {
     try {
       if (supers instanceof QualifiedName[]) {
         for (QualifiedName name : (QualifiedName[])supers) {
-          resolveName(c, name, supertypes);
+          name.resolveCandidates(myResolve, c, supertypes);
         }
       } else {
-        resolveName(c, (QualifiedName)supers, supertypes);
+        ((QualifiedName)supers).resolveCandidates(myResolve, c, supertypes);
       }
     }
     catch (IncompleteHierarchyException ignore) {

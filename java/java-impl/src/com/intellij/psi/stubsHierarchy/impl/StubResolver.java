@@ -35,24 +35,29 @@ public class StubResolver {
   }
 
   // resolve class `sym` extends/implements `baseId`
-  Set<Symbol> resolveBase(Symbol.ClassSymbol sym, @QNameId int name, boolean processPackages) throws IncompleteHierarchyException {
-    @QNameId int prefix = myNameEnvironment.prefixId(name);
-    @ShortName int shortName = myNameEnvironment.shortName(name);
-    if (prefix == NameEnvironment.NO_NAME) {
-      Set<Symbol> result = findIdent(sym.myOwner, sym.myUnitInfo, shortName, processPackages);
-      if (result.isEmpty()) {
-        throw IncompleteHierarchyException.INSTANCE;
-      }
-      return result;
-    }
-
-    Set<Symbol> prev = resolveBase(sym, prefix, true);
-    Set<Symbol> result = new HashSet<>();
-    for (Symbol symbol : prev) {
-      selectSym(symbol, shortName, processPackages, result);
+  Set<Symbol> resolveBase(Symbol.ClassSymbol sym, @ShortName int[] qname) throws IncompleteHierarchyException {
+    Set<Symbol> result = resolveUnqualified(sym, qname[0], qname.length > 1);
+    for (int i = 1; i < qname.length; i++) {
+      result = processQualifier(result, qname[i], i != qname.length - 1);
     }
     if (result.isEmpty()) {
       throw IncompleteHierarchyException.INSTANCE;
+    }
+    return result;
+  }
+
+  Set<Symbol> resolveUnqualified(Symbol.ClassSymbol sym, @ShortName final int shortName, boolean processPackages) throws IncompleteHierarchyException {
+    Set<Symbol> symbols = findIdent(sym.myOwner, sym.myUnitInfo, shortName, processPackages);
+    if (symbols.isEmpty()) {
+      throw IncompleteHierarchyException.INSTANCE;
+    }
+    return symbols;
+  }
+
+  private Set<Symbol> processQualifier(Set<Symbol> contextResults, @ShortName final int shortName, final boolean processPackages) throws IncompleteHierarchyException {
+    Set<Symbol> result = new HashSet<>();
+    for (Symbol symbol : contextResults) {
+      selectSym(symbol, shortName, processPackages, result);
     }
     return result;
   }

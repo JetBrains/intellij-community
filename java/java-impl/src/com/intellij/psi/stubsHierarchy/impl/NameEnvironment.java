@@ -42,8 +42,8 @@ class NameEnvironment extends UserDataHolderBase {
     myStems.add(0);
 
     java_lang = fromString("java.lang");
-    java_lang_Enum = new QualifiedName(fromString(CommonClassNames.JAVA_LANG_ENUM));
-    java_lang_annotation_Annotation = new QualifiedName(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
+    java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
+    java_lang_annotation_Annotation = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
   }
 
   @QNameId

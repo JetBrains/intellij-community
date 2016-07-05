@@ -16,6 +16,7 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.Nullable;
@@ -57,10 +58,10 @@ public class StubEnter {
                          int stubId,
                          int mods,
                          @ShortName int name,
-                         @QNameId int[] superNames,
+                         @CompactArray(QualifiedName.class) Object superNames,
                          @QNameId int qname, int fileId) throws IOException {
     int flags = checkFlags(mods, owner, info.getType() == IndexTree.BYTECODE);
-    @CompactArray(QualifiedName.class) Object supers = internSupers(mods, superNames);
+    @CompactArray(QualifiedName.class) Object supers = handleSpecialSupers(mods, superNames);
 
     ClassSymbol classSymbol = mySymbols.enterClass(fileId, stubId, flags, name, owner, info, supers, qname);
     if (uncompleted != null) {
@@ -71,27 +72,18 @@ public class StubEnter {
 
   @Nullable
   @CompactArray(QualifiedName.class)
-  Object internSupers(int flags, int[] superNames) {
+  Object handleSpecialSupers(int flags, @CompactArray(QualifiedName.class) Object superNames) {
     if (BitUtil.isSet(flags, IndexTree.ANNOTATION)) {
       return myNameEnvironment.java_lang_annotation_Annotation;
     }
 
-    boolean isEnum = BitUtil.isSet(flags, IndexTree.ENUM);
-    if (superNames.length == 0) {
-      return isEnum ? myNameEnvironment.java_lang_Enum : null;
-    }
-    if (superNames.length == 1 && !isEnum) {
-      return new QualifiedName(superNames[0]);
+    if (BitUtil.isSet(flags, IndexTree.ENUM)) {
+      if (superNames == null) return myNameEnvironment.java_lang_Enum;
+      if (superNames instanceof QualifiedName) return new QualifiedName[]{(QualifiedName)superNames, myNameEnvironment.java_lang_Enum};
+      return ArrayUtil.append((QualifiedName[])superNames, myNameEnvironment.java_lang_Enum);
     }
 
-    QualifiedName[] array = new QualifiedName[superNames.length + (isEnum ? 1 : 0)];
-    for (int i = 0; i < superNames.length; i++) {
-      array[i] = new QualifiedName(superNames[i]);
-    }
-    if (isEnum) {
-      array[array.length - 1] = myNameEnvironment.java_lang_Enum;
-    }
-    return array;
+    return superNames;
   }
 
   public void connect1() {

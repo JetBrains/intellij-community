@@ -15,25 +15,66 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-final class QualifiedName {
-  public final int myId;
+import java.util.Collections;
+import java.util.Set;
 
-  QualifiedName(int id) {
-    this.myId = id;
+abstract class QualifiedName {
+
+  abstract void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+    throws IncompleteHierarchyException;
+
+  static class OfComponents extends QualifiedName {
+    @ShortName final int[] components;
+
+    OfComponents(int[] components) {
+      this.components = components;
+    }
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      for (Symbol symbol : resolver.resolveBase(place, components)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
   }
 
-  public boolean isEmpty() {
-    return myId == 0;
+  static class OfSingleComponent extends QualifiedName {
+    @ShortName final int shortName;
+
+    OfSingleComponent(@ShortName int shortName) {
+      this.shortName = shortName;
+    }
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      for (Symbol symbol : resolver.resolveUnqualified(place, shortName, false)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    return o instanceof QualifiedName && myId == ((QualifiedName)o).myId;
-  }
+  static class Interned extends QualifiedName {
+    @QNameId final int id;
 
-  @Override
-  public int hashCode() {
-    return myId;
+    Interned(int id) {
+      this.id = id;
+    }
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      Symbol.ClassSymbol[] candidates = resolver.findGlobalType(id);
+      if (candidates.length == 0) {
+        throw new IncompleteHierarchyException();
+      }
+
+      Collections.addAll(result, candidates);
+    }
   }
 }

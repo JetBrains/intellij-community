@@ -76,6 +76,17 @@ class SerializedUnit {
     }
   }
 
+  static QualifiedName readNameComponents(DataInput in) throws IOException {
+    int length = DataInputOutputUtil.readINT(in);
+    if (length == 1) return new QualifiedName.OfSingleComponent(in.readInt());
+
+    int[] result = new int[length];
+    for (int i = 0; i < length; i++) {
+      result[i] = in.readInt();
+    }
+    return new QualifiedName.OfComponents(result);
+  }
+
   // unit
 
   private static void writeUnit(@NotNull DataOutput out, IndexTree.Unit value) throws IOException {
@@ -117,7 +128,7 @@ class SerializedUnit {
     int stubId = DataInputOutputUtil.readINT(in);
     int mods = DataInputOutputUtil.readINT(in);
     @ShortName int name = in.readInt();
-    @QNameId int[] superNames = readSupers(in);
+    @CompactArray(QualifiedName.class) Object superNames = readSupers(in, info.getType() == IndexTree.BYTECODE);
 
     @QNameId int qname = in.names.memberQualifiedName(ownerName, name);
     ClassSymbol symbol = in.stubEnter.classEnter(info, owner, stubId, mods, name, superNames, qname, in.fileId);
@@ -135,12 +146,20 @@ class SerializedUnit {
     }
   }
 
-  private static @QNameId int[] readSupers(UnitInputStream in) throws IOException {
-    @QNameId int[] superNames = new int[DataInputOutputUtil.readINT(in)];
+  private static @CompactArray(QualifiedName.class) Object readSupers(UnitInputStream in, boolean intern) throws IOException {
+    int length = DataInputOutputUtil.readINT(in);
+    if (length == 0) return null;
+    if (length == 1) return readSuperName(in, intern);
+
+    QualifiedName[] superNames = new QualifiedName[length];
     for (int i = 0; i < superNames.length; i++) {
-      superNames[i] = in.names.readQualifiedName(in);
+      superNames[i] = readSuperName(in, intern);
     }
     return superNames;
+  }
+
+  private static QualifiedName readSuperName(UnitInputStream in, boolean intern) throws IOException {
+    return intern ? new QualifiedName.Interned(in.names.readQualifiedName(in)) : readNameComponents(in);
   }
 
   // members
