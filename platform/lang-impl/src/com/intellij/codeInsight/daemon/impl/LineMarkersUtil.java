@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ class LineMarkersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-    List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(Math.max(markers.size(), oldMarkers.size()));
+    List<LineMarkerInfo> result = new ArrayList<>(Math.max(markers.size(), oldMarkers.size()));
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     for (LineMarkerInfo info : oldMarkers) {
