@@ -138,7 +138,8 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
       else {
         SemanticEditorPosition position = getPosition(editor, offset);
-        if (position.before().isAt(RightParenthesis)) {
+        position = position.before().beforeOptional(LineComment).beforeOptional(Whitespace);
+        if (position.isAt(RightParenthesis)) {
           int offsetAfterParen = position.getStartOffset() + 1;
           position.beforeParentheses(LeftParenthesis, RightParenthesis);
           if (!position.isAtEnd()) {
