@@ -21,9 +21,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
@@ -200,12 +198,18 @@ public abstract class Symbol {
              (ClassSymbol[])myMembers;
     }
 
-    void setMembers(ClassSymbol[] members) {
-      myMembers = members.length == 0 ? null : members.length == 1 ? members[0] : members;
+    void setMembers(List<ClassSymbol> members) {
+      myMembers = members.isEmpty() ? null : members.size() == 1 ? members.get(0) : toSortedArray(members);
+    }
+
+    private static ClassSymbol[] toSortedArray(List<ClassSymbol> members) {
+      ClassSymbol[] array = members.toArray(new ClassSymbol[members.size()]);
+      Arrays.sort(array, CLASS_SYMBOL_BY_NAME_COMPARATOR);
+      return array;
     }
   }
 
-  public static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
+  private static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
     int name1 = s1.myShortName;
     int name2 = s2.myShortName;
     return (name1 < name2) ? -1 : ((name1 == name2) ? 0 : 1);
