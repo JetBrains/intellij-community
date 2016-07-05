@@ -31,6 +31,7 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class CCFromCourseArchive extends DumbAwareAction {
@@ -156,15 +157,18 @@ public class CCFromCourseArchive extends DumbAwareAction {
       answerPlaceholder.init();
       final VirtualFile hints = project.getBaseDir().findChild(EduNames.HINTS);
       if (hints != null) {
-        final String hintFile = answerPlaceholder.getHint();
-        final VirtualFile virtualFile = hints.findChild(hintFile);
-        if (virtualFile != null) {
-          final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
-          if (hintDocument != null) {
-            final String hintText = hintDocument.getText();
-            answerPlaceholder.setHint(hintText);
-          }
+        final ArrayList<String> result = new ArrayList<>();
+        for (String hint : answerPlaceholder.getHints()) {
+          final VirtualFile virtualFile = hints.findChild(hint);
+          if (virtualFile != null) {
+            final Document hintDocument = FileDocumentManager.getInstance().getDocument(virtualFile);
+            if (hintDocument != null) {
+              final String hintText = hintDocument.getText();
+              result.add(hintText);
+            }
+          }          
         }
+        answerPlaceholder.setHints(result);
       }
 
       document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());

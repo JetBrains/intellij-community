@@ -3,7 +3,11 @@ package com.jetbrains.edu.learning.courseFormat;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of windows which user should type in
@@ -11,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class AnswerPlaceholder {
 
-  @Expose private String hint = "";
+  @Expose private List<String> myHints = new ArrayList<String>();
 
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";
@@ -64,12 +68,13 @@ public class AnswerPlaceholder {
     this.length = length;
   }
 
-  public String getHint() {
-    return hint;
+  @NotNull
+  public List<String> getHints() {
+    return myHints;
   }
 
-  public void setHint(@Nullable final String hint) {
-    this.hint = hint;
+  public void setHints(@Nullable final List<String> hints) {
+    myHints = hints;
   }
 
   public String getPossibleAnswer() {

@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
 
@@ -27,23 +29,23 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
     myPanel = new CCCreateAnswerPlaceholderPanel();
-    if (answerPlaceholder.getHint() != null) {
+    if (answerPlaceholder.getHints() != null) {
       setHintText(answerPlaceholder);
     }
     myProject = project;
     String answerPlaceholderTaskText = answerPlaceholder.getTaskText();
     myPanel.setAnswerPlaceholderText(answerPlaceholderTaskText != null ? answerPlaceholderTaskText : "");
-    String hintName = answerPlaceholder.getHint();
-    myPanel.setHintText(hintName != null ? hintName : "");
+    List<String> hintName = answerPlaceholder.getHints();
+    myPanel.setHintText(!hintName.isEmpty() ? hintName.get(0) : "");
     init();
     initValidation();
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void setHintText(AnswerPlaceholder answerPlaceholder) {
-    String hintText = answerPlaceholder.getHint();
+    List<String> hintText = answerPlaceholder.getHints();
 
-    myPanel.setHintText(hintText);
+    myPanel.setHintText(hintText.isEmpty()? "" : hintText.get(0));
   }
 
   @Override
@@ -51,7 +53,10 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     String answerPlaceholderText = myPanel.getAnswerPlaceholderText();
     myAnswerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
     myAnswerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
-    myAnswerPlaceholder.setHint(myPanel.getHintText());
+    myAnswerPlaceholder.setHints(
+      new ArrayList<String>() {{
+        add(myPanel.getHintText());
+      }});
     super.doOKAction();
   }
 
@@ -64,7 +69,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   @Nullable
   @Override
   public ValidationInfo doValidate() {
-    return myAnswerPlaceholder.getHint() != null ? null : new ValidationInfo("Type hint");
+    return myAnswerPlaceholder.getHints() != null ? null : new ValidationInfo("Type hint");
   }
 
   @Nullable
