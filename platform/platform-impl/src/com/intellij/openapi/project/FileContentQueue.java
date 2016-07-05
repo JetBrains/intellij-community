@@ -83,9 +83,6 @@ public class FileContentQueue {
           if (contentQueue.loadNextContent()) {
             ourContentLoadingQueues.addLast(contentQueue);
           }
-          if (myContentsToLoad.get() == 0) {
-            return;
-          }
           contentQueue = ourContentLoadingQueues.pollFirst();
         }
       };
