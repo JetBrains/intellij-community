@@ -172,7 +172,7 @@ class FreezeLogger {
   
   private static final Logger LOG = Logger.getInstance(FreezeLogger.class);
   private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, Disposer.newDisposable());
-  private static final int MAX_ALLOWED_TIME = 1000;
+  private static final int MAX_ALLOWED_TIME = 500;
   
   public static void runUnderPerformanceMonitor(Runnable action) {
     ALARM.cancelAllRequests();
@@ -187,7 +187,12 @@ class FreezeLogger {
   }
   
   private static void dumpThreads() {
-    LOG.error("Slow typing report, thread dumps attached", ThreadDumper.dumpThreadsToString());
+    String dumps = ThreadDumper.dumpThreadsToString();
+    String msg = "Typing freeze report, thread dumps attached. EDT stacktrace:\n" 
+                 + ThreadDumper.dumpEdtStackTrace() 
+                 + "\n\n\n";
+    
+    LOG.error(msg, dumps);
   }
   
 }
