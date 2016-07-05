@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -38,6 +39,8 @@ import java.util.Collection;
 import java.util.List;
 
 class LineMarkersUtil {
+  private static final Logger LOG = Logger.getInstance(LineMarkersUtil.class);
+
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
                                      @NotNull Segment bounds,
@@ -61,6 +64,10 @@ class LineMarkersUtil {
       else {
         result.add(info);
       }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+"); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
     for (final LineMarkerInfo info : markers) {
