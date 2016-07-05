@@ -41,7 +41,7 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
 
   @Override
   public int getVersion() {
-    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
+    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
   }
 
   @NotNull

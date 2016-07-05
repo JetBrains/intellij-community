@@ -176,10 +176,20 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
+  /**
+   * @return path to annotation-processors generated _production_ sources
+    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
+   */
+  @Deprecated
   @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module) {
+    return getAnnotationProcessorsGenerationPath(module, false);
+  }
+
+  @Nullable
+  public static String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
-    final String sourceDirName = config.getGeneratedSourcesDirectoryName(false);
+    final String sourceDirName = config.getGeneratedSourcesDirectoryName(forTests);
     if (config.isOutputRelativeToContentRoot()) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
       if (roots.length == 0) {
@@ -192,7 +202,7 @@ public class CompilerPaths {
     }
 
 
-    final String path = getModuleOutputPath(module, false);
+    final String path = getModuleOutputPath(module, forTests);
     if (path == null) {
       return null;
     }

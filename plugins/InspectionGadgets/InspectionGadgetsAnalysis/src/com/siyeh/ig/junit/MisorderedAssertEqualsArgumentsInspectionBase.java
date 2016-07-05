@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
         }
         else if (target instanceof PsiLocalVariable) {
           final PsiVariable variable = (PsiLocalVariable)target;
-          final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, variable);
+          final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
           if (LibraryUtil.isOnlyLibraryCodeUsed(definition)) {
             return true;
           }

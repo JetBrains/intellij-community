@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
@@ -56,7 +57,11 @@ public class ExternalDiffToolUtil {
   public static boolean canCreateFile(@NotNull DiffContent content) {
     if (content instanceof EmptyContent) return true;
     if (content instanceof DocumentContent) return true;
-    if (content instanceof FileContent) return true;
+    if (content instanceof FileContent) {
+      VirtualFile file = ((FileContent)content).getFile();
+      if (file instanceof VirtualFileWithoutContent) return false;
+      return true;
+    }
     if (content instanceof DirectoryContent) return ((DirectoryContent)content).getFile().isInLocalFileSystem();
     return false;
   }

@@ -31,14 +31,14 @@ public class StubHierarchyConnector {
 
   private void resolveName(Symbol.ClassSymbol place, QualifiedName name, Set<Symbol.ClassSymbol> result) throws IncompleteHierarchyException {
     if (place.isCompiled()) {
-      Symbol.ClassSymbol[] candidates = myResolve.findGlobalType(name);
+      Symbol.ClassSymbol[] candidates = myResolve.findGlobalType(name.myId);
       if (candidates.length == 0) {
         throw new IncompleteHierarchyException();
       }
 
       Collections.addAll(result, candidates);
     } else {
-      for (Symbol symbol : myResolve.resolveBase(place, name.myComponents)) {
+      for (Symbol symbol : myResolve.resolveBase(place, name.myId, false)) {
         if (symbol instanceof Symbol.ClassSymbol) {
           result.add((Symbol.ClassSymbol)symbol);
         }

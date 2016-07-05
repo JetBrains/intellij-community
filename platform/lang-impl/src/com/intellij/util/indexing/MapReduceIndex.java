@@ -46,6 +46,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -66,6 +67,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final boolean myIsPsiBackedIndex;
   private final IndexExtension<Key, Value, Input> myExtension;
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
+  private final AtomicLong myModificationStamp = new AtomicLong();
   private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<Collection<Key>>();
 
   private PersistentHashMap<Integer, ByteSequence> myContents;
@@ -900,6 +902,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return myExtension;
   }
 
+  public long getModificationStamp() {
+    return myModificationStamp.get();
+  }
+
   public class SimpleUpdateData extends UpdateData<Key, Value> {
     private final int savedInputId;
     private final @NotNull Map<Key, Value> newData;
@@ -934,6 +940,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     myRemoveStaleKeyOperation = new MapDiffUpdateData.RemovedOrUpdatedKeyProcessor<Key>() {
     @Override
     public void process(Key key, int inputId) throws StorageException {
+      myModificationStamp.incrementAndGet();
       myStorage.removeAllValues(key, inputId);
     }
   };
@@ -941,6 +948,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final MapDiffUpdateData.AddedKeyProcessor<Key, Value> myAddedKeyProcessor = new MapDiffUpdateData.AddedKeyProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
+      myModificationStamp.incrementAndGet();
       myStorage.addValue(key, inputId, value);
     }
   };

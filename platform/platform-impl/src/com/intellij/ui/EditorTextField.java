@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -562,7 +563,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myInheritSwingFont) {
       editor.getColorsScheme().setEditorFontName(getFont().getFontName());
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+      return;
     }
+    UISettings settings = UISettings.getInstance();
+    if (settings.PRESENTATION_MODE) editor.setFontSize(settings.PRESENTATION_MODE_FONT_SIZE);
   }
 
   protected boolean shouldHaveBorder() {

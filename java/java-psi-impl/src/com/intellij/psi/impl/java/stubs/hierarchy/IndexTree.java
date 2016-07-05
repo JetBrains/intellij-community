@@ -38,6 +38,7 @@ public class IndexTree {
   public static final int ENUM         = 1 << 6;
   public static final int COMPILED     = 1 << 7;
   public static final int MEMBER       = 1 << 8;
+  public static final int SUPERS_UNRESOLVED = 1 << 9;
 
   public static final byte BYTECODE = 0;
   public static final byte JAVA = 1;

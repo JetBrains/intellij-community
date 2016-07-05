@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariableSearchUtils {
+public class DeclarationSearchUtils {
 
-  private VariableSearchUtils() {}
+  private DeclarationSearchUtils() {}
 
   public static boolean variableNameResolvesToTarget(
     @NotNull String variableName, @NotNull PsiVariable target,
@@ -131,5 +135,24 @@ public class VariableSearchUtils {
       return ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
     }
     return null;
+  }
+
+  public static boolean isTooExpensiveToSearch(PsiNamedElement element, boolean zeroResult) {
+    final String name = element.getName();
+    if (name == null) {
+      return true;
+    }
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
+    final SearchScope useScope = element.getUseScope();
+    if (!(useScope instanceof GlobalSearchScope)) {
+      return zeroResult;
+    }
+    final PsiSearchHelper.SearchCostResult cost =
+      searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator());
+    if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
+      return zeroResult;
+    }
+    return cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 }

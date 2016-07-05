@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
@@ -25,22 +26,24 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.psi.stubsHierarchy.StubHierarchyIndexer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GrStubIndexer extends StubHierarchyIndexer {
   @Override
   public int getVersion() {
-    return 0;
+    return GrStubFileElementType.STUB_VERSION + 1;
   }
 
   @Override
@@ -51,6 +54,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
   @Nullable
   @Override
   public Unit indexFile(@NotNull FileContent content) {
+    if (!isNormalGroovyFile(((FileContentImpl)content).getPsiFileForPsiDependentIndex())) return null;
+
     Stub stubTree = StubTreeBuilder.buildStubTree(content);
     if (!(stubTree instanceof GrFileStub)) return null;
 
@@ -70,7 +75,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
       }
 
       if (el instanceof GrTypeDefinitionStub) {
-        ClassDecl classDecl = processClassDecl((GrTypeDefinitionStub)el, usedNames);
+        ClassDecl classDecl = processClassDecl((GrTypeDefinitionStub)el, usedNames, false);
         if (classDecl != null) {
           classList.add(classDecl);
         }
@@ -87,10 +92,19 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     return new Unit(pid, IndexTree.GROOVY, imports, classes);
   }
 
+  private static boolean isNormalGroovyFile(final PsiFile file) {
+    return file instanceof GroovyFile && !hasSpecialScriptType((GroovyFile)file);
+  }
+
+  private static boolean hasSpecialScriptType(GroovyFile file) {
+    return file.isScript() &&
+           ContainerUtil.exists(GroovyScriptTypeDetector.EP_NAME.getExtensions(), detector -> detector.isSpecificScriptFile(file));
+  }
+
   @Nullable
   private static Decl processMember(StubElement<?> el, Set<String> namesCache) {
     if (el instanceof GrTypeDefinitionStub) {
-      return processClassDecl((GrTypeDefinitionStub)el, namesCache);
+      return processClassDecl((GrTypeDefinitionStub)el, namesCache, true);
     }
     ArrayList<Decl> innerList = new ArrayList<Decl>();
     for (StubElement childElement : el.getChildrenStubs()) {
@@ -103,7 +117,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
   }
 
   @Nullable
-  private static ClassDecl processClassDecl(GrTypeDefinitionStub classStub, Set<String> namesCache) {
+  private static ClassDecl processClassDecl(GrTypeDefinitionStub classStub, Set<String> namesCache, boolean inner) {
     ArrayList<String> superList = new ArrayList<String>();
     ArrayList<Decl> innerList = new ArrayList<Decl>();
     if (classStub.isAnonymous()) {
@@ -128,6 +142,9 @@ public class GrStubIndexer extends StubHierarchyIndexer {
       }
     }
     int flags = translateFlags(classStub);
+    if (inner && !superList.isEmpty()) {
+      flags |= IndexTree.SUPERS_UNRESOLVED; // 'extends' list resolves to classes from the current package first, and those can be in a language unknown to this hierarchy
+    }
     String[] supers = superList.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(superList);
     Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(new Decl[innerList.size()]);
     return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);

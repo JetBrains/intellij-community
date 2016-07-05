@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.psiutils;
+package com.intellij.openapi.vfs;
 
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiExpression;
-import org.jetbrains.annotations.NotNull;
-
-public class WellFormednessUtils {
-  private WellFormednessUtils() {
-    super();
-  }
-
-  public static boolean isWellFormed(@NotNull PsiAssignmentExpression expression) {
-
-    final PsiExpression rhs = expression.getRExpression();
-    return rhs != null;
-  }
+/**
+ * @author Irina.Chernushina on 7/4/2016.
+ */
+public interface VirtualFileWithoutContent {
 }

@@ -28,6 +28,7 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree.*;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
+import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
@@ -47,7 +48,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
 
   @Override
   public int getVersion() {
-    return 0;
+    return JavaFileElementType.STUB_VERSION + 1;
   }
 
   @Override
@@ -95,10 +96,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
   @Nullable
   private static Decl processMember(StubElement<?> el, Set<String> namesCache) {
     if (el instanceof PsiClassStubImpl) {
-      PsiClassStubImpl classStub = (PsiClassStubImpl)el;
-      if (!classStub.isAnonymousInQualifiedNew()) {
-        return processClassDecl(classStub, namesCache);
-      }
+      return processClassDecl((PsiClassStubImpl)el, namesCache);
     }
     ArrayList<Decl> innerList = new ArrayList<Decl>();
     for (StubElement childElement : el.getChildrenStubs()) {
@@ -146,6 +144,9 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
 
     }
     int flags = translateFlags(classStub, accessModifiers);
+    if (classStub.isAnonymousInQualifiedNew()) {
+      flags |= IndexTree.SUPERS_UNRESOLVED;
+    }
     String[] supers = superList.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(superList);
     Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(new Decl[innerList.size()]);
     return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);

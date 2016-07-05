@@ -88,10 +88,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       }
       else if (!ourOomOccurred) {
         MessagePool messagePool = MessagePool.getInstance();
-        LogMessage message = messagePool.addIdeFatalMessage(event);
-        if (message != null && ApplicationManager.getApplication() != null) {
-          ErrorNotifier.notifyUi(message, messagePool);
-        }
+        messagePool.addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {

@@ -88,6 +88,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   @CalledInAwt
   protected void onDispose() {
     destroyChangedBlocks();
+    myFoldingModel.destroy();
     super.onDispose();
   }
 
@@ -119,6 +120,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   protected Runnable applyNotification(@Nullable final JComponent notification) {
     return () -> {
       clearDiffPresentation();
+      myFoldingModel.destroy();
       if (notification != null) myPanel.addNotification(notification);
     };
   }
@@ -135,7 +137,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   @CalledInAwt
   protected void destroyChangedBlocks() {
-    myFoldingModel.destroy();
   }
 
   //

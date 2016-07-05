@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,8 +101,8 @@ public class GitFileAnnotation extends FileAnnotation {
     final LineInfo info = myLines.get(lineNumber);
     VcsFileRevision fileRevision = info.myFileRevision;
     if (fileRevision != null) {
-      return GitBundle.message("annotation.tool.tip", info.getRevision().asString(), info.getAuthor(), info.getDate(),
-                               fileRevision.getCommitMessage());
+      return GitBundle.message("annotation.tool.tip", info.getRevision().asString(), info.getAuthor(),
+                               DateFormatUtil.formatDateTime(info.getDate()), fileRevision.getCommitMessage());
     }
     else {
       return "";

@@ -21,35 +21,29 @@ public class Symbols {
   private Object[] myClassSymbolsByNameId = new Object[0x8000];
 
   protected Symbols() {
-    myRootPackage = new PackageSymbol(null, myNameEnvironment.empty, NamesEnumerator.NO_NAME);
-    myPackages.put(myNameEnvironment.empty.myId, myRootPackage);
+    myRootPackage = new PackageSymbol(null, 0, NameEnvironment.NO_NAME);
+    myPackages.put(0, myRootPackage);
   }
 
-  public PackageSymbol enterPackage(QualifiedName qualifiedName) {
-    PackageSymbol p = myPackages.get(qualifiedName.myId);
+  public PackageSymbol enterPackage(@QNameId int qualifiedName) {
+    PackageSymbol p = myPackages.get(qualifiedName);
     if (p == null) {
-      PackageSymbol owner = enterPackage(myNameEnvironment.prefix(qualifiedName));
+      PackageSymbol owner = enterPackage(myNameEnvironment.prefixId(qualifiedName));
       int shortName = myNameEnvironment.shortName(qualifiedName);
       p = new PackageSymbol(owner, qualifiedName, shortName);
-      myPackages.put(qualifiedName.myId, p);
+      myPackages.put(qualifiedName, p);
     }
     return p;
   }
 
   @Nullable
-  public PackageSymbol getPackage(QualifiedName qualifiedName) {
-    if (qualifiedName == null)
-      return null;
-    return myPackages.get(qualifiedName.myId);
+  PackageSymbol getPackage(@QNameId int qualifiedName) {
+    return myPackages.get(qualifiedName);
   }
 
   @NotNull
-  public ClassSymbol[] loadClass(@NotNull QualifiedName qualifiedName) {
-    int i = qualifiedName.myId;
-    if (i >= myClassSymbolsByNameId.length) {
-      return ClassSymbol.EMPTY_ARRAY;
-    }
-    return getClassSymbols(i);
+  ClassSymbol[] loadClass(@QNameId int name) {
+    return name >= myClassSymbolsByNameId.length ? ClassSymbol.EMPTY_ARRAY : getClassSymbols(name);
   }
 
   private ClassSymbol[] getClassSymbols(int id) {
@@ -70,12 +64,12 @@ public class Symbols {
                          Symbol owner,
                          UnitInfo info,
                          @CompactArray(QualifiedName.class) Object supers,
-                         @Nullable QualifiedName qualifiedName) {
+                         @QNameId int qualifiedName) {
     int anchorId = myClassAnchors.registerClass(fileId, stubId);
     ClassSymbol c = new ClassSymbol(anchorId, flags, owner, shortName, info, supers);
     myClassSymbols.add(c);
-    if (qualifiedName != null) {
-      putClassByName(c, qualifiedName.myId);
+    if (qualifiedName >= 0) {
+      putClassByName(c, qualifiedName);
     }
     return c;
   }

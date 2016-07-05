@@ -15,8 +15,12 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * This annotation exists for documentation purposes only.<p/>
@@ -24,10 +28,23 @@ import java.lang.annotation.RetentionPolicy;
  * The value annotated with this annotation is used to save memory when storing mostly-singular or empty collections.
  * For empty collection, 'null' value is used. For one-element collection, the value is the single element. Otherwise,
  * an array is used. Possible component types are specified in the annotation value.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.SOURCE)
-public @interface CompactArray {
+@Target(ElementType.TYPE_USE)
+@interface CompactArray {
   Class[] value();
 }
+
+/**
+ * int id of a qualified name in a {@link NameEnvironment}
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE_USE)
+@interface QNameId { }
+
+/**
+ * int hash of a qualified name part, produced by {@link IndexTree#hashIdentifier(String)}
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE_USE)
+@interface ShortName { }

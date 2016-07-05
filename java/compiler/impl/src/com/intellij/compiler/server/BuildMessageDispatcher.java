@@ -71,7 +71,14 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   public BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
     myCanceledSessions.remove(sessionId);
     final SessionData data = mySessionDescriptors.remove(sessionId);
-    return data != null? data.handler : null;
+    if (data == null) {
+      return null;
+    }
+    final Channel channel = data.channel;
+    if (channel != null) {
+      channel.attr(SESSION_DATA).remove(); // cleanup the attribute so that session data is not leaked
+    }
+    return data.handler;
   }
 
   public void cancelSession(UUID sessionId) {

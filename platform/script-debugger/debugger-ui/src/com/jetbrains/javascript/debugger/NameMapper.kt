@@ -40,7 +40,8 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   // PsiNamedElement, JSVariable for example
   // returns generated name
-  open fun map(identifierOrNamedElement: PsiElement): String? {
+  @JvmOverloads
+  open fun map(identifierOrNamedElement: PsiElement, forceMapBySourceCode: Boolean = false): String? {
     val offset = identifierOrNamedElement.textOffset
     val line = document.getLineNumber(offset)
 
@@ -67,7 +68,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     }
 
     var sourceName = sourceEntry.name
-    if (sourceName == null || (Registry.`is`("js.debugger.name.mappings.by.source.code", false) || Registry.`is`("js.debugger.map.this.by.source.code", false))) {
+    if (sourceName == null || forceMapBySourceCode || Registry.`is`("js.debugger.name.mappings.by.source.code", false)) {
       sourceName = (identifierOrNamedElement as? PsiNamedElement)?.name ?: identifierOrNamedElement.text ?: sourceName ?: return null
     }
 

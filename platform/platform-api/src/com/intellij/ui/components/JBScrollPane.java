@@ -44,6 +44,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.*;
 import java.lang.reflect.Field;
@@ -937,13 +938,11 @@ public class JBScrollPane extends JScrollPane {
         g.fillRoundRect(x, y, width, height, arc, arc);
       }
       if (myDrawColor != null) {
+        Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        path.append(new RoundRectangle2D.Double(x, y, width, height, arc, arc), false);
+        path.append(new RoundRectangle2D.Double(x + 1, y + 1, width - 2, height - 2, arc - 2, arc - 2), false);
         g.setColor(myDrawColor);
-        if (UIUtil.isRetina(g)) {
-          g.drawRoundRect(x, y, width, height, arc, arc);
-        }
-        else {
-          g.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
-        }
+        g.fill(path);
       }
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }

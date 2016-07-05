@@ -18,6 +18,7 @@ package com.intellij.psi.stubsHierarchy;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +43,9 @@ public abstract class ClassHierarchy {
 
   @NotNull
   public abstract SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull SmartClassAnchor anchor);
+
+  @Nullable
+  public abstract SmartClassAnchor findAnchor(@NotNull PsiClass psiClass);
 
   /**
    * @return whether stub hierarchy resolver couldn't determine the super class exactly because there were several possible candidates
