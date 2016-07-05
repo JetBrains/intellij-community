@@ -41,6 +41,10 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
     return ServiceManager.getService(JsonSchemaFileTypeManager.class);
   }
 
+  public JsonSchemaFileTypeManager() {
+    ProjectManager.getInstance().addProjectManagerListener(this);
+  }
+
   public boolean isJsonSchemaFile(@NotNull final VirtualFile file) {
     ensureInitialized();
     for (Collection<VirtualFile> files : myFileSets.values()) {
