@@ -42,11 +42,11 @@ class ScrollPainter extends RegionPainter.Alpha {
 
     static final class Mac {
       static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, Gray.x80, Gray.x26);
-      static final RegionPainter<Float> DEFAULT = new Round(2, .20f, .30f, Gray.x00, Gray.x00);
+      static final RegionPainter<Float> DEFAULT = new Round(2, .20f, .30f, Gray.x00, null);
 
       static final class Overlay {
         static final RegionPainter<Float> DARCULA = new Round(1, 0f, .55f, Gray.x80, Gray.x26);
-        static final RegionPainter<Float> DEFAULT = new Round(2, 0f, .50f, Gray.x00, Gray.x00);
+        static final RegionPainter<Float> DEFAULT = new Round(2, 0f, .50f, Gray.x00, null);
       }
     }
   }
@@ -58,11 +58,11 @@ class ScrollPainter extends RegionPainter.Alpha {
 
     static final class Mac {
       static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, Gray.xA6, Gray.x0D);
-      static final RegionPainter<Float> DEFAULT = Thumb.DEFAULT;
+      static final RegionPainter<Float> DEFAULT = Thumb.Mac.DEFAULT;
 
       static final class Overlay {
         static final RegionPainter<Float> DARCULA = new Round(1, 0f, .55f, Gray.xA6, Gray.x0D);
-        static final RegionPainter<Float> DEFAULT = Thumb.DEFAULT;
+        static final RegionPainter<Float> DEFAULT = Thumb.Mac.Overlay.DEFAULT;
       }
     }
   }
