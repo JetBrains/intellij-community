@@ -31,5 +31,6 @@ public class SplitMultiCatchFixTest extends IGQuickFixesTestCase {
   public void testSimple() { doTest(); }
   public void testTypeAnno() { doTest(); }
   public void testAtParameter() { doTest(); }
+  public void testAtFinalKeyword() { doTest(); }
   public void testAtCodeBlock() { assertQuickfixNotAvailable(); }
 }
