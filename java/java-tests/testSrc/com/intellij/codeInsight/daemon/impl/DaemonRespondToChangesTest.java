@@ -855,8 +855,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
         log.append("getLineMarkerInfo(" + element + ")\n");
         if (element instanceof PsiComment) {
-          return new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null,
-                                      GutterIconRenderer.Alignment.LEFT);
+          LineMarkerInfo<PsiComment> info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          log.append(info + "\n");
+          return info;
         }
         return null;
       }
