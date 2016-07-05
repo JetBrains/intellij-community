@@ -28,9 +28,9 @@ import java.util.*;
  * but other {@link MemberSymbol}s are also sometimes needed for working with anonymous or local classes.
  */
 abstract class Symbol {
-  public int myFlags;
-  public int myShortName;
-  public final Symbol myOwner;
+  int myFlags;
+  @ShortName final int myShortName;
+  final Symbol myOwner;
 
   public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;

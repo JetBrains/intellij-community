@@ -17,6 +17,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.BitUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -39,8 +40,16 @@ public class StubEnter {
     myStubHierarchyConnector = new StubHierarchyConnector(myNameEnvironment, symbols);
   }
 
-  PackageSymbol enterPackage(DataInput in) throws IOException {
-    return mySymbols.enterPackage(myNameEnvironment.readQualifiedName(in));
+  PackageSymbol readPackageName(DataInput in) throws IOException {
+    PackageSymbol pkg = mySymbols.myRootPackage;
+    int qname = 0;
+    int len = DataInputOutputUtil.readINT(in);
+    for (int i = 0; i < len; i++) {
+      int shortName = in.readInt();
+      qname = myNameEnvironment.qualifiedName(qname, shortName);
+      pkg = mySymbols.enterPackage(qname, shortName, pkg);
+    }
+    return pkg;
   }
 
   ClassSymbol classEnter(UnitInfo info,

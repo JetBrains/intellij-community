@@ -25,11 +25,9 @@ public class Symbols {
     myPackages.put(0, myRootPackage);
   }
 
-  public PackageSymbol enterPackage(@QNameId int qualifiedName) {
+  PackageSymbol enterPackage(@QNameId int qualifiedName, @ShortName int shortName, PackageSymbol owner) {
     PackageSymbol p = myPackages.get(qualifiedName);
     if (p == null) {
-      PackageSymbol owner = enterPackage(myNameEnvironment.prefixId(qualifiedName));
-      int shortName = myNameEnvironment.shortName(qualifiedName);
       p = new PackageSymbol(owner, qualifiedName, shortName);
       myPackages.put(qualifiedName, p);
     }

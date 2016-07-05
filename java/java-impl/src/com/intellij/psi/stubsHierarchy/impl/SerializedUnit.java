@@ -92,7 +92,7 @@ class SerializedUnit {
   }
 
   private static void enterUnit(UnitInputStream in) throws IOException {
-    PackageSymbol pkg = in.stubEnter.enterPackage(in);
+    PackageSymbol pkg = in.stubEnter.readPackageName(in);
     byte type = in.readByte();
     long[] imports = type == IndexTree.BYTECODE ? Imports.EMPTY_ARRAY : Imports.readImports(in);
     UnitInfo unitInfo = UnitInfo.mkUnitInfo(type, imports);
