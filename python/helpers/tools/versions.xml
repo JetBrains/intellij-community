@@ -112,7 +112,6 @@
 		<module>bsddb.test.test_sequence</module>
 		<module>build_class</module>
 		<module>builtins</module>
-		<module>bz2</module>
 		<module>cProfile</module>
 		<module>collections</module>
 		<module>collections.__main__</module>
@@ -859,7 +858,6 @@
 		<module>bsddb.test.test_sequence</module>
 		<module>build_class</module>
 		<module>builtins</module>
-		<module>bz2</module>
 		<module>cProfile</module>
 		<module>collections.__main__</module>
 		<module>collections.abc</module>
@@ -1548,7 +1546,6 @@
 		<module>bsddb.test.test_replication</module>
 		<module>build_class</module>
 		<module>builtins</module>
-		<module>bz2</module>
 		<module>collections.__main__</module>
 		<module>collections.abc</module>
 		<module>concurrent</module>
@@ -2128,7 +2125,6 @@
 		<module>bsddb.test.test_fileid</module>
 		<module>build_class</module>
 		<module>builtins</module>
-		<module>bz2</module>
 		<module>collections.__main__</module>
 		<module>collections.abc</module>
 		<module>concurrent</module>
@@ -2541,7 +2537,6 @@
 		<module>bsddb.test.test_env_close</module>
 		<module>build_class</module>
 		<module>builtins</module>
-		<module>bz2</module>
 		<module>collections.__main__</module>
 		<module>collections.abc</module>
 		<module>concurrent</module>
@@ -2941,7 +2936,6 @@
 		<module>bsddb.test.test_replication</module>
 		<module>bsddb.test.test_sequence</module>
 		<module>bsddb.test.test_thread</module>
-		<module>bz2</module>
 		<module>cPickle</module>
 		<module>cStringIO</module>
 		<module>collections.__main__</module>
@@ -3480,7 +3474,6 @@
 		<module>bsddb.test.test_sequence</module>
 		<module>bsddb.test.test_thread</module>
 		<module>build_class</module>
-		<module>bz2</module>
 		<module>cPickle</module>
 		<module>cStringIO</module>
 		<module>collections.__main__</module>
@@ -3926,7 +3919,6 @@
 		<module>bsddb.test.test_sequence</module>
 		<module>bsddb.test.test_thread</module>
 		<module>build_class</module>
-		<module>bz2</module>
 		<module>cPickle</module>
 		<module>cStringIO</module>
 		<module>collections.__main__</module>
