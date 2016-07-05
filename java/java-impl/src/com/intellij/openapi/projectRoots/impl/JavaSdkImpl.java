@@ -44,6 +44,7 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -269,10 +270,12 @@ public class JavaSdkImpl extends JavaSdk {
     return result;
   }
 
-  private static void scanFolder(File javasFolder, ArrayList<String> result) {
-    File[] candidates = javasFolder.listFiles(pathname -> JdkUtil.checkForJdk(pathname));
+  private static void scanFolder(File javasFolder, List<String> result) {
+    @SuppressWarnings("RedundantCast") File[] candidates = javasFolder.listFiles((FileFilter)JdkUtil::checkForJdk);
     if (candidates != null) {
-      result.addAll(ContainerUtil.map2List(candidates, file -> file.getAbsolutePath()));
+      for (File file : candidates) {
+        result.add(file.getAbsolutePath());
+      }
     }
   }
 
