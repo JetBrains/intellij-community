@@ -869,27 +869,27 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     };
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
-
+    myDaemonCodeAnalyzer.restart();
     try {
-      List<HighlightInfo> infos = highlightErrors();
+      List<HighlightInfo> infos = doHighlighting();
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       type(' ');
-      infos = highlightErrors();
+      infos = doHighlighting();
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       backspace();
-      infos = highlightErrors();
+      infos = doHighlighting();
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
