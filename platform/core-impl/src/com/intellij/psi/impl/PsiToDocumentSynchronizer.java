@@ -114,14 +114,13 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         PsiDocumentManagerBase.checkConsistency(psiFile, document);
       }
     }
-
   }
 
-  boolean isInsideAtomicChange(@NotNull PsiFile file) {
+  static boolean isInsideAtomicChange(@NotNull PsiFile file) {
     return file.getUserData(PSI_DOCUMENT_ATOMIC_ACTION) == Boolean.TRUE;
   }
 
-  public void performAtomically(@NotNull PsiFile file, @NotNull Runnable runnable) {
+  static void performAtomically(@NotNull PsiFile file, @NotNull Runnable runnable) {
     assert !isInsideAtomicChange(file);
     file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, Boolean.TRUE);
 
@@ -313,7 +312,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return myTransactionsMap.containsKey(document);
   }
 
-
   public static class DocumentChangeTransaction{
     private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(new Comparator<TextRange>() {
       @Override
@@ -322,7 +320,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
     });
     private final PsiFile myChangeScope;
-    private ImmutableText myDocText;
+    private final ImmutableText myDocText;
     private ImmutableText myPsiText;
 
     public DocumentChangeTransaction(@NotNull Document doc, @NotNull PsiFile scope) {
@@ -342,17 +340,17 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       int start = 0;
       int end = start + length;
 
-      final int replaceLength = replace.length();
       final CharSequence chars = myPsiText.subSequence(psiStart, psiStart + length);
       if (StringUtil.equals(chars, replace)) return;
 
       int newStartInReplace = 0;
-      int newEndInReplace = replaceLength;
+      final int replaceLength = replace.length();
       while (newStartInReplace < replaceLength && start < end && replace.charAt(newStartInReplace) == chars.charAt(start)) {
         start++;
         newStartInReplace++;
       }
 
+      int newEndInReplace = replaceLength;
       while (start < end && newStartInReplace < newEndInReplace && replace.charAt(newEndInReplace - 1) == chars.charAt(end - 1)) {
         newEndInReplace--;
         end--;
