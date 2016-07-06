@@ -157,9 +157,6 @@ public abstract class CodeStyleManager  {
                                                @Nullable DiffInfo diffInfo) throws IncorrectOperationException;
 
 
-  /**
-   * @deprecated use {@link #reformatTextWithContext(PsiFile, Collection, DiffInfo)}
-   */
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
     reformatTextWithContext(file, ranges, null);
   }
