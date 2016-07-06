@@ -1,5 +1,5 @@
 interface I {
-  boolean equals(I i);
+  boolean <warning descr="'equals()' should take 'Object' as its argument">equals</warning>(I i);
 }
 class A {
 
