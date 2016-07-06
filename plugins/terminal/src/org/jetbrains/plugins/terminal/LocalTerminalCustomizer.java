@@ -16,16 +16,13 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author traff
- */
 public interface LocalTerminalCustomizer {
-  ExtensionPointName<LocalTerminalCustomizer> EP_NAME =
-    ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
+  ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
 
-  void setupEnvironment(@NotNull  Map<String, String> envs);
+  void setupEnvironment(@NotNull Project project, @NotNull Map<String, String> envs);
 }
