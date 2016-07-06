@@ -366,7 +366,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @NotNull
     @Override
     public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-      if (myScope1.equals(scope) || myScope2.equals(scope)) {
+      if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) {
         return this;
       }
       return new IntersectionScope(this, scope, null);
