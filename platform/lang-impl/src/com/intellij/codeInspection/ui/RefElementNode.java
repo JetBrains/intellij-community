@@ -82,7 +82,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myPresentation.amnesty(getElement());
     super.amnestyElement(excludedManager);
   }
 
