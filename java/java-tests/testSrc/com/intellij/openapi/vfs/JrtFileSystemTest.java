@@ -64,13 +64,21 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void moduleListing() {
+    String path = myTempDir.getRoot().getPath();
+    assertThat(JrtFileSystem.listModules(path)).containsExactlyInAnyOrder("java.base", "test1");
+  }
+
+  @Test
   public void basicOps() throws IOException {
-    assertThat(myRoot.findChild("test")).isNotNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
 
-    List<String> names = Stream.of(myRoot.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
-    assertThat(names).containsOnly("test");
+    VirtualFile moduleRoot = myRoot.findChild("test1");
+    assertThat(moduleRoot).isNotNull();
+    assertThat(JrtFileSystem.isModuleRoot(moduleRoot)).isTrue();
+    assertThat(childNames(moduleRoot)).containsExactlyInAnyOrder("test", "module-info.class");
 
-    VirtualFile classFile = myRoot.findFileByRelativePath("test/pkg1/Class1.class");
+    VirtualFile classFile = moduleRoot.findFileByRelativePath("test/pkg1/Class1.class");
     assertThat(classFile).isNotNull();
 
     byte[] bytes = classFile.contentsToByteArray();
@@ -80,12 +88,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void refresh() throws IOException {
-    VirtualFile dir = myRoot.findChild("test");
-    assertThat(dir).isNotNull();
-
-    assertThat(dir.isValid()).isTrue();
-    assertThat(Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList())).containsOnly("pkg1");
-    assertThat(myRoot.findFileByRelativePath("test/pkg2/Class2.class")).isNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1");
 
     Path modules = myTempDir.getRoot().toPath().resolve("lib/modules");
     Files.move(modules, myTempDir.getRoot().toPath().resolve("lib/modules.bak"));
@@ -95,8 +98,10 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     assertThat(local).isNotNull();
     local.refresh(false, true);
 
-    assertThat(dir.isValid()).isTrue();
-    assertThat(Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList())).containsOnly("pkg1", "pkg2");
-    assertThat(myRoot.findFileByRelativePath("test/pkg2/Class2.class")).isNotNull();
+    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test1", "test2");
+  }
+
+  private static List<String> childNames(VirtualFile dir) {
+    return Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
   }
 }
