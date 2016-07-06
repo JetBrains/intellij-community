@@ -110,7 +110,8 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         SimpleFormatRangesInfo info = new SimpleFormatRangesInfo(new TextRange(startOffset, endOffset));
-        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, info);
+        List<TextRange> ranges = info.getRangesToFormat();
+        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, null);
       }
     });
     ACTIONS.put(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, new TestFormatAction() {
@@ -122,7 +123,8 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
             return startOffset <= offset && offset < endOffset;
           }
         };
-        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, info);
+        List<TextRange> ranges = info.getRangesToFormat();
+        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, info);
       }
     });
   }

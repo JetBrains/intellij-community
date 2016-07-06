@@ -15,19 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
-public abstract class FormatRangesInfo implements DiffInfo {
-  
-  @NotNull
-  public abstract List<TextRange> getRangesToFormat();
-
-  @Override
-  public boolean isOnInsertedLine(int offset) {
-    return false;
-  }
-  
+public interface DiffInfo {
+  boolean isOnInsertedLine(int offset);
 }

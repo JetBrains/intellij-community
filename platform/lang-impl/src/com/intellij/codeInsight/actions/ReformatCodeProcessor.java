@@ -38,10 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -125,7 +123,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (processChangedTextOnly) {
           FormatRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedTextHelper(file);
           if (helper != null) {
-            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, helper);
+            List<TextRange> ranges = helper.getRangesToFormat();
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges, helper);
           }
         }
         else {

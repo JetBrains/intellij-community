@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.SimpleFormatRangesInfo;
 import com.intellij.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -73,7 +72,7 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     return () -> CommandProcessor.getInstance().executeCommand(
       getProject(),
       () -> ApplicationManager.getApplication().runWriteAction(
-        () -> codeStyleManager.reformatTextWithContext(file, new SimpleFormatRangesInfo(ranges))
+        () -> codeStyleManager.reformatTextWithContext(file, ranges, null)
       ),
       null,
       null);
