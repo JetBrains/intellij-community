@@ -133,6 +133,7 @@ public class PythonSdkUpdater implements StartupActivity {
       return true;
     }
 
+    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable methodCallStacktrace = new Throwable();
     application.invokeLater(() -> {
       synchronized (ourLock) {
         if (!ourScheduledToRefresh.contains(homePath)) {
@@ -165,6 +166,7 @@ public class PythonSdkUpdater implements StartupActivity {
                   PyPackageManager.getInstance(sdk12).refreshAndGetPackages(true);
                 }
                 catch (ExecutionException e) {
+                  e.initCause(methodCallStacktrace);
                   LOG.warn(e);
                 }
               }
