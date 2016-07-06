@@ -20,20 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author Irina.Chernushina on 5/30/2016.
  */
 public class JsonSchemaFileTypeManager implements ProjectManagerListener {
-  private final Set<VirtualFile> myFileSets = Collections.synchronizedSet(new HashSet<>());
+  private final Collection<VirtualFile> myFileSets = ContainerUtil.createConcurrentList();
   private volatile boolean mySetsInitialized;
   private static final Object LOCK = new Object();
 
@@ -54,28 +51,13 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
     if (mySetsInitialized) return;
     synchronized (LOCK) {
       if (mySetsInitialized) return;
-      final Set<VirtualFile> copy = new HashSet<>();
-      copy.addAll(myFileSets);
       myFileSets.clear();
       final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project openProject : openProjects) {
         myFileSets.addAll(JsonSchemaService.Impl.getEx(openProject).getSchemaFiles());
       }
-      final Set<VirtualFile> toRefresh = symmetricDifference(copy, myFileSets);
-      UIUtil.invokeLaterIfNeeded(() -> FileContentUtilCore.reparseFiles(toRefresh));
       mySetsInitialized = true;
     }
-  }
-
-  private static <T> Set<T> symmetricDifference(Set<T> a, Set<T> b) {
-    final Set<T> result = new HashSet<T>(a);
-    for (T element : b) {
-      // .add() returns false if element already exists
-      if (!result.add(element)) {
-        result.remove(element);
-      }
-    }
-    return result;
   }
 
   @Override
