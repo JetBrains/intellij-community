@@ -48,12 +48,14 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   public String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
       PsiType type = DumbService.isDumb(e.getProject()) ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
-      return type == null ? "<lambda>" : "lambda " + getShortClassName(type.getCanonicalText());
+      return type == null ? "->" : "-> " + getShortClassName(type.getCanonicalText());
+    }
+    else if (e instanceof PsiAnonymousClass) {
+      String name = ((PsiAnonymousClass)e).getBaseClassReference().getReferenceName();
+      return "new " + StringUtil.notNullize(name, "class");
     }
     String description = ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
-    String suffix = e instanceof PsiParameterListOwner? "()" :
-                    //e instanceof PsiAnonymousClass || e instanceof PsiClassInitializer ? " {}" :
-                    null;
+    String suffix = e instanceof PsiParameterListOwner? "()" : null;
     return suffix != null ? description + suffix : description;
   }
 
