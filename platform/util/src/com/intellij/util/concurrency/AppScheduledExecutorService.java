@@ -16,6 +16,8 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +37,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
+  private final LowMemoryWatcherManager myLowMemoryWatcherManager = new LowMemoryWatcherManager();
   private Consumer<Thread> newThreadListener;
   private final AtomicInteger counter = new AtomicInteger();
 
@@ -100,6 +103,8 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public void shutdownAppScheduledExecutorService() {
+    // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
+    Disposer.dispose(myLowMemoryWatcherManager);
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
   }
