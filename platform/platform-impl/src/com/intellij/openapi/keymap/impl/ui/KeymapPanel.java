@@ -667,7 +667,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void reset() {
     if (myNonEnglishKeyboardSupportOption != null) {
-      KeyboardSettingsExternalizable.getInstance().setNonEnglishKeyboardSupportEnabled(false);
       myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
