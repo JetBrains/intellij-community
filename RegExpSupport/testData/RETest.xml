@@ -81,7 +81,7 @@
       <pattern><![CDATA[[<warning descr="Redundant character range">a-a</warning>]]]></pattern>
       <expected>OK</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern><![CDATA[[<error descr="Illegal character range (to < from)">\x4a-\x3f</error>]]]></pattern>
       <expected>OK</expected>
     </test>
