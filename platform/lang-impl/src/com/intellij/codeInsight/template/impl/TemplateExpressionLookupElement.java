@@ -27,7 +27,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -72,7 +71,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
 
     if (handleCompletionChar(context) && !myState.isFinished()) {
       myState.calcResults(true);
-      myState.nextTab();
+      myState.considerNextTabOnLookupItemSelected(getDelegate());
     }
   }
 
