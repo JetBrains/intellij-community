@@ -31,7 +31,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class ClsBuilderTest extends LightIdeaTestCase {
+public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testUtilList() { doTest("java/util/List.class"); }
   public void testNullable() { doTest("org/jetbrains/annotations/Nullable.class"); }
   public void testUtilCollections() { doTest("java/util/Collections.class"); }
