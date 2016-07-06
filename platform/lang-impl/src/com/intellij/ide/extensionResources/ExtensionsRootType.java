@@ -76,7 +76,12 @@ public class ExtensionsRootType extends RootType {
       private final ExtensionsRootType myRootType = getInstance();
       @Override
       public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !myRootType.isBackupFile(file);
+        if (file.isDirectory()) return false;
+        String extension = file.getExtension();
+        return extension != null &&
+               !"txt".equalsIgnoreCase(extension) && !"properties".equalsIgnoreCase(extension) &&
+               !extension.startsWith(BACKUP_FILE_EXTENSION) &&
+               !myRootType.isResourceFile(file);
       }
     };
   }
@@ -131,9 +136,8 @@ public class ExtensionsRootType extends RootType {
     return super.substituteName(project, file);
   }
 
-  public boolean isBackupFile(@NotNull VirtualFile file) {
-    String extension = file.getExtension();
-    return !file.isDirectory() && extension != null && extension.startsWith(BACKUP_FILE_EXTENSION);
+  public boolean isResourceFile(@NotNull VirtualFile file) {
+    return false;
   }
 
   @Nullable
