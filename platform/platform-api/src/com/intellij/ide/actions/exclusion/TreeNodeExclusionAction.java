@@ -93,6 +93,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
     for (TreePath path : paths) {
       final T node = (T)path.getLastPathComponent();
       TreeUtil.traverse(node, n -> {
+        if (!exclusionProcessor.isNodeExclusionAvailable((T)n)) return true;
         if (Boolean.valueOf(myIsExclude) != exclusionProcessor.isNodeExcluded((T)n)) {
           if (myIsExclude) {
             exclusionProcessor.excludeNode(node);
