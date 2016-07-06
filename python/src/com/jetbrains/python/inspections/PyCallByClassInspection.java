@@ -120,7 +120,8 @@ public class PyCallByClassInspection extends PyInspection {
                                 if (method != null) {
                                   PyClass calling_class = method.getContainingClass();
                                   assert calling_class != null; // it's a method
-                                  if (first_arg_class.isSubclass(qual_class, null) && calling_class.isSubclass(qual_class, null)) {
+                                  if (first_arg_class.isSubclass(qual_class, myTypeEvalContext) &&
+                                      calling_class.isSubclass(qual_class, myTypeEvalContext)) {
                                     break;
                                     // TODO: might propose to switch to super() here
                                   }

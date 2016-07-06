@@ -501,8 +501,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
       PyClass bClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
-      if (isSubclass(aClass, bClass)
-          || (isSubclass(bClass, aClass))) {
+      if (aClass != null && bClass != null && bClass.isSubclass(aClass, myContext.getTypeEvalContext())) {
         return true;
       }
     }
@@ -511,13 +510,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     return false;
-  }
-
-  private static boolean isSubclass(@Nullable PyClass aClass, @Nullable PyClass bClass) {
-    if (aClass == null || bClass == null) {
-      return false;
-    }
-    return bClass.isSubclass(aClass, null);
   }
 
   private static boolean isLocalScope(PsiElement element) {
