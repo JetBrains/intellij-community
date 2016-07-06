@@ -44,12 +44,6 @@ import java.util.*;
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
   private static final ReferenceQueue<SmartPsiElementPointerImpl> ourQueue = new ReferenceQueue<SmartPsiElementPointerImpl>();
-  @SuppressWarnings("unused") private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      processQueue();
-    }
-  });
 
   private final Project myProject;
   private final Key<FilePointersList> POINTERS_KEY;
@@ -59,6 +53,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
     myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
+  }
+
+  static {
+    LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
+        processQueue();
+      }
+    }, ApplicationManager.getApplication());
   }
 
   private static void processQueue() {
