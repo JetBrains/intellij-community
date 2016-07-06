@@ -36,15 +36,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class ModuleHighlightUtil {
-  private static final String MODULE_FILE_NAME = "module-info.java";
+import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
+public class ModuleHighlightUtil {
   @Nullable
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    if (!MODULE_FILE_NAME.equals(file.getName())) {
+    if (!MODULE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorMessages.message("module.file.wrong.name");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
-      QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(MODULE_FILE_NAME));
+      QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(MODULE_INFO_FILE));
       return info;
     }
 
@@ -59,7 +59,7 @@ public class ModuleHighlightUtil {
       Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(vFile);
       if (module != null) {
         Collection<VirtualFile> others =
-          FilenameIndex.getVirtualFilesByName(project, MODULE_FILE_NAME, new ModulesScope(Collections.singleton(module), project));
+          FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(Collections.singleton(module), project));
         if (others.size() > 1) {
           String message = JavaErrorMessages.message("module.file.duplicate");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
