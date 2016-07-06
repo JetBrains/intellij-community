@@ -93,12 +93,14 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return true;
       }
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-      boolean result = true;
       if (arrayInitializer != null) {
         final PsiExpression[] initializers = arrayInitializer.getInitializers();
         for (final PsiExpression initializerExpression : initializers) {
-          result &= isMoveable(initializerExpression);
+          if (!isMoveable(initializerExpression)) {
+            return false;
+          }
         }
+        return true;
       }
       final PsiType type = newExpression.getType();
       if (type == null) {
@@ -112,13 +114,15 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
-        return result;
+        return false;
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
       for (final PsiExpression argumentExpression : expressions) {
-        result &= isMoveable(argumentExpression);
+        if (!isMoveable(argumentExpression)) {
+          return false;
+        }
       }
-      return result;
+      return true;
     }
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;

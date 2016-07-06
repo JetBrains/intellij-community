@@ -160,5 +160,15 @@ public class TooBroadScope
         System.out.println();
         System.out.println();
         System.out.println(list);
+
+        String[] <warning descr="Scope of variable 'ss' is too broad">ss</warning> = new String[10];
+        System.out.println();
+        System.out.println();
+        System.out.println(ss);
+
+        String[] <warning descr="Scope of variable 'ss2' is too broad">ss2</warning> = new String[] {""};
+        System.out.println();
+        System.out.println();
+        System.out.println(ss2);
     }
 }
