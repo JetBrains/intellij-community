@@ -236,13 +236,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      if (data.getFragments() != null) {
-        for (LineFragment fragment : data.getFragments()) {
-          myDiffChanges.add(new SimpleDiffChange(this, fragment));
+      List<LineFragment> fragments = data.getFragments();
+      if (fragments != null) {
+        for (int i = 0; i < fragments.size(); i++) {
+          LineFragment fragment = fragments.get(i);
+          LineFragment previousFragment = i != 0 ? fragments.get(i - 1) : null;
+
+          myDiffChanges.add(new SimpleDiffChange(this, fragment, previousFragment));
         }
       }
 
-      myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
+      myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
