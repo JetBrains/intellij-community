@@ -107,11 +107,11 @@ public class PyABCUtil {
         final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
         if (metaClassType instanceof PyClassType) {
           final PyClassType metaClass = (PyClassType)metaClassType;
-          return isSubclass(metaClass.getPyClass(), superClassName, true, null);
+          return isSubclass(metaClass.getPyClass(), superClassName, true, context);
         }
       }
       else {
-        return isSubclass(pyClass, superClassName, true, null);
+        return isSubclass(pyClass, superClassName, true, context);
       }
     }
     if (type instanceof PyUnionType) {
