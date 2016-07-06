@@ -1735,6 +1735,9 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="groovy.scripting.shell"
+            class="org.jetbrains.plugins.groovy.ide.GroovyScriptingShellAction"
+            text="Groovy IDE Scripting Shell"/>
   </actions>
 
   <application-components>
