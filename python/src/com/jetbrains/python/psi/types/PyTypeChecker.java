@@ -433,7 +433,7 @@ public class PyTypeChecker {
     if (superClass == null ||
         subClass == null ||
         subClass.isSubclass(superClass, context) ||
-        (superClass.getName() != null && PyABCUtil.isSubclass(subClass, superClass.getName(), true, context)) ||
+        PyABCUtil.isSubclass(subClass, superClass, context) ||
         PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
