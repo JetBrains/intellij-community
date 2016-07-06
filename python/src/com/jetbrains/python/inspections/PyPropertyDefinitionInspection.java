@@ -28,7 +28,6 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
@@ -287,7 +286,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private void checkForSelf(PyParameterList paramList) {
       PyParameter[] parameters = paramList.getParameters();
       final PyClass cls = PsiTreeUtil.getParentOfType(paramList, PyClass.class);
-      if (cls != null && cls.isSubclass("type", null)) return;
+      if (cls != null && cls.isSubclass("type", myTypeEvalContext)) return;
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
           parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
