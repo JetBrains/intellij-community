@@ -85,13 +85,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
-    QualifiedName result = null;
-    for (QualifiedName name : qNames) {
-      if (result == null || name.getComponentCount() < result.getComponentCount()) {
-        result = name;
-      }
-    }
-    return result;
+    return qNames.stream().min((o1, o2) -> o1.getComponentCount() - o2.getComponentCount()).orElse(null);
   }
 
   @Nullable
