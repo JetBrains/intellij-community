@@ -278,10 +278,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return false;
   }
 
-  public boolean isSubclass(PyClass parent) {
-    return isSubclass(parent, null);
-  }
-
   @Override
   public boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context) {
     if (context == null) {
