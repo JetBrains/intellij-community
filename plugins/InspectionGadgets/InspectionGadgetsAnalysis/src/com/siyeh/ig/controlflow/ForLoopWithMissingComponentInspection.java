@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,50 +122,56 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
       }
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
+      final PsiExpression condition = forStatement.getCondition();
       for (PsiElement declaredElement : declaredElements) {
         if (!(declaredElement instanceof PsiVariable)) {
           continue;
         }
         final PsiVariable variable = (PsiVariable)declaredElement;
-        if (!TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_UTIL_ITERATOR)) {
-          continue;
+        if (TypeUtils.variableHasTypeOrSubtype(variable, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+          if (isHasNext(condition, variable)) {
+            return true;
+          }
         }
-        final PsiExpression condition = forStatement.getCondition();
-        if (isHasNext(condition, variable)) {
-          return true;
+        else if (TypeUtils.variableHasTypeOrSubtype(variable, "java.util.Enumeration")) {
+          if (isHasMoreElements(condition, variable)) {
+            return true;
+          }
         }
       }
       return false;
     }
 
     private boolean isHasNext(PsiExpression condition, PsiVariable iterator) {
-      if (condition instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      return isCallToBooleanZeroArgumentMethod(HardcodedMethodConstants.HAS_NEXT, condition, iterator);
+    }
+
+    private boolean isHasMoreElements(PsiExpression condition, PsiVariable enumeration) {
+      return isCallToBooleanZeroArgumentMethod("hasMoreElements", condition, enumeration);
+    }
+
+    private boolean isCallToBooleanZeroArgumentMethod(String methodName, PsiExpression expression, PsiVariable calledOn) {
+      if (expression instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
-        return isHasNext(lhs, iterator) || isHasNext(rhs, iterator);
+        return isHasNext(lhs, calledOn) || isHasNext(rhs, calledOn);
       }
-      if (!(condition instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)condition;
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 0) {
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (!MethodCallUtils.isCallToMethod(call, null, PsiType.BOOLEAN, methodName)) {
         return false;
       }
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.HAS_NEXT.equals(methodName)) {
-        return false;
-      }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return true;
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiElement target = referenceExpression.resolve();
-      return iterator.equals(target);
+      return calledOn.equals(target);
     }
   }
 }
