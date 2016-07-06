@@ -29,7 +29,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiJavaModuleReference;
 import com.intellij.psi.search.FilenameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +92,6 @@ public class ModuleHighlightUtil {
   }
 
   private static TextRange range(PsiJavaModule module) {
-    PsiJavaModuleReference name = module.getNameElement();
-    return name != null ? new TextRange(module.getTextOffset(), name.getTextRange().getEndOffset()) : module.getTextRange();
+    return new TextRange(module.getTextOffset(), module.getNameElement().getTextRange().getEndOffset());
   }
 }
