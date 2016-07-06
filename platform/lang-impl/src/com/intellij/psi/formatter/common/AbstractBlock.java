@@ -187,12 +187,10 @@ public abstract class AbstractBlock implements ASTBlock {
    * @return additional range to reformat, when this block if formatted
    */
   @Nullable
-  public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
+  public List<TextRange> getExtraRangesToFormat(FormatTextRanges ranges) {
     if (ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
-      List<TextRange> extra = calculateExtraRanges(myNode);
-      return new ExtraReformatRanges(extra);
+      return calculateExtraRanges(myNode);
     }
-    
     return null;
   }
 

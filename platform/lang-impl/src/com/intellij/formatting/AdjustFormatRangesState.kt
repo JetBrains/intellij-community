@@ -69,23 +69,17 @@ class VcsAwareFormatRangesInfo(val formattingRanges: List<TextRange>,
 
     
 class AdditionalRangesExtractor(private val formatRanges: FormatTextRanges) : BlockProcessor {
-  val extraRanges = mutableListOf<ExtraReformatRanges>()
+  val extraRanges = mutableListOf<TextRange>()
 
   override fun processLeafBlock(block: Block) = Unit
 
   override fun processCompositeBlock(block: Block) {
     if (block is AbstractBlock) {
-      block.getExtraRangesToFormat(formatRanges)?.let { extraRanges.add(it) }
+      block.getExtraRangesToFormat(formatRanges)?.let { 
+        extraRanges.addAll(it) 
+      }
     }
   }
-}
-
-class ExtraReformatRanges(val ranges: List<TextRange> = emptyList()) {
-  constructor(range: TextRange): this(listOf(range))
-}
-
-fun FormatTextRanges.mergeWith(extraRanges: ExtraReformatRanges) {
-  extraRanges.ranges.forEach { add(it, false) }
 }
 
 
@@ -97,7 +91,9 @@ class AdjustFormatRangesState(var currentRoot: Block,
   
   init {
     setOnDone({
-      extractor.extraRanges.forEach { formatRanges.mergeWith(it) }
+      extractor.extraRanges.forEach { 
+        formatRanges.add(it, false) 
+      }
     })
   }
   
