@@ -36,19 +36,27 @@ interface RecentTestsPopupEntry {
   fun accept(visitor: TestEntryVisitor)
 }
 
-
 abstract class TestEntryVisitor {
   open fun visitTest(test: SingleTestEntry) = Unit
   open fun visitSuite(suite: SuiteEntry) = Unit
   open fun visitRunConfiguration(configuration: RunConfigurationEntry) = Unit
 }
 
+private fun String.toClassName(allowedDots: Int): String {
+  val fqn = VirtualFileManager.extractPath(this)
+  var dots = 0
+  return fqn.takeLastWhile { 
+    if (it == '.') dots++
+    dots <= allowedDots
+  }
+}
+
 class SingleTestEntry(val url: String,
                       override val runDate: Date,
-                      private val magnitude: TestStateInfo.Magnitude) : RecentTestsPopupEntry 
+                      magnitude: TestStateInfo.Magnitude) : RecentTestsPopupEntry 
 {
 
-  override val presentation = VirtualFileManager.extractPath(url)
+  override val presentation = url.toClassName(1)
   override val icon = TestIconMapper.getIcon(magnitude)
   
   override val failed = magnitude == ERROR_INDEX || magnitude == FAILED_INDEX
@@ -68,9 +76,9 @@ class SuiteEntry(val suiteUrl: String, override val runDate: Date) : RecentTests
   val suiteName = VirtualFileManager.extractPath(suiteUrl)
   
   var runConfiguration: RunConfigurationEntry? = null
-  
-  override val presentation = VirtualFileManager.extractPath(suiteUrl)
-  override val icon = AllIcons.RunConfigurations.Junit
+
+  override val presentation = suiteUrl.toClassName(0)
+  override val icon: Icon? = AllIcons.RunConfigurations.Junit
   
   override val failed: Boolean
     get() {
@@ -113,9 +121,9 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings, ini
     suite.runConfiguration = this
   }
 
-  override val presentation = runSettings.name
+  override val presentation: String = runSettings.name
 
-  override val icon = AllIcons.RunConfigurations.Junit
+  override val icon: Icon? = AllIcons.RunConfigurations.Junit
 
   override fun accept(visitor: TestEntryVisitor) {
     visitor.visitRunConfiguration(this)
