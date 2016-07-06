@@ -2,15 +2,13 @@ import os
 import sys
 import time
 import traceback
-from _pydev_bundle import pydev_imports
-from _pydevd_bundle.pydevd_utils import save_main_module
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
 from _prof_imports import ProfilerResponse
 from prof_io import ProfWriter, ProfReader
-from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath
+from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath, save_main_module, execfile
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
@@ -88,7 +86,7 @@ class Profiler(object):
         self.start_profiling()
 
         try:
-            pydev_imports.execfile(file, globals, globals)  # execute the script
+            execfile(file, globals, globals)  # execute the script
         finally:
             self.stop_profiling()
             self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run, self.snapshot_extension()), remote_run)
