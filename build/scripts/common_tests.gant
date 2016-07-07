@@ -54,7 +54,7 @@ target("enable_coverage": "Enable coverage measurement") {
     destfile: exec_data_file,
     classdumpdir: class_dump_dir,
     includes: "org.jetbrains.android.*:com.android.tools.idea.*:com.android.tools.ndk.*:com.google.gct.*:com.google.idea.blaze.*",  // duplicates test.patterns property
-    excludes: "*Test:*Test\$*:*TestCase:*TestCase\$*",
+    excludes: "*Test:*Test\$*:*TestCase:*TestCase\$*:*\$\$EnhancerBy*",
   )
 }
 
