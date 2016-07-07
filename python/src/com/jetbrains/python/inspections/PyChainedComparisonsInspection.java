@@ -260,10 +260,8 @@ public class PyChainedComparisonsInspection extends PyInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(model -> {
-        PyChainedComparisonsInspection tool =
-          (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
-                                                                 file);
-        tool.ignoreConstantInTheMiddle = false;
+        final PyChainedComparisonsInspection tool = (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
+        tool.ignoreConstantInTheMiddle = true;
       });
     }
   }
