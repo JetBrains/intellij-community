@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/asm5-src.zip!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/asm-src.zip!/" />
     </SOURCES>
   </library>
 </component>
