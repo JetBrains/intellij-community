@@ -78,6 +78,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
 
@@ -525,11 +526,13 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       ArrayList<ShelvedChangeList> shelvedListsFromChanges = ContainerUtil.newArrayList(getLists(dataContext));
       // filter changes
       shelvedListsFromChanges.removeAll(shelvedListsToDelete);
-      List<ShelvedChange> filteredChanges = getFilteredChanges(shelvedListsToDelete, SHELVED_CHANGE_KEY.getData(dataContext));
-      List<ShelvedBinaryFile> filteredBinaries = getFilteredBinaries(shelvedListsToDelete, SHELVED_BINARY_FILE_KEY.getData(dataContext));
+      List<ShelvedChange> changesToDelete =
+        getChangesNotInLists(shelvedListsToDelete, notNullize(SHELVED_CHANGE_KEY.getData(dataContext)));
+      List<ShelvedBinaryFile> binariesToDelete =
+        getBinariesNotInLists(shelvedListsToDelete, notNullize(SHELVED_BINARY_FILE_KEY.getData(dataContext)));
 
       int changeListSize = shelvedListsToDelete.size();
-      int fileListSize = filteredBinaries.size() + filteredChanges.size();
+      int fileListSize = binariesToDelete.size() + changesToDelete.size();
       if (fileListSize == 0 && changeListSize == 0) return;
 
       String message = VcsBundle.message("shelve.changes.delete.items.confirm", constructDeleteFilesInfoMessage(fileListSize),
@@ -543,13 +546,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
       }
       for (ShelvedChangeList list : shelvedListsFromChanges) {
-        removeChangesFromChangeList(project, list, filteredChanges, filteredBinaries);
+        removeChangesFromChangeList(project, list, changesToDelete, binariesToDelete);
       }
     }
 
-    private List<ShelvedBinaryFile> getFilteredBinaries(@NotNull List<ShelvedChangeList> listsToDelete,
-                                                        @Nullable List<ShelvedBinaryFile> binaryFiles) {
-      if (binaryFiles == null) return Collections.emptyList();
+    private List<ShelvedBinaryFile> getBinariesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                          @NotNull List<ShelvedBinaryFile> binaryFiles) {
       List<ShelvedBinaryFile> result = new ArrayList<>(binaryFiles);
       for (ShelvedChangeList list : listsToDelete) {
         result.removeAll(list.getBinaryFiles());
@@ -558,9 +560,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
 
     @NotNull
-    private List<ShelvedChange> getFilteredChanges(@NotNull List<ShelvedChangeList> listsToDelete,
-                                                   @Nullable List<ShelvedChange> shelvedChanges) {
-      if (shelvedChanges == null) return Collections.emptyList();
+    private List<ShelvedChange> getChangesNotInLists(@NotNull List<ShelvedChangeList> listsToDelete,
+                                                     @NotNull List<ShelvedChange> shelvedChanges) {
       List<ShelvedChange> result = new ArrayList<>(shelvedChanges);
       for (ShelvedChangeList list : listsToDelete) {
         result.removeAll(list.getChanges(myProject));
@@ -625,12 +626,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return !getLists(dataContext).isEmpty();
     }
 
+    @NotNull
     private List<ShelvedChangeList> getLists(@NotNull final DataContext dataContext) {
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
-
-      final List<ShelvedChangeList> shelvedChangeLists = (shelved == null && recycled == null) ?
-                                                         Collections.emptyList() : new ArrayList<ShelvedChangeList>();
+      if (shelved == null && recycled == null) return Collections.emptyList();
+      List<ShelvedChangeList> shelvedChangeLists = ContainerUtil.newArrayList();
       if (shelved != null) {
         ContainerUtil.addAll(shelvedChangeLists, shelved);
       }
