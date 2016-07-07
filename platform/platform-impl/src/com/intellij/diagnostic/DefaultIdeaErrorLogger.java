@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.android.tools.analytics.UsageTracker;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.notification.Notification;
@@ -78,7 +79,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return;
 
     // Android Studio: track exception count
-    if (AnalyticsUploader.trackingEnabled()) {
+    if (UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
       Throwable t = event.getThrowable();
       if (t != null) {
         AnalyticsUploader.trackException(t, false);
@@ -91,6 +92,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(new Runnable() {
+          @Override
           public void run() {
             new OutOfMemoryDialog(kind).show();
           }

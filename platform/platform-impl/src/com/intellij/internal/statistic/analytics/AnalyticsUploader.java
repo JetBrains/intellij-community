@@ -15,10 +15,18 @@
  */
 package com.intellij.internal.statistic.analytics;
 
+import com.android.tools.analytics.UsageTracker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventCategory;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventKind;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.StudioCrash;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.PluginManager;
@@ -49,7 +57,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 // Note: Methods such as trackException() are called from within the logger when an exception is detected,
 // so don't use a Logger in this class and possibly end up in an infinite recursion.
@@ -112,20 +123,19 @@ public class AnalyticsUploader {
         new BasicNameValuePair(CD_OS_VERSION, SystemInfo.OS_VERSION),
         new BasicNameValuePair(CD_JAVA_RUNTIME_VERSION, SystemInfo.JAVA_RUNTIME_VERSION),
         new BasicNameValuePair(CD_LOCALE, getLanguage()));
-  public static final String CATEGORY_STUDIO_EXCEPTION = "excstudio";
 
   private static final LastSeenExceptions ourLastSeenExceptions = new LastSeenExceptions(3);
 
-  public static String getLanguage() {
+  private static String getLanguage() {
     Locale locale = Locale.getDefault();
     return locale == null ? "unknown" : locale.toString();
   }
 
-  public static boolean trackingEnabled() {
+  private static boolean trackingEnabled() {
     return DEBUG || StatisticsUploadAssistant.isSendAllowed();
   }
 
-  public static void trackEvent(@NotNull String eventCategory,
+  private static void trackEvent(@NotNull String eventCategory,
                          @NotNull String eventAction,
                          @Nullable String eventLabel,
                          @Nullable Integer eventValue) {
@@ -209,11 +219,6 @@ public class AnalyticsUploader {
     }
   }
 
-  @NotNull
-  public static String getLastExceptionDescription() {
-    return ourLastSeenExceptions.getDescriptions();
-  }
-
   public static void trackExceptionsAndActivity(final long activityCount,
                                                 final long exceptionCount,
                                                 final long bundledPluginExceptionCount,
@@ -240,31 +245,17 @@ public class AnalyticsUploader {
 
     // send all the counters to tools.google.com
     if (!ApplicationManager.getApplication().isInternal()) {
-      // @formatter:off
-      postToGoogleLogs(CATEGORY_STUDIO_EXCEPTION, ImmutableMap.of("activity", Long.toString(activityCount),
-                                                                  "exc", Long.toString(exceptionCount),
-                                                                  "exb", Long.toString(bundledPluginExceptionCount),
-                                                                  "exp", Long.toString(nonBundledPluginExceptionCount),
-                                                                  "exf", Long.toString(fatalExceptionCount)));
+      UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
+                                     .setCategory(EventCategory.PING)
+                                     .setKind(EventKind.STUDIO_CRASH)
+                                     .setStudioCrash(StudioCrash.newBuilder()
+                                                     .setActions(activityCount)
+                                                     .setExceptions(exceptionCount)
+                                                     .setBundledPluginExceptions(bundledPluginExceptionCount)
+                                                     .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
+                                                     .setCrashes(fatalExceptionCount)));
       // @formatter:on
     }
-  }
-
-  public static void postToGoogleLogs(@NotNull final String categoryId, @NotNull final Map<String, String> parameters) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          URL url = getPingUrl(categoryId, ApplicationInfo.getInstance().getStrictVersion(), INSTALLATION_ID, parameters);
-          postToGoogleLogs(url);
-        }
-        catch (Throwable t) {
-          if (DEBUG) {
-            System.err.println("Unexpected error while uploading exception metrics: " + t);
-          }
-        }
-      }
-    });
   }
 
   // Posting to Dremel means simply connecting to the URL and ignoring the response

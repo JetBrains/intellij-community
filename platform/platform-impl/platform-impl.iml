@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="analytics-shared" />
     <orderEntry type="module" module-name="analytics-publisher" />
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="analytics-protos" />
   </component>
 </module>

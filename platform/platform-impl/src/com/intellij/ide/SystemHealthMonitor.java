@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -304,21 +302,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         if (activityCount > 0 || exceptionCount > 0) {
           AnalyticsUploader.trackExceptionsAndActivity(
             activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0);
-
-          // b/24000263
-          if (exceptionCount > 1000) {
-            // @formatter:off
-            Map<String,String> parameters = ImmutableMap.<String,String>builder()
-              .put("initCount", Long.toString(ourInitialPersistedExceptionCount.get()))
-              .put("locale", AnalyticsUploader.getLanguage())
-              .put("osname", SystemInfo.OS_NAME)
-              .put("osver", SystemInfo.OS_VERSION)
-              .put("jre_version", SystemInfo.JAVA_RUNTIME_VERSION)
-              .put("last3exc", AnalyticsUploader.getLastExceptionDescription())
-              .build();
-            AnalyticsUploader.postToGoogleLogs("excdetails", parameters);
-            // @formatter:on
-          }
         }
       }
     }, INITIAL_DELAY_MINUTES, INTERVAL_IN_MINUTES, TimeUnit.MINUTES);
