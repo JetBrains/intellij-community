@@ -38,12 +38,13 @@ public class RainbowHighlighter {
 
   public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
-    float[] components = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT).getForegroundColor().getRGBColorComponents(null);
+    TextAttributes attributes = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT);
+    Color foregroundColor = attributes.getForegroundColor();
+    float[] components = foregroundColor.getRGBColorComponents(null);
     myFloats = Color.RGBtoHSB((int)(255 * components[0]), (int)(255 * components[0]), (int)(255 * components[0]), null);
   }
 
-  public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType
-    .HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
+  public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
 
   public static boolean isRainbowEnabled() {
     return Registry.is("editor.rainbow.identifiers", false);
@@ -54,16 +55,10 @@ public class RainbowHighlighter {
     int hash = StringHash.murmur(name, 0);
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
-    //System.out.println("name = " + name + " \tv=" + v);
-
     return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(Color.getHSBColor(v, 0.7f, myFloats[2] + .3f)));
   }
 
-  public HighlightInfo getInfo(
-    @Nullable String nameKey,
-    @Nullable PsiElement id,
-    @Nullable TextAttributesKey colorKey) {
-
+  public HighlightInfo getInfo(@Nullable String nameKey, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
     if (id == null || nameKey == null || StringUtil.isEmpty(nameKey)) return null;
     if (colorKey == null) colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
     final TextAttributes attributes = getAttributes(nameKey, myColorsScheme.getAttributes(colorKey));
@@ -73,5 +68,4 @@ public class RainbowHighlighter {
       .range(id)
       .create();
   }
-
 }
