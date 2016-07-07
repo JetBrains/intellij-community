@@ -228,7 +228,7 @@ object UpdateChecker {
           if (updateable.containsKey(id)) {
             updateable.remove(id)
             state.onDescriptorDownload(descriptor)
-            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
+            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber, forceHttps)
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
             if (updateable.isEmpty()) {
               break@outer
