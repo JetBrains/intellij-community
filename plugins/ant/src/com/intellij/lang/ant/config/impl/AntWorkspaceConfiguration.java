@@ -29,12 +29,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "antWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class AntWorkspaceConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration");
+
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String URL = "url";
@@ -66,9 +66,6 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     catch (InvalidDataException e) {
       LOG.error(e);
     }
-  }
-
-  public void initComponent() {
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
@@ -114,10 +111,10 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
 
   @Nullable
   private static Element findChildByUrl(Element parentNode, String url) {
-    List children = parentNode.getChildren(BUILD_FILE);
-    for (final Object aChildren : children) {
-      Element element = (Element)aChildren;
-      if (Comparing.equal(element.getAttributeValue(URL), url)) return element;
+    for (Element element : parentNode.getChildren(BUILD_FILE)) {
+      if (Comparing.equal(element.getAttributeValue(URL), url)) {
+        return element;
+      }
     }
     return null;
   }

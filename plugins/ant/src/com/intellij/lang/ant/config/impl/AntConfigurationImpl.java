@@ -173,32 +173,32 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     try {
       final Element state = new Element("state");
       getProperties().writeExternal(state);
-        ApplicationManager.getApplication().runReadAction(() -> {
-          for (final AntBuildFileBase buildFile : getBuildFiles()) {
-            final Element element = new Element(BUILD_FILE);
-            element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-            buildFile.writeProperties(element);
-            saveEvents(element, buildFile);
-            state.addContent(element);
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (final AntBuildFileBase buildFile : getBuildFiles()) {
+          final Element element = new Element(BUILD_FILE);
+          element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
+          buildFile.writeProperties(element);
+          saveEvents(element, buildFile);
+          state.addContent(element);
+        }
 
-          final List<VirtualFile> files = new ArrayList<VirtualFile>(myAntFileToContextFileMap.keySet());
-          // sort in order to minimize changes
-          Collections.sort(files, (o1, o2) -> o1.getUrl().compareTo(o2.getUrl()));
-          for (VirtualFile file : files) {
-            final Element element = new Element(CONTEXT_MAPPING);
-            final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
-            element.setAttribute(URL, file.getUrl());
-            element.setAttribute(CONTEXT, contextFile.getUrl());
-            state.addContent(element);
-          }
-        });
+        final List<VirtualFile> files = new ArrayList<VirtualFile>(myAntFileToContextFileMap.keySet());
+        // sort in order to minimize changes
+        Collections.sort(files, (o1, o2) -> o1.getUrl().compareTo(o2.getUrl()));
+        for (VirtualFile file : files) {
+          final Element element = new Element(CONTEXT_MAPPING);
+          final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
+          element.setAttribute(URL, file.getUrl());
+          element.setAttribute(CONTEXT, contextFile.getUrl());
+          state.addContent(element);
+        }
+      });
       return state;
     }
     catch (WriteExternalException e) {
       LOG.error(e);
+      return null;
     }
-    return null;
   }
 
   public void loadState(Element state) {
@@ -624,8 +624,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private void loadBuildFileProjectProperties(final Element parentNode) {
     final List<Pair<Element, String>> files = new ArrayList<Pair<Element, String>>();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (final Object o : parentNode.getChildren(BUILD_FILE)) {
-      final Element element = (Element)o;
+    for (final Element element : parentNode.getChildren(BUILD_FILE)) {
       final String url = element.getAttributeValue(URL);
       if (url != null) {
         files.add(Pair.create(element, url));
@@ -634,8 +633,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     
     // contexts
     myAntFileToContextFileMap.clear();
-    for (final Object o : parentNode.getChildren(CONTEXT_MAPPING)) {
-      final Element element = (Element)o;
+    for (final Element element : parentNode.getChildren(CONTEXT_MAPPING)) {
       final String url = element.getAttributeValue(URL);
       final String contextUrl = element.getAttributeValue(CONTEXT);
       final VirtualFile file = vfManager.findFileByUrl(url);
