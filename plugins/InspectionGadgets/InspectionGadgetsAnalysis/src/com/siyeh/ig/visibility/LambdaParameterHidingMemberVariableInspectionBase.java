@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class LambdaParameterHidingMemberVariableInspectionBase extends BaseInspe
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.hides.member.variable.ignore.superclass.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("lambda.parameter.hides.member.variable.ignore.invisible.option"),
                              "m_ignoreInvisibleFields");
     return optionsPanel;
   }
@@ -98,13 +98,13 @@ public class LambdaParameterHidingMemberVariableInspectionBase extends BaseInspe
       }
       PsiClass aClass = ClassUtils.getContainingClass(variable);
       while (aClass != null) {
-        final PsiField[] fields = aClass.getAllFields();
-        for (PsiField field : fields) {
-          final String fieldName = field.getName();
-          if (!variableName.equals(fieldName)) {
-            continue;
+        final PsiField field = aClass.findFieldByName(variableName, true);
+        if (field != null) {
+          if (!m_ignoreInvisibleFields){
+            return aClass;
           }
-          if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
+          else if (ClassUtils.isFieldVisible(field, aClass) &&
+                   (PsiUtil.getEnclosingStaticElement(variable, aClass) == null) || field.hasModifierProperty(PsiModifier.STATIC)){
             return aClass;
           }
         }
