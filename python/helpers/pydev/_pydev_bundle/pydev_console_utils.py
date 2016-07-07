@@ -189,10 +189,13 @@ class BaseInterpreterInterface:
 
         return self.need_more_for_code(self.buffer.text)
 
-    def create_std_in(self):
-        return StdIn(self, self.host, self.client_port)
+    def create_std_in(self, debugger=None, original_std_in=None):
+        if debugger is None:
+            return StdIn(self, self.host, self.client_port)
+        else:
+            return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
-    def add_exec(self, code_fragment):
+    def add_exec(self, code_fragment, debugger=None):
         original_in = sys.stdin
         try:
             help = None
@@ -210,7 +213,7 @@ class BaseInterpreterInterface:
 
         more = False
         try:
-            sys.stdin = self.create_std_in()
+            sys.stdin = self.create_std_in(debugger, original_in)
             try:
                 if help is not None:
                     #This will enable the help() function to work.
