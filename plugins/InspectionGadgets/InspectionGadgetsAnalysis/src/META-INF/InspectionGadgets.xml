@@ -1624,6 +1624,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="array.allocation.zero.length.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="ConstantForZeroLengthArrayAllocation" shortName="UnnecessaryEmptyArrayUsage"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="constant.for.zero.length.array.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.memory.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.memory.UnnecessaryEmptyArrayUsageInspection"/>
 
     <!--group.names.method.metrics-->
     <localInspection groupPath="Java" language="JAVA" suppressId="ConstructorWithTooManyParameters" shortName="ParametersPerConstructor"
