@@ -82,6 +82,15 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (PsiUtil.isConstantExpression(expression) || ExpressionUtils.isNullLiteral(expression)) {
       return true;
     }
+    if (expression instanceof PsiArrayInitializerExpression) {
+      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+      for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
+        if (!isMoveable(initializer)) {
+          return false;
+        }
+      }
+      return true;
+    }
     if (expression instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
