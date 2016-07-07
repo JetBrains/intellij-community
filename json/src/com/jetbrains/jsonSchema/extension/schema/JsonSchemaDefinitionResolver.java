@@ -169,10 +169,10 @@ public class JsonSchemaDefinitionResolver {
         element = (JsonProperty) grand;
       } else break;
     }
-    final StringBuilder path = new StringBuilder("/properties");
+    final StringBuilder path = new StringBuilder();
     Collections.reverse(names);
     for (String name : names) {
-      path.append('/').append(name);
+      path.append("/properties/").append(name);
     }
     myRef = path.toString();
   }
