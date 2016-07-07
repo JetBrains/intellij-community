@@ -43,7 +43,6 @@ class WinExeInstallerBuilder {
     String communityHome = buildContext.paths.communityHome
     String outFileName = buildContext.productProperties.baseArtifactName(buildContext.buildNumber)
     buildContext.messages.progress("Building Windows installer $outFileName")
-    ant.taskdef(name: "nsis", classname: "com.intellij.internalUtilities.ant.NsiFiles", classpath: "$communityHome/build/lib/NsiFiles.jar")
 
     def box = "$buildContext.paths.temp/winInstaller"
     ant.mkdir(dir: "$box/bin")
@@ -56,28 +55,26 @@ class WinExeInstallerBuilder {
     }
 
     ant.copy(todir: "$box/nsiconf") {
-      fileset(dir: "$communityHome/build/conf/nsis") {
-        include(name: "*")
-        exclude(name: "strings*")
-        exclude(name: "paths*")
-        exclude(name: "version*")
-      }
+      fileset(dir: "$communityHome/build/conf/nsis")
     }
     if (SystemInfoRt.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
       ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
     }
 
-    ant.nsis(instfile: "$box/nsiconf/idea_win.nsh", uninstfile: "$box/nsiconf/unidea_win.nsh") {
-      [buildContext.paths.distAll, winDistPath].each {
-        ant.fileset(dir: it, includes: "**/*") {
-          exclude(name: "**/idea.properties")
-          exclude(name: "**/*.vmoptions")
-        }
-      }
+    try {
+      def generator = new NsisFileListGenerator()
+      generator.addDirectory(buildContext.paths.distAll)
+      generator.addDirectory(winDistPath, ["**/idea.properties", "**/*.vmoptions"])
+
       if (bundleJre) {
-        ant.fileset(dir: jreDirectoryPath, includes: "jre/**/*")
+        generator.addDirectory(jreDirectoryPath)
       }
+      generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
+      generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
+    }
+    catch (IOException e) {
+      buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
     prepareConfigurationFiles(box, winDistPath)
