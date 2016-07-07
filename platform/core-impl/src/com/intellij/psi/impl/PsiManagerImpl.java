@@ -226,7 +226,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("beforeChildAddition: parent = " + event.getParent());
+      LOG.debug("beforeChildAddition: event = " + event);
     }
     fireEvent(event);
   }
