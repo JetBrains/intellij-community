@@ -150,6 +150,7 @@ public class TooBroadScope
     }
 
     private final String[] EMPTY = {};
+    private final String[] ONE = {"one"};
     void abc() {
         String[] <warning descr="Scope of variable 'strings' is too broad">strings</warning> = EMPTY;
         System.out.println();
@@ -170,5 +171,14 @@ public class TooBroadScope
         System.out.println();
         System.out.println();
         System.out.println(ss2);
+
+        List<String> ss4 = Arrays.asList(ONE);
+        backgroundAction();
+        System.out.println();
+        System.out.println(ss4);
+    }
+
+    void backgroundAction() {
+        ONE[0] = "two";
     }
 }
