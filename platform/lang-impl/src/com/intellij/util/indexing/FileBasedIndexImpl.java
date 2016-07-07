@@ -1980,6 +1980,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
+      if (!myInitialized) waitUntilIndicesAreInitialized();
     }
 
     @NotNull
