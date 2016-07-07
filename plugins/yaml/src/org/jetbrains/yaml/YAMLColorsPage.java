@@ -61,8 +61,6 @@ public class YAMLColorsPage implements ColorSettingsPage {
   // Empty still
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<String, TextAttributesKey>();
 
-  private static final ColorDescriptor[] COLORS = ColorDescriptor.EMPTY_ARRAY;
-
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
@@ -85,7 +83,7 @@ public class YAMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
