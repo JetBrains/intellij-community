@@ -872,6 +872,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     myDaemonCodeAnalyzer.restart();
     try {
       List<HighlightInfo> infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
@@ -880,6 +881,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       type(' ');
       infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
@@ -888,6 +890,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       backspace();
       infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
