@@ -162,7 +162,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     else {
       key = storageClass.name!!
     }
-    storageLock.withLock {
+    storageLock.read {
       var storage = storages[key]
       if (storage == null) {
         storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
