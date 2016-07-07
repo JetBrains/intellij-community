@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="asm5">
+  <library name="ASM">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/asm-all.jar!/" />
     </CLASSES>
