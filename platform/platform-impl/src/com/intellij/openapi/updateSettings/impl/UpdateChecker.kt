@@ -221,7 +221,8 @@ object UpdateChecker {
 
     outer@ for (host in hosts) {
       try {
-        val list = RepositoryHelper.loadPlugins(host, buildNumber, indicator)
+        val forceHttps = host == null && updateSettings.canUseSecureConnection()
+        val list = RepositoryHelper.loadPlugins(host, buildNumber, null, forceHttps, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
