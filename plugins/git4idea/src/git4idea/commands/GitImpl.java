@@ -335,16 +335,13 @@ public class GitImpl implements Git {
     return run(h);
   }
 
-  /**
-   * Create branch without checking it out.
-   * {@code git branch <branchName>}
-   */
   @Override
   @NotNull
-  public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
+  public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setStdoutSuppressed(false);
     h.addParameters(branchName);
+    h.addParameters(startPoint);
     return run(h);
   }
 

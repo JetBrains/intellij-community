@@ -99,8 +99,12 @@ public interface Git {
   @NotNull
   GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit);
 
+  /**
+   * Create branch without checking it out: <br/>
+   * <pre>    git branch &lt;branchName&gt; &lt;startPoint&gt;</pre>
+   */
   @NotNull
-  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName);
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint);
 
   @NotNull
   GitCommandResult renameBranch(@NotNull GitRepository repository,
