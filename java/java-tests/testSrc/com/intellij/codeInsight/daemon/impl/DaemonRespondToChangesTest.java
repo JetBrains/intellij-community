@@ -895,7 +895,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertOneElement(lineMarkers);
     }
     catch (AssertionError e) {
-      System.err.println("Log:\n"+log);
+      System.err.println("Log:\n"+log+"\n---");
       throw e;
     }
   }
