@@ -131,10 +131,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
     if (file != null && file.isPhysical() && virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) return true;
 
-    if (virtualFile != null) {
-      return myFileIndex.isInContent(virtualFile);
-    }
-    return false;
+    return virtualFile != null && myFileIndex.isInContent(virtualFile);
   }
 
   @Override
@@ -229,9 +226,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "beforeChildAddition: parent = " + event.getParent()
-      );
+      LOG.debug("beforeChildAddition: parent = " + event.getParent());
     }
     fireEvent(event);
   }
@@ -241,10 +236,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REMOVAL);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "beforeChildRemoval: child = " + event.getChild()
-        + ", parent = " + event.getParent()
-      );
+      LOG.debug("beforeChildRemoval: child = " + event.getChild() + ", parent = " + event.getParent());
     }
     fireEvent(event);
   }
@@ -254,10 +246,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "beforeChildReplacement: oldChild = " + event.getOldChild()
-        + ", parent = " + event.getParent()
-      );
+      LOG.debug("beforeChildReplacement: oldChild = " + event.getOldChild());
     }
     fireEvent(event);
   }
@@ -275,11 +264,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_MOVEMENT);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "beforeChildMovement: child = " + event.getChild()
-        + ", oldParent = " + event.getOldParent()
-        + ", newParent = " + event.getNewParent()
-      );
+      LOG.debug("beforeChildMovement: child = " + event.getChild() + ", oldParent = " + event.getOldParent() + ", newParent = " + event.getNewParent());
     }
     fireEvent(event);
   }
@@ -288,11 +273,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "beforePropertyChange: element = " + event.getElement()
-        + ", propertyName = " + event.getPropertyName()
-        + ", oldValue = " + event.getOldValue()
-      );
+      LOG.debug("beforePropertyChange: element = " + event.getElement() + ", propertyName = " + event.getPropertyName() + ", oldValue = " + event.getOldValue());
     }
     fireEvent(event);
   }
@@ -300,10 +281,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "childAdded: child = " + event.getChild()
-        + ", parent = " + event.getParent()
-      );
+      LOG.debug("childAdded: child = " + event.getChild() + ", parent = " + event.getParent());
     }
     fireEvent(event);
     afterChange(true);
@@ -312,9 +290,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void childRemoved(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "childRemoved: child = " + event.getChild() + ", parent = " + event.getParent()
-      );
+      LOG.debug("childRemoved: child = " + event.getChild() + ", parent = " + event.getParent());
     }
     fireEvent(event);
     afterChange(true);
@@ -323,11 +299,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void childReplaced(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "childReplaced: oldChild = " + event.getOldChild()
-        + ", newChild = " + event.getNewChild()
-        + ", parent = " + event.getParent()
-      );
+      LOG.debug("childReplaced: oldChild = " + event.getOldChild() + ", newChild = " + event.getNewChild() + ", parent = " + event.getParent());
     }
     fireEvent(event);
     afterChange(true);
@@ -336,11 +308,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void childMoved(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "childMoved: child = " + event.getChild()
-        + ", oldParent = " + event.getOldParent()
-        + ", newParent = " + event.getNewParent()
-      );
+      LOG.debug("childMoved: child = " + event.getChild() + ", oldParent = " + event.getOldParent() + ", newParent = " + event.getNewParent());
     }
     fireEvent(event);
     afterChange(true);
@@ -349,9 +317,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void childrenChanged(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED);
     if (LOG.isDebugEnabled()) {
-      LOG.debug(
-        "childrenChanged: parent = " + event.getParent()
-      );
+      LOG.debug("childrenChanged: parent = " + event.getParent());
     }
     fireEvent(event);
     afterChange(true);
