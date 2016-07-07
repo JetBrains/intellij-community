@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
 
 import java.awt.event.InputEvent;
@@ -99,28 +100,29 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
              "line");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().alt().pressAt(1, 6);
+    EditorMouseFixture mouse = mouse();
+    mouse.alt().pressAt(1, 6);
     checkResultByText("line\n" +
                       "long l<caret>ine\n" +
                       "very long line\n" +
                       "long line\n" +
                       "line");
 
-    mouse().alt().dragTo(4, 6);
+    mouse.dragTo(4, 6); // still holding Alt
     checkResultByText("line\n" +
                       "long l<caret>ine\n" +
                       "very l<caret>ong line\n" +
                       "long l<caret>ine\n" +
                       "line<caret>");
 
-    mouse().alt().dragTo(4, 8);
+    mouse.dragTo(4, 8); // still holding Alt
     checkResultByText("line\n" +
                       "long l<selection>in<caret></selection>e\n" +
                       "very l<selection>on<caret></selection>g line\n" +
                       "long l<selection>in<caret></selection>e\n" +
                       "line");
 
-    mouse().alt().dragTo(4, 10).release();
+    mouse.dragTo(4, 10).release(); // still holding Alt
     checkResultByText("line\n" +
                       "long l<selection>ine<caret></selection>\n" +
                       "very l<selection>ong <caret></selection>line\n" +
@@ -136,28 +138,29 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
              "line");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().middle().pressAt(1, 17);
+    EditorMouseFixture mouse = mouse();
+    mouse.middle().pressAt(1, 17);
     checkResultByText("line\n" +
                       "long line<caret>\n" +
                       "very long line\n" +
                       "long line\n" +
                       "line");
 
-    mouse().middle().dragTo(2, 16);
+    mouse.dragTo(2, 16);
     checkResultByText("line\n" +
                       "long line<caret>\n" +
                       "very long line<caret>\n" +
                       "long line\n" +
                       "line");
 
-    mouse().middle().dragTo(3, 12);
+    mouse.dragTo(3, 12);
     checkResultByText("line\n" +
                       "long line\n" +
                       "very long li<selection><caret>ne</selection>\n" +
                       "long line\n" +
                       "line");
 
-    mouse().middle().dragTo(3, 6).release();
+    mouse.dragTo(3, 6).release();
     checkResultByText("line\n" +
                       "long l<selection><caret>ine</selection>\n" +
                       "very l<selection><caret>ong line</selection>\n" +
@@ -171,15 +174,16 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
              "line3");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().pressAt(0, 1).dragTo(1, 2);
+    EditorMouseFixture mouse = mouse();
+    mouse.pressAt(0, 1).dragTo(1, 2);
     checkResultByText("l<selection>ine1\n" +
                       "li<caret></selection>ne2\n" +
                       "line3");
-    mouse().alt().dragTo(1, 3);
+    mouse.alt().dragTo(1, 3);
     checkResultByText("l<selection>in<caret></selection>e1\n" +
                       "l<selection>in<caret></selection>e2\n" +
                       "line3");
-    mouse().dragTo(2, 4).release();
+    mouse.noModifiers().dragTo(2, 4).release();
     checkResultByText("l<selection>ine1\n" +
                       "line2\n" +
                       "line<caret></selection>3");
