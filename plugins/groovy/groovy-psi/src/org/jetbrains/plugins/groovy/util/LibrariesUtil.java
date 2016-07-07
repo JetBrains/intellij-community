@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,7 +54,7 @@ public class LibrariesUtil {
   }
 
   public static Library[] getLibrariesByCondition(final Module module, final Condition<Library> condition) {
-    if (module == null) return new Library[0];
+    if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<Library>();
 
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();

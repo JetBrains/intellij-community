@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getProjectSDKLibraries(Project project) {
-    if (project == null || project.isDisposed()) return new Library[0];
+    if (project == null || project.isDisposed()) return Library.EMPTY_ARRAY;
     final LibraryTable table = ProjectLibraryTable.getInstance(project);
     final List<Library> all = ContainerUtil.findAll(table.getLibraries(), LIB_SEARCH_CONDITION);
     return all.toArray(new Library[all.size()]);

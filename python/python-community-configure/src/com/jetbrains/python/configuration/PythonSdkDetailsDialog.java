@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.PyBundle;
@@ -564,7 +563,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       catch (Exception e) {
         LOG.error(e);
       }
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override

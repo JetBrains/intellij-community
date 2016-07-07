@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private Map<MouseShortcut, List<String>> myMouseShortcut2ListOfIds = null;
   // TODO[vova,anton] it should be final member
 
-  private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
+  private static final Shortcut[] ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
 

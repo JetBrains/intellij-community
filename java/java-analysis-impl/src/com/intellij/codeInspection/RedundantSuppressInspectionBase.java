@@ -227,7 +227,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
                 @Nullable
                 @Override
                 public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-                  return new CommonProblemDescriptor[0];
+                  return CommonProblemDescriptor.EMPTY_ARRAY;
                 }
 
                 @Override

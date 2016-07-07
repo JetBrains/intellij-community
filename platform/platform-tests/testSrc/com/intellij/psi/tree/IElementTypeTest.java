@@ -26,12 +26,14 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -149,7 +151,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testInitialRegisterPerformance() {
     PlatformTestUtil.startPerformanceTest("IElementType add", 100, () -> {
       Language language = Language.ANY;
-      IElementType[] old = IElementType.push(new IElementType[0]);
+      IElementType[] old = IElementType.push(IElementType.EMPTY_ARRAY);
       try {
         for (short i = 0; i < 15000; i++) {
           IElementType type = new IElementType("i " + i, language);
