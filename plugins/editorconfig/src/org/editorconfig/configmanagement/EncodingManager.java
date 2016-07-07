@@ -22,11 +22,11 @@ import java.util.Map;
 
 public class EncodingManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
-  private static final String charsetKey = "charset";
+  public static final String charsetKey = "charset";
 
   private final Project myProject;
 
-  private static final Map<String, Charset> encodingMap;
+  public static final Map<String, Charset> encodingMap;
 
   static {
     Map<String, Charset> map = new HashMap<String, Charset>();

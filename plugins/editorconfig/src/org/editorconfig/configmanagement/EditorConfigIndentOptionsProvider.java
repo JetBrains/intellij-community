@@ -19,10 +19,10 @@ import java.util.List;
  */
 public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider {
   // Handles the following EditorConfig settings:
-  private static final String indentSizeKey = "indent_size";
-  private static final String continuationSizeKey = "continuation_indent_size";
-  private static final String tabWidthKey = "tab_width";
-  private static final String indentStyleKey = "indent_style";
+  public static final String indentSizeKey = "indent_size";
+  public static final String continuationSizeKey = "continuation_indent_size";
+  public static final String tabWidthKey = "tab_width";
+  public static final String indentStyleKey = "indent_style";
 
   @Nullable
   @Override
