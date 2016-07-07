@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -191,14 +193,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (leftLeft.getText().equals(getLeftExpression(rightExpression, false).getText())) {
             myIsLeft = true;
             myIsRight = true;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
           final PyExpression right = getSmallestRight(rightExpression, false);
           if (right != null && leftLeft.getText().equals(right.getText())) {
             myIsLeft = true;
             myIsRight = false;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
         }
