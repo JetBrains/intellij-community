@@ -561,6 +561,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   private void setupEditorFont(final EditorEx editor) {
     if (myInheritSwingFont) {
+      ((EditorImpl)editor).setUseEditorAntialiasing(false);
       editor.getColorsScheme().setEditorFontName(getFont().getFontName());
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;

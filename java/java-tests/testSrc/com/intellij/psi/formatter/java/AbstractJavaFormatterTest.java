@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -109,21 +112,16 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        SimpleFormatRangesInfo info = new SimpleFormatRangesInfo(new TextRange(startOffset, endOffset));
-        List<TextRange> ranges = info.getRangesToFormat();
+        Collection<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
         CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, null);
       }
     });
     ACTIONS.put(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        SimpleFormatRangesInfo info = new SimpleFormatRangesInfo(new TextRange(startOffset, endOffset)) {
-          @Override
-          public boolean isOnInsertedLine(int offset) {
-            return startOffset <= offset && offset < endOffset;
-          }
-        };
-        List<TextRange> ranges = info.getRangesToFormat();
+        TextRange range = new TextRange(startOffset, endOffset);
+        List<TextRange> ranges = ContainerUtil.newArrayList(range);
+        DiffInfo info = new DiffInfoImpl(ranges);
         CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, info);
       }
     });

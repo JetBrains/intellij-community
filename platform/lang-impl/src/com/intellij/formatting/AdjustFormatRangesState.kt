@@ -48,7 +48,6 @@ package com.intellij.formatting
 import com.intellij.formatting.engine.State
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.DiffInfo
-import com.intellij.psi.codeStyle.FormatRangesInfo
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.util.containers.Stack
 
@@ -57,17 +56,9 @@ interface BlockProcessor {
   fun processCompositeBlock(block: Block)
 }
 
-class VcsAwareFormatRangesInfo(val formattingRanges: List<TextRange>,
-                               private val insertedRanges: List<TextRange>): FormatRangesInfo() 
-{
-  constructor(changedTextRange: TextRange): this(listOf(changedTextRange), emptyList())
-
-  override fun getRangesToFormat() = formattingRanges
-
+class DiffInfoImpl(private val insertedRanges: List<TextRange>): DiffInfo {
   override fun isOnInsertedLine(offset: Int) = insertedRanges.find { it.contains(offset) } != null
-  
 }
-
     
 class AdditionalRangesExtractor(private val diffInfo: DiffInfo?) : BlockProcessor {
   

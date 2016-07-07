@@ -149,7 +149,7 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
       VirtualFile scriptDir = getScriptsRootDirectory();
       VirtualFile[] scriptDirChildren = scriptDir != null ? scriptDir.getChildren() : VirtualFile.EMPTY_ARRAY;
       Condition<VirtualFile> regularFileFilter = ExtensionsRootType.regularFileFilter();
-      scripts = Arrays.stream(scriptDirChildren).filter(regularFileFilter::value).filter(f->!f.getName().equals("readme.txt")).collect(Collectors.toList());
+      scripts = Arrays.stream(scriptDirChildren).filter(regularFileFilter::value).collect(Collectors.toList());
     }
     catch (IOException ignore) {
       return Collections.emptyList();

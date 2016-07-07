@@ -17,17 +17,18 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class FormatRangesInfo implements DiffInfo {
+public class ChangedRangesInfo {
   
-  @NotNull
-  public abstract List<TextRange> getRangesToFormat();
+  public final DiffInfo diffInfo;
+  public final List<TextRange> changedRanges;
 
-  @Override
-  public boolean isOnInsertedLine(int offset) {
-    return false;
+  public ChangedRangesInfo(@Nullable DiffInfo info, @NotNull List<TextRange> ranges) {
+    diffInfo = info;
+    changedRanges = ranges;
   }
   
 }

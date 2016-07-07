@@ -155,11 +155,8 @@ public abstract class CodeStyleManager  {
   public abstract void reformatTextWithContext(@NotNull PsiFile file, 
                                                @NotNull Collection<TextRange> ranges, 
                                                @Nullable DiffInfo diffInfo) throws IncorrectOperationException;
-  
 
-  /**
-   * @deprecated use {@link #reformatTextWithContext(PsiFile, FormatRangesInfo)} 
-   */
+
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
     reformatTextWithContext(file, ranges, null);
   }
