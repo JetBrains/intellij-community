@@ -1,11 +1,22 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+  ext.kotlin_version = '1.0.3'
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
 plugins {
   id "org.jetbrains.intellij" version "0.0.39"
 }
 
 subprojects {
   apply plugin: 'java'
+  apply plugin: 'kotlin'
   apply plugin: "org.jetbrains.intellij"
 
   tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
@@ -13,7 +24,7 @@ subprojects {
   sourceSets {
     main {
       java.srcDirs 'src', '../src', '../gen'
-      resources.srcDirs 'resources'
+      kotlin.srcDirs 'src'
       resources.srcDirs 'resources', '../resources'
     }
     test {
