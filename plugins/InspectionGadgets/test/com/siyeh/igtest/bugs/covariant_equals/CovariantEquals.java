@@ -29,3 +29,8 @@ class D implements I {
     return false;
   }
 }
+class E {
+  boolean <warning descr="'equals()' should take 'Object' as its argument">equals</warning>(E e) {
+    return false;
+  }
+}

@@ -55,9 +55,6 @@ public class CovariantEqualsInspection extends BaseInspection {
       if (!HardcodedMethodConstants.EQUALS.equals(name)) {
         return;
       }
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return;
-      }
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() != 1) {
         return;
@@ -71,7 +68,7 @@ public class CovariantEqualsInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
+      final PsiMethod[] methods = aClass.findMethodsByName("equals", false);
       for (PsiMethod method1 : methods) {
         if (MethodUtils.isEquals(method1)) {
           return;
