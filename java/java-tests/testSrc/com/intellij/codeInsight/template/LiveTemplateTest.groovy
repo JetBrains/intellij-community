@@ -1175,7 +1175,7 @@ class Foo {{
 class Foo {{
     for (int a<caret> = 0; a < array.length; a++) {
          = array[a];
-
+        
     }
 }}
 """
