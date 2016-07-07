@@ -17,6 +17,7 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * @author Mikhail Golubev
@@ -43,6 +43,17 @@ public class AddImportQuickFixTest extends PyQuickFixTestCase {
       final List<ImportCandidateHolder> candidates = fix.getCandidates();
       final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("join"));
       assertSameElements(names, "os.path.join(path, *paths)");
+      return true;
+    });
+  }
+
+  // PY-19975
+  public void testCanonicalNamesFromHigherLevelPackage() {
+    doMultiFileAutoImportTest("Import", fix -> {
+      final List<ImportCandidateHolder> candidates = fix.getCandidates();
+      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("MyClass"));
+      assertSameElements(names, "foo.MyClass", "bar.MyClass");
+      return true;
     });
   }
 
@@ -50,7 +61,7 @@ public class AddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest(hintPrefix, null);
   }
 
-  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Consumer<AutoImportQuickFix> checkQuickfix) {
+  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<AutoImportQuickFix> checkQuickfix) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     final String entryPoint = "main";
@@ -62,10 +73,13 @@ public class AddImportQuickFixTest extends PyQuickFixTestCase {
     });
     assertNotNull("Auto import quick fix starting with '" + hintPrefix + "' wasn't found", intention);
     final AutoImportQuickFix quickfix = (AutoImportQuickFix)((QuickFixWrapper)intention).getFix();
+    boolean applyFix = true;
     if (checkQuickfix != null) {
-      checkQuickfix.accept(quickfix);
+      applyFix = checkQuickfix.process(quickfix);
     }
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(true) + "/" + entryPoint + "_after.py", true);
+    if (applyFix) {
+      myFixture.launchAction(intention);
+      myFixture.checkResultByFile(getTestName(true) + "/" + entryPoint + "_after.py", true);
+    }
   }
 }

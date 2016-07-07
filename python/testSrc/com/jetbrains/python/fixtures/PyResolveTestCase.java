@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,17 @@ public abstract class PyResolveTestCase extends PyTestCase {
       throw new RuntimeException(e);
     }
     return assertResolveResult(element, aClass, name, containingFilePath);
+  }
+
+  protected void assertUnresolved() {
+    final PsiElement element;
+    try {
+      element = doResolve();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    assertNull(element);
   }
 
   public static <T extends PsiElement> T assertResolveResult(PsiElement element,

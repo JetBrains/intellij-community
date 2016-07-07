@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +29,10 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -98,10 +102,12 @@ public class ImportFromExistingAction implements QuestionAction {
       return false;
     }
     // act
-    if (mySources.size() > 1) {
+    if (mySources.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      doWriteAction(mySources.get(0));
+    }
+    else {
       selectSourceAndDo();
     }
-    else doWriteAction(mySources.get(0));
     return true;
   }
 

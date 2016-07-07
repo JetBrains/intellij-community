@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,17 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  // PY-19523
+  public void testBz2Module() {
+    doTest();
+  }
+
+  public void testUnderscoreBz2Module() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, () -> doTest());
+    runWithLanguageLevel(level, this::doTest);
   }
 
   private void doTest() {

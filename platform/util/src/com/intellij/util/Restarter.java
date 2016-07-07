@@ -121,7 +121,7 @@ public class Restarter {
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
         Collections.addAll(commands, beforeRestart);
-        Collections.addAll(commands, String.valueOf(argc.getValue()));
+        Collections.addAll(commands, String.valueOf(argv.length));
         Collections.addAll(commands, argv);
       }
     });
@@ -147,11 +147,34 @@ public class Restarter {
     });
   }
 
+  private static String[] getRestartArgv(String[] argv) {
+    int countArgs = argv.length;
+    for (int i = argv.length-1; i >=0; i--) {
+      if (argv[i].endsWith("com.intellij.idea.Main") ||
+          argv[i].endsWith(".exe")) {
+        countArgs = i + 1;
+        if ("0".equals(argv[2])) {
+          // update number of args in according with removed cmd line args
+          argv[3] = String.valueOf(Integer.valueOf(argv[3]) - (argv.length - (i+1)));
+        }
+        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separator) < 0) {
+          //absolute path
+          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
+        }
+        break;
+      }
+    }
+    String[] restartArg = new String[countArgs];
+    System.arraycopy(argv, 0, restartArg, 0, countArgs);
+    return restartArg;
+  }
+
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<String>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
+    String[] argv = getRestartArgv(ArrayUtil.toStringArray(commands));
+    Runtime.getRuntime().exec(argv);
   }
 
   public static String getRestarterDir() {

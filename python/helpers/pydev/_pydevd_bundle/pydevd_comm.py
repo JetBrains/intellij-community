@@ -1331,7 +1331,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression)
+                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_vars.var_to_xml(result, "")
                 xml += "</xml>"

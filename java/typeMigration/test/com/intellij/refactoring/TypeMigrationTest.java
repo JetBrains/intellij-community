@@ -826,6 +826,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
   }
 
+  public void testMethodMigrationToVoidWithUnusedReturns() {
+    doTestMethodType("toVoidMethod", PsiType.VOID);
+  }
+
   public void testMigrationToSuper() {
     doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.A<java.lang.String>", null));
   }
