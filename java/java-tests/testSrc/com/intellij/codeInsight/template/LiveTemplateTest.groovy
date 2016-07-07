@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.*
@@ -274,6 +275,94 @@ class Foo {
 }
 '''
     assert !state
+  }
+
+  public void "test not to go to next tab after insert if element is a psi package"() {
+    myFixture.configureByText 'a.java', '''
+<caret>
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("imp", "user", 'import $MODIFIER$ java.$NAME$;');
+    template.addVariable('NAME', new MacroCallNode(new CompleteMacro(true)), new EmptyNode(), true)
+    template.addVariable('MODIFIER', new EmptyExpression(), true)
+    startTemplate(template);
+    myFixture.type('uti\n')
+    myFixture.checkResult '''
+import  java.util.<caret>;
+'''
+    assert !state.finished
+  }
+
+  public void "test not to go to next tab after insert if element has call arguments"() {
+    myFixture.configureByText 'a.java', '''
+import  java.util.*;
+public class Main {
+    List<String> getStringList(int i){
+        List<String> ints = null;
+        <caret>
+        return new ArrayList<>(i);
+    }
+}
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
+                                                                    '$END$;\n' +
+                                                                    '}');
+    template.addVariable('ITERABLE_TYPE', new MacroCallNode(new CompleteSmartMacro()), new EmptyNode(), true)
+    template.addVariable('VAR', new TextExpression("item"), true)
+    template.addVariable('ELEMENT_TYPE', new TextExpression("String"), true);
+    template.setToReformat(true)
+    startTemplate(template);
+    myFixture.type('get\n')
+    myFixture.checkResult """
+import  java.util.*;
+public class Main {
+    List<String> getStringList(int i){
+        List<String> ints = null;
+        for (String item : getStringList(<caret>)) {
+            ;
+        }
+        return new ArrayList<>(i);
+    }
+}
+"""
+    assert !state.finished
+  }
+
+  public void "test go to next tab after insert if element does not have call arguments"() {
+    myFixture.configureByText 'a.java', '''
+import  java.util.*;
+public class Main {
+    List<String> getStringList(int i){
+        List<String> ints = null;
+        <caret>
+        return new ArrayList<>(i);
+    }
+}
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("for", "user", 'for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {\n' +
+                                                                    '$END$;\n' +
+                                                                    '}');
+    template.addVariable('ITERABLE_TYPE', new MacroCallNode(new CompleteSmartMacro()), new EmptyNode(), true)
+    template.addVariable('VAR', new TextExpression("item"), true)
+    template.addVariable('ELEMENT_TYPE', new TextExpression("String"), true);
+    template.setToReformat(true)
+    startTemplate(template);
+    myFixture.type('in\n')
+    myFixture.checkResult """
+import  java.util.*;
+public class Main {
+    List<String> getStringList(int i){
+        List<String> ints = null;
+        for (String <selection>item</selection> : ints) {
+            ;
+        }
+        return new ArrayList<>(i);
+    }
+}
+"""
+    assert !state.finished
   }
 
   public void "test non-imported classes in className macro"() {
@@ -1086,7 +1175,7 @@ class Foo {{
 class Foo {{
     for (int a<caret> = 0; a < array.length; a++) {
          = array[a];
-        
+
     }
 }}
 """
