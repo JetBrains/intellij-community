@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a Java module declaration.
@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
  * @since 2016.3
  */
 public interface PsiJavaModule extends PsiElement {
-  @Nullable PsiJavaModuleReference getNameElement();
-  @Nullable String getModuleName();
+  String MODULE_INFO_CLASS = "module-info";
+  String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
+
+  @NotNull PsiJavaModuleReference getNameElement();
+  @NotNull String getModuleName();
 }

@@ -61,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("A quick brown fox");
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().clickAt(0, 1);
-    mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
+    mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
     checkResultByText("A<selection> q<caret></selection>uick brown fox");
   }
 

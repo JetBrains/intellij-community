@@ -157,6 +157,11 @@ public class EditorMouseFixture {
     return this;
   }
 
+  public EditorMouseFixture noModifiers() {
+    myModifiers = 0;
+    return this;
+  }
+
   public EditorMouseFixture middle() {
     myButton = MouseEvent.BUTTON2;
     return this;

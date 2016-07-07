@@ -325,6 +325,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
 
+  private boolean myUseEditorAntialiasing = true;
+
   private final ImmediatePainter myImmediatePainter;
 
   static {
@@ -6175,6 +6177,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     e.consume();
     return true;
+  }
+
+  public boolean useEditorAntialiasing() {
+    return myUseEditorAntialiasing;
+  }
+
+  public void setUseEditorAntialiasing(boolean value) {
+    myUseEditorAntialiasing = value;
   }
 
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);
