@@ -372,9 +372,21 @@ public final class PyToxTest extends PyEnvTestCase {
       // To help tox with all interpreters, we add all our environments to path
       // Envs should have binaries like "python2.7" (with version included),
       // and tox will find em: see tox_get_python_executable @ interpreters.py
-      final String join = StringUtil.join(getPythonRoots(), File.pathSeparator);
-      configuration.getEnvs().put("PATH", join);
 
+      //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
+      final List<String> roots = new ArrayList<>();
+      final List<String> libs = new ArrayList<>();
+      for (final String root : getPythonRoots()) {
+        File bin = new File(root, "/bin/");
+        roots.add(bin.exists() ? bin.getAbsolutePath() : root);
+        File lib = new File(root, "/lib/");
+        if (lib.exists()) {
+          libs.add(lib.getAbsolutePath());
+        }
+      }
+
+      configuration.getEnvs().put("PATH", StringUtil.join(roots, File.pathSeparator));
+      configuration.getEnvs().put("LD_LIBRARY_PATH", StringUtil.join(libs, File.pathSeparator));
     }
   }
 
