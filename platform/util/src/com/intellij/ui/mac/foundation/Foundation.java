@@ -18,6 +18,7 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author spleaner
@@ -173,6 +175,14 @@ public class Foundation {
     }
   }
 
+  public static ID nsUUID(@NotNull UUID uuid) {
+    return nsUUID(uuid.toString());
+  }
+
+  public static ID nsUUID(@NotNull String uuid) {
+    return invoke(invoke(invoke("NSUUID", "alloc"), "initWithUUIDString:", nsString(uuid)), "autorelease");
+  }
+
   @Nullable
   public static String toStringViaUTF8(ID cfString) {
     if (cfString.intValue() == 0) return null;
@@ -184,6 +194,16 @@ public class Foundation {
     byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, FoundationLibrary.kCFStringEncodingUTF8);
     if (ok == 0) throw new RuntimeException("Could not convert string");
     return Native.toString(buffer);
+  }
+
+  @Nullable
+  public static String getNSErrorText(@Nullable ID error) {
+    if (error == null || error.byteValue() == 0) return null;
+
+    String description = toStringViaUTF8(invoke(error, "localizedDescription"));
+    String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
+    if (recovery != null) description += "\n" + recovery;
+    return StringUtil.notNullize(description);
   }
 
   @Nullable
@@ -471,6 +491,13 @@ public class Foundation {
     final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
     final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
+  }
+
+  @NotNull
+  public static PointerType createPointerReference() {
+    PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
+    reference.getPointer().clear(Native.POINTER_SIZE);
+    return reference;
   }
 
   private static Object[] convertTypes(@NotNull Object[] v) {
