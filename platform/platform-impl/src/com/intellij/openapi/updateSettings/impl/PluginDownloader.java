@@ -293,10 +293,18 @@ public class PluginDownloader {
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
+    boolean forceHttps = host == null && UpdateSettings.getInstance().canUseSecureConnection();
+    return createDownloader(descriptor, host, buildNumber, forceHttps);
+  }
+
+  @NotNull
+  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
+                                                  @Nullable String host,
+                                                  @Nullable BuildNumber buildNumber,
+                                                  boolean forceHttps) throws IOException {
     try {
       String url = getUrl(descriptor, host, buildNumber);
       String id = descriptor.getPluginId().getIdString();
-      boolean forceHttps = host == null && UpdateSettings.getInstance().canUseSecureConnection();
       PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber, forceHttps);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
