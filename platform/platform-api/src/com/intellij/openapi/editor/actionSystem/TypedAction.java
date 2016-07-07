@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +170,7 @@ public class TypedAction {
 class FreezeLogger {
   
   private static final Logger LOG = Logger.getInstance(FreezeLogger.class);
-  private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, Disposer.newDisposable());
+  private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int MAX_ALLOWED_TIME = 500;
   
   public static void runUnderPerformanceMonitor(Runnable action) {
