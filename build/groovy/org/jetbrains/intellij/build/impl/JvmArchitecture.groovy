@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 /**
  * @author nik
  */
+//tode[nik] rename and move out of 'impl'?
 enum JvmArchitecture {
   x32(""), x64("64")
 

@@ -53,6 +53,7 @@ class BuildContextImpl extends BuildContext {
     underTeamCity = System.getProperty("teamcity.buildType.id") != null
     messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
 
+    bundledJreManager = new BundledJreManager(this, buildOutputRoot)
     def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
 
@@ -60,7 +61,7 @@ class BuildContextImpl extends BuildContext {
       loadProject()
     }
     else {
-      //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance
+      //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
       messages.info("Skipping loading project because it's already loaded")
     }
     def appInfoFile = findApplicationInfoInSources()
@@ -220,8 +221,5 @@ class BuildPathsImpl extends BuildPaths {
     artifacts = "${this.buildOutputRoot}/artifacts"
     distAll = "$buildOutputRoot/dist.all"
     temp = "$buildOutputRoot/temp"
-    oracleWinJre = "$buildOutputRoot/jdk.oracle.win"
-    winJre = "$buildOutputRoot/jdk.win"
-    linuxJre = "$buildOutputRoot/jdk.linux"
   }
 }

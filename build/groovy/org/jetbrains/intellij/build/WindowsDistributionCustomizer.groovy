@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.JvmArchitecture
+
 /**
  * @author nik
  */
@@ -29,7 +31,10 @@ abstract class WindowsDistributionCustomizer {
    */
   boolean includeBatchLaunchers = true
 
-  boolean bundleJre = true
+  /**
+   * Specify bitness of bundled JRE. If {@code null} no JRE will be bundled
+   */
+  JvmArchitecture bundledJreArchitecture = JvmArchitecture.x32
   boolean buildZipWithBundledOracleJre = false
 
   /**

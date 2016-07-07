@@ -48,24 +48,25 @@ class MacDmgBuilder {
       remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
     }
     def dmgBuilder = new MacDmgBuilder(buildContext, remoteDir, macHostProperties)
-    if (buildContext.paths.macJreTarGz != null && new File(buildContext.paths.macJreTarGz).exists()) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, true)
+    def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
+    if (jreArchivePath != null) {
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
     }
     else {
-      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive doesn't exist: $buildContext.paths.macJreTarGz")
+      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive is missing")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, false)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, null)
     }
   }
 
-  private void doSignAndBuildDmg(String macZipPath, boolean bundleJre) {
-    def suffix = bundleJre ? "" : "-no-jdk"
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath) {
+    def suffix = jreArchivePath != null ? "" : "-no-jdk"
     String targetFileName = buildContext.productProperties.baseArtifactName(buildContext.buildNumber) + suffix
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: macZipPath, tofile: sitFilePath)
     ftpAction("mkdir") {}
-    signMacZip(sitFilePath, targetFileName, bundleJre)
+    signMacZip(sitFilePath, targetFileName, jreArchivePath)
     buildDmg(targetFileName)
   }
 
@@ -109,12 +110,12 @@ class MacDmgBuilder {
     buildContext.notifyArtifactBuilt(dmgFilePath)
   }
 
-  private def signMacZip(String sitFilePath, String targetFileName, boolean bundleJre) {
+  private def signMacZip(String sitFilePath, String targetFileName, String jreArchivePath) {
     buildContext.messages.progress("Signing ${targetFileName}.sit")
 
-    if (bundleJre) {
+    if (jreArchivePath != null) {
       ftpAction("put") {
-        ant.fileset(file: buildContext.paths.macJreTarGz)
+        ant.fileset(file: jreArchivePath)
       }
     }
 
@@ -129,7 +130,7 @@ class MacDmgBuilder {
       }
     }
 
-    String jreFileNameArgument = bundleJre ? " \"${PathUtilRt.getFileName(buildContext.paths.macJreTarGz)}\"" : ""
+    String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
               + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument")
     ftpAction("get", true, null, 3) {

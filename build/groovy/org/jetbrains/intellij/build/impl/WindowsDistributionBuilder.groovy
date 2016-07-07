@@ -51,20 +51,22 @@ class WindowsDistributionBuilder {
     buildWinLauncher(JvmArchitecture.x32)
     buildWinLauncher(JvmArchitecture.x64)
     buildContext.windowsDistributionCustomizer.copyAdditionalFiles(buildContext, winDistPath)
-    def customJrePath = buildContext.windowsDistributionCustomizer.bundleJre && new File(buildContext.paths.winJre).exists() ? buildContext.paths.winJre : null
-    buildWinZip(customJrePath, ".win")
-    String oracleJrePath = buildContext.paths.oracleWinJre
-    if (buildContext.windowsDistributionCustomizer.buildZipWithBundledOracleJre) {
-      if (new File(oracleJrePath, "jre").exists()) {
+
+    def arch = buildContext.windowsDistributionCustomizer.bundledJreArchitecture
+    def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    buildWinZip(jreDirectoryPath, ".win")
+    if (arch != null && buildContext.windowsDistributionCustomizer.buildZipWithBundledOracleJre) {
+      String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
+      if (oracleJrePath != null) {
         buildWinZip(oracleJrePath, "-oracle-win")
       }
       else {
-        buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE: ${oracleJrePath}/jre doesn't exist")
+        buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
       }
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext).buildInstaller(winDistPath)
+      new WinExeInstallerBuilder(buildContext, jreDirectoryPath).buildInstaller(winDistPath)
     }
   }
 
@@ -189,13 +191,13 @@ IDS_VM_OPTIONS=$vmOptions
     }
   }
 
-  private void buildWinZip(String pathToJreToBundle, String zipNameSuffix) {
+  private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = buildContext.windowsDistributionCustomizer.rootDirectoryName(buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
-      if (pathToJreToBundle != null) {
-        dirs += pathToJreToBundle
+      if (jreDirectoryPath != null) {
+        dirs += jreDirectoryPath
       }
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {

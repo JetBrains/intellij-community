@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
@@ -39,6 +40,7 @@ abstract class BuildContext {
   MacHostProperties macHostProperties
   BuildOptions options
   SignTool signTool
+  BundledJreManager bundledJreManager
 
   /**
    * Build number without product code (e.g. '162.500.10')
@@ -116,22 +118,6 @@ abstract class BuildPaths {
    * Path to a directory containing JDK (currently Java 8) which is used to compile the project
    */
   String jdkHome
-
-  /**
-   * Path to a directory containing distribution of JRE for Windows which will be bundled with the product
-   */
-  String winJre
-
-  String oracleWinJre
-  /**
-   * Path to a directory containing distribution of JRE for Linux which will be bundled with the product
-   */
-  String linuxJre
-
-  /**
-   * Path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
-   */
-  String macJreTarGz
 }
 
 interface BuildMessages {

@@ -26,10 +26,12 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final GantBuilder ant
+  private final String jreDirectoryPath
 
-  WinExeInstallerBuilder(BuildContext buildContext) {
+  WinExeInstallerBuilder(BuildContext buildContext, String jreDirectoryPath) {
     this.buildContext = buildContext
     ant = buildContext.ant
+    this.jreDirectoryPath = jreDirectoryPath
   }
 
   void buildInstaller(String winDistPath) {
@@ -47,15 +49,15 @@ class WinExeInstallerBuilder {
     ant.mkdir(dir: "$box/bin")
     ant.mkdir(dir: "$box/nsiconf")
 
-    def bundleJre = buildContext.windowsDistributionCustomizer.bundleJre
-    if (bundleJre && !new File(buildContext.paths.winJre).exists()) {
-      buildContext.messages.info("JRE won't be bundled with Windows installer because JRE directory doesn't exist: ${buildContext.paths.winJre}")
+    def bundleJre = buildContext.windowsDistributionCustomizer.bundledJreArchitecture != null
+    if (bundleJre && jreDirectoryPath == null) {
+      buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
       bundleJre = false
     }
 
     if (bundleJre) {
       ant.copy(todir: "$box/bin") {
-        fileset(dir: "${buildContext.paths.winJre}/jre") {
+        fileset(dir: "$jreDirectoryPath/jre") {
           include(name: "**/msvcr71.dll")
         }
       }
@@ -83,13 +85,7 @@ class WinExeInstallerBuilder {
       }
       if (bundleJre) {
         ant.fileset(dir: box, includes: "bin/msvcr71.dll")
-        ant.fileset(dir: buildContext.paths.winJre, includes: "jre/**/*")
-        //todo[nik] how tools.jar is excluded?
-        if (buildContext.productProperties.toolsJarRequired) {
-          ant.fileset(dir: buildContext.paths.winJre) {
-            include(name: "jre/lib/tools.jar")
-          }
-        }
+        ant.fileset(dir: jreDirectoryPath, includes: "jre/**/*")
       }
     }
 

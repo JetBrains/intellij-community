@@ -49,12 +49,13 @@ class LinuxDistributionBuilder {
     unixVMOptions()
     unixReadme()
     buildContext.linuxDistributionCustomizer.copyAdditionalFiles(buildContext, unixDistPath)
-    buildTarGz(false)
-    if (new File(buildContext.paths.linuxJre).exists()) {
-      buildTarGz(true)
+    buildTarGz(null)
+    def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+    if (jreDirectoryPath != null) {
+      buildTarGz(jreDirectoryPath)
     }
     else {
-      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE directory doesn't exist: $buildContext.paths.linuxJre")
+      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
     }
   }
 
@@ -116,17 +117,17 @@ class LinuxDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(boolean bundleJre) {
+  private void buildTarGz(String jreDirectoryPath) {
     def tarRoot = buildContext.linuxDistributionCustomizer.rootDirectoryName(buildContext.buildNumber)
-    def suffix = bundleJre ? "" : "-no-jdk"
+    def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.buildNumber)}${suffix}.tar"
     def extraBins = buildContext.linuxDistributionCustomizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
-    if (bundleJre) {
-      paths += buildContext.paths.linuxJre
+    if (jreDirectoryPath != null) {
+      paths += jreDirectoryPath
       extraBins += "jre/jre/bin/*"
     }
-    buildContext.messages.block("Build Linux tar.gz archive${bundleJre ? "" : " (without JRE)"}") {
+    buildContext.messages.block("Build Linux tar.gz archive${jreDirectoryPath != null ? "" : " (without JRE)"}") {
       buildContext.ant.tar(tarfile: tarPath, longfile: "gnu") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
