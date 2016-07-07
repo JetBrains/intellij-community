@@ -98,6 +98,9 @@ public class VcsLogFullDetailsIndex implements Disposable {
     myMapReduceIndex.dispose();
   }
 
+  protected void onNotIndexableCommit(int commit) throws StorageException {
+  }
+
   @NotNull
   public static File getStorageFile(@NotNull String kind, @NotNull String id, int version) {
     File subdir = new File(PersistentUtil.LOG_CACHE, kind);
@@ -124,6 +127,14 @@ public class VcsLogFullDetailsIndex implements Disposable {
       return new PersistentHashMap<>(PersistentUtil.getStorageFile("index-inputs-" + myName, myLogId, extension.getVersion()),
                                      EnumeratorIntegerDescriptor.INSTANCE,
                                      new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), myID));
+    }
+
+    @Override
+    protected void updateWithMap(int inputId, @NotNull UpdateData<Integer, Void> updateData) throws StorageException {
+      if (((SimpleUpdateData)updateData).getNewData().isEmpty()) {
+        onNotIndexableCommit(inputId);
+      }
+      super.updateWithMap(inputId, updateData);
     }
   }
 

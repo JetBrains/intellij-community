@@ -16,11 +16,15 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,11 +35,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex {
+  private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
   private static final int VERSION = 0;
   private static final String TRIGRAMS = "trigrams";
+  private static final int VALUE = 239;
+
+  @NotNull private final PersistentHashMap<Integer, Integer> myNoTrigramsCommits;
 
   public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
     super(logId, TRIGRAMS, VERSION, new TrigramMessageIndexer(), disposableParent);
+
+    myNoTrigramsCommits =
+      PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId, VERSION);
   }
 
   @Nullable
@@ -46,6 +57,38 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex {
     if (trigramProcessor.map.isEmpty()) return null;
 
     return getCommitsWithAllKeys(trigramProcessor.map.keySet());
+  }
+
+  @Override
+  protected void onNotIndexableCommit(int commit) throws StorageException {
+    try {
+      myNoTrigramsCommits.put(commit, VALUE);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  @Override
+  public boolean isIndexed(int commit) throws IOException {
+    return super.isIndexed(commit) || myNoTrigramsCommits.containsMapping(commit);
+  }
+
+  @Override
+  public void flush() throws StorageException {
+    super.flush();
+    myNoTrigramsCommits.force();
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    try {
+      myNoTrigramsCommits.close();
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
   public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
