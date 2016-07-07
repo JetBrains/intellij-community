@@ -77,7 +77,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myPresentation.ignoreCurrentElement(getElement());
     super.excludeElement(excludedManager);
   }
 
