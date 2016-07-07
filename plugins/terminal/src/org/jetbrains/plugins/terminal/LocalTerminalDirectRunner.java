@@ -93,11 +93,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
-    
-    for (LocalTerminalCustomizer customizer: LocalTerminalCustomizer.EP_NAME.getExtensions()) {
-      customizer.setupEnvironment(myProject, envs);
-    }
-    
     try {
       return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }
