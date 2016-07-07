@@ -279,6 +279,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  // PY-20004
+  public void testChainedComparison7() {
+    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   // PY-14002
   public void testChainedComparisonWithCommonBinaryExpression() {
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
