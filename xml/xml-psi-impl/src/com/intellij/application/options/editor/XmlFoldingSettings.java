@@ -20,54 +20,42 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 
-@State(
-  name = "XmlFoldingSettings",
-  storages = @Storage("editor.codeinsight.xml")
-)
-public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings> {
+@State(name = "XmlFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
+public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
+  private XmlFoldingSettings.State myState;
+
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
   }
 
   @Override
   public boolean isCollapseXmlTags() {
-    return COLLAPSE_XML_TAGS;
-  }
-
-  public void setCollapseXmlTags(boolean value) {
-    COLLAPSE_XML_TAGS = value;
+    return myState.COLLAPSE_XML_TAGS;
   }
 
   @Override
   public boolean isCollapseHtmlStyleAttribute() {
-    return COLLAPSE_HTML_STYLE_ATTRIBUTE;
+    return myState.COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }
 
   public boolean isCollapseEntities() {
-    return COLLAPSE_ENTITIES;
-  }
-
-  public void setCollapseEntities(boolean COLLAPSE_ENTITIES) {
-    this.COLLAPSE_ENTITIES = COLLAPSE_ENTITIES;
-  }
-
-  public void setCollapseHtmlStyleAttribute(boolean value) {
-    this.COLLAPSE_HTML_STYLE_ATTRIBUTE = value;
-  }
-
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ENTITIES = true;
-
-  @Override
-  public XmlFoldingSettings getState() {
-    return this;
+    return myState.COLLAPSE_ENTITIES;
   }
 
   @Override
-  public void loadState(final XmlFoldingSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(State state) {
+    myState = state;
+  }
+
+  public static final class State {
+    public boolean COLLAPSE_XML_TAGS = false;
+    public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
+    public boolean COLLAPSE_ENTITIES = true;
   }
 }

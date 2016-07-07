@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ package com.intellij.application.options.editor;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BeanConfigurable;
 
-public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings> implements CodeFoldingOptionsProvider {
+public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings.State> implements CodeFoldingOptionsProvider {
   public XmlCodeFoldingOptionsProvider() {
-    super(XmlFoldingSettings.getInstance());
+    super(XmlFoldingSettings.getInstance().getState());
     checkBox("COLLAPSE_XML_TAGS", ApplicationBundle.message("checkbox.collapse.xml.tags"));
     checkBox("COLLAPSE_HTML_STYLE_ATTRIBUTE", ApplicationBundle.message("checkbox.collapse.html.style.attribute"));
     checkBox("COLLAPSE_ENTITIES", ApplicationBundle.message("checkbox.collapse.entities"));
