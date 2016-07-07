@@ -1,0 +1,100 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.util;
+
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.AppExecutorUtil;
+
+import javax.management.ListenerNotFoundException;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryNotificationInfo;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
+import java.util.concurrent.Future;
+
+public class LowMemoryWatcherManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
+
+  private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
+
+  private Future<?> mySubmitted; // guarded by ourJanitor
+  private final Runnable myJanitor = new Runnable() {
+    @Override
+    public void run() {
+      // null mySubmitted before all listeners called to avoid data race when listener added in the middle of the execution and is lost
+      // this may however cause listeners to execute more than once (potentially even in parallel)
+      synchronized (myJanitor) {
+        mySubmitted = null;
+      }
+      LowMemoryWatcher.onLowMemorySignalReceived();
+    }
+  };
+
+  public LowMemoryWatcherManager() {
+    try {
+      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+        if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
+          long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
+          if (threshold > 0) {
+            bean.setUsageThreshold(threshold);
+            bean.setCollectionUsageThreshold(threshold);
+          }
+        }
+      }
+      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(myLowMemoryListener, null, null);
+    }
+    catch (Throwable e) {
+      // should not happen normally
+      LOG.info("Errors initializing LowMemoryWatcher: ", e);
+    }
+  }
+
+  private final NotificationListener myLowMemoryListener = new NotificationListener() {
+    @Override
+    public void handleNotification(Notification notification, Object __) {
+      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType()) ||
+          MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+        synchronized (myJanitor) {
+          if (mySubmitted == null) {
+            mySubmitted = AppExecutorUtil.getAppExecutorService().submit(myJanitor);
+          }
+        }
+      }
+    }
+  };
+
+  @Override
+  public void dispose() {
+    try {
+      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(myLowMemoryListener);
+    }
+    catch (ListenerNotFoundException e) {
+      LOG.error(e);
+    }
+    synchronized (myJanitor) {
+      if (mySubmitted != null) {
+        mySubmitted.cancel(false);
+        mySubmitted = null;
+      }
+    }
+
+    LowMemoryWatcher.stopAll();
+  }
+}

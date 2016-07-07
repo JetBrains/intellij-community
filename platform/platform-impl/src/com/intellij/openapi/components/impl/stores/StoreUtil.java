@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,11 @@ import org.jetbrains.annotations.Nullable;
 public final class StoreUtil {
   private static final Logger LOG = Logger.getInstance(StoreUtil.class);
 
-  private StoreUtil() {
-  }
+  private StoreUtil() { }
 
   public static void save(@NotNull IComponentStore stateStore, @Nullable Project project) {
-    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
+    Thread currentThread = Thread.currentThread();
+    ShutDownTracker.getInstance().registerStopperThread(currentThread);
     try {
       stateStore.save(new SmartList<Pair<SaveSession, VirtualFile>>());
     }
@@ -77,7 +77,7 @@ public final class StoreUtil {
       }
     }
     finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+      ShutDownTracker.getInstance().unregisterStopperThread(currentThread);
     }
   }
 

@@ -36,10 +36,13 @@ public interface ProjectLifecycleListener {
   void afterProjectClosed(@NotNull Project project);
 
   abstract class Adapter implements ProjectLifecycleListener {
+    @Override
     public void projectComponentsInitialized(@NotNull Project project) { }
 
+    @Override
     public void beforeProjectLoaded(@NotNull Project project) { }
 
+    @Override
     public void afterProjectClosed(@NotNull Project project) { }
   }
 }

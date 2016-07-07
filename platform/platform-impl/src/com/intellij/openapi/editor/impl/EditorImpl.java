@@ -325,6 +325,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
 
+  private boolean myUseEditorAntialiasing = true;
+
   private final ImmediatePainter myImmediatePainter;
 
   static {
@@ -379,17 +381,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter, areRenderersInvolved(highlighter), 
-                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
+                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         attributesChanged(highlighter, areRenderersInvolved(highlighter), 
-                          EditorUtil.attributesImpactFontStyle(highlighter.getTextAttributes()));
+                          EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
 
         if (myUseNewRendering && renderersChanged) {
@@ -413,14 +415,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-        if (myUseNewRendering && start != end) {
+        if (myUseNewRendering && start != end && fontStyleOrColorChanged) {
           myView.invalidateRange(start, end);
         }
-        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        }
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
         if (errorStripeNeedsRepaint) {
-          ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+          if (myFoldingModel.isInBatchFoldingOperation()) {
+            myErrorStripeNeedsRepaint = true;
+          }
+          else {
+            myMarkupModel.repaint(start, end);
+          }
         }
 
         if (!myUseNewRendering && renderersChanged) {
@@ -1917,6 +1926,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myImmediatePainter.beforeUpdate(e);
+  }
+
+  void invokeDelayedErrorStripeRepaint() {
+    if (myErrorStripeNeedsRepaint) {
+      myMarkupModel.repaint(-1, -1);
+      myErrorStripeNeedsRepaint = false;
+    }
   }
 
   private void changedUpdate(DocumentEvent e) {
@@ -5455,7 +5471,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
       boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
       boolean newAvailable = filter == null || filter.value(highlighter);
-      if (oldAvailable != newAvailable) myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, false);
+      if (oldAvailable != newAvailable) {
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
+                                                EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
+      }
     }
   }
 
@@ -5723,8 +5742,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyMouseAdapter extends MouseAdapter {
-    private boolean mySelectionTweaked;
-
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
       requestFocus();
@@ -5766,7 +5783,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       clearDraggedRange();
 
 
-      mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
@@ -5824,9 +5840,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMultiSelectionInProgress = false;
 
       myDragOnGutterSelectionStartLine = -1;
-      if (!mySelectionTweaked) {
-        tweakSelectionIfNecessary(e);
-      }
       if (e.isConsumed()) {
         return;
       }
@@ -5926,10 +5939,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
             eventArea == EditorMouseEventArea.ANNOTATIONS_AREA ||
             eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          if (tweakSelectionIfNecessary(e)) {
-            mySelectionTweaked = true;
-          }
-          else {
+          if (!tweakSelectionIfNecessary(e)) {
             myGutterComponent.mousePressed(e);
           }
           if (e.isConsumed()) return false;
@@ -6167,6 +6177,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     e.consume();
     return true;
+  }
+
+  public boolean useEditorAntialiasing() {
+    return myUseEditorAntialiasing;
+  }
+
+  public void setUseEditorAntialiasing(boolean value) {
+    myUseEditorAntialiasing = value;
   }
 
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);

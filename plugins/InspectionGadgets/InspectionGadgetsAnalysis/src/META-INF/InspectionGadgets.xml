@@ -1086,7 +1086,7 @@
                      implementationClass="com.siyeh.ig.inheritance.TypeParameterExtendsFinalClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.inheritance.MissingOverrideAnnotationInspection" cleanupTool="true"/>
 
     <!--group.names.initialization.issues-->

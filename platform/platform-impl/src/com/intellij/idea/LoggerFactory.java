@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.StringReader;
@@ -35,8 +36,9 @@ public class LoggerFactory implements Logger.Factory {
 
   private LoggerFactory() { }
 
+  @NotNull
   @Override
-  public synchronized Logger getLoggerInstance(String name) {
+  public synchronized Logger getLoggerInstance(@NotNull String name) {
     try {
       if (!myInitialized) {
         init();

@@ -242,7 +242,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return mySubstrateRef.getContainingFile();
     }
     catch (PsiInvalidElementAccessException e) {
-      throw new PsiInvalidElementAccessException(this, e);
+      if (PsiInvalidElementAccessException.getInvalidationTrace(this) != null) {
+        throw new PsiInvalidElementAccessException(this, e);
+      } else {
+        throw e;
+      }
     }
   }
 

@@ -19,10 +19,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
@@ -35,12 +34,10 @@ import java.awt.*;
 
 public class RainbowHighlighter {
   private final float[] myFloats;
-  @NotNull private final EditorColorsScheme myColorsScheme;
-  @NotNull private final Color myDefaultBackground;
+  @NotNull private final TextAttributesScheme myColorsScheme;
 
-  public RainbowHighlighter(@Nullable EditorColorsScheme colorsScheme, @Nullable Color background) {
+  public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
-    myDefaultBackground = background != null ? background : myColorsScheme.getDefaultBackground();
     float[] components = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT).getForegroundColor().getRGBColorComponents(null);
     myFloats = Color.RGBtoHSB((int)(255 * components[0]), (int)(255 * components[0]), (int)(255 * components[0]), null);
   }
@@ -58,21 +55,8 @@ public class RainbowHighlighter {
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
     //System.out.println("name = " + name + " \tv=" + v);
-    final Color color = Color.getHSBColor(v, 0.7f, myFloats[2] + .3f);
 
-    Color bkColor = origin.getBackgroundColor();
-    if (bkColor == null) {
-      bkColor = myColorsScheme.getAttributes(HighlighterColors.TEXT).getBackgroundColor();
-    }
-    if (bkColor == null) {
-      bkColor = myDefaultBackground;
-    }
-    return TextAttributes.fromFlyweight(origin
-                                          .getFlyweight()
-                                          .withForeground(color)
-    //fixme: uta: foreground color is not activated for local variables without background color reset
-                                          .withBackground(bkColor)
-    );
+    return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(Color.getHSBColor(v, 0.7f, myFloats[2] + .3f)));
   }
 
   public HighlightInfo getInfo(

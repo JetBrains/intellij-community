@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,17 +64,22 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static boolean myAltPressed;
 
   public DarculaLaf() {
+    base = createBaseLookAndFeel();
+  }
+
+  protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
       if (SystemInfo.isWindows || SystemInfo.isLinux) {
-        base = new IdeaLaf();
+        return new IdeaLaf();
       } else {
         final String name = UIManager.getSystemLookAndFeelClassName();
-        base = (BasicLookAndFeel)Class.forName(name).newInstance();
+        return (BasicLookAndFeel)Class.forName(name).newInstance();
       }
     }
     catch (Exception e) {
       log(e);
     }
+    return null;
   }
 
   private void callInit(String method, UIDefaults defaults) {
@@ -89,7 +94,7 @@ public class DarculaLaf extends BasicLookAndFeel {
   }
 
   @SuppressWarnings("UnusedParameters")
-  private static void log(Exception e) {
+  protected static void log(Exception e) {
 //    everything is gonna be alright
     e.printStackTrace();
   }

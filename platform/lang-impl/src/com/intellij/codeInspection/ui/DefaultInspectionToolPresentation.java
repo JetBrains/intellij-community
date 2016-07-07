@@ -644,7 +644,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                   final QuickFixAction quickFixAction = result.get(clazz);
                   try {
                     String familyName = fix.getFamilyName();
-                    ((LocalQuickFixWrapper)quickFixAction).setText(familyName);
+                    ((LocalQuickFixWrapper)quickFixAction).setText(StringUtil.escapeMnemonics(familyName));
                   }
                   catch (AbstractMethodError e) {
                     //for plugin compatibility

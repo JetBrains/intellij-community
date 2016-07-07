@@ -1523,9 +1523,13 @@ public class BuildManager implements Disposable {
             final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
             for (Module module : compileContext.getCompileScope().getAffectedModules()) {
               if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-                final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-                if (path != null) {
-                  candidates.add(path);
+                final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
+                if (productionPath != null) {
+                  candidates.add(productionPath);
+                }
+                final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
+                if (testsPath != null) {
+                  candidates.add(testsPath);
                 }
               }
             }

@@ -17,7 +17,6 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,17 +80,8 @@ public class DefaultLogger extends Logger {
     //noinspection ThrowableResultOfMethodCallIgnored
     Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
     if (rootCause instanceof ExceptionWithAttachments) {
-      return "\nAttachments:" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(),
-                                                new Function<Attachment, String>() {
-                                                  @Override
-                                                  public String fun(Attachment attachment) {
-                                                    return attachment.getPath() + "\n" + attachment.getDisplayText();
-                                                  }
-                                                },
-                                                "\n----\n");
+      return "\nAttachments:" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING, "\n----\n");
     }
     return "";
   }
-
-
 }

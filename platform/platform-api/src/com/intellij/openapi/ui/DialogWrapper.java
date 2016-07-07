@@ -47,6 +47,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -434,7 +435,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui");
+    return UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"));
   }
 
   /**
@@ -543,11 +544,7 @@ public abstract class DialogWrapper {
     }
 
     if (hasHelpToMoveToLeftSide) {
-      JButton helpButton = new JButton(getHelpAction());
-      helpButton.putClientProperty("JButton.buttonType", "help");
-      helpButton.setText("");
-      helpButton.setMargin(insets);
-      helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
+      JButton helpButton = createHelpButton(insets);
       panel.add(helpButton, BorderLayout.WEST);
     }
 
@@ -578,6 +575,32 @@ public abstract class DialogWrapper {
       panel.setBorder(JBUI.Borders.emptyTop(8));
     }
     return panel;
+  }
+
+  @NotNull
+  protected JButton createHelpButton(Insets insets) {
+    final JButton helpButton;
+    if ((SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+      helpButton = new JButton(getHelpAction()) {
+        @Override
+        public void paint(Graphics g) {
+          IconUtil.paintInCenterOf(this, g, AllIcons.Windows.WinHelp);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+          return new Dimension(AllIcons.Windows.WinHelp.getIconWidth(), AllIcons.Windows.WinHelp.getIconHeight());
+        }
+      };
+      helpButton.setOpaque(false);
+    } else {
+      helpButton = new JButton(getHelpAction());
+    }
+    helpButton.putClientProperty("JButton.buttonType", "help");
+    helpButton.setText("");
+    helpButton.setMargin(insets);
+    helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
+    return helpButton;
   }
 
   protected boolean shouldAddErrorNearButtons() {

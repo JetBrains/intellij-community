@@ -79,14 +79,14 @@ public class HierarchyServiceImpl extends HierarchyService {
   }
 
   private void loadUnits(BitSet files, int[] indexKeys, StubEnter stubEnter) {
-    FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit> processor = new FileBasedIndexImpl.IdValueProcessor<IndexTree.Unit>() {
+    FileBasedIndexImpl.IdValueProcessor<SerializedUnit> processor = new FileBasedIndexImpl.IdValueProcessor<SerializedUnit>() {
       final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       int count = 0;
       @Override
-      public boolean process(int fileId, IndexTree.Unit unit) {
+      public boolean process(int fileId, SerializedUnit unit) {
         if (indicator != null && ++count % 128 == 0) indicator.checkCanceled();
         if (files.get(fileId)) {
-          stubEnter.unitEnter(unit, fileId);
+          unit.readUnit(stubEnter, fileId);
         }
         return true;
       }

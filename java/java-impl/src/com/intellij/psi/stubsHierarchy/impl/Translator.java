@@ -19,11 +19,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 
 public class Translator {
-  private static final Key<long[]> DEFAULT_JAVA_IMPORTS_KEY = Key.create("java_imports");
-  private static final Key<long[]> DEFAULT_GROOVY_IMPORTS_KEY = Key.create("groovy_imports");
+  private static final Key<Import[]> DEFAULT_JAVA_IMPORTS_KEY = Key.create("java_imports");
+  private static final Key<Import[]> DEFAULT_GROOVY_IMPORTS_KEY = Key.create("groovy_imports");
 
-  private static long[] getDefaultJavaImports(NameEnvironment nameEnvironment) {
-    long[] imports = nameEnvironment.getUserData(DEFAULT_JAVA_IMPORTS_KEY);
+  private static Import[] getDefaultJavaImports(NameEnvironment nameEnvironment) {
+    Import[] imports = nameEnvironment.getUserData(DEFAULT_JAVA_IMPORTS_KEY);
     if (imports == null) {
       imports = createDefaultJavaImports(nameEnvironment);
       nameEnvironment.putUserData(DEFAULT_JAVA_IMPORTS_KEY, imports);
@@ -31,14 +31,14 @@ public class Translator {
     return imports;
   }
 
-  private static long[] createDefaultJavaImports(NameEnvironment nameEnvironment) {
-    return new long[]{
-      Imports.mkImport(nameEnvironment.fromString("java.lang", true), false, true, 0)
+  private static Import[] createDefaultJavaImports(NameEnvironment nameEnvironment) {
+    return new Import[]{
+      importPackage(nameEnvironment, "java.lang")
     };
   }
 
-  private static long[] getDefaultGroovyImports(NameEnvironment nameEnvironment) {
-    long[] imports = nameEnvironment.getUserData(DEFAULT_GROOVY_IMPORTS_KEY);
+  private static Import[] getDefaultGroovyImports(NameEnvironment nameEnvironment) {
+    Import[] imports = nameEnvironment.getUserData(DEFAULT_GROOVY_IMPORTS_KEY);
     if (imports == null) {
       imports = createDefaultGroovyImports(nameEnvironment);
       nameEnvironment.putUserData(DEFAULT_GROOVY_IMPORTS_KEY, imports);
@@ -46,20 +46,24 @@ public class Translator {
     return imports;
   }
 
-  private static long[] createDefaultGroovyImports(NameEnvironment nameEnvironment) {
-    return new long[] {
-      Imports.mkImport(nameEnvironment.fromString("java.lang", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.util", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.io", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.net", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("groovy.lang", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("groovy.util", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.math.BigInteger", true), false, true, 0),
-      Imports.mkImport(nameEnvironment.fromString("java.math.BigDecimal", true), false, true, 0),
+  private static Import[] createDefaultGroovyImports(NameEnvironment nameEnvironment) {
+    return new Import[] {
+      importPackage(nameEnvironment, "java.lang"),
+      importPackage(nameEnvironment, "java.util"),
+      importPackage(nameEnvironment, "java.io"),
+      importPackage(nameEnvironment, "java.net"),
+      importPackage(nameEnvironment, "groovy.lang"),
+      importPackage(nameEnvironment, "groovy.util"),
+      new Import(nameEnvironment.fromString("java.math"), IndexTree.hashIdentifier("BigInteger"), false),
+      new Import(nameEnvironment.fromString("java.math"), IndexTree.hashIdentifier("BigDecimal"), false),
     };
   }
 
-  public static long[] getDefaultImports(byte type, NameEnvironment nameEnvironment) {
+  private static Import importPackage(NameEnvironment nameEnvironment, String qname) {
+    return new Import(nameEnvironment.fromString(qname), 0, false);
+  }
+
+  public static Import[] getDefaultImports(byte type, NameEnvironment nameEnvironment) {
     if (type == IndexTree.JAVA)
       return getDefaultJavaImports(nameEnvironment);
     if (type == IndexTree.GROOVY)

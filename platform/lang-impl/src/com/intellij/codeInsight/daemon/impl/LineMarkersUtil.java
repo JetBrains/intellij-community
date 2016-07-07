@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,6 +39,8 @@ import java.util.Collection;
 import java.util.List;
 
 class LineMarkersUtil {
+  private static final Logger LOG = Logger.getInstance(LineMarkersUtil.class);
+
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
                                      @NotNull Segment bounds,
@@ -47,7 +49,7 @@ class LineMarkersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-    List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(Math.max(markers.size(), oldMarkers.size()));
+    List<LineMarkerInfo> result = new ArrayList<>(Math.max(markers.size(), oldMarkers.size()));
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     for (LineMarkerInfo info : oldMarkers) {
@@ -62,6 +64,10 @@ class LineMarkersUtil {
       else {
         result.add(info);
       }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+"); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
     for (final LineMarkerInfo info : markers) {

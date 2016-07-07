@@ -52,6 +52,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.util.DocumentUtil;
@@ -775,6 +776,18 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return WrapObjectWithOptionalOfNullableFix.createFix(type, expression);
+  }
+
+  @Override
+  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiForeachStatement) {
+      final PsiType type = expression.getType();
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+        return new ReplaceIteratorForEachLoopWithIteratorForLoopFix((PsiForeachStatement)parent);
+      }
+    }
+    return null;
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {

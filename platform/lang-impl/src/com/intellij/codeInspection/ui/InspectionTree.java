@@ -303,37 +303,9 @@ public class InspectionTree extends Tree {
   }
 
   public int getSelectedProblemCount() {
-    if (getSelectionCount() == 0) return 0;
-    final TreePath[] paths = getSelectionPaths();
-    LOG.assertTrue(paths != null);
-    Set<InspectionTreeNode> result = new HashSet<>();
-    MultiMap<InspectionTreeNode, InspectionTreeNode> rootDependencies = new MultiMap<>();
-    for (TreePath path : paths) {
-
-      final InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
-      final Collection<InspectionTreeNode> visitedChildren = rootDependencies.get(node);
-      for (InspectionTreeNode child : visitedChildren) {
-        result.remove(child);
-      }
-
-      boolean needToAdd = true;
-      for (int i = 0; i < path.getPathCount() - 1; i++) {
-        final InspectionTreeNode parent = (InspectionTreeNode) path.getPathComponent(i);
-        rootDependencies.putValue(parent, node);
-        if (result.contains(parent)) {
-          needToAdd = false;
-          break;
-        }
-      }
-
-      if (needToAdd) {
-        result.add(node);
-      }
-    }
-
     int count = 0;
-    for (InspectionTreeNode node : result) {
-      count += node.getProblemCount();
+    for (TreePath path : TreeUtil.selectMaximals(getSelectionPaths())) {
+      count += ((InspectionTreeNode)path.getLastPathComponent()).getProblemCount();
     }
     return count;
   }

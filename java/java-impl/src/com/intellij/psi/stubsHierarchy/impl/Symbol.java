@@ -21,18 +21,16 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Java symbols needed for hierarchy building. Mostly classes ({@link ClassSymbol}) or packages ({@link PackageSymbol}),
  * but other {@link MemberSymbol}s are also sometimes needed for working with anonymous or local classes.
  */
-public abstract class Symbol {
-  public int myFlags;
-  public int myShortName;
-  public final Symbol myOwner;
+abstract class Symbol {
+  int myFlags;
+  @ShortName final int myShortName;
+  final Symbol myOwner;
 
   public Symbol(int flags, Symbol owner, int name) {
     this.myFlags = flags;
@@ -47,10 +45,6 @@ public abstract class Symbol {
 
   ClassSymbol[] getMembers() {
     return ClassSymbol.EMPTY_ARRAY;
-  }
-
-  public boolean isStatic() {
-    return BitUtil.isSet(myFlags, IndexTree.STATIC);
   }
 
   public boolean isPackage() {
@@ -74,9 +68,9 @@ public abstract class Symbol {
   }
 
   public static class PackageSymbol extends Symbol {
-    final QualifiedName myQualifiedName;
+    @QNameHash final int myQualifiedName;
 
-    public PackageSymbol(Symbol owner, QualifiedName fullname, int name) {
+    public PackageSymbol(Symbol owner, @QNameHash int fullname, int name) {
       super(IndexTree.PACKAGE, owner, name);
       myQualifiedName = fullname;
     }
@@ -85,7 +79,6 @@ public abstract class Symbol {
   /** A class for class symbols
    */
   public static class ClassSymbol extends MemberSymbol {
-    private static final int HIERARCHY_INCOMPLETE = 1 << 20;
     private static final int CONNECT_STARTED = 1 << 21;
     public static final ClassSymbol[] EMPTY_ARRAY = new ClassSymbol[0];
 
@@ -101,8 +94,10 @@ public abstract class Symbol {
                 @CompactArray(QualifiedName.class) Object supers) {
       super(flags | IndexTree.CLASS, owner, name);
       this.myAnchorId = anchorId;
-      this.mySuperClasses = supers;
-      this.myUnitInfo = unitInfo;
+
+      boolean incomplete = isHierarchyIncomplete();
+      this.mySuperClasses = incomplete ? null : supers;
+      this.myUnitInfo = incomplete ? null : unitInfo;
     }
 
     @Override
@@ -150,7 +145,7 @@ public abstract class Symbol {
 
     void markHierarchyIncomplete() {
       setSupers(Collections.emptySet());
-      myFlags = BitUtil.set(myFlags, HIERARCHY_INCOMPLETE, true);
+      myFlags = BitUtil.set(myFlags, IndexTree.SUPERS_UNRESOLVED, true);
     }
 
     void setSupers(Set<ClassSymbol> supers) {
@@ -161,7 +156,7 @@ public abstract class Symbol {
     }
 
     boolean isHierarchyIncomplete() {
-      return BitUtil.isSet(myFlags, HIERARCHY_INCOMPLETE);
+      return BitUtil.isSet(myFlags, IndexTree.SUPERS_UNRESOLVED);
     }
 
     boolean hasAmbiguousSupers() {
@@ -186,7 +181,7 @@ public abstract class Symbol {
     @CompactArray(ClassSymbol.class) private Object myMembers = null;
 
     MemberSymbol(Symbol owner) {
-      super(IndexTree.MEMBER, owner, NamesEnumerator.NO_NAME);
+      super(IndexTree.MEMBER, owner, NameEnvironment.NO_NAME);
     }
 
     MemberSymbol(int flags, Symbol owner, int name) {
@@ -199,12 +194,18 @@ public abstract class Symbol {
              (ClassSymbol[])myMembers;
     }
 
-    void setMembers(ClassSymbol[] members) {
-      myMembers = members.length == 0 ? null : members.length == 1 ? members[0] : members;
+    void setMembers(List<ClassSymbol> members) {
+      myMembers = members.isEmpty() ? null : members.size() == 1 ? members.get(0) : toSortedArray(members);
+    }
+
+    private static ClassSymbol[] toSortedArray(List<ClassSymbol> members) {
+      ClassSymbol[] array = members.toArray(new ClassSymbol[members.size()]);
+      Arrays.sort(array, CLASS_SYMBOL_BY_NAME_COMPARATOR);
+      return array;
     }
   }
 
-  public static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
+  private static final Comparator<ClassSymbol> CLASS_SYMBOL_BY_NAME_COMPARATOR = (s1, s2) -> {
     int name1 = s1.myShortName;
     int name2 = s2.myShortName;
     return (name1 < name2) ? -1 : ((name1 == name2) ? 0 : 1);

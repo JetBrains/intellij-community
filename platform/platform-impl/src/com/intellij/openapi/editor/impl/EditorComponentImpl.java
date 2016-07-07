@@ -19,6 +19,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -130,8 +131,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
-      return myEditor.getVirtualFile() == null ? myEditor : null;
+      return myEditor;
     }
     if (CommonDataKeys.CARET.is(dataId)) {
       return myEditor.getCaretModel().getCurrentCaret();
@@ -222,7 +222,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     try {
       Graphics2D gg = (Graphics2D)g;
       UIUtil.setupComposite(gg);
-      EditorUIUtil.setupAntialiasing(gg);
+      if (myEditor.useEditorAntialiasing()) {
+        EditorUIUtil.setupAntialiasing(gg);
+      }
+      else {
+        UISettings.setupAntialiasing(gg);
+      }
       myEditor.paint(gg);
     }
     finally {

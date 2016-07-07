@@ -39,6 +39,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -200,6 +201,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void onDone(boolean isExcludeAction) {
         if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+          myTree.revalidate();
+          myTree.repaint();
+        } else {
           myTree.queueUpdate();
         }
         syncRightPanel();
@@ -364,7 +368,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private JComponent createToolbar(final DefaultActionGroup specialGroup) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false);
-    toolbar.setTargetComponent(this);
+    //toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
 
@@ -667,7 +671,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (app.isUnitTestMode()) {
       buildAction.run();
     } else {
-      app.executeOnPooledThread(() -> app.runReadAction(buildAction));
+      app.executeOnPooledThread(buildAction);
     }
   }
 
@@ -718,12 +722,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();
-          if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-            addTool(toolWrapper,
-                    profile.getErrorLevel(key, state.getScope(myProject), myProject),
-                    isGroupedBySeverity,
-                    singleInspectionRun);
-          }
+          LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
+          ReadAction.run(() -> {
+            if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
+              addTool(toolWrapper,
+                      profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                      isGroupedBySeverity,
+                      singleInspectionRun);
+            }
+          });
         }
       }
     }

@@ -196,6 +196,20 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   @SuppressWarnings("Duplicates")
+  public void testOneOfSelectError() throws Exception {
+    final List<String> subSchemas = new ArrayList<String>();
+    subSchemas.add("{\"type\": \"string\",\n" +
+                   "          \"enum\": [\n" +
+                   "            \"off\", \"warn\", \"error\"\n" +
+                   "          ]}");
+    subSchemas.add("{\"type\": \"integer\"}");
+    final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
+    testImpl(schema, "{\"prop\": \"off\"}");
+    testImpl(schema, "{\"prop\": 12}");
+    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">\"wrong\"</warning>}");
+  }
+
+  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<String>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
 import java.io.File;
@@ -41,6 +42,20 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   protected String getPrefix() {
     return isWindowsNativeLook() ? "intellijlaf_native" : "intellijlaf";
+  }
+
+  @Override
+  protected BasicLookAndFeel createBaseLookAndFeel() {
+    if (isWindowsNativeLook()) {
+      try {
+        final String name = UIManager.getSystemLookAndFeelClassName();
+        return (BasicLookAndFeel)Class.forName(name).newInstance();
+      }
+      catch (Exception e) {
+        log(e);
+      }
+    }
+    return super.createBaseLookAndFeel();
   }
 
   @Override

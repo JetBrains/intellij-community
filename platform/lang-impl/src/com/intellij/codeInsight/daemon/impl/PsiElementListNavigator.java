@@ -145,7 +145,7 @@ public class PsiElementListNavigator {
       setCancelCallback(() -> {
         HintUpdateSupply.hideHint(list);
         if (listUpdaterTask != null) {
-          return listUpdaterTask.cancelTask();
+          listUpdaterTask.cancelTask();
         }
         return true;
       });

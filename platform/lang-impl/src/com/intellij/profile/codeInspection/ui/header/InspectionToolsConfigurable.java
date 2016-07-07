@@ -161,6 +161,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myProfiles.getProfilesComboBox().selectProfile(model);
   }
 
+  protected boolean setActiveProfileAsDefaultOnApply() {
+    return true;
+  }
+
   @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
@@ -529,7 +533,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       else {
         final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
         panel.apply();
-        if (panel == selectedPanel) {
+        if (setActiveProfileAsDefaultOnApply() && panel == selectedPanel) {
           applyRootProfile(panel.getCurrentProfileName(), panel.isProjectLevel());
         }
       }

@@ -16,6 +16,8 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,11 +36,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
+  @NotNull private final String myName;
+  private final LowMemoryWatcherManager myLowMemoryWatcherManager = new LowMemoryWatcherManager();
   private Consumer<Thread> newThreadListener;
   private final AtomicInteger counter = new AtomicInteger();
 
   private static class Holder {
-    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService();
+    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
   }
 
   @NotNull
@@ -46,8 +50,9 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return Holder.INSTANCE;
   }
 
-  AppScheduledExecutorService() {
+  AppScheduledExecutorService(@NotNull final String name) {
     super(new BackendThreadPoolExecutor(), new AppDelayQueue());
+    myName = name;
     ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
       @NotNull
       @Override
@@ -98,6 +103,8 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public void shutdownAppScheduledExecutorService() {
+    // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
+    Disposer.dispose(myLowMemoryWatcherManager);
     delayQueue.shutdown(); // shutdown delay queue first to avoid rejected execution exceptions in Alarm
     doShutdown();
   }
@@ -105,7 +112,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   @NotNull
   @TestOnly
   public String statistics() {
-    return "app threads created counter = " + counter;
+    return myName + " threads created counter = " + counter;
   }
 
   public int getBackendPoolExecutorSize() {
@@ -120,18 +127,22 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor() {
-      super(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>());
     }
 
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in " + t+" ("+System.identityHashCode(t)+")");
+        LOG.trace("beforeExecute " + BoundedTaskExecutor.info(r) + " in " + t);
       }
     }
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("afterExecute  " + BoundedTaskExecutor.info(r) + " in " + Thread.currentThread());
+      }
+
       if (t != null) {
         LOG.error("Worker exited due to exception", t);
       }

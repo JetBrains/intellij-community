@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -122,7 +123,7 @@ public class TemplateState implements Disposable {
       @Override
       public void itemSelected(LookupEvent event) {
         if (isCaretOutsideCurrentSegment()) {
-          gotoEnd(true); 
+          gotoEnd(true);
         }
       }
     };
@@ -205,7 +206,7 @@ public class TemplateState implements Disposable {
       }
       myLookupListener = null;
     }
-    
+
     myEditorDocumentListener = null;
     myCommandListener = null;
     myCaretListener = null;
@@ -856,7 +857,12 @@ public class TemplateState implements Disposable {
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
-    String oldText = myDocument.getCharsSequence().subSequence(start, end).toString();
+    TextRange range = TextRange.create(start, end);
+    if (!TextRange.from(0, myDocument.getCharsSequence().length()).contains(range)) {
+      LOG.error("Diagnostic for EA-54980. Can't extract " + range + " range. " + presentTemplate(myTemplate),
+                AttachmentFactory.createAttachment(myDocument));
+    }
+    String oldText = range.subSequence(myDocument.getCharsSequence()).toString();
 
     if (!oldText.equals(newValue)) {
       mySegments.setNeighboursGreedy(segmentNumber, false);
@@ -915,6 +921,27 @@ public class TemplateState implements Disposable {
     setCurrentVariableNumber(nextVariableNumber);
     focusCurrentExpression();
     currentVariableChanged(oldVar);
+  }
+
+  public void considerNextTabOnLookupItemSelected(LookupElement item) {
+    if (item != null) {
+      ExpressionContext context = getCurrentExpressionContext();
+      for (TemplateCompletionProcessor processor : Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
+        if (!processor.nextTabOnItemSelected(context, item)) {
+          return;
+        }
+      }
+    }
+    TextRange range = getCurrentVariableRange();
+    if (range != null && range.getLength() > 0) {
+      int caret = myEditor.getCaretModel().getOffset();
+      if (caret == range.getEndOffset()) {
+        nextTab();
+      }
+      else if (caret > range.getEndOffset()) {
+        gotoEnd(true);
+      }
+    }
   }
 
   private void lockSegmentAtTheSameOffsetIfAny() {

@@ -24,6 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
+
+import java.util.List;
 
 public class BuildStubsHierarchyAction extends InheritanceAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction");
@@ -39,8 +42,10 @@ public class BuildStubsHierarchyAction extends InheritanceAction {
     ThrowableComputable<ClassHierarchy, RuntimeException> computable = () -> ReadAction.compute(service::getHierarchy);
     ClassHierarchy hierarchy = ProgressManager.getInstance().runProcessWithProgressSynchronously(computable, "Building Hierarchy", false, project);
     long elapsed = System.currentTimeMillis() - start;
+    List<? extends SmartClassAnchor> covered = hierarchy.getCoveredClasses();
     LOG.info("Building stub hierarchy took " + elapsed + " ms" +
              "; classes=" + hierarchy.getAllClasses().size() +
-             "; covered=" + hierarchy.getCoveredClasses().size());
+             "; covered=" + covered.size() +
+             "; ambiguous=" + covered.stream().filter(hierarchy::hasAmbiguousSupers).count());
   }
 }

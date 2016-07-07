@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,7 +27,6 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -116,14 +113,6 @@ public class VcsInitialization implements Disposable {
     Future<?> future = myFuture;
     if (future != null) {
       future.cancel(false);
-      // have to wait for task completion to avoid running it in background for closed project
-      long start = System.currentTimeMillis();
-      while (myIndicator.isRunning() && System.currentTimeMillis() < start + 10000) {
-        TimeoutUtil.sleep(10);
-      }
-      if (myIndicator.isRunning()) {
-        LOG.error("Failed to wait for completion if VCS initialization. ", new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
-      }
     }
   }
 }

@@ -184,7 +184,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         HintUpdateSupply.hideHint(list);
         final ListBackgroundUpdaterTask task = gotoData.listUpdaterTask;
         if (task != null) {
-          return task.cancelTask();
+          task.cancelTask();
         }
         return true;
       }).

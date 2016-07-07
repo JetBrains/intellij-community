@@ -61,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("A quick brown fox");
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().clickAt(0, 1);
-    mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
+    mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
     checkResultByText("A<selection> q<caret></selection>uick brown fox");
   }
 
@@ -404,5 +404,12 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(1, highlighters.length);
     assertEquals(7, highlighters[0].getStartOffset());
     assertEquals(8, highlighters[0].getEndOffset());
+  }
+
+  public void testShiftPressedBeforeDragOverLineNumbersIsFinished() throws Exception {
+    initText("abc\ndef\nghi");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
+    mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
+    checkResultByText("<selection>abc\ndef\nghi</selection>");
   }
 }

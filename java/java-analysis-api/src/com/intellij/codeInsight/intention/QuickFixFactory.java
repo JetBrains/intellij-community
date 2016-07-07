@@ -274,4 +274,6 @@ public abstract class QuickFixFactory {
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     throw new UnsupportedOperationException();
   }
+
+  public abstract IntentionAction createNotIterableForEachLoopFix(PsiExpression expression);
 }

@@ -46,8 +46,9 @@ public class TestLoggerFactory implements Logger.Factory {
 
   private TestLoggerFactory() { }
 
+  @NotNull
   @Override
-  public synchronized Logger getLoggerInstance(final String name) {
+  public synchronized Logger getLoggerInstance(@NotNull final String name) {
     if (!myInitialized) {
       init();
     }

@@ -26,6 +26,7 @@ import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -71,7 +72,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   private static BitSet calcAnonymous(ClassSymbol[] classSymbols) {
     BitSet answer = new BitSet();
     for (ClassSymbol symbol : classSymbols) {
-      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NamesEnumerator.NO_NAME) {
+      if (!symbol.isHierarchyIncomplete() && symbol.myShortName == NameEnvironment.NO_NAME) {
         answer.set(symbol.myAnchorId);
       }
     }
@@ -112,11 +113,15 @@ public class SingleClassHierarchy extends ClassHierarchy {
   @NotNull
   @Override
   public SmartClassAnchor[] getDirectSubtypeCandidates(@NotNull PsiClass psiClass) {
-    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-    if (!(vFile instanceof VirtualFileWithId)) return StubClassAnchor.EMPTY_ARRAY;
-
-    SmartClassAnchor anchor = forPsiClass(((VirtualFileWithId)vFile).getId(), psiClass);
+    SmartClassAnchor anchor = findAnchor(psiClass);
     return anchor == null ? StubClassAnchor.EMPTY_ARRAY : getDirectSubtypeCandidates(anchor);
+  }
+
+  @Override
+  @Nullable
+  public SmartClassAnchor findAnchor(@NotNull PsiClass psiClass) {
+    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+    return vFile instanceof VirtualFileWithId ? forPsiClass(((VirtualFileWithId)vFile).getId(), psiClass) : null;
   }
 
   @NotNull

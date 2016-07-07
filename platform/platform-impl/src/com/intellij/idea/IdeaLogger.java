@@ -40,7 +40,7 @@ import java.io.LineNumberReader;
 /**
  * @author Mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class IdeaLogger extends Log4jBasedLogger {
   private static ApplicationInfoProvider ourApplicationInfoProvider = getIdeaInfoProvider();
 
@@ -53,11 +53,11 @@ public class IdeaLogger extends Log4jBasedLogger {
     return ourCompilationTimestamp;
   }
 
-  private static String ourCompilationTimestamp;
+  private static final String ourCompilationTimestamp;
 
   @NonNls private static final String COMPILATION_TIMESTAMP_RESOURCE_NAME = "/.compilation-timestamp";
 
-  private static ThrowableRenderer ourThrowableRenderer = t -> {
+  private static final ThrowableRenderer ourThrowableRenderer = t -> {
     String[] defaultRes = DefaultThrowableRenderer.render(t);
     int maxStackSize = 1024;
     int maxExtraSize = 256;
@@ -73,24 +73,22 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   static {
     InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
+    String stamp = null;
     if (stream != null) {
       try {
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
-        try {
+        try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream))) {
           String s = reader.readLine();
           if (s != null) {
-            ourCompilationTimestamp = s.trim();
+            stamp = s.trim();
           }
-        }
-        finally {
-          reader.close();
         }
       }
       catch (IOException ignored) { }
     }
+    ourCompilationTimestamp = stamp;
   }
 
-  IdeaLogger(org.apache.log4j.Logger logger) {
+  IdeaLogger(@NotNull org.apache.log4j.Logger logger) {
     super(logger);
     LoggerRepository repository = myLogger.getLoggerRepository();
     if (repository instanceof ThrowableRendererSupport) {
@@ -109,7 +107,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(@NonNls String message, Attachment... attachments) {
+  public void error(@NonNls String message, @NotNull Attachment... attachments) {
     myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
   }
 
@@ -170,21 +168,20 @@ public class IdeaLogger extends Log4jBasedLogger {
     }
   }
 
+  @NotNull
   public static ThrowableRenderer getThrowableRenderer() {
     return ourThrowableRenderer;
   }
 
-  public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
+  public static void setApplicationInfoProvider(@NotNull ApplicationInfoProvider aProvider) {
     ourApplicationInfoProvider = aProvider;
   }
 
+  @NotNull
   private static ApplicationInfoProvider getIdeaInfoProvider() {
-    return new ApplicationInfoProvider() {
-      @Override
-      public String getInfo() {
-        final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-        return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
-      }
+    return () -> {
+      final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+      return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
     };
   }
 }

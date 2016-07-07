@@ -16,7 +16,7 @@ cantOpenFile:
 getPythonInfo:  
   Call getPythonInfo
   StrCmp $0 "Error" skip_python_download
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 4" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 5" "State"
   StrCpy $R8 "$0.msi"
   StrCpy $R9 "/quiet /qn /norestart"
   StrCmp $R2 1 "" python3
@@ -24,7 +24,7 @@ getPythonInfo:
   StrCpy $R3 $1
   goto check_python
 python3:  
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 5" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 6" "State"
   StrCpy $R8 "$R0.exe"
   StrCpy $R9 "InstallAllUsers=1 /quiet"
   StrCmp $R2 1 "" skip_python_download
@@ -52,6 +52,19 @@ python_exists:
 skip_python_download:  
 FunctionEnd
 
+Function searchJava64
+  StrCpy $0 "HKLM"
+  StrCpy $1 "Software\JavaSoft\Java Development Kit\${JAVA_REQUIREMENT}"
+  StrCpy $2 "JavaHome"
+  SetRegView 64
+  call OMReadRegStr
+  SetRegView 32
+  StrCpy $3 "$3\bin\java.exe"
+  IfFileExists $3 done no_java_64
+no_java_64:
+  StrCpy $3 ""
+done:
+FunctionEnd
 
 Function updatePythonControls
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" $R4 "Text" "Python $R2 (installed)"
@@ -65,13 +78,26 @@ FunctionEnd
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
-  call winVersion
-  ${If} $0 == "1"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Type" "Label"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" ""
+  ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
+  ${If} $0 == ${PRODUCT_EXE_FILE}
+    StrCpy $R0 "32-bit launcher"
+    StrCpy $R1 "64-bit launcher"
   ${Else}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
+    ;there is only one launcher and it is 64-bit.
+    StrCpy $R0 "64-bit launcher"
+    StrCpy $R1 ""
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
+
+  ${If} $R1 != ""
+    ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
+    ${If} $R0 == ${PRODUCT_EXE_FILE}
+      call searchJava64
+      ${If} $3 != ""
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+      ${EndIf}
+    ${EndIf}
   ${EndIf}
   IfFileExists "$TEMP\python.txt" deletePythonFileInfo getPythonFileInfo
 deletePythonFileInfo:
@@ -84,8 +110,8 @@ getPythonFileInfo:
 cantOpenFile:
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded."
 removePythonChoice:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Flags" "DISABLED"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 5" "Flags" "DISABLED"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Flags" "DISABLED"
   goto association
 getPythonInfo:
   Call getPythonInfo
@@ -93,24 +119,24 @@ getPythonInfo:
   ;check if pythons are already installed
   StrCpy $R2 $0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Python $0"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 5" "Text" "Python $0"
   StrCmp $R2 "Absent" checkPython3
   StrCpy $R2 $0
-  StrCpy $R4 "Field 4"
-  StrCpy $R5 "Field 5"
+  StrCpy $R4 "Field 5"
+  StrCpy $R5 "Field 6"
   Call updatePythonControls
 checkPython3:
   StrCpy $R2 $R0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 5" "Text" "Python $R0"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Text" "Python $R0"
   StrCmp $R2 "Absent" association
   StrCpy $R2 $R0
-  StrCpy $R4 "Field 5"
-  StrCpy $R5 "Field 4"
+  StrCpy $R4 "Field 6"
+  StrCpy $R5 "Field 5"
   Call updatePythonControls
 association:
-  StrCpy $R0 6
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
+  StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   push "${ASSOCIATION}"
 loop:
   call SplitStr
@@ -120,10 +146,7 @@ loop:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
   goto loop
 skip_association:
-  call winVersion
-  ${If} $0 == "1"
-  IntOp $R0 $R0 - 1
-  ${EndIf}
+  IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
 done:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"

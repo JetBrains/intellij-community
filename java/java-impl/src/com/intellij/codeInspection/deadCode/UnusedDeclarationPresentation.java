@@ -249,13 +249,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     protected boolean applyFix(@NotNull RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       List<RefElement> deletedRefs = new ArrayList<RefElement>(1);
+      final RefFilter filter = getFilter();
       for (RefEntity refElement : refElements) {
         PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;
-        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
+        if (filter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
 
         final RefEntity owner = refElement.getOwner();
-        if (!(owner instanceof RefElement && ArrayUtil.find(refElements, owner) > -1)) {
+        if (!(owner instanceof RefJavaElement) || filter.getElementProblemCount((RefJavaElement)owner) == 0 || !(ArrayUtil.find(refElements, owner) > -1)) {
           commentOutDead(psiElement);
         }
 

@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -47,8 +47,12 @@ public abstract class GroovyUtils {
   public static GrTypeDefinition getPublicClass(@Nullable VirtualFile virtualFile, @NotNull PsiManager manager) {
     if (virtualFile == null) return null;
 
-    PsiFile psiFile = manager.findFile(virtualFile);
-    if ((psiFile instanceof GroovyFile)) {
+    PsiElement psiFile = manager.findFile(virtualFile);
+    if (psiFile instanceof PsiCompiledFile) {
+      psiFile = psiFile.getNavigationElement();
+    }
+
+    if (psiFile instanceof GroovyFile) {
       return getClassDefinition((GroovyFile)psiFile);
     }
 

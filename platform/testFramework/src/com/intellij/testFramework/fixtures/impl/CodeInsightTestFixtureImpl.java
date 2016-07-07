@@ -16,6 +16,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -70,6 +71,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -83,6 +85,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.Profile;
@@ -133,6 +137,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static final String START_FOLD = "<fold\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>";
   private static final String END_FOLD = "</fold>";
+  private static final String RAINBOW = "rainbow";
 
   private final IdeaProjectTestFixture myProjectFixture;
   private final TempDirTestFixture myTempDirFixture;
@@ -1750,17 +1755,35 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  public String getHighlightingDescription(@NotNull List<HighlightInfo> highlighting, @NotNull String tagName) {
+  public String getHighlightingDescription(@NotNull List<HighlightInfo> highlighting, @NotNull String tagName, boolean withColor) {
     final List<Border> borders = new LinkedList<Border>();
     for (HighlightInfo region : highlighting) {
-      borders.add(new Border(Border.LEFT, region.getStartOffset(), "", false));
+      TextAttributes attributes = region.getTextAttributes(null, null);
+      borders.add(new Border(Border.LEFT, region.getStartOffset(),
+                             attributes == null ? "null"
+                                                : attributes.getForegroundColor() == null
+                                                  ? "null"
+                                                  : Integer.toHexString(attributes.getForegroundColor().getRGB()),
+                             false));
       borders.add(new Border(Border.RIGHT, region.getEndOffset(), "", false));
     }
     Collections.sort(borders);
 
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
-      result.insert(border.getOffset(), (border.isSide() == Border.LEFT ? "<": "</") + tagName + ">");
+      StringBuilder info = new StringBuilder();
+      info.append('<');
+      if (border.isSide() == Border.LEFT) {
+        info.append(tagName);
+        if (withColor) {
+          info.append(" color=\'").append(border.myText).append('\'');
+        }
+      }
+      else {
+        info.append('/').append(tagName);
+      }
+      info.append('>');
+      result.insert(border.getOffset(), info);
     }
 
     return result.toString();
@@ -1807,6 +1830,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void testFolding(@NotNull final String verificationFileName) {
     testFoldingRegions(verificationFileName, null, false);
+  }
+
+  @Override
+  public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
+    RegistryValue registryValue = Registry.get("editor.rainbow.identifiers");
+    final boolean rainbowColors = registryValue.asBoolean();
+    try {
+      registryValue.setValue(isRainbowOn);
+      configureByText(fileName, text.replaceAll("<" + RAINBOW + "(\\scolor=\'[^\']*\')?>", "").replace("</" + RAINBOW + ">", ""));
+
+      Assert.assertEquals(text, getHighlightingDescription(ContainerUtil.filter(doHighlighting(),
+                                                           info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT), RAINBOW,
+                                                           withColor));
+    }
+    finally {
+      registryValue.setValue(rainbowColors);
+    }
   }
 
   @Override

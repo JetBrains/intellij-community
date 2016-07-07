@@ -47,6 +47,10 @@ public class SplitTryWithMultipleResourcesFixTest extends IGQuickFixesTestCase {
     doTest();
   }
 
+  public void testAtFinalKeyword() {
+    doTest();
+  }
+
   public void testAtCodeBlock() {
     assertQuickfixNotAvailable();
   }

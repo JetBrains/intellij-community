@@ -44,6 +44,7 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -269,10 +270,12 @@ public class JavaSdkImpl extends JavaSdk {
     return result;
   }
 
-  private static void scanFolder(File javasFolder, ArrayList<String> result) {
-    File[] candidates = javasFolder.listFiles(pathname -> JdkUtil.checkForJdk(pathname));
+  private static void scanFolder(File javasFolder, List<String> result) {
+    @SuppressWarnings("RedundantCast") File[] candidates = javasFolder.listFiles((FileFilter)JdkUtil::checkForJdk);
     if (candidates != null) {
-      result.addAll(ContainerUtil.map2List(candidates, file -> file.getAbsolutePath()));
+      for (File file : candidates) {
+        result.add(file.getAbsolutePath());
+      }
     }
   }
 
@@ -531,23 +534,24 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static List<VirtualFile> findClasses(File file, boolean isJre) {
-    List<File> roots = JavaSdkUtil.getJdkClassesRoots(file, isJre);
-    List<String> urls = ContainerUtil.newArrayListWithCapacity(roots.size() + 1);
-    if (JrtFileSystem.isModularJdk(file.getPath())) {
-      urls.add(VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()) + JrtFileSystem.SEPARATOR));
-    }
-    for (File root : roots) {
-      urls.add(VfsUtil.getUrlForLibraryRoot(root));
-    }
+    List<VirtualFile> result = ContainerUtil.newArrayList();
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    List<VirtualFile> result = ContainerUtil.newArrayListWithCapacity(urls.size());
-    for (String url : urls) {
-      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (vFile != null) {
-        result.add(vFile);
+    String path = file.getPath();
+    if (JrtFileSystem.isModularJdk(path)) {
+      String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(path) + JrtFileSystem.SEPARATOR);
+      for (String module : JrtFileSystem.listModules(path)) {
+        ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url + module));
       }
     }
+
+    for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
+      String url = VfsUtil.getUrlForLibraryRoot(root);
+      ContainerUtil.addIfNotNull(result, fileManager.findFileByUrl(url));
+    }
+
     Collections.sort(result, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+
     return result;
   }
 

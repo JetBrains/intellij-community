@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.FormatRangesInfo;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -159,7 +159,7 @@ public class FormatChangedTextUtil {
   
     
   @Nullable
-  public FormatRangesInfo getChangedTextHelper(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
     return null;
   }
   

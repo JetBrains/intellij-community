@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -123,5 +124,30 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
+  }
+
+  @Override
+  public PsiElement findElementAt(int offset) {
+    return findElementAt(offset, getBaseLanguage());
+  }
+
+  @Override
+  public PsiElement findElementAt(int offset, @NotNull Language language) {
+    PsiFile file = getPsi(language);
+    if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    return findElementAt(file, offset);
+  }
+
+  @Override
+  public PsiReference findReferenceAt(int offset) {
+    return findReferenceAt(offset, getBaseLanguage());
+  }
+
+  @Nullable
+  @Override
+  public PsiReference findReferenceAt(int offset, @NotNull Language language) {
+    PsiFile file = getPsi(language);
+    if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
+    return findReferenceAt(file, offset);
   }
 }

@@ -17,78 +17,28 @@ package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 
-public abstract class UnitInfo {
+final class UnitInfo {
   private static final UnitInfo[] EMPTY_INFOS = new UnitInfo[]{
-    new LongUnitInfo(IndexTree.BYTECODE, Imports.EMPTY_ARRAY),
-    new LongUnitInfo(IndexTree.JAVA, Imports.EMPTY_ARRAY),
-    new LongUnitInfo(IndexTree.GROOVY, Imports.EMPTY_ARRAY)
+    new UnitInfo(IndexTree.BYTECODE, Imports.EMPTY_ARRAY),
+    new UnitInfo(IndexTree.JAVA, Imports.EMPTY_ARRAY),
+    new UnitInfo(IndexTree.GROOVY, Imports.EMPTY_ARRAY)
   };
 
-  static UnitInfo mkUnitInfo(byte unitType, long[] imports) {
-    if (imports.length == 0) {
-      return EMPTY_INFOS[unitType];
-    }
-    for (long anImport : imports) {
-      if (Imports.getAlias(anImport) != 0) {
-        return new LongUnitInfo(unitType, imports);
-      }
-    }
-    return new IntUnitInfo(unitType, imports);
-  }
-
   /* IndexTree.BYTECODE, IndexTree.JAVA, IndexTree.GROOVY */
-  public abstract byte getType();
+  final byte type;
+  final Import[] imports;
 
-  public abstract long[] getImports();
-
-  static class LongUnitInfo extends UnitInfo {
-    public final byte type;
-
-    @Override
-    public byte getType() {
-      return type;
-    }
-
-    public long[] getImports() {
-      return imports;
-    }
-    private long[] imports;
-    public LongUnitInfo(byte type, long[] imports) {
-      this.type = type;
-      this.imports = imports;
-    }
+  private UnitInfo(byte type, Import[] imports) {
+    this.type = type;
+    this.imports = imports;
   }
 
-  static class IntUnitInfo extends UnitInfo {
-    public final byte type;
-    private int[] imports;
-
-    @Override
-    public byte getType() {
-      return type;
-    }
-    public long[] getImports() {
-      return convert(imports);
-    }
-    public IntUnitInfo(byte type, long[] imports) {
-      this.type = type;
-      this.imports = convert(imports);
-    }
-
-    private static int[] convert(long[] ar) {
-      int[] result = new int[ar.length];
-      for (int i = 0; i < ar.length; i++) {
-        result[i] = (int)ar[i];
-      }
-      return result;
-    }
-
-    private static long[] convert(int[] ar) {
-      long[] result = new long[ar.length];
-      for (int i = 0; i < ar.length; i++) {
-        result[i] = ar[i];
-      }
-      return result;
-    }
+  static UnitInfo mkUnitInfo(byte unitType, Import[] imports) {
+    return imports.length == 0 ? EMPTY_INFOS[unitType] : new UnitInfo(unitType, imports);
   }
+
+  boolean isCompiled() {
+    return type == IndexTree.BYTECODE;
+  }
+
 }

@@ -58,7 +58,8 @@ class TimeStampedIndentOptions extends IndentOptions {
 
 class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);
-  
+  private static final int INDENT_COMPUTATION_TIMEOUT = 5 * Time.SECOND;
+
   private final Document myDocument;
   private final Project myProject;
   private final IndentOptions myOptionsToAdjust;
@@ -129,7 +130,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   }
 
   private boolean isComputingForTooLong() {
-    return System.currentTimeMillis() - myComputationStarted > 5 * Time.SECOND;
+    return System.currentTimeMillis() - myComputationStarted > INDENT_COMPUTATION_TIMEOUT;
   }
 
   public void scheduleInBackgroundForCommittedDocument() {

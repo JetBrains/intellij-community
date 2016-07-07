@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -170,8 +169,6 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
 
   @Override
   public boolean shouldInspect(@NotNull PsiElement psiRoot) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
-
     final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
     if (settingForRoot == FileHighlightingSetting.SKIP_HIGHLIGHTING ||
         settingForRoot == FileHighlightingSetting.SKIP_INSPECTION) {

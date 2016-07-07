@@ -15,37 +15,66 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
-public final class QualifiedName {
-  public static final QualifiedName[] EMPTY_ARRAY = new QualifiedName[0];
+abstract class QualifiedName {
 
-  // unique id of this full name
-  public final int myId;
-  // ids of parts of this name
-  public final int[] myComponents;
+  abstract void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+    throws IncompleteHierarchyException;
 
-  QualifiedName(int id, int[] components) {
-    this.myId = id;
-    this.myComponents = components;
-  }
+  static class OfComponents extends QualifiedName {
+    @ShortName final int[] components;
 
-  public boolean isEmpty() {
-    return myComponents.length == 0;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o instanceof QualifiedName) {
-      QualifiedName other = (QualifiedName)o;
-      return myId == other.myId && Arrays.equals(myComponents, other.myComponents);
+    OfComponents(int[] components) {
+      this.components = components;
     }
-    return false;
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      for (Symbol symbol : resolver.resolveBase(place, components)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return myId;
+  static class OfSingleComponent extends QualifiedName {
+    @ShortName final int shortName;
+
+    OfSingleComponent(@ShortName int shortName) {
+      this.shortName = shortName;
+    }
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      for (Symbol symbol : resolver.resolveUnqualified(place, shortName, false)) {
+        if (symbol instanceof Symbol.ClassSymbol) {
+          result.add((Symbol.ClassSymbol)symbol);
+        }
+      }
+    }
+  }
+
+  static class Interned extends QualifiedName {
+    @QNameHash final int id;
+
+    Interned(int id) {
+      this.id = id;
+    }
+
+    @Override
+    void resolveCandidates(StubResolver resolver, Symbol.ClassSymbol place, Set<Symbol.ClassSymbol> result)
+      throws IncompleteHierarchyException {
+      Symbol.ClassSymbol[] candidates = resolver.findGlobalType(id);
+      if (candidates.length == 0) {
+        throw IncompleteHierarchyException.INSTANCE;
+      }
+
+      Collections.addAll(result, candidates);
+    }
   }
 }

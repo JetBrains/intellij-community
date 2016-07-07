@@ -31,6 +31,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -148,7 +150,8 @@ public class LocalVariablesUtil {
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<>(); // LinkedHashMap for correct order
 
-    com.sun.jdi.Method method = frameProxy.location().method();
+    Location location = frameProxy.location();
+    com.sun.jdi.Method method = location.method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
 
     // gather code variables names
@@ -168,7 +171,7 @@ public class LocalVariablesUtil {
     }
 
     // now try to fetch stack values
-    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy, namesMap);
+    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy.getVirtualMachine(), location, namesMap);
     StackFrame frame = frameProxy.getStackFrame();
     int size = vars.size();
     while (size > 0) {
@@ -266,13 +269,13 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) {
-    if (!frame.getVirtualMachine().canGetBytecodes()) {
+  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
+                                                                            Location location,
+                                                                            MultiMap<Integer, String> namesMap) {
+    if (!vm.canGetBytecodes()) {
       return Collections.emptyList();
     }
     try {
-      final Location location = frame.location();
       LOG.assertTrue(location != null);
       final com.sun.jdi.Method method = location.method();
       final Location methodLocation = method.location();
@@ -285,19 +288,20 @@ public class LocalVariablesUtil {
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = getFirstLocalsSlot(method);
         final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
-        new InstructionParser(bytecodes, location.codeIndex()) {
-          @Override
-          protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
-            if (slot >= firstLocalVariableSlot) {
-              DecompiledLocalVariable variable = usedVars.get(slot);
-              if (variable == null || !typeSignature.equals(variable.getSignature())) {
-                variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
-                usedVars.put(slot, variable);
-              }
-            }
-          }
-        }.parse();
-
+        MethodBytecodeUtil.visit(location.declaringType(), method, location.codeIndex(),
+          new MethodVisitor(Opcodes.ASM5) {
+           @Override
+           public void visitVarInsn(int opcode, int slot) {
+             if (slot >= firstLocalVariableSlot) {
+               DecompiledLocalVariable variable = usedVars.get(slot);
+               String typeSignature = MethodBytecodeUtil.getVarInstructionType(opcode).getDescriptor();
+               if (variable == null || !typeSignature.equals(variable.getSignature())) {
+                 variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
+                 usedVars.put(slot, variable);
+               }
+             }
+           }
+          });
         if (usedVars.isEmpty()) {
           return Collections.emptyList();
         }
@@ -310,7 +314,7 @@ public class LocalVariablesUtil {
     catch (UnsupportedOperationException ignored) {
     }
     catch (Exception e) {
-      LOG.info(e);
+      LOG.error(e);
     }
     return Collections.emptyList();
   }

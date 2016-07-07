@@ -49,4 +49,9 @@ public class InspectionNode extends InspectionTreeNode {
   public String getCustomizedTailText() {
     return myProfile.isToolEnabled(myKey) ? null : "Disabled";
   }
+
+  @Override
+  public int getProblemCount() {
+    return myKey == null ? 0 : super.getProblemCount();
+  }
 }

@@ -43,6 +43,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -51,6 +52,7 @@ import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.MapIndexStorage
 import com.intellij.util.indexing.StorageException
 import com.intellij.util.io.*
@@ -407,6 +409,51 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       file.rename(this, "Bar" + i + ".java");
       assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope));
     }
+  }
+
+  public void "test no index stamp update when no change"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
+
+    VfsUtil.saveText(vFile, "Foo class")
+    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+
+    VfsUtil.saveText(vFile, "class Foo2 {}")
+    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    document.setText("Foo2 class")
+    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
+    document.setText("class Foo2")
+    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+
+    document.setText("Foo3 class");
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+  }
+
+  public void "test no stub index stamp update when no change"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+    def stamp = ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project)
+
+    VfsUtil.saveText(vFile, "class Foo { int foo; }")
+    assertTrue(stamp == ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+
+    VfsUtil.saveText(vFile, "class Foo2 { }")
+    assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    document.setText("class Foo3 {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    stamp = ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project)
+
+    document.setText("class Foo3 { int foo; }")
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    assertTrue(stamp == ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+
+    document.setText("class Foo2 { }")
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
   }
 
   public void "test do not collect stub tree while holding stub elements"() throws IOException {

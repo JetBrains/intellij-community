@@ -47,7 +47,7 @@ package com.intellij.formatting
 
 import com.intellij.formatting.engine.State
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.codeStyle.FormatRangesInfo
+import com.intellij.psi.codeStyle.DiffInfo
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.util.containers.Stack
 
@@ -56,51 +56,44 @@ interface BlockProcessor {
   fun processCompositeBlock(block: Block)
 }
 
-class VcsAwareFormatRangesInfo(val formattingRanges: List<TextRange>,
-                               private val insertedRanges: List<TextRange>): FormatRangesInfo() 
-{
-  constructor(changedTextRange: TextRange): this(listOf(changedTextRange), emptyList())
-
-  override fun getRangesToFormat() = formattingRanges
-
+class DiffInfoImpl(private val insertedRanges: List<TextRange>): DiffInfo {
   override fun isOnInsertedLine(offset: Int) = insertedRanges.find { it.contains(offset) } != null
-  
 }
-
     
-class AdditionalRangesExtractor(private val formatRanges: FormatTextRanges) : BlockProcessor {
-  val extraRanges = mutableListOf<ExtraReformatRanges>()
+class AdditionalRangesExtractor(private val diffInfo: DiffInfo?) : BlockProcessor {
+  
+  val totalNewRanges = mutableListOf<TextRange>()
 
   override fun processLeafBlock(block: Block) = Unit
 
   override fun processCompositeBlock(block: Block) {
     if (block is AbstractBlock) {
-      block.getExtraRangesToFormat(formatRanges)?.let { extraRanges.add(it) }
+      val newRanges = block.getExtraRangesToFormat(diffInfo)
+      if (newRanges != null) {
+        totalNewRanges.addAll(newRanges)
+      }
     }
   }
-}
-
-class ExtraReformatRanges(val ranges: List<TextRange> = emptyList()) {
-  constructor(range: TextRange): this(listOf(range))
-}
-
-fun FormatTextRanges.mergeWith(extraRanges: ExtraReformatRanges) {
-  extraRanges.ranges.forEach { add(it, false) }
+  
 }
 
 
 class AdjustFormatRangesState(var currentRoot: Block,
-                              val formatRanges: FormatTextRanges) : State() {
-  
-  private val extractor = AdditionalRangesExtractor(formatRanges)
+                              val formatRanges: FormatTextRanges, 
+                              diffInfo: DiffInfo?) : State() {
+
+  private val extractor = AdditionalRangesExtractor(diffInfo)
   private val state = Stack(currentRoot)
-  
+
   init {
     setOnDone({
-      extractor.extraRanges.forEach { formatRanges.mergeWith(it) }
+      val newRangesToAdd = extractor.totalNewRanges
+      newRangesToAdd.forEach {
+        formatRanges.add(it, false)
+      }
     })
   }
-  
+
   override fun doIteration() {
     val currentBlock = state.pop()
     processBlock(currentBlock)

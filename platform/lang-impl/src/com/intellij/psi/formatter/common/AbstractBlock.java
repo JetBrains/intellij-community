@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.DiffInfo;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.IndentRangesCalculator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -187,12 +188,11 @@ public abstract class AbstractBlock implements ASTBlock {
    * @return additional range to reformat, when this block if formatted
    */
   @Nullable
-  public ExtraReformatRanges getExtraRangesToFormat(FormatTextRanges ranges) {
-    if (ranges.isInsertedBlock(this) && myNode.textContains('\n')) {
-      List<TextRange> extra = calculateExtraRanges(myNode);
-      return new ExtraReformatRanges(extra);
+  public List<TextRange> getExtraRangesToFormat(@Nullable DiffInfo info) {
+    int startOffset = getTextRange().getStartOffset();
+    if (info != null && info.isOnInsertedLine(startOffset) && myNode.textContains('\n')) {
+      return calculateExtraRanges(myNode);
     }
-    
     return null;
   }
 

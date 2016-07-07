@@ -99,6 +99,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @CalledInAwt
   protected void onDispose() {
     destroyChangedBlocks();
+    myFoldingModel.destroy();
     super.onDispose();
   }
 
@@ -225,6 +226,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private Runnable apply(@NotNull final CompareData data) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+
       clearDiffPresentation();
 
       myIsContentsEqual = data.isContentsEqual();
@@ -253,6 +255,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private Runnable applyNotification(@Nullable final JComponent notification) {
     return () -> {
       clearDiffPresentation();
+      myFoldingModel.destroy();
       if (notification != null) myPanel.addNotification(notification);
     };
   }
@@ -289,8 +292,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
-
-    myFoldingModel.destroy();
 
     myContentPanel.repaintDivider();
     myStatusPanel.update();

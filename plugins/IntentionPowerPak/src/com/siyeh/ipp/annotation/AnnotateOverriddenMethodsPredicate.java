@@ -1,5 +1,5 @@
 /*
- * Copyright 20112013 Bas Leijdekkers
+ * Copyright 2011-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.util.Collection;
 
 class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAnnotation)) {
       return false;
@@ -64,7 +65,9 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
       parameterIndex = -1;
       method = (PsiMethod)grandParent;
     }
-    final Project project = element.getProject();
+    if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
+      return false;
+    }
     final Collection<PsiMethod> overridingMethods =
       OverridingMethodsSearch.search(method).findAll();
     if (overridingMethods.isEmpty()) {

@@ -18,9 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -30,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,17 +109,12 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
      */
     @Nullable
     public PsiClass getUsageClass(final PsiMethod method) {
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
-      final String name = method.getName();
-      final GlobalSearchScope scope = GlobalSearchScope.projectScope(method.getProject());
-      if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
-          == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
         return null;
       }
-      progressManager.runProcess(() -> {
+      ProgressManager.getInstance().runProcess(() -> {
         final Query<PsiReference> query = MethodReferencesSearch.search(method);
-        if (!query.forEach(UsageProcessor.this)) {
+        if (!query.forEach(this)) {
           foundClass.set(null);
         }
       }, null);

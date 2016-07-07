@@ -65,7 +65,10 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
+      PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
+      if (contextClass instanceof PsiCompiledElement) {
+        contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+      }
       if(contextClass == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }

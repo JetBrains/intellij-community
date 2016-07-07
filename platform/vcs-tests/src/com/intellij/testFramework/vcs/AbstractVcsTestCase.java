@@ -16,7 +16,6 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diff.LineTokenizer;
@@ -51,9 +50,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author yole
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractVcsTestCase {
-  protected boolean myTraceClient = false;
+  protected boolean myTraceClient;
   protected Project myProject;
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
@@ -80,12 +79,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void refreshVfs() {
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        myWorkingCopyDir.refresh(false, true);
-      }
-    });
+    UsefulTestCase.edt(() -> myWorkingCopyDir.refresh(false, true));
   }
 
   protected void initProject(final File clientRoot, String testName) throws Exception {
@@ -97,12 +91,9 @@ public abstract class AbstractVcsTestCase {
 
     projectCreated();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
-        assert myWorkingCopyDir != null;
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
+      assert myWorkingCopyDir != null;
     });
     ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
   }
@@ -147,12 +138,11 @@ public abstract class AbstractVcsTestCase {
             return;
           }
           catch (IOException e) {
-            if (i == (numOfRuns - 1)) {
+            if (i == numOfRuns - 1) {
               // last run
               throw e;
             }
             Thread.sleep(50);
-            continue;
           }
         }
       }
@@ -237,7 +227,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
-    final AtomicReference<VirtualFile> res = new AtomicReference<VirtualFile>();
+    final AtomicReference<VirtualFile> res = new AtomicReference<>();
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
@@ -283,24 +273,16 @@ public abstract class AbstractVcsTestCase {
   }
 
   public static void sortChanges(final List<Change> changes) {
-    Collections.sort(changes, new Comparator<Change>() {
-      @Override
-      public int compare(final Change o1, final Change o2) {
-        final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
-        final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
-        return p1.compareTo(p2);
-      }
+    Collections.sort(changes, (o1, o2) -> {
+      final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
+      final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
+      return p1.compareTo(p2);
     });
   }
 
   public FileAnnotation createTestAnnotation(@NotNull AnnotationProvider provider, VirtualFile file) throws VcsException {
     final FileAnnotation annotation = provider.annotate(file);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        annotation.dispose();
-      }
-    });
+    Disposer.register(myProject, annotation::dispose);
     return annotation;
   }
 
