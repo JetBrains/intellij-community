@@ -16,16 +16,13 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.Convertor;
 import com.jetbrains.jsonSchema.extension.schema.JsonSchemaBaseReference;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.extension.schema.JsonSchemaDefinitionResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +44,7 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
     @Nullable
     @Override
     public PsiElement resolveInner() {
-      final Project project = getElement().getProject();
-      final Convertor<String, PsiElement> resolver =
-        JsonSchemaService.Impl.get(project).getToPropertyResolver(getElement().getContainingFile().getVirtualFile());
-      if (resolver != null) return resolver.convert("/properties/" + StringUtil.unquoteString(getCanonicalText()));
-      return null;
+      return new JsonSchemaDefinitionResolver(getElement(), null).doResolve();
     }
   }
 }
