@@ -20,13 +20,22 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(name = "XmlFoldingSettings", storages = @Storage("editor.codeinsight.xml"))
 public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
-  private XmlFoldingSettings.State myState;
+  private final XmlFoldingSettings.State myState = new State();
 
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
+  }
+
+  public XmlFoldingSettings() {
+    // todo: remove after 2017.1 release
+    CssFoldingSettings cssFoldingSettings = CssFoldingSettings.getInstance();
+    if (cssFoldingSettings != null) {
+      myState.COLLAPSE_DATA_URI = cssFoldingSettings.isCollapseDataUri();
+    }
   }
 
   @Override
@@ -44,18 +53,24 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
   }
 
   @Override
+  public boolean isCollapseDataUri() {
+    return myState.COLLAPSE_DATA_URI;
+  }
+
+  @Override
   public State getState() {
     return myState;
   }
 
   @Override
   public void loadState(State state) {
-    myState = state;
+    XmlSerializerUtil.copyBean(state, myState);
   }
 
   public static final class State {
     public boolean COLLAPSE_XML_TAGS = false;
     public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
     public boolean COLLAPSE_ENTITIES = true;
+    public boolean COLLAPSE_DATA_URI = true;
   }
 }

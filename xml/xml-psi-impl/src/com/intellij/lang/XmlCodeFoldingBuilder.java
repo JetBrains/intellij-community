@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
@@ -266,7 +265,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
-    return child.getContainingFile() instanceof HtmlFileImpl &&
+    return HtmlUtil.isHtmlFile(child.getContainingFile()) &&
            HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName());
   }
 
