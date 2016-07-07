@@ -55,14 +55,6 @@ class WinExeInstallerBuilder {
       bundleJre = false
     }
 
-    if (bundleJre) {
-      ant.copy(todir: "$box/bin") {
-        fileset(dir: "$jreDirectoryPath/jre") {
-          include(name: "**/msvcr71.dll")
-        }
-      }
-    }
-
     ant.copy(todir: "$box/nsiconf") {
       fileset(dir: "$communityHome/build/conf/nsis") {
         include(name: "*")
@@ -84,7 +76,6 @@ class WinExeInstallerBuilder {
         }
       }
       if (bundleJre) {
-        ant.fileset(dir: box, includes: "bin/msvcr71.dll")
         ant.fileset(dir: jreDirectoryPath, includes: "jre/**/*")
       }
     }
