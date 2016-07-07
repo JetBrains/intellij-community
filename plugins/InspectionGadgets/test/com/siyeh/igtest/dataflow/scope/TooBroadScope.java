@@ -181,4 +181,11 @@ public class TooBroadScope
     void backgroundAction() {
         ONE[0] = "two";
     }
+
+    void time() {
+        long start = System.currentTimeMillis();
+        System.out.println();
+        long end = System.currentTimeMillis();
+        System.out.println("elapsed: " + (end - start));
+    }
 }
