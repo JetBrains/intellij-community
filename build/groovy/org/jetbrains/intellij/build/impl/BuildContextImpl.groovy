@@ -214,12 +214,16 @@ class BuildContextImpl extends BuildContext {
 
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
-    this.communityHome = new File(communityHome).canonicalPath
-    this.projectHome = new File(projectHome).canonicalPath
-    this.buildOutputRoot = new File(buildOutputRoot).canonicalPath
-    this.jdkHome = new File(jdkHome).canonicalPath
+    this.communityHome = toCanonicalPath(communityHome)
+    this.projectHome = toCanonicalPath(projectHome)
+    this.buildOutputRoot = toCanonicalPath(buildOutputRoot)
+    this.jdkHome = toCanonicalPath(jdkHome)
     artifacts = "${this.buildOutputRoot}/artifacts"
-    distAll = "$buildOutputRoot/dist.all"
-    temp = "$buildOutputRoot/temp"
+    distAll = "${this.buildOutputRoot}/dist.all"
+    temp = "${this.buildOutputRoot}/temp"
+  }
+
+  private static String toCanonicalPath(String communityHome) {
+    FileUtil.toSystemIndependentName(new File(communityHome).canonicalPath)
   }
 }

@@ -83,6 +83,9 @@ abstract class BuildContext {
   }
 }
 
+/**
+ * All paths are absolute and use '/' as a separator
+ */
 abstract class BuildPaths {
   /**
    * Path to a directory where idea/community Git repository is checked out
