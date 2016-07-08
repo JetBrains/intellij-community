@@ -26,13 +26,15 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.TestVcsLogProvider;
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +61,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   private DataWaiter myDataWaiter;
   private VcsLogRefresher myLoader;
-  private List<Future<?>> myStartedTasks;
+  private final List<Future<?>> myStartedTasks = Collections.synchronizedList(new ArrayList<>());
 
   private List<String> myCommits;
 
@@ -75,7 +77,6 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myLogProvider.appendHistory(log(myCommits));
     myLogProvider.addRef(createBranchRef("master", "a2"));
 
-    myStartedTasks = new ArrayList<Future<?>>();
     myDataWaiter = new DataWaiter();
     myLoader = createLoader(myDataWaiter);
   }
@@ -172,7 +173,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private void waitForBackgroundTasksToComplete() throws InterruptedException, ExecutionException, TimeoutException {
-    for (Future<?> task : myStartedTasks) {
+    for (Future<?> task : new ArrayList<>(myStartedTasks)) {
       task.get(1, TimeUnit.SECONDS);
     }
   }
@@ -213,14 +214,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
                                    myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            LOG.debug("Starting a background task...");
-            myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
-            LOG.debug(myStartedTasks.size() + " started tasks");
-          }
-        });
+        LOG.debug("Starting a background task...");
+        myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
+        LOG.debug(myStartedTasks.size() + " started tasks");
       }
     };
   }
