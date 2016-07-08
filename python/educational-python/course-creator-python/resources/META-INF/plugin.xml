@@ -29,7 +29,7 @@
   </extensions>
 
   <actions>
-    <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu" text="Create New Educational Project">
+    <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
       <add-to-group group-id="CCFileGroup" anchor="last"/>
       <add-to-group group-id="CCProjectViewGroup" anchor="last"/>
     </action>

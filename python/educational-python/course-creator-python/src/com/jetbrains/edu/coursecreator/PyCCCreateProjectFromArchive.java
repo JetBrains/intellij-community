@@ -7,6 +7,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
 public class PyCCCreateProjectFromArchive extends DumbAwareAction {
+  public PyCCCreateProjectFromArchive() {
+    super("Preview Course");
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
