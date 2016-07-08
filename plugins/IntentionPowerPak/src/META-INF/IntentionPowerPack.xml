@@ -537,11 +537,6 @@
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.asserttoif.AssertToIfIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.asserttoif.IfToAssertionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
