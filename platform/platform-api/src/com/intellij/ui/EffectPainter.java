@@ -67,7 +67,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
           height = h;
         }
         g = (Graphics2D)g.create(x, y, width, height);
-        g.clipRect(0, 0, width, height);
+        g.clipRect(0, -1, width, height + 1); // 1px for Retina painting
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setPaint(paint);
 
