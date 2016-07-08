@@ -55,7 +55,9 @@ class WinExeInstallerBuilder {
     }
 
     ant.copy(todir: "$box/nsiconf") {
-      fileset(dir: "$communityHome/build/conf/nsis")
+      fileset(dir: "$communityHome/build/conf/nsis") {
+        exclude(name: "version*")
+      }
     }
     if (SystemInfoRt.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
