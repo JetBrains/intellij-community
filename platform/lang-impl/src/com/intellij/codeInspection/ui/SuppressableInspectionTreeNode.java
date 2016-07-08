@@ -20,11 +20,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,6 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class SuppressableInspectionTreeNode extends CachedInspectionTreeNode implements RefElementAndDescriptorAware {
-  private final static Logger LOG = Logger.getInstance(SuppressableInspectionTreeNode.class);
   @NotNull
   private final InspectionResultsView myView;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
@@ -73,38 +72,19 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
 
   @NotNull
   public Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
-    if (actions == null) {
-      synchronized (this) {
-        if ((actions = myAvailableSuppressActions) == null) {
-          final RefEntity element = getElement();
-          if (element == null) {
-            actions = getSuppressActions();
-          }
-          else {
-            actions = getOnlyAvailableSuppressActions(element.getRefManager().getProject());
-          }
-          myAvailableSuppressActions = actions;
-        }
-      }
-    }
-    return actions;
+    return myAvailableSuppressActions;
+  }
+
+  public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
+    myAvailableSuppressActions.remove(action);
   }
 
   @Override
   protected void init(Project project) {
     super.init(project);
-    myAvailableSuppressActions = getOnlyAvailableSuppressActions(project);
-  }
-
-  @Override
-  protected void dropCache(Project project) {
-    super.dropCache(project);
-    if (isValid()) {
-      synchronized (this) {
-        myAvailableSuppressActions = getOnlyAvailableSuppressActions(project);
-      }
-    }
+    myAvailableSuppressActions = getElement() == null
+                                 ? Collections.emptySet()
+                                 : getOnlyAvailableSuppressActions(project);
   }
 
   @NotNull
@@ -134,7 +114,7 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     for (SuppressIntentionAction action : actions) {
       if (action.isAvailable(project, null, suppressElement)) {
         if (availableActions == null) {
-          availableActions = new THashSet<>(actions.size());
+          availableActions = ContainerUtil.newConcurrentSet(TObjectHashingStrategy.IDENTITY);
         }
         availableActions.add(action);
       }

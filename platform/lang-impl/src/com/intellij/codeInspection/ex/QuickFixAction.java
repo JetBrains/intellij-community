@@ -124,7 +124,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false));
+        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }

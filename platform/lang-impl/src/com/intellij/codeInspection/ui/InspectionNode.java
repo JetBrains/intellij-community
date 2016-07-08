@@ -51,7 +51,7 @@ public class InspectionNode extends InspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount() {
-    return myKey == null ? 0 : super.getProblemCount();
+  public int getProblemCount(boolean allowSuppressed) {
+    return myKey == null ? 0 : super.getProblemCount(allowSuppressed);
   }
 }

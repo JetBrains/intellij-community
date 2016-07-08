@@ -220,16 +220,17 @@ public class InspectionTree extends Tree {
   }
 
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, true);
+    return getSelectedDescriptors(false, null, true, false);
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, false);
+    return getSelectedDescriptors(false, null, false, false);
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
                                                           @Nullable Set<VirtualFile> readOnlyFilesSink,
-                                                          boolean allowResolved) {
+                                                          boolean allowResolved,
+                                                          boolean allowSuppressed) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
     final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
@@ -242,7 +243,7 @@ public class InspectionTree extends Tree {
       final int length = pathAsArray.length;
       final Object node = pathAsArray[length - 1];
       if (node instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved)) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved, allowSuppressed)) {
           if (length >= 2) {
             parentToChildNode.putValue(pathAsArray[length - 2], (ProblemDescriptionNode)node);
           } else {
@@ -255,7 +256,7 @@ public class InspectionTree extends Tree {
     }
 
     for (InspectionTreeNode node : nonDescriptorNodes) {
-      processChildDescriptorsDeep(node, descriptors, sortedByPosition, allowResolved, readOnlyFilesSink);
+      processChildDescriptorsDeep(node, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
     }
 
     for (Map.Entry<Object, Collection<ProblemDescriptionNode>> entry : parentToChildNode.entrySet()) {
@@ -302,10 +303,10 @@ public class InspectionTree extends Tree {
     return true;
   }
 
-  public int getSelectedProblemCount() {
+  public int getSelectedProblemCount(boolean allowSuppressed) {
     int count = 0;
     for (TreePath path : TreeUtil.selectMaximals(getSelectionPaths())) {
-      count += ((InspectionTreeNode)path.getLastPathComponent()).getProblemCount();
+      count += ((InspectionTreeNode)path.getLastPathComponent()).getProblemCount(allowSuppressed);
     }
     return count;
   }
@@ -314,12 +315,13 @@ public class InspectionTree extends Tree {
                                            List<CommonProblemDescriptor> descriptors,
                                            boolean sortedByPosition,
                                            boolean allowResolved,
+                                           boolean allowSuppressed,
                                            @Nullable Set<VirtualFile> readOnlyFilesSink) {
     List<CommonProblemDescriptor> descriptorChildren = null;
     for (int i = 0; i < node.getChildCount(); i++) {
       final TreeNode child = node.getChildAt(i);
       if (child instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)child, allowResolved)) {
+        if (isNodeValidAndIncluded((ProblemDescriptionNode)child, allowResolved, allowSuppressed)) {
           if (sortedByPosition) {
             if (descriptorChildren == null) {
               descriptorChildren = new ArrayList<>();
@@ -331,7 +333,7 @@ public class InspectionTree extends Tree {
         }
       }
       else {
-        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition, allowResolved, readOnlyFilesSink);
+        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
       }
     }
 
@@ -347,10 +349,10 @@ public class InspectionTree extends Tree {
     }
   }
 
-  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved) {
+  private boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded(myExcludedManager) &&
-                               !node.isAlreadySuppressedFromView() &&
+                               (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
                                !node.isQuickFixAppliedFromView()));
   }
 

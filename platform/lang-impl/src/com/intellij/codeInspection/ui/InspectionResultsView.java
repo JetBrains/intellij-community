@@ -497,7 +497,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       setCursor(new Cursor(Cursor.WAIT_CURSOR));
       final JPanel editorPanel = new JPanel();
       editorPanel.setLayout(new BorderLayout());
-      final int problemCount = myTree.getSelectedProblemCount();
+      final int problemCount = myTree.getSelectedProblemCount(true);
       JComponent previewPanel = null;
       final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
       if (tool != null && refEntity != null && refEntity.isValid()) {
@@ -512,7 +512,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       editorPanel.add(previewPanel, BorderLayout.CENTER);
       if (problemCount > 0) {
-        final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(previewEditor, this);
+        final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
         if (fixToolbar != null) {
           if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
             myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
