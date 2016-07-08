@@ -65,7 +65,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private int myCharHeight; // guarded by myLock
   private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
-  
+  private int myTopOverhang; //guarded by myLock
+  private int myBottomOverhang; //guarded by myLock
+
   private final Object myLock = new Object();
   
   public EditorView(EditorImpl editor) {
@@ -406,6 +408,20 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
 
+  public int getTopOverhang() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myTopOverhang;
+    }
+  }
+
+  public int getBottomOverhang() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myBottomOverhang;
+    }
+  }
+
   // guarded by myLock
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
@@ -424,6 +440,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
     int ascent = FontLayoutService.getInstance().getAscent(fm);
     myAscent = (int)Math.ceil(ascent * verticalScalingFactor);
+    myTopOverhang = Math.max(ascent - myAscent, 0);
+    myBottomOverhang = Math.max(fontMetricsHeight - ascent - myLineHeight + myAscent, 0);
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
