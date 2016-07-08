@@ -837,8 +837,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       // 3. Underline
       if (attributes.isUnderline()) {
-        final int underlineAt = textBaseline + 1;
-        UIUtil.drawLine(g, offset, underlineAt, offset + fragmentWidth, underlineAt);
+        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), g.getColor());
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {

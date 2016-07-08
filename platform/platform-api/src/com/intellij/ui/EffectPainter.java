@@ -27,6 +27,27 @@ import java.awt.geom.*;
  */
 public enum EffectPainter implements RegionPainter<Paint> {
   /**
+   * @see com.intellij.openapi.editor.markup.EffectType#LINE_UNDERSCORE
+   */
+  LINE_UNDERSCORE {
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      // we assume here that Y is a baseline of a text
+      if (!Registry.is("ide.text.effect.line.new")) {
+        g.setPaint(paint);
+        g.drawLine(x, y + 1, x + width, y + 1);
+      }
+      else if (paint != null && width > 0 && height > 0) {
+        g.setPaint(paint);
+        int h = height < 4 ? 2 : height >> 1;
+        double pos = Registry.doubleValue("ide.text.effect.line.new.pos");
+        y += (int)((double)height - h * pos);
+        g.setPaint(paint);
+        g.drawLine(x, y, x + width, y);
+      }
+    }
+  },
+  /**
    * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
    */
   WAVE_UNDERSCORE {

@@ -2428,7 +2428,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           drawBoldLineUnderScore(g, end.x, y - 1, charWidth - 1);
         }
         else if (attributes.getEffectType() != EffectType.BOXED) {
-          UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
+          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
       }
     }
@@ -3546,8 +3546,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (effectType == EffectType.LINE_UNDERSCORE) {
-        g.setColor(effectColor);
-        UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+        EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
