@@ -115,7 +115,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     override fun after(events: MutableList<out VFileEvent>) {
       eventLoop@ for (event in events) {
-        if (event.requestor != null) {
+        if (event.requestor is SchemeManagerImpl<*, *>) {
           continue
         }
 
