@@ -621,7 +621,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return list;
   }
 
-  private void loadBuildFileProjectProperties(final Element parentNode) {
+  private void loadBuildFileProjectProperties(@NotNull Element parentNode) {
     final List<Pair<Element, String>> files = new ArrayList<Pair<Element, String>>();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (final Element element : parentNode.getChildren(BUILD_FILE)) {
@@ -649,6 +649,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         if (getProject().isDisposed()) {
           return;
         }
+
         indicator.setIndeterminate(true);
         indicator.pushState();
         try {
@@ -679,15 +680,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   LOG.error(e);
                 }
               }
-              // updating properties separately to avoid  unnecesary building of PSI after clearing caches
+              // updating properties separately to avoid unnecessary building of PSI after clearing caches
               for (Pair<Element, AntBuildFileBase> pair : buildFiles) {
                 final AntBuildFileBase buildFile = pair.getSecond();
                 buildFile.updateProperties();
                 final VirtualFile vFile = buildFile.getVirtualFile();
                 final String buildFileUrl = vFile != null? vFile.getUrl() : null;
 
-                for (final Object o1 : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
-                  final Element e = (Element)o1;
+                for (Element e : pair.getFirst().getChildren(EXECUTE_ON_ELEMENT)) {
                   final String eventId = e.getAttributeValue(EVENT_ELEMENT);
                   ExecutionEvent event = null;
                   final String targetName = e.getAttributeValue(TARGET_ELEMENT);
