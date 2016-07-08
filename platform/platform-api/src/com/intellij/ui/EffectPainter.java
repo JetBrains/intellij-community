@@ -71,42 +71,38 @@ public enum EffectPainter implements RegionPainter<Paint> {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setPaint(paint);
 
-        int length = 2 * height - 2;
+        int length = 2 * height - 2; // the spatial period of the wave
 
         double dx = -((x % length + length) % length); // normalize
-        double size = (double)length / 4;
-
         double upper = 0;
         double lower = height - 1;
-        double center = lower / 2;
-
         Path2D path = new Path2D.Double();
         path.moveTo(dx, lower);
-        while (true) {
-          if (simple) {
-            dx += size + size;
-            path.lineTo(dx, upper);
+        if (simple) {
+          g.setStroke(STROKE);
+          double size = (double)length / 2;
+          while (true) {
+            path.lineTo(dx += size, upper);
             if (dx > width) break;
-            dx += size + size;
-            path.lineTo(dx, lower);
-            if (dx > width) break;
-          }
-          else {
-            dx += size;
-            path.quadTo(dx - size / 2, lower, dx, center);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, upper, dx, upper);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, upper, dx, center);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, lower, dx, lower);
+            path.lineTo(dx += size, lower);
             if (dx > width) break;
           }
         }
-        if (simple) g.setStroke(STROKE);
+        else {
+          double size = (double)length / 4;
+          double prev = dx - size / 2;
+          double center = lower / 2;
+          while (true) {
+            path.quadTo(prev += size, lower, dx += size, center);
+            if (dx > width) break;
+            path.quadTo(prev += size, upper, dx += size, upper);
+            if (dx > width) break;
+            path.quadTo(prev += size, upper, dx += size, center);
+            if (dx > width) break;
+            path.quadTo(prev += size, lower, dx += size, lower);
+            if (dx > width) break;
+          }
+        }
         g.draw(path);
         g.dispose();
       }
