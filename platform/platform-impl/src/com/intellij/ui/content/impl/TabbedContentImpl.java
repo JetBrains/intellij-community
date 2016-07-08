@@ -85,6 +85,25 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   }
 
   @Override
+  public void renameContent(@NotNull JComponent tab, @NotNull String newTabName) {
+    Pair<String, JComponent> toRemove = null;
+    for (Pair<String, JComponent> existingTab : myTabs) {
+      if (existingTab.second == tab) {
+        toRemove = existingTab;
+        break;
+      }
+    }
+    int index = myTabs.indexOf(toRemove);
+    if (index != -1) {
+      myTabs.remove(index);
+    }
+    myTabs.add(Pair.create(newTabName, tab));
+    if (getComponent() == tab) {
+      super.setDisplayName(newTabName);
+    }
+  }
+
+  @Override
   public String getDisplayName() {
     return getTabName();
   }
