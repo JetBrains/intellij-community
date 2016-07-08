@@ -276,6 +276,8 @@ abstract class ComponentStoreImpl : IComponentStore {
         // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
         // use.loaded.state.as.existing used in upsource
         val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
+          name != "AntConfiguration" &&
+          name != "FacetManager" &&
           name != "ProjectModuleManager" &&
           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
