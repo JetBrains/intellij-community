@@ -87,7 +87,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
            settings.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected() ||
            settings.KEEP_PROXY_PASSWORD != myRememberProxyPasswordCheckBox.isSelected() ||
            settings.PROXY_TYPE_IS_SOCKS != mySocks.isSelected() ||
-           !Comparing.strEqual(settings.PROXY_LOGIN, myProxyLoginTextField.getText()) ||
+           !Comparing.strEqual(settings.getProxyLogin(), myProxyLoginTextField.getText()) ||
            !Comparing.strEqual(settings.getPlainProxyPassword(), new String(myProxyPasswordTextField.getPassword())) ||
            settings.PROXY_PORT != myProxyPortTextField.getNumber() ||
            !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
@@ -231,7 +231,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     enableProxy(settings.USE_HTTP_PROXY);
 
-    myProxyLoginTextField.setText(settings.PROXY_LOGIN);
+    myProxyLoginTextField.setText(settings.getProxyLogin());
     myProxyPasswordTextField.setText(settings.getPlainProxyPassword());
 
     myProxyPortTextField.setNumber(settings.PROXY_PORT);
@@ -312,7 +312,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     settings.PROXY_AUTHENTICATION = myProxyAuthCheckBox.isSelected();
     settings.KEEP_PROXY_PASSWORD = myRememberProxyPasswordCheckBox.isSelected();
 
-    settings.PROXY_LOGIN = getText(myProxyLoginTextField);
+    settings.setProxyLogin(getText(myProxyLoginTextField));
     settings.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
     settings.PROXY_EXCEPTIONS = StringUtil.nullize(myProxyExceptions.getText(), true);
 
