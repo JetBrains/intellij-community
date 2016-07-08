@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -832,6 +832,30 @@ public class PyTypeTest extends PyTestCase {
   public void testTupleMultiplication() {
     doTest("Tuple[int, bool, int, bool]",
            "expr = (1, False) * 2");
+  }
+
+
+  public void testTupleDestructuring() {
+    doTest("str",
+           "_, expr = (1, 'val') ");
+  }
+
+  public void testParensTupleDestructuring() {
+    doTest("str",
+           "(_, expr) = (1, 'val') ");
+  }
+
+  // PY-19825
+  public void testSubTupleDestructuring() {
+    doTest("str",
+           "(a, (_, expr)) = (1, (2,'val')) ");
+  }
+
+  // PY-19825
+  public void testSubTupleIndirectDestructuring() {
+    doTest("str",
+           "xs = (2,'val')\n" +
+           "(a, (_, expr)) = (1, xs) ");
   }
 
   public void testConstructorUnification() {

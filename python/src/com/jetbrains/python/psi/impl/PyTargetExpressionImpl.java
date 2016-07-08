@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,16 +174,18 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       if (parent instanceof PyTupleExpression) {
         PsiElement nextParent = parent.getParent();
-        while (nextParent instanceof PyParenthesizedExpression) {
+        while (nextParent instanceof PyParenthesizedExpression || nextParent instanceof PyTupleExpression) {
           nextParent = nextParent.getParent();
         }
         if (nextParent instanceof PyAssignmentStatement) {
           final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
-          if (value != null) {
+          final PyExpression lhs = assignment.getLeftHandSideExpression();
+          final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
+          if (value != null && targetTuple != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
             if (assignedType instanceof PyTupleType) {
-              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PyTupleExpression)parent, (PyTupleType)assignedType);
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, (PyTupleType)assignedType);
               if (t != null) {
                 return t;
               }
