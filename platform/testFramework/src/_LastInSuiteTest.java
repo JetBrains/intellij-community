@@ -18,7 +18,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -49,20 +48,9 @@ public class _LastInSuiteTest extends TestCase {
         catch (Exception e) {
           throw new RuntimeException(e);
         }
-      }
-    });
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
+        // disposes default project too
         LightPlatformTestCase.closeAndDeleteProject();
-      }
-    }.execute().throwException();
-
-    // disposes default project too
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
