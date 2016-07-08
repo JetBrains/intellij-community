@@ -26,16 +26,22 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.SystemInfo;
@@ -55,10 +61,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author nik
@@ -241,6 +250,11 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
           OrderEnumerator enumerator = OrderEnumerator.orderEntries(myProject);
           if (!myConfiguration.OPTION_INCLUDE_LIBS) {
             enumerator = enumerator.withoutSdk().withoutLibraries();
+          } else {
+            // Android Studio: Don't attempt to compile the source files;
+            // they won't compile (they reference @hide classes and methods etc which
+            // are not present in android.jar)
+            enumerator = enumerator.withoutSdk();
           }
           final PathsList pathsList = enumerator.getSourcePathsList();
           final List<VirtualFile> files = pathsList.getRootDirs();
@@ -266,6 +280,9 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       catch (IOException e) {
         LOGGER.error(e);
       }
+
+      // Android Studio: Add custom parameters to handle generating javadoc with the Android SDK
+      addAndroidParameters(cmdLine, parameters, modules);
 
       if (myConfiguration.OPTION_LINK_TO_JDK_DOCS) {
         VirtualFile[] docUrls = jdk.getRootProvider().getFiles(JavadocOrderRootType.getInstance());
@@ -293,6 +310,102 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       if (myConfiguration.OUTPUT_DIRECTORY != null) {
         parameters.add("-d");
         parameters.add(myConfiguration.OUTPUT_DIRECTORY.replace('/', File.separatorChar));
+      }
+    }
+
+    // Android Studio: We'll need to make some tweaks to make the javadoc
+    // generation work for Android. In particular, we need to point to
+    // the Android SDK's android.jar file with a -bootclasspath argument.
+    // We only do this if at least one Android module is part of the javadoc
+    // code generation scope (since otherwise the user may have a Java library
+    // in their Gradle project, for example for an annotation processor, that
+    // they're generating javadoc for.)
+    //
+    // This code is pretty clumsy; looking up the Android SDKs and the Android
+    // Facet by string names instead of using the AndroidSDk and AndroidFacet
+    // classes. The reason for that is that this is in the core Java support
+    // in IntelliJ, and we don't have access to any of the Android plugin APIs
+    // (and we don't want to introduce a dependency), so we stab around by using
+    // well known names.
+    private void addAndroidParameters(GeneralCommandLine cmdLine, ParametersList parameters, Set<Module> modules) {
+      boolean haveAndroidModule = false;
+      for (Module module : modules) {
+        for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+          if ("Android".equals(facet.getName())) {
+            haveAndroidModule = true;
+            break;
+          }
+        }
+      }
+      if (!haveAndroidModule) {
+        return;
+      }
+
+      Sdk sdk = null;
+      for (SdkType type : SdkType.getAllTypes()) {
+        if ("Android SDK".equals(type.getName())) {
+          int sdkApi = 0;
+          // Pick the best one
+          Pattern pattern = Pattern.compile("Android API (\\d+) Platform");
+          for (Sdk s : ProjectJdkTable.getInstance().getSdksOfType(type)) {
+            String name = s.toString();
+            Matcher matcher = pattern.matcher(name);
+            if (matcher.find()) {
+              try {
+                int api = Integer.parseInt(matcher.group(1));
+                if (api > sdkApi) {
+                  sdk = s;
+                  sdkApi = api;
+                }
+              }
+              catch (NumberFormatException ignore) {
+              }
+            }
+          }
+          break;
+        }
+      }
+      if (sdk == null) {
+        return;
+      }
+
+      SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
+      if (additionalData == null) {
+        return;
+      }
+
+      String path = sdk.getHomePath();
+      if (path == null) {
+        return;
+      }
+      File sdkDir = new File(FileUtil.toSystemDependentName(path));
+
+      String buildTarget = null;
+      try {
+        Field field = additionalData.getClass().getDeclaredField("myBuildTarget");
+        field.setAccessible(true);
+        buildTarget = (String)field.get(additionalData);
+      } catch (Throwable ignore) {
+      }
+      if (buildTarget == null) {
+        return;
+      }
+
+      File androidJar = new File(sdkDir, "platforms" + File.separator + buildTarget + File.separator + "android.jar");
+      if (androidJar.isFile()) {
+        cmdLine.addParameter("-bootclasspath");
+        cmdLine.addParameter(androidJar.getPath());
+        // aapt generates javadocs that don't pass doclint
+        cmdLine.addParameter("-Xdoclint:none");
+
+        if (myConfiguration.OPTION_LINK_TO_JDK_DOCS) {
+          File reference = new File(sdkDir, "docs" + File.separator + "reference");
+          if (reference.exists()) {
+            parameters.add("-linkoffline");
+            parameters.add("https://developer.android.com/reference");
+            parameters.add(reference.getPath());
+          }
+        }
       }
     }
 
