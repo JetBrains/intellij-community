@@ -76,7 +76,7 @@ target('run_tests': 'Run java tests') {
   testcases.each { testCase ->
     List<String> jvmArgs = [
       "-Dclasspath.file=${classpathFile}",
-      "-Didea.platform.prefix=Idea",
+      "-Didea.platform.prefix=AndroidStudio",
       "-Dbootstrap.testcases=$testCase"
     ]
 
