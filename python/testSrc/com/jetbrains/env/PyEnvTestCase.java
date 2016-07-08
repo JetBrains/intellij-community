@@ -83,7 +83,7 @@ public abstract class PyEnvTestCase {
    * Escape test output to prevent python test be processed as test result
    */
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\##");
+    return message.replace("##", "from test: \\[sharp][sharp]");
   }
 
   protected boolean isStaging(Description description) {
