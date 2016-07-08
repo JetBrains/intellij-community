@@ -62,7 +62,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   }
 
   @NotNull
-  private static BoundedScheduledExecutorService createBoundedScheduledExecutor(ExecutorService backendExecutor, int maxTasks) {
+  private static BoundedScheduledExecutorService createBoundedScheduledExecutor(@NotNull ExecutorService backendExecutor, int maxTasks) {
     return new BoundedScheduledExecutorService(backendExecutor, maxTasks);
   }
 
