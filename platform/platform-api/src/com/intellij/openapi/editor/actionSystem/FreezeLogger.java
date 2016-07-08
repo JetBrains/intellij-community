@@ -18,7 +18,11 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FreezeLogger {
   
@@ -26,9 +30,9 @@ public class FreezeLogger {
   private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int MAX_ALLOWED_TIME = 500;
   
-  public static void runUnderPerformanceMonitor(Runnable action) {
+  public static void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
     ALARM.cancelAllRequests();
-    ALARM.addRequest(FreezeLogger::dumpThreads, MAX_ALLOWED_TIME);
+    ALARM.addRequest(() -> dumpThreads(project), MAX_ALLOWED_TIME);
     
     try {
       action.run();
@@ -38,7 +42,11 @@ public class FreezeLogger {
     }
   }
   
-  private static void dumpThreads() {
+  private static void dumpThreads(@Nullable Project project) {
+    if (project != null && !project.isDisposed() && DumbService.isDumb(project)) {
+      return;
+    }
+    
     String dumps = ThreadDumper.dumpThreadsToString();
     String msg = "Typing freeze report, thread dumps attached. EDT stacktrace:\n" 
                  + ThreadDumper.dumpEdtStackTrace() 

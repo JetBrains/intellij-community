@@ -23,6 +23,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +131,8 @@ public class TypedAction {
 
   public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
     if (editor == null) return;
-    FreezeLogger.runUnderPerformanceMonitor(() -> myRawHandler.execute(editor, charTyped, dataContext));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    FreezeLogger.runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));
   }
   
   private class DefaultRawHandler implements TypedActionHandler {
