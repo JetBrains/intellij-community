@@ -38,10 +38,9 @@ public enum EffectPainter implements RegionPainter<Paint> {
         g.drawLine(x, y + 1, x + width, y + 1);
       }
       else if (paint != null && width > 0 && height > 0) {
-        g.setPaint(paint);
-        int h = height < 4 ? 2 : height >> 1;
+        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
         double pos = Registry.doubleValue("ide.text.effect.line.new.pos");
-        y += (int)((double)height - h * pos);
+        y += height < 3 ? 1 : (int)((double)height - h * pos);
         g.setPaint(paint);
         g.drawLine(x, y, x + width, y);
       }
@@ -51,7 +50,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
    * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
    */
   WAVE_UNDERSCORE {
-    private final BasicStroke STROKE = new BasicStroke(.7f);
+    private final BasicStroke STROKE = new BasicStroke(.5f);
 
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
@@ -61,7 +60,8 @@ public enum EffectPainter implements RegionPainter<Paint> {
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (paint != null && width > 0 && height > 0) {
-        int h = height < 4 ? 2 : Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        boolean simple = height < 5;
+        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
         if (h != height) {
           y += height - h;
           height = h;
@@ -71,8 +71,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setPaint(paint);
 
-        int length = 2 * height;
-        boolean simple = length < 5;
+        int length = 2 * height - 2;
 
         double dx = -((x % length + length) % length); // normalize
         double size = (double)length / 4;
