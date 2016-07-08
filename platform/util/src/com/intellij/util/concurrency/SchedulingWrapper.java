@@ -63,9 +63,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
     if (!shutdown.compareAndSet(false, true)) {
       throw new IllegalStateException("Already shutdown");
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Shutdown", new Throwable());
-    }
   }
 
   @NotNull
