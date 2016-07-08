@@ -53,7 +53,7 @@ public class EduStepicUpdater {
       StepicUpdateSettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
       courses.removeAll(cachedCourses);
-      if (!courses.isEmpty()) {
+      if (!courses.isEmpty() && !cachedCourses.isEmpty()) {
         final String message;
         final String title;
         if (courses.size() == 1) {
