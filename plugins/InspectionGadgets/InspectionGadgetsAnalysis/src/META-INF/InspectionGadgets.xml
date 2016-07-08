@@ -792,6 +792,10 @@
                      key="assert.to.if.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.asserttoif.AssertToIfInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="IfToAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="if.to.assertion.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.asserttoif.IfToAssertionInspection"/>
 
     <!--group.names.data.flow.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanVariableAlwaysNegated" bundle="com.siyeh.InspectionGadgetsBundle"
