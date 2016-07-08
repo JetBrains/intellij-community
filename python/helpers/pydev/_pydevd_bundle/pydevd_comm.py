@@ -261,7 +261,7 @@ class PyDBDaemonThread(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.killReceived = False
-        self.dontTraceMe = True
+        self.pydev_do_not_trace = True
         self.is_pydev_daemon_thread = True
 
     def run(self):
@@ -292,7 +292,7 @@ class PyDBDaemonThread(threading.Thread):
         self.killReceived = True
 
     def _stop_trace(self):
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
 
             disable_tracing = True
 
