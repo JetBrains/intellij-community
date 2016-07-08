@@ -15,31 +15,19 @@
  */
 package org.testng;
 
-import java.io.PrintStream;
+public class IDEATestNGInvokedMethodListener implements IInvokedMethodListener {
+  private final IDEATestNGRemoteListener myListener;
 
-public class IDEATestNGRemoteListenerEx extends IDEATestNGRemoteListener implements IInvokedMethodListener {
-  public IDEATestNGRemoteListenerEx() {}
-
-  public IDEATestNGRemoteListenerEx(PrintStream printStream) {
-    super(printStream);
+  public IDEATestNGInvokedMethodListener(IDEATestNGRemoteListener listener) {
+    myListener = listener;
   }
 
   public synchronized void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
     if (!testResult.getMethod().isTest()) {
-      onConfigurationStart(createDelegated(testResult));
+      myListener.onConfigurationStart(myListener.createDelegated(testResult));
     }
   }
 
   //should be covered by test listeners
   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {}
-
-  @Override
-  public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(createDelegated(result));
-  }
-
-  @Override
-  public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(createDelegated(result));
-  }
 }
