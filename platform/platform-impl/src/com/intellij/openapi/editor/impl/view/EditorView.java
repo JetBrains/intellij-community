@@ -284,6 +284,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     assertIsDispatchThread();
     synchronized (myLock) {
       myPlainSpaceWidth = -1;
+      myTabSize = -1;
     }
     setFontRenderContext();
     myLogicalPositionCache.reset(false);
