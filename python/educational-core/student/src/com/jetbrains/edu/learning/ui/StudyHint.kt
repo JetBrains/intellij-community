@@ -40,9 +40,13 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     if (course != null) {
       val courseMode = course.courseMode
       val group = DefaultActionGroup()
-      group.addAll(GoBackward(), GoForward())
-      if (EduNames.STUDY != courseMode) {
-        group.addAll(Separator.getInstance(), EditHint(), AddHint(), RemoveHint())
+      if (courseMode == EduNames.STUDY) {
+        if (myHints.size > 1) {
+          group.addAll(GoBackward(), GoForward())
+        }
+      }
+      else {
+        group.addAll(GoBackward(), GoForward(), Separator.getInstance(), EditHint(), AddHint(), RemoveHint())
       }
       studyToolWindow.setActionToolbar(group)
       if (!myHints.isEmpty()) {

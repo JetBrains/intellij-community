@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
@@ -29,23 +29,21 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     setTitle(ourTitle);
     myAnswerPlaceholder = answerPlaceholder;
     myPanel = new CCCreateAnswerPlaceholderPanel();
-    if (answerPlaceholder.getHints() != null) {
+    if (!answerPlaceholder.getHints().isEmpty()) {
       setHintText(answerPlaceholder);
     }
     myProject = project;
     String answerPlaceholderTaskText = answerPlaceholder.getTaskText();
     myPanel.setAnswerPlaceholderText(answerPlaceholderTaskText != null ? answerPlaceholderTaskText : "");
-    List<String> hintName = answerPlaceholder.getHints();
-    myPanel.setHintText(!hintName.isEmpty() ? hintName.get(0) : "");
     init();
     initValidation();
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void setHintText(AnswerPlaceholder answerPlaceholder) {
-    List<String> hintText = answerPlaceholder.getHints();
-
-    myPanel.setHintText(hintText.isEmpty()? "" : hintText.get(0));
+    List<String> hintTexts = answerPlaceholder.getHints();
+    myPanel.setHintText(hintTexts.get(0));
+    myPanel.setHints(hintTexts);
   }
 
   @Override
@@ -53,10 +51,13 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     String answerPlaceholderText = myPanel.getAnswerPlaceholderText();
     myAnswerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
     myAnswerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
-    myAnswerPlaceholder.setHints(
-      new ArrayList<String>() {{
-        add(myPanel.getHintText());
-      }});
+    final List<String> hints = myPanel.getHints();
+    if (hints.size() == 1 && hints.get(0).isEmpty()) {
+      myAnswerPlaceholder.setHints(Collections.emptyList());
+    }
+    else {
+      myAnswerPlaceholder.setHints(hints);
+    }
     super.doOKAction();
   }
 
@@ -69,7 +70,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   @Nullable
   @Override
   public ValidationInfo doValidate() {
-    return myAnswerPlaceholder.getHints() != null ? null : new ValidationInfo("Type hint");
+    return !myPanel.getHints().isEmpty() ? null : new ValidationInfo("Type hint");
   }
 
   @Nullable
