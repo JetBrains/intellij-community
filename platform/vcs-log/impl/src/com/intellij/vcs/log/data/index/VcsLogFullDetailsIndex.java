@@ -71,21 +71,40 @@ public class VcsLogFullDetailsIndex implements Disposable {
 
   @NotNull
   public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
-    Ref<TIntHashSet> result = new Ref<>(null);
+    TIntHashSet result = null;
 
     for (Integer key : keys) {
       TIntHashSet newResult = new TIntHashSet();
-      iterateCommitIds(key, integer -> {
-        if (result.get() == null || result.get().contains(integer)) {
-          newResult.add(integer);
-        }
-      });
+      ValueContainer<Void> data = myMapReduceIndex.getData(key);
 
-      result.set(newResult);
+      ValueContainer.ValueIterator<Void> valueIt = data.getValueIterator();
+      while (valueIt.hasNext()) {
+        valueIt.next();
+        ValueContainer.IntIterator inputIt = valueIt.getInputIdsIterator();
+        if (result != null && result.size() < inputIt.size()) {
+          ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
+          result.forEach(value -> {
+            if (predicate.contains(value)) {
+              newResult.add(value);
+            }
+            return true;
+          });
+        }
+        else {
+          while (inputIt.hasNext()) {
+            int integer = inputIt.next();
+            if (result == null || result.contains(integer)) {
+              newResult.add(integer);
+            }
+          }
+        }
+      }
+
+      result = newResult;
     }
 
-    if (result.get() == null) return new TIntHashSet();
-    return result.get();
+    if (result == null) return new TIntHashSet();
+    return result;
   }
 
   private void iterateCommitIds(int key, @NotNull Consumer<Integer> consumer) throws StorageException {
