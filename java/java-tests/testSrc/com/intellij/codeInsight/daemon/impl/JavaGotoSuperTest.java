@@ -115,6 +115,16 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
+  public void testSiblingInheritanceAndGenerics() throws Throwable {
+    configureByFile(getBasePath() + "SiblingInheritanceAndGenerics.java");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    action.update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
+    action.actionPerformed(event);
+    checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
+  }
+
   public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() throws Throwable {
     configureByFile(getBasePath() + "DeceivingSiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
