@@ -24,6 +24,7 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.ValueWrapper;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -168,9 +169,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         ex.printStackTrace(writer);
         final ComparisonFailureData failureData;
         if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
-          final Object actual = ((AssertionFailedError)ex).getActual();
-          final Object expected = ((AssertionFailedError)ex).getExpected();
-          failureData = new ComparisonFailureData(expected.toString(), actual.toString());
+          final ValueWrapper actual = ((AssertionFailedError)ex).getActual();
+          final ValueWrapper expected = ((AssertionFailedError)ex).getExpected();
+          failureData = new ComparisonFailureData(expected.getStringRepresentation(), actual.getStringRepresentation());
         }
         else {
           failureData = ExpectedPatterns.createExceptionNotification(ex);
