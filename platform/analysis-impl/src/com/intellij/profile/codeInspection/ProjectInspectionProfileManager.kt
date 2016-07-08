@@ -77,7 +77,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override val schemeManager: SchemeManager<InspectionProfile>
+  override val schemeManager: SchemeManager<InspectionProfileImpl>
 
   private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
                            @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
@@ -97,7 +97,15 @@ class ProjectInspectionProfileManager(val project: Project,
       }
 
       override fun onSchemeAdded(scheme: InspectionProfileImpl) {
-        fireProfileChanged(scheme)
+        if (scheme.wasInitialized()) {
+          fireProfileChanged(scheme)
+        }
+      }
+
+      override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
+        for (adapter in profileListeners) {
+          adapter.profileActivated(oldScheme, newScheme)
+        }
       }
     }, isUseOldFileNameSanitize = true)
 
@@ -206,11 +214,17 @@ class ProjectInspectionProfileManager(val project: Project,
         }
       }
     }
+
+    if (newState.useProjectProfile) {
+      schemeManager.currentSchemeName = newState.projectProfile
+    }
   }
 
   @Synchronized override fun getState(): Element? {
     val result = Element("settings")
-    XmlSerializer.serializeInto(this.state, result, skipDefaultsSerializationFilter)
+    val state = this.state
+    state.projectProfile = schemeManager.currentSchemeName
+    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
     }
@@ -235,20 +249,12 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized override fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
-    get() = state.projectProfile
+    get() = schemeManager.currentSchemeName
 
-  @Synchronized override fun setRootProfile(newProfile: String?) {
-    if (newProfile == state.projectProfile) {
-      return
-    }
-
-    val oldProfile = state.projectProfile
-    state.projectProfile = newProfile
-    state.useProjectProfile = newProfile != null
-    oldProfile?.let {
-      for (adapter in profileListeners) {
-        adapter.profileActivated(getProfile(oldProfile), newProfile?.let { getProfile(it) })
-      }
+  @Synchronized override fun setRootProfile(name: String?) {
+    if (name != schemeManager.currentSchemeName) {
+      schemeManager.currentSchemeName = name
+      state.useProjectProfile = name != null
     }
   }
 
@@ -257,23 +263,20 @@ class ProjectInspectionProfileManager(val project: Project,
       return applicationProfileManager.currentProfile as InspectionProfileImpl
     }
 
-    val currentName = state.projectProfile
-    if (currentName == null || schemeManager.isEmpty) {
-      state.projectProfile = PROJECT_DEFAULT_PROFILE_NAME
-      val projectProfile = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, InspectionProfileImpl.getDefaultProfile(), null)
-      projectProfile.copyFrom(applicationProfileManager.currentProfile)
-      projectProfile.isProjectLevel = true
-      projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME)
-      schemeManager.addScheme(projectProfile)
-      return projectProfile
+    var currentScheme = schemeManager.currentScheme
+    if (currentScheme == null) {
+      currentScheme = schemeManager.allSchemes.firstOrNull()
+      if (currentScheme == null) {
+        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
+                                            InspectionProfileImpl.getDefaultProfile(), null)
+        currentScheme.copyFrom(applicationProfileManager.currentProfile)
+        currentScheme.isProjectLevel = true
+        currentScheme.setName(PROJECT_DEFAULT_PROFILE_NAME)
+        schemeManager.addScheme(currentScheme)
+      }
+      schemeManager.setCurrent(currentScheme, false)
     }
-
-    var profile = schemeManager.findSchemeByName(currentName)
-    if (profile == null) {
-      profile = schemeManager.allSchemes.get(0)!!
-      state.projectProfile = profile.name
-    }
-    return profile as InspectionProfileImpl
+    return currentScheme
   }
 
   private fun fireProfilesInitialized() {

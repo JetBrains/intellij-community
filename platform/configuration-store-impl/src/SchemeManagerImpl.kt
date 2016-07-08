@@ -133,13 +133,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
               processor.onSchemeDeleted(it)
             }
 
-            val newScheme = readSchemeFromFile(event.file, false)?.let {
+            updateCurrentScheme(oldCurrentScheme, readSchemeFromFile(event.file, false)?.let {
               processor.initScheme(it)
               processor.onSchemeAdded(it)
               it
-            }
-
-            updateCurrentScheme(oldCurrentScheme, newScheme)
+            })
           }
 
           is VFileCreateEvent -> {
@@ -188,17 +186,22 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    private fun updateCurrentScheme(oldCurrentScheme: T?, newCurrentScheme: T? = null) {
+    private fun updateCurrentScheme(oldScheme: T?, newScheme: T? = null) {
       if (currentScheme != null) {
         return
       }
 
-      if (oldCurrentScheme != currentScheme) {
-        @Suppress("UNCHECKED_CAST")
-        setCurrent(newCurrentScheme ?: schemes.firstOrNull())
+      if (oldScheme != currentScheme) {
+        val scheme = newScheme ?: schemes.firstOrNull()
+        currentPendingSchemeName = null
+        currentScheme = scheme
+        // must be equals by reference
+        if (oldScheme !== scheme) {
+          processor.onCurrentSchemeSwitched(oldScheme, scheme)
+        }
       }
-      else if (newCurrentScheme != null) {
-        processPendingCurrentSchemeName(newCurrentScheme)
+      else if (newScheme != null) {
+        processPendingCurrentSchemeName(newScheme)
       }
     }
   }
@@ -770,15 +773,21 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     schemes.addAll(newSchemes)
 
     if (oldCurrentScheme != newCurrentScheme) {
+      val newScheme: T?
       if (newCurrentScheme != null) {
         currentScheme = newCurrentScheme
+        newScheme = newCurrentScheme
       }
       else if (oldCurrentScheme != null && !schemes.contains(oldCurrentScheme)) {
-        currentScheme = schemes.firstOrNull()
+        newScheme = schemes.firstOrNull()
+        currentScheme = newScheme
+      }
+      else {
+        newScheme = null
       }
 
-      if (oldCurrentScheme != currentScheme) {
-        processor.onCurrentSchemeChanged(oldCurrentScheme)
+      if (oldCurrentScheme != newScheme) {
+        processor.onCurrentSchemeSwitched(oldCurrentScheme, newScheme)
       }
     }
   }
@@ -885,8 +894,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     val oldCurrent = currentScheme
     currentScheme = scheme
-    if (notify && oldCurrent != scheme) {
-      processor.onCurrentSchemeChanged(oldCurrent)
+    if (notify && oldCurrent !== scheme) {
+      processor.onCurrentSchemeSwitched(oldCurrent, scheme)
     }
   }
 

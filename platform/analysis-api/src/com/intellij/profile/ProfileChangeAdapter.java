@@ -21,7 +21,7 @@ public interface ProfileChangeAdapter {
   default void profileChanged(Profile profile) {
   }
 
-  default void profileActivated(@Nullable Profile oldProfile, Profile profile) {
+  default void profileActivated(@Nullable Profile oldProfile, @Nullable Profile profile) {
   }
 
   default void profilesInitialized() {

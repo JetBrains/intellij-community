@@ -72,10 +72,9 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       }
 
       @Override
-      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-        Keymap keymap = mySchemeManager.getCurrentScheme();
+      public void onCurrentSchemeSwitched(@Nullable Keymap oldScheme, @Nullable Keymap newScheme) {
         for (KeymapManagerListener listener : myListeners) {
-          listener.activeKeymapChanged(keymap);
+          listener.activeKeymapChanged(newScheme);
         }
       }
     };

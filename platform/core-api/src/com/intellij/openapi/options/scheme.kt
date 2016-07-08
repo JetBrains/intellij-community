@@ -69,10 +69,7 @@ abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   open fun onSchemeDeleted(scheme: MUTABLE_SCHEME) {
   }
 
-  /**
-   * Scheme switched.
-   */
-  open fun onCurrentSchemeChanged(oldScheme: Scheme?) {
+  open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?) {
   }
 
   open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED

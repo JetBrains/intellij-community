@@ -196,13 +196,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                           @NotNull final Project project,
                                           @NotNull final Collection<String> disabledInspections,
                                           @NotNull Disposable parentDisposable) {
-    InspectionToolWrapper[] wrapped =
-      ContainerUtil.map2Array(tools, InspectionToolWrapper.class, new Function<InspectionProfileEntry, InspectionToolWrapper>() {
-        @Override
-        public InspectionToolWrapper fun(InspectionProfileEntry tool) {
-          return InspectionToolRegistrar.wrapTool(tool);
-        }
-      });
+    InspectionToolWrapper[] wrapped = ContainerUtil.map2Array(tools, InspectionToolWrapper.class, InspectionToolRegistrar::wrapTool);
 
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
     profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);

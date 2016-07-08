@@ -31,7 +31,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -99,11 +102,11 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
 
       @Override
-      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
+      public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
         LafManager.getInstance().updateUI();
         schemeChangedOrSwitched();
 
-        fireChanges(mySchemeManager.getCurrentScheme());
+        fireChanges(newScheme);
       }
 
       @NotNull

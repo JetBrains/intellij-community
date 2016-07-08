@@ -48,7 +48,7 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
 
   void fireProfileChanged(@Nullable Profile oldProfile, @NotNull Profile profile);
 
-  void setRootProfile(@Nullable String profileName);
+  void setRootProfile(@Nullable String name);
 
   @SuppressWarnings("unused")
   @NotNull

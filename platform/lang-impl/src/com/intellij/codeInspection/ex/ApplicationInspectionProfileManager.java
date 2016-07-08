@@ -34,7 +34,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
@@ -74,7 +73,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
                                                                                                  SeverityProvider,
                                                                                                  PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
-  private final SchemeManager<InspectionProfile> mySchemeManager;
+  private final SchemeManager<InspectionProfileImpl> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
 
   public static ApplicationInspectionProfileManager getInstanceImpl() {
@@ -114,10 +113,9 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       }
 
       @Override
-      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
-        Profile current = mySchemeManager.getCurrentScheme();
-        if (current != null) {
-          fireProfileChanged((Profile)oldScheme, current);
+      public void onCurrentSchemeSwitched(@Nullable InspectionProfileImpl oldScheme, @Nullable InspectionProfileImpl newScheme) {
+        if (newScheme != null) {
+          fireProfileChanged(oldScheme, newScheme);
         }
         onProfilesChanged();
       }
@@ -126,7 +124,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   @NotNull
   @Override
-  protected SchemeManager<InspectionProfile> getSchemeManager() {
+  protected SchemeManager<InspectionProfileImpl> getSchemeManager() {
     return mySchemeManager;
   }
 

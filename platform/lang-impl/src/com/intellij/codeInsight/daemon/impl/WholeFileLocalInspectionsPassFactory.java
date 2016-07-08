@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -77,7 +76,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       }
 
       @Override
-      public void profileActivated(Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
         myFileToolsCache.clear();
       }
     };
@@ -93,8 +92,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null; //optimization
     }
 
-    if (!ProjectInspectionProfileManager.getInstanceImpl(file.getProject()).isCurrentProfileInitialized() ||
-        myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
+    if (myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
       return null;
     }
 

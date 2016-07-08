@@ -33,7 +33,7 @@ import com.intellij.util.messages.MessageBus
 internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
 
 abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProfileManager {
-  protected abstract val schemeManager: SchemeManager<InspectionProfile>
+  protected abstract val schemeManager: SchemeManager<InspectionProfileImpl>
 
   protected val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
   private val severityRegistrar = SeverityRegistrar(messageBus)
@@ -79,8 +79,8 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  fun addProfile(profile: Profile) {
-    schemeManager.addScheme(profile as InspectionProfile)
+  fun addProfile(profile: InspectionProfileImpl) {
+    schemeManager.addScheme(profile)
   }
 
   override final fun deleteProfile(name: String) {
@@ -94,13 +94,13 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
   }
 
   override fun updateProfile(profile: Profile) {
-    schemeManager.addScheme(profile as InspectionProfile)
+    schemeManager.addScheme(profile as InspectionProfileImpl)
     fireProfileChanged(profile)
   }
 }
 
-abstract class InspectionProfileProcessor : LazySchemeProcessor<InspectionProfile, InspectionProfileImpl>() {
-  override final fun getState(scheme: InspectionProfile): SchemeState {
+abstract class InspectionProfileProcessor : LazySchemeProcessor<InspectionProfileImpl, InspectionProfileImpl>() {
+  override final fun getState(scheme: InspectionProfileImpl): SchemeState {
     if (scheme is InspectionProfileImpl) {
       return if (scheme.wasInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
     }
