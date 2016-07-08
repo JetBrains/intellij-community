@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.WavePainter;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -30,7 +31,11 @@ public enum EffectPainter implements RegionPainter<Paint> {
 
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
-      if (paint != null && width > 0 && height > 0) {
+      if (!Registry.is("ide.text.effect.wave.new")) {
+        g.setPaint(paint);
+        WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
+      }
+      else if (paint != null && width > 0 && height > 0) {
         if (!Registry.is("ide.text.effect.wave.new.scale")) {
           y += height - 3;
           height = 3;

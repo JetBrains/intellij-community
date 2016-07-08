@@ -2413,12 +2413,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-          if (Registry.is("ide.text.effect.wave.new")) {
-            EffectPainter.WAVE.paint((Graphics2D)g, end.x, y, charWidth - 1, getDescent() - 1, attributes.getEffectColor());
-          }
-          else {
-            UIUtil.drawWave((Graphics2D)g, new Rectangle(end.x, y, charWidth - 1, getDescent() - 1));
-          }
+          EffectPainter.WAVE.paint((Graphics2D)g, end.x, y, charWidth - 1, getDescent() - 1, attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
           final int dottedAt = SystemInfo.isMac ? y - 1 : y;
@@ -3567,13 +3562,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
-        if (Registry.is("ide.text.effect.wave.new")) {
-          EffectPainter.WAVE.paint((Graphics2D)g, xStart, y + 1, xEnd - xStart, getDescent() - 1, effectColor);
-        }
-        else {
-          g.setColor(effectColor);
-          UIUtil.drawWave((Graphics2D)g, new Rectangle(xStart, y + 1, xEnd - xStart, getDescent() - 1));
-        }
+        EffectPainter.WAVE.paint((Graphics2D)g, xStart, y + 1, xEnd - xStart, getDescent() - 1, effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
