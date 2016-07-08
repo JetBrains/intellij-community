@@ -124,7 +124,7 @@ public class JdkBundleTest {
 
     boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
     JdkBundle bundle = macNonStandardJDK
-                       ? JdkBundle.createBundle(homeJDK, "", true, false) : // the test is run under jdk with non-standard layout
+                       ? JdkBundle.createBundle(homeJDK, "", true, false, true) : // the test is run under jdk with non-standard layout
                        JdkBundle.createBundle(bootJDK, true, false);
 
     assertNotNull(bundle);
