@@ -164,7 +164,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   public void initProfiles() {
     if (myProfilesAreInitialized.getAndSet(true)) {
-      if (mySchemeManager.getAllSchemes().isEmpty()) {
+      if (mySchemeManager.isEmpty()) {
         createDefaultProfile();
       }
       return;
@@ -172,7 +172,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     if (!LOAD_PROFILES) return;
 
     mySchemeManager.loadSchemes();
-    if (mySchemeManager.getAllSchemes().isEmpty()) {
+    if (mySchemeManager.isEmpty()) {
       createDefaultProfile();
     }
   }

@@ -41,7 +41,6 @@ public abstract class SchemeManager<T extends Scheme> {
    */
   public abstract void clearAllSchemes();
 
-  @SuppressWarnings("NullableProblems")
   @NotNull
   public abstract List<T> getAllSchemes();
 
