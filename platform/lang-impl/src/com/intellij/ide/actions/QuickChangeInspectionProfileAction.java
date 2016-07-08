@@ -23,14 +23,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final ProjectInspectionProfileManagerImpl projectProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
+    final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     InspectionProfile current = projectProfileManager.getCurrentProfile();
     for (Profile profile : projectProfileManager.getProfiles()) {
       addScheme(group, projectProfileManager, current, profile);
@@ -38,7 +38,7 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
   }
 
   private static void addScheme(final DefaultActionGroup group,
-                                final ProjectInspectionProfileManagerImpl projectProfileManager,
+                                final ProjectInspectionProfileManager projectProfileManager,
                                 final Profile current,
                                 final Profile scheme) {
     group.add(new DumbAwareAction(scheme.getName(), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {

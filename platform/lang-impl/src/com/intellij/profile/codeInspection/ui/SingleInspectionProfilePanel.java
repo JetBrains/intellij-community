@@ -47,7 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
 import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
@@ -56,7 +56,6 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -89,6 +88,8 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
+import com.intellij.util.containers.Queue;
+
 /**
  * User: anna
  * Date: 31-May-2006
@@ -105,7 +106,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
-  private final ProjectInspectionProfileManagerImpl myProjectProfileManager;
+  private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull private Profile myOriginal;
   private InspectionProfileImpl mySelectedProfile;
   private JEditorPane myBrowser;
@@ -134,7 +135,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     public void dispose() {}
   };
 
-  public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager,
+  public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
                                       @NotNull String inspectionProfileName,
                                       @NotNull ModifiableModel profile,
                                       @NotNull Profile original) {
@@ -148,7 +149,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
     if (profile.isProjectLevel()) {
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManagerImpl)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
     }
     else {
       return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);

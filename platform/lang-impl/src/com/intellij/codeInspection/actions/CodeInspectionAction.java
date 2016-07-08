@@ -31,7 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
@@ -103,7 +103,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final ProfilesComboBox profiles = (ProfilesComboBox)panel.myBrowseProfilesCombo.getComboBox();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    final ProjectInspectionProfileManagerImpl projectProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
+    final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       @Override
@@ -137,7 +137,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return panel.myAdditionalPanel;
   }
 
-  protected InspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManagerImpl projectProfileManager,
+  protected InspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManager projectProfileManager,
                                                            InspectionProfileManager profileManager,
                                                            final ProfilesComboBox profilesCombo) {
     return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo);
@@ -146,7 +146,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   protected static class ExternalProfilesComboboxAwareInspectionToolsConfigurable extends InspectionToolsConfigurable {
     private final ProfilesComboBox myProfilesCombo;
 
-    public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager, ProfilesComboBox profilesCombo) {
+    public ExternalProfilesComboboxAwareInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager, ProfilesComboBox profilesCombo) {
       super(projectProfileManager);
       myProfilesCombo = profilesCombo;
     }

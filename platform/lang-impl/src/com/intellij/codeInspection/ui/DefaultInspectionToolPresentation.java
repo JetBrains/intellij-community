@@ -36,7 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -143,7 +143,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
     }
-    SeverityRegistrar registrar = ProjectInspectionProfileManagerImpl.getInstanceImpl(project).getSeverityRegistrar();
+    SeverityRegistrar registrar = ProjectInspectionProfileManager.getInstanceImpl(project).getSeverityRegistrar();
     return registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
   }
 

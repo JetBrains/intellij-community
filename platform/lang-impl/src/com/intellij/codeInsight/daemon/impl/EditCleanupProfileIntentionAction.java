@@ -21,7 +21,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -53,7 +53,7 @@ class EditCleanupProfileIntentionAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final ProjectInspectionProfileManagerImpl profileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
+    final ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     final ProjectInspectionToolsConfigurable configurable =
       new ProjectInspectionToolsConfigurable(profileManager) {
         @Override

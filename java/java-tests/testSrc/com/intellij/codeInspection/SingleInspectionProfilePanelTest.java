@@ -22,7 +22,7 @@ import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
   // see IDEA-85700
   public void testSettingsModification() throws Exception {
     Project project = ProjectManager.getInstance().getDefaultProject();
-    ProjectInspectionProfileManagerImpl profileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
 
@@ -57,7 +57,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
 
   public void testModifyInstantiatedTool() throws Exception {
     Project project = ProjectManager.getInstance().getDefaultProject();
-    ProjectInspectionProfileManagerImpl profileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project);
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
 

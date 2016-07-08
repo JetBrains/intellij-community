@@ -91,7 +91,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -221,7 +221,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProfileImpl.initAndDo((Computable)() -> {
       InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
-      ProjectInspectionProfileManagerImpl.getInstanceImpl(project).setRootProfile(profile.getName());
+      ProjectInspectionProfileManager.getInstanceImpl(project).setRootProfile(profile.getName());
       return null;
     });
   }

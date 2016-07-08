@@ -35,7 +35,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImplKt;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerKt;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -841,7 +841,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     initInspectionTools(project);
 
     for (Element scopeElement : scopes.getChildren(SCOPE)) {
-      final String profile = scopeElement.getAttributeValue(ProjectInspectionProfileManagerImplKt.PROFILE);
+      final String profile = scopeElement.getAttributeValue(ProjectInspectionProfileManagerKt.PROFILE);
       if (profile != null) {
         final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)getProfileManager().getProfile(profile);
         if (inspectionProfile != null) {

@@ -49,7 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.IdeBorderFactory;
@@ -80,7 +80,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   private static final String COPY_SUFFIX = "copy";
   protected final InspectionProfileManager myApplicationProfileManager;
-  protected final ProjectInspectionProfileManagerImpl myProjectProfileManager;
+  protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
   private final Map<Profile, SingleInspectionProfilePanel> myPanels =
     new HashMap<Profile, SingleInspectionProfilePanel>();
@@ -90,7 +90,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private AuxiliaryRightPanel myAuxiliaryRightPanel;
   private Alarm mySelectionAlarm;
 
-  public InspectionToolsConfigurable(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager) {
+  public InspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
     myApplicationProfileManager = InspectionProfileManager.getInstance();
   }

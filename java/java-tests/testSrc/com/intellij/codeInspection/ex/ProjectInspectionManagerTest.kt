@@ -22,7 +22,7 @@ import com.intellij.configurationStore.loadAndUseProject
 import com.intellij.configurationStore.saveStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
@@ -51,7 +51,7 @@ internal class ProjectInspectionManagerTest {
     loadAndUseProject(tempDirManager, {
       it.path
     }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
@@ -101,7 +101,7 @@ internal class ProjectInspectionManagerTest {
     loadAndUseProject(tempDirManager, {
       it.path
     }) { project ->
-      val projectInspectionProfileManager = ProjectInspectionProfileManagerImpl.getInstanceImpl(project)
+      val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
 

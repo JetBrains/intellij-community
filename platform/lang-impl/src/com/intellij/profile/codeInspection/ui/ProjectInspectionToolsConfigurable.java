@@ -22,12 +22,12 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
-  public ProjectInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager) {
+  public ProjectInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     super(projectProfileManager);
   }
 

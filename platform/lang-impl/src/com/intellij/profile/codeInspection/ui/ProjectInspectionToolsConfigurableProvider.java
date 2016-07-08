@@ -15,16 +15,16 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class ProjectInspectionToolsConfigurableProvider extends ErrorsConfigurableProvider {
-  private final ProjectInspectionProfileManagerImpl myProjectProfileManager;
+  private final ProjectInspectionProfileManager myProjectProfileManager;
 
-  public ProjectInspectionToolsConfigurableProvider(@NotNull ProjectInspectionProfileManagerImpl projectProfileManager) {
+  public ProjectInspectionToolsConfigurableProvider(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
   }
 

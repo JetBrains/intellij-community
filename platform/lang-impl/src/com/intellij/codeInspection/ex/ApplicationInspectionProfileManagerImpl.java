@@ -207,7 +207,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
 
   private static void updateProfileImpl(@NotNull Profile profile) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      ProjectInspectionProfileManagerImpl.getInstanceImpl(project).initInspectionTools(profile);
+      ProjectInspectionProfileManager.getInstanceImpl(project).initInspectionTools(profile);
     }
   }
 

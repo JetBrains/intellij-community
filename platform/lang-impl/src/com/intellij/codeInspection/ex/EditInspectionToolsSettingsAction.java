@@ -29,7 +29,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
@@ -103,7 +103,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     final ErrorsConfigurable errorsConfigurable;
     if (!canChooseDifferentProfile) {
-      errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManagerImpl.getInstanceImpl(project)) {
+      errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstanceImpl(project)) {
 
         @Override
         protected boolean setActiveProfileAsDefaultOnApply() {

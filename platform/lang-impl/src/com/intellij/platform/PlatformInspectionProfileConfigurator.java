@@ -19,7 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class PlatformInspectionProfileConfigurator implements DirectoryProjectConfigurator {
   @Override
   public void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef) {
-    ProjectInspectionProfileManagerImpl.getInstanceImpl(project).setRootProfile(null);
+    ProjectInspectionProfileManager.getInstanceImpl(project).setRootProfile(null);
   }
 }

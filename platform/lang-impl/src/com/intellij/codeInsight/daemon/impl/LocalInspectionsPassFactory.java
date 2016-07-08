@@ -28,7 +28,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
@@ -60,7 +60,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
-    if (textRange == null || !ProjectInspectionProfileManagerImpl.getInstanceImpl(file.getProject()).isCurrentProfileInitialized()){
+    if (textRange == null || !ProjectInspectionProfileManager.getInstanceImpl(file.getProject()).isCurrentProfileInitialized()){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
     }
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);

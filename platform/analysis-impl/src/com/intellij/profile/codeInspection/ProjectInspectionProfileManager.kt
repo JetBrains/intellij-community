@@ -52,15 +52,15 @@ private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true)))
-class ProjectInspectionProfileManagerImpl(val project: Project,
-                                          private val applicationProfileManager: InspectionProfileManager,
-                                          private val scopeManager: DependencyValidationManager,
-                                          private val localScopesHolder: NamedScopeManager,
-                                          schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
+class ProjectInspectionProfileManager(val project: Project,
+                                      private val applicationProfileManager: InspectionProfileManager,
+                                      private val scopeManager: DependencyValidationManager,
+                                      private val localScopesHolder: NamedScopeManager,
+                                      schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): ProjectInspectionProfileManagerImpl {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManagerImpl
+    fun getInstanceImpl(project: Project): ProjectInspectionProfileManager {
+      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
     }
   }
 
@@ -85,7 +85,7 @@ class ProjectInspectionProfileManagerImpl(val project: Project,
   init {
     schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
       override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManagerImpl, InspectionProfileImpl.getDefaultProfile(), dataHolder)
+        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, InspectionProfileImpl.getDefaultProfile(), dataHolder)
         profile.isProjectLevel = true
         return profile
       }
