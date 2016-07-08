@@ -13,7 +13,7 @@ import java.util.*;
  * User: anna
  * Date: 5/22/13
  */
-public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener {
+public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
   private final List<String> myCurrentSuites = new ArrayList<String>();
