@@ -150,6 +150,7 @@ public class TooBroadScope
     }
 
     private final String[] EMPTY = {};
+    private final String[] ONE = {"one"};
     void abc() {
         String[] <warning descr="Scope of variable 'strings' is too broad">strings</warning> = EMPTY;
         System.out.println();
@@ -160,5 +161,41 @@ public class TooBroadScope
         System.out.println();
         System.out.println();
         System.out.println(list);
+
+        String[] <warning descr="Scope of variable 'ss' is too broad">ss</warning> = new String[10];
+        System.out.println();
+        System.out.println();
+        System.out.println(ss);
+
+        String[] <warning descr="Scope of variable 'ss2' is too broad">ss2</warning> = new String[] {""};
+        System.out.println();
+        System.out.println();
+        System.out.println(ss2);
+
+        String[] <warning descr="Scope of variable 'ss3' is too broad">ss3</warning> = {};
+        System.out.println();
+        System.out.println();
+        System.out.println(ss3);
+
+        String[] ss3a = {ONE[0]};
+        backgroundAction();
+        System.out.println();
+        System.out.println(ss3a);
+
+        List<String> ss4 = Arrays.asList(ONE);
+        backgroundAction();
+        System.out.println();
+        System.out.println(ss4);
+    }
+
+    void backgroundAction() {
+        ONE[0] = "two";
+    }
+
+    void time() {
+        long start = System.currentTimeMillis();
+        System.out.println();
+        long end = System.currentTimeMillis();
+        System.out.println("elapsed: " + (end - start));
     }
 }

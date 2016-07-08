@@ -29,7 +29,7 @@ import java.util.Locale;
  */
 public class LineEndingsManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
-  private static final String lineEndingsKey = "end_of_line";
+  public static final String lineEndingsKey = "end_of_line";
 
   private final Project myProject;
   private boolean statusBarUpdated = false;

@@ -70,6 +70,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
@@ -78,7 +80,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   private static final String HEADER_TITLE = "Profile:";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
-  private static final String COPY_SUFFIX = "copy";
+  private static final Pattern COPIED_PROFILE_SUFFIX_PATTERN = Pattern.compile("(.*\\s*copy)\\s*(\\d*)");
+
   protected final InspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
@@ -114,15 +117,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     LOG.assertTrue(modifyLevel || modifyName);
     String profileDefaultName = selectedProfile.getName();
     if (modifyName) {
-      if (!profileDefaultName.endsWith(COPY_SUFFIX)) {
-        profileDefaultName += " " + COPY_SUFFIX;
+      final Matcher matcher = COPIED_PROFILE_SUFFIX_PATTERN.matcher(profileDefaultName);
+      int nextIdx;
+      if (matcher.matches()) {
+        profileDefaultName = matcher.group(1);
+        nextIdx = matcher.group(2).isEmpty() ? 1 : Integer.valueOf(matcher.group(2));
+      }
+      else {
+        profileDefaultName += " copy";
+        nextIdx = 1;
       }
       if (hasName(profileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel())) {
-        int idx = 0;
         String currentProfileDefaultName;
         do {
-          idx++;
-          currentProfileDefaultName = profileDefaultName + " " + String.valueOf(idx);
+          currentProfileDefaultName = profileDefaultName + " " + String.valueOf(nextIdx);
+          nextIdx++;
         }
         while (hasName(currentProfileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel()));
         profileDefaultName = currentProfileDefaultName;

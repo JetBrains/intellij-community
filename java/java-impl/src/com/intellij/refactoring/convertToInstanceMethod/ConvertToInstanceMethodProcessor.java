@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     final Project project = myMethod.getProject();
 
     final PsiReference[] methodReferences =
-      ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
+      ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (final PsiReference ref : methodReferences) {
       final PsiElement element = ref.getElement();

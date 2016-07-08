@@ -95,26 +95,14 @@ public class RepositoryHelper {
 
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
-    boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, null, forceHttps, indicator);
+    return loadPlugins(repositoryUrl, null, indicator);
   }
   
-  /**
-   * Loads list of plugins, compatible with a given build, from a given plugin repository (main repository if null).
-   */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber buildnumber,
                                                        @Nullable ProgressIndicator indicator) throws IOException {
     boolean forceHttps = repositoryUrl == null && IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return loadPlugins(repositoryUrl, buildnumber, forceHttps, indicator);
-  }
-
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                       @Nullable BuildNumber buildnumber,
-                                                       boolean forceHttps,
-                                                       @Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(repositoryUrl, buildnumber, null, forceHttps, indicator);
   }
 

@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="asm5" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>
-

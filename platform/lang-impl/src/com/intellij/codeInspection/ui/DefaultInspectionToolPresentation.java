@@ -415,7 +415,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
     if (descriptors == null) {
-      descriptors = new CommonProblemDescriptor[0];
+      descriptors = CommonProblemDescriptor.EMPTY_ARRAY;
     }
     getIgnoredElements().put(refEntity, ArrayUtil.append(descriptors, descriptor));
   }

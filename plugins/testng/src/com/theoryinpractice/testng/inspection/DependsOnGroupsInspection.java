@@ -139,7 +139,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
         }
       }
     }
-    return problemDescriptors.toArray(new ProblemDescriptor[]{});
+    return problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private class GroupNameQuickFix implements LocalQuickFix {

@@ -256,7 +256,7 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -352,13 +352,13 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getOpenFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
     @NotNull
     public VirtualFile[] getSelectedFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -484,7 +484,7 @@ public class Mock {
 
     @Override
     public VirtualFile[] getChildren() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @NotNull

@@ -87,7 +87,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    */
   private Map<MouseShortcut, List<String>> myMouseShortcut2ListOfIds = null;
 
-  private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
+  private static final Shortcut[] ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
 

@@ -19,7 +19,7 @@
 
   <property name="src.dir" value="${basedir}/src"/>
   <property name="out.dir" value="${basedir}/out"/>
-  <property name="src.zip" value="${basedir}/asm5-src.zip"/>
+  <property name="src.zip" value="${basedir}/asm-src.zip"/>
   <property name="out.jar" value="${basedir}/asm-all.jar"/>
 
   <target name="check">
@@ -41,6 +41,7 @@
   <target name="patch" depends="unpack">
     <patch dir="${src.dir}" strip="0" patchfile="1_version_check.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
+    <delete file="${src.dir}/org/objectweb/asm/optimizer/ModuleInfoBndPlugin.java" quiet="true"/>
   </target>
 
   <target name="repackage" depends="patch">

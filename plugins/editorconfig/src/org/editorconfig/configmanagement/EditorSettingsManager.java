@@ -21,8 +21,8 @@ import java.util.Map;
 
 public class EditorSettingsManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
-  private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
-  private static final String insertFinalNewlineKey = "insert_final_newline";
+  public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
+  public static final String insertFinalNewlineKey = "insert_final_newline";
   private static final Map<String, String> trimMap;
 
   static {

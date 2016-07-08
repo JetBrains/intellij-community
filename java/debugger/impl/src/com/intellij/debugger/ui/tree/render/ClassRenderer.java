@@ -244,7 +244,7 @@ public class ClassRenderer extends NodeRendererImpl{
 
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
     try {
-      return elementFactory.createExpressionFromText(fieldDescriptor.getField().name(), DebuggerUtils.findClass(
+      return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
         fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
       );
     }

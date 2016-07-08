@@ -41,7 +41,7 @@ import java.util.List;
  * This will significantly simplify code, since we will not need to take the list of possible variants of children and grandchildren;
  * we will be able to iterate variants, not collections of variants
  */
-class JsonSchemaWalker {
+public class JsonSchemaWalker {
   public interface CompletionSchemesConsumer {
     void consume(boolean isName, @NotNull JsonSchemaObject schema);
   }
@@ -65,7 +65,7 @@ class JsonSchemaWalker {
     extractSchemaVariants(consumer, rootSchema, isName, position);
   }
 
-  private static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
+  public static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
                                             @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
     final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<Pair<JsonSchemaObject, Integer>>();
     queue.add(Pair.create(rootSchema, 0));
@@ -189,12 +189,12 @@ class JsonSchemaWalker {
     return steps;
   }
 
-  private static class Step {
+  public static class Step {
     private final StateType myType;
     @Nullable
     private final Transition myTransition;
 
-    public Step(StateType type, Transition transition) {
+    public Step(StateType type, @Nullable Transition transition) {
       myType = type;
       myTransition = transition;
     }
@@ -282,7 +282,7 @@ class JsonSchemaWalker {
     @Nullable
     private final JsonSchemaType myCorrespondingJsonType;
 
-    StateType(JsonSchemaType correspondingJsonType) {
+    StateType(@Nullable JsonSchemaType correspondingJsonType) {
       myCorrespondingJsonType = correspondingJsonType;
     }
 

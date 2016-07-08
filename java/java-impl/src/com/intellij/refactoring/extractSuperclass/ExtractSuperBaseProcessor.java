@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
+    PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
+      PsiReference.EMPTY_ARRAY);
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     detectTurnToSuperRefs(refs, result);
     final PsiPackage originalPackage = JavaDirectoryService.getInstance().getPackage(myClass.getContainingFile().getContainingDirectory());

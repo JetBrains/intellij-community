@@ -722,7 +722,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();
-          LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
           ReadAction.run(() -> {
             if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
               addTool(toolWrapper,

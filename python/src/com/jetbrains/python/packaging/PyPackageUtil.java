@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -50,9 +50,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author vlan
@@ -314,8 +314,7 @@ public class PyPackageUtil {
       }
       manager.refreshAndGetPackages(true);
     }
-    catch (ExecutionException e) {
-      LOG.warn(e);
+    catch (ExecutionException ignored) {
     }
     finally {
       isUpdating.set(false);
