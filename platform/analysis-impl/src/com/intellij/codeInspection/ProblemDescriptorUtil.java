@@ -57,7 +57,7 @@ public class ProblemDescriptorUtil {
     }
     ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
     ref = StringUtil.first(ref, 100, true);
-    return clearDuplicatedWhitespaces(ref);
+    return ref.trim().replaceAll("\\s+", " ");
   }
 
   @NotNull
@@ -180,41 +180,5 @@ public class ProblemDescriptorUtil {
         return HighlightInfoType.INFORMATION;
     }
     throw new RuntimeException("Cannot map " + highlightType);
-  }
-
-  static String clearDuplicatedWhitespaces(@NotNull String input) {
-    if (input.isEmpty()) {
-      return input;
-    }
-    char[] refWithoutRedundantSpaces = null;
-    int tail = 0;
-    for (int i = 0; i < input.length() - 1; i++) {
-      final char c1 = input.charAt(i);
-      final char c2 = input.charAt(i+1);
-      final boolean isWhiteSpace1 = StringUtil.isWhiteSpace(c1);
-      final boolean isWhiteSpace2 = StringUtil.isWhiteSpace(c2);
-      if (isWhiteSpace1 && isWhiteSpace2) {
-        if (refWithoutRedundantSpaces == null) {
-          refWithoutRedundantSpaces = new char[input.length()];
-          for (int j = 0; j < i; j++) {
-            refWithoutRedundantSpaces[j] = input.charAt(j);
-          }
-          tail = i;
-        }
-      }
-      else if (refWithoutRedundantSpaces != null) {
-        refWithoutRedundantSpaces[tail++] = isWhiteSpace1 ? ' ' : c1;
-      }
-    }
-    final char lastChar = input.charAt(input.length() - 1);
-    final boolean isLastWhiteSpace = StringUtil.isWhiteSpace(lastChar);
-    if (refWithoutRedundantSpaces != null) {
-      if (!isLastWhiteSpace) {
-        refWithoutRedundantSpaces[tail++] = lastChar;
-      }
-    } else if (isLastWhiteSpace) {
-      return new String(input.toCharArray(), 0, input.length() - 1);
-    }
-    return refWithoutRedundantSpaces == null ? input : new String(refWithoutRedundantSpaces, 0, tail);
   }
 }
