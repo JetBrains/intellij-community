@@ -383,7 +383,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (settings != null && settings.USE_HTTP_PROXY) {
       final String credentials;
       if (settings.PROXY_AUTHENTICATION) {
-        credentials = String.format("%s:%s@", settings.PROXY_LOGIN, settings.getPlainProxyPassword());
+        credentials = String.format("%s:%s@", settings.getProxyLogin(), settings.getPlainProxyPassword());
       }
       else {
         credentials = "";

@@ -589,9 +589,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           extraJvmArgs.add(KeyValue.create("https.nonProxyHosts", nonProxyHosts));
         }
       }
-      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.PROXY_LOGIN)) {
-        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.PROXY_LOGIN));
-        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.PROXY_LOGIN));
+      if (httpConfigurable.USE_HTTP_PROXY && StringUtil.isNotEmpty(httpConfigurable.getProxyLogin())) {
+        extraJvmArgs.add(KeyValue.create("http.proxyUser", httpConfigurable.getProxyLogin()));
+        extraJvmArgs.add(KeyValue.create("https.proxyUser", httpConfigurable.getProxyLogin()));
         final String plainProxyPassword = httpConfigurable.getPlainProxyPassword();
         extraJvmArgs.add(KeyValue.create("http.proxyPassword", plainProxyPassword));
         extraJvmArgs.add(KeyValue.create("https.proxyPassword", plainProxyPassword));
