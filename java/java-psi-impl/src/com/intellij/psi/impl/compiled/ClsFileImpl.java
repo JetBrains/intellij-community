@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -612,7 +613,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       PsiJavaFileStub stub = stubBuilder.fun(packageName);
 
       try {
-        StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
+        FileContentPair source = new FileContentPair(file, bytes);
+        StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<FileContentPair>(source, STRATEGY, stub, 0, className);
         reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
         PsiClassStub<?> result = visitor.getResult();
         if (result == null) return null;
@@ -633,23 +635,38 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
-  private static final InnerClassSourceStrategy<VirtualFile> STRATEGY = new InnerClassSourceStrategy<VirtualFile>() {
-    @Nullable
-    @Override
-    public VirtualFile findInnerClass(String innerName, VirtualFile outerClass) {
-      String baseName = outerClass.getNameWithoutExtension();
-      VirtualFile dir = outerClass.getParent();
-      assert dir != null : outerClass;
-      return dir.findChild(baseName + '$' + innerName + ".class");
+  private static class FileContentPair extends Pair<VirtualFile, byte[]> {
+    public FileContentPair(VirtualFile file, byte[] content) {
+      super(file, content);
     }
 
     @Override
-    public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
-      try {
-        byte[] bytes = innerClass.contentsToByteArray(false);
-        new ClassReader(bytes).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+    public String toString() {
+      return first.toString();
+    }
+  }
+
+  private static final InnerClassSourceStrategy<FileContentPair> STRATEGY = new InnerClassSourceStrategy<FileContentPair>() {
+    @Nullable
+    @Override
+    public FileContentPair findInnerClass(String innerName, FileContentPair outerClass) {
+      String baseName = outerClass.first.getNameWithoutExtension();
+      VirtualFile dir = outerClass.first.getParent();
+      assert dir != null : outerClass;
+      VirtualFile innerClass = dir.findChild(baseName + '$' + innerName + ".class");
+      if (innerClass != null) {
+        try {
+          byte[] bytes = innerClass.contentsToByteArray(false);
+          return new FileContentPair(innerClass, bytes);
+        }
+        catch (IOException ignored) { }
       }
-      catch (IOException ignored) { }
+      return null;
+    }
+
+    @Override
+    public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
+      new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
     }
   };
 
