@@ -46,7 +46,7 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
       final PsiElement el = ((PsiTreeElementBase)node).getElement();
       if (el != null) {
         final List<JavaLambdaTreeElement> result = new ArrayList<>();
-        el.accept(new JavaRecursiveElementWalkingVisitor() {
+        el.accept(new JavaRecursiveElementVisitor() {
           @Override
           public void visitLambdaExpression(PsiLambdaExpression expression) {
             super.visitLambdaExpression(expression);
