@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerImpl;
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -50,7 +50,7 @@ public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings i
   @Override
   public Element getState() {
     Element element = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
-    String profile = ApplicationInspectionProfileManagerImpl.getInstanceImpl().getRootProfileName();
+    String profile = ApplicationInspectionProfileManager.getInstanceImpl().getRootProfileName();
     if (!InspectionProfileImpl.DEFAULT_PROFILE_NAME.equals(profile)) {
       element.setAttribute("profile", profile);
     }
@@ -60,7 +60,7 @@ public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings i
   @Override
   public void loadState(Element state) {
     XmlSerializer.deserializeInto(this, state);
-    ApplicationInspectionProfileManagerImpl inspectionProfileManager = ApplicationInspectionProfileManagerImpl.getInstanceImpl();
+    ApplicationInspectionProfileManager inspectionProfileManager = ApplicationInspectionProfileManager.getInstanceImpl();
     inspectionProfileManager.getConverter().storeEditorHighlightingProfile(state,
                                                                            new InspectionProfileImpl(InspectionProfileConvertor.OLD_HIGHTLIGHTING_SETTINGS_PROFILE));
     inspectionProfileManager.setRootProfile(StringUtil.notNullize(state.getAttributeValue("profile"), "Default"));

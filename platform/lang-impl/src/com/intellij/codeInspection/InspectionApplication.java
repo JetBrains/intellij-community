@@ -347,7 +347,7 @@ public class InspectionApplication {
 
   @Nullable
   private Profile loadProfileByPath(final String profilePath) throws IOException, JDOMException {
-    Profile inspectionProfile = ApplicationInspectionProfileManagerImpl.getInstanceImpl().loadProfile(profilePath);
+    Profile inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + profilePath + "\'");
     }

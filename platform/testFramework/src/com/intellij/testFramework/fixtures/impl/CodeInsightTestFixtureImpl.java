@@ -207,7 +207,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
     profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);
 
-    final ApplicationInspectionProfileManagerImpl inspectionProfileManager = ApplicationInspectionProfileManagerImpl.getInstanceImpl();
+    final ApplicationInspectionProfileManager inspectionProfileManager = ApplicationInspectionProfileManager.getInstanceImpl();
     final Profile oldRootProfile = inspectionProfileManager.getCurrentProfile();
     inspectionProfileManager.addProfile(profile);
     Disposer.register(parentDisposable, new Disposable() {

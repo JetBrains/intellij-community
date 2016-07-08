@@ -70,18 +70,18 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
   },
   additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
-public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfileManager implements InspectionProfileManager,
-                                                                                                     SeverityProvider,
-                                                                                                     PersistentStateComponent<Element> {
+public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager,
+                                                                                                 SeverityProvider,
+                                                                                                 PersistentStateComponent<Element> {
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<InspectionProfile> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
 
-  public static ApplicationInspectionProfileManagerImpl getInstanceImpl() {
-    return (ApplicationInspectionProfileManagerImpl)ServiceManager.getService(InspectionProfileManager.class);
+  public static ApplicationInspectionProfileManager getInstanceImpl() {
+    return (ApplicationInspectionProfileManager)ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public ApplicationInspectionProfileManagerImpl(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
+  public ApplicationInspectionProfileManager(@NotNull InspectionToolRegistrar registrar, @NotNull SchemeManagerFactory schemeManagerFactory, @NotNull MessageBus messageBus) {
     super(messageBus);
 
     myRegistrar = registrar;
@@ -99,7 +99,7 @@ public class ApplicationInspectionProfileManagerImpl extends BaseInspectionProfi
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
-        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManagerImpl.this, getDefaultProfile(), dataHolder);
+        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, getDefaultProfile(), dataHolder);
       }
 
       @Override
