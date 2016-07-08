@@ -11,7 +11,7 @@ abstract class UrlProvider {
     abstract val experimentDataUrl: String
     
     companion object {
-        fun getInstance() = ServiceManager.getService(UrlProvider::class.java)
+        fun getInstance(): UrlProvider = ServiceManager.getService(UrlProvider::class.java)
     }
 
 }
@@ -22,7 +22,7 @@ abstract class FilePathProvider {
     abstract fun getStatsDataDirectory(): File
     
     companion object {
-        fun getInstance() = ServiceManager.getService(FilePathProvider::class.java)
+        fun getInstance(): FilePathProvider = ServiceManager.getService(FilePathProvider::class.java)
     }
 
 }
@@ -35,7 +35,7 @@ class InternalUrlProvider: UrlProvider() {
         get() = if (isPropertyExists("stats.collector.localhost.server")) localhost else internalHost
     
     
-    override val statsServerPostUrl = "$host:8080/stats/upload"
+    override val statsServerPostUrl = "http://test.jetstat-resty.aws.intellij.net/uploadstats"
     override val experimentDataUrl = "$host:8090/experiment/info"
 }
 
