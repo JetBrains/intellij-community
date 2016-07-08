@@ -65,7 +65,7 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.gen5.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestExecutionListener;
 
 import java.io.File;
 import java.io.IOException;

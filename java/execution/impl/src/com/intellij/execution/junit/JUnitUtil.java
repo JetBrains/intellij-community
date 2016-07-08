@@ -42,7 +42,7 @@ public class JUnitUtil {
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
-  @NonNls public static final String TEST5_ANNOTATION = "org.junit.gen5.api.Test";
+  @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
@@ -51,16 +51,16 @@ public class JUnitUtil {
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
 
-  public static final String BEFORE_EACH_ANNOTATION_NAME = "org.junit.gen5.api.BeforeEach";
-  public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.gen5.api.AfterEach";
+  public static final String BEFORE_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeEach";
+  public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.AfterEach";
 
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
 
-  public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.gen5.api.BeforeAll";
-  public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.gen5.api.AfterAll";
+  public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
+  public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
 
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION, TEST5_ANNOTATION));
 
