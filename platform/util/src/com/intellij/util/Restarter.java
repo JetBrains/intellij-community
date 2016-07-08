@@ -113,7 +113,7 @@ public class Restarter {
     final int pid = kernel32.GetCurrentProcessId();
     final IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
+    final String[] argv = argv_ptr.getWideStringArray(0, argc.getValue());
     kernel32.LocalFree(argv_ptr);
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
