@@ -60,12 +60,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.bool.RemoveBooleanEqualityIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.bool.NegateComparisonIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>
