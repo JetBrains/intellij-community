@@ -259,6 +259,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
+          if (brokenOff) return;
           WriteCommandAction.runWriteCommandAction(project, () -> {
             PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
             final int offset = newEditor.getCaretModel().getOffset();
