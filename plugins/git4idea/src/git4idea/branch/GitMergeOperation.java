@@ -51,7 +51,6 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
-  @NotNull private final Map<GitRepository, String> myCurrentRevisionsBeforeMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
   @NotNull private final Map<GitRepository, Boolean> myConflictedRepositories = new HashMap<GitRepository, Boolean>();
@@ -59,12 +58,10 @@ class GitMergeOperation extends GitBranchOperation {
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                     @NotNull Collection<GitRepository> repositories,
-                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge,
-                    @NotNull Map<GitRepository, String> currentRevisionsBeforeMerge) {
+                    @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge) {
     super(project, git, uiHandler, repositories);
     myBranchToMerge = branchToMerge;
     myDeleteOnMerge = deleteOnMerge;
-    myCurrentRevisionsBeforeMerge = currentRevisionsBeforeMerge;
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -328,7 +325,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult rollback(@NotNull GitRepository repository) {
-    return myGit.reset(repository, GitResetMode.HARD, myCurrentRevisionsBeforeMerge.get(repository));
+    return myGit.reset(repository, GitResetMode.HARD, getInitialRevision(repository));
   }
 
   @NotNull
