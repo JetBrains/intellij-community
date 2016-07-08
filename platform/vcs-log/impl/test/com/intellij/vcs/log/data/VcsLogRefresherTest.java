@@ -48,11 +48,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherTest.class);
 
   private static final int RECENT_COMMITS_COUNT = 2;
-  public static final Consumer<Exception> FAILING_EXCEPTION_HANDLER = new Consumer<Exception>() {
-    @Override
-    public void consume(@NotNull Exception e) {
-      throw new AssertionError(e);
-    }
+  private static final Consumer<Exception> FAILING_EXCEPTION_HANDLER = e -> {
+    throw new AssertionError(e);
   };
   private TestVcsLogProvider myLogProvider;
   private VcsLogData myLogData;
@@ -70,7 +67,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     super.setUp();
 
     myLogProvider = new TestVcsLogProvider(myProjectRoot);
-    myLogProviders = Collections.<VirtualFile, VcsLogProvider>singletonMap(myProjectRoot, myLogProvider);
+    myLogProviders = Collections.singletonMap(myProjectRoot, myLogProvider);
     myTopDetailsCache = ContainerUtil.newHashMap();
 
     myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
@@ -203,12 +200,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myLogData = new VcsLogData(myProject, myLogProviders, new Consumer<Exception>() {
-      @Override
-      public void consume(Exception e) {
-        LOG.error(e);
-      }
-    });
+    myLogData = new VcsLogData(myProject, myLogProviders, LOG::error);
     Disposer.register(myProject, myLogData);
     return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(),
                                    myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
@@ -228,20 +220,10 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   @NotNull
   private List<TimedVcsCommit> convert(@NotNull List<GraphCommit<Integer>> actualLog) {
-    return ContainerUtil.map(actualLog, new Function<GraphCommit<Integer>, TimedVcsCommit>() {
-      @NotNull
-      @Override
-      public TimedVcsCommit fun(@NotNull GraphCommit<Integer> commit) {
-        Function<Integer, Hash> convertor = new Function<Integer, Hash>() {
-          @NotNull
-          @Override
-          public Hash fun(Integer integer) {
-            return myLogData.getCommitId(integer).getHash();
-          }
-        };
-        return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),
-                                      commit.getTimestamp());
-      }
+    return ContainerUtil.map(actualLog, commit -> {
+      Function<Integer, Hash> convertor = integer -> myLogData.getCommitId(integer).getHash();
+      return new TimedVcsCommitImpl(convertor.fun(commit.getId()), ContainerUtil.map(commit.getParents(), convertor),
+                                    commit.getTimestamp());
     });
   }
 
@@ -251,7 +233,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private static class DataWaiter implements Consumer<DataPack> {
-    private volatile BlockingQueue<DataPack> myQueue = new ArrayBlockingQueue<DataPack>(10);
+    private volatile BlockingQueue<DataPack> myQueue = new ArrayBlockingQueue<>(10);
     private volatile Exception myException;
 
     @Override
@@ -274,7 +256,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       return myException != null;
     }
 
-    public String getExceptionText() {
+    String getExceptionText() {
       return ExceptionUtil.getThrowableText(myException);
     }
 
