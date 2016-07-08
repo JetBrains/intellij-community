@@ -19,7 +19,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
-    private val sendInterval = 30 * Time.MINUTE
+    private val sendInterval = 5 * Time.MINUTE
 
     private fun send() {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -113,7 +113,8 @@ class SimpleRequestService: RequestService() {
         try {
             val response = Request.Post(url).bodyFile(file, ContentType.TEXT_HTML).execute()
             val httpResponse = response.returnResponse()
-            return ResponseData(httpResponse.statusLine.statusCode)
+            val text = EntityUtils.toString(httpResponse.entity)
+            return ResponseData(httpResponse.statusLine.statusCode, text)
         }
         catch (e: IOException) {
             LOG.debug(e)
