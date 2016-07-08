@@ -26,19 +26,24 @@ import java.awt.geom.*;
  * @author Sergey.Malenkov
  */
 public enum EffectPainter implements RegionPainter<Paint> {
-  WAVE {
+  /**
+   * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
+   */
+  WAVE_UNDERSCORE {
     private final BasicStroke STROKE = new BasicStroke(.7f);
 
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      // we assume here that Y is a baseline of a text
       if (!Registry.is("ide.text.effect.wave.new")) {
         g.setPaint(paint);
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (paint != null && width > 0 && height > 0) {
-        if (!Registry.is("ide.text.effect.wave.new.scale")) {
-          y += height - 3;
-          height = 3;
+        int h = height < 4 ? 2 : Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        if (h != height) {
+          y += height - h;
+          height = h;
         }
         g = (Graphics2D)g.create(x, y, width, height);
         g.clipRect(0, 0, width, height);

@@ -440,7 +440,7 @@ class EditorPainter implements TextDrawingCallback {
       UIUtil.drawLine(g, xStart, y1, xEnd, y1);
     }
     else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      EffectPainter.WAVE.paint(g, xStart, y + 1, xEnd - xStart, myView.getDescent() - 1, effectColor);
+      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
       UIUtil.drawBoldDottedLine(g, xStart, xEnd, SystemInfo.isMac ? y : y + 1, myEditor.getBackgroundColor(), g.getColor(), false);
