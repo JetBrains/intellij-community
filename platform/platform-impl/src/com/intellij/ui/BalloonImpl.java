@@ -1952,4 +1952,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public boolean isBlockClicks() {
     return myBlockClicks;
   }
+
+  public boolean isClickProcessor() {
+    return myClickHandler != null || !myCloseOnClick || isBlockClicks();
+  }
 }
