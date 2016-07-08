@@ -38,8 +38,9 @@ import java.util.Set;
 public class VcsLogFullDetailsIndex implements Disposable {
   @NotNull private final MyMapReduceIndex myMapReduceIndex;
   @NotNull private final ID<Integer, Void> myID;
-  private final String myLogId;
-  private final String myName;
+  @NotNull private final String myLogId;
+  @NotNull private final String myName;
+  @NotNull protected final DataIndexer<Integer, Void, VcsFullCommitDetails> myIndexer;
 
   public VcsLogFullDetailsIndex(@NotNull String logId,
                                 @NotNull String name,
@@ -50,8 +51,9 @@ public class VcsLogFullDetailsIndex implements Disposable {
     myID = ID.create(name);
     myName = name;
     myLogId = logId;
+    myIndexer = indexer;
 
-    myMapReduceIndex = new MyMapReduceIndex(indexer, version);
+    myMapReduceIndex = new MyMapReduceIndex(myIndexer, version);
 
     Disposer.register(disposableParent, this);
   }
@@ -68,7 +70,7 @@ public class VcsLogFullDetailsIndex implements Disposable {
   }
 
   @NotNull
-  public TIntHashSet getCommitsWithAllKeys(@NotNull Set<Integer> keys) throws StorageException {
+  public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
     Ref<TIntHashSet> result = new Ref<>(null);
 
     for (Integer key : keys) {

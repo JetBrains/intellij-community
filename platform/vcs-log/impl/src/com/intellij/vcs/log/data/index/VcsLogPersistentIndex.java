@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -73,6 +74,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final PersistentMap<Integer, String> myMessagesIndex;
   @Nullable private final VcsLogMessagesTrigramIndex myTrigramIndex;
   @Nullable private final VcsLogUserIndex myUserIndex;
+  @Nullable private final VcsLogPathsIndex myPathsIndex;
 
   @NotNull private TIntHashSet myCommitsToIndex = new TIntHashSet();
 
@@ -95,6 +97,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myMessagesIndex = createMap(EnumeratorStringDescriptor.INSTANCE, "messages", logId, 0);
     myTrigramIndex = createIndex(() -> new VcsLogMessagesTrigramIndex(logId, this));
     myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, this));
+    myPathsIndex = createIndex(() -> new VcsLogPathsIndex(logId, myRoots, this));
 
     Disposer.register(disposableParent, this);
   }
@@ -159,10 +162,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myMessagesIndex.put(index, detail.getFullMessage());
         if (myTrigramIndex != null) myTrigramIndex.update(index, detail);
         if (myUserIndex != null) myUserIndex.update(index, detail);
+        if (myPathsIndex != null) myPathsIndex.update(index, detail);
       }
       myMessagesIndex.force();
       if (myTrigramIndex != null) myTrigramIndex.flush();
       if (myUserIndex != null) myUserIndex.flush();
+      if (myPathsIndex != null) myPathsIndex.flush();
     }
     catch (IOException | StorageException e) {
       myFatalErrorsConsumer.consume(e);
@@ -173,6 +178,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     try {
       return myMessagesIndex.get(commit) != null &&
              (myUserIndex == null || myUserIndex.isIndexed(commit)) &&
+             (myPathsIndex == null || myPathsIndex.isIndexed(commit)) &&
              (myTrigramIndex == null || myTrigramIndex.isIndexed(commit));
     }
     catch (IOException e) {
@@ -233,6 +239,19 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @NotNull
+  private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
+    if (myPathsIndex != null) {
+      try {
+        return myPathsIndex.getCommitsForPaths(paths);
+      }
+      catch (IOException | StorageException e) {
+        myFatalErrorsConsumer.consume(e);
+      }
+    }
+    return new TIntHashSet();
+  }
+
+  @NotNull
   public TIntHashSet filterMessages(@NotNull String text) {
     if (myTrigramIndex != null) {
       try {
@@ -274,7 +293,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     if (filters.isEmpty()) return false;
     for (VcsLogDetailsFilter filter : filters) {
       if (!((filter instanceof VcsLogTextFilter && myTrigramIndex != null) ||
-            (filter instanceof VcsLogUserFilterImpl && myUserIndex != null))) {
+            (filter instanceof VcsLogUserFilterImpl && myUserIndex != null) ||
+            (filter instanceof VcsLogStructureFilter && myPathsIndex != null))) {
         return false;
       }
     }
@@ -284,20 +304,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Override
   @NotNull
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    Set<Integer> result = ContainerUtil.newHashSet();
-
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
     VcsLogUserFilterImpl userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilterImpl.class);
+    VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
 
-    TIntHashSet filteredByMessage;
+    TIntHashSet filteredByMessage = null;
     if (textFilter != null) {
       filteredByMessage = filterMessages(textFilter.getText());
     }
-    else {
-      filteredByMessage = null;
-    }
 
-    TIntHashSet filteredByUser;
+    TIntHashSet filteredByUser = null;
     if (userFilter != null) {
       Set<VcsUser> users = ContainerUtil.newHashSet();
       for (VirtualFile root : myRoots) {
@@ -306,28 +322,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       filteredByUser = filterUsers(users);
     }
-    else {
-      filteredByUser = null;
+
+    TIntHashSet filteredByPath = null;
+    if (pathFilter != null) {
+      filteredByPath = filterPaths(pathFilter.getFiles());
     }
 
-    if (filteredByMessage == null) {
-      if (filteredByUser != null) {
-        filteredByUser.forEach(value -> {
-          result.add(value);
-          return true;
-        });
-      }
-    }
-    else {
-      filteredByMessage.forEach(value -> {
-        if (filteredByUser != null && filteredByUser.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
-    }
-
-    return result;
+    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
   }
 
   @Override

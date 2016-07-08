@@ -15,11 +15,16 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -46,5 +51,66 @@ public class TroveUtil {
   public static IntStream stream(@NotNull TIntArrayList list) {
     if (list.isEmpty()) return IntStream.empty();
     return IntStream.range(0, list.size()).map(list::get);
+  }
+
+  @NotNull
+  public static Set<Integer> intersect(@NotNull TIntHashSet... sets) {
+    TIntHashSet result = null;
+
+    Arrays.sort(sets, (set1, set2) -> {
+      if (set1 == null) return -1;
+      if (set2 == null) return 1;
+      return set1.size() - set2.size();
+    });
+    for (TIntHashSet set : sets) {
+      result = intersect(result, set);
+    }
+
+    if (result == null) return ContainerUtil.newHashSet();
+    return createJavaSet(result);
+  }
+
+  @Nullable
+  private static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
+    if (set1 == null) return set2;
+    if (set2 == null) return set1;
+
+    TIntHashSet result = new TIntHashSet();
+
+    if (set1.size() < set2.size()) {
+      set1.forEach(value -> {
+        if (set2.contains(value)) {
+          result.add(value);
+        }
+        return true;
+      });
+    }
+    else {
+      set2.forEach(value -> {
+        if (set1.contains(value)) {
+          result.add(value);
+        }
+        return true;
+      });
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static Set<Integer> createJavaSet(@NotNull TIntHashSet set) {
+    Set<Integer> result = ContainerUtil.newHashSet(set.size());
+    set.forEach(value -> {
+      result.add(value);
+      return true;
+    });
+    return result;
+  }
+
+  public static void addAll(@NotNull TIntHashSet where, @NotNull TIntHashSet what) {
+    what.forEach(value -> {
+      where.add(value);
+      return true;
+    });
   }
 }
