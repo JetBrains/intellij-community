@@ -254,7 +254,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       // Android Studio: include metrics libraries in $install/lib
       // including the common base library to avoid classloader issues.
-      jar("android-common.jar") {
+      jar("android-base-common.jar") {
         module("common")
       }
       jar("google-analytics-library.jar") {
@@ -834,8 +834,10 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         exclude(name: "src/*.jar")
       }
 
-      jar("android-common.jar") {
+      jar("adt-common.jar") {
         module("android-common")
+      }
+      jar("adt-ui.jar") {
         module("adt-ui")
       }
       jar("repository.jar") {
