@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -54,7 +55,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   };
   private TestVcsLogProvider myLogProvider;
   private VcsLogData myLogData;
-  private Map<Integer, VcsCommitMetadata> myTopDetailsCache;
+  private ConcurrentIntObjectMap<VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   private DataWaiter myDataWaiter;
@@ -68,8 +69,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     super.setUp();
 
     myLogProvider = new TestVcsLogProvider(myProjectRoot);
-    myLogProviders = Collections.<VirtualFile, VcsLogProvider>singletonMap(myProjectRoot, myLogProvider);
-    myTopDetailsCache = ContainerUtil.newHashMap();
+    myLogProviders = Collections.singletonMap(myProjectRoot, myLogProvider);
+    myTopDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
 
     myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
     myLogProvider.appendHistory(log(myCommits));

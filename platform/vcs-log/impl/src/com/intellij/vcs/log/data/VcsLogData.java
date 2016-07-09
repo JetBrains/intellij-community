@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.StopWatch;
@@ -63,7 +64,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
+  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
