@@ -34,7 +34,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -283,10 +282,14 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       Language language = psiFile.getLanguage();
       Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
       if (commenter == null) return null;
-      String linePrefix = ObjectUtils.chooseNotNull(commenter.getLineCommentPrefix(), commenter.getBlockCommentPrefix());
+      String linePrefix = commenter.getLineCommentPrefix();
+      String lineSuffix = "";
+      if (linePrefix == null) {
+        linePrefix = commenter.getBlockCommentPrefix();
+        lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
+      }
       if (linePrefix == null) return null;
       int prefixLength = linePrefix.length();
-      String lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
 
       int startOffset = firstElement.getTextRange().getStartOffset();
       final Document document = editor.getDocument();
