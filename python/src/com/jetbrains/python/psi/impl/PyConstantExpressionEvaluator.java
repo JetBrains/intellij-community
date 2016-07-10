@@ -62,6 +62,9 @@ public class PyConstantExpressionEvaluator {
     if (result instanceof Boolean) {
       return (Boolean)result;
     }
+    else if (result instanceof Integer) {
+      return ((Integer)result).intValue() != 0;
+    }
     else {
       return defaultValue;
     }
