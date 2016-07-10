@@ -390,26 +390,26 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final Instruction instruction = myBuilder.startNode(node);
     final PyWhilePart whilePart = node.getWhilePart();
     final PyExpression condition = whilePart.getCondition();
+    boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
+      isStaticallyTrue = (PyConstantExpressionEvaluator.evaluate(condition) == Boolean.TRUE);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null) {
+    if (elsePart == null && !isStaticallyTrue) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = whilePart.getStatementList();
-    if (list != null) {
-      myBuilder.startConditionalNode(list,  condition, true);
-      list.accept(this);
-      // Loop edges
-      if (myBuilder.prevInstruction != null) {
-        myBuilder.addEdge(myBuilder.prevInstruction, instruction);
-      }
-      myBuilder.checkPending(instruction);
+    myBuilder.startConditionalNode(list, condition, true);
+    list.accept(this);
+    // Loop edges
+    if (myBuilder.prevInstruction != null) {
+      myBuilder.addEdge(myBuilder.prevInstruction, instruction);
     }
+    myBuilder.checkPending(instruction);
     myBuilder.prevInstruction = head;
-    if (elsePart != null) {
+    if (elsePart != null && !isStaticallyTrue) {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
