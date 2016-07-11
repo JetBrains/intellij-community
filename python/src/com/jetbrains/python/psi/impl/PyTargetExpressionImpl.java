@@ -62,6 +62,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author yole
  */
@@ -684,34 +686,21 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public PsiComment getTypeComment() {
-    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(this,
-                                                                    PyAssignmentStatement.class,
-                                                                    PyWithStatement.class,
-                                                                    PyForPart.class);
-    if (commentContainer != null) {
-      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
-      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
-        return comment;
+    PsiComment comment = null;
+    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+    if (assignment != null) {
+      final PyExpression assignedValue = assignment.getAssignedValue();
+      if (assignedValue != null) {
+        comment = as(PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
       }
     }
-    return null;
-  }
-
-  @Nullable
-  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    while (true) {
-      if (child == null) {
-        return null;
+    else {
+      final PyStatementListContainer forOrWith = PsiTreeUtil.getParentOfType(this, PyForPart.class, PyWithStatement.class);
+      if (forOrWith != null) {
+        comment = PyUtil.getCommentOnHeaderLine(forOrWith);
       }
-      if (child instanceof PsiComment) {
-        return (PsiComment)child;
-      }
-      if (child.getText().contains("\n")) {
-        return null;
-      }
-      child = child.getNextSibling();
     }
+    return comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null ? comment : null;
   }
 
   @Nullable
