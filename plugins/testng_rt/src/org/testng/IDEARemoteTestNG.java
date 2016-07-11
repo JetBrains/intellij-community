@@ -83,10 +83,10 @@ public class IDEARemoteTestNG extends TestNG {
   }
 
   private void attachListeners(IDEATestNGRemoteListener listener) {
-    addListener(new IDEATestNGSuiteListener(listener));
-    addListener(new IDEATestNGTestListener(listener));
+    addListener((Object)new IDEATestNGSuiteListener(listener));
+    addListener((Object)new IDEATestNGTestListener(listener));
     try {
-      addListener(new IDEATestNGInvokedMethodListener(listener));
+      addListener((Object)new IDEATestNGInvokedMethodListener(listener));
     }
     catch (Throwable ignored) {}
   }
