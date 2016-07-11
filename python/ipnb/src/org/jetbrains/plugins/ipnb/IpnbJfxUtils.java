@@ -81,7 +81,7 @@ public class IpnbJfxUtils {
       initHyperlinkListener(engine);
       engine.setOnStatusChanged(status -> adjustHeight(webView, javafxPanel, source));
 
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize() + 4);
       engine.loadContent(prefix + convertToHtml(source) + ourPostfix);
       final BorderPane pane = new BorderPane(webView);
       final Scene scene = new Scene(pane, width != 0 ? width : 20, 20);
