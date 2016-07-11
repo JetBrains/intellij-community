@@ -5,6 +5,8 @@ import java.util.*;
 
 public class ThrowableInstanceNeverThrown {
 
+    private Throwable stop = new RuntimeException();
+
     void foo() throws Exception {
         try {
             System.out.println("");
