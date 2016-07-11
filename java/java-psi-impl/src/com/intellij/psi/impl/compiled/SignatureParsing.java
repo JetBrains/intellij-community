@@ -98,15 +98,18 @@ public class SignatureParsing {
     }
   }
 
-  private static String parseTypeVariableRefSignature(CharacterIterator signature) {
+  private static String parseTypeVariableRefSignature(CharacterIterator signature) throws ClsFormatException {
     StringBuilder id = new StringBuilder();
 
     signature.next();
-    while (signature.current() != ';' && signature.current() != '>') {
+    while (signature.current() != ';' && signature.current() != '>' && signature.current() != CharacterIterator.DONE) {
       id.append(signature.current());
       signature.next();
     }
 
+    if (signature.current() == CharacterIterator.DONE) {
+      throw new ClsFormatException();
+    }
     if (signature.current() == ';') {
       signature.next();
     }
