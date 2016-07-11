@@ -304,8 +304,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor);
       paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor());
 
-      int firstVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
-      int lastVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
+      int firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
+      int lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
