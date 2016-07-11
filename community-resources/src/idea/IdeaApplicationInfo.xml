@@ -6,7 +6,7 @@
   <about url="/idea_community_about.png" foreground="444444" copyrightForeground="7A858F" linkColor="9b5121" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
+  <names product="IDEA" fullname="IntelliJ IDEA Community Edition" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
   <editor background-url="/idea_logo_welcome.png"/>
