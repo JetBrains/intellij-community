@@ -35,7 +35,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     static {
       ourInstance = ServiceManager.getService(ProgressManager.class);
       if (ourInstance == null) {
-        throw new AssertionError("ProgressManager is null; app.disposed=" + ApplicationManager.getApplication().isDisposed());
+        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
       }
     }
   }
