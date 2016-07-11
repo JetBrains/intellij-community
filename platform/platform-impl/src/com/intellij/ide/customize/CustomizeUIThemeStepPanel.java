@@ -17,6 +17,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.cloudConfiguration.CloudConfigurationManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -27,6 +28,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,8 +42,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     public final String name;
     public final String previewFileName;
     public final String laf;
-    
-    private Icon icon; 
+
+    private Icon icon;
 
     public ThemeInfo(String name, String previewFileName, String laf) {
       this.name = name;
@@ -64,10 +67,11 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       return icon;
     }
-    
+
     public void apply() {
     }
   }
+
   protected static final ThemeInfo AQUA = new ThemeInfo("Default", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
   protected static final ThemeInfo INTELLIJ = new ThemeInfo("IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
@@ -88,9 +92,9 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     myColumnMode = myThemes.size() > 2;
     JPanel buttonsPanel = new JPanel(new GridLayout(myColumnMode ? myThemes.size() : 1, myColumnMode ? 1 : myThemes.size(), 5, 5));
     ButtonGroup group = new ButtonGroup();
-    final ThemeInfo myDefaultTheme = myThemes.iterator().next();
+    final ThemeInfo myDefaultTheme = getDefaultTheme();
 
-    for (final ThemeInfo theme: myThemes) {
+    for (final ThemeInfo theme : myThemes) {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
       radioButton.setOpaque(false);
       final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
@@ -100,7 +104,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       panel.setBorder(createSmallEmptyBorder());
       panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
       Icon icon = theme.getIcon();
-      final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, icon.getIconWidth() * 2 / 3, icon.getIconHeight() * 2 / 3), .5) : icon);
+      final JLabel label = new JLabel(
+        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, icon.getIconWidth() * 2 / 3, icon.getIconHeight() * 2 / 3), .5) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
       label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);
@@ -120,6 +125,33 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
     SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, CustomizeUIThemeStepPanel.this));
     myInitial = false;
+  }
+
+  @NotNull
+  private ThemeInfo getDefaultTheme() {
+    String sharedLaf = CloudConfigurationManager.getCustomizeProvider().getSharedLaf();
+    if (sharedLaf != null) {
+      ThemeInfo theme = findTheme(sharedLaf);
+      if (theme == null && AQUA.name.equals(sharedLaf)) {
+        theme = findTheme(INTELLIJ.name);
+      }
+      if (theme != null) {
+        return theme;
+      }
+    }
+
+    return myThemes.iterator().next();
+  }
+
+  @Nullable
+  private ThemeInfo findTheme(@NotNull String name) {
+    for (ThemeInfo theme : myThemes) {
+      if (name.equals(theme.name)) {
+        mySkipFirstShowing = true;
+        return theme;
+      }
+    }
+    return null;
   }
 
   protected void initThemes(Collection<ThemeInfo> result) {
@@ -170,7 +202,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   private void applyLaf(ThemeInfo theme, Component component) {
     UIManager.LookAndFeelInfo info = new UIManager.LookAndFeelInfo(theme.name, theme.laf);
-    if (info == null) return;
     try {
       UIManager.setLookAndFeel(info.getClassName());
       String className = info.getClassName();
@@ -192,16 +223,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         myPreviewLabel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Label.disabledForeground")));
       }
     }
-    catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-    catch (InstantiationException e) {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e) {
-      e.printStackTrace();
-    }
-    catch (UnsupportedLookAndFeelException e) {
+    catch (Exception e) {
       e.printStackTrace();
     }
   }
