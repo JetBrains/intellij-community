@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  */
 package com.intellij.psi.stubs;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
+ * @since 02.08.2012
  */
 public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
-  @NonNls
   @NotNull
   String getExternalId();
 
   void serialize(@NotNull T stub, @NotNull StubOutputStream dataStream) throws IOException;
+
   @NotNull
-  T deserialize(@NotNull StubInputStream dataStream, final P parentStub) throws IOException;
+  T deserialize(@NotNull StubInputStream dataStream, P parentStub) throws IOException;
 
   void indexStub(@NotNull T stub, @NotNull IndexSink sink);
-
 }
