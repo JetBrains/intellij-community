@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,26 +70,25 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    final List stubs = getStub().getChildrenStubs();
+    @SuppressWarnings("unchecked") List<StubElement> stubs = getStub().getChildrenStubs();
+    if (stubs.size() == 0) return EMPTY_ARRAY;
     PsiElement[] children = new PsiElement[stubs.size()];
     for (int i = 0; i < stubs.size(); i++) {
-      children[i] = ((StubElement)stubs.get(i)).getPsi();
+      children[i] = stubs.get(i).getPsi();
     }
     return children;
   }
 
   @Override
   public PsiElement getFirstChild() {
-    final List<StubElement> children = getStub().getChildrenStubs();
-    if (children.isEmpty()) return null;
-    return children.get(0).getPsi();
+    @SuppressWarnings("unchecked") List<StubElement> children = getStub().getChildrenStubs();
+    return children.isEmpty() ? null : children.get(0).getPsi();
   }
 
   @Override
   public PsiElement getLastChild() {
-    final List<StubElement> children = getStub().getChildrenStubs();
-    if (children.isEmpty()) return null;
-    return children.get(children.size() - 1).getPsi();
+    @SuppressWarnings("unchecked") List<StubElement> children = getStub().getChildrenStubs();
+    return children.isEmpty() ? null : children.get(children.size() - 1).getPsi();
   }
 
   @Override
