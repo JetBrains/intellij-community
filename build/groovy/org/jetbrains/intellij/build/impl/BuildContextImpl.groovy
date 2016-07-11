@@ -199,7 +199,7 @@ class BuildContextImpl extends BuildContext {
   void notifyArtifactBuilt(String artifactPath) {
     if (!underTeamCity) return
 
-    if (!FileUtil.startsWith(artifactPath, paths.projectHome)) {
+    if (!FileUtil.startsWith(FileUtil.toSystemIndependentName(artifactPath), paths.projectHome)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
