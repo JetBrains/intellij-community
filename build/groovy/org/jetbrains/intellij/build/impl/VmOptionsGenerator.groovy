@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.intellij.build.JvmArchitecture
+
 /**
  * @author nik
  */

@@ -17,6 +17,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
+
 /**
  * @author nik
  */

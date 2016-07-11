@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 package org.jetbrains.intellij.build
-
-import org.jetbrains.intellij.build.impl.JvmArchitecture
-
 /**
  * @author nik
  */

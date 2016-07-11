@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build
 
 /**
  * @author nik
  */
-//tode[nik] rename and move out of 'impl'?
 enum JvmArchitecture {
   x32(""), x64("64")
 
