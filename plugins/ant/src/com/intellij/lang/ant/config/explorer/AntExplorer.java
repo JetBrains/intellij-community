@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
@@ -65,6 +66,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
 import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,7 +96,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public boolean canExpand() {
       final AntConfiguration config = myConfig;
-      return config != null && config.getBuildFiles().length != 0;
+      return config != null && !config.getBuildFileList().isEmpty();
     }
 
     public void collapseAll() {
@@ -288,7 +290,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     if (buildFile != null) {
       final TreePath[] paths = myTree.getSelectionPaths();
       final String[] targets = getTargetNamesFromPaths(paths);
-      ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
+      ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.emptyList(), AntBuildListener.NULL);
     }
   }
 
@@ -473,7 +475,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return virtualFiles == null ? null : virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = collectAntFiles(buildFile -> buildFile.getAntFile());
+      final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile);
       return elements == null ? null : elements.toArray(new PsiElement[elements.size()]);
     } 
     return super.getData(dataId);
@@ -501,7 +503,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
     final List<T> result = new ArrayList<T>();
-    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, buildFile -> function.fun(buildFile)));
+    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, function));
     return result.isEmpty() ? null : result;
   }
 
@@ -518,7 +520,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private static final class NodeRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
@@ -658,7 +660,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public boolean isSelected(AnActionEvent event) {
       final Project project = myProject;
-      return project != null? AntConfigurationBase.getInstance(project).isFilterTargets() : false;
+      return project != null && AntConfigurationBase.getInstance(project).isFilterTargets();
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
@@ -698,7 +700,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myBuilder.queueUpdate();
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final AntBuildFile buildFile = myTarget.getModel().getBuildFile();
       e.getPresentation().setEnabled(buildFile != null && buildFile.exists());
@@ -894,6 +896,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     private void updateTree() {
+      //noinspection deprecation
       myBuilder.updateFromRoot();
     }
 
@@ -931,7 +934,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         }
       }
 
-      return VfsUtil.toVirtualFileArray(virtualFileList);
+      return VfsUtilCore.toVirtualFileArray(virtualFileList);
     }
   }
 }

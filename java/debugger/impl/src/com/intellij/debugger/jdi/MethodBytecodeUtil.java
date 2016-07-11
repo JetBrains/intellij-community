@@ -16,18 +16,18 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.ThrowableConsumer;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.InterfaceType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -89,7 +89,7 @@ public class MethodBytecodeUtil {
         }
 
         MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
-        mv.visitAttribute(createCode(bytecodes));
+        mv.visitAttribute(createCode(writer, method, bytecodes));
 
         new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
           @Override
@@ -162,15 +162,38 @@ public class MethodBytecodeUtil {
   }
 
   @NotNull
-  private static Attribute createCode(byte[] bytecodes) throws IOException {
+  private static Attribute createCode(ClassWriter cw, Method method, byte[] bytecodes) throws IOException {
     return createAttribute("Code", dos -> {
       dos.writeShort(0); // max_stack
       dos.writeShort(0); // max_locals
       dos.writeInt(bytecodes.length);  // code_length
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
-      dos.writeShort(0); // attributes_count
+      List<Location> locations = getMethodLocations(method);
+      if (!locations.isEmpty()) {
+        dos.writeShort(1); // attributes_count
+        dos.writeShort(cw.newUTF8("LineNumberTable"));
+        dos.writeInt(2 * locations.size() + 2);
+        dos.writeShort(locations.size());
+        for (Location l : locations) {
+          dos.writeShort((short)l.codeIndex());
+          dos.writeShort(l.lineNumber());
+        }
+      }
+      else {
+        dos.writeShort(0); // attributes_count
+      }
     });
+  }
+
+  @NotNull
+  private static List<Location> getMethodLocations(Method method) {
+    try {
+      return method.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return Collections.emptyList();
+    }
   }
 
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");

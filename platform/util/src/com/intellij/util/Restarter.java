@@ -113,7 +113,7 @@ public class Restarter {
     final int pid = kernel32.GetCurrentProcessId();
     final IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
+    final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
 
     doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), new Consumer<List<String>>() {
@@ -153,10 +153,6 @@ public class Restarter {
       if (argv[i].endsWith("com.intellij.idea.Main") ||
           argv[i].endsWith(".exe")) {
         countArgs = i + 1;
-        if ("0".equals(argv[2])) {
-          // update number of args in according with removed cmd line args
-          argv[3] = String.valueOf(Integer.valueOf(argv[3]) - (argv.length - (i+1)));
-        }
         if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separator) < 0) {
           //absolute path
           argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
@@ -173,8 +169,7 @@ public class Restarter {
     List<String> commands = new ArrayList<String>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
-    String[] argv = getRestartArgv(ArrayUtil.toStringArray(commands));
-    Runtime.getRuntime().exec(argv);
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
   }
 
   public static String getRestarterDir() {

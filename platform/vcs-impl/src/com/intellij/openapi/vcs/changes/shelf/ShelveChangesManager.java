@@ -754,29 +754,37 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                            final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
-    final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
-    final File newPath = getPatchFileInConfigDir(newPatchDir);
+                                   final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
+    ShelvedChangeList listCopy;
     try {
-      FileUtil.copy(new File(changeList.PATH), newPath);
+      listCopy = !changeList.isRecycled() ? createRecycledChangelist(changeList) : null;
     }
     catch (IOException e) {
       // do not delete if cannot recycle
       return;
     }
-    final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
-                                                             new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
-    listCopy.markToDelete(changeList.isMarkedToDelete());
-    listCopy.setName(newPatchDir.getName());
-
     writePatchesToFile(myProject, changeList.PATH, remainingPatches, commitContext);
 
     changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
-    recycleChangeList(listCopy, changeList);
-    // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
-    mySchemeManager.addNewScheme(listCopy, false);
+    if (listCopy != null) {
+      recycleChangeList(listCopy, changeList);
+      // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
+      mySchemeManager.addNewScheme(listCopy, false);
+    }
     notifyStateChanged();
+  }
+
+  @Nullable
+  private ShelvedChangeList createRecycledChangelist(ShelvedChangeList changeList) throws IOException {
+    final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
+    final File newPath = getPatchFileInConfigDir(newPatchDir);
+    FileUtil.copy(new File(changeList.PATH), newPath);
+    final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
+                                                             new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
+    listCopy.markToDelete(changeList.isMarkedToDelete());
+    listCopy.setName(newPatchDir.getName());
+    return listCopy;
   }
 
   public void restoreList(@NotNull final ShelvedChangeList changeList) {

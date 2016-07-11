@@ -79,8 +79,6 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
   }
 
   public void readExternal(@NotNull Element element) {
-    myValues.clear();
-
     Map<String, AbstractProperty> propertyByName = new THashMap<String, AbstractProperty>();
     for (AbstractProperty abstractProperty : myExternalizers.keySet()) {
       propertyByName.put(abstractProperty.getName(), abstractProperty);

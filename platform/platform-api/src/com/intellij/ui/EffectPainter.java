@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.WavePainter;
 
 import java.awt.*;
 import java.awt.geom.*;
@@ -25,58 +26,83 @@ import java.awt.geom.*;
  * @author Sergey.Malenkov
  */
 public enum EffectPainter implements RegionPainter<Paint> {
-  WAVE {
-    private final BasicStroke STROKE = new BasicStroke(.7f);
+  /**
+   * @see com.intellij.openapi.editor.markup.EffectType#LINE_UNDERSCORE
+   */
+  LINE_UNDERSCORE {
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      // we assume here that Y is a baseline of a text
+      if (!Registry.is("ide.text.effect.line.new")) {
+        g.setPaint(paint);
+        g.drawLine(x, y + 1, x + width, y + 1);
+      }
+      else if (paint != null && width > 0 && height > 0) {
+        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        double pos = Registry.doubleValue("ide.text.effect.line.new.pos");
+        y += height < 3 ? 1 : (int)((double)height - h * pos);
+        g.setPaint(paint);
+        g.drawLine(x, y, x + width, y);
+      }
+    }
+  },
+  /**
+   * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
+   */
+  WAVE_UNDERSCORE {
+    private final BasicStroke STROKE = new BasicStroke(.5f);
 
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
-      if (paint != null && width > 0 && height > 0) {
-        if (!Registry.is("ide.text.effect.wave.new.scale")) {
-          y += height - 3;
-          height = 3;
+      // we assume here that Y is a baseline of a text
+      if (!Registry.is("ide.text.effect.wave.new")) {
+        g.setPaint(paint);
+        WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
+      }
+      else if (paint != null && width > 0 && height > 0) {
+        boolean simple = height < 5;
+        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        if (h != height) {
+          y += height - h;
+          height = h;
         }
         g = (Graphics2D)g.create(x, y, width, height);
-        g.clipRect(0, 0, width, height);
+        g.clipRect(0, -1, width, height + 1); // 1px for Retina painting
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setPaint(paint);
 
-        int length = 2 * height;
-        boolean simple = length < 5;
+        int length = 2 * height - 2; // the spatial period of the wave
 
         double dx = -((x % length + length) % length); // normalize
-        double size = (double)length / 4;
-
         double upper = 0;
         double lower = height - 1;
-        double center = lower / 2;
-
         Path2D path = new Path2D.Double();
         path.moveTo(dx, lower);
-        while (true) {
-          if (simple) {
-            dx += size + size;
-            path.lineTo(dx, upper);
+        if (simple) {
+          g.setStroke(STROKE);
+          double size = (double)length / 2;
+          while (true) {
+            path.lineTo(dx += size, upper);
             if (dx > width) break;
-            dx += size + size;
-            path.lineTo(dx, lower);
-            if (dx > width) break;
-          }
-          else {
-            dx += size;
-            path.quadTo(dx - size / 2, lower, dx, center);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, upper, dx, upper);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, upper, dx, center);
-            if (dx > width) break;
-            dx += size;
-            path.quadTo(dx - size / 2, lower, dx, lower);
+            path.lineTo(dx += size, lower);
             if (dx > width) break;
           }
         }
-        if (simple) g.setStroke(STROKE);
+        else {
+          double size = (double)length / 4;
+          double prev = dx - size / 2;
+          double center = lower / 2;
+          while (true) {
+            path.quadTo(prev += size, lower, dx += size, center);
+            if (dx > width) break;
+            path.quadTo(prev += size, upper, dx += size, upper);
+            if (dx > width) break;
+            path.quadTo(prev += size, upper, dx += size, center);
+            if (dx > width) break;
+            path.quadTo(prev += size, lower, dx += size, lower);
+            if (dx > width) break;
+          }
+        }
         g.draw(path);
         g.dispose();
       }

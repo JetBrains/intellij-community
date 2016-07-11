@@ -30,18 +30,23 @@ import static org.junit.Assert.assertEquals;
 public class SignatureParsingTest {
   @Test
   public void testVarianceAmbiguity() throws ClsFormatException {
-    parseTypeString("Psi<?,P>", "LPsi<*TP>;");
-    parseTypeString("Psi<? extends P>", "LPsi<+TP>;");
-    parseTypeString("Psi<? super P>", "LPsi<-TP>;");
+    assertEquals("Psi<?,P>", parseTypeString("LPsi<*TP>;"));
+    assertEquals("Psi<? extends P>", parseTypeString("LPsi<+TP>;"));
+    assertEquals("Psi<? super P>", parseTypeString("LPsi<-TP>;"));
   }
 
   @Test
   public void testMapping() throws ClsFormatException {
-    parseTypeString("p.Obj.I<p.Obj1.I,p.Obj2.I>", "Lp/Obj$I<Lp/Obj1$I;Lp/Obj2$I;>;");
-    parseTypeString("p.Obj$.I<p.$Obj1.I,p.Obj2.I$>", "Lp/Obj$$I<Lp/$Obj1$I;Lp/Obj2$I$;>;");
+    assertEquals("p.Obj.I<p.Obj1.I,p.Obj2.I>", parseTypeString("Lp/Obj$I<Lp/Obj1$I;Lp/Obj2$I;>;"));
+    assertEquals("p.Obj$.I<p.$Obj1.I,p.Obj2.I$>", parseTypeString("Lp/Obj$$I<Lp/$Obj1$I;Lp/Obj2$I$;>;"));
   }
 
-  private static void parseTypeString(String expected, String signature) throws ClsFormatException {
-    assertEquals(expected, SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER));
+  @Test(expected = ClsFormatException.class)
+  public void testIllegal() throws ClsFormatException {
+    parseTypeString("T");
+  }
+
+  private static String parseTypeString(String signature) throws ClsFormatException {
+    return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
   }
 }

@@ -162,5 +162,7 @@ public class SuppressActionSequentialTask implements SequentialTask {
         LOG.error(e1);
       }
     });
+
+    node.removeSuppressActionFromAvailable(mySuppressAction);
   }
 }

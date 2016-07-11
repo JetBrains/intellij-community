@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
@@ -73,13 +73,13 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
 
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
   @NotNull private static final String STORAGE_KIND = "hashes";
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
 
   private static final int NO_INDEX = -1;
 
-  @NotNull private final PersistentEnumerator<CommitId> myPersistentEnumerator;
+  @NotNull private final PersistentEnumeratorBase<CommitId> myPersistentEnumerator;
   @NotNull private final Consumer<Exception> myExceptionReporter;
 
   public VcsLogHashMapImpl(@NotNull Project project,

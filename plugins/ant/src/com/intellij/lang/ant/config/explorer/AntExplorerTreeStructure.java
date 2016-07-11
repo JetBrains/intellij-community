@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,8 +83,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       if (!configuration.isInitialized()) {
         return new Object[] {AntBundle.message("loading.ant.config.progress")};
       }
-      final AntBuildFile[] buildFiles = configuration.getBuildFiles();
-      return buildFiles.length != 0 ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      return configuration.getBuildFileList().isEmpty() ? new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")} : configuration.getBuildFiles();
     }
 
     if (element instanceof AntBuildFile) {

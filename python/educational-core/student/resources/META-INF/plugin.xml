@@ -28,6 +28,12 @@
     </component>
   </project-components>
 
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.stepic.EduStepicUpdater</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
@@ -82,8 +88,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                       serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
-    <postStartupActivity implementation="com.jetbrains.edu.learning.stepic.StudyCoursesUpdater"/>
-
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              id="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              displayName="Education"/>
@@ -101,7 +105,9 @@
 
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>
   </extensions>
+
   <extensions defaultExtensionNs="Edu">
     <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
   </extensions>

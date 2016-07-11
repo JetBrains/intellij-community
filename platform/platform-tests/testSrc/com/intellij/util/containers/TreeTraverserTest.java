@@ -197,6 +197,13 @@ public class TreeTraverserTest extends TestCase {
 
   // JBIterable ----------------------------------------------
 
+  public void testOfAppendNulls() {
+    Integer o = null;
+    JBIterable<Integer> it = JBIterable.of(o).append(o).append(JBIterable.empty());
+    assertTrue(it.isEmpty());
+    assertSame(it, JBIterable.empty());
+  }
+
   public void testAppend() {
     JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(JBIterable.empty()).append(7);
     assertEquals(7, it.size());

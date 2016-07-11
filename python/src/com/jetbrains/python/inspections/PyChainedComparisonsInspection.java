@@ -193,14 +193,14 @@ public class PyChainedComparisonsInspection extends PyInspection {
           if (leftLeft.getText().equals(getLeftExpression(rightExpression, false).getText())) {
             myIsLeft = true;
             myIsRight = true;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
           final PyExpression right = getSmallestRight(rightExpression, false);
           if (right != null && leftLeft.getText().equals(right.getText())) {
             myIsLeft = true;
             myIsRight = false;
-            isConstantInTheMiddle = leftRight instanceof PyLiteralExpression;
+            isConstantInTheMiddle = leftLeft instanceof PyLiteralExpression;
             return true;
           }
         }
@@ -259,11 +259,9 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyProfile(model -> {
-        PyChainedComparisonsInspection tool =
-          (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME,
-                                                                 file);
-        tool.ignoreConstantInTheMiddle = false;
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(model -> {
+        final PyChainedComparisonsInspection tool = (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
+        tool.ignoreConstantInTheMiddle = true;
       });
     }
   }

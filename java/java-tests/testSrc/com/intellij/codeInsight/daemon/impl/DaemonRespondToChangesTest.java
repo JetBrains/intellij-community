@@ -356,7 +356,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
-    assertEmpty(errors);
+    assertEmpty(getFile().getText(), errors);
   }
 
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
@@ -869,33 +869,36 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     };
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
-
+    myDaemonCodeAnalyzer.restart();
     try {
-      List<HighlightInfo> infos = highlightErrors();
+      List<HighlightInfo> infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       type(' ');
-      infos = highlightErrors();
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       backspace();
-      infos = highlightErrors();
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
     }
     catch (AssertionError e) {
-      System.err.println("Log:\n"+log);
+      System.err.println("Log:\n"+log+"\n---");
       throw e;
     }
   }

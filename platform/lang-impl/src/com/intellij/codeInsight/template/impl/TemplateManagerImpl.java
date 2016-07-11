@@ -191,7 +191,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
 
     if (shouldSkipInTests()) {
-      if (!templateState.isFinished()) templateState.gotoEnd();
+      if (!templateState.isFinished()) templateState.gotoEnd(false);
     }
   }
 

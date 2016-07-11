@@ -122,7 +122,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     try {
       return JsonSchemaReader.isJsonSchema(getDefinitions(), file, text, errorConsumer);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       reset();
       errorConsumer.consume(e.getMessage());
       return false;

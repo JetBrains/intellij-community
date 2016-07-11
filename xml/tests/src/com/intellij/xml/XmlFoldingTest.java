@@ -33,6 +33,8 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testEntities() throws Throwable { doTest(); }
 
+  public void testDataUri() throws Throwable { doTest(); }
+
   private void doTest() throws Throwable {
     doTest(".html");
   }

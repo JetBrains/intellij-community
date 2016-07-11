@@ -972,12 +972,21 @@ public class ExpressionParsing extends Parsing {
 
   private boolean parseAwaitExpression(boolean isTargetExpression) {
     if (atToken(PyTokenTypes.AWAIT_KEYWORD)) {
-      PsiBuilder.Marker expr = myBuilder.mark();
+      final PsiBuilder.Marker expr = myBuilder.mark();
       myBuilder.advanceLexer();
+
       if (!parseMemberExpression(isTargetExpression)) {
         myBuilder.error(message("PARSE.expected.expression"));
+        expr.done(PyElementTypes.PREFIX_EXPRESSION);
       }
-      expr.done(PyElementTypes.PREFIX_EXPRESSION);
+      else {
+        if (isTargetExpression) {
+          expr.error("can't assign to await expression");
+        } else {
+          expr.done(PyElementTypes.PREFIX_EXPRESSION);
+        }
+      }
+
       return true;
     }
     else {

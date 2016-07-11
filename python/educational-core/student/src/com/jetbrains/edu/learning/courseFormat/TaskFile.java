@@ -97,7 +97,7 @@ public class TaskFile {
       answerPlaceholderCopy.setLength(answerPlaceholder.getLength());
       answerPlaceholderCopy.setPossibleAnswer(answerPlaceholder.getPossibleAnswer());
       answerPlaceholderCopy.setIndex(answerPlaceholder.getIndex());
-      answerPlaceholderCopy.setHint(answerPlaceholder.getHint());
+      answerPlaceholderCopy.setHints(answerPlaceholder.getHints());
       final AnswerPlaceholder.MyInitialState state = answerPlaceholder.getInitialState();
       if (state != null) {
         answerPlaceholderCopy.setInitialState(new AnswerPlaceholder.MyInitialState(state.getOffset(), state.getLength()));

@@ -42,7 +42,7 @@ public class TestLoggerFactory implements Logger.Factory {
   private static final long LOG_SIZE_LIMIT = 100 * 1024 * 1024;
   private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
-  private boolean myInitialized = false;
+  private boolean myInitialized;
 
   private TestLoggerFactory() { }
 
@@ -78,8 +78,8 @@ public class TestLoggerFactory implements Logger.Factory {
       }
 
       System.setProperty("log4j.defaultInitOverride", "true");
-      final DOMConfigurator domConfigurator = new DOMConfigurator();
       try {
+        final DOMConfigurator domConfigurator = new DOMConfigurator();
         domConfigurator.doConfigure(new StringReader(text), LogManager.getLoggerRepository());
       }
       catch (ClassCastException e) {
@@ -112,23 +112,19 @@ public class TestLoggerFactory implements Logger.Factory {
         String logText;
 
         if (length > LOG_SEEK_WINDOW) {
-          RandomAccessFile file = new RandomAccessFile(ideaLog, "r");
-          try {
+          try (RandomAccessFile file = new RandomAccessFile(ideaLog, "r")) {
             file.seek(length - LOG_SEEK_WINDOW);
             byte[] bytes = new byte[(int)LOG_SEEK_WINDOW];
             int read = file.read(bytes);
             logText = new String(bytes, 0, read);
-          }
-          finally {
-            file.close();
           }
         }
         else {
           logText = FileUtil.loadFile(ideaLog);
         }
 
-        Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         System.out.println("\n\nIdea Log:");
+        Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
           Matcher matcher = logStart.matcher(line);
           int lineStart = matcher.lookingAt() ? matcher.end() : 0;
@@ -141,16 +137,11 @@ public class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static void enableDebugLogging(@NotNull Disposable parentDisposable, String... categories) {
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, @NotNull String... categories) {
     for (String category : categories) {
       final Logger logger = Logger.getInstance(category);
       logger.setLevel(Level.DEBUG);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          logger.setLevel(Level.INFO);
-        }
-      });
+      Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
     }
   }
 }

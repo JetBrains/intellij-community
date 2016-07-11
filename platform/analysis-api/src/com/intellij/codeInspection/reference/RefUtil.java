@@ -58,7 +58,7 @@ public class RefUtil {
     return false;
   }
 
-  public static boolean isWriteImplicitly(PsiElement element) {
+  public static boolean isImplicitWrite(PsiElement element) {
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitWrite(element)) return true;

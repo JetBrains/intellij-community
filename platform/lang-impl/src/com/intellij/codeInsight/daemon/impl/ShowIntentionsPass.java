@@ -47,6 +47,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -83,7 +84,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final int offset = ((EditorEx)editor).getExpectedCaretOffset();
     final Project project = file.getProject();
 
-    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, info -> {
       addAvailableActionsForGroups(info, editor, file, result, passId, offset);
       return true;
@@ -243,7 +244,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
       if (descriptor.canCleanup(file)) {
-        final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
+        final ArrayList<IntentionAction> options = new ArrayList<>();
         options.add(EditCleanupProfileIntentionAction.INSTANCE);
         options.add(CleanupOnScopeIntention.INSTANCE);
         actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(CleanupAllIntention.INSTANCE, options, "Code Cleanup Options"));
@@ -302,7 +303,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                                  (psiFile, editor) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action));
 
       if (place != null) {
-        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+        List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         enableDisableIntentionAction.add(new IntentionHintComponent.EditIntentionSettingsAction(action));
         HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
@@ -366,7 +367,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
         final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
         final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
-        final Processor<LocalInspectionToolWrapper> processor = (toolWrapper) -> {
+        final Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
           final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
           final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
           final String displayName = toolWrapper.getDisplayName();
@@ -396,7 +397,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           localInspectionTool.inspectionFinished(session, holder);
           return true;
         };
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, null, false, processor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, new DaemonProgressIndicator(), false, processor);
       }
     }
   }

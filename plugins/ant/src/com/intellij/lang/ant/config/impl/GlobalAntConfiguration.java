@@ -152,7 +152,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
       return null;
     }
     final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(project);
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       if (vFile.equals(buildFile.getVirtualFile())) {
         final AntBuildTarget target = buildFile.getModel().findTarget(targetName);
         if (target != null) {

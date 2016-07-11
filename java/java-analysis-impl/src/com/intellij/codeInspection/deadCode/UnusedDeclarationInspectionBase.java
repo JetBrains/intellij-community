@@ -758,4 +758,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean isGraphNeeded() {
     return true;
   }
+
+  @TestOnly
+  public List<EntryPoint> getExtensions() {
+    return myExtensions;
+  }
 }

@@ -174,9 +174,9 @@ public class FindSuperElementsHelper {
       // calculate substitutor of containingClass --> inheritor
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myContainingClass, inheritor, PsiSubstitutor.EMPTY);
       // calculate substitutor of inheritor --> superInterface
-      substitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
+      PsiSubstitutor superInterfaceSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
 
-      return MethodSignatureUtil.isSubsignature(superMethod.getSignature(substitutor), method.getSignature(PsiSubstitutor.EMPTY));
+      return MethodSignatureUtil.isSubsignature(superMethod.getSignature(superInterfaceSubstitutor), method.getSignature(substitutor));
     }
 
     Map<PsiMethod, SiblingInfo> getResult() {

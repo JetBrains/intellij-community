@@ -1,8 +1,9 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -10,20 +11,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.edu.learning.ui.StudyHint;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.LinkedList;
 
 public class StudyShowHintAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "ShowHintAction";
@@ -61,29 +67,36 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
       return;
     }
     EduUsagesCollector.hintShown();
-    String hintText = ourWarningMessage;
+    LinkedList<String> hints = new LinkedList<>();
     if (answerPlaceholder != null) {
-      String hint = answerPlaceholder.getHint();
-      hintText = hint.isEmpty() ? HINT_NOT_AVAILABLE : hint;
+      hints.addAll(answerPlaceholder.getHints());
+      //final ArrayList<String> strings = new ArrayList<>();
+      //strings.add(answerPlaceholder.getHints());
+      //strings.add("test");
+      //hints.addAll(strings);
     }
-    PsiElement element = file.findElementAt(offset);
-    DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-    DocumentationComponent component = new DocumentationComponent(documentationManager);
-    component.setData(element != null ? element : file, element != null ? hintText : ourWarningMessage, true, null);
-    showHintPopUp(project, editor, component);
+    else {
+      hints.add(ourWarningMessage);
+    }
+    final StudyToolWindow hintComponent = new StudyHint(answerPlaceholder, project).getStudyToolWindow();
+
+    showHintPopUp(project, studyState, editor, hintComponent);
   }
 
-  private static void showHintPopUp(Project project, Editor editor, DocumentationComponent component) {
-    final JBPopup popup =
-      JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+  private static void showHintPopUp(Project project, StudyState studyState, Editor editor, StudyToolWindow hintComponent) {
+    final JBPopup popup = 
+      JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent)
         .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)
+        .setTitle(studyState.getTask().getName())
         .createPopup();
-    component.setHint(popup);
-    popup.showInBestPositionFor(editor);
-    Disposer.dispose(component);
+    Disposer.register(popup, hintComponent);
+
+    final Component focusOwner = IdeFocusManager.getInstance(project).getFocusOwner();
+    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    PopupPositionManager.positionPopupInBestPosition(popup, editor, dataContext);
   }
 
   @Override

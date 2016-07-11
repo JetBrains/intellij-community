@@ -51,12 +51,12 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public int getProblemCount() {
+  public int getProblemCount(boolean allowSuppressed) {
     int sum = 0;
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      sum += child.getProblemCount();
+      sum += child.getProblemCount(allowSuppressed);
     }
     return sum;
   }

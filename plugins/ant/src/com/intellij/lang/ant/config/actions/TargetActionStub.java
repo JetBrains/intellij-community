@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.Disposable;
@@ -60,10 +59,6 @@ public class TargetActionStub extends AnAction implements Disposable {
           config.removeAntConfigurationListener(this);
           invokeAction(e);
         }
-
-        public void buildFileChanged(final AntBuildFile buildFile) {/*empty*/}
-        public void buildFileAdded(final AntBuildFile buildFile) {/*empty*/}
-        public void buildFileRemoved(final AntBuildFile buildFile) {/*empty*/}
       };
       config.addAntConfigurationListener(listener);
       Disposer.register(myProject, new ListenerRemover(config, listener));

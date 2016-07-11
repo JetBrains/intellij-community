@@ -18,12 +18,13 @@ package com.intellij.junit5;
 import com.intellij.junit4.ExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import org.junit.gen5.engine.TestExecutionResult;
-import org.junit.gen5.engine.support.descriptor.JavaSource;
-import org.junit.gen5.launcher.TestExecutionListener;
-import org.junit.gen5.launcher.TestIdentifier;
-import org.junit.gen5.launcher.TestPlan;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.JavaMethodSource;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.ValueWrapper;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -168,9 +169,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         ex.printStackTrace(writer);
         final ComparisonFailureData failureData;
         if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
-          final Object actual = ((AssertionFailedError)ex).getActual();
-          final Object expected = ((AssertionFailedError)ex).getExpected();
-          failureData = new ComparisonFailureData(expected.toString(), actual.toString());
+          final ValueWrapper actual = ((AssertionFailedError)ex).getActual();
+          final ValueWrapper expected = ((AssertionFailedError)ex).getExpected();
+          failureData = new ComparisonFailureData(expected.getStringRepresentation(), actual.getStringRepresentation());
         }
         else {
           failureData = ExpectedPatterns.createExceptionNotification(ex);
@@ -213,19 +214,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   static String getClassName(TestIdentifier description) {
-    Optional<JavaSource> javaSource = getJavaSource(description);
-    return javaSource.map(source -> {
-      final Optional<Class<?>> javaClass = source.getJavaClass();
-      return javaClass.isPresent() ? javaClass.get().getName() : null;
-    }).orElse(null);
+    Optional<JavaMethodSource> javaSource = getJavaSource(description);
+    return javaSource.map(source -> source.getJavaClass().getName()).orElse(null);
   }
 
   static String getMethodName(TestIdentifier testIdentifier) {
-    return getJavaSource(testIdentifier).map((source) -> source.getJavaMethodName().orElse(null)).orElse(null);
+    return getJavaSource(testIdentifier).map(JavaMethodSource::getJavaMethodName).orElse(null);
   }
 
-  private static Optional<JavaSource> getJavaSource(TestIdentifier testIdentifier) {
-    return testIdentifier.getSource().filter(JavaSource.class::isInstance).map(JavaSource.class::cast);
+  private static Optional<JavaMethodSource> getJavaSource(TestIdentifier testIdentifier) {
+    return testIdentifier.getSource().filter(JavaMethodSource.class::isInstance).map(JavaMethodSource.class::cast);
   }
   
 }

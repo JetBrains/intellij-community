@@ -149,7 +149,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     final Document document = getDocument(file);
 
-    WriteCommandAction.runWriteCommandAction(null, () -> getPsiDocumentManager().getSynchronizer().performAtomically(file, () -> changeDocument(document, getPsiDocumentManager())));
+    WriteCommandAction.runWriteCommandAction(null, () -> PsiToDocumentSynchronizer
+      .performAtomically(file, () -> changeDocument(document, getPsiDocumentManager())));
 
 
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);

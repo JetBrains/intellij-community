@@ -127,7 +127,7 @@ class Usage {
       PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
     }
     
-    state.gotoEnd()
+    state.gotoEnd(false)
   }
 
   public void "test prefer outer class when static is not applicable for inner"() {
@@ -153,7 +153,7 @@ class A {
       PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
     }
     
-    state.gotoEnd()
+    state.gotoEnd(false)
 
     checkResultByText """
 class A {

@@ -561,6 +561,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
 
+      LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
       ApplicationManager.getApplication().runWriteAction(() -> {

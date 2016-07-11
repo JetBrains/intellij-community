@@ -51,6 +51,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
 
   @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
+    commandLine.setWorkDirectory(myTaskDir.getPath());
     ParamsGroup group = commandLine.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert group != null;
 
