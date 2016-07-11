@@ -47,6 +47,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -396,7 +397,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           localInspectionTool.inspectionFinished(session, holder);
           return true;
         };
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, null, false, processor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(intentionTools, new EmptyProgressIndicator(), false, processor);
       }
     }
   }
