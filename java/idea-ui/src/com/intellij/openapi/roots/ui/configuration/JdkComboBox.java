@@ -66,13 +66,14 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<SdkTypeId> filter) {
-    this(jdkModel, getSdkFilter(filter), filter);
+    this(jdkModel, getSdkFilter(filter), filter, false);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<Sdk> filter,
-                     @Nullable Condition<SdkTypeId> creationFilter) {
-    super(new JdkComboBoxModel(jdkModel, filter));
+                     @Nullable Condition<SdkTypeId> creationFilter,
+                     boolean addSuggestedItems) {
+    super(new JdkComboBoxModel(jdkModel, filter, addSuggestedItems));
     myFilter = filter;
     myCreationFilter = creationFilter;
     setRenderer(new ProjectJdkListRenderer() {
@@ -288,12 +289,27 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    public JdkComboBoxModel(final ProjectSdksModel jdksModel, @Nullable Condition<Sdk> sdkFilter) {
+    public JdkComboBoxModel(final ProjectSdksModel jdksModel, @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       Sdk[] jdks = jdksModel.getSdks();
       Arrays.sort(jdks, (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()));
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
           addElement(new JdkComboBoxItem(jdk));
+        }
+      }
+      if (addSuggested) {
+        addSuggestedItems(sdkFilter, jdks);
+      }
+    }
+
+    protected void addSuggestedItems(@Nullable Condition<Sdk> sdkFilter, Sdk[] jdks) {
+      SdkType[] types = SdkType.getAllTypes();
+      for (SdkType type : types) {
+        if (sdkFilter == null || ContainerUtil.find(jdks, sdkFilter) == null) {
+          String homePath = type.suggestHomePath();
+          if (homePath != null && type.isValidSdkHome(homePath)) {
+            addElement(new SuggestedJdkItem(type, homePath));
+          }
         }
       }
     }
