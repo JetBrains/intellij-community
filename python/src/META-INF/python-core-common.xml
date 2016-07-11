@@ -626,6 +626,7 @@
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor" interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
