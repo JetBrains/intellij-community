@@ -133,6 +133,7 @@ public class Main {
            Comparing.strEqual(firstArg, "duplocate") ||
            Comparing.strEqual(firstArg, "traverseUI") ||
            Comparing.strEqual(firstArg, "buildAppcodeCache") ||
+           Comparing.strEqual(firstArg, "format") ||
            (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
