@@ -473,7 +473,7 @@ class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(val fileSpec: Stri
     var hasSchemes = false
     val nameGenerator = UniqueNameGenerator()
     val schemesToSave = SmartList<E>()
-    for (scheme in schemes) {
+    for (scheme in schemes.toList()) {
       @Suppress("UNCHECKED_CAST")
       if (scheme is ExternalizableScheme) {
         val state = getState(scheme as E)
