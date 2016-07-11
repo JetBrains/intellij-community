@@ -14,7 +14,7 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void bar() {
-        new RuntimeException();
+        <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
     }
 
     void throwing() throws Throwable {
@@ -31,7 +31,7 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void leftBehind() throws Throwable {
-        final RuntimeException e = new RuntimeException("throw me");
+        final RuntimeException e = <warning descr="Runtime exception instance 'new RuntimeException(\"throw me\")' is not thrown">new RuntimeException("throw me")</warning>;
     }
 
     void exceptionIsCollected() {
