@@ -15,6 +15,7 @@
  */
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 
@@ -25,7 +26,9 @@ includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 target('default': "Developers update") {
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
-  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$out/release", new IdeaCommunityProperties(home))
+  def options = new BuildOptions()
+  options.useCompiledClassesFromProjectOutput = true
+  def context = BuildContext.createContext(ant, projectBuilder, project, global, home, projectHome, "$home/out/release-ce", new IdeaCommunityProperties(home), options)
   context.paths.distAll = deploy
   layoutFull(context)
 }
