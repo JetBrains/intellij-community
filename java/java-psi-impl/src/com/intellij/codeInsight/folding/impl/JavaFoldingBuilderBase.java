@@ -65,22 +65,22 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (element instanceof PsiImportList) {
       return "...";
     }
-    else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
+    if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
       return "{...}";
     }
-    else if (element instanceof PsiDocComment) {
+    if (element instanceof PsiDocComment) {
       return "/**...*/";
     }
-    else if (element instanceof PsiFile) {
+    if (element instanceof PsiFile) {
       return "/.../";
     }
-    else if (element instanceof PsiAnnotation) {
+    if (element instanceof PsiAnnotation) {
       return "@{...}";
     }
-    else if (element instanceof PsiReferenceParameterList) {
+    if (element instanceof PsiReferenceParameterList) {
       return SMILEY;
     }
-    else if (element instanceof PsiComment) {
+    if (element instanceof PsiComment) {
       return "//...";
     }
     return "...";
@@ -201,8 +201,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     }
     if (element == null) return null;
-    if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (element == null || element.equals(first)) return null;
+    PsiElement prevSibling = element.getPrevSibling();
+    if (prevSibling instanceof PsiWhiteSpace) element = prevSibling;
+    if (element.equals(first)) return null;
     return new UnfairTextRange(first.getTextOffset(), element.getTextOffset());
   }
 
@@ -447,8 +448,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {
     PsiUtilCore.ensureValid(elementToFold);
     TextRange range = getRangeToFold(elementToFold);
-    if (range == null) return false;
-    return addFoldRegion(list, elementToFold, document, allowOneLiners, range);
+    return range != null && addFoldRegion(list, elementToFold, document, allowOneLiners, range);
   }
 
   private static boolean addFoldRegion(final List<FoldingDescriptor> list, final PsiElement elementToFold, final Document document,
@@ -740,8 +740,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements,
-                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick) {
+  private void addCodeBlockFolds(@NotNull PsiElement scope,
+                                 @NotNull final List<FoldingDescriptor> foldElements,
+                                 @NotNull final Set<PsiElement> processedComments,
+                                 @NotNull final Document document,
+                                 final boolean quick) {
     final boolean dumb = DumbService.isDumb(scope.getProject());
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
