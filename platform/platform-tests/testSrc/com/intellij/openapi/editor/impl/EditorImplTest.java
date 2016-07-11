@@ -412,4 +412,17 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
     checkResultByText("<selection>abc\ndef\nghi</selection>");
   }
+
+  public void testScrollingInEditorOfSmallHeight() throws Exception {
+    initText("abc\n<caret>");
+    int heightInPixels = (int)(myEditor.getLineHeight() * 1.5);
+    EditorTestUtil.setEditorVisibleSizeInPixels(myEditor,
+                                                1000 * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor),
+                                                heightInPixels);
+    myEditor.getSettings().setAnimatedScrolling(false);
+    type('a');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
+    type('b');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
+  }
 }
