@@ -41,6 +41,11 @@ public class SignatureParsingTest {
     assertEquals("p.Obj$.I<p.$Obj1.I,p.Obj2.I$>", parseTypeString("Lp/Obj$$I<Lp/$Obj1$I;Lp/Obj2$I$;>;"));
   }
 
+  @Test(expected = ClsFormatException.class)
+  public void testIllegal() throws ClsFormatException {
+    parseTypeString("T");
+  }
+
   private static String parseTypeString(String signature) throws ClsFormatException {
     return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
   }
