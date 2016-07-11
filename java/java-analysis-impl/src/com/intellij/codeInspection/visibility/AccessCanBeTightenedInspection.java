@@ -139,7 +139,8 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
-    private int suggestLevel(@NotNull PsiMember member, PsiClass memberClass, int currentLevel) {
+    @PsiUtil.AccessLevel
+    private int suggestLevel(@NotNull PsiMember member, PsiClass memberClass, @PsiUtil.AccessLevel int currentLevel) {
       if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.NATIVE)) return currentLevel;
       if (member instanceof PsiMethod && member instanceof SyntheticElement || !member.isPhysical()) return currentLevel;
 
@@ -199,6 +200,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         return currentLevel; // do not propose private for unused method
       }
 
+      @PsiUtil.AccessLevel
       int suggestedLevel = maxLevel.get();
       if (suggestedLevel == PsiUtil.ACCESS_LEVEL_PRIVATE && memberClass == null) {
         suggestedLevel = suggestPackageLocal(member);
@@ -263,7 +265,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
       PsiDirectory directory = file.getContainingDirectory();
       PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
-        return suggestPackageLocal(element);
+        return suggestPackageLocal(member);
       }
       if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
         //access from subclass can be via protected, except for constructors
@@ -299,7 +301,8 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
     return result[0];
   }
 
-  private int suggestPackageLocal(@NotNull PsiElement member) {
+  @PsiUtil.AccessLevel
+  private int suggestPackageLocal(@NotNull PsiMember member) {
     boolean suggestPackageLocal = member instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)member)
                 ? myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES
                 : myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS;
