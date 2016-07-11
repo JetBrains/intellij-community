@@ -251,7 +251,7 @@ class EditorSizeManager extends InlayModel.Adapter implements PrioritizedDocumen
   private int calculatePreferredWidth() {
     if (checkDirty()) return 1;
     assertValidState();
-    VisualLinesIterator iterator = new VisualLinesIterator(myView, 0);
+    VisualLinesIterator iterator = new VisualLinesIterator(myEditor, 0);
     int maxWidth = 0;
     while (!iterator.atEnd()) {
       int visualLine = iterator.getVisualLine();

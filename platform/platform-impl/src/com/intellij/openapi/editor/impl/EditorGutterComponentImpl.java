@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -435,21 +436,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
 
         int annotationSize = myTextAnnotationGutterSizes.get(i);
-        for (int j = startVisualLine; j <= endVisualLine; j++) {
-          int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
+        VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
+        while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
+          int logLine = visLinesIterator.getStartLogicalLine();
+          int y = visLinesIterator.getY();
           String s = gutterProvider.getLineText(logLine, myEditor);
           final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
           final Color bg = gutterProvider.getBgColor(logLine, myEditor);
           if (bg != null) {
             g.setColor(bg);
-            g.fillRect(x, myEditor.visibleLineToY(j), annotationSize, lineHeight);
+            g.fillRect(x, y, annotationSize, lineHeight);
           }
           g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
           g.setFont(myEditor.getColorsScheme().getFont(style));
           if (!StringUtil.isEmpty(s)) {
             // we leave half of the gap before the text
-            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, myEditor.visibleLineToY(j) + myEditor.getAscent());
+            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, y + myEditor.getAscent());
           }
+          visLinesIterator.advance();
         }
 
         x += annotationSize;
@@ -540,17 +544,18 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
-      for (int i = startVisualLine; i <= endVisualLine; i++) {
-        LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
+      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
+      while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
+        LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(visLinesIterator.getVisualLine(), 0));
         if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) > 0) {
           continue;
         }
-        int logLine = convertor.execute(logicalPosition.line);
+        int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
         if (logLine >= 0) {
           String s = String.valueOf(logLine + 1);
-          int startY = myEditor.visibleLineToY(i);
+          int startY = visLinesIterator.getY();
           if (myEditor.isInDistractionFreeMode()) {
-            Color fgColor = myTextFgColors.get(i);
+            Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
             g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
           }
 
@@ -562,6 +567,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                        textOffset,
                        startY + myEditor.getAscent());
         }
+        visLinesIterator.advance();
       }
     }
     finally {
@@ -949,10 +955,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
 
-    int startY = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset)).y;
+    int startY = myEditor.visibleLineToY(myEditor.offsetToVisualLine(startOffset));
 
     // top edge of the last line of the highlighted area
-    int endY = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset)).y;
+    int endY = myEditor.visibleLineToY(myEditor.offsetToVisualLine(endOffset));
     // => add one line height to make height correct (bottom edge of the highlighted area)
     DocumentEx document = myEditor.getDocument();
     if (document.getLineStartOffset(document.getLineNumber(endOffset)) != endOffset) {

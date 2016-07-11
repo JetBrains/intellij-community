@@ -155,11 +155,11 @@ class EditorPainter implements TextDrawingCallback {
       paintBackground(g, myView.getPrefixAttributes(), insets.left, insets.top, prefixLayout.getWidth());
     }
     
-    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
+    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
       if (visualLine > endVisualLine || visualLine >= lineCount) break;
-      int y = myView.visualLineToY(visualLine);
+      int y = visLinesIterator.getY();
       paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
@@ -337,12 +337,12 @@ class EditorPainter implements TextDrawingCallback {
                                 myView.getPrefixAttributes().getEffectColor(), myView.getPrefixAttributes().getEffectType());
     }
 
-    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
+    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
       if (visualLine > endVisualLine || visualLine >= lineCount) break;
 
-      int y = myView.visualLineToY(visualLine);
+      int y = visLinesIterator.getY();
       final boolean paintSoftWraps = paintAllSoftWraps || 
                                      myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
       final int[] currentLogicalLine = new int[] {-1}; 
