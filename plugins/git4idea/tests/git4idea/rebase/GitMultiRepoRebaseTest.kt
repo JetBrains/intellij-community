@@ -62,7 +62,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     rebase("master")
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertAllRebased()
     assertNoRebaseInProgress(myAllRepositories)
   }
@@ -165,7 +165,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(myProject)
 
-    assertSuccessfulNotification("Rebased feature on master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     assertAllRebased()
     assertNoRebaseInProgress(myAllRepositories)
   }
