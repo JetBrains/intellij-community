@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -59,9 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @State(name = "ScratchFileService", storages = @Storage("scratches.xml"))
@@ -313,5 +312,27 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @Nullable
   private static Language getLanguageByFileName(@Nullable VirtualFile file) {
     return file == null ? null : LanguageUtil.getFileTypeLanguage(FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
+  }
+
+  public static class IndexSetContributor extends IndexableSetContributor {
+
+    @NotNull
+    @Override
+    public Set<VirtualFile> getAdditionalRootsToIndex() {
+      ScratchFileService instance = ScratchFileService.getInstance();
+      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+      for (RootType rootType : RootType.getAllRootIds()) {
+        if (rootType.isHidden()) continue;
+        ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));
+      }
+      return result;
+    }
+
+    @NotNull
+    @Override
+    public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
+      return Collections.emptySet();
+    }
   }
 }
