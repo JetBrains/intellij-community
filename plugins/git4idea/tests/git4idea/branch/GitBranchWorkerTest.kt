@@ -15,6 +15,7 @@
  */
 package git4idea.branch
 
+import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -32,6 +33,8 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.CharArrayUtil
 import git4idea.GitCommit
+import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
+import git4idea.branch.GitDeleteBranchOperation.*
 import git4idea.commands.GitCommandResult
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
@@ -41,7 +44,6 @@ import git4idea.test.GitPlatformTest
 import git4idea.test.GitScenarios.*
 import java.util.*
 import java.util.regex.Matcher
-import javax.swing.event.HyperlinkEvent
 
 class GitBranchWorkerTest : GitPlatformTest() {
 
@@ -512,43 +514,47 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_delete_branch_that_is_fully_merged() {
+    val todelete = "todelete"
     for (repository in myRepositories) {
-      git(repository, "branch todelete")
+      git(repository, "branch $todelete")
     }
 
-    deleteBranch("todelete", TestUiHandler())
+    deleteBranch(todelete, TestUiHandler())
 
-    assertNotNull("Successful notification was not shown", myVcsNotifier.lastNotification)
-    assertEquals("Successful notification is incorrect",
-                 "Deleted branch " + bcode("todelete") + "<br/><a href='undo'>Restore</a>",
-                 myVcsNotifier.lastNotification.content)
+    `assert successful deleted branch notification`(todelete, false, RESTORE)
   }
 
-  fun test_delete_unmerged_branch_should_mention_this_in_notification() {
+  fun test_delete_unmerged_branch_should_restore_on_link_click() {
     prepareUnmergedBranch(myCommunity)
 
-    var dialogShown = false
-    val brancher = GitBranchWorker(myProject, myGit, object : TestUiHandler() {
-      override fun showBranchIsNotFullyMergedDialog(project: Project,
-                                                    history: Map<GitRepository, List<GitCommit>>,
-                                                    baseBranches: Map<GitRepository, String>,
-                                                    removedBranch: String): Boolean {
-        dialogShown = true
-        return false
-      }
-    })
-
-    brancher.deleteBranch("todelete", listOf(myCommunity))
-    val notification = assertSuccessfulNotification(
-        """
-        Deleted branch ${bcode("todelete")}<br/>
-        <a href='undo'>Restore</a><hr/><a>Some commits</a> were not merged and could be lost
-        """.trimIndent())
-    assertFalse("'Branch is not fully merged' dialog shouldn't be shown yet", dialogShown)
-    val clickEvent = HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, GitDeleteBranchOperation.VIEW_UNMERGED_LINK)
-    notification.listener!!.hyperlinkUpdate(notification, clickEvent)
-    assertTrue("'Branch is not fully merged' dialog was not shown", dialogShown)
+    myCommunity.deleteBranch("todelete")
+    val notification = `assert successful deleted branch notification`("todelete", true, RESTORE, VIEW_COMMITS);
+    val restoreAction = findAction(notification, RESTORE)
+    Notification.fire(notification, restoreAction)
+    assertBranchExists(myCommunity, "todelete")
   }
+
+  fun `test restore branch deletion should restore tracking`() {
+    prepareRemoteRepo(myCommunity)
+    cd(myCommunity)
+    val feature = "feature"
+    git("checkout -b $feature")
+    git("push -u origin $feature")
+    git("checkout master")
+
+    myCommunity.deleteBranch(feature)
+
+    val notification = `assert successful deleted branch notification`(feature, false, RESTORE, DELETE_TRACKED_BRANCH);
+    val restoreAction = findAction(notification, RESTORE)
+    Notification.fire(notification, restoreAction)
+    assertBranchExists(myCommunity, feature)
+    val trackInfo = getTrackInfoForBranch(myCommunity, myCommunity.branches.findLocalBranch(feature)!!)
+    assertNotNull("Track info should be preserved", trackInfo)
+    assertEquals("Tracked branch is incorrect", "origin/$feature", trackInfo!!.remoteBranch.nameForLocalOperations)
+  }
+
+  private fun findAction(notification: Notification,
+                         actionTitle: String) = notification.actions.find { it.templatePresentation.text == actionTitle }!!
 
   fun test_ok_in_unmerged_branch_dialog_should_force_delete_branch() {
     prepareUnmergedBranch(myUltimate)
@@ -600,17 +606,18 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun test_delete_branch_merged_to_head_but_unmerged_to_upstream_should_mention_this_in_notification() {
     // inspired by IDEA-83604
     // for the sake of simplicity we deal with a single myCommunity repository for remote operations
+    val feature = "feature"
     prepareRemoteRepo(myCommunity)
     cd(myCommunity)
-    git("checkout -b feature")
-    git("push -u origin feature")
+    git("checkout -b $feature")
+    git("push -u origin $feature")
 
     // create a commit and merge it to master, but not to feature's upstream
     Executor.touch("feature.txt", "feature content")
     git("add feature.txt")
     git("commit -m feature_branch")
     git("checkout master")
-    git("merge feature")
+    git("merge $feature")
 
     // delete feature fully merged to current HEAD, but not to the upstream
     var dialogShown = false
@@ -624,16 +631,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    brancher.deleteBranch("feature", listOf(myCommunity))
-    val notification = assertSuccessfulNotification(
-        """
-        Deleted branch ${bcode("feature")}<br/>
-        <a href='undo'>Restore</a>
-        <a>Delete tracked remote branch</a><hr/><a>Some commits</a> were not merged and could be lost
-        """.trimIndent())
+    brancher.deleteBranch(feature, listOf(myCommunity))
+    val notification = `assert successful deleted branch notification`(feature, true, RESTORE, VIEW_COMMITS, DELETE_TRACKED_BRANCH);
+    val viewAction = findAction(notification, VIEW_COMMITS)
     assertFalse("'Branch is not fully merged' dialog shouldn't be shown yet", dialogShown)
-    val clickEvent = HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, GitDeleteBranchOperation.VIEW_UNMERGED_LINK)
-    notification.listener!!.hyperlinkUpdate(notification, clickEvent)
+    Notification.fire(notification, viewAction)
     assertTrue("'Branch is not fully merged' dialog was not shown", dialogShown)
   }
 
@@ -659,6 +661,19 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertFile(myUltimate, "branch_file.txt", "branch content")
     assertFile(myCommunity, "branch_file.txt", "branch content")
     assertFile(myContrib, "branch_file.txt", "branch content")
+  }
+
+  fun `test delete branch proposes to delete its tracked branch`() {
+    prepareRemoteRepo(myCommunity)
+    cd(myCommunity)
+
+    val todelete = "todelete"
+    git("branch $todelete")
+    git("push -u origin todelete")
+
+    myCommunity.deleteBranch(todelete)
+
+    `assert successful deleted branch notification`(todelete, false, RESTORE, DELETE_TRACKED_BRANCH)
   }
 
   fun test_merge_branch_that_is_up_to_date() {
@@ -843,10 +858,24 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("checkout master")
   }
 
-  internal fun assertBranchDeleted(name: String) {
+  private fun assertBranchDeleted(name: String) {
     for (repository in myRepositories) {
       assertBranchDeleted(repository, name)
     }
+  }
+
+  private fun GitRepository.deleteBranch(branchName: String) {
+    GitBranchWorker(myProject, myGit, TestUiHandler()).deleteBranch(branchName, listOf(this))
+  }
+
+  private fun `assert successful deleted branch notification`(branchName: String,
+                                                              unmergedWarning: Boolean = false,
+                                                              vararg actions: String): Notification {
+    val title = """<b>Deleted Branch:</b> $branchName"""
+    val warning = if (unmergedWarning) "<br/>Unmerged commits were discarded" else ""
+    val notification = assertSuccessfulNotification("$title$warning")
+    assertOrderedEquals("Notification actions are incorrect", notification.actions.map { it.templatePresentation.text }, *actions)
+    return notification
   }
 
   private open class TestUiHandler : GitBranchUiHandler {

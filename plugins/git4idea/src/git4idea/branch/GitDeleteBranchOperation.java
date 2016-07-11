@@ -17,7 +17,9 @@ package git4idea.branch;
 
 import com.google.common.collect.Maps;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,12 +38,12 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
@@ -52,9 +54,10 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 class GitDeleteBranchOperation extends GitBranchOperation {
 
   private static final Logger LOG = Logger.getInstance(GitDeleteBranchOperation.class);
-  private static final String UNDO_LINK = "undo";
-  private static final String DELETE_REMOTE_LINK = "delete_remote";
-  static final String VIEW_UNMERGED_LINK = "view";
+
+  static final String RESTORE = "Restore";
+  static final String VIEW_COMMITS = "View Commits";
+  static final String DELETE_TRACKED_BRANCH = "Delete Tracked Branch";
 
   @NotNull private final String myBranchName;
   @NotNull private final VcsNotifier myNotifier;
@@ -120,15 +123,33 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @Override
   protected void notifySuccess() {
-    String message = String.format("Deleted branch %s", formatBranchName(myBranchName));
-    message += "<br/><a href='" + UNDO_LINK + "'>Restore</a>";
+    boolean unmergedCommits = !myUnmergedToBranches.isEmpty();
+    String message = "<b>Deleted Branch:</b> " + myBranchName;
+    if (unmergedCommits) message += "<br/>Unmerged commits were discarded";
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
+    notification.addAction(new NotificationAction(RESTORE) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        restoreInBackground();
+      }
+    });
+    if (unmergedCommits) {
+      notification.addAction(new NotificationAction(VIEW_COMMITS) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          viewUnmergedCommitsInBackground();
+        }
+      });
+    }
     if (!myTrackedBranches.isEmpty()) {
-      message += "<br/><a href='" + DELETE_REMOTE_LINK + "'>Delete tracked remote branch</a>";
+      notification.addAction(new NotificationAction(DELETE_TRACKED_BRANCH) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          deleteTrackedBranchInBackground();
+        }
+      });
     }
-    if (!myUnmergedToBranches.isEmpty()) {
-      message += "<hr/><a href='" + VIEW_UNMERGED_LINK + "'>Some commits</a> were not merged and could be lost";
-    }
-    myNotifier.notifySuccess("", message, new SuccessNotificationLinkListener());
+    myNotifier.notify(notification);
   }
 
   private static void refresh(@NotNull GitRepository... repositories) {
@@ -274,51 +295,46 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
   }
 
-  private class SuccessNotificationLinkListener extends NotificationListener.Adapter {
+  private void deleteTrackedBranchInBackground() {
+    new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitBrancher brancher = ServiceManager.getService(getProject(), GitBrancher.class);
+        for (String remoteBranch : myTrackedBranches.keySet()) {
+          brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(myTrackedBranches.get(remoteBranch)));
+        }
+      }
+    }.queue();
+  }
 
-    @Override
-    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      notification.hideBalloon();
-      if (e.getDescription().equals(UNDO_LINK)) {
-        new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            rollbackBranchDeletion();
-          }
-        }.queue();
+  private void restoreInBackground() {
+    new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        rollbackBranchDeletion();
       }
-      else if (e.getDescription().equals(DELETE_REMOTE_LINK)) {
-        new Task.Backgroundable(myProject, "Deleting Remote Branch " + myBranchName + "...") {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            GitBrancher brancher = ServiceManager.getService(getProject(), GitBrancher.class);
-            for (String remoteBranch : myTrackedBranches.keySet()) {
-              brancher.deleteRemoteBranch(remoteBranch, new ArrayList<>(myTrackedBranches.get(remoteBranch)));
-            }
-          }
-        }.queue();
-      }
-      else if (e.getDescription().equals(VIEW_UNMERGED_LINK)) {
-        new Task.Backgroundable(myProject, "Collecting Unmerged Commits...") {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            boolean restore = showNotFullyMergedDialog(myUnmergedToBranches);
-            if (restore) {
-              rollback();
-            }
-          }
-        }.queue();
-      }
-    }
+    }.queue();
+  }
 
-    private void rollbackBranchDeletion() {
-      GitCompoundResult result = doRollback();
-      if (result.totalSuccess()) {
-        myNotifier.notifySuccess("Restored " + formatBranchName(myBranchName));
-      }
-      else {
-        myNotifier.notifyError("Couldn't Restore " + formatBranchName(myBranchName), result.getErrorOutputWithReposIndication());
-      }
+  private void rollbackBranchDeletion() {
+    GitCompoundResult result = doRollback();
+    if (result.totalSuccess()) {
+      myNotifier.notifySuccess("Restored " + formatBranchName(myBranchName));
     }
+    else {
+      myNotifier.notifyError("Couldn't Restore " + formatBranchName(myBranchName), result.getErrorOutputWithReposIndication());
+    }
+  }
+
+  private void viewUnmergedCommitsInBackground() {
+    new Task.Backgroundable(myProject, "Collecting Unmerged Commits...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        boolean restore = showNotFullyMergedDialog(myUnmergedToBranches);
+        if (restore) {
+          rollback();
+        }
+      }
+    }.queue();
   }
 }

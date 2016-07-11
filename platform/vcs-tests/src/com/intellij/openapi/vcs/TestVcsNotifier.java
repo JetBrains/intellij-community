@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestVcsNotifier extends VcsNotifier {
 
-  public static final String TEST_NOTIFICATION_GROUP = "Test";
+  private static final String TEST_NOTIFICATION_GROUP = "Test";
 
   private Notification myLastNotification;
 
@@ -42,6 +42,12 @@ public class TestVcsNotifier extends VcsNotifier {
   public Notification notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                              @NotNull NotificationType type, @Nullable NotificationListener listener) {
     myLastNotification = new Notification(TEST_NOTIFICATION_GROUP, title, message, type, listener);
+    return myLastNotification;
+  }
+
+  @NotNull
+  public Notification notify(@NotNull Notification notification) {
+    myLastNotification = notification;
     return myLastNotification;
   }
 
