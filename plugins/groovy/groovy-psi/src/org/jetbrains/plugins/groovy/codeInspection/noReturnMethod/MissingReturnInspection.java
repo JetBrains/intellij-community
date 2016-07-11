@@ -222,6 +222,14 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     if (!lastChild.isValid() || !lastChild.isPhysical() || range.getStartOffset() >= range.getEndOffset()) {
       return;
     }
+
+    // Android Studio: Don't report these errors in build.gradle files;
+    // they're usually wrong
+    PsiFile containingFile = lastChild.getContainingFile();
+    if (containingFile != null && containingFile.getName().endsWith(".gradle")) {
+      return;
+    }
+
     holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
   }
 
