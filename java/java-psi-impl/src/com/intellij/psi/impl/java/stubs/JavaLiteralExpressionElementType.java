@@ -34,8 +34,8 @@ import java.io.IOException;
 /**
  * @author peter
  */
-public class PsiLiteralElementType extends JavaStubElementType<PsiLiteralStub, PsiLiteralExpression> {
-  public PsiLiteralElementType() {
+public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLiteralStub, PsiLiteralExpression> {
+  public JavaLiteralExpressionElementType() {
     super("LITERAL_EXPRESSION");
   }
 

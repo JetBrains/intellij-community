@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public interface JavaStubElementTypes {
   JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
   JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
+  JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
@@ -131,7 +132,6 @@ public interface JavaStubElementTypes {
       return new ImportStaticStatementElement();
     }
   };
-  PsiLiteralElementType LITERAL_EXPRESSION = new PsiLiteralElementType();
 
   IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }
