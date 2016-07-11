@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitCommit;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
@@ -172,9 +173,32 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     for (GitRepository repository : getSuccessfulRepositories()) {
       GitCommandResult res = myGit.branchCreate(repository, myBranchName, myDeletedBranchTips.get(repository));
       result.append(repository, res);
+
+      for (String trackedBranch : myTrackedBranches.keySet()) {
+        if (myTrackedBranches.get(trackedBranch).contains(repository)) {
+          GitCommandResult setTrackResult = setUpTracking(repository, myBranchName, trackedBranch);
+          if (!setTrackResult.success()) {
+            LOG.warn("Couldn't set " + myBranchName + " to track " + trackedBranch + " in " + repository.getRoot().getName() + ": " +
+                     setTrackResult.getErrorOutputAsJoinedString());
+          }
+        }
+      }
+
       refresh(repository);
     }
     return result;
+  }
+
+  @NotNull
+  private GitCommandResult setUpTracking(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String trackedBranch) {
+    GitLineHandler handler = new GitLineHandler(myProject, repository.getRoot(), GitCommand.BRANCH);
+    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion())) {
+      handler.addParameters("--set-upstream-to", trackedBranch, branchName);
+    }
+    else {
+      handler.addParameters("--set-upstream", branchName, trackedBranch);
+    }
+    return myGit.runCommand(handler);
   }
 
   @NotNull
