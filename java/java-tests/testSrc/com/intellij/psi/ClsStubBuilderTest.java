@@ -51,15 +51,26 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
-  private void doTest() {
-    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+  private void doTest(String className) {
+    VirtualFile clsFile = findFile(className);
     assertNotNull(clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
-  private void doTest(String className) {
-    VirtualFile clsFile = findFile(className);
+  private VirtualFile findFile(final String className) {
+    final VirtualFile[] roots = getProjectJDK().getRootProvider().getFiles(OrderRootType.CLASSES);
+    for (VirtualFile root : roots) {
+      VirtualFile vFile = root.findFileByRelativePath(className);
+      if (vFile != null) return vFile;
+    }
+
+    fail("Cannot file class file for: " + className);
+    return null;
+  }
+
+  private void doTest() {
+    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
+    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
     assertNotNull(clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
   }
@@ -84,16 +95,5 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private VirtualFile findFile(final String className) {
-    final VirtualFile[] roots = getProjectJDK().getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile root : roots) {
-      VirtualFile vFile = root.findFileByRelativePath(className);
-      if (vFile != null) return vFile;
-    }
-
-    fail("Cannot file class file for: " + className);
-    return null;
   }
 }
