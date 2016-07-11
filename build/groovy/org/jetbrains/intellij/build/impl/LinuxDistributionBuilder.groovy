@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 
 /**
  * @author nik
@@ -23,8 +24,10 @@ import org.jetbrains.intellij.build.BuildContext
 class LinuxDistributionBuilder {
   private final BuildContext buildContext
   final String unixDistPath
+  private final LinuxDistributionCustomizer customizer
 
-  LinuxDistributionBuilder(BuildContext buildContext) {
+  LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer) {
+    this.customizer = customizer
     this.buildContext = buildContext
     unixDistPath = "$buildContext.paths.buildOutputRoot/dist.unix"
   }
@@ -43,12 +46,12 @@ class LinuxDistributionBuilder {
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/idea.properties", eol: "unix")
-    buildContext.ant.copy(file: buildContext.linuxDistributionCustomizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+    buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
 
     unixScripts()
     unixVMOptions()
     unixReadme()
-    buildContext.linuxDistributionCustomizer.copyAdditionalFiles(buildContext, unixDistPath)
+    customizer.copyAdditionalFiles(buildContext, unixDistPath)
     buildTarGz(null)
     def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
     if (jreDirectoryPath != null) {
@@ -118,10 +121,10 @@ class LinuxDistributionBuilder {
   }
 
   private void buildTarGz(String jreDirectoryPath) {
-    def tarRoot = buildContext.linuxDistributionCustomizer.rootDirectoryName(buildContext.buildNumber)
+    def tarRoot = customizer.rootDirectoryName(buildContext.buildNumber)
     def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.buildNumber)}${suffix}.tar"
-    def extraBins = buildContext.linuxDistributionCustomizer.extraExecutables
+    def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath

@@ -20,6 +20,7 @@ import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 
 import java.time.LocalDateTime
@@ -31,8 +32,10 @@ class MacDmgBuilder {
   private final String artifactsPath
   private final MacHostProperties macHostProperties
   private final String remoteDir
+  private final MacDistributionCustomizer customizer
 
-  private MacDmgBuilder(BuildContext buildContext, String remoteDir, MacHostProperties macHostProperties) {
+  private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
+    this.customizer = customizer
     this.buildContext = buildContext
     ant = buildContext.ant
     artifactsPath = buildContext.paths.artifacts
@@ -40,14 +43,14 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  public static void signAndBuildDmg(BuildContext buildContext, MacHostProperties macHostProperties, String macZipPath) {
+  public static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
     defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
 
     String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}"
     if (remoteDir.toLowerCase().endsWith("snapshot")) {
       remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
     }
-    def dmgBuilder = new MacDmgBuilder(buildContext, remoteDir, macHostProperties)
+    def dmgBuilder = new MacDmgBuilder(buildContext, customizer, remoteDir, macHostProperties)
     def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
     if (jreArchivePath != null) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
@@ -73,7 +76,7 @@ class MacDmgBuilder {
   private void buildDmg(String targetFileName) {
     buildContext.messages.progress("Building ${targetFileName}.dmg")
     def dmgImageCopy = "$artifactsPath/${buildContext.fullBuildNumber}.png"
-    def dmgImagePath = (buildContext.applicationInfo.isEAP ? buildContext.macDistributionCustomizer.dmgImagePathForEAP : null) ?: buildContext.macDistributionCustomizer.dmgImagePath
+    def dmgImagePath = (buildContext.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
     ant.copy(file: dmgImagePath, tofile: dmgImageCopy)
     ftpAction("put") {
       ant.fileset(file: dmgImageCopy)

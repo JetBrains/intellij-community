@@ -19,6 +19,9 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -200,21 +203,30 @@ idea.fatal.error.notification=disabled
     def propertiesFile = patchIdeaPropertiesFile()
 
     WindowsDistributionBuilder windowsBuilder = null
-    buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
-      windowsBuilder = new WindowsDistributionBuilder(buildContext)
-      windowsBuilder.layoutWin(propertiesFile)
-    })
+    def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
+    if (windowsDistributionCustomizer != null) {
+      buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
+        windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
+        windowsBuilder.layoutWin(propertiesFile)
+      })
+    }
 
     LinuxDistributionBuilder linuxBuilder = null
-    buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
-      linuxBuilder = new LinuxDistributionBuilder(buildContext)
-      linuxBuilder.layoutUnix(propertiesFile)
+    def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
+    if (linuxDistributionCustomizer != null) {
+      buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
+        linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
+        linuxBuilder.layoutUnix(propertiesFile)
+      }
     }
 
     MacDistributionBuilder macBuilder = null
-    buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
-      macBuilder = new MacDistributionBuilder(buildContext)
-      macBuilder.layoutMac(propertiesFile)
+    def macDistributionCustomizer = buildContext.macDistributionCustomizer
+    if (macDistributionCustomizer != null) {
+      buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
+        macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
+        macBuilder.layoutMac(propertiesFile)
+      }
     }
 
     if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {

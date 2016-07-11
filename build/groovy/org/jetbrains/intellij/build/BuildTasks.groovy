@@ -33,11 +33,17 @@ abstract class BuildTasks {
 
   /**
    * Update search/searchableOptions.xml file in {@code targetModuleName} module output directory
+   * <br>
+   * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
+   * be called inside {@link #buildDistributions()}
    */
   abstract void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses)
 
   /**
    * Create a copy of *ApplicationInfo.xml file with substituted __BUILD_NUMBER__ and __BUILD_DATE__ placeholders
+   * <br>
+   * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
+   * be called inside {@link #buildDistributions()}
    * @return path to the copied file
    */
   abstract File patchApplicationInfo()

@@ -80,10 +80,19 @@ public abstract class ProductProperties {
    */
   abstract String baseArtifactName(String buildNumber)
 
+  /**
+   * @return instance of the class containing properties specific for Windows distribution or {@code null} if the product doesn't have Windows distribution
+   */
   abstract WindowsDistributionCustomizer createWindowsCustomizer(String projectHome)
 
+  /**
+   * @return instance of the class containing properties specific for Linux distribution or {@code null} if the product doesn't have Linux distribution
+   */
   abstract LinuxDistributionCustomizer createLinuxCustomizer(String projectHome)
 
+  /**
+   * @return instance of the class containing properties specific for Mac OS distribution or {@code null} if the product doesn't have Mac OS distribution
+   */
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
   boolean setPluginAndIDEVersionInPluginXml = true

@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 /**
@@ -27,8 +28,10 @@ class WinExeInstallerBuilder {
   private final BuildContext buildContext
   private final GantBuilder ant
   private final String jreDirectoryPath
+  private final WindowsDistributionCustomizer customizer
 
-  WinExeInstallerBuilder(BuildContext buildContext, String jreDirectoryPath) {
+  WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, String jreDirectoryPath) {
+    this.customizer = customizer
     this.buildContext = buildContext
     ant = buildContext.ant
     this.jreDirectoryPath = jreDirectoryPath
@@ -48,7 +51,7 @@ class WinExeInstallerBuilder {
     ant.mkdir(dir: "$box/bin")
     ant.mkdir(dir: "$box/nsiconf")
 
-    def bundleJre = buildContext.windowsDistributionCustomizer.bundledJreArchitecture != null
+    def bundleJre = customizer.bundledJreArchitecture != null
     if (bundleJre && jreDirectoryPath == null) {
       buildContext.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
       bundleJre = false
@@ -85,7 +88,7 @@ class WinExeInstallerBuilder {
     if (SystemInfoRt.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " /DIPR=\"${buildContext.windowsDistributionCustomizer.associateIpr}\"" +
+                        " /DIPR=\"${customizer.associateIpr}\"" +
                         " /DOUT_FILE=\"${outFileName}\"" +
                         " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
@@ -95,7 +98,7 @@ class WinExeInstallerBuilder {
                         " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
                         " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                         " -DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " -DIPR=\"${buildContext.windowsDistributionCustomizer.associateIpr}\"" +
+                        " -DIPR=\"${customizer.associateIpr}\"" +
                         " -DOUT_FILE=\"${outFileName}\"" +
                         " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
@@ -113,14 +116,14 @@ class WinExeInstallerBuilder {
   private void prepareConfigurationFiles(String box, String winDistPath) {
     def productProperties = buildContext.productProperties
     new File(box, "nsiconf/paths.nsi").text = """
-!define IMAGES_LOCATION "${toSystemDependentName(buildContext.windowsDistributionCustomizer.installerImagesPath)}"
+!define IMAGES_LOCATION "${toSystemDependentName(customizer.installerImagesPath)}"
 !define PRODUCT_PROPERTIES_FILE "${toSystemDependentName("$winDistPath/bin/idea.properties")}"
 !define PRODUCT_VM_OPTIONS_NAME ${productProperties.baseFileName}*.exe.vmoptions
 !define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
     String fullProductName = productProperties.fullNameIncludingEdition(buildContext.applicationInfo)
-    def extensionsList = buildContext.windowsDistributionCustomizer.fileAssociations
+    def extensionsList = customizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "JetBrains"
@@ -133,7 +136,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
-!define UNINSTALL_WEB_PAGE "${buildContext.windowsDistributionCustomizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
+!define UNINSTALL_WEB_PAGE "${customizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDEA build has been installed
 ; set to 1 for release build

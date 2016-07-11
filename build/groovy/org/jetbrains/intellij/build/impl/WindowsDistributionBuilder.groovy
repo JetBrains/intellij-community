@@ -17,15 +17,18 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 /**
  * @author nik
  */
 class WindowsDistributionBuilder {
   private final BuildContext buildContext
+  private final WindowsDistributionCustomizer customizer
   final String winDistPath
 
-  WindowsDistributionBuilder(BuildContext buildContext) {
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer) {
+    this.customizer = customizer
     this.buildContext = buildContext
     winDistPath = "$buildContext.paths.buildOutputRoot/dist.win"
   }
@@ -43,19 +46,19 @@ class WindowsDistributionBuilder {
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
 
-    buildContext.ant.copy(file: buildContext.windowsDistributionCustomizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
-    if (buildContext.windowsDistributionCustomizer.includeBatchLaunchers) {
+    buildContext.ant.copy(file: customizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+    if (customizer.includeBatchLaunchers) {
       winScripts()
     }
     winVMOptions()
     buildWinLauncher(JvmArchitecture.x32)
     buildWinLauncher(JvmArchitecture.x64)
-    buildContext.windowsDistributionCustomizer.copyAdditionalFiles(buildContext, winDistPath)
+    customizer.copyAdditionalFiles(buildContext, winDistPath)
 
-    def arch = buildContext.windowsDistributionCustomizer.bundledJreArchitecture
+    def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     buildWinZip(jreDirectoryPath, ".win")
-    if (arch != null && buildContext.windowsDistributionCustomizer.buildZipWithBundledOracleJre) {
+    if (arch != null && customizer.buildZipWithBundledOracleJre) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
         buildWinZip(oracleJrePath, "-oracle-win")
@@ -66,7 +69,7 @@ class WindowsDistributionBuilder {
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext, jreDirectoryPath).buildInstaller(winDistPath)
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath).buildInstaller(winDistPath)
     }
   }
 
@@ -194,7 +197,7 @@ IDS_VM_OPTIONS=$vmOptions
   private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.buildNumber)}${zipNameSuffix}.zip"
-      def zipPrefix = buildContext.windowsDistributionCustomizer.rootDirectoryName(buildContext.buildNumber)
+      def zipPrefix = customizer.rootDirectoryName(buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
       if (jreDirectoryPath != null) {
         dirs += jreDirectoryPath

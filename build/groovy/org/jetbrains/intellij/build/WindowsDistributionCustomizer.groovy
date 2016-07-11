@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.impl.JvmArchitecture
  */
 abstract class WindowsDistributionCustomizer {
   /**
-   * Path to *.ico file for Windows distribution
+   * Path to 256x256 *.ico file for Windows distribution
    */
   String icoPath
 
