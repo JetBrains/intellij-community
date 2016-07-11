@@ -119,13 +119,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
       String stderr = output.getStderr();
       if (!stderr.isEmpty()) {
-        ApplicationManager.getApplication().invokeLater(() ->
-                                                          StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
-                                                                                              MessageType.WARNING.getPopupBackground(),
-                                                                                              myProject));
         //log error output of tests
         LOG.info("#educational " + stderr);
-        return null;
       }
       return testsOutput;
     }
