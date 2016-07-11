@@ -72,6 +72,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -84,6 +86,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -106,7 +110,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
-  private final Alarm myAlarm = new Alarm();
+  // use scheduler instead of Alarm because the latter requires ModalityState.current() which is obtainable from EDT only which requires too many invokeLaters
+  private final ScheduledExecutorService myAlarm = EdtExecutorService.getScheduledExecutorInstance();
+  @NotNull
+  private volatile Future myUpdateRunnableFuture = new FixedFuture<>(null);
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<>();
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<>();
@@ -362,7 +369,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
-    myAlarm.cancelAllRequests();
+    myUpdateRunnableFuture.cancel(false);
+
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
@@ -607,24 +615,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   
   @TestOnly
   boolean isRunningOrPending() {
-    return isRunning() || !myAlarm.isEmpty();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return isRunning() || !myUpdateRunnableFuture.isDone();
   }
 
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
     cancelUpdateProgress(toRestartAlarm, reason);
-    myAlarm.cancelAllRequests();
+    myUpdateRunnableFuture.cancel(false);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
       if (LOG.isDebugEnabled()) {
         myFrequentEventDetector.eventHappened(reason);
       }
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (myAlarm.isEmpty()) {
-          myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
-        }
-      });
+      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -840,7 +845,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       }
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       cancelUpdateProgress(true, "Cancel by alarm");
-      myAlarm.cancelAllRequests();
+      myUpdateRunnableFuture.cancel(false);
       DaemonProgressIndicator progress = createUpdateProgress();
       myPassExecutorService.submitPasses(passes, progress);
     }
@@ -858,9 +863,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
         // wait for heavy processing to stop, re-schedule daemon but not too soon
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
-          HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> {
-            myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), ModalityState.NON_MODAL);
-          });
+          HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
+              myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), TimeUnit.MILLISECONDS));
           return;
         }
         Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
