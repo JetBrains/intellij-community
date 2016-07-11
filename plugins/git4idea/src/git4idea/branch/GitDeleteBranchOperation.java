@@ -130,7 +130,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     notification.addAction(new NotificationAction(RESTORE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        restoreInBackground();
+        restoreInBackground(notification);
       }
     });
     if (unmergedCommits) {
@@ -307,19 +307,20 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }.queue();
   }
 
-  private void restoreInBackground() {
+  private void restoreInBackground(@NotNull Notification notification) {
     new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        rollbackBranchDeletion();
+        rollbackBranchDeletion(notification);
       }
     }.queue();
   }
 
-  private void rollbackBranchDeletion() {
+  private void rollbackBranchDeletion(@NotNull Notification notification) {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
       myNotifier.notifySuccess("Restored " + formatBranchName(myBranchName));
+      notification.expire();
     }
     else {
       myNotifier.notifyError("Couldn't Restore " + formatBranchName(myBranchName), result.getErrorOutputWithReposIndication());
