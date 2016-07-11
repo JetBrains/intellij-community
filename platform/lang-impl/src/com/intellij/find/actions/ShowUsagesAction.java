@@ -763,7 +763,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (title != null) {
         text += "<br><small> " + title + "</small>";
     }
-    return XmlStringUtil.wrapInHtml(text);
+    return XmlStringUtil.wrapInHtml(UIUtil.convertSpace2Nbsp(text));
   }
 
   @Nullable
