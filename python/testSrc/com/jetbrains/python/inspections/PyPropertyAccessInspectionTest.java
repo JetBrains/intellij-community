@@ -186,6 +186,12 @@ public class PyPropertyAccessInspectionTest extends PyTestCase {
     doTestPy3();
   }
 
+  // PY-19956
+  public void testWriteToAttrInSlots() {
+    doTestPy2();
+    doTestPy3();
+  }
+
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
   }
