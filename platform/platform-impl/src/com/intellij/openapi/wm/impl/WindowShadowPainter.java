@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.icons.AllIcons.Ide.Shadow.Popup.*;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -36,8 +37,9 @@ final class WindowShadowPainter extends AbstractPainter implements AWTEventListe
   private List<Rectangle> myShadows;
   private Component myComponent;
 
-  WindowShadowPainter() {
-    setNeedsRepaint(true);
+  @Override
+  public boolean needsRepaint() {
+    return true;
   }
 
   @Override
@@ -48,8 +50,9 @@ final class WindowShadowPainter extends AbstractPainter implements AWTEventListe
     if (window == null) return;
     Object source = event.getSource();
     if (source instanceof Window && SwingUtilities.isDescendingFrom((Window)source, window)) {
+      List<Rectangle> shadows = myShadows;
       myShadows = getShadows(component, window);
-      setNeedsRepaint(myShadows != null);
+      if (!Objects.equals(myShadows, shadows)) component.repaint();
     }
   }
 
@@ -68,7 +71,6 @@ final class WindowShadowPainter extends AbstractPainter implements AWTEventListe
         for (Rectangle bounds : shadows) {
           PAINTER.paintShadow(component, g, bounds.x, bounds.y, bounds.width, bounds.height);
         }
-        setNeedsRepaint(true);
       }
     }
     else if (myComponent != null) {
