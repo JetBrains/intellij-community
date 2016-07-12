@@ -84,6 +84,15 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testUseOfPackagePrivateInAnnotation() {
+    doTest("import java.util.*;\n" +
+           "@interface Ann{ String value(); }\n" +
+           "@Ann(value = C.VAL\n)" +
+           "class C {\n" +
+           "    static final String VAL = \"xx\";\n" +
+           "}");
+  }
+
   public void testSameFile() {
     doTest("class C {\n" +
            "  private static class Err {\n" +

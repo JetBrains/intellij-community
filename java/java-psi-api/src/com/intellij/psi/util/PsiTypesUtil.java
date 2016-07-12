@@ -22,12 +22,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PsiTypesUtil {
   @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
@@ -308,5 +311,41 @@ public class PsiTypesUtil {
       PsiUtil.ensureValidType(parameterType, "Invalid type of parameter " + parameter + " of " + parameter.getClass());
     }
     return parameterType;
+  }
+
+  public static PsiTypeParameter[] filterUnusedTypeParameters(final PsiType superReturnTypeInBaseClassType,
+                                                              final PsiTypeParameter[] typeParameters) {
+    if (typeParameters.length == 0) return typeParameters;
+
+    final Set<PsiTypeParameter> usedParameters = new HashSet<PsiTypeParameter>();
+    superReturnTypeInBaseClassType.accept(new PsiTypeVisitor<Object>(){
+      @Nullable
+      @Override
+      public Object visitClassType(PsiClassType classType) {
+        final PsiClass aClass = classType.resolve();
+        if (aClass instanceof PsiTypeParameter && ArrayUtil.find(typeParameters, aClass) > -1) {
+          usedParameters.add((PsiTypeParameter)aClass);
+          return null;
+        }
+        for (PsiType type : classType.getParameters()) {
+          type.accept(this);
+        }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Object visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        return bound != null ? bound.accept(this) : null;
+      }
+
+      @Nullable
+      @Override
+      public Object visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+    });
+    return usedParameters.toArray(new PsiTypeParameter[usedParameters.size()]);
   }
 }

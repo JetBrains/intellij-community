@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -84,6 +85,10 @@ public class DebuggerContextUtil {
   }
 
   public static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiElement psi, @NotNull PsiFile file) {
+    if (psi instanceof PsiCompiledElement) {
+      // it makes no sense to compute text range of compiled element
+      return null;
+    }
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
       try {

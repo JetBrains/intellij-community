@@ -75,7 +75,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       Element element = new Element(BUILD_FILE);
       element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
       ((AntBuildFileBase)buildFile).writeWorkspaceProperties(element);
@@ -92,7 +92,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
     if (properties == null) {
       return;
     }
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       final Element fileElement = findChildByUrl(properties, buildFile.getVirtualFile().getUrl());
       if (fileElement == null) {
         continue;

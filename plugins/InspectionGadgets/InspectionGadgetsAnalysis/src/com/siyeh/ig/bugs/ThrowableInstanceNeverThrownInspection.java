@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
     return new ExceptionInstanceNeverThrownVisitor();
   }
 
-  private static class ExceptionInstanceNeverThrownVisitor
-    extends BaseInspectionVisitor {
+  private static class ExceptionInstanceNeverThrownVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
@@ -92,7 +91,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
       }
       final PsiElement typedParent = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, PsiVariable.class);
       final PsiElement variable = ThrowableResultOfMethodCallIgnoredInspection.getVariable(typedParent, expression);
-      if (typedParent != null && variable == null) {
+      if (typedParent != null && variable == null || variable instanceof PsiField) {
         return;
       }
       if (variable instanceof PsiLocalVariable) {

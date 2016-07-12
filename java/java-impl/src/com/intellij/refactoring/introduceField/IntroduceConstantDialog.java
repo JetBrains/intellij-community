@@ -210,6 +210,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     for (String possibleClassName : possibleClassNames) {
       myTfTargetClassName.prependItem(possibleClassName);
     }
+    myTfTargetClassName.getChildComponent().setSelectedItem(myParentClass.getQualifiedName());
     myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();

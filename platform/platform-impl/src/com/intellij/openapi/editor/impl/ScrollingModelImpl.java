@@ -227,8 +227,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
     // the following code tries to keeps 1 line above and 1 line below if available in viewRect
     int lineHeight = myEditor.getLineHeight();
-    int scrollUpBy = viewRect.y - targetLocation.y + (viewRect.height > lineHeight ? lineHeight : 0);
-    int scrollDownBy = targetLocation.y - viewRect.y - Math.max(0, viewRect.height - 2 * lineHeight);
+    // to avoid 'hysteresis', minAcceptableY should be always less or equal to maxAcceptableY
+    int minAcceptableY = viewRect.y + Math.max(0, Math.min(lineHeight, viewRect.height - 3 * lineHeight));
+    int maxAcceptableY = viewRect.y + (viewRect.height <= lineHeight ? 0 :
+                                       (viewRect.height - (viewRect.height <= 2 * lineHeight ? lineHeight : 2 * lineHeight)));
+    int scrollUpBy = minAcceptableY - targetLocation.y;
+    int scrollDownBy = targetLocation.y - maxAcceptableY;
     int centerPosition = targetLocation.y - viewRect.height / 3;
 
     int vOffset = viewRect.y;

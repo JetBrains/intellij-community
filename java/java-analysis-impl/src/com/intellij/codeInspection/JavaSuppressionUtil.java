@@ -129,8 +129,6 @@ public class JavaSuppressionUtil {
   }
 
   static PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, @NotNull String inspectionToolID) {
-    final PsiAnnotation generatedAnnotation = AnnotationUtil.findAnnotation(owner, Generated.class.getName());
-    if (generatedAnnotation != null) return generatedAnnotation;
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
@@ -138,7 +136,7 @@ public class JavaSuppressionUtil {
         return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
-    return null;
+    return AnnotationUtil.findAnnotation(owner, Generated.class.getName());
   }
 
   static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID) {
@@ -215,9 +213,9 @@ public class JavaSuppressionUtil {
         }
         if (up instanceof PsiVariable) {
           PsiVariable local = (PsiVariable)up;
-          if (getAnnotationMemberSuppressedIn(local, toolId) != null) {
-            PsiModifierList modifierList = local.getModifierList();
-            return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
+          final PsiElement annotation = getAnnotationMemberSuppressedIn(local, toolId);
+          if (annotation != null) {
+            return annotation;
           }
         }
 

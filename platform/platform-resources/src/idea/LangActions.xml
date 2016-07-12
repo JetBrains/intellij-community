@@ -652,6 +652,8 @@
               use-shortcut-of="RecentFiles"/>
       <separator/>
       <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
     </group>
 
     <!-- <action id="UsageView.ImportToFavorites" class="com.intellij.ide.favoritesTreeView.ImportUsagesAction"/> -->

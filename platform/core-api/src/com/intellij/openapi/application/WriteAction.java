@@ -27,7 +27,6 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   @NotNull
   @Override
-  @SuppressWarnings("InstanceofCatchParameter")
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
@@ -37,7 +36,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       AccessToken token = start(getClass());
       try {
         result.run();
-      } finally {
+      }
+      finally {
         token.finish();
       }
       return result;
@@ -80,7 +80,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     AccessToken token = start();
     try {
       action.run();
-    } finally {
+    }
+    finally {
       token.finish();
     }
   }
@@ -89,7 +90,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     AccessToken token = start();
     try {
       return action.compute();
-    } finally {
+    }
+    finally {
       token.finish();
     }
   }

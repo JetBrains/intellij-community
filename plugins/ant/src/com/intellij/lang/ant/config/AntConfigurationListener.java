@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,15 @@ package com.intellij.lang.ant.config;
 import java.util.EventListener;
 
 public interface AntConfigurationListener extends EventListener {
-  void configurationLoaded();
+  default void configurationLoaded() {
+  }
   
-  void buildFileChanged(final AntBuildFile buildFile);
+  default void buildFileChanged(final AntBuildFile buildFile) {
+  }
 
-  void buildFileAdded(final AntBuildFile buildFile);
+  default void buildFileAdded(final AntBuildFile buildFile) {
+  }
 
-  void buildFileRemoved(final AntBuildFile buildFile);
+  default void buildFileRemoved(final AntBuildFile buildFile) {
+  }
 }

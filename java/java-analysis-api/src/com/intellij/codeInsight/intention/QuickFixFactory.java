@@ -136,8 +136,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRemoveParameterListFix(@NotNull PsiMethod parent);
 
-  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element);
-  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module);
+  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull Module module);
 
   @NotNull public abstract IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level);
 

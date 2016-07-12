@@ -62,7 +62,8 @@ def String getLibraryName(JpsLibrary lib) {
 binding.setVariable("checkLibLicenses", {
   def libraries = new HashSet<JpsLibrary>()
   def lib2Module = new HashMap<JpsLibrary, JpsModule>();
-  allModules().each {JpsModule module ->
+  Set<String> nonPublicModules = ["buildScripts", "build"] as Set
+  allModules().findAll {!nonPublicModules.contains(it.name)}.each {JpsModule module ->
     JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
       lib2Module[it] = module
       libraries << it

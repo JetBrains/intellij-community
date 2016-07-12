@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -193,7 +194,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
-    if (name == null || name.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(name)) {
       name = myVFile.getName();
     }
     return name;
@@ -212,7 +213,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   @Nullable
   public AntBuildModelBase getModelIfRegistered() {
-    return (AntBuildModelBase)myAntConfiguration.getModelIfRegistered(this);
+    return myAntConfiguration.getModelIfRegistered(this);
   }
 
   public boolean isRunInBackground() {
