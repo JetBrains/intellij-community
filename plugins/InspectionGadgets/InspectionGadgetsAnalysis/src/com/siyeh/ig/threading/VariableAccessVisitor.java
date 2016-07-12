@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
@@ -202,14 +203,16 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       new HashSet<PsiMethod>(usedMethods);
     boolean stabilized = false;
     while (!stabilized) {
+      ProgressManager.checkCanceled();
       stabilized = true;
       final Set<PsiMethod> methodsDeterminedThisPass =
         new HashSet<PsiMethod>();
       for (PsiMethod method : remainingMethods) {
-        final Collection<PsiReference> references =
-          referenceMap.get(method);
+        ProgressManager.checkCanceled();
+        final Collection<PsiReference> references = referenceMap.get(method);
         boolean areAllReferencesSynchronized = true;
         for (PsiReference reference : references) {
+          ProgressManager.checkCanceled();
           if (isKnownToBeUsed(reference)) {
             if (isInKnownUnsynchronizedContext(reference)) {
               methodsNotAlwaysSynchronized.add(method);
@@ -242,13 +245,16 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       new HashSet<PsiMethod>(privateMethods);
     boolean stabilized = false;
     while (!stabilized) {
+      ProgressManager.checkCanceled();
       stabilized = true;
       final Set<PsiMethod> methodsDeterminedThisPass =
         new HashSet<PsiMethod>();
       for (PsiMethod method : remainingMethods) {
+        ProgressManager.checkCanceled();
         final Collection<PsiReference> references =
           referenceMap.get(method);
         for (PsiReference reference : references) {
+          ProgressManager.checkCanceled();
           if (isKnownToBeUsed(reference)) {
             usedMethods.add(method);
             methodsDeterminedThisPass.add(method);
@@ -266,6 +272,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     final HashMap<PsiMethod, Collection<PsiReference>> referenceMap =
       new HashMap<PsiMethod, Collection<PsiReference>>();
     for (PsiMethod method : privateMethods) {
+      ProgressManager.checkCanceled();
       final SearchScope scope = method.getUseScope();
       final Collection<PsiReference> references =
         ReferencesSearch.search(method, scope).findAll();
@@ -278,6 +285,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     final Set<PsiMethod> privateMethods = new HashSet<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
     for (PsiMethod method : methods) {
+      ProgressManager.checkCanceled();
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
         privateMethods.add(method);
       }
