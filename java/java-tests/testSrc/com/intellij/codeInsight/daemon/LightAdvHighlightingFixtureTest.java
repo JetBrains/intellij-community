@@ -56,6 +56,13 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testStaticImportCompoundWithInheritance() throws Exception {
+    myFixture.addClass("package a; public interface A { static void foo(Object o){} static void foo(String str) {}}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testSuppressedInGenerated() throws Exception {
     myFixture.addClass("package javax.annotation; public @interface Generated {}");
     final RedundantCastInspection inspection = new RedundantCastInspection();

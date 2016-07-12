@@ -1,7 +1,7 @@
-import bar.A;
+import static bar.A.foo;
 
 class Usage {
   void bar() {
-    A.foo();
+    foo();
   }
 }

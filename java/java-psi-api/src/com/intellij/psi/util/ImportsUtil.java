@@ -92,7 +92,7 @@ public class ImportsUtil {
           if (containingClass != null && stmt.resolveTargetClass() == containingClass) {
             if (!stmt.isOnDemand() && Comparing.strEqual(referenceName, member.getName())) {
               if (member instanceof PsiMethod) {
-                return containingClass.findMethodsByName(referenceName, false).length == 1;
+                return containingClass.findMethodsByName(referenceName, false).length > 0;
               }
               return true;
             }
