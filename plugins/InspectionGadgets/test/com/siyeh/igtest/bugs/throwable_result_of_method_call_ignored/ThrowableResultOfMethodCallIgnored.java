@@ -19,6 +19,10 @@ public class ThrowableResultOfMethodCallIgnored {
       throw (RuntimeException) b();
     }
 
+    void n(int i) throws Exception {
+        throw i == 0 ? null : b();
+    }
+
     public Exception b() {
       return new RuntimeException();
     }

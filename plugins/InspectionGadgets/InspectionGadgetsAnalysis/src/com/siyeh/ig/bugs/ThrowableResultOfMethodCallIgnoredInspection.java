@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
+      while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression ||
+        parent instanceof PsiConditionalExpression) {
         parent = parent.getParent();
       }
       if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
