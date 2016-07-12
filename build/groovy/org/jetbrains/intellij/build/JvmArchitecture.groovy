@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.decls;
-
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
-import junit.framework.TestCase;
+package org.jetbrains.intellij.build
 
 /**
- * @author Bas Leijdekkers
+ * @author nik
  */
-public class SimplifyVariableIntentionTest extends IPPTestCase {
+enum JvmArchitecture {
+  x32(""), x64("64")
 
-  public void testFieldWithWhitespace() { doTest(); }
+  final String fileSuffix
 
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("simplify.variable.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "decls/simplify_variable";
+  JvmArchitecture(String fileSuffix) {
+    this.fileSuffix = fileSuffix
   }
 }

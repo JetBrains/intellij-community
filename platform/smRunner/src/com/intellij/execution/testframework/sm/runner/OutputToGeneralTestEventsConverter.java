@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -41,6 +42,7 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
+  private final int CYCLE_BUFFER_SIZE = ConsoleBuffer.getCycleBufferSize();
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
@@ -90,7 +92,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
   }
 
-  private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
+  private void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
+    if (text.length() > CYCLE_BUFFER_SIZE) {
+      final StringBuilder builder = new StringBuilder(CYCLE_BUFFER_SIZE);
+      builder.append(text, 0, CYCLE_BUFFER_SIZE - 105);
+      builder.append("<...>");
+      builder.append(text, text.length() - 100, text.length());
+      text = builder.toString();
+    }
+
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         if (myPendingLineBreakFlag) {

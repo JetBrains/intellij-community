@@ -70,6 +70,7 @@ public interface JavaElementType {
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
   IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
   IElementType NAME_VALUE_PAIR = JavaStubElementTypes.NAME_VALUE_PAIR;
+  IElementType LITERAL_EXPRESSION = JavaStubElementTypes.LITERAL_EXPRESSION;
   IElementType ANNOTATION_PARAMETER_LIST = JavaStubElementTypes.ANNOTATION_PARAMETER_LIST;
   IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
   IElementType IMPLEMENTS_LIST = JavaStubElementTypes.IMPLEMENTS_LIST;
@@ -82,7 +83,6 @@ public interface JavaElementType {
   IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
-  IElementType LITERAL_EXPRESSION = JavaStubElementTypes.LITERAL_EXPRESSION;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);

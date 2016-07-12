@@ -27,6 +27,8 @@ import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -94,6 +96,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
           if (startFindUsages(editor, element)) {
             return;
+          }
+
+          //disable 'no declaration found' notification for keywords
+          final PsiElement elementAtCaret = file.findElementAt(offset);
+          if (elementAtCaret != null) {
+            final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
+            if (namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project)) {
+              return;
+            }
           }
         }
         chooseAmbiguousTarget(editor, offset, elements, file);

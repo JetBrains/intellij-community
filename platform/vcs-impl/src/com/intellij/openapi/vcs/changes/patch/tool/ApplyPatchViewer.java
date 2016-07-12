@@ -28,7 +28,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideContentPanel;
@@ -482,7 +481,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       super(shortcut);
       getTemplatePresentation().setText("Ignore");
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
-      copyShortcutFrom(ActionManager.getInstance().getAction("Diff.IgnoreRightSide"));
+      setShortcutSet(new CompositeShortcutSet(ActionManager.getInstance().getAction("Diff.IgnoreRightSide").getShortcutSet(),
+                                              ActionManager.getInstance().getAction("Diff.ApplyLeftSide").getShortcutSet()));
     }
 
     @Override

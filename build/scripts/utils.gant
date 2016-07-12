@@ -277,7 +277,7 @@ projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  if (!FileUtil.startsWith(artifactPath, home)) {
+  if (!FileUtil.startsWith(FileUtil.toSystemIndependentName(artifactPath), FileUtil.toSystemIndependentName(home))) {
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())

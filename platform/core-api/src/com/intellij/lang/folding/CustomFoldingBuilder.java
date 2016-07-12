@@ -38,7 +38,6 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
-
   private CustomFoldingProvider myDefaultProvider;
   private static final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
   private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<Set<ASTNode>>();
@@ -46,8 +45,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   @NotNull
   @Override
   public final FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     ourCustomRegionElements.set(new HashSet<ASTNode>());
+    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     try {
       if (CustomFoldingProvider.getAllProviders().length > 0) {
         myDefaultProvider = null;
@@ -158,7 +157,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @param node The node which may contain custom region start.
    * @return True if the node marks a custom region start.
    */
-  public final boolean isCustomRegionStart(ASTNode node) {
+  public final boolean isCustomRegionStart(@NotNull ASTNode node) {
     if (isCustomFoldingCandidate(node)) {
       String nodeText = node.getText();
       CustomFoldingProvider defaultProvider = getDefaultProvider(nodeText);
@@ -174,7 +173,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @param node The node which may contain custom region end
    * @return True if the node marks a custom region end.
    */
-  protected final boolean isCustomRegionEnd(ASTNode node) {
+  protected final boolean isCustomRegionEnd(@NotNull ASTNode node) {
     if (isCustomFoldingCandidate(node)) {
       String nodeText = node.getText();
       CustomFoldingProvider defaultProvider = getDefaultProvider(nodeText);
@@ -206,7 +205,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @param node The node to check.
    * @return True if the node may contain custom folding tags.
    */
-  protected boolean isCustomFoldingCandidate(ASTNode node) {
+  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
     return node.getPsi() instanceof PsiComment;
   }
 
@@ -218,14 +217,15 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @param node  The node to check.
    * @return      True if the node is a root for custom foldings.
    */
-  protected boolean isCustomFoldingRoot(ASTNode node) {
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     return node.getFirstChildNode() != null;
   }
 
   private static class FoldingStack extends Stack<ASTNode> {
+    @NotNull
     private final ASTNode owner;
 
-    public FoldingStack(@NotNull ASTNode owner) {
+    private FoldingStack(@NotNull ASTNode owner) {
       super(1);
       this.owner = owner;
     }

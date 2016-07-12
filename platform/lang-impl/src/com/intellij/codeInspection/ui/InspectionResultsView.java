@@ -79,7 +79,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -177,15 +177,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
-        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          synchronized (myTreeStructureUpdateLock) {
-            InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
-            if (parent != null) {
-              parent.remove(node);
-              ((DefaultTreeModel)myTree.getModel()).reload(parent);
-            }
-          }
-        }
       }
 
       @Override
@@ -200,13 +191,59 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void onDone(boolean isExcludeAction) {
-        if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+        if (isExcludeAction) {
+          if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+            synchronized (myTreeStructureUpdateLock) {
+              final TreePath[] selected = myTree.getSelectionPaths();
+              if (selected != null) {
+                final TreePath commonParent = TreeUtil.findCommonPath(selected);
+                if (!selectCommonNextSibling(selected, commonParent)) {
+                  TreeUtil.removeSelected(myTree);
+                  TreeUtil.selectPath(myTree, commonParent);
+                }
+              }
+            }
+          }
           myTree.revalidate();
           myTree.repaint();
-        } else {
-          myTree.queueUpdate();
+        }
+        else {
+          InspectionViewPsiTreeChangeAdapter.resetTree(InspectionResultsView.this);
         }
         syncRightPanel();
+      }
+
+      private boolean selectCommonNextSibling(@NotNull TreePath[] selected, @NotNull TreePath commonParent) {
+        final int pathCount = commonParent.getPathCount() + 1;
+        for (TreePath path : selected) {
+          if (path.getPathCount() != pathCount) {
+            return false;
+          }
+        }
+        final InspectionTreeNode parent = (InspectionTreeNode)commonParent.getLastPathComponent();
+        final int[] indices = new int[selected.length];
+        for (int i = 0; i < selected.length; i++) {
+          TreePath path = selected[i];
+          indices[i] = parent.getIndex((TreeNode)path.getLastPathComponent());
+        }
+        Arrays.sort(indices);
+        int prevIdx = -1;
+        for (int idx: indices) {
+          if (prevIdx != -1) {
+            if (idx - prevIdx != 1) {
+              return false;
+            }
+          }
+          prevIdx = idx;
+        }
+        final int toSelect = indices[indices.length - 1] + 1;
+        if (parent.getChildCount() > toSelect) {
+          final TreeNode nodeToSelect = parent.getChildAt(toSelect);
+          TreeUtil.removeSelected(myTree);
+          TreeUtil.selectNode(myTree, nodeToSelect);
+          return true;
+        }
+        return false;
       }
     };
     createActionsToolbar();

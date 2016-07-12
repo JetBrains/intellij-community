@@ -121,7 +121,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<Pair<VirtualFile, EditorWindow>>();
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<EditorComposite>(null);
 
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, 
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true,
                                                                     MergingUpdateQueue.ANY_COMPONENT);
 
   private final BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
@@ -717,7 +717,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static boolean isOpenInNewWindow(AWTEvent event) {
     // Shift was used while clicking
-    if (event instanceof MouseEvent && ((MouseEvent)event).isShiftDown()) {
+    if (event instanceof MouseEvent &&
+        ((MouseEvent)event).isShiftDown() &&
+        (event.getID() == MouseEvent.MOUSE_CLICKED ||
+         event.getID() == MouseEvent.MOUSE_PRESSED ||
+         event.getID() == MouseEvent.MOUSE_RELEASED)) {
       return true;
     }
 
@@ -877,6 +881,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
             editor.addPropertyChangeListener(myEditorPropertyChangeListener);
             editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
           }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
           catch (Exception e) {
             LOG.error(e);
           }
@@ -998,9 +1005,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       while (!semaphore.waitFor(10) && !myProject.isDisposed());
     }
   }
-  
+
   @Nullable
-  private EditorWithProviderComposite createComposite(@NotNull VirtualFile file, 
+  private EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull FileEditor[] editors, @NotNull FileEditorProvider[] providers) {
     if (NullUtils.hasNull(editors) || NullUtils.hasNull(providers)) {
       List<FileEditor> editorList = new ArrayList<FileEditor>(editors.length);
@@ -1407,7 +1414,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     removeTopComponent(editor, annotationComponent);
   }
-  
+
   @NotNull
   public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
     final EditorComposite composite = getEditorComposite(editor);
@@ -1845,7 +1852,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private class MyRootsListener extends ModuleRootAdapter {
     private boolean myScheduled;
-    
+
     @Override
     public void rootsChanged(ModuleRootEvent event) {
       if (myScheduled) return;

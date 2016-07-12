@@ -256,12 +256,12 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   @Override
-  protected boolean isCustomFoldingCandidate(ASTNode node) {
+  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
     return node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT;
   }
 
   @Override
-  protected boolean isCustomFoldingRoot(ASTNode node) {
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     return node.getPsi() instanceof PyFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
   }
 

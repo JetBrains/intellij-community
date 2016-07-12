@@ -48,7 +48,7 @@ public class PropertiesFoldingBuilder extends CustomFoldingBuilder {
   }
 
   @Override
-  protected boolean isCustomFoldingRoot(ASTNode node) {
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     return node.getElementType() == PropertiesElementTypes.FILE;
   }
 }

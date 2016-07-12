@@ -17,14 +17,10 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.actions.RunInspectionAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -109,9 +105,7 @@ public class InspectionNodeInfo extends JPanel {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        final AnAction action = ActionManager.getInstance().getAction("RunInspectionOn");
-        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
-                                                                   DataManager.getInstance().getDataContext(runInspectionOnButton)));
+        RunInspectionAction.runInspection(project, toolWrapper.getShortName(), null, null, null);
         return true;
       }
     }.installOn(runInspectionOnButton);

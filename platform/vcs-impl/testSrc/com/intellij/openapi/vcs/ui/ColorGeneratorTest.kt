@@ -22,15 +22,14 @@ import java.awt.Color
 class ColorGeneratorTest : UsefulTestCase () {
   fun testLineGeneration() {
     for (count in 0..5) {
-      assertEquals(count, generate(Color.BLACK, Color.WHITE, count).size)
+      assertEquals(count + 2, generate(Color.BLACK, Color.WHITE, count).size)
     }
 
-    assertOrderedEquals(generate(Gray._100, Gray._200, 1), listOf(Gray._100))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 2), listOf(Gray._100, Gray._200))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 3), listOf(Gray._100, Gray._150, Gray._200))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 5), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 0), listOf(Gray._100, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 1), listOf(Gray._100, Gray._150, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 3), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
 
-    assertOrderedEquals(generate(Color(0, 100, 200), Color(200, 100, 0), 3), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
+    assertOrderedEquals(generate(Color(0, 100, 200), Color(200, 100, 0), 1), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
   }
 
   fun testChainLineGeneration() {

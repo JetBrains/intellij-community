@@ -293,7 +293,8 @@ public class PluginDownloader {
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
-    boolean forceHttps = host == null && UpdateSettings.getInstance().canUseSecureConnection();
+    boolean forceHttps = host == null
+                         && (ApplicationManager.getApplication() == null || UpdateSettings.getInstance().canUseSecureConnection());
     return createDownloader(descriptor, host, buildNumber, forceHttps);
   }
 

@@ -340,12 +340,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element) {
     return new ShowModulePropertiesFix(element);
   }
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull Module module) {
     return new ShowModulePropertiesFix(module);
   }
 
