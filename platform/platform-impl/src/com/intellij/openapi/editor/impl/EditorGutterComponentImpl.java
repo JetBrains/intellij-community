@@ -547,25 +547,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(visLinesIterator.getVisualLine(), 0));
-        if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) > 0) {
-          continue;
-        }
-        int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
-        if (logLine >= 0) {
-          String s = String.valueOf(logLine + 1);
-          int startY = visLinesIterator.getY();
-          if (myEditor.isInDistractionFreeMode()) {
-            Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
-            g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+        if (EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPosition) <= 0) {
+          int logLine = convertor.execute(visLinesIterator.getStartLogicalLine());
+          if (logLine >= 0) {
+            String s = String.valueOf(logLine + 1);
+            int startY = visLinesIterator.getY();
+            if (myEditor.isInDistractionFreeMode()) {
+              Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
+              g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
+            }
+
+            int textOffset = isMirrored() ?
+                             offset - getLineNumberAreaWidth() - 1:
+                             offset - g.getFontMetrics().stringWidth(s);
+
+            g.drawString(s,
+                         textOffset,
+                         startY + myEditor.getAscent());
           }
-
-          int textOffset = isMirrored() ?
-                           offset - getLineNumberAreaWidth() - 1:
-                           offset - g.getFontMetrics().stringWidth(s);
-
-          g.drawString(s,
-                       textOffset,
-                       startY + myEditor.getAscent());
         }
         visLinesIterator.advance();
       }
