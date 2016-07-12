@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,8 +155,12 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   @Override
   protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
     Object key = myKey.get().get();
-    if (key instanceof byte[]) return (byte[])key;
-    if (key instanceof PasswordSafeException && ((PasswordSafeException)key).justHappened()) throw (PasswordSafeException)key;
+    if (key instanceof byte[]) {
+      return (byte[])key;
+    }
+    if (key instanceof PasswordSafeException && ((PasswordSafeException)key).justHappened()) {
+      throw (PasswordSafeException)key;
+    }
 
     if (isPasswordEncrypted()) {
       try {
@@ -180,12 +184,12 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       try {
         if (myDatabase.isEmpty()) {
-          if (!MasterPasswordDialog.resetMasterPasswordDialog(project, MasterKeyPasswordSafe.this, requestor).showAndGet()) {
+          if (!MasterPasswordDialog.resetMasterPasswordDialog(project, this, requestor).showAndGet()) {
             throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
           }
         }
         else {
-          MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
+          MasterPasswordDialog.askPassword(project, this, requestor);
         }
       }
       catch (PasswordSafeException e) {
@@ -251,10 +255,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
 
   @Override
   public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
-    if (myDatabase.isEmpty()) {
-      return null;
-    }
-    return super.getPassword(project, requestor, key);
+    return myDatabase.isEmpty() ? null : super.getPassword(project, requestor, key);
   }
 
   @Override
@@ -266,7 +267,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] getEncryptedPassword(byte[] key) {
+  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
     return myDatabase.get(key);
   }
 
