@@ -55,21 +55,24 @@ public class ControlFlowStatementWithoutBracesInspection
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new ControlFlowStatementFix(infos);
+    if (infos.length == 1 && infos[0] instanceof String) {
+      return new ControlFlowStatementFix((String)infos[0]);
+    }
+    return null;
   }
 
   private static class ControlFlowStatementFix extends InspectionGadgetsFix {
-    private final Object[] myInfos;
+    private final String myKeywordText;
 
-    public ControlFlowStatementFix(Object[] infos) {
-      myInfos = infos;
+    public ControlFlowStatementFix(String keywordText) {
+      myKeywordText = keywordText;
     }
 
     @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
-        "control.flow.statement.without.braces.message", myInfos);
+        "control.flow.statement.without.braces.message", myKeywordText);
     }
     @Override
     @NotNull
