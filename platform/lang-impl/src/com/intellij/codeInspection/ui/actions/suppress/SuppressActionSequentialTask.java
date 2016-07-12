@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,7 @@ import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -137,16 +139,19 @@ public class SuppressActionSequentialTask implements SequentialTask {
         }
 
         final RefElement containerRef = refEntity.getRefManager().getReference(container);
+        final Set<Object> suppressedNodes = myContext.getView().getSuppressedNodes(wrapper.getShortName());
         if (containerRef != null) {
           Queue<RefEntity> toIgnoreInView = new Queue<RefEntity>(1);
           toIgnoreInView.addLast(containerRef);
           while (!toIgnoreInView.isEmpty()) {
             final RefEntity entity = toIgnoreInView.pullFirst();
-            final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
-            if (descriptors != null) {
-              for (CommonProblemDescriptor problemDescriptor : descriptors) {
-                myContext.getView().getSuppressedNodes(wrapper.getShortName()).add(problemDescriptor);
+            if (node instanceof ProblemDescriptionNode) {
+              final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
+              if (descriptors != null) {
+                Collections.addAll(suppressedNodes, descriptors);
               }
+            } else {
+              suppressedNodes.add(entity);
             }
             final List<RefEntity> children = entity.getChildren();
             if (children != null) {
@@ -156,7 +161,9 @@ public class SuppressActionSequentialTask implements SequentialTask {
             }
           }
         }
-        myContext.getView().getSuppressedNodes(wrapper.getShortName()).add(descriptor);
+        if (node instanceof ProblemDescriptionNode) {
+          suppressedNodes.add(descriptor);
+        }
       }
       catch (IncorrectOperationException e1) {
         LOG.error(e1);
