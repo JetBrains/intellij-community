@@ -93,7 +93,7 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                     if additional_info is not None:
                         for frame in additional_info.iter_frames(t):
-                            py_db.set_trace_for_frame_and_parents(frame)
+                            py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
                             del frame
 
                     py_db.set_suspend(t, CMD_THREAD_SUSPEND)
