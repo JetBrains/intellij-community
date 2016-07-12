@@ -18,7 +18,7 @@ package com.intellij.ide.passwordSafe;
 /**
  * This exception is thrown when master password is not available (process of entering password is cancelled, or IDEA is running headless mode)
  */
-public class MasterPasswordUnavailableException extends PasswordSafeException {
+public class MasterPasswordUnavailableException extends RuntimeException {
   public MasterPasswordUnavailableException(String message) {
     super(message);
   }

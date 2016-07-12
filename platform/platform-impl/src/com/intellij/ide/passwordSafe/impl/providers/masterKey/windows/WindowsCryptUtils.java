@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey.windows;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -52,7 +51,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  public static byte[] protect(byte[] data) throws MasterPasswordUnavailableException {
+  public static byte[] protect(byte[] data) {
     if(data.length == 0) {
       return data;
     }
@@ -75,7 +74,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  public static byte[] unprotect(byte[] data) throws MasterPasswordUnavailableException {
+  public static byte[] unprotect(byte[] data) {
     if(data.length == 0) {
       return data;
     }
@@ -92,10 +91,10 @@ public class WindowsCryptUtils {
     return getBytes(out, kernel, rc);
   }
 
-  private static byte[] getBytes(Crypt32.DATA_BLOB out, Kernel32 kernel, boolean rc) throws MasterPasswordUnavailableException {
+  private static byte[] getBytes(Crypt32.DATA_BLOB out, Kernel32 kernel, boolean rc) {
     if (!rc) {
       W32API.DWORD drc = kernel.GetLastError();
-      throw new MasterPasswordUnavailableException("CryptProtectData failed: " + drc.intValue());
+      throw new RuntimeException("CryptProtectData failed: " + drc.intValue());
     }
     else {
       byte[] output = new byte[out.cbData.intValue()];
