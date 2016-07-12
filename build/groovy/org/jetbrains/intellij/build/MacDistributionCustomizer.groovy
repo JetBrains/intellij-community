@@ -19,12 +19,24 @@ package org.jetbrains.intellij.build
  * @author nik
  */
 abstract class MacDistributionCustomizer {
+  /**
+   * Path to icns file containing 32x32 product icon for Mac OS distribution
+   */
   String icnsPath
+
+  /**
+   * The minimum version of Mac OS where the product is allowed to be installed
+   */
   String minOSXVersion = "10.8"
   String helpId = ""
   String docTypes = null
   List<String> urlSchemes = []
   List<String> architectures = ["x86_64"]
+
+  /**
+   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under Mac OS. This property is
+   * taken into account only if {@link ProductProperties#enableYourkitAgentInEAP} is {@code true}.
+   */
   boolean enableYourkitAgentInEAP = true
 
   /**
