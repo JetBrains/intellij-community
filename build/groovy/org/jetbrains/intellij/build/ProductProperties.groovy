@@ -106,6 +106,10 @@ public abstract class ProductProperties {
    * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
    */
   String yourkitAgentBinariesDirectoryPath = null
+
+  /**
+   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
+   */
   boolean enableYourkitAgentInEAP = false
 
   List<String> excludedPlugins = []

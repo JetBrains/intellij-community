@@ -890,6 +890,16 @@ public class PyUtil {
     }
   }
 
+  /**
+   * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
+   * that it follows the statement header, i.e. it's directly after the colon, not on its own line. 
+   */
+  @Nullable
+  public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
+    final PyStatementList statementList = container.getStatementList();
+    return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 

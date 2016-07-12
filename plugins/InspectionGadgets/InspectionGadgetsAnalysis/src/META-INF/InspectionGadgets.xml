@@ -2385,7 +2385,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.style.ConstantOnRHSOfComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ControlFlowStatementWithoutBraces" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="control.flow.statement.without.braces.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ControlFlowStatementWithoutBracesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsCalledOnEnumConstant" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equals.called.on.enum.constant.display.name" groupBundle="messages.InspectionsBundle"

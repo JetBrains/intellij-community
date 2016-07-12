@@ -39,8 +39,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
       }
       else if (paint != null && width > 0 && height > 0) {
         int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
-        double pos = Registry.doubleValue("ide.text.effect.line.new.pos");
-        y += height < 3 ? 1 : (int)((double)height - h * pos);
+        y += height - 1 - h / 2;
         g.setPaint(paint);
         g.drawLine(x, y, x + width, y);
       }
@@ -60,25 +59,17 @@ public enum EffectPainter implements RegionPainter<Paint> {
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (paint != null && width > 0 && height > 0) {
-        boolean simple = height < 5;
-        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
-        if (h != height) {
-          y += height - h;
-          height = h;
-        }
         g = (Graphics2D)g.create(x, y, width, height);
-        g.clipRect(0, -1, width, height + 1); // 1px for Retina painting
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setPaint(paint);
-
-        int length = 2 * height - 2; // the spatial period of the wave
+        g.clipRect(0, 0, width, height);
+        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        int length = 2 * h - 2; // the spatial period of the wave
 
         double dx = -((x % length + length) % length); // normalize
-        double upper = 0;
+        double upper = height - h;
         double lower = height - 1;
         Path2D path = new Path2D.Double();
         path.moveTo(dx, lower);
-        if (simple) {
+        if (height < 6) {
           g.setStroke(STROKE);
           double size = (double)length / 2;
           while (true) {
@@ -91,7 +82,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
         else {
           double size = (double)length / 4;
           double prev = dx - size / 2;
-          double center = lower / 2;
+          double center = (upper + lower) / 2;
           while (true) {
             path.quadTo(prev += size, lower, dx += size, center);
             if (dx > width) break;
@@ -103,6 +94,8 @@ public enum EffectPainter implements RegionPainter<Paint> {
             if (dx > width) break;
           }
         }
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setPaint(paint);
         g.draw(path);
         g.dispose();
       }

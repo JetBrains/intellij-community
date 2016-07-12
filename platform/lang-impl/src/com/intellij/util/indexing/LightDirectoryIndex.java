@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.scratch;
+package com.intellij.util.indexing;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -23,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -33,23 +35,27 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * This is a light version of DirectoryIndexImpl.
+ * This is a light version of DirectoryIndexImpl
  *
  * @author gregsh
  */
-abstract class LightDirectoryIndex<T> {
+public final class LightDirectoryIndex<T> {
   private final ConcurrentIntObjectMap<T> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
   private final T myDefValue;
+  private final Consumer<LightDirectoryIndex<T>> myInitializer;
 
-  public LightDirectoryIndex(@NotNull MessageBusConnection connection, @NotNull T defValue) {
+  public LightDirectoryIndex(@NotNull Disposable parentDisposable, @NotNull T defValue, @NotNull Consumer<LightDirectoryIndex<T>> initializer) {
     myDefValue = defValue;
-    reinitRoots();
+    myInitializer = initializer;
+    resetIndex();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
-        reinitRoots();
+        resetIndex();
       }
     });
+
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
@@ -60,7 +66,7 @@ abstract class LightDirectoryIndex<T> {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (file == null || file.isDirectory()) {
-            reinitRoots();
+            resetIndex();
             break;
           }
         }
@@ -68,15 +74,20 @@ abstract class LightDirectoryIndex<T> {
     });
   }
 
-  public void reinitRoots() {
+  public void resetIndex() {
     myInfoCache.clear();
-    collectRoots((file, info) -> cacheInfo(file, info));
+    myInitializer.consume(this);
   }
 
-  protected abstract void collectRoots(@NotNull PairConsumer<VirtualFile, T> consumer);
+  public void putInfo(@Nullable VirtualFile file, @NotNull T value) {
+    if (!(file instanceof VirtualFileWithId)) return;
+    cacheInfo(file, value);
+  }
 
   @NotNull
-  public T getInfoForFile(@NotNull VirtualFile file) {
+  public T getInfoForFile(@Nullable VirtualFile file) {
+    if (!(file instanceof VirtualFileWithId)) return myDefValue;
+
     VirtualFile dir;
     if (!file.isDirectory()) {
       T info = getCachedInfo(file);
