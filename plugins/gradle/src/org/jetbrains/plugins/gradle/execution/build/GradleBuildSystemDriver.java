@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
  */
 public class GradleBuildSystemDriver extends BuildSystemDriver {
   @Override
-  public void build(@NotNull BuildContext buildContext, @Nullable BuildStatusNotification buildCallback) {
+  public void build(@NotNull BuildContext buildContext, @Nullable BuildChunkStatusNotification buildCallback) {
     String executionName = null;
     if (buildContext.getScope() instanceof ProjectBuildScope) {
       executionName = buildContext.isIncrementalBuild() ? "Make" : "Rebuild";

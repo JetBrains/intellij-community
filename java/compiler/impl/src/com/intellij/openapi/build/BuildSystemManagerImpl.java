@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.list;
@@ -116,10 +118,29 @@ public class BuildSystemManagerImpl extends BuildSystemManager {
         return myDefaultBuildSystemDriver;
       }));
 
+    AtomicInteger inProgressCounter = new AtomicInteger(toBuild.size());
+    AtomicInteger errorsCounter = new AtomicInteger();
+    AtomicInteger warningsCounter = new AtomicInteger();
+    AtomicBoolean abortedFlag = new AtomicBoolean(false);
     for (Map.Entry<BuildSystemDriver, ? extends List<? extends BuildTarget>> entry : toBuild.entrySet()) {
       BuildSystemDriver driver = entry.getKey();
       BuildScope buildScope = toBuild.size() == 1 ? scope : new BuildScopeImpl(entry.getValue(), scope.getSessionId());
-      driver.build(new BuildContextImpl(myProject, buildScope, isIncrementalBuild), callback);
+      BuildChunkStatusNotification chunkStatusNotification = callback == null ? null : new BuildChunkStatusNotification() {
+        @Override
+        public void finished(boolean aborted, int errors, int warnings, BuildContext buildContext) {
+          int inProgress = inProgressCounter.decrementAndGet();
+          int allErrors = errorsCounter.addAndGet(errors);
+          int allWarnings = warningsCounter.addAndGet(warnings);
+          if(aborted){
+            abortedFlag.set(true);
+          }
+          callback.chunkFinished(aborted, errors, warnings, inProgress, buildContext);
+          if (inProgress == 0) {
+            callback.finished(abortedFlag.get(), allErrors, allWarnings);
+          }
+        }
+      };
+      driver.build(new BuildContextImpl(myProject, buildScope, isIncrementalBuild), chunkStatusNotification);
     }
   }
 

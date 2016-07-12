@@ -38,7 +38,7 @@ public abstract class BuildSystemDriver {
 
   public static final ExtensionPointName<BuildSystemDriver> EP_NAME = ExtensionPointName.create("com.intellij.buildSystemDriver");
 
-  public abstract void build(@NotNull BuildContext buildContext, @Nullable BuildStatusNotification callback);
+  public abstract void build(@NotNull BuildContext buildContext, @Nullable BuildChunkStatusNotification callback);
 
   public abstract boolean canBuild(@NotNull BuildTarget buildTarget);
 

@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  */
 public class DefaultBuildSystemDriver extends BuildSystemDriver {
   @Override
-  public void build(@NotNull BuildContext buildContext, @Nullable BuildStatusNotification callback) {
+  public void build(@NotNull BuildContext buildContext, @Nullable BuildChunkStatusNotification callback) {
     CompileStatusNotification compileNotification =
       callback == null ? null : (aborted, errors, warnings, compileContext) -> callback.finished(aborted, errors, warnings, buildContext);
     if (buildContext.getScope() instanceof ProjectBuildScope) {

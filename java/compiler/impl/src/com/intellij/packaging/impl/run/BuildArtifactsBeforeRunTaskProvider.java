@@ -176,12 +176,11 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       }
     }.execute();
 
-    final BuildStatusNotification callback = new BuildStatusNotification() {
+    final BuildStatusNotification callback = new BuildStatusNotificationAdapter() {
       @Override
       public void finished(boolean aborted,
                            int errors,
-                           int warnings,
-                           BuildContext buildContext) {
+                           int warnings) {
         result.set(!aborted && errors == 0);
         finished.up();
       }

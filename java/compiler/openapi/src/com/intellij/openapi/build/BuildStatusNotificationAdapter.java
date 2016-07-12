@@ -17,24 +17,14 @@ package com.intellij.openapi.build;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
+ * @since 7/12/2016
  */
-public interface BuildStatusNotification {
+public class BuildStatusNotificationAdapter implements BuildStatusNotification {
+  @Override
+  public void finished(boolean aborted, int errors, int warnings) {
+  }
 
-  /**
-   * @param aborted  true if the at least one build chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
-   */
-  void finished(boolean aborted, int errors, int warnings);
-
-  /**
-   *
-   * @param aborted  true if the build chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
-   * @param inProgress not finished build chunks count
-   * @param buildContext context for the build chunk
-   */
-  void chunkFinished(boolean aborted, int errors, int warnings, int inProgress, final BuildContext buildContext);
+  @Override
+  public void chunkFinished(boolean aborted, int errors, int warnings, int inProgress, BuildContext buildContext) {
+  }
 }

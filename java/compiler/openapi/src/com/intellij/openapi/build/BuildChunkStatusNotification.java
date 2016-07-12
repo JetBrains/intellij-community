@@ -19,22 +19,14 @@ package com.intellij.openapi.build;
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public interface BuildStatusNotification {
-
-  /**
-   * @param aborted  true if the at least one build chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
-   */
-  void finished(boolean aborted, int errors, int warnings);
+public interface BuildChunkStatusNotification {
 
   /**
    *
    * @param aborted  true if the build chunk has been cancelled.
    * @param errors   error count
    * @param warnings warning count
-   * @param inProgress not finished build chunks count
    * @param buildContext context for the build chunk
    */
-  void chunkFinished(boolean aborted, int errors, int warnings, int inProgress, final BuildContext buildContext);
+  void finished(boolean aborted, int errors, int warnings, final BuildContext buildContext);
 }
