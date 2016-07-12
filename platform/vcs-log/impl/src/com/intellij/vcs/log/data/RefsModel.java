@@ -1,25 +1,25 @@
 package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RefsModel implements VcsLogRefs {
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
-  @NotNull private final MultiMap<CommitId, VcsRef> myRefsToHashes;
+  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHashes;
 
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myBranchesToIndices;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHeadIndices;
   @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
 
@@ -37,9 +37,7 @@ public class RefsModel implements VcsLogRefs {
       }
     }
 
-    myRefsToHashes = prepareRefsMap(allRefs);
-
-    myBranchesToIndices = prepareRefsToIndicesMap(myBranches, hashMap);
+    myRefsToHashes = prepareRefsToIndicesMap(allRefs, hashMap);
     myRefsToHeadIndices = prepareRefsToIndicesMap(Iterables.filter(Iterables.concat(refsByRoot.values()),
                                                                    vcsRef -> heads.contains(
                                                                      hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()))),
@@ -74,17 +72,9 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
-  private static MultiMap<CommitId, VcsRef> prepareRefsMap(@NotNull Iterable<VcsRef> refs) {
-    MultiMap<CommitId, VcsRef> map = MultiMap.createSmart();
-    for (VcsRef ref : refs) {
-      map.putValue(new CommitId(ref.getCommitHash(), ref.getRoot()), ref);
-    }
-    return map;
-  }
-
-  @NotNull
   public Collection<VcsRef> branchesToCommit(int index) {
-    return myBranchesToIndices.containsKey(index) ? myBranchesToIndices.get(index) : Collections.<VcsRef>emptyList();
+    Collection<VcsRef> refs = refsToCommit(index);
+    return refs.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
   }
 
   @NotNull
@@ -104,10 +94,9 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   @Override
-  public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    CommitId commitId = new CommitId(hash, root);
-    if (myRefsToHashes.containsKey(commitId)) {
-      return myRefsToHashes.get(commitId);
+  public Collection<VcsRef> refsToCommit(int index) {
+    if (myRefsToHashes.containsKey(index)) {
+      return myRefsToHashes.get(index);
     }
     return Collections.emptyList();
   }
@@ -121,6 +110,17 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   @Override
   public Collection<VcsRef> getAllRefs() {
-    return ContainerUtil.newHashSet(myRefsToHashes.values());
+    return new AbstractCollection<VcsRef>() {
+      @Override
+      public Iterator<VcsRef> iterator() {
+        List<Iterator<VcsRef>> iterators = myRefs.values().stream().map(Set::iterator).collect(Collectors.toList());
+        return Iterators.concat(iterators.toArray(new Iterator[iterators.size()]));
+      }
+
+      @Override
+      public int size() {
+        return myRefs.values().stream().mapToInt(Set::size).sum();
+      }
+    };
   }
 }

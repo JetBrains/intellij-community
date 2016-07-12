@@ -19,8 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GraphTableModel extends AbstractTableModel {
   public static final int ROOT_COLUMN = 0;
@@ -111,7 +113,7 @@ public class GraphTableModel extends AbstractTableModel {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
       case COMMIT_COLUMN:
-        return new GraphCommitCell(data.getSubject(), myDataPack.getRefs().refsToCommit(data.getId(), data.getRoot()));
+        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex));
       case AUTHOR_COLUMN:
         String authorString = VcsUserUtil.getShortPresentation(data.getAuthor());
         return authorString + (VcsUserUtil.isSamePerson(data.getAuthor(), data.getCommitter()) ? "" : "*");
@@ -180,6 +182,16 @@ public class GraphTableModel extends AbstractTableModel {
   private <T extends VcsShortCommitDetails> T getDetails(int row, @NotNull DataGetter<T> dataGetter) {
     Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
     return dataGetter.getCommitData(getIdAtRow(row), iterable);
+  }
+
+  @NotNull
+  private Collection<VcsRef> getRefsAtRow(int row) {
+    return myDataPack.getRefs().refsToCommit(getIdAtRow(row));
+  }
+
+  @NotNull
+  public List<VcsRef> getBranchesAtRow(int row) {
+    return getRefsAtRow(row).stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
   }
 
   @NotNull
