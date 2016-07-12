@@ -209,7 +209,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
     }
 
-    val effectiveRoamingType = if (roamingType == RoamingType.DEFAULT && collapsedPath == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
+    val effectiveRoamingType: RoamingType
+    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+      effectiveRoamingType = RoamingType.DISABLED
+    }
+    else {
+      effectiveRoamingType = roamingType
+    }
     val storage = MyFileStorage(this, File(filePath), collapsedPath, rootTagName, effectiveRoamingType, getMacroSubstitutor(collapsedPath), streamProvider)
     if (isUseVfsListener == ThreeState.YES) {
       virtualFileTracker?.put(filePath, storage)
@@ -329,7 +335,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   fun collapseMacros(path: String): String {
     var result = path
     for ((key, value) in macros) {
-      result = StringUtil.replace(result, value, key)
+      result = result.replace(value, key)
     }
     return normalizeFileSpec(result)
   }
@@ -356,7 +362,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     private fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
-      var session = sessions[storage]
+      var session = sessions.get(storage)
       if (session == null) {
         session = storage.startExternalization()
         if (session != null) {
@@ -385,7 +391,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           saveSessions.add(saveSession)
         }
       }
-      return ContainerUtil.notNullize(saveSessions)
+      return saveSessions ?: emptyList()
     }
   }
 
