@@ -18,6 +18,7 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.build.BuildSystemManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -37,12 +38,12 @@ public class CompileAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
-      CompilerManager.getInstance(project).compile(module, null);
+      BuildSystemManager.getInstance(project).rebuild(module);
     }
     else {
       VirtualFile[] files = getCompilableFiles(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
-        CompilerManager.getInstance(project).compile(files, null);
+        BuildSystemManager.getInstance(project).compile(files);
       }
     }
 

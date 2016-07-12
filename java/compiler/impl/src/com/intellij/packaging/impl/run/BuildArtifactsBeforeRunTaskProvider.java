@@ -29,14 +29,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.build.*;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -175,9 +175,13 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
         }
       }
     }.execute();
-    
-    final CompileStatusNotification callback = new CompileStatusNotification() {
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+
+    final BuildStatusNotification callback = new BuildStatusNotification() {
+      @Override
+      public void finished(boolean aborted,
+                           int errors,
+                           int warnings,
+                           BuildContext buildContext) {
         result.set(!aborted && errors == 0);
         finished.up();
       }
@@ -187,11 +191,10 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       if (myProject.isDisposed()) {
         return;
       }
-      final CompilerManager manager = CompilerManager.getInstance(myProject);
-      final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
-      ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
+      List<ArtifactBuildTarget> artifactBuildTargets = ContainerUtil.map(artifacts, ArtifactBuildTarget::new);
+      Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
       finished.down();
-      manager.make(scope, CompilerFilter.ALL, callback);
+      BuildSystemManager.getInstance(myProject).buildDirty(new BuildScopeImpl(artifactBuildTargets, sessionId), callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();

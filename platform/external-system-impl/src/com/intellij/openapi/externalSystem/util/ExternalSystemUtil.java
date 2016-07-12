@@ -520,11 +520,24 @@ public class ExternalSystemUtil {
                              @NotNull final ProjectSystemId externalSystemId,
                              @Nullable final TaskCallback callback,
                              @NotNull final ProgressExecutionMode progressExecutionMode) {
+    runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, true);
+  }
+
+  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
+                             @NotNull final String executorId,
+                             @NotNull final Project project,
+                             @NotNull final ProjectSystemId externalSystemId,
+                             @Nullable final TaskCallback callback,
+                             @NotNull final ProgressExecutionMode progressExecutionMode,
+                             boolean activateToolWindowBeforeRun) {
     final Pair<ProgramRunner, ExecutionEnvironment> pair = createRunner(taskSettings, executorId, project, externalSystemId);
     if (pair == null) return;
 
     final ProgramRunner runner = pair.first;
     final ExecutionEnvironment environment = pair.second;
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    assert runnerAndConfigurationSettings != null;
+    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(activateToolWindowBeforeRun);
 
     final TaskUnderProgress task = new TaskUnderProgress() {
       @Override

@@ -233,7 +233,7 @@ public class ExternalSystemTaskActivator {
                                    targetDone.up();
                                  }
                                },
-                               ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+                               ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
     targetDone.waitFor();
     return result.get();
   }

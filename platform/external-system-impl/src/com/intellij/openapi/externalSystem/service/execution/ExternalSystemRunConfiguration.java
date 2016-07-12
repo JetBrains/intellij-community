@@ -27,10 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
@@ -106,10 +103,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-    return new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
+    MyRunnableState runnableState =
+      new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
+    copyUserDataTo(runnableState);
+    return runnableState;
   }
 
-  public static class MyRunnableState implements RunProfileState {
+  public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
 
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
     @NotNull private final Project myProject;
@@ -173,6 +173,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    mySettings.getVmOptions(),
                                                                                    mySettings.getScriptParameters(),
                                                                                    debuggerSetup);
+      copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
       final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
