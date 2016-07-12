@@ -43,11 +43,11 @@ public interface Inlay extends Disposable, UserDataHolderEx {
     }
 
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return 0;
+      return editor.getLineHeight();
     }
 
     public int calcHeightInPixels(@NotNull Editor editor) {
-      return 0;
+      return editor.getLineHeight();
     }
   }
 }

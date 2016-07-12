@@ -100,6 +100,22 @@ public class InlayModelImpl implements InlayModel, Disposable {
     return result;
   }
 
+  @NotNull
+  @Override
+  public List<Inlay> getVisibleLineExtendingElements() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Inlay> result = new ArrayList<>();
+    myInlayTree.process(inlay -> {
+      if ((inlay.getType() == Inlay.Type.BLOCK || inlay.getHeightInPixels() > myEditor.getLineHeight()) &&
+          !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+        result.add(inlay);
+      }
+      return true;
+    });
+    Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
+    return result;
+  }
+
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);

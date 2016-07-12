@@ -159,6 +159,7 @@
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
       <action id="EditorAddInlay" class="com.intellij.openapi.editor.actions.AddInlayAction"/>
+      <action id="EditorAddThickInlay" class="com.intellij.openapi.editor.actions.AddThickInlayAction"/>
       <action id="EditorAddBlockInlay" class="com.intellij.openapi.editor.actions.AddBlockInlayAction"/>
     </group>
 

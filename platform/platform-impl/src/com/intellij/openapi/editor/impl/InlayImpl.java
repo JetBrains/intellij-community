@@ -39,8 +39,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
       throw new IllegalArgumentException("Positive width should be defined for an inline inlay");
     }
     myHeightInPixels = renderer.calcHeightInPixels(editor);
-    if (type == Type.BLOCK && myHeightInPixels <= 0) {
-      throw new IllegalArgumentException("Positive height should be defined for a block inlay");
+    if (myHeightInPixels <= 0) {
+      throw new IllegalArgumentException("Inlay height should be positive");
     }
     myRenderer = renderer;
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);

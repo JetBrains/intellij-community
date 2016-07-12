@@ -596,6 +596,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
         validateSize();
         if (inlay.getType() == Inlay.Type.INLINE) {
+          myCaretModel.updateVisualPosition();
+        }
+        if (inlay.getType() == Inlay.Type.INLINE && inlay.getHeightInPixels() <= getLineHeight()) {
           repaint(inlay.getOffset(), inlay.getOffset(), false);
         }
         else {

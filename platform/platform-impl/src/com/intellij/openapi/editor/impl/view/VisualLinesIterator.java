@@ -30,7 +30,7 @@ public class VisualLinesIterator {
   private final Document myDocument;
   private final FoldRegion[] myFoldRegions;
   private final List<? extends SoftWrap> mySoftWraps;
-  private final List<Inlay> myBlockInlays;
+  private final List<Inlay> myInlays;
   
   @NotNull
   private Location myLocation;
@@ -43,7 +43,7 @@ public class VisualLinesIterator {
     FoldRegion[] regions = myEditor.getFoldingModel().fetchTopLevel();
     myFoldRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
     mySoftWraps = softWrapModel.getRegisteredSoftWraps();
-    myBlockInlays = myEditor.getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
+    myInlays = myEditor.getInlayModel().getVisibleLineExtendingElements();
     myLocation = new Location(startVisualLine);
   }
 
@@ -129,14 +129,8 @@ public class VisualLinesIterator {
           softWrap = -softWrap;
         }
         foldRegion = myEditor.getFoldingModel().getLastCollapsedRegionBefore(offset) + 1;
-        y = startVisualLine * myEditor.getLineHeight();
-        advanceInlay();
-      }
-    }
-
-    private void advanceInlay() {
-      while (inlay < myBlockInlays.size() && myBlockInlays.get(inlay).getOffset() < offset) {
-        y += myBlockInlays.get(inlay++).getHeightInPixels();
+        y = myEditor.visibleLineToY(startVisualLine);
+        while (inlay < myInlays.size() && myInlays.get(inlay).getOffset() < offset) inlay++;
       }
     }
 
@@ -152,7 +146,18 @@ public class VisualLinesIterator {
       visualLine++;
       while (foldRegion < myFoldRegions.length && myFoldRegions[foldRegion].getStartOffset() < offset) foldRegion++;
       y += myEditor.getLineHeight();
-      advanceInlay();
+      int inlineMaxHeight = myEditor.getLineHeight();
+      while (inlay < myInlays.size() && myInlays.get(inlay).getOffset() < offset) {
+        Inlay inlay1 = myInlays.get(this.inlay++);
+        int height = inlay1.getHeightInPixels();
+        if (inlay1.getType() == Inlay.Type.BLOCK) {
+          y += height;
+        }
+        else if (height > inlineMaxHeight) {
+          y += (height - inlineMaxHeight);
+          inlineMaxHeight = height;
+        }
+      }
     }
 
     private int getNextSoftWrapOffset() {

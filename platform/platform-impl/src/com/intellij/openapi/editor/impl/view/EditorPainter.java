@@ -366,7 +366,7 @@ class EditorPainter implements TextDrawingCallback {
             for (Inlay inlay : inlays) {
               Inlay.Renderer renderer = inlay.getRenderer();
               int width = inlay.getWidthInPixels();
-              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, myView.getLineHeight()), myEditor);
+              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, inlay.getHeightInPixels()), myEditor);
               xStart += width;
             }
             return;
@@ -821,11 +821,11 @@ class EditorPainter implements TextDrawingCallback {
       Caret caret = location.myCaret;
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-        if (caret != null &&
-            !myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE).isEmpty()) {
+        int inlaysHeight = getInlaysHeightAtCaret(caret);
+        if (inlaysHeight > 0) {
           int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
           int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
-          g.drawRect(x1, y, x2 - x1 - 1, lineHeight - 1);
+          g.drawRect(x1, y, x2 - x1 - 1, inlaysHeight - 1);
         }
         else {
           int lineWidth = JBUI.scale(settings.getLineCursorWidth());
@@ -883,16 +883,26 @@ class EditorPainter implements TextDrawingCallback {
       int x = location.myPoint.x;
       int y = location.myPoint.y;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      if (lineCaret && caret != null &&
-          !myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE).isEmpty()) {
+      int inlaysHeight = lineCaret ? getInlaysHeightAtCaret(caret) : 0;
+      if (inlaysHeight > 0) {
         int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
         int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
-        myEditor.getContentComponent().repaintEditorComponent(x1, location.myPoint.y, x2 - x1 + width, lineHeight);
+        myEditor.getContentComponent().repaintEditorComponent(x1, location.myPoint.y, x2 - x1 + width, inlaysHeight);
       }
       else {
         myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, lineHeight);
       }
     }
+  }
+
+  private int getInlaysHeightAtCaret(@Nullable Caret caret) {
+    if (caret == null) return 0;
+    List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE);
+    int height = 0;
+    for (Inlay inlay : inlays) {
+      height = Math.max(height, inlay.getHeightInPixels());
+    }
+    return height;
   }
   
   private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, int y, LineFragmentPainter painter) {

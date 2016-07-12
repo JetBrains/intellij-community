@@ -3,6 +3,9 @@
   <action id="EditorAddInlay">
     <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
+  <action id="EditorAddThickInlay">
+    <keyboard-shortcut first-keystroke="control alt E"/>
+  </action>
   <action id="EditorAddBlockInlay">
     <keyboard-shortcut first-keystroke="control alt W"/>
   </action>

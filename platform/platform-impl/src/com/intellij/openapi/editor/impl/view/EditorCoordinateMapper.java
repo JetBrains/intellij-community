@@ -51,47 +51,43 @@ class EditorCoordinateMapper {
   int visualLineToY(int line) {
     int y = myView.getInsets().top;
     if (line <= 0) return y;
-    y += line * myView.getLineHeight();
+    int lineHeight = myView.getLineHeight();
+    y += line * lineHeight;
 
-    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
+    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleLineExtendingElements();
     int from = 0;
     int to = inlays.size() - 1;
     while (from <= to) {
       int cur = (from + to) >>> 1;
-      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset(), false);
+      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset());
       if (curVisualLine < line)
         from = cur + 1;
       else if (curVisualLine > line)
         to = cur - 1;
       else {
-        while (cur > 0 && offsetToVisualLine(inlays.get(cur - 1).getOffset(), false) == line) cur--;
+        while (cur > 0 && offsetToVisualLine(inlays.get(cur - 1).getOffset()) == line) cur--;
         from = cur;
         break;
       }
     }
-    for (int i = 0; i < from; i++) {
-      y += inlays.get(i).getHeightInPixels();
-    }
+    y += calcCumulativeHeight(inlays, from, null);
     return y;
   }
 
   int yToVisualLine(int y) {
     y = Math.max(0, y - myView.getInsets().top);
-    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleElements(Inlay.Type.BLOCK);
+    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleLineExtendingElements();
     int[] cumulativeHeights = new int[inlays.size()];
-    int sum = 0;
-    for (int i = 0; i < cumulativeHeights.length; i++) {
-      cumulativeHeights[i] = (sum += inlays.get(i).getHeightInPixels());
-    }
+    calcCumulativeHeight(inlays, cumulativeHeights.length, cumulativeHeights);
     int from = 0;
     int to = cumulativeHeights.length - 1;
     int lineHeight = myView.getLineHeight();
     while (from <= to) {
       int cur = (from + to) >>> 1;
-      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset(), false);
+      int curVisualLine = offsetToVisualLine(inlays.get(cur).getOffset());
 
       int curStart = cur;
-      while (curStart > 0 && offsetToVisualLine(inlays.get(curStart - 1).getOffset(), false) == curVisualLine) {
+      while (curStart > 0 && offsetToVisualLine(inlays.get(curStart - 1).getOffset()) == curVisualLine) {
         curStart--;
       }
       int curStartY = curVisualLine * lineHeight + (curStart > 0 ? cumulativeHeights[curStart - 1] : 0);
@@ -101,7 +97,7 @@ class EditorCoordinateMapper {
       }
 
       int curEnd = cur;
-      while (curEnd < cumulativeHeights.length - 1 && offsetToVisualLine(inlays.get(curEnd + 1).getOffset(), false) == curVisualLine) {
+      while (curEnd < cumulativeHeights.length - 1 && offsetToVisualLine(inlays.get(curEnd + 1).getOffset()) == curVisualLine) {
         curEnd++;
       }
       int curEndY = (curVisualLine + 1) * lineHeight + cumulativeHeights[curEnd];
@@ -113,6 +109,33 @@ class EditorCoordinateMapper {
       return curVisualLine;
     }
     return (y - (from > 0 ? cumulativeHeights[from - 1] : 0)) / lineHeight;
+  }
+
+  private int calcCumulativeHeight(List<Inlay> inlays, int toIndex, int[] intermediateValues) {
+    int lineHeight = myView.getLineHeight();
+    int lastInlineHeight = lineHeight;
+    int lastVisualLine = 0;
+    int sum = 0;
+    for (int i = 0; i < toIndex; i++) {
+      Inlay inlay = inlays.get(i);
+      int heightInPixels = inlay.getHeightInPixels();
+      if (inlay.getType() == Inlay.Type.BLOCK) {
+        sum += heightInPixels;
+      }
+      else {
+        int visualLine = offsetToVisualLine(inlay.getOffset());
+        if (visualLine > lastVisualLine) {
+          lastVisualLine = visualLine;
+          lastInlineHeight = lineHeight;
+        }
+        if (heightInPixels > lastInlineHeight) {
+          sum += (heightInPixels - lastInlineHeight);
+          lastInlineHeight = heightInPixels;
+        }
+      }
+      if (intermediateValues != null) intermediateValues[i] = sum;
+    }
+    return sum;
   }
 
   @NotNull
@@ -236,6 +259,10 @@ class EditorCoordinateMapper {
 
   int visualPositionToOffset(VisualPosition visualPosition) {
     return logicalPositionToOffset(visualToLogicalPosition(visualPosition));
+  }
+
+  private int offsetToVisualLine(int offset) {
+    return offsetToVisualLine(offset, false);
   }
 
   int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
