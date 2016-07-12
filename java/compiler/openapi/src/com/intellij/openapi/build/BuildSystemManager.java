@@ -86,4 +86,10 @@ public abstract class BuildSystemManager {
   public abstract void buildDirty(@NotNull BuildScope scope, @Nullable BuildStatusNotification callback);
 
   public abstract void rebuild(@NotNull BuildScope scope, @Nullable BuildStatusNotification callback);
+
+  public abstract BuildScope createProjectBuildScope(Project project);
+
+  public abstract BuildScope createModulesBuildScope(Module... modules);
+
+  public abstract BuildScope createArtifactsBuildScope(Artifact... artifacts);
 }

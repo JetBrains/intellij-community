@@ -47,14 +47,12 @@ public class BuildSystemManagerImpl extends BuildSystemManager {
 
   @Override
   public void buildDirty(@NotNull Module[] modules, @Nullable BuildStatusNotification callback) {
-    BuildScope buildScope = new BuildScopeImpl(map(list(modules), ModuleBuildTarget::new));
-    doBuild(buildScope, true, callback);
+    doBuild(createModulesBuildScope(modules), true, callback);
   }
 
   @Override
   public void rebuild(@NotNull Module[] modules, @Nullable BuildStatusNotification callback) {
-    BuildScope buildScope = new BuildScopeImpl(map(list(modules), ModuleBuildTarget::new));
-    doBuild(buildScope, false, callback);
+    doBuild(createModulesBuildScope(modules), false, callback);
   }
 
   @Override
@@ -91,12 +89,27 @@ public class BuildSystemManagerImpl extends BuildSystemManager {
 
   @Override
   public void buildProjectDirty(@Nullable BuildStatusNotification callback) {
-    doBuild(new ProjectBuildScope(myProject), true, callback);
+    doBuild(createProjectBuildScope(myProject), true, callback);
   }
 
   @Override
   public void rebuildProject(@Nullable BuildStatusNotification callback) {
-    doBuild(new ProjectBuildScope(myProject), false, callback);
+    doBuild(createProjectBuildScope(myProject), false, callback);
+  }
+
+  @Override
+  public BuildScope createProjectBuildScope(Project project) {
+    return new ProjectBuildScope(project);
+  }
+
+  @Override
+  public BuildScope createModulesBuildScope(Module... modules) {
+    return new BuildScopeImpl(map(list(modules), ModuleBuildTarget::new));
+  }
+
+  @Override
+  public BuildScope createArtifactsBuildScope(Artifact... artifacts) {
+    return new BuildScopeImpl(map(list(artifacts), ArtifactBuildTarget::new));
   }
 
   @NotNull
@@ -105,8 +118,7 @@ public class BuildSystemManagerImpl extends BuildSystemManager {
   }
 
   private void doBuild(@NotNull Artifact[] artifacts, @Nullable BuildStatusNotification callback, boolean isIncrementalBuild) {
-    BuildScope buildScope = new BuildScopeImpl(map(list(artifacts), ArtifactBuildTarget::new));
-    doBuild(buildScope, isIncrementalBuild, callback);
+    doBuild(createArtifactsBuildScope(artifacts), isIncrementalBuild, callback);
   }
 
   private void doBuild(@NotNull BuildScope scope, boolean isIncrementalBuild, @Nullable BuildStatusNotification callback) {
@@ -124,7 +136,8 @@ public class BuildSystemManagerImpl extends BuildSystemManager {
     AtomicBoolean abortedFlag = new AtomicBoolean(false);
     for (Map.Entry<BuildSystemDriver, ? extends List<? extends BuildTarget>> entry : toBuild.entrySet()) {
       BuildSystemDriver driver = entry.getKey();
-      BuildScope buildScope = toBuild.size() == 1 ? scope : new BuildScopeImpl(entry.getValue(), scope.getSessionId());
+      BuildScope buildScope =
+        toBuild.size() == 1 ? scope : new BuildScopeImpl(entry.getValue(), scope.getSessionId(), scope.getRunConfiguration());
       BuildChunkStatusNotification chunkStatusNotification = callback == null ? null : new BuildChunkStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, BuildContext buildContext) {

@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.build;
 
+import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
 
 /**
@@ -24,7 +27,13 @@ import java.util.Collection;
 public interface BuildScope {
   Collection<? extends BuildTarget> getTargets();
 
-  void setSessionId(Object sessionId);
+  void setSessionId(@Nullable Object sessionId);
 
+  @Nullable
   Object getSessionId();
+
+  void setRunConfiguration(@Nullable RunConfiguration configuration);
+
+  @Nullable
+  RunConfiguration getRunConfiguration();
 }

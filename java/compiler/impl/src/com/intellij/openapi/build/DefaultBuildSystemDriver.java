@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.ExecutionManagerImpl;
@@ -88,11 +89,18 @@ public class DefaultBuildSystemDriver extends BuildSystemDriver {
 
   private static void buildProject(BuildContext buildContext, CompileStatusNotification callback) {
     Project project = buildContext.getProject();
+    CompilerManager compilerManager = CompilerManager.getInstance(project);
     if (buildContext.isIncrementalBuild()) {
-      CompilerManager.getInstance(project).make(callback);
+      CompileScope scope = compilerManager.createProjectCompileScope(project);
+      RunConfiguration configuration = buildContext.getScope().getRunConfiguration();
+      if (configuration != null) {
+        scope.putUserData(CompilerManager.RUN_CONFIGURATION_KEY, configuration);
+        scope.putUserData(CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY, configuration.getType().getId());
+      }
+      compilerManager.make(scope, callback);
     }
     else {
-      CompilerManager.getInstance(project).rebuild(callback);
+      compilerManager.rebuild(callback);
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.build;
 
+import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -27,14 +28,23 @@ public class BuildScopeImpl implements BuildScope {
   private final Collection<? extends BuildTarget> myTargets;
   @Nullable
   private Object mySessionId;
+  @Nullable
+  private RunConfiguration myConfiguration;
 
   public BuildScopeImpl(Collection<? extends BuildTarget> targets) {
-    myTargets = targets;
+    this(targets, null, null);
   }
 
   public BuildScopeImpl(Collection<? extends BuildTarget> targets, @Nullable Object sessionId) {
+    this(targets, sessionId, null);
+  }
+
+  public BuildScopeImpl(Collection<? extends BuildTarget> targets,
+                        @Nullable Object sessionId,
+                        @Nullable RunConfiguration configuration) {
     myTargets = targets;
     mySessionId = sessionId;
+    myConfiguration = configuration;
   }
 
   @Override
@@ -51,5 +61,16 @@ public class BuildScopeImpl implements BuildScope {
   @Override
   public Object getSessionId() {
     return mySessionId;
+  }
+
+  @Override
+  public void setRunConfiguration(@Nullable RunConfiguration configuration) {
+    myConfiguration = configuration;
+  }
+
+  @Nullable
+  @Override
+  public RunConfiguration getRunConfiguration() {
+    return myConfiguration;
   }
 }
