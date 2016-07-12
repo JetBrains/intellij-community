@@ -720,6 +720,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return changes;
   }
 
+  @Nullable
+  VcsKey getVcsFor(@NotNull Change change) {
+    return myIdx.getVcsFor(change);
+  }
+
   void setListsToDisappear(final Collection<String> names) {
     myListsToDisappear.addAll(names);
   }

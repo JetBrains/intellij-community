@@ -1167,6 +1167,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Nullable
+  public VcsKey getVcsFor(@NotNull Change change) {
+    synchronized (myDataLock) {
+      return myWorker.getVcsFor(change);
+    }
+  }
+
   @Override
   public void moveChangesTo(final LocalChangeList list, final Change... changes) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
