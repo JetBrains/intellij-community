@@ -175,6 +175,11 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertFalse(isInner("weird/ToStringStyle"));
   }
 
+  public void testModuleInfo() {
+    String testDir = getTestDataDir();
+    doTest(testDir + "../stubBuilder/module-info.class", testDir + "module-info.txt");
+  }
+
   private static String getTestDataDir() {
     return JavaTestUtil.getJavaTestDataPath() + "/psi/cls/mirror/";
   }

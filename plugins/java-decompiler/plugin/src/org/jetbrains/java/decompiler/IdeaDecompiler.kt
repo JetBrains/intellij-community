@@ -133,7 +133,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       else ClsFileImpl.decompile(file)
 
   private fun decompile(file: VirtualFile): CharSequence {
-    if ("package-info.class" == file.name) {
+    if ("package-info.class" == file.name || "module-info.class" == file.name) {
       return ClsFileImpl.decompile(file)
     }
 

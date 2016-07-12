@@ -18,8 +18,10 @@ package com.intellij.psi.impl.java.stubs.impl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.stubs.PsiFileStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IStubFileElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +56,12 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   @Override
   public PsiClass[] getClasses() {
     return getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+  }
+
+  @Override
+  public PsiJavaModule getModule() {
+    StubElement<PsiJavaModule> moduleStub = findChildStubByType(JavaStubElementTypes.MODULE);
+    return moduleStub != null ? moduleStub.getPsi() : null;
   }
 
   @Override

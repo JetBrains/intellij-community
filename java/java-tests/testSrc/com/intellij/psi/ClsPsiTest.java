@@ -412,6 +412,18 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("@pkg.TypeAnnotations.TA(\"parameter\") int", p1.getType().getCanonicalText(true));
   }
 
+  public void testModuleInfo() {
+    PsiJavaFile file = getFile("../../stubBuilder/module-info");
+    assertEquals(LanguageLevel.JDK_1_9, file.getLanguageLevel());
+
+    PsiJavaModule module = file.getModuleDeclaration();
+    assertNotNull(module);
+    assertEquals("M.N", module.getModuleName());
+
+    assertNull(file.getPackageStatement());
+    assertEquals(0, file.getClasses().length);
+  }
+
   private PsiJavaFile getFile() {
     return getFile(getTestName(false));
   }

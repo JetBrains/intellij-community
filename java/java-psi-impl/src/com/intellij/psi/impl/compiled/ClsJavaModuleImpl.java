@@ -13,42 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source;
+package com.intellij.psi.impl.compiled;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiJavaModuleReference;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
-  public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
-    super(stub, JavaStubElementTypes.MODULE);
-  }
+public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
+  private PsiJavaModuleReference myReference;
 
-  public PsiJavaModuleImpl(@NotNull ASTNode node) {
-    super(node);
+  public ClsJavaModuleImpl(PsiJavaModuleStub stub) {
+    super(stub);
+    myReference = new ClsJavaModuleReferenceImpl(this, stub.getName());
   }
 
   @NotNull
   @Override
   public PsiJavaModuleReference getNameElement() {
-    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReference.class);
+    return myReference;
   }
 
   @NotNull
   @Override
   public String getModuleName() {
-    PsiJavaModuleStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
-    }
+    return myReference.getReferenceText();
+  }
 
-    return getNameElement().getReferenceText();
+  @Override
+  public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    buffer.append("module ").append(getModuleName()).append(" { /* compiled code */ }");
+  }
+
+  @Override
+  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaElementType.MODULE);
+    setMirror(getNameElement(), SourceTreeToPsiMap.<PsiJavaModule>treeToPsiNotNull(element).getNameElement());
   }
 
   @Override
