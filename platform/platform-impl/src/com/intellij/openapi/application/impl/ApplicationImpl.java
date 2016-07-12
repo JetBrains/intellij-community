@@ -1026,18 +1026,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    boolean mustAcquire = !isReadAccessAllowed();
-
-    if (mustAcquire) {
-      assertNoPsiLock();
-      if (!myLock.tryReadLock()) return false;
-    }
-
-    try {
+    if (isReadAccessAllowed()) {
       action.run();
     }
-    finally {
-      if (mustAcquire) {
+    else {
+      assertNoPsiLock();
+      if (!myLock.tryReadLock()) return false;
+      try {
+        action.run();
+      }
+      finally {
         endRead();
       }
     }
