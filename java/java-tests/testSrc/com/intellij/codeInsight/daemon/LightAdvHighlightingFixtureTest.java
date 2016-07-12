@@ -77,6 +77,21 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
 
   }
 
+  public void testUsageOfProtectedAnnotationOutsideAPackage() throws Exception {
+    myFixture.addClass("package a;\n" +
+                       "import java.lang.annotation.ElementType;\n" +
+                       "import java.lang.annotation.Target;\n" +
+                       "\n" +
+                       "public class A {\n" +
+                       "    @Target( { ElementType.METHOD, ElementType.TYPE } )\n" +
+                       "    protected @interface Test{\n" +
+                       "    }\n" +
+                       "}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
