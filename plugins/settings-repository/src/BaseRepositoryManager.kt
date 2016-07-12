@@ -130,7 +130,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
    */
   protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
 
-  override fun delete(path: String) {
+  override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}
 
     lock.write {
@@ -138,8 +138,11 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       // delete could be called for non-existent file
       if (file.exists()) {
         delete(file, path)
+        return true
       }
     }
+
+    return false
   }
 
   private fun delete(file: Path, path: String) {

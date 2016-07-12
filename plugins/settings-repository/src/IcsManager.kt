@@ -246,23 +246,26 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
-      if (repositoryManager.renameDirectory(linkedMapOf(
-        Pair("\$ROOT_CONFIG$", null),
-        Pair("_mac/\$ROOT_CONFIG$", "_mac"),
-        Pair("_windows/\$ROOT_CONFIG$", "_windows"),
-        Pair("_linux/\$ROOT_CONFIG$", "_linux"),
-        Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
-        Pair("_unix/\$ROOT_CONFIG$", "_unix"),
-        Pair("_unknown/\$ROOT_CONFIG$", "_unknown"),
+      val migrateSchemes = repositoryManager.renameDirectory(linkedMapOf(
+          Pair("\$ROOT_CONFIG$", null),
+          Pair("_mac/\$ROOT_CONFIG$", "_mac"),
+          Pair("_windows/\$ROOT_CONFIG$", "_windows"),
+          Pair("_linux/\$ROOT_CONFIG$", "_linux"),
+          Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
+          Pair("_unix/\$ROOT_CONFIG$", "_unix"),
+          Pair("_unknown/\$ROOT_CONFIG$", "_unknown"),
 
-        Pair("\$APP_CONFIG$", null),
-        Pair("_mac/\$APP_CONFIG$", "_mac"),
-        Pair("_windows/\$APP_CONFIG$", "_windows"),
-        Pair("_linux/\$APP_CONFIG$", "_linux"),
-        Pair("_freebsd/\$APP_CONFIG$", "_freebsd"),
-        Pair("_unix/\$APP_CONFIG$", "_unix"),
-        Pair("_unknown/\$APP_CONFIG$", "_unknown")
-      ))) {
+          Pair("\$APP_CONFIG$", null),
+          Pair("_mac/\$APP_CONFIG$", "_mac"),
+          Pair("_windows/\$APP_CONFIG$", "_windows"),
+          Pair("_linux/\$APP_CONFIG$", "_linux"),
+          Pair("_freebsd/\$APP_CONFIG$", "_freebsd"),
+          Pair("_unix/\$APP_CONFIG$", "_unix"),
+          Pair("_unknown/\$APP_CONFIG$", "_unknown")
+      ))
+
+      val removeOtherXml = repositoryManager.delete("other.xml")
+      if (migrateSchemes || removeOtherXml) {
         // schedule push to avoid merge conflicts
         application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
       }
