@@ -663,6 +663,15 @@ public class VfsUtilCore {
     return components;
   }
 
+  public static boolean hasInvalidFiles(@NotNull Iterable<VirtualFile> files) {
+    for (VirtualFile file : files) {
+      if (!file.isValid()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
