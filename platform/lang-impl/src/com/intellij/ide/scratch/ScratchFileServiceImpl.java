@@ -22,6 +22,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -44,15 +45,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.indexing.LightDirectoryIndex;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -71,22 +71,14 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   private final LightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
 
-  protected ScratchFileServiceImpl(MessageBus messageBus) {
-    myIndex = new LightDirectoryIndex<RootType>(messageBus.connect(), NULL_TYPE) {
-
-      @Override
-      protected void collectRoots(@NotNull PairConsumer<VirtualFile, RootType> consumer) {
-        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-        for (RootType r : RootType.getAllRootIds()) {
-          String root = getRootPath(r);
-          VirtualFile rootFile = fileSystem.findFileByPath(root);
-          if (rootFile != null) {
-            consumer.consume(rootFile, r);
-          }
-        }
+  protected ScratchFileServiceImpl(Application application) {
+    myIndex = new LightDirectoryIndex<RootType>(application, NULL_TYPE, index -> {
+      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+      for (RootType r : RootType.getAllRootIds()) {
+        index.putInfo(fileSystem.findFileByPath(getRootPath(r)), r);
       }
-    };
-    initFileOpenedListener(messageBus);
+    });
+    initFileOpenedListener(application.getMessageBus());
   }
 
   @NotNull
@@ -100,7 +92,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   public RootType getRootType(@Nullable VirtualFile file) {
     if (file == null) return null;
     VirtualFile directory = file.isDirectory() ? file : file.getParent();
-    if (!(directory instanceof VirtualFileWithId)) return null;
     RootType result = myIndex.getInfoForFile(directory);
     return result == NULL_TYPE ? null : result;
   }
