@@ -138,7 +138,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       notification.addAction(new NotificationAction(VIEW_COMMITS) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          viewUnmergedCommitsInBackground();
+          viewUnmergedCommitsInBackground(notification);
         }
       });
     }
@@ -351,13 +351,13 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
   }
 
-  private void viewUnmergedCommitsInBackground() {
+  private void viewUnmergedCommitsInBackground(@NotNull Notification notification) {
     new Task.Backgroundable(myProject, "Collecting Unmerged Commits...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         boolean restore = showNotFullyMergedDialog(myUnmergedToBranches);
         if (restore) {
-          rollback();
+          rollbackBranchDeletion(notification);
         }
       }
     }.queue();
