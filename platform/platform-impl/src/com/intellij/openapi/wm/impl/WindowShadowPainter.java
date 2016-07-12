@@ -21,38 +21,80 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.util.List;
 
 import static com.intellij.icons.AllIcons.Ide.Shadow.Popup.*;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author Sergey.Malenkov
  */
-final class WindowShadowPainter extends AbstractPainter {
+final class WindowShadowPainter extends AbstractPainter implements AWTEventListener {
   private static final ShadowPainter PAINTER = new ShadowPainter(Top, Top_right, Right, Bottom_right, Bottom, Bottom_left, Left, Top_left);
+  private static final long MASK = AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK;
+  private List<Rectangle> myShadows;
+  private Component myComponent;
 
   WindowShadowPainter() {
     setNeedsRepaint(true);
   }
 
   @Override
-  public void executePaint(Component component, Graphics2D g) {
+  public void eventDispatched(AWTEvent event) {
+    Component component = myComponent;
+    if (component == null) return;
     Window window = UIUtil.getWindow(component);
-    if (window != null) {
-      Point point = new Point();
-      SwingUtilities.convertPointToScreen(point, component);
-      paintShadows(component, g, point, window.getOwnedWindows());
-      setNeedsRepaint(true);
+    if (window == null) return;
+    Object source = event.getSource();
+    if (source instanceof Window && SwingUtilities.isDescendingFrom((Window)source, window)) {
+      myShadows = getShadows(component, window);
+      setNeedsRepaint(myShadows != null);
     }
   }
 
-  private static void paintShadows(Component component, Graphics2D g, Point point, Window... windows) {
+  @Override
+  public void executePaint(Component component, Graphics2D g) {
+    Window window = UIUtil.getWindow(component);
+    if (window != null) {
+      if (myComponent != component) {
+        boolean add = myComponent == null;
+        myComponent = component;
+        myShadows = getShadows(component, window);
+        if (add) Toolkit.getDefaultToolkit().addAWTEventListener(this, MASK);
+      }
+      List<Rectangle> shadows = myShadows;
+      if (shadows != null) {
+        for (Rectangle bounds : shadows) {
+          PAINTER.paintShadow(component, g, bounds.x, bounds.y, bounds.width, bounds.height);
+        }
+        setNeedsRepaint(true);
+      }
+    }
+    else if (myComponent != null) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+      myComponent = null;
+    }
+  }
+
+  private static List<Rectangle> getShadows(Component component, Window window) {
+    Point point = new Point();
+    SwingUtilities.convertPointToScreen(point, component);
+    return getShadows(null, point, window.getOwnedWindows());
+  }
+
+  private static List<Rectangle> getShadows(List<Rectangle> list, Point point, Window... windows) {
     if (windows != null) {
       for (Window window : windows) {
         Rectangle bounds = getShadowBounds(point, window);
-        if (bounds != null) PAINTER.paintShadow(component, g, bounds.x, bounds.y, bounds.width, bounds.height);
-        paintShadows(component, g, point, window.getOwnedWindows());
+        if (bounds != null) {
+          if (list == null) list = newArrayList();
+          list.add(bounds);
+        }
+        list = getShadows(list, point, window.getOwnedWindows());
       }
     }
+    return list;
   }
 
   private static Rectangle getShadowBounds(Point point, Window window) {
