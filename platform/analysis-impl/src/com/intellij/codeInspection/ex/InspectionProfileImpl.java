@@ -57,6 +57,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -148,7 +149,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     };
     final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, InspectionProfileManager.getInstance());
-    initAndDo((Computable)() -> {
+    initAndDo(() -> {
       profile.initInspectionTools(project);
       return null;
     });
@@ -615,7 +616,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : extension::getDisplayName;
+      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName()) : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
@@ -1015,11 +1016,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  public static <T> T initAndDo(@NotNull Computable<T> runnable) {
+  public static <T> T initAndDo(@NotNull Supplier<T> runnable) {
     boolean old = INIT_INSPECTIONS;
     try {
       INIT_INSPECTIONS = true;
-      return runnable.compute();
+      return runnable.get();
     }
     finally {
       INIT_INSPECTIONS = old;

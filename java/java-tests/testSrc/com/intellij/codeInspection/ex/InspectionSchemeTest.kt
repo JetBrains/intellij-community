@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.readText
@@ -57,7 +56,7 @@ internal class InspectionSchemeTest {
     val scheme = profileManager.profiles.first() as InspectionProfileImpl
     assertThat(scheme.name).isEqualTo("Bar")
 
-    InspectionProfileImpl.initAndDo(Computable { scheme.initInspectionTools(null) })
+    InspectionProfileImpl.initAndDo { scheme.initInspectionTools(null) }
 
     schemeManagerFactory.save()
 

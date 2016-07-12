@@ -21,7 +21,10 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -65,7 +68,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -115,6 +117,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author yole
@@ -125,6 +128,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
 
   private static IdeaTestApplication ourApplication;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected static Project ourProject;
   private static Module ourModule;
   private static PsiManager ourPsiManager;
@@ -223,9 +227,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourProject != null) {
       closeAndDeleteProject();
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      cleanPersistedVFSContent();
-    });
+    ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
@@ -342,8 +344,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  // todo: use Class<? extends InspectionProfileEntry> once on Java 7
-  protected void enableInspectionTools(@NotNull Class<?>... classes) {
+  protected void enableInspectionTools(@NotNull Class<? extends InspectionProfileEntry>[] classes) {
     final InspectionProfileEntry[] tools = new InspectionProfileEntry[classes.length];
 
     final List<InspectionEP> eps = ContainerUtil.newArrayList();
@@ -371,27 +372,36 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
-    enableInspectionTool(getProject(), toolWrapper);
-  }
-  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
-    enableInspectionTool(getProject(), toolWrapper);
+    enableInspectionTool(getProject(), toolWrapper, myTestRootDisposable);
   }
 
-  public static void enableInspectionTool(@NotNull final Project project, @NotNull final InspectionToolWrapper toolWrapper) {
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+    enableInspectionTool(getProject(), InspectionToolRegistrar.wrapTool(tool), myTestRootDisposable);
+  }
+
+  public static void enableInspectionTool(@NotNull Project project, @NotNull InspectionToolWrapper toolWrapper, @Nullable Disposable disposable) {
+    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
     }
-    InspectionProfileImpl.initAndDo((Computable)() -> {
-      InspectionProfileImpl impl = (InspectionProfileImpl)profile;
-      InspectionToolWrapper existingWrapper = impl.getInspectionTool(shortName, project);
+
+    InspectionProfileImpl.initAndDo(() -> {
+      InspectionToolWrapper existingWrapper = profile.getInspectionTool(shortName, project);
       if (existingWrapper == null || existingWrapper.isInitialized() != toolWrapper.isInitialized() || toolWrapper.isInitialized() && toolWrapper.getTool() != existingWrapper.getTool()) {
-        impl.addTool(project, toolWrapper, new THashMap<>());
+        profile.addTool(project, toolWrapper, new THashMap<>());
       }
-      impl.enableTool(shortName, project);
+      profile.enableTool(shortName, project);
+
+      if (disposable != null) {
+        Disposer.register(disposable, new Disposable() {
+          @Override
+          public void dispose() {
+            profile.disableTool(shortName, project);
+          }
+        });
+      }
       return null;
     });
   }
@@ -401,27 +411,27 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 
+  @SuppressWarnings("TearDownDoesntCallSuperTearDown")
   @Override
   protected void tearDown() throws Exception {
     Project project = getProject();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    List<Throwable> errors = ContainerUtil.newSmartList();
-    Function<ThrowableRunnable<?>, ?> runSafe = c -> {
+    List<Throwable> errors = new SmartList<>();
+    Consumer<ThrowableRunnable<?>> runSafe = c -> {
       try {
         c.run();
       }
       catch (Throwable e) {
         errors.add(e);
       }
-      return true;
     };
     try {
-      runSafe.fun(() -> checkForSettingsDamage(errors));
-      runSafe.fun(() -> doTearDown(project, ourApplication, true, errors));
-      runSafe.fun(super::tearDown);
-      runSafe.fun(() -> myThreadTracker.checkLeak());
-      runSafe.fun(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project));
-      runSafe.fun(() -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed());
+      runSafe.accept(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings());
+      runSafe.accept(() -> checkForSettingsDamage(errors));
+      runSafe.accept(() -> doTearDown(project, ourApplication, true, errors));
+      runSafe.accept(super::tearDown);
+      runSafe.accept(() -> myThreadTracker.checkLeak());
+      runSafe.accept(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project));
+      runSafe.accept(() -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed());
     }
     catch (Throwable e) {
       errors.add(e);
@@ -559,6 +569,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public final void runBare() throws Throwable {
     if (!shouldRunTest()) {
@@ -581,6 +592,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           resetAllFields();
         }
         catch (Throwable e) {
+          //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
       }
@@ -594,6 +606,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private void startRunAndTear() throws Throwable {
     setUp();
     try {
@@ -696,6 +709,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     if (!ourProject.isDisposed()) {
+      @SuppressWarnings("ConstantConditions")
       File ioFile = new File(ourProject.getProjectFilePath());
       Disposer.dispose(ourProject);
       if (ioFile.exists()) {
@@ -715,7 +729,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (ourPathToKeep != null) {
       File parent = new File(ourPathToKeep).getParentFile();
       if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-        parent.delete(); // delete only empty folders
+        // delete only empty folders
+        //noinspection ResultOfMethodCallIgnored
+        parent.delete();
       }
     }
 

@@ -20,16 +20,15 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,7 +61,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return context.getStdJobDescriptors().LOCAL_ANALYSIS_ARRAY;
   }
 
-
   public boolean isUnfair() {
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
@@ -85,8 +83,8 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     @NotNull
     @Override
     protected Map<String, LocalInspectionEP> compute() {
-      HashMap<String, LocalInspectionEP> map = new HashMap<String, LocalInspectionEP>();
-      for (LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
+      Map<String, LocalInspectionEP> map = new THashMap<>();
+      for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
         map.put(ep.getShortName(), ep);
       }
       return map;
