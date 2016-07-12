@@ -205,7 +205,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
           myTree.repaint();
         }
         else {
-          myTree.queueUpdate();
+          InspectionViewPsiTreeChangeAdapter.resetTree(InspectionResultsView.this);
         }
         syncRightPanel();
       }
