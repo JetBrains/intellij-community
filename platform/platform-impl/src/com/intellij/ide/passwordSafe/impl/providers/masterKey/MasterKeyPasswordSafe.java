@@ -173,10 +173,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
     }
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
-    }
-
     key = invokeAndWait(() -> {
       Object key1 = myKey.get().get();
       if (key1 instanceof byte[] || key1 instanceof PasswordSafeException && ((PasswordSafeException)key1).justHappened()) {
@@ -184,7 +180,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       try {
         if (myDatabase.isEmpty()) {
-          if (!MasterPasswordDialog.resetMasterPasswordDialog(project, this, requestor).showAndGet()) {
+          if (!MasterPasswordDialog.resetMasterPasswordDialog(project, this).showAndGet()) {
             throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
           }
         }
