@@ -79,7 +79,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -177,15 +176,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement(myExcludedInspectionTreeNodesManager);
-        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-          synchronized (myTreeStructureUpdateLock) {
-            InspectionTreeNode parent = (InspectionTreeNode)node.getParent();
-            if (parent != null) {
-              parent.remove(node);
-              ((DefaultTreeModel)myTree.getModel()).reload(parent);
-            }
-          }
-        }
       }
 
       @Override
@@ -200,10 +190,21 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Override
       public void onDone(boolean isExcludeAction) {
-        if (!isExcludeAction || !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+        if (isExcludeAction) {
+          if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
+            synchronized (myTreeStructureUpdateLock) {
+              final TreePath[] selected = myTree.getSelectionPaths();
+              if (selected != null) {
+                final TreePath commonParent = TreeUtil.findCommonPath(selected);
+                TreeUtil.removeSelected(myTree);
+                TreeUtil.selectPath(myTree, commonParent);
+              }
+            }
+          }
           myTree.revalidate();
           myTree.repaint();
-        } else {
+        }
+        else {
           myTree.queueUpdate();
         }
         syncRightPanel();
