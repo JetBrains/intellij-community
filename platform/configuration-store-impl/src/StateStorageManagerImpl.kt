@@ -235,7 +235,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       effectiveRoamingType = roamingType
     }
 
-    val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType)
+    val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else this.rootTagName)
     if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage) {
       virtualFileTracker?.put(filePath, storage)
     }
