@@ -111,7 +111,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
-  private final Splash mySplash;
+  private Splash mySplash;
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress;
 
@@ -419,6 +419,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
+    mySplash = null;
 
     createLocatorFile();
   }
