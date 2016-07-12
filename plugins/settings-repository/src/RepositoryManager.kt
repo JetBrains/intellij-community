@@ -46,7 +46,7 @@ interface RepositoryManager {
    */
   fun write(path: String, content: ByteArray, size: Int): Boolean
 
-  fun delete(path: String)
+  fun delete(path: String): Boolean
 
   fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean)
 
