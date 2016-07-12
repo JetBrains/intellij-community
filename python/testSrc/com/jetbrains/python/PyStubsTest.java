@@ -39,7 +39,6 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -436,39 +435,6 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(func);
     final String annotation = func.getTypeCommentAnnotation();
     assertEquals("(str) -> int", annotation);
-    assertNotParsed(file);
-  }
-
-  // PY-18741
-  public void testParameterTypeComment() {
-    final PyFile file = getTestFile();
-    final PyFunction func = file.findTopLevelFunction("func");
-    assertNotNull(func);
-    final PyParameter[] parameters = func.getParameterList().getParameters();
-    assertSize(2, parameters);
-    final PyNamedParameter param = assertInstanceOf(parameters[0], PyNamedParameter.class);
-    final String annotation = param.getTypeCommentAnnotation();
-    assertEquals("int", annotation);
-    assertNotParsed(file);
-
-    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
-    final PyType paramType = context.getType(param);
-    assertInstanceOf(paramType, PyClassType.class);
-    assertNotParsed(file);
-  }
-
-  public void testTargetExpressionTypeComment() {
-    final PyFile file = getTestFile();
-    final PyTargetExpression target = file.findTopLevelAttribute("x");
-    assertNotNull(target);
-
-    final String annotation = target.getTypeCommentAnnotation();
-    assertEquals("int", annotation);
-    assertNotParsed(file);
-
-    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
-    final PyType paramType = context.getType(target);
-    assertInstanceOf(paramType, PyClassType.class);
     assertNotParsed(file);
   }
 
