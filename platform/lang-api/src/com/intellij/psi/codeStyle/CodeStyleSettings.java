@@ -898,8 +898,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @TestOnly
   public void clearCodeStyleSettings() {
-    CodeStyleSettings cleanSettings = new CodeStyleSettings();
-    copyFrom(cleanSettings);
+    clearCodeStyleSettings(new CodeStyleSettings());
+  }
+
+  @TestOnly
+  public void clearCodeStyleSettings(CodeStyleSettings oldCodeStyleSettings) {
+    copyFrom(oldCodeStyleSettings);
     myAdditionalIndentOptions.clear(); //hack
     myLoadedAdditionalIndentOptions = false;
   }
