@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -221,7 +222,8 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
       for (int i = 0; i < mySelection.size(); i++) {
         CommitPanel commitPanel = getCommitPanel(i);
-        commitPanel.setCommit(detailsList.get(i));
+        Integer commit = myDataPack.getVisibleGraph().getRowInfo(mySelection.get(i)).getCommit();
+        commitPanel.setCommit(detailsList.get(i), ((RefsModel)myDataPack.getRefs()).refsToCommit(commit));
       }
 
       if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
