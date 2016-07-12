@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -176,6 +177,13 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         e.printStackTrace();
       }
     }
+  }
+
+  public void testPerformanceWithLotsOfFragments() throws Exception {
+    for (int i = 0; i < 10_000; i++) {
+      mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ",  ProcessOutputTypes.STDOUT);
+    }
+    PlatformTestUtil.startPerformanceTest("Flashing lot's of fragments", 10, mySplitter::flush).attempts(1).useLegacyScaling().assertTiming();
   }
 
   private Future<?> execute(final Runnable runnable) {
