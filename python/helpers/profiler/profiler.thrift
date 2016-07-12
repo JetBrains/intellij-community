@@ -23,6 +23,7 @@ struct CallTreeStat {
   1: required i32 count,
   2: required string name,
   3: required list<CallTreeStat> children,
+  4: required map<i32, i32> line_count,    // number of times a line inside the frame was executed
 }
 
 struct TreeStats {
