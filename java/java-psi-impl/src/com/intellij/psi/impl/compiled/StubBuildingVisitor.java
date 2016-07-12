@@ -108,10 +108,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-    LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(version);
-    if (languageLevel == null) languageLevel = LanguageLevel.HIGHEST;
-    ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
-
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
 
     ClassInfo info = null;

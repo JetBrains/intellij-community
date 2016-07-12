@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
@@ -75,7 +74,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,7 +98,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile SoftReference<StubTree> myStub;
   private volatile TreeElement myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement;
-  private volatile LanguageLevel myLanguageLevel;
   private boolean myIsPhysical = true;
   private boolean myInvalidated;
 
@@ -244,17 +241,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    LanguageLevel level = myLanguageLevel;
-    if (level == null) {
-      List classes = ApplicationManager.getApplication().runReadAction(new Computable<List>() {
-        @Override
-        public List compute() {
-          return getStub().getChildrenStubs();
-        }
-      });
-      myLanguageLevel = level = !classes.isEmpty() ? ((PsiClassStub<?>)classes.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
+    PsiClassHolderFileStub<?> stub = getStub();
+    if (stub instanceof PsiJavaFileStub) {
+      LanguageLevel level = ((PsiJavaFileStub)stub).getLanguageLevel();
+      if (level != null) {
+        return level;
+      }
     }
-    return level;
+    return LanguageLevel.HIGHEST;
   }
 
   @Nullable
@@ -541,8 +535,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myMirrorFileElement = null;
       myPackageStatement = packageStatement;
     }
-
-    myLanguageLevel = null;
   }
 
   @Override
@@ -590,10 +582,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
-    return buildFileStub(file, bytes, new Function<String, PsiJavaFileStub>() {
+    return buildFileStub(file, bytes, new Function<ClassReader, PsiJavaFileStub>() {
       @Override
-      public PsiJavaFileStub fun(String packageName) {
-        return new PsiJavaFileStubImpl(packageName, true);
+      public PsiJavaFileStub fun(ClassReader reader) {
+        String packageName = getPackageName(reader.getClassName());
+        LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(reader.readShort(6));
+        return new PsiJavaFileStubImpl(null, packageName, level, true);
       }
     });
   }
@@ -601,7 +595,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file,
                                               @NotNull byte[] bytes,
-                                              @NotNull Function<String, PsiJavaFileStub> stubBuilder) throws ClsFormatException {
+                                              @NotNull Function<ClassReader, PsiJavaFileStub> stubBuilder) throws ClsFormatException {
     try {
       if (ClassFileViewProvider.isInnerClass(file, bytes)) {
         return null;
@@ -609,8 +603,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
-      String packageName = getPackageName(reader.getClassName());
-      PsiJavaFileStub stub = stubBuilder.fun(packageName);
+      PsiJavaFileStub stub = stubBuilder.fun(reader);
 
       try {
         FileContentPair source = new FileContentPair(file, bytes);

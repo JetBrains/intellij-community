@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
@@ -87,6 +88,8 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertTrue(file.isValid());
     assertEquals("pack", file.getPackageName());
     assertEquals(1, file.getClasses().length);
+    file = getFile("MyEnum");
+    assertEquals(LanguageLevel.JDK_1_5, file.getLanguageLevel());
   }
 
   public void testClassBasics() {
