@@ -198,7 +198,7 @@ public class PyCompatibilityInspection extends PyInspection {
           for (int i = 0; i != myVersionsToProcess.size(); ++i) {
             LanguageLevel languageLevel = myVersionsToProcess.get(i);
             if (PyBuiltinCache.getInstance(resolved).isBuiltin(resolved)) {
-              if (!"print".equals(name) && !myUsedImports.contains(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+              if (!"print".equals(name) && !"exec".equals(name) && !myUsedImports.contains(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
                 len = appendLanguageLevel(message, len, languageLevel);
               }
             }
