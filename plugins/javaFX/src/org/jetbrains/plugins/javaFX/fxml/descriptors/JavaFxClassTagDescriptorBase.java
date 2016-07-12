@@ -118,22 +118,18 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
       if (descr instanceof JavaFxClassTagDescriptorBase) {
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
-          final List<PsiMethod> setters = CachedValuesManager.getCachedValue(element, new CachedValueProvider<List<PsiMethod>>() {
-            @Nullable
-            @Override
-            public Result<List<PsiMethod>> compute() {
-              final List<PsiMethod> meths = new ArrayList<PsiMethod>();
-              for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-                if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
-                  final PsiParameter[] parameters = method.getParameterList().getParameters();
-                  if (parameters.length == 2 &&
-                      InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
-                    meths.add(method);
-                  }
+          final List<PsiMethod> setters = CachedValuesManager.getCachedValue(element, () -> {
+            final List<PsiMethod> meths = new ArrayList<PsiMethod>();
+            for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
+              if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
+                final PsiParameter[] parameters = method.getParameterList().getParameters();
+                if (parameters.length == 2 &&
+                    InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE)) {
+                  meths.add(method);
                 }
               }
-              return Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
+            return CachedValueProvider.Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           });
           for (PsiMethod setter : setters) {
             children.add(factory.fun(setter));

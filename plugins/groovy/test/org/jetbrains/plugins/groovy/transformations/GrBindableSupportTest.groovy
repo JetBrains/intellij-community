@@ -87,7 +87,7 @@ class GrBindableSupportTest {
       assert method
       assert method.containingClass == clazz
       assert method.originInfo == BindableTransformationSupport.ORIGIN_INFO
-      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE)
+      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE_FQN)
     }
   }
 

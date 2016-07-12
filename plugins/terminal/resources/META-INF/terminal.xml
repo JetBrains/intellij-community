@@ -18,4 +18,9 @@
       <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
     </component>
   </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
+                    interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>
+  </extensionPoints>
 </idea-plugin>

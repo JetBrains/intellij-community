@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
@@ -35,12 +34,8 @@ class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
     List<Configurable> list;
     if (category == DebuggerSettingsCategory.GENERAL) {
       list = new SmartList<>(
-        SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class, new Getter<XDebuggerGeneralSettings>() {
-          @Override
-          public XDebuggerGeneralSettings get() {
-            return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings();
-          }
-        }));
+        SimpleConfigurable.create("debugger.general", "", GeneralConfigurableUi.class,
+                                  () -> XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings()));
     }
     else {
       list = null;

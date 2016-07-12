@@ -27,12 +27,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +42,7 @@ public class JUnitUtil {
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
-  @NonNls public static final String TEST5_ANNOTATION = "org.junit.gen5.api.Test";
+  @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
@@ -54,16 +51,16 @@ public class JUnitUtil {
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
 
-  public static final String BEFORE_EACH_ANNOTATION_NAME = "org.junit.gen5.api.BeforeEach";
-  public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.gen5.api.AfterEach";
+  public static final String BEFORE_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeEach";
+  public static final String AFTER_EACH_ANNOTATION_NAME = "org.junit.jupiter.api.AfterEach";
 
   public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
 
-  public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.gen5.api.BeforeAll";
-  public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.gen5.api.AfterAll";
+  public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
+  public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
 
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION, TEST5_ANNOTATION));
 
@@ -144,22 +141,24 @@ public class JUnitUtil {
         }
       }
     }
-    final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null) return false;
-    final boolean hasJUnit5 = isJUnit5(modifierList);
+    boolean hasJUnit5 = isJUnit5(psiClass);
     if (!PsiClassUtil.isRunnableClass(psiClass, !hasJUnit5, checkAbstract)) return false;
 
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
     if (checkForTestCaseInheritance && (!hasJUnit5 || psiClass.hasModifierProperty(PsiModifier.PUBLIC)) && isTestCaseInheritor(psiClass)) return true;
 
+    return CachedValuesManager.getCachedValue(psiClass, () ->
+      CachedValueProvider.Result.create(hasTestOrSuiteMethods(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static boolean hasTestOrSuiteMethods(@NotNull PsiClass psiClass) {
     for (final PsiMethod method : psiClass.getAllMethods()) {
-      ProgressManager.checkCanceled();
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
     }
-    
-    if (hasJUnit5) {
+
+    if (isJUnit5(psiClass)) {
       for (PsiClass innerClass : psiClass.getInnerClasses()) {
         for (PsiMethod method : innerClass.getAllMethods()) {
           if (isTestAnnotated(method)) return true;

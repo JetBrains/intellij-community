@@ -88,7 +88,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
     UIUtil.invokeLaterIfNeeded(() -> {
       LOG.debug("Starting a background task...");
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator(refreshTask));
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator());
     });
   }
 

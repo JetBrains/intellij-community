@@ -115,8 +115,9 @@ public class SSBasedInspection extends LocalInspectionTool {
         synchronized (LOCK) {
           if (LexicalNodesFilter.getInstance().accepts(element)) return;
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
-          for (Configuration configuration : myConfigurations) {
-            final MatchContext context = compiledOptions.get(configuration);
+          for (Map.Entry<Configuration, MatchContext> entry : compiledOptions.entrySet()) {
+            Configuration configuration = entry.getKey();
+            MatchContext context = entry.getValue();
 
             if (MatcherImpl.checkIfShouldAttemptToMatch(context, matchedNodes)) {
               final int nodeCount = context.getPattern().getNodeCount();

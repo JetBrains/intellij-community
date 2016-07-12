@@ -397,7 +397,7 @@
       <!-- Tools -->
       <group id="ToolsMenu" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
-        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
+        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
@@ -496,6 +496,7 @@
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <separator/>
         <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
+        <action id="CollectSettings" class="com.intellij.ide.actions.CollectSettingsAction" text="Settings Summary"/>
         <separator/>
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
@@ -752,6 +753,9 @@
     </group>
 
     <group id="EditorContextBarMenu">
+      <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
+              icon="AllIcons.Actions.ToggleSoftWrap"/>
+      <separator/>
     </group>
 
     <group id="DirDiffMenu">
@@ -785,5 +789,6 @@
     <action id="SaveDocument" class="com.intellij.ide.actions.SaveDocumentAction"/>
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
+    <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
   </actions>
 </idea-plugin>

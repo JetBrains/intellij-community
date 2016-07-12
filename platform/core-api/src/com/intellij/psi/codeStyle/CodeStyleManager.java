@@ -152,8 +152,15 @@ public abstract class CodeStyleManager  {
    * @param ranges
    * @throws IncorrectOperationException
    */
-  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
+  public abstract void reformatTextWithContext(@NotNull PsiFile file, 
+                                               @NotNull Collection<TextRange> ranges, 
+                                               @Nullable DiffInfo diffInfo) throws IncorrectOperationException;
 
+
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    reformatTextWithContext(file, ranges, null);
+  }
+  
   /**
    * Re-formats the specified range of a file, modifying only line indents and leaving
    * all other whitespace intact.

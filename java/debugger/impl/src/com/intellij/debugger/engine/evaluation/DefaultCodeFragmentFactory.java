@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
@@ -32,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

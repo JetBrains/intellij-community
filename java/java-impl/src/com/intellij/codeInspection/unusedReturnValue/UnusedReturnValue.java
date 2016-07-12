@@ -175,6 +175,11 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();

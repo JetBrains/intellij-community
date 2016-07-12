@@ -29,11 +29,13 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author peter
@@ -53,7 +55,7 @@ public class FileContentQueue {
   private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<FileContent>();
   private final AtomicInteger myContentsToLoad = new AtomicInteger();
 
-  private volatile long myLoadedBytesInQueue;
+  private final AtomicLong myLoadedBytesInQueue = new AtomicLong();
   private final Object myProceedWithLoadingLock = new Object();
 
   private volatile long myBytesBeingProcessed;
@@ -81,9 +83,6 @@ public class FileContentQueue {
         while (contentQueue != null) {
           if (contentQueue.loadNextContent()) {
             ourContentLoadingQueues.addLast(contentQueue);
-          }
-          if (myContentsToLoad.get() == 0) {
-            return;
           }
           contentQueue = ourContentLoadingQueues.pollFirst();
         }
@@ -129,14 +128,13 @@ public class FileContentQueue {
 
     boolean counterUpdated = false;
     try {
-      synchronized (myProceedWithLoadingLock) {
-        while (myLoadedBytesInQueue > MAX_SIZE_OF_BYTES_IN_QUEUE) {
-          indicator.checkCanceled();
-          myProceedWithLoadingLock.wait(300);
-        }
-        myLoadedBytesInQueue += contentLength;
-        counterUpdated = true;
+      while (myLoadedBytesInQueue.get() > MAX_SIZE_OF_BYTES_IN_QUEUE) {
+        indicator.checkCanceled();
+        synchronized (myProceedWithLoadingLock) { myProceedWithLoadingLock.wait(300); }
       }
+
+      myLoadedBytesInQueue.addAndGet(contentLength);
+      counterUpdated = true;
 
       content.getBytes(); // Reads the content bytes and caches them.
 
@@ -144,9 +142,7 @@ public class FileContentQueue {
     }
     catch (Throwable e) {
       if (counterUpdated) {
-        synchronized (myProceedWithLoadingLock) {
-          myLoadedBytesInQueue -= contentLength;   // revert size counter
-        }
+        myLoadedBytesInQueue.addAndGet(-contentLength); // revert size counter
       }
 
       if (e instanceof ProcessCanceledException) {
@@ -156,7 +152,11 @@ public class FileContentQueue {
         throw (InterruptedException)e;
       }
       else if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) {
-        LOG.info(e);
+        if (e instanceof FileNotFoundException) {
+          LOG.debug(e); // it is possible to not observe file system change until refresh finish, we handle missed file properly anyway
+        } else {
+          LOG.info(e);
+        }
       }
       else if (ApplicationManager.getApplication().isUnitTestMode()) {
         //noinspection CallToPrintStackTrace
@@ -230,11 +230,11 @@ public class FileContentQueue {
       }
     }
 
-    synchronized (myProceedWithLoadingLock) {
-      myLoadedBytesInQueue -= result.getLength();
-      if (myLoadedBytesInQueue < MAX_SIZE_OF_BYTES_IN_QUEUE) {
-        myProceedWithLoadingLock
-          .notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
+    long loadedBytesInQueueNow = myLoadedBytesInQueue.addAndGet(-result.getLength());
+    if (loadedBytesInQueueNow < MAX_SIZE_OF_BYTES_IN_QUEUE) {
+      synchronized (myProceedWithLoadingLock) {
+        // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
+        myProceedWithLoadingLock.notifyAll();
       }
     }
 
@@ -249,9 +249,7 @@ public class FileContentQueue {
   }
 
   public void pushBack(@NotNull FileContent content) {
-    synchronized (myProceedWithLoadingLock) {
-      myLoadedBytesInQueue += content.getLength();
-    }
+    myLoadedBytesInQueue.addAndGet(content.getLength());
     myLoadedContents.addFirst(content);
   }
 }

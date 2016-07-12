@@ -823,7 +823,8 @@ public class TypeMigrationLabeler {
   }
 
   public PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType) {
-    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(new PsiReference[0]));
+    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(
+      PsiReference.EMPTY_ARRAY));
   }
 
   PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType, final PsiReference[] refs) {

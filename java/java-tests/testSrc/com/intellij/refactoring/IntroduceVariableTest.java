@@ -250,7 +250,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSubPrimitiveLiteral() {
-    doTest(new MockIntroduceVariableHandler("str", false, false, false, "boolean"));
+    doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
   public void testArrayFromVarargs() {
@@ -509,7 +509,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testDenotableType1() {
-    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<?>>"));
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<? extends java.lang.Object>>"));
   }
 
   public void testDenotableType2() {

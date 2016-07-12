@@ -54,10 +54,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.TextFieldCompletionProvider;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -569,14 +566,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        item.parameter.defaultValue = WriteCommandAction.runWriteCommandAction(myProject, new Computable<String>() {
+        String def = WriteCommandAction.runWriteCommandAction(myProject, new Computable<String>() {
           @Override
           public String compute() {
-            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText();
+            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim();
           }
         });
-        String def = item.parameter.defaultValue;
-        def = def.trim();
+        item.parameter.defaultValue = def;
         if (!(type instanceof PsiEllipsisType)) {
           try {
             if (!StringUtil.isEmpty(def)) {
@@ -672,7 +668,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final PsiModifierList modifierList = method.getModifierList();
     String modifiers = modifierList.getText();
     final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
-    final String newModifier = getVisibility();
+    final String newModifier = ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL);
     String newModifierStr = VisibilityUtil.getVisibilityString(newModifier);
     if (!Comparing.equal(newModifier, oldModifier)) {
       int index = modifiers.indexOf(oldModifier);

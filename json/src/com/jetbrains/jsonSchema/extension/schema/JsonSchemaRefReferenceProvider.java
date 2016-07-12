@@ -16,17 +16,12 @@
 package com.jetbrains.jsonSchema.extension.schema;
 
 import com.intellij.json.psi.JsonValue;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,44 +52,15 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       final String text = getCanonicalText();
       String id = null;
       String ref = text.substring(1);
-      if (!text.startsWith("#")) {
+      final boolean isGlobal = !text.startsWith("#");
+      if (isGlobal) {
         final int idx = text.indexOf("#");
         if (idx <= 0) return null;
         id = text.substring(0, idx);
         ref = text.substring(idx + 1);
       }
 
-      return resolveSchemaProperty(getElement(), id, ref);
+      return new JsonSchemaDefinitionResolver(getElement(), id).setRef(ref).setInCurrentFile(!isGlobal).doResolve();
     }
-  }
-
-  @Nullable
-  public static PsiElement resolveSchemaProperty(PsiElement baseElement, @Nullable final String schemaId, String ref) {
-    final Project project = baseElement.getProject();
-    final FileBasedIndex index = FileBasedIndex.getInstance();
-    final Ref<Pair<VirtualFile, Integer>> reference = new Ref<>();
-    final GlobalSearchScope filter = schemaId == null ? GlobalSearchScope.fileScope(baseElement.getContainingFile()) :
-                                     JsonSchemaResourcesRootsProvider.enlarge(project, GlobalSearchScope.allScope(project));
-    index.processValues(JsonSchemaFileIndex.PROPERTIES_INDEX, ref, null, new FileBasedIndex.ValueProcessor<Integer>() {
-      @Override
-      public boolean process(VirtualFile file, Integer value) {
-        if (schemaId != null) {
-          if (!JsonSchemaService.Impl.getEx(project).checkFileForId(schemaId, file)) {
-            return true;
-          }
-        }
-        reference.set(Pair.create(file, value));
-        return false;
-      }
-    }, filter);
-
-    if (!reference.isNull()) {
-      final Pair<VirtualFile, Integer> pair = reference.get();
-      final PsiFile file = baseElement.getManager().findFile(pair.getFirst());
-      if (file != null) {
-        return file.findElementAt(pair.getSecond());
-      }
-    }
-    return null;
   }
 }

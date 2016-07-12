@@ -84,12 +84,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiVariable) {
-        return RecursionManager.doPreventingRecursion(expression, true, new Computable<Color>() {
-          @Override
-          public Color compute() {
-            return getExpressionColor(((PsiVariable)target).getInitializer());
-          }
-        });
+        return RecursionManager.doPreventingRecursion(expression, true, () -> getExpressionColor(((PsiVariable)target).getInitializer()));
       }
     }
     return JavaColorProvider.getJavaColorFromExpression(expression);

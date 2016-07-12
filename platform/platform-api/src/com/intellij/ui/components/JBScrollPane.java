@@ -15,11 +15,11 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -37,9 +37,13 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.*;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.lang.reflect.Field;
 
 public class JBScrollPane extends JScrollPane {
   /**
@@ -53,24 +57,18 @@ public class JBScrollPane extends JScrollPane {
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   @Deprecated
-  public static final RegionPainter<Float> TRACK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+  public static final RegionPainter<Float> THUMB_PAINTER = ScrollPainter.EditorThumb.DEFAULT;
 
   @Deprecated
-  public static final RegionPainter<Float> TRACK_DARK_PAINTER = new AlphaPainter(.0f, .1f, Gray.x80);
+  public static final RegionPainter<Float> THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.DARCULA;
 
   @Deprecated
-  public static final RegionPainter<Float> THUMB_PAINTER = new ProtectedPainter(new SubtractThumbPainter(.20f, .15f, Gray.x80, Gray.x91),
-                                                                                new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
-  @Deprecated
-  public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = ScrollPainter.EditorThumb.Mac.DEFAULT;
 
   @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .2f, .3f, Gray.x00);
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new RoundThumbPainter(2, 0f, .5f, Gray.x00);
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
 
-  @Deprecated
-  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
-  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new RoundThumbPainter(2, 0f, .15f, Gray.xFF);
+  private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
@@ -168,6 +166,35 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+    if (ui instanceof BasicScrollPaneUI) {
+      try {
+        Field field = BasicScrollPaneUI.class.getDeclaredField("mouseScrollListener");
+        field.setAccessible(true);
+        Object value = field.get(ui);
+        if (value instanceof MouseWheelListener) {
+          MouseWheelListener oldListener = (MouseWheelListener)value;
+          MouseWheelListener newListener = event -> {
+            if (isScrollEvent(event)) {
+              Object source = event.getSource();
+              if (source instanceof JScrollPane) {
+                JScrollPane pane = (JScrollPane)source;
+                if (pane.isWheelScrollingEnabled()) {
+                  JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
+                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                }
+              }
+            }
+          };
+          field.set(ui, newListener);
+          // replace listener if field updated successfully
+          removeMouseWheelListener(oldListener);
+          addMouseWheelListener(newListener);
+        }
+      }
+      catch (Exception exception) {
+        LOG.warn(exception);
+      }
+    }
   }
 
   @Override
@@ -457,6 +484,19 @@ public class JBScrollPane extends JScrollPane {
             return ltr ? LEFT : RIGHT;
           }
         }
+        // assume alignment for a scroll bar,
+        // which is not contained in a scroll pane
+        if (component instanceof JScrollBar) {
+          JScrollBar bar = (JScrollBar)component;
+          switch (bar.getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return bar.getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
+          }
+        }
       }
       return null;
     }
@@ -523,6 +563,7 @@ public class JBScrollPane extends JScrollPane {
       boolean isEmpty = bounds.width < 0 || bounds.height < 0;
       Component view = viewport == null ? null : viewport.getView();
       Dimension viewPreferredSize = view == null ? new Dimension() : view.getPreferredSize();
+      if (view instanceof JComponent) JBViewport.fixPreferredSize(viewPreferredSize, (JComponent)view, vsb, hsb);
       Dimension viewportExtentSize = viewport == null ? new Dimension() : viewport.toViewCoordinates(bounds.getSize());
       // If the view is tracking the viewports width we don't bother with a horizontal scrollbar.
       // If the view is tracking the viewports height we don't bother with a vertical scrollbar.
@@ -774,170 +815,19 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class ProtectedPainter implements RegionPainter<Float> {
-    private RegionPainter<Float> myPainter;
-    private RegionPainter<Float> myFallback;
-
-    public ProtectedPainter(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
-      myPainter = painter;
-      myFallback = fallback;
-    }
-
-    @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      RegionPainter<Float> painter = myFallback;
-      if (myPainter != null) {
-        try {
-          myPainter.paint(g, x, y, width, height, value);
-          return;
-        }
-        catch (Throwable exception) {
-          // do not try to use myPainter again on other systems
-          if (!SystemInfo.isWindows) myPainter = null;
-        }
-      }
-      if (painter != null) {
-        painter.paint(g, x, y, width, height, value);
-      }
-    }
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }
 
-  private static class AlphaPainter extends RegionPainter.Alpha {
-    private final float myBase;
-    private final float myDelta;
-    final Color myFillColor;
-
-    private AlphaPainter(float base, float delta, Color fill) {
-      myBase = base;
-      myDelta = delta;
-      myFillColor = fill;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      g.setColor(myFillColor);
-      g.fillRect(x, y, width, height);
-    }
-
-    @Override
-    protected float getAlpha(Float value) {
-      return value != null ? myBase + myDelta * value : 0;
-    }
-  }
-
-  private static class RoundThumbPainter extends AlphaPainter {
-    private final int myBorder;
-
-    private RoundThumbPainter(int border, float base, float delta, Color fill) {
-      super(base, delta, fill);
-      myBorder = border;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      width -= myBorder + myBorder;
-      height -= myBorder + myBorder;
-
-      int arc = Math.min(width, height);
-      g.setColor(myFillColor);
-      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
-    }
-  }
-
-  private static class ThumbPainter extends AlphaPainter {
-    private final Color myDrawColor;
-
-    private ThumbPainter(float base, float delta, Color fill, Color draw) {
-      super(base, delta, fill);
-      myDrawColor = draw;
-    }
-
-    @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      super.paint(g, x + 1, y + 1, width - 2, height - 2);
-      g.setColor(myDrawColor);
-      if (Registry.is("ide.scroll.thumb.border.rounded")) {
-        g.drawLine(x + 1, y, x + width - 2, y);
-        g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-        g.drawLine(x, y + 1, x, y + height - 2);
-        g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-      }
-      else {
-        g.drawRect(x, y, width - 1, height - 1);
-      }
-    }
-  }
-
-  private static class SubtractThumbPainter extends ThumbPainter {
-    public SubtractThumbPainter(float base, float delta, Color fill, Color draw) {
-      super(base, delta, fill, draw);
-    }
-
-    @Override
-    protected Composite getComposite(float alpha) {
-      return alpha < 1
-             ? new SubtractComposite(alpha)
-             : AlphaComposite.SrcOver;
-    }
-  }
-
-  private static class SubtractComposite implements Composite, CompositeContext {
-    private final float myAlpha;
-
-    private SubtractComposite(float alpha) {
-      myAlpha = alpha;
-    }
-
-    private int subtract(int newValue, int oldValue) {
-      float value = (oldValue & 0xFF) - (newValue & 0xFF) * myAlpha;
-      return value <= 0 ? 0 : (int)value;
-    }
-
-    @Override
-    public CompositeContext createContext(ColorModel src, ColorModel dst, RenderingHints hints) {
-      return isValid(src) && isValid(dst) ? this : AlphaComposite.SrcOver.derive(myAlpha).createContext(src, dst, hints);
-    }
-
-    private static boolean isValid(ColorModel model) {
-      if (model instanceof DirectColorModel && DataBuffer.TYPE_INT == model.getTransferType()) {
-        DirectColorModel dcm = (DirectColorModel)model;
-        if (0x00FF0000 == dcm.getRedMask() && 0x0000FF00 == dcm.getGreenMask() && 0x000000FF == dcm.getBlueMask()) {
-          return 4 != dcm.getNumComponents() || 0xFF000000 == dcm.getAlphaMask();
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public void compose(Raster srcIn, Raster dstIn, WritableRaster dstOut) {
-      int width = Math.min(srcIn.getWidth(), dstIn.getWidth());
-      int height = Math.min(srcIn.getHeight(), dstIn.getHeight());
-
-      int[] srcPixels = new int[width];
-      int[] dstPixels = new int[width];
-
-      for (int y = 0; y < height; y++) {
-        srcIn.getDataElements(0, y, width, 1, srcPixels);
-        dstIn.getDataElements(0, y, width, 1, dstPixels);
-        for (int x = 0; x < width; x++) {
-          int src = srcPixels[x];
-          int dst = dstPixels[x];
-          int a = subtract(src >> 24, dst >> 24) << 24;
-          int r = subtract(src >> 16, dst >> 16) << 16;
-          int g = subtract(src >> 8, dst >> 8) << 8;
-          int b = subtract(src, dst);
-          dstPixels[x] = a | r | g | b;
-        }
-        dstOut.setDataElements(0, y, width, 1, dstPixels);
-      }
-    }
-
-    @Override
-    public void dispose() {
-    }
-  }
+  private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
+    ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
+    ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 }

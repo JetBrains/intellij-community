@@ -53,6 +53,7 @@ public class GitCommand {
   public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
   public static final GitCommand MERGE_BASE = read("merge-base");
+  public static final GitCommand MV = write("mv");
   public static final GitCommand PULL = write("pull");
   public static final GitCommand PUSH = write("push");
   public static final GitCommand REBASE = write("rebase");

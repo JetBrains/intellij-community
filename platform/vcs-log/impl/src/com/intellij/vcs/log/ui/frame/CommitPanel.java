@@ -16,8 +16,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +38,6 @@ import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +55,8 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
 class CommitPanel extends JBPanel {
   private static final Logger LOG = Logger.getInstance("Vcs.Log");
@@ -78,14 +77,14 @@ class CommitPanel extends JBPanel {
     myColorManager = colorManager;
     myDataPack = dataPack;
 
-    setLayout(new MigLayout("flowy, ins 0, hidemode 3, gapy 0, fill", null, "0[]0[]push"));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setOpaque(false);
 
     myReferencesPanel = new ReferencesPanel(myColorManager);
     myDataPanel = new DataPanel(myLogData.getProject(), myLogData.isMultiRoot());
 
-    add(myReferencesPanel, "growx, wmax 100%, growy 0");
-    add(myDataPanel, "growx, wmax 100%, growy");
+    add(myReferencesPanel);
+    add(myDataPanel);
   }
 
   public void setDataPack(@NotNull VisiblePack visiblePack) {
@@ -147,7 +146,7 @@ class CommitPanel extends JBPanel {
       Color color = VcsLogGraphTable.getRootBackgroundColor(data.getRoot(), myColorManager);
       setBorder(new CompoundBorder(new MatteBorder(0, VcsLogGraphTable.ROOT_INDICATOR_COLORED_WIDTH, 0, 0, color),
                                    new MatteBorder(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH / 2,
-                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH, BOTTOM_BORDER, 0,
+                                                   VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH - ReferencesPanel.H_GAP, BOTTOM_BORDER, 0,
                                                    new JBColor(CommitPanel::getCommitDetailsBackground))));
     }
   }
@@ -159,11 +158,6 @@ class CommitPanel extends JBPanel {
 
   public boolean isExpanded() {
     return myDataPanel.isExpanded();
-  }
-
-  @NotNull
-  public static Font getCommitDetailsFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 
   @NotNull
@@ -197,6 +191,8 @@ class CommitPanel extends JBPanel {
 
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+      setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
 
       addHyperlinkListener(e -> {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
@@ -428,11 +424,13 @@ class CommitPanel extends JBPanel {
   }
 
   private static class ReferencesPanel extends JPanel {
+    private static final int H_GAP = 4;
+    private static final int V_GAP = 3;
     @NotNull private final VcsRefPainter myReferencePainter;
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
-      super(new WrappedFlowLayout(4, 2));
+      super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
       myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);

@@ -47,7 +47,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -57,7 +56,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,33 +164,20 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfile inspectionProfile;
+    final InspectionProfileImpl inspectionProfile;
     if (profile != null) {
-      inspectionProfile = (InspectionProfile)profile;
+      inspectionProfile = (InspectionProfileImpl)profile;
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
         @Override
-        public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
-          return resMap.containsKey(key.toString());
-        }
-
-        @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
-
-        @Override
-        public boolean isEditable() {
-          return false;
-        }
-
-        @NotNull
-        @Override
-        public String getDisplayName() {
-          return getName();
-        }
       };
+      for (String id : resMap.keySet()) {
+        inspectionProfile.enableTool(id, project);
+      }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);
   }

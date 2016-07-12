@@ -609,7 +609,7 @@ public class SSHMain implements GitExternalApp {
   @Override
   public String toString() {
     return String
-      .format("SSHMain{myHost=%s, myHandlerNo=%d, myCommand='%s', myExitCode=%d, myLastError='%s'}", myHost, myHandlerNo, myCommand,
+      .format("SSHMain{myHost=%s, myHandlerNo=%s, myCommand='%s', myExitCode=%d, myLastError='%s'}", myHost, myHandlerNo, myCommand,
               myExitCode, myLastError);
   }
 

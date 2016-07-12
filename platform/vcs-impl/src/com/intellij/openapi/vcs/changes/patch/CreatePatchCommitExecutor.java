@@ -28,17 +28,21 @@ import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -49,6 +53,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
@@ -135,6 +140,15 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
+      File commonAncestor = ChangesUtil.findCommonAncestor(changes);
+      myPanel.setCommonParentPath(commonAncestor);
+      Set<AbstractVcs> affectedVcses = ChangesUtil.getAffectedVcses(changes, myProject);
+      if (affectedVcses.size() == 1 && commonAncestor != null) {
+        VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(commonAncestor));
+        if (vcsRoot != null) {
+          myPanel.selectBasePath(vcsRoot);
+        }
+      }
       myPanel.setReversePatch(false);
 
       JComponent panel = myPanel.getPanel();
@@ -147,16 +161,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     public void execute(Collection<Change> changes, String commitMessage) {
-      if (! myPanel.isOkToExecute()) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          @Override
-          public void run() {
-            Messages
-              .showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
-          }
-        }, ModalityState.NON_MODAL, myProject);
-        return;
-      }
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (file.exists()) {
@@ -204,8 +208,9 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = PATCH_PATH;
         final boolean reversePatch = myPanel.isReversePatch();
 
-        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), reversePatch);
-        PatchWriter.writePatches(myProject, fileName, patches, myCommitContext, myPanel.getEncoding());
+        String baseDirName = myPanel.getBaseDirName();
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
+        PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding());
         final String message;
         if (binaryCount == 0) {
           message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
@@ -241,6 +246,12 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     public void executionCanceled() {
+    }
+
+    @Override
+    @Nullable
+    public ValidationInfo validateFields() {
+      return myPanel.validateFields();
     }
 
     @Override

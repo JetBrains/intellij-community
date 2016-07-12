@@ -40,7 +40,7 @@ public class ImplementationSearcher {
 
   public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
 
-  @NotNull
+  @Nullable
   PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     final TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
     boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -57,14 +57,14 @@ public class ImplementationSearcher {
     }), onRef);
   }
 
-  @NotNull
+  @Nullable
   public PsiElement[] searchImplementations(final PsiElement element,
                                             final Editor editor, final int offset,
                                             final boolean includeSelfAlways,
                                             final boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     final PsiElement[] elements = searchDefinitions(element, editor);
-    if (elements == null) return PsiElement.EMPTY_ARRAY; //the search has been cancelled
+    if (elements == null) return null; //the search has been cancelled
     if (elements.length > 0) {
       if (!includeSelfAlways) return filterElements(element, elements, offset);
       final PsiElement[] all;

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -58,22 +59,26 @@ public class GrDelegatesToUtil {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
-    GroovyResolveResult result = resolveActualCall(call);
+    final GroovyResolveResult result = resolveActualCall(call);
+    final PsiElement element = result.getElement();
 
-    if (GdkMethodUtil.isWithOrIdentity(result.getElement())) {
+    if (GdkMethodUtil.isWithOrIdentity(element)) {
       final GrExpression qualifier = inferCallQualifier((GrMethodCall)call);
       if (qualifier == null) return null;
 
       return new DelegatesToInfo(qualifier.getType(), Closure.DELEGATE_FIRST);
     }
 
-    GrClosureSignature signature = inferSignature(result.getElement());
+    final GrClosureSignature signature = inferSignature(element);
     if (signature == null) return null;
 
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(place, call, signature);
     if (map == null) return null;
 
-    final PsiParameter parameter = findParameter(closableBlock, map, result);
+    if (!(element instanceof PsiMethod)) return null;
+    final PsiMethod method = (PsiMethod)element;
+    final PsiParameterList parameterList = method.getParameterList();
+    final PsiParameter parameter = findParameter(parameterList, closableBlock, map);
     if (parameter == null) return null;
 
     final String delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY);
@@ -89,7 +94,7 @@ public class GrDelegatesToUtil {
     if (delegatesTo == null) return null;
 
     PsiType delegateType = getFromValue(delegatesTo);
-    if (delegateType == null) delegateType = getFromTarget(delegatesTo, signature, map);
+    if (delegateType == null) delegateType = getFromTarget(parameterList, delegatesTo, signature, map);
     if (delegateType == null) delegateType = getFromType(result, delegatesTo);
 
     final int strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"));
@@ -121,16 +126,13 @@ public class GrDelegatesToUtil {
   }
 
   @Nullable
-  private static PsiParameter findParameter(@NotNull GrClosableBlock closableBlock,
-                                            @NotNull GrClosureSignatureUtil.ArgInfo<PsiElement>[] map,
-                                            @NotNull GroovyResolveResult result) {
-    final PsiElement element = result.getElement();
-    if (element instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+  private static PsiParameter findParameter(@NotNull PsiParameterList parameterList,
+                                            @NotNull GrClosableBlock closableBlock,
+                                            @NotNull GrClosureSignatureUtil.ArgInfo<PsiElement>[] map) {
+    final PsiParameter[] parameters = parameterList.getParameters();
 
-      for (int i = 0; i < map.length; i++) {
-        if (map[i].args.contains(closableBlock)) return parameters[i];
-      }
+    for (int i = 0; i < map.length; i++) {
+      if (map[i].args.contains(closableBlock)) return parameters[i];
     }
 
     return null;
@@ -155,13 +157,14 @@ public class GrDelegatesToUtil {
     return null;
   }
 
-  private static PsiType getFromTarget(PsiAnnotation delegatesTo,
+  private static PsiType getFromTarget(PsiParameterList parameterList,
+                                       PsiAnnotation delegatesTo,
                                        GrClosureSignature signature,
                                        GrClosureSignatureUtil.ArgInfo<PsiElement>[] map) {
-    String target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target");
+    final String target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target");
     if (target == null) return null;
 
-    final int parameter = findTargetParameter(delegatesTo, target);
+    final int parameter = findTargetParameter(parameterList, target);
     if (parameter < 0) return null;
 
     final PsiType type = map[parameter].type;
@@ -205,7 +208,7 @@ public class GrDelegatesToUtil {
     if (!(element instanceof PsiMethod)) return null;
 
     String typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type");
-    if (typeValue == null) return null;
+    if (StringUtil.isEmptyOrSpaces(typeValue)) return null;
 
     PsiElement context = FromStringHintProcessor.createContext((PsiMethod)element);
     PsiType type = JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(typeValue, context);
@@ -213,10 +216,7 @@ public class GrDelegatesToUtil {
     return result.getSubstitutor().substitute(type);
   }
 
-  private static int findTargetParameter(@NotNull PsiAnnotation delegatesTo, @NotNull String target) {
-    //                                                 ann      mod.list    parameter   param.list
-    final PsiParameterList list = (PsiParameterList)delegatesTo.getParent().getParent().getParent();
-
+  private static int findTargetParameter(@NotNull PsiParameterList list, @NotNull String target) {
     PsiParameter[] parameters = list.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       final PsiModifierList modifierList = parameters[i].getModifierList();

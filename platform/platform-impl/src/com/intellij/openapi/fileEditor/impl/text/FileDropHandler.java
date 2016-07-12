@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,6 +76,8 @@ public class FileDropHandler implements EditorDropHandler {
       final VirtualFile vFile = fileSystem.refreshAndFindFileByIoFile(file);
       final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx) FileEditorManager.getInstance(project);
       if (vFile != null) {
+        NonProjectFileWritingAccessProvider.allowWriting(vFile);
+        
         if (editorWindow != null) {
           fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
         }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -46,7 +46,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -70,17 +69,12 @@ public class PluginDescriptorChooser {
                           final Consumer<DomFileElement<IdeaPlugin>> consumer) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
-    List<DomFileElement<IdeaPlugin>> elements =
-      DomService.getInstance().getFileElements(IdeaPlugin.class,
-                                               project,
-                                               module.getModuleWithDependenciesScope());
+    List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, project,
+                                                                                         module.getModuleWithDependentsScope());
 
-    elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public boolean value(DomFileElement<IdeaPlugin> element) {
-        VirtualFile virtualFile = element.getFile().getVirtualFile();
-        return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
-      }
+    elements = ContainerUtil.filter(elements, element -> {
+      VirtualFile virtualFile = element.getFile().getVirtualFile();
+      return virtualFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile);
     });
 
     elements = findAppropriateIntelliJModule(module.getName(), elements);
@@ -96,8 +90,7 @@ public class PluginDescriptorChooser {
     }
 
     final BaseListPopupStep<PluginDescriptorCandidate> popupStep =
-      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor",
-                                                       createCandidates(module, elements)) {
+      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor", createCandidates(module, elements)) {
 
         @Override
         public boolean isSpeedSearchEnabled() {
@@ -156,17 +149,25 @@ public class PluginDescriptorChooser {
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   List<DomFileElement<IdeaPlugin>> elements) {
+    ModuleManager moduleManager = ModuleManager.getInstance(currentModule.getProject());
+    final String[] groupPath = moduleManager.getModuleGroupPath(currentModule);
+
     Collections.sort(elements, (o1, o2) -> {
       // current module = first group
       final Module module1 = o1.getModule();
       final Module module2 = o2.getModule();
-      final int byAlpha = ModulesAlphaComparator.INSTANCE.compare(module1, module2);
-      if (byAlpha == 0) return 0;
 
       if (currentModule.equals(module1)) return -1;
       if (currentModule.equals(module2)) return 1;
-
-      return byAlpha;
+      
+      if (module1 != null && module2 != null) {
+        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module2)),
+                                                groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module1)));
+        if (groupComparison != 0) {
+          return groupComparison;
+        }
+      }
+      return ModulesAlphaComparator.INSTANCE.compare(module1, module2);
     });
     Collections.sort(elements, (o1, o2) -> {
       if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
@@ -185,6 +186,18 @@ public class PluginDescriptorChooser {
         return new PluginDescriptorCandidate(element, startsNewGroup);
       }
     });
+  }
+
+  private static int groupMatchLevel(@Nullable String[] targetGroupPath, @Nullable String[] groupPath) {
+    if (targetGroupPath != null && groupPath != null) {
+      for (int i = 0; i < Math.min(targetGroupPath.length, groupPath.length); i++) {
+        if (!targetGroupPath[i].equals(groupPath[i])) {
+          return i;
+        }
+      }
+      return Math.min(targetGroupPath.length, groupPath.length);
+    }
+    return 0;
   }
 
   private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,

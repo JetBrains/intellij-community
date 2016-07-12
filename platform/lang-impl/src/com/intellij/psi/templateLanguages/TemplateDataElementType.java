@@ -46,7 +46,7 @@ import javax.swing.*;
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.templateLanguages.TemplateDataElementType");
 
-  public static final LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
+  public static final LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
   @NotNull private final IElementType myTemplateElementType;
   @NotNull private final IElementType myOuterElementType;
@@ -92,12 +92,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       lexer.start(chars);
       insertOuters(parsed, lexer, table);
 
-      if (parsed != null) {
-        final TreeElement element = parsed.getFirstChildNode();
-        if (element != null) {
-          parsed.rawRemoveAllChildren();
-          treeElement.rawAddChildren(element);
-        }
+      final TreeElement element = parsed.getFirstChildNode();
+      if (element != null) {
+        parsed.rawRemoveAllChildren();
+        treeElement.rawAddChildren(element);
       }
     }
     finally {
@@ -118,7 +116,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return childNode;
   }
 
-  protected void prepareParsedTemplateFile(FileElement root) {
+  protected void prepareParsedTemplateFile(@NotNull FileElement root) {
   }
 
   protected Language getTemplateFileLanguage(TemplateLanguageFileViewProvider viewProvider) {
@@ -195,8 +193,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       LOG.error("Invalid start: " + tokenStart + "; " + lexer);
     }
     final int tokenEnd = lexer.getTokenEnd();
-    if (tokenEnd < 0 || tokenEnd > buffer.length()) {
-      LOG.error("Invalid end: " + tokenEnd + "; " + lexer);
+    if (tokenEnd < 0 || tokenEnd > buffer.length() || tokenEnd < tokenStart) {
+      LOG.error("Invalid range: (" + tokenStart+","+tokenEnd + "); buffer length:"+buffer.length()+"; " + lexer);
     }
 
     return new OuterLanguageElementImpl(outerElementType, table.intern(buffer, tokenStart, tokenEnd));

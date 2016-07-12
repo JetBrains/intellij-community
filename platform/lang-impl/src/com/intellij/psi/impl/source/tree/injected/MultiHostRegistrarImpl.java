@@ -55,7 +55,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -199,7 +198,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     TextRange relevantRangeInHost = relevantRange.shiftRight(hostTextRange.getStartOffset());
     SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
     shreds.add(new ShredImpl(manager.createSmartPsiFileRangePointer(myHostPsiFile, relevantRangeInHost, true),
-                             manager.createSmartPsiElementPointer(host, myHostPsiFile),
+                             manager.createSmartPsiElementPointer(host, myHostPsiFile, true),
                              prefix, suffix, new ProperTextRange(startOffset, endOffset), false));
     return this;
   }
@@ -258,6 +257,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         }
 
         virtualFile.setContent(null, documentWindow.getText(), false);
+        virtualFile.setWritable(virtualFile.getDelegate().isWritable());
 
         cacheEverything(place, documentWindow, viewProvider, psiFile, pointer);
 

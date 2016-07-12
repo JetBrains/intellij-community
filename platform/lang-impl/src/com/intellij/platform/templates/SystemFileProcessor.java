@@ -22,7 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
@@ -45,7 +45,7 @@ import java.util.List;
 public class SystemFileProcessor extends ProjectTemplateFileProcessor {
 
   private static final String[] COMPONENT_NAMES = new String[] {
-    FileEditorManagerImpl.FILE_EDITOR_MANAGER,
+    FileEditorManager.class.getName(),
     "org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"
   };
 
@@ -60,7 +60,11 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
         Object component = project.getComponent(componentName);
         if (component == null) {
           try {
-            component = ServiceManager.getService(project, Class.forName(componentName));
+            Class<?> aClass = Class.forName(componentName);
+            component = project.getComponent(aClass);
+            if(component == null) {
+              component = ServiceManager.getService(project, aClass);
+            }
           }
           catch (ClassNotFoundException ignore) {
           }
@@ -84,9 +88,12 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
                   LOG.error(ignore);
                 }
               }
-              else {
+              else if (component instanceof PersistentStateComponent) {
                 Object state = ((PersistentStateComponent)component).getState();
-                Element element1 = XmlSerializer.serialize(state);
+                if(state == null){
+                  return;
+                }
+                Element element1 = state instanceof Element ? (Element)state : XmlSerializer.serialize(state);
                 element.addContent(element1.cloneContent());
                 element.setAttribute("name", StoreUtil.getStateSpec((PersistentStateComponent)component).name());
               }

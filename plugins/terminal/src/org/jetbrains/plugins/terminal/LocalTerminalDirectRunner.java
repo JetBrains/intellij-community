@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -94,6 +93,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+    
+    for (LocalTerminalCustomizer customizer: LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+      customizer.setupEnvironment(myProject, envs);
+    }
+    
     try {
       return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }

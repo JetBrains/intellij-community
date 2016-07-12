@@ -63,12 +63,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
 
     ExtensionPointLocator locator = new ExtensionPointLocator(epClass);
     List<ExtensionPointCandidate> targets =
-      ContainerUtil.filter(locator.findDirectCandidates(), new Condition<ExtensionPointCandidate>() {
-        @Override
-        public boolean value(ExtensionPointCandidate candidate) {
-          return epName.equals(candidate.epName);
-        }
-      });
+      ContainerUtil.filter(locator.findDirectCandidates(), candidate -> epName.equals(candidate.epName));
 
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)

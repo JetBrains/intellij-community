@@ -40,12 +40,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @NotNull private final EditorImpl myEditor;
   @NotNull private final MarkupModelEx myDelegate;
 
-  private final Condition<RangeHighlighter> IS_AVAILABLE = new Condition<RangeHighlighter>() {
-    @Override
-    public boolean value(RangeHighlighter highlighter) {
-      return isAvailable(highlighter);
-    }
-  };
+  private final Condition<RangeHighlighter> IS_AVAILABLE = highlighter -> isAvailable(highlighter);
 
   public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
@@ -128,8 +123,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
-    myDelegate.fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged);
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
+    myDelegate.fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
   }
 
   @Override

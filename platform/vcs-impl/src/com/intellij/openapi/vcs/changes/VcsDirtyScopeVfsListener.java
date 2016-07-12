@@ -66,8 +66,14 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
           myQueue.clear();
         }
 
+        HashSet<FilePath> dirtyFiles = ContainerUtil.newHashSet();
+        HashSet<FilePath> dirtyDirs = ContainerUtil.newHashSet();
         for (FilesAndDirs filesAndDirs : list) {
-          dirtyScopeManager.filePathsDirty(filesAndDirs.dirtyFiles, filesAndDirs.dirtyDirs);
+          dirtyFiles.addAll(filesAndDirs.dirtyFiles);
+          dirtyDirs.addAll(filesAndDirs.dirtyDirs);
+        }
+        if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
+          dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
         }
       }
     };
@@ -81,6 +87,9 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   }
 
   public static void install(@NotNull Project project) {
+    if (!project.isOpen()) {
+      throw new RuntimeException("Already closed: " + project);
+    }
     getInstance(project);
   }
 
@@ -156,10 +165,12 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
   }
 
   private void markDirtyOnPooled(@NotNull FilesAndDirs dirtyFilesAndDirs) {
-    synchronized (myLock) {
-      myQueue.add(dirtyFilesAndDirs);
+    if (!dirtyFilesAndDirs.isEmpty()) {
+      synchronized (myLock) {
+        myQueue.add(dirtyFilesAndDirs);
+      }
+      myZipperUpdater.request();
     }
-    myZipperUpdater.request();
   }
 
   /**
@@ -189,6 +200,10 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
 
     private void addToFiles(@Nullable VirtualFile file) {
       add(file, true);
+    }
+
+    private boolean isEmpty() {
+      return dirtyFiles.isEmpty() && dirtyDirs.isEmpty();
     }
   }
 }

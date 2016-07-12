@@ -202,7 +202,7 @@ public class GuavaPredicatesUtil {
       if (typeElement != null) {
         final PsiType type = typeElement.getType();
         final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-        if (aClass != null && GuavaLambda.PREDICATE.equals(aClass.getQualifiedName())) {
+        if (aClass != null && GuavaLambda.PREDICATE.getClassQName().equals(aClass.getQualifiedName())) {
           expression = (PsiExpression)parParent.replace(expression);
         }
       }

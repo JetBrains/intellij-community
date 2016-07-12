@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -398,11 +397,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
                   return fieldsToInitializers.get(source).movedFieldsUsed;
                 }
               },
-              new Condition<PsiField>() {
-                public boolean value(PsiField object) {
-                  return !initializedFields.contains(object);
-                }
-              }
+              object -> !initializedFields.contains(object)
       );
 
       for (PsiField psiField : unmovable) {
@@ -556,7 +551,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
       if (doLookup) {
         final PsiReference[] references =
-          ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(new PsiReference[0]);
+          ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(PsiReference.EMPTY_ARRAY);
         if (commonInitializerCandidate == null && references.length > 0) {
           return null;
         }

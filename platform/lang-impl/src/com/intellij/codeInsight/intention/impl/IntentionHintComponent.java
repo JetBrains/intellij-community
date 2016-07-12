@@ -340,18 +340,10 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     myPanel.setLayout(new BorderLayout());
     myPanel.setOpaque(false);
 
-    boolean showRefactoringsBulb = ContainerUtil.exists(intentions.inspectionFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
-      @Override
-      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
-        return descriptor.getAction() instanceof BaseRefactoringIntentionAction;
-      }
-    });
-    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(intentions.errorFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
-      @Override
-      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
-        return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
-      }
-    });
+    boolean showRefactoringsBulb = ContainerUtil.exists(intentions.inspectionFixesToShow,
+                                                        descriptor -> descriptor.getAction() instanceof BaseRefactoringIntentionAction);
+    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(intentions.errorFixesToShow,
+                                                                    descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction()));
 
     Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 

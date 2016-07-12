@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +42,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -132,6 +132,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final RefFilter filter = getFilter();
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
+      if (!refEntity.isValid()) return;
       Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
@@ -185,18 +186,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     protected boolean applyFix(@NotNull final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
-      final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-      for (RefEntity refElement : refElements) {
-        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
-        if (psiElement == null) continue;
-        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
-        psiElements.add(psiElement);
-      }
-
+      final PsiElement[] psiElements = Arrays
+        .stream(refElements)
+        .filter(RefElement.class::isInstance)
+        .map(e -> ((RefElement) e).getElement())
+        .filter(e -> e != null)
+        .toArray(PsiElement[]::new);
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
-        SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false,
+        SafeDeleteHandler.invoke(project, psiElements, false,
                                  () -> removeElements(refElements, project, myToolWrapper));
       });
 
@@ -211,6 +210,20 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
       super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), toolWrapper);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isEnabledAndVisible()) {
+        final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
+        for (RefEntity element : elements) {
+          if (!((RefElement) element).isEntry()) {
+            return;
+          }
+        }
+        e.getPresentation().setEnabled(false);
+      }
     }
 
     @Override
@@ -236,13 +249,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     protected boolean applyFix(@NotNull RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
       List<RefElement> deletedRefs = new ArrayList<RefElement>(1);
+      final RefFilter filter = getFilter();
       for (RefEntity refElement : refElements) {
         PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
         if (psiElement == null) continue;
-        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
+        if (filter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
 
         final RefEntity owner = refElement.getOwner();
-        if (!(owner instanceof RefElement && ArrayUtil.find(refElements, owner) > -1)) {
+        if (!(owner instanceof RefJavaElement) || filter.getElementProblemCount((RefJavaElement)owner) == 0 || !(ArrayUtil.find(refElements, owner) > -1)) {
           commentOutDead(psiElement);
         }
 
@@ -341,12 +355,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
                                        @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure) {
+                                       boolean showStructure,
+                                       boolean groupByStructure) {
     final EntryPointsNode entryPointsNode = new EntryPointsNode(context);
     InspectionToolWrapper dummyToolWrapper = entryPointsNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(dummyToolWrapper);
     presentation.updateContent();
-    provider.appendToolNodeContent(context, entryPointsNode, node, showStructure);
+    provider.appendToolNodeContent(context, entryPointsNode, node, showStructure, groupByStructure);
     return entryPointsNode;
   }
 

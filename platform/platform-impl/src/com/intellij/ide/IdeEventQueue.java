@@ -50,11 +50,13 @@ import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AppContext;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
@@ -109,7 +111,8 @@ public class IdeEventQueue extends EventQueue {
    * Swing event.
    */
   private int myEventCount;
-  private final AtomicInteger myKeyboardEventsInTheQueue = new AtomicInteger();
+  final AtomicInteger myKeyboardEventsPosted = new AtomicInteger();
+  final AtomicInteger myKeyboardEventsDispatched = new AtomicInteger();
   private boolean myIsInInputEvent;
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
@@ -152,8 +155,31 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
+
+    abracadabraDaberBoreh();
   }
 
+  private void abracadabraDaberBoreh() {
+    // we need to track if there are KeyBoardEvents in IdeEventQueue
+    // so we want to intercept all events posted to IdeEventQueue and increment counters
+    // However, we regular control flow goes like this:
+    //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
+    // Instead, we do following:
+    //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
+    //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
+    // since that the control flow goes like this:
+    //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
+    try {
+      Class<?> aClass = Class.forName("sun.awt.PostEventQueue");
+      Constructor<?> constructor = aClass.getDeclaredConstructor(EventQueue.class);
+      constructor.setAccessible(true);
+      Object postEventQueue = constructor.newInstance(this);
+      AppContext.getAppContext().put("PostEventQueue", postEventQueue);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public void setWindowManager(final WindowManagerEx windowManager) {
     myWindowManager = windowManager;
@@ -327,59 +353,61 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
-    try {
-      if (!appIsLoaded()) {
-        try {
-          super.dispatchEvent(e);
-        }
-        catch (Throwable t) {
-          processException(t);
-        }
-        return;
-      }
-
-      e = InertialMouseRouter.changeSourceIfNeeded(e);
-
-      e = fixNonEnglishKeyboardLayouts(e);
-
-      e = mapEvent(e);
-      if (Registry.is("keymap.windows.as.meta")) {
-        e = mapMetaState(e);
-      }
-
-      boolean wasInputEvent = myIsInInputEvent;
-      myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
-      if (myIsInInputEvent) {
-        HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-      }
-      AWTEvent oldEvent = myCurrentEvent;
-      myCurrentEvent = e;
-
-      boolean userActivity = myIsInInputEvent || e instanceof ItemEvent;
-      try (AccessToken ignored = startActivity(userActivity)) {
-        _dispatchEvent(e, false);
+    if (!appIsLoaded()) {
+      try {
+        super.dispatchEvent(e);
       }
       catch (Throwable t) {
         processException(t);
       }
-      finally {
-        myIsInInputEvent = wasInputEvent;
-        myCurrentEvent = oldEvent;
+      return;
+    }
 
-        for (EventDispatcher each : myPostProcessors) {
-          each.dispatch(e);
-        }
+    e = InertialMouseRouter.changeSourceIfNeeded(e);
 
-        if (e instanceof KeyEvent) {
-          maybeReady();
-        }
-      }
+    e = fixNonEnglishKeyboardLayouts(e);
+
+    e = mapEvent(e);
+    if (Registry.is("keymap.windows.as.meta")) {
+      e = mapMetaState(e);
+    }
+
+    boolean wasInputEvent = myIsInInputEvent;
+    myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
+    if (myIsInInputEvent) {
+      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    }
+    AWTEvent oldEvent = myCurrentEvent;
+    myCurrentEvent = e;
+
+    boolean userActivity = myIsInInputEvent || e instanceof ItemEvent || e instanceof FocusEvent && !((FocusEvent)e).isTemporary();
+    try (AccessToken ignored = startActivity(userActivity)) {
+      _dispatchEvent(e, false);
+    }
+    catch (Throwable t) {
+      processException(t);
     }
     finally {
-      if (isKeyboardEvent(e)) {
-        myKeyboardEventsInTheQueue.decrementAndGet();
+      myIsInInputEvent = wasInputEvent;
+      myCurrentEvent = oldEvent;
+
+      for (EventDispatcher each : myPostProcessors) {
+        each.dispatch(e);
+      }
+
+      if (e instanceof KeyEvent) {
+        maybeReady();
       }
     }
+  }
+
+  @Override
+  public AWTEvent getNextEvent() throws InterruptedException {
+    AWTEvent event = super.getNextEvent();
+    if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
+      throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
+    }
+    return event;
   }
 
   @Nullable
@@ -515,7 +543,10 @@ public class IdeEventQueue extends EventQueue {
   private AWTEvent mapMetaState(AWTEvent e) {
     if (myWinMetaPressed) {
       Application app = ApplicationManager.getApplication();
-      if (app == null || !app.isActive()) {
+
+      boolean weAreNotActive = app == null || !app.isActive();
+      weAreNotActive |= e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null;
+      if (weAreNotActive) {
         myWinMetaPressed = false;
         return e;
       }
@@ -564,7 +595,7 @@ public class IdeEventQueue extends EventQueue {
       enterSuspendModeIfNeeded(e);
     }
 
-    myKeyboardBusy = myKeyboardEventsInTheQueue.get() != 0;
+    myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
     if (e instanceof KeyEvent) {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
@@ -1121,13 +1152,13 @@ public class IdeEventQueue extends EventQueue {
   public void postEvent(@NotNull AWTEvent event) {
     myFrequentEventDetector.eventHappened(event);
     if (isKeyboardEvent(event)) {
-      myKeyboardEventsInTheQueue.incrementAndGet();
+      myKeyboardEventsPosted.incrementAndGet();
     }
     super.postEvent(event);
   }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
-    return event instanceof KeyEvent && (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED || event.getID() == KeyEvent.KEY_TYPED);
+    return event instanceof KeyEvent;
   }
 
   @Override

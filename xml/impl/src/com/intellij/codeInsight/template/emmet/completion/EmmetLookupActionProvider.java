@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,8 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
               if (project.isDisposed()) return;
 
               final Configurable generatorSpecificConfigurable = generator.createConfigurable();
-              EmmetCompositeConfigurable configurable = generatorSpecificConfigurable != null
-                                                        ? new EmmetCompositeConfigurable(generatorSpecificConfigurable)
-                                                        : new EmmetCompositeConfigurable(new XmlEmmetConfigurable());
-              ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+              Configurable configurable = generatorSpecificConfigurable != null ? generatorSpecificConfigurable : new XmlEmmetConfigurable();
+              ShowSettingsUtil.getInstance().editConfigurable(project, new EmmetCompositeConfigurable(configurable));
             });
             return Result.HIDE_LOOKUP;
           }
@@ -62,7 +60,7 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
         consumer.consume(new LookupElementAction(AllIcons.Actions.Delete, "Disable Emmet") {
           @Override
           public Result performLookupAction() {
-            ApplicationManager.getApplication().invokeLater(() -> generator.disableEmmet());
+            ApplicationManager.getApplication().invokeLater(generator::disableEmmet);
             return Result.HIDE_LOOKUP;
           }
         });

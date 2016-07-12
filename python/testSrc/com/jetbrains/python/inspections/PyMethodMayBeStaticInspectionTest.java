@@ -100,22 +100,12 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
 
   // PY-18866
   public void testSuperSamePy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
   }
 
   // PY-18866
   public void testSuperNotSamePy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
   }
 
   private void doTest() {

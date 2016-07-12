@@ -257,8 +257,8 @@ public class OptionalGetWithoutIsPresentInspection extends BaseInspection {
       }
       else if (expression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-        final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, null);
-        final PsiExpression optionalDefinition = VariableSearchUtils.findDefinition(this.referenceExpression, null);
+        final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, null);
+        final PsiExpression optionalDefinition = DeclarationSearchUtils.findDefinition(this.referenceExpression, null);
         if (definition == null || optionalDefinition == null || optionalDefinition.getTextOffset() > definition.getTextOffset()) {
           return false;
         }

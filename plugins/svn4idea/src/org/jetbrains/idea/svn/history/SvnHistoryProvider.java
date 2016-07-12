@@ -128,6 +128,7 @@ public class SvnHistoryProvider
         public void consume(VcsFileRevision vcsFileRevision) {
           field.setText(mergeSourceColumn.getText(vcsFileRevision));
           field.setCaretPosition(0);
+          field.repaint();
         }
       };
 

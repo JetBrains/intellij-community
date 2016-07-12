@@ -99,14 +99,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
     return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
-        return ContainerUtil.findAll(aClass.getMethods(), new Condition<Method>() {
-          public boolean value(final Method method) {
-            return Modifier.isStatic(method.getModifiers())
-                   && Modifier.isPublic(method.getModifiers())
-                   && !Modifier.isAbstract(method.getModifiers())
-                   && ElementPattern.class.isAssignableFrom(method.getReturnType());
-          }
-        });
+        return ContainerUtil.findAll(aClass.getMethods(), method -> Modifier.isStatic(method.getModifiers())
+                                                                && Modifier.isPublic(method.getModifiers())
+                                                                && !Modifier.isAbstract(method.getModifiers())
+                                                                && ElementPattern.class.isAssignableFrom(method.getReturnType()));
       }
     }));
   }

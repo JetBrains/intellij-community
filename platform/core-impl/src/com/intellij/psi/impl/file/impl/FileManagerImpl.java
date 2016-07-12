@@ -61,8 +61,8 @@ public class FileManagerImpl implements FileManager {
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = ContainerUtil.createConcurrentWeakValueMap();
 
-  private boolean myInitialized = false;
-  private boolean myDisposed = false;
+  private boolean myInitialized;
+  private boolean myDisposed;
 
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
@@ -113,7 +113,7 @@ public class FileManagerImpl implements FileManager {
     });
   }
 
-  public static void clearPsiCaches(FileViewProvider provider) {
+  public static void clearPsiCaches(@NotNull FileViewProvider provider) {
     if (provider instanceof SingleRootFileViewProvider) {
       for (PsiFile root : ((SingleRootFileViewProvider)provider).getCachedPsiFiles()) {
         if (root instanceof PsiFileImpl) {
@@ -146,9 +146,13 @@ public class FileManagerImpl implements FileManager {
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
-    if (findCachedViewProvider(vFile) == null) {
+    LanguageSubstitutors.cancelReparsing(vFile);
+    FileViewProvider viewProvider = findCachedViewProvider(vFile);
+    if (viewProvider == null) {
       return;
     }
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     setViewProvider(vFile, null);
 
     VirtualFile dir = vFile.getParent();
@@ -177,13 +181,13 @@ public class FileManagerImpl implements FileManager {
     if (myInitialized) {
       myConnection.disconnect();
     }
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     clearViewProviders();
 
     myDisposed = true;
   }
 
   private void clearViewProviders() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     DebugUtil.startPsiModification("clearViewProviders");
     try {
       for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
@@ -199,7 +203,13 @@ public class FileManagerImpl implements FileManager {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    clearViewProviders();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        clearViewProviders();
+      }
+    });
+
     myVFileToPsiDirMap.clear();
     ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
   }
@@ -321,7 +331,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  private boolean myProcessingFileTypesChange = false;
+  private boolean myProcessingFileTypesChange;
   private void handleFileTypesChange(@NotNull FileTypesChanged runnable) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
@@ -346,7 +356,7 @@ public class FileManagerImpl implements FileManager {
 
   @TestOnly
   public void checkConsistency() {
-    HashMap<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();
     for (VirtualFile vFile : fileToViewProvider.keySet()) {
       final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
@@ -585,7 +595,7 @@ public class FileManagerImpl implements FileManager {
     return true;
   }
 
-  private void markInvalidations(Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
+  private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
     DebugUtil.startPsiModification(null);
     try {
       for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {

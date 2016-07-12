@@ -32,7 +32,6 @@ import static org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor.GROOVY_L
 @CompileStatic
 class JsonBuilderTest extends LightGroovyTestCase {
 
-  final String basePath = null
   final LightProjectDescriptor projectDescriptor = GROOVY_LATEST
 
   void 'test highlighting'() {

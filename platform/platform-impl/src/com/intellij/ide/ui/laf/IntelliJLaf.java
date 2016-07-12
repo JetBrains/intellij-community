@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
 import java.io.File;
@@ -40,7 +41,21 @@ public class IntelliJLaf extends DarculaLaf {
 
   @Override
   protected String getPrefix() {
-    return "intellijlaf";
+    return isWindowsNativeLook() ? "intellijlaf_native" : "intellijlaf";
+  }
+
+  @Override
+  protected BasicLookAndFeel createBaseLookAndFeel() {
+    if (isWindowsNativeLook()) {
+      try {
+        final String name = UIManager.getSystemLookAndFeelClassName();
+        return (BasicLookAndFeel)Class.forName(name).newInstance();
+      }
+      catch (Exception e) {
+        log(e);
+      }
+    }
+    return super.createBaseLookAndFeel();
   }
 
   @Override
@@ -99,6 +114,7 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   public static boolean isGraphite() {
+    if (!SystemInfo.isMac) return false;
     try {
       // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
       // NSGraphiteControlTint = 6
@@ -114,6 +130,6 @@ public class IntelliJLaf extends DarculaLaf {
   }
 
   public static boolean isWindowsNativeLook() {
-    return Registry.is("ide.intellij.laf.win10.ui");
+    return SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui");
   }
 }

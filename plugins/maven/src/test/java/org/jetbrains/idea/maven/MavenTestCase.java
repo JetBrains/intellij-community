@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   // should not be static
-  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator());
+  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL));
 
   private File ourTempDir;
 

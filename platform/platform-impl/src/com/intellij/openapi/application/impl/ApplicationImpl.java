@@ -22,8 +22,9 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.*;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
@@ -32,7 +33,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
@@ -171,10 +171,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myCommandLineMode = isCommandLine;
 
     myDoNotSave = isUnitTestMode || isHeadless;
-
-    if (myTestModeFlag) {
-      registerShutdownHook();
-    }
+    CommandLineUtil.VERBOSE_COMMAND_LINE_MODE = isUnitTestMode;
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
@@ -220,26 +217,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
-  }
-
-  private void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      if (isDisposed() || myDisposeInProgress) {
-        return;
-      }
-      ShutDownTracker.invokeAndWait(isUnitTestMode(), true, () -> {
-        if (ApplicationManager.getApplication() != this) return;
-        try {
-          myDisposeInProgress = true;
-          saveAll();
-        }
-        finally {
-          if (!disposeSelf(true)) {
-            myDisposeInProgress = false;
-          }
-        }
-      });
-    });
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
@@ -350,7 +327,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        assert !isReadAccessAllowed() : describe(Thread.currentThread());
         try {
           return action.call();
         }
@@ -362,7 +338,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
         finally {
           Thread.interrupted(); // reset interrupted status
-          assert !isReadAccessAllowed() : describe(Thread.currentThread());
         }
         return null;
       }
@@ -415,13 +390,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      long t = System.currentTimeMillis();
-      init(mySplash == null ? null : new EmptyProgressIndicator() {
+      long start = System.currentTimeMillis();
+      ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
           mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
         }
-      }, () -> {
+      };
+      init(indicator, () -> {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
@@ -438,8 +414,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
       });
-      t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigCount() + " application components initialized in " + (System.currentTimeMillis() - start) + "ms");
     }
     finally {
       token.finish();
@@ -513,19 +488,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
       LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
-      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+      //noinspection TestOnlyProblems
+      LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics()
+               + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
+      );
     }
   }
 
   @TestOnly
   public String writeActionStatistics() {
     return writePauses.statistics();
-  }
-
-  @NotNull
-  @Override
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.getAppComponents();
   }
 
   @Override
@@ -1150,6 +1122,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
+        fireAfterWriteActionFinished(clazz);
       }
     }
   }
@@ -1289,6 +1262,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void fireWriteActionFinished(@NotNull Class action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
+  }
+
+  private void fireAfterWriteActionFinished(@NotNull Class action) {
+    myDispatcher.getMulticaster().afterWriteActionFinished(action);
   }
 
   @Override

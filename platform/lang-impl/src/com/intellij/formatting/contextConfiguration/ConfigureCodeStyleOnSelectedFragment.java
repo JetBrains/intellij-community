@@ -129,12 +129,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
 
-      setInitialLocationCallback(new Computable<Point>() {
-        @Override
-        public Point compute() {
-          return new DialogPositionProvider().calculateLocation();
-        }
-      });
+      setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
 
       init();
     }

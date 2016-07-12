@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.ui.components.JBScrollPane.isScrollEvent;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -325,6 +326,7 @@ public final class IdeMouseEventDispatcher {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
+             && isScrollEvent(mwe)
              && findHorizontalScrollBar(c) != null;
     }
     return false;

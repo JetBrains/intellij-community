@@ -23,8 +23,11 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.autotest.AbstractAutoTestManager;
+import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -44,7 +47,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,7 +138,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
-    handler.putUserData(TestStateStorage.RUN_CONFIGURATION_NAME_KEY, getConfiguration().getName());
     
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
@@ -155,7 +156,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = () -> {
-          root.flush();
           deleteTempFiles();
           clear();
         };
@@ -166,15 +166,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
     LOG.assertTrue(rerunFailedTestsAction != null);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return viewer;
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction);
+    result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
+      @Override
+      public AbstractAutoTestManager getAutoTestManager(Project project) {
+        return JavaAutoRunManager.getInstance(project);
+      }
+    });
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;

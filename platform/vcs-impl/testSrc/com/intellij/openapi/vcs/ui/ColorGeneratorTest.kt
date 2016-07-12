@@ -22,37 +22,35 @@ import java.awt.Color
 class ColorGeneratorTest : UsefulTestCase () {
   fun testLineGeneration() {
     for (count in 0..5) {
-      assertEquals(count, generate(Color.BLACK, Color.WHITE, count).size)
+      assertEquals(count + 2, generate(Color.BLACK, Color.WHITE, count).size)
     }
 
-    assertOrderedEquals(generate(Gray._100, Gray._200, 1), listOf(Gray._100))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 2), listOf(Gray._100, Gray._200))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 3), listOf(Gray._100, Gray._150, Gray._200))
-    assertOrderedEquals(generate(Gray._100, Gray._200, 5), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 0), listOf(Gray._100, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 1), listOf(Gray._100, Gray._150, Gray._200))
+    assertOrderedEquals(generate(Gray._100, Gray._200, 3), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
 
-    assertOrderedEquals(generate(Color(0, 100, 200), Color(200, 100, 0), 3), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
+    assertOrderedEquals(generate(Color(0, 100, 200), Color(200, 100, 0), 1), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
   }
 
   fun testChainLineGeneration() {
     for (anchorCount in 0..5) {
       val anchors = generate(Color.BLACK, Color.WHITE, anchorCount)
-      for (count in 0..40) {
+      for (count in 0..5) {
         val generated = generateChain(count, anchors)
-        assertEquals(count, generated.size)
+        assertContainsOrdered(generated, anchors)
       }
     }
 
-    assertOrderedEquals(generateChain(1, Gray._100, Gray._200), listOf(Gray._100))
-    assertOrderedEquals(generateChain(2, Gray._100, Gray._200), listOf(Gray._100, Gray._200))
-    assertOrderedEquals(generateChain(3, Gray._100, Gray._200), listOf(Gray._100, Gray._150, Gray._200))
-    assertOrderedEquals(generateChain(5, Gray._100, Gray._200), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
+    assertOrderedEquals(generateChain(0, Gray._100, Gray._200), listOf(Gray._100, Gray._200))
+    assertOrderedEquals(generateChain(1, Gray._100, Gray._200), listOf(Gray._100, Gray._150, Gray._200))
+    assertOrderedEquals(generateChain(3, Gray._100, Gray._200), listOf(Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
 
-    assertOrderedEquals(generateChain(3, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._100, Gray._200))
-    assertOrderedEquals(generateChain(5, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._50, Gray._100, Gray._150, Gray._200))
-    assertOrderedEquals(generateChain(9, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._25, Gray._50, Gray._75, Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
+    assertOrderedEquals(generateChain(0, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._100, Gray._200))
+    assertOrderedEquals(generateChain(1, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._50, Gray._100, Gray._150, Gray._200))
+    assertOrderedEquals(generateChain(3, Gray._0, Gray._100, Gray._200), listOf(Gray._0, Gray._25, Gray._50, Gray._75, Gray._100, Gray._125, Gray._150, Gray._175, Gray._200))
 
-    assertOrderedEquals(generateChain(3, Color(0, 100, 200), Color(200, 100, 0)), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
-    assertOrderedEquals(generateChain(5, Color(0, 100, 200), Color(0, 0, 0), Color(200, 100, 0)), listOf(Color(0, 100, 200), Color(0, 50, 100), Color(0, 0, 0), Color(100, 50, 0), Color(200, 100, 0)))
+    assertOrderedEquals(generateChain(1, Color(0, 100, 200), Color(200, 100, 0)), listOf(Color(0, 100, 200), Color(100, 100, 100), Color(200, 100, 0)))
+    assertOrderedEquals(generateChain(1, Color(0, 100, 200), Color(0, 0, 0), Color(200, 100, 0)), listOf(Color(0, 100, 200), Color(0, 50, 100), Color(0, 0, 0), Color(100, 50, 0), Color(200, 100, 0)))
   }
 
   fun generate(color1: Color, color2: Color, count: Int) = ColorGenerator.generateLinearColorSequence(color1, color2, count)

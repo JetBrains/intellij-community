@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.HashSet;
@@ -104,7 +105,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
               if (myT.equals(conjunct)) return true;
             }
           }
-          final PsiType lowerBound = CClass.getUserData(InferenceSession.LOWER_BOUND);
+          final PsiType lowerBound = InferenceSession.getLowerBound(CClass);
           if (lowerBound != null) {
             constraints.add(new StrictSubtypingConstraint(lowerBound, myS));
             return true;

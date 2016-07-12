@@ -19,9 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +38,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
   public static final String BUILD_TOOLS_GROUP = "Build Tools";
-  public static final String MOBILE_GROUP = "Mobile Java";
   private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
@@ -82,12 +79,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
-      @Override
-      public boolean value(SdkTypeId sdkType) {
-        return moduleBuilder.isSuitableSdkType(sdkType);
-      }
-    });
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder,
+                                                                         moduleBuilder::isSuitableSdkType);
   }
 
   private static Icon getJavaModuleIcon() {

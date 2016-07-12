@@ -178,14 +178,10 @@ public class EditorHyperlinkSupport {
     final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-                                                        new FilteringProcessor<RangeHighlighterEx>(new Condition<RangeHighlighterEx>() {
-                                                          @Override
-                                                          public boolean value(RangeHighlighterEx rangeHighlighterEx) {
-                                                            return HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
-                                                                   rangeHighlighterEx.isValid() &&
-                                                                   getHyperlinkInfo(rangeHighlighterEx) != null;
-                                                          }
-                                                        }, processor)
+                                                        new FilteringProcessor<RangeHighlighterEx>(
+                                                          rangeHighlighterEx -> HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
+                                                                              rangeHighlighterEx.isValid() &&
+                                                                 getHyperlinkInfo(rangeHighlighterEx) != null, processor)
     );
     return new ArrayList<RangeHighlighter>(processor.getResults());
   }
@@ -279,22 +275,27 @@ public class EditorHyperlinkSupport {
       final String text = getLineText(document, line, true);
       Filter.Result result = customFilter.applyFilter(text, endOffset);
       if (result != null) {
-        for (Filter.ResultItem resultItem : result.getResultItems()) {
-          int start = resultItem.getHighlightStartOffset();
-          int end = resultItem.getHighlightEndOffset();
-          if (end < start || end > document.getTextLength()) {
-            LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength() + "; filter=" + customFilter);
-            continue;
-          }
+        highlightHyperlinks(result);
+      }
+    }
+  }
 
-          TextAttributes attributes = resultItem.getHighlightAttributes();
-          if (resultItem.getHyperlinkInfo() != null) {
-            createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes());
-          }
-          else if (attributes != null) {
-            addHighlighter(start, end, attributes);
-          }
-        }
+  public void highlightHyperlinks(@NotNull Filter.Result result) {
+    Document document = myEditor.getDocument();
+    for (Filter.ResultItem resultItem : result.getResultItems()) {
+      int start = resultItem.getHighlightStartOffset();
+      int end = resultItem.getHighlightEndOffset();
+      if (end < start || end > document.getTextLength()) {
+        LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength());
+        continue;
+      }
+
+      TextAttributes attributes = resultItem.getHighlightAttributes();
+      if (resultItem.getHyperlinkInfo() != null) {
+        createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes());
+      }
+      else if (attributes != null) {
+        addHighlighter(start, end, attributes);
       }
     }
   }

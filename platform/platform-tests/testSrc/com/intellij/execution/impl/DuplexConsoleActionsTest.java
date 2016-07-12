@@ -125,7 +125,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
       @NotNull
       @Override
       public AnAction[] createConsoleActions() {
-        return ContainerUtil.reverse(Arrays.asList(super.createConsoleActions())).toArray(new AnAction[0]);
+        return ContainerUtil.reverse(Arrays.asList(super.createConsoleActions())).toArray(AnAction.EMPTY_ARRAY);
       }
     };
     console.getComponent();

@@ -91,10 +91,14 @@ public class AutoPopupController implements Disposable {
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
-    scheduleAutoPopup(editor, condition);
+    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
-  public void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition){
+    scheduleAutoPopup(editor, completionType, condition);
+  }
+
+  public void scheduleAutoPopup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       return;
     }
@@ -129,12 +133,12 @@ public class AutoPopupController implements Disposable {
         return;
       }
 
-      CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
+      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0, false);
     });
   }
 
   public void scheduleAutoPopup(final Editor editor) {
-    scheduleAutoPopup(editor, null);
+    scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
   private void addRequest(final Runnable request, final int delay) {

@@ -658,8 +658,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     @Override
     public void visibilityChanged() {
       if (myProject.isOpen()) {
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        myTodoTreeBuilder.setUpdatable(isShowing());
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
+          () -> myTodoTreeBuilder.setUpdatable(isShowing()));
       }
     }
   }

@@ -135,12 +135,9 @@ class AsyncCompletion implements CompletionThreading {
 
       @Override
       public void consume(final CompletionResult result) {
-        queue.offer(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            indicator.addItem(result);
-            return true;
-          }
+        queue.offer(() -> {
+          indicator.addItem(result);
+          return true;
         });
       }
     };

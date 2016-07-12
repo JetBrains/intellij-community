@@ -73,22 +73,38 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
       try {
-        Object trace = recursiveInvocation ? null :
-                       element instanceof PsiFile ? getInvalidationTrace(element) :
-                       findInvalidationTrace(element.getNode());
+        Object trace = recursiveInvocation ? null : getPsiInvalidationTrace(element);
         myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
-        if (trace == null) {
-          myDiagnostic = Attachment.EMPTY_ARRAY;
-        }
-        else {
-          myDiagnostic = new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
-                                                                     : new Attachment("diagnostic.txt", trace.toString())};
-        }
+        myDiagnostic = createAttachments(trace);
       }
       finally {
         element.putUserData(REPORTING_EXCEPTION, null);
       }
     }
+  }
+
+  private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
+    myElementReference = new SoftReference<PsiElement>(null);
+    myMessage = "Element " + node.getClass() + " of type " + node.getElementType() + (message == null ? "" : "; " + message);
+    myDiagnostic = createAttachments(findInvalidationTrace(node));
+  }
+
+  public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable String message) {
+    return new PsiInvalidElementAccessException(node, message);
+  }
+
+  @NotNull
+  private static Attachment[] createAttachments(@Nullable Object trace) {
+    return trace == null
+           ? Attachment.EMPTY_ARRAY
+           : new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
+                                                         : new Attachment("diagnostic.txt", trace.toString())};
+  }
+
+  @Nullable
+  private static Object getPsiInvalidationTrace(@NotNull PsiElement element) {
+    Object trace = getInvalidationTrace(element);
+    return trace != null || element instanceof PsiFile ? trace : findInvalidationTrace(element.getNode());
   }
 
   private static String getMessageWithReason(@NotNull PsiElement element,

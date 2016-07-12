@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     String text = "";
-    PsiElement[] impls = new PsiElement[0];
+    PsiElement[] impls = PsiElement.EMPTY_ARRAY;
     if (element != null) {
       //if (element instanceof PsiPackage) return;
 
@@ -300,7 +300,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         })
         .setCancelCallback(() -> {
           ImplementationsUpdaterTask task = SoftReference.dereference(myTaskRef);
-          cancelTask(task);
+          if (task != null) {
+            task.cancelTask();
+          }
           return Boolean.TRUE;
         })
         .createPopup();
@@ -314,17 +316,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private static boolean cancelTask(@Nullable ImplementationsUpdaterTask task) {
-    if (task != null) {
-      ProgressIndicator indicator = task.myIndicator;
-      if (indicator != null) {
-        indicator.cancel();
-      }
-      return task.setCanceled();
-    }
-    return false;
-  }
-
   private void updateInBackground(Editor editor,
                                   @Nullable PsiElement element,
                                   @NotNull ImplementationViewComponent component,
@@ -332,7 +323,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                   @NotNull AbstractPopup popup,
                                   @NotNull Ref<UsageView> usageView) {
     final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
-    cancelTask(updaterTask);
+    if (updaterTask != null) {
+      updaterTask.cancelTask();
+    }
 
     if (element == null) return; //already found
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf());
@@ -412,7 +405,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private final PsiElement myElement;
     private final boolean myIncludeSelf;
     private PsiElement[] myElements;
-    private volatile ProgressIndicator myIndicator;
 
     private ImplementationsUpdaterTask(@NotNull PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
       super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
@@ -445,7 +437,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
-      myIndicator = indicator;
       super.run(indicator);
       final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
         new ImplementationSearcher.BackgroundableImplementationSearcher() {
@@ -477,7 +468,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void onSuccess() {
-      if (!cancelTask(this)) {
+      if (!cancelTask()) {
         myComponent.update(myElements, myComponent.getIndex());
       }
       super.onSuccess();

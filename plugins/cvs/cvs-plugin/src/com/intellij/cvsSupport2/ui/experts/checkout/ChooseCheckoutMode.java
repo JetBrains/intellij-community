@@ -254,12 +254,7 @@ public class ChooseCheckoutMode extends WizardStep {
       if (!hasParentIn(allFiles, file)) result.add(file);
     }
 
-    Collections.sort(result, new Comparator<File>(){
-      @Override
-      public int compare(File file, File file1) {
-        return file.getPath().compareTo(file1.getPath());
-      }
-    });
+    Collections.sort(result, (file, file1) -> file.getPath().compareTo(file1.getPath()));
     return result;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,21 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -61,32 +65,31 @@ public class CompilerUtil {
     }
   }
 
-  public static void refreshOutputDirectories(Collection<File> outputs, boolean async) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    List<VirtualFile> toRefresh = new ArrayList<VirtualFile>();
+  /**
+   * A lightweight procedure which ensures that given roots exist in the VFS.
+   * No actual refresh is performed.
+   */
+  public static void refreshOutputRoots(@NotNull Collection<String> outputRoots) {
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    Collection<VirtualFile> toRefresh = ContainerUtil.newHashSet();
 
-    int newDirectories = 0;
-    for (File ioOutput : outputs) {
-      VirtualFile output = fileSystem.findFileByIoFile(ioOutput);
-      if (output != null) {
-        toRefresh.add(output);
-      }
-      else if (ioOutput.exists()) {
-        VirtualFile parent = fileSystem.refreshAndFindFileByIoFile(ioOutput.getParentFile());
-        if (parent != null) {
+    for (String outputRoot : outputRoots) {
+      FileAttributes attributes = FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(outputRoot));
+      VirtualFile vFile = fs.findFileByPath(outputRoot);
+      if (attributes != null && vFile == null) {
+        VirtualFile parent = fs.refreshAndFindFileByPath(PathUtil.getParentPath(outputRoot));
+        if (parent != null && toRefresh.add(parent)) {
           parent.getChildren();
-          toRefresh.add(parent);
-          newDirectories++;
         }
       }
+      else if (attributes == null && vFile != null ||
+               attributes != null && attributes.isDirectory() != vFile.isDirectory()) {
+        toRefresh.add(vFile);
+      }
     }
-    if (newDirectories > 10) {
-      LOG.info(newDirectories + " new output directories were created, refreshing their parents together to avoid too many rootsChange events");
-      RefreshQueue.getInstance().refresh(async, false, null, toRefresh);
-    }
-    else {
-      LOG.debug("Refreshing " + outputs.size() + " outputs");
-      fileSystem.refreshIoFiles(outputs, async, false, null);
+
+    if (!toRefresh.isEmpty()) {
+      RefreshQueue.getInstance().refresh(false, false, null, toRefresh);
     }
   }
 

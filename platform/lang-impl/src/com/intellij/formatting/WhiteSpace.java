@@ -74,6 +74,8 @@ public class WhiteSpace {
   private static final int LF_COUNT_SHIFT = 7;
   private static final int MAX_LF_COUNT = 1 << 24;
 
+  private static final RangesAssert myRangesAssert = new RangesAssert();
+
   /**
    * Creates new <code>WhiteSpace</code> object with the given start offset and a flag that shows if current white space is
    * the first white space.
@@ -108,15 +110,11 @@ public class WhiteSpace {
    * @param model                 formatting model that is used to access to the underlying document text
    * @param options               indent formatting options
    */
-  public void append(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
+  public void changeEndOffset(int newEndOffset, FormattingDocumentModel model, CommonCodeStyleSettings.IndentOptions options) {
     final int oldEndOffset = myEnd;
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
-      InitialInfoBuilder.assertInvalidRanges(myStart,
-        newEndOffset,
-        model,
-        "some block intersects with whitespace"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, newEndOffset, model, "some block intersects with whitespace");
     }
 
     myEnd = newEndOffset;
@@ -125,14 +123,9 @@ public class WhiteSpace {
     myInitial = model.getText(range);
 
     if (!coveredByBlock(model)) {
-      InitialInfoBuilder.assertInvalidRanges(myStart,
-        myEnd,
-        model,
-        "nonempty text is not covered by block"
-      );
+      myRangesAssert.assertInvalidRanges(myStart, myEnd, model, "nonempty text is not covered by block");
     }
 
-    // There is a possible case that this method is called more than once on the same object. We want to
     if (newEndOffset > oldEndOffset) {
       refreshStateOnEndOffsetIncrease(newEndOffset, oldEndOffset, options.TAB_SIZE);
     } else {
@@ -661,7 +654,7 @@ public class WhiteSpace {
    */
   private CharSequence[] getInitialLines() {
     if (myInitial == null) return new CharSequence[]{""};
-    final ArrayList<CharSequence> result = new ArrayList<CharSequence>();
+    final ArrayList<CharSequence> result = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     for (int i = 0; i < myInitial.length(); i++) {
       final char c = myInitial.charAt(i);

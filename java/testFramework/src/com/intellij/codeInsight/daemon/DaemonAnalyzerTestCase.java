@@ -239,15 +239,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
-      new Condition<HighlightInfo>() {
-        @Override
-        public boolean value(HighlightInfo info) {
-          return info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
-                 info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
-                 info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
-                  info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0;
-        }
-      });
+      info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
+             info.getSeverity() == HighlightSeverity.WARNING && checkWarnings ||
+             info.getSeverity() == HighlightSeverity.WEAK_WARNING && checkWeakWarnings ||
+              info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0);
   }
 
   @NotNull

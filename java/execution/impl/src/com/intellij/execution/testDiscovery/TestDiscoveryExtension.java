@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +74,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
                                  @NotNull final ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
+      final String frameworkPrefix = ((JavaTestConfigurationBase)configuration).getFrameworkPrefix();
+      final String moduleName = ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModuleName();
+
       final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
       connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
@@ -85,11 +87,14 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           if ((root == null || root.getHandler() == handler)) {
             final String fullTestName = test.getLocationUrl();
             if (fullTestName != null && fullTestName.startsWith(JavaTestLocator.TEST_PROTOCOL)) {
-              myCompletedMethodNames.add(((JavaTestConfigurationBase)configuration).getFrameworkPrefix() + fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
+              myCompletedMethodNames.add(frameworkPrefix + fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
               if (myCompletedMethodNames.size() > 50) {
                 final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
                 myCompletedMethodNames.clear();
-                processTracesAlarm.addRequest(() -> processAvailableTraces(configuration, fullTestNames), 100);
+                processTracesAlarm.addRequest(() -> processAvailableTraces(fullTestNames,
+                                                                           getTracesDirectory(configuration), moduleName, frameworkPrefix,
+                                                                           TestDiscoveryIndex.getInstance(configuration.getProject())
+                ), 100);
               }
             }
           }
@@ -160,7 +165,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {
-            coverageIndex.updateFromTestTrace(testMethodTrace);
+            coverageIndex.updateFromTestTrace(testMethodTrace, ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModuleName(),
+                                              ((JavaTestConfigurationBase)configuration).getFrameworkPrefix());
             FileUtil.delete(testMethodTrace);
           }
           catch (IOException e) {
@@ -176,9 +182,11 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  private static void processAvailableTraces(RunConfigurationBase configuration, String[] fullTestNames) {
-    final String tracesDirectory = getTracesDirectory(configuration);
-    final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
+  public static void processAvailableTraces(final String[] fullTestNames,
+                                            final String tracesDirectory,
+                                            final String moduleName,
+                                            final String frameworkPrefix,
+                                            final TestDiscoveryIndex discoveryIndex) {
     synchronized (ourTracesLock) {
       for (String fullTestName : fullTestNames) {
         final String className = StringUtil.getPackageName(fullTestName);
@@ -187,7 +195,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
           if (testMethodTrace.exists()) {
             try {
-              coverageIndex.updateFromTestTrace(testMethodTrace);
+              discoveryIndex.updateFromTestTrace(testMethodTrace, moduleName, frameworkPrefix);
               FileUtil.delete(testMethodTrace);
             }
             catch (IOException e) {

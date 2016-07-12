@@ -27,16 +27,14 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiQualifiedNamedElement;
@@ -88,15 +86,6 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof InspectionPackageNode) return 1;
 
-    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) {
-      final Object userObject1 = ((OfflineRefElementNode)node1).getOfflineDescriptor();
-      final Object userObject2 = ((OfflineRefElementNode)node2).getOfflineDescriptor();
-      final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
-      final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
-      if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
-      return descriptor1.getFQName().compareTo(descriptor2.getFQName());
-    }
-
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
       return compareEntities(((RefElementNode)node1).getElement(), ((RefElementNode)node2).getElement());
     }
@@ -104,8 +93,21 @@ public class InspectionResultsViewComparator implements Comparator {
       final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
       final CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
       if (descriptor1 instanceof ProblemDescriptor && descriptor2 instanceof ProblemDescriptor) {
-        //TODO: Do not materialise lazy pointers
-        return ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
+        int diff = ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
+        if (diff != 0) {
+          return diff;
+        }
+        diff = ((ProblemDescriptor)descriptor1).getHighlightType().compareTo(((ProblemDescriptor)descriptor2).getHighlightType());
+        if (diff != 0) {
+          return diff;
+        }
+        diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor1).getStartElement(),
+                                                     ((ProblemDescriptor)descriptor2).getStartElement());
+        if (diff != 0) {
+          return diff;
+        }
+        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor2).getEndElement(),
+                                                     ((ProblemDescriptor)descriptor1).getEndElement());
       }
       if (descriptor1 != null && descriptor2 != null) {
         return descriptor1.getDescriptionTemplate().compareToIgnoreCase(descriptor2.getDescriptionTemplate());
@@ -162,15 +164,29 @@ public class InspectionResultsViewComparator implements Comparator {
         return positionComparing;
       }
     }
-    if (entity1 != null && entity2 != null) {
-      final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
-      if (nameComparing != 0) {
-        return nameComparing;
+    if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
+      final VirtualFile file1 = ((RefFile)entity1).getPointer().getVirtualFile();
+      final VirtualFile file2 = ((RefFile)entity2).getPointer().getVirtualFile();
+      if (file1 != null && file2 != null) {
+        if (file1.equals(file2)) return 0;
+        final int cmp = compareEntitiesByName(entity1, entity2);
+        if (cmp != 0) return cmp;
+        return file1.hashCode() - file2.hashCode();
       }
-      return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
+    }
+    if (entity1 != null && entity2 != null) {
+      return compareEntitiesByName(entity1, entity2);
     }
     if (entity1 != null) return -1;
     return entity2 != null ? 1 : 0;
+  }
+
+  private static int compareEntitiesByName(RefEntity entity1, RefEntity entity2) {
+    final int nameComparing = entity1.getName().compareToIgnoreCase(entity2.getName());
+    if (nameComparing != 0) {
+      return nameComparing;
+    }
+    return entity1.getQualifiedName().compareToIgnoreCase(entity2.getQualifiedName());
   }
 
   private static class InspectionResultsViewComparatorHolder {

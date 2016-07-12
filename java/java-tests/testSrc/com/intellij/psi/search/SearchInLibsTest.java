@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ public class SearchInLibsTest extends PsiTestCase {
     final PsiClass aClass = myJavaFacade.findClass(classNameToSearch);
     assertNotNull(aClass);
 
-    PsiReference[] refs = ReferencesSearch.search(aClass, scope, false).toArray(new PsiReference[0]);
+    PsiReference[] refs = ReferencesSearch.search(aClass, scope, false).toArray(PsiReference.EMPTY_ARRAY);
 
     ArrayList<PsiFile> files = new ArrayList<>();
     for (PsiReference ref : refs) {

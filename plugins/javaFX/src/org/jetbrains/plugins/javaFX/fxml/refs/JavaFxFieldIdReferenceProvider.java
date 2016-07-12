@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.AttributeValueSelfReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -52,16 +52,18 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
         }
       }
     }
-    return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
+    return new PsiReference[]{
+      new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass),
+      new AttributeValueSelfReference(xmlAttributeValue)};
   }
 
-  public static class JavaFxControllerFieldRef extends JavaFxPropertyReference<XmlAttributeValue> {
+  public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
     private final XmlAttributeValue myXmlAttributeValue;
     private final PsiMember myFieldOrMethod;
     private final PsiClass myAClass;
 
     public JavaFxControllerFieldRef(XmlAttributeValue xmlAttributeValue, PsiMember fieldOrMethod, PsiClass aClass) {
-      super(xmlAttributeValue, aClass, true);
+      super(xmlAttributeValue, true);
       myXmlAttributeValue = xmlAttributeValue;
       myFieldOrMethod = fieldOrMethod;
       myAClass = aClass;
@@ -119,39 +121,6 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
         }
       }
       return ArrayUtil.toObjectArray(fieldsToSuggest);
-    }
-
-    @Nullable
-    @Override
-    public PsiMethod getGetter() {
-      if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)myFieldOrMethod)) {
-        return (PsiMethod)myFieldOrMethod;
-      }
-      return super.getGetter();
-    }
-
-    @Nullable
-    @Override
-    public PsiMethod getSetter() {
-      if (myFieldOrMethod instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)myFieldOrMethod)) {
-        return (PsiMethod)myFieldOrMethod;
-      }
-      return super.getSetter();
-    }
-
-    @Nullable
-    @Override
-    public PsiField getField() {
-      if (myFieldOrMethod instanceof PsiField) {
-        return (PsiField)myFieldOrMethod;
-      }
-      return super.getField();
-    }
-
-    @Nullable
-    @Override
-    public String getPropertyName() {
-      return PropertyUtil.getPropertyName(myFieldOrMethod);
     }
 
     @Override

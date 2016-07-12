@@ -353,14 +353,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     try {
       text = file.getText().subSequence(startOffset, endOffset).toString();
       String prefix = null;
-      String stripped = text;
       if (startLiteralExpression != null) {
         final int startExpressionOffset = startLiteralExpression.getTextOffset();
-        if (startOffset == startExpressionOffset) {
-          if (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\'')) {
-            stripped = text.substring(1);
-          }
-        } else if (startOffset == startExpressionOffset + 1) {
+        if (startOffset == startExpressionOffset + 1) {
           text = "\"" + text;
         } else if (startOffset > startExpressionOffset + 1){
           prefix = "\" + ";
@@ -371,34 +366,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       String suffix = null;
       if (endLiteralExpression != null) {
         final int endExpressionOffset = endLiteralExpression.getTextOffset() + endLiteralExpression.getTextLength();
-        if (endOffset == endExpressionOffset ) {
-          if (StringUtil.endsWithChar(stripped, '\"') || StringUtil.endsWithChar(stripped, '\'')) {
-            stripped = stripped.substring(0, stripped.length() - 1);
-          }
-        } else if (endOffset == endExpressionOffset - 1) {
+        if (endOffset == endExpressionOffset - 1) {
           text += "\"";
         } else if (endOffset < endExpressionOffset - 1) {
           suffix = " + \"";
           text += "\"";
         }
-      }
-
-      boolean primitive = false;
-      if (stripped.equals("true") || stripped.equals("false")) {
-        primitive = true;
-      }
-      else {
-        try {
-          Integer.parseInt(stripped);
-          primitive = true;
-        }
-        catch (NumberFormatException e1) {
-          //then not primitive
-        }
-      }
-
-      if (primitive) {
-        text = stripped;
       }
 
       if (literalExpression != null && text.equals(literalExpression.getText())) return literalExpression;

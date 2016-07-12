@@ -18,16 +18,19 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -38,7 +41,7 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable {
+public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsComponent");
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
 
@@ -337,8 +340,12 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   @Override
   public Dimension getPreferredSize() {
-    final Graphics2D g2 = (Graphics2D)getGraphics();
-    return new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
+    Border border = getBorder();
+    Graphics2D g2 = (Graphics2D)getGraphics();
+    Dimension dim = new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
+    Insets insets = border != null ? border.getBorderInsets(this) : JBUI.emptyInsets();
+    dim.height += insets.top + insets.bottom;
+    return dim;
   }
 
   @Override
@@ -352,6 +359,11 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     removeMouseMotionListener(myMouseListener);
 
     myListeners = null;
+  }
+
+  @Override
+  public double getWeight() {
+    return Double.MAX_VALUE;
   }
 
   private static class PagedImage {
@@ -709,13 +721,13 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final int width = c.getWidth();
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(offset + 2, 1, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
+        g2.fillRoundRect(offset + 2, 2, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color borderColor = s.getBorderColor(c);
       if (borderColor != null) {
         g2.setColor(borderColor);
-        g2.drawRoundRect(offset + 2, 1, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
+        g2.drawRoundRect(offset + 2, 2, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color textColor = s.getForegroundColor(c);

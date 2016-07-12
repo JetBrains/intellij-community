@@ -198,6 +198,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
   }
 
+  public long getIndexModificationStamp(StubIndexKey<?, ?> indexId, @NotNull Project project) {
+    MyIndex<?> index = getAsyncState().myIndices.get(indexId);
+    if (index != null) {
+      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+      return index.getModificationStamp();
+    }
+    return -1;
+  }
+
   public void flush() throws StorageException {
     if (!myInitialized) {
       return;

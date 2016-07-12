@@ -58,7 +58,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
    */
   @Override
   @NonNls
-  protected abstract String getBasePath();
+  protected String getBasePath() { null }
 
 
   protected void addGroovyTransformField() {

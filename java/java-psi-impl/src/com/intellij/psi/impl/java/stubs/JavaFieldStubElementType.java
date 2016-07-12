@@ -132,7 +132,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     TypeInfo type = TypeInfo.readTYPE(dataStream);
     StringRef initializerText = dataStream.readName();
     byte flags = dataStream.readByte();
-    return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
+    return new PsiFieldStubImpl(parentStub, StringRef.toString(name), type, StringRef.toString(initializerText), flags);
   }
 
   @Override

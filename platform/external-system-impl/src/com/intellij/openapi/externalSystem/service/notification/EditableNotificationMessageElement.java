@@ -85,13 +85,10 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
 
   private static void disableLink(@NotNull final HyperlinkEvent event, @Nullable final String linkText) {
     if (event.getSource() instanceof MyJEditorPane) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          final MyJEditorPane editorPane = (MyJEditorPane)event.getSource();
-          editorPane.myElement.addDisabledLink(event.getDescription(), linkText);
-          editorPane.myElement.updateStyle(editorPane, null, null, true, false);
-        }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        final MyJEditorPane editorPane = (MyJEditorPane)event.getSource();
+        editorPane.myElement.addDisabledLink(event.getDescription(), linkText);
+        editorPane.myElement.updateStyle(editorPane, null, null, true, false);
       });
     }
   }

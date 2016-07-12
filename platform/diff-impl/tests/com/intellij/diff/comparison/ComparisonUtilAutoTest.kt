@@ -134,7 +134,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
       val sequence2 = text2.charsSequence
       val sequence3 = text3.charsSequence
 
-      val fragments = ByLine.compareTwoStep(sequence1, sequence2, sequence3, policy, INDICATOR)
+      val fragments = MANAGER.compareLines(sequence1, sequence2, sequence3, policy, INDICATOR)
 
       val fineFragments = fragments.map { f ->
         val chunk1 = DiffUtil.getLinesContent(text1, f.startLine1, f.endLine1)

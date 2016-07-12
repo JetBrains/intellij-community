@@ -152,28 +152,25 @@ public class ActionsTreeUtil {
   @Nullable
   private static Condition<AnAction> wrapFilter(@Nullable final Condition<AnAction> filter, final Keymap keymap, final ActionManager actionManager) {
     final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
-    return new Condition<AnAction>() {
-      @Override
-      public boolean value(final AnAction action) {
-        if (action == null) return false;
-        final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
-        if (id != null) {
-          if (!Registry.is("keymap.show.alias.actions")) {
-            String binding = getActionBinding(keymap, id);
-            boolean bound = binding != null
-                            && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
-                            && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
-            if (bound) {
-              return false;
-            }
-          }
-          if (!shortcutRestrictions.getForActionId(id).allowChanging) {
+    return action -> {
+      if (action == null) return false;
+      final String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+      if (id != null) {
+        if (!Registry.is("keymap.show.alias.actions")) {
+          String binding = getActionBinding(keymap, id);
+          boolean bound = binding != null
+                          && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
+                          && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
+          if (bound) {
             return false;
           }
         }
-
-        return filter == null || filter.value(action);
+        if (!shortcutRestrictions.getForActionId(id).allowChanging) {
+          return false;
+        }
       }
+
+      return filter == null || filter.value(action);
     };
   }
 
@@ -506,46 +503,42 @@ public class ActionsTreeUtil {
   }
 
   public static Condition<AnAction> isActionFiltered(final String filter, final boolean force) {
-    return new Condition<AnAction>() {
-      public boolean value(final AnAction action) {
-        if (filter == null) return true;
-        if (action == null) return false;
-        final String insensitiveFilter = filter.toLowerCase();
-        for (String text : new String[]{action.getTemplatePresentation().getText(),
-                                        action.getTemplatePresentation().getDescription(),
-                                        action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
-          if (text != null) {
-            final String lowerText = text.toLowerCase();
+    return action -> {
+      if (filter == null) return true;
+      if (action == null) return false;
+      final String insensitiveFilter = filter.toLowerCase();
+      for (String text : new String[]{action.getTemplatePresentation().getText(),
+                                      action.getTemplatePresentation().getDescription(),
+                                      action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
+        if (text != null) {
+          final String lowerText = text.toLowerCase();
 
-            if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
-              return true;
-            }
-            else if (lowerText.contains(insensitiveFilter)) {
-              return true;
-            }
+          if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
+            return true;
+          }
+          else if (lowerText.contains(insensitiveFilter)) {
+            return true;
           }
         }
-        return false;
       }
+      return false;
     };
   }
 
   public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
                                                      final Keymap keymap,
                                                      final Shortcut shortcut) {
-    return new Condition<AnAction>() {
-      public boolean value(final AnAction action) {
-        if (shortcut == null) return true;
-        if (action == null) return false;
-        final Shortcut[] actionShortcuts =
-          keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
-        for (Shortcut actionShortcut : actionShortcuts) {
-          if (actionShortcut != null && actionShortcut.startsWith(shortcut)) {
-            return true;
-          }
+    return action -> {
+      if (shortcut == null) return true;
+      if (action == null) return false;
+      final Shortcut[] actionShortcuts =
+        keymap.getShortcuts(action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action));
+      for (Shortcut actionShortcut : actionShortcuts) {
+        if (actionShortcut != null && actionShortcut.startsWith(shortcut)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 

@@ -49,12 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseRefactoringAction extends AnAction {
-  private final Condition<Language> myLanguageCondition = new Condition<Language>() {
-    @Override
-    public boolean value(Language language) {
-      return isAvailableForLanguage(language);
-    }
-  };
+  private final Condition<Language> myLanguageCondition = language -> isAvailableForLanguage(language);
 
   protected abstract boolean isAvailableInEditorOnly();
 

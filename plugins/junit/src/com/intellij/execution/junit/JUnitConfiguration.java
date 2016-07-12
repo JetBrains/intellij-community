@@ -58,11 +58,14 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
+  @NonNls public static final String BY_SOURCE_POSITION = "source location";
+  @NonNls public static final String BY_SOURCE_CHANGES = "changes";
 
   //fork modes
   @NonNls public static final String FORK_NONE = "none";
   @NonNls public static final String FORK_METHOD = "method";
   @NonNls public static final String FORK_KLASS = "class";
+  @NonNls public static final String FORK_REPEAT = "repeat";
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
@@ -287,6 +290,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     setGeneratedName();
   }
 
+  public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
+    myData.setTestMethod(sourceLocation);
+    myData.TEST_OBJECT = BY_SOURCE_POSITION;
+  }
+
   public void setMainClass(final PsiClass testClass) {
     final boolean shouldUpdateName = isGeneratedName();
     setModule(myData.setMainClass(testClass));
@@ -498,6 +506,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     private String REPEAT_MODE = RepeatCount.ONCE;
     private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
     private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+    private String myChangeList = "All";
 
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
@@ -680,6 +689,14 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public void setCategoryName(String categoryName) {
       CATEGORY_NAME = categoryName;
+    }
+
+    public String getChangeList() {
+      return myChangeList;
+    }
+
+    public void setChangeList(String changeList) {
+      myChangeList = changeList;
     }
   }
 

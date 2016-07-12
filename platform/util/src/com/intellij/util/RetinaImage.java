@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -50,6 +51,7 @@ public class RetinaImage {
    * @param observer the raw image observer
    * @return the Retina-aware wrapper
    */
+  @NotNull
   public static Image createFrom(Image image, final int scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
@@ -65,11 +67,13 @@ public class RetinaImage {
     return hidpi;
   }
 
+  @NotNull
   public static BufferedImage create(final int width, int height, int type) {
     return create(null, width, height, type);
   }
 
 
+  @NotNull
   private static BufferedImage create(Image image, final int width, int height, int type) {
     if (SystemInfo.isAppleJvm) {
       return AppleHiDPIScaledImage.create(width, height, type);

@@ -499,6 +499,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+
+      for (PsiElement element : myElementsToMove) {
+        if (element instanceof PsiClass) {
+          MoveClassesOrPackagesUtil.prepareMoveClass((PsiClass)element);
+        }
+      }
+
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
@@ -528,7 +535,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiClass) {
           final PsiClass psiClass = (PsiClass)element;
-          MoveClassesOrPackagesUtil.prepareMoveClass(psiClass);
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;

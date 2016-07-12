@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 
@@ -55,8 +54,8 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
     final Document document = EditorFactory.getInstance().createDocument(testData);
     FilterMixin filter = (FilterMixin)new ExceptionExFilterFactory().create(GlobalSearchScope.projectScope(getProject()));
     final ArrayList<String> result = new ArrayList<String>();
-    filter.applyHeavyFilter(document, 0, 0,
-                            highlight -> result.add(new TextRange(highlight.getStart(), highlight.getEnd() - 1).substring(testData)));
+    filter.applyHeavyFilter(document, 0, 0, r -> r.getResultItems().forEach(
+      highlight -> result.add(new TextRange(highlight.getHighlightStartOffset(), highlight.getHighlightEndOffset() - 1).substring(testData))));
     assertSameElements(result, "com.sample.RunningMain.func1", "com.sample.RunningMain.main");
   }
 }

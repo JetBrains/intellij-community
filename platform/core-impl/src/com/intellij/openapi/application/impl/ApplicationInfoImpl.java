@@ -35,6 +35,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,40 +48,40 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private String myCodeName = null;
-  private String myMajorVersion = null;
-  private String myMinorVersion = null;
-  private String myMicroVersion = null;
-  private String myPatchVersion = null;
-  private String myFullVersion = null;
-  private String myBuildNumber = null;
-  private String myApiVersion = null;
+  private String myCodeName;
+  private String myMajorVersion;
+  private String myMinorVersion;
+  private String myMicroVersion;
+  private String myPatchVersion;
+  private String myFullVersion;
+  private String myBuildNumber;
+  private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private Color myProgressColor = null;
+  private Color myProgressColor;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
-  private Color myAboutLinkColor = null;
-  private String myProgressTailIconName = null;
-  private Icon myProgressTailIcon = null;
+  private Color myAboutLinkColor;
+  private String myProgressTailIconName;
+  private Icon myProgressTailIcon;
 
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
   private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
-  private String mySplashImageUrl = null;
-  private String myAboutImageUrl = null;
+  private String mySplashImageUrl;
+  private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl = null;
+  private String myBigIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
-  private String myWelcomeScreenLogoUrl = null;
-  private String myEditorBackgroundImageUrl = null;
+  private String myWelcomeScreenLogoUrl;
+  private String myEditorBackgroundImageUrl;
 
-  private Calendar myBuildDate = null;
-  private Calendar myMajorReleaseBuildDate = null;
-  private String myPackageCode = null;
+  private Calendar myBuildDate;
+  private Calendar myMajorReleaseBuildDate;
+  private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
@@ -111,6 +112,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
+
+  private String mySubscriptionFormId;
+  private String mySubscriptionNewsKey;
+  private String mySubscriptionNewsValue;
+  private String mySubscriptionTipsKey;
+  private boolean mySubscriptionTipsAvailable;
+  private String mySubscriptionAdditionalFormData;
 
   private Rectangle myAboutLogoRect;
 
@@ -192,6 +200,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ELEMENT_LICENSING = "licensing";
   private static final String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
   private static final String ESSENTIAL_PLUGIN = "essential-plugin";
+
+  private static final String ELEMENT_SUBSCRIPTIONS = "subscriptions";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
@@ -554,6 +570,37 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutLogoRect;
   }
 
+  @Override
+  public String getSubscriptionFormId() {
+    return mySubscriptionFormId;
+  }
+
+  @Override
+  public String getSubscriptionNewsKey() {
+    return mySubscriptionNewsKey;
+  }
+
+  @Override
+  public String getSubscriptionNewsValue() {
+    return mySubscriptionNewsValue;
+  }
+
+  @Override
+  public String getSubscriptionTipsKey() {
+    return mySubscriptionTipsKey;
+  }
+
+  @Override
+  public boolean areSubscriptionTipsAvailable() {
+    return mySubscriptionTipsAvailable;
+  }
+
+  @Nullable
+  @Override
+  public String getSubscriptionAdditionalFormData() {
+    return mySubscriptionAdditionalFormData;
+  }
+
   private static ApplicationInfoImpl ourShadowInstance;
 
   public boolean isBetaOrRC() {
@@ -866,6 +913,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    Element subscriptionsElement = parentNode.getChild(ELEMENT_SUBSCRIPTIONS);
+    if (subscriptionsElement != null) {
+      mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
+      mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
+      mySubscriptionNewsValue = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE, "yes");
+      mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
+      mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
+      mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {
@@ -958,6 +1014,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public static boolean isInPerformanceTest() {
     return myInPerformanceTest;
   }
+  @TestOnly
   public static void setInPerformanceTest(boolean inPerformanceTest) {
     myInPerformanceTest = inPerformanceTest;
   }

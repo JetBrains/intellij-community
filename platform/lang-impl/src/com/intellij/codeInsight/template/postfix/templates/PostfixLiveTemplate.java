@@ -39,6 +39,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -262,18 +263,18 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
-    return new Condition<PostfixTemplate>() {
-      @Override
-      public boolean value(PostfixTemplate template) {
-        return template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
-      }
-    };
+    return template -> template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
   }
 
   @NotNull
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
     PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+
+    if (copy instanceof PsiFileImpl) {
+      ((PsiFileImpl) copy).setOriginalFile(file);
+    }
+
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);

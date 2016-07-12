@@ -2115,7 +2115,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "…" + text.subSequence(text.length() - length / 2 - 1, text.length())
+           ? text.subSequence(0, length / 2) + "\u2026" + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -2383,13 +2383,18 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
+    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = offset; i < text.length(); ++i) {
+    for (int i = start, len = min(text.length(), end); i < len; ++i) {
       if (text.charAt(i) == c) {
         count++;
       }
-      else if (continuous) {
+      else if (stopAtOtherChar) {
         break;
       }
     }
@@ -3272,64 +3277,6 @@ public class StringUtil extends StringUtilRt {
     return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
   }
 
-  @Contract(pure = true)
-  public static String getShortened(@NotNull String s, int maxWidth) {
-    int length = s.length();
-    if (isEmpty(s) || length <= maxWidth) return s;
-    ArrayList<String> words = new ArrayList<String>();
-
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < length; i++) {
-      char ch = s.charAt(i);
-
-      if (i == length - 1) {
-        builder.append(ch);
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-        continue;
-      }
-
-      if (i > 0 && (ch == '/' || ch == '\\' || ch == '.' || ch == '-' || Character.isUpperCase(ch))) {
-        words.add(builder.toString());
-        builder.delete(0, builder.length());
-      }
-      builder.append(ch);
-    }
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
-      if (i < words.size() - 1 && word.length() == 1) {
-        words.remove(i);
-        words.set(i, word + words.get(i));
-      }
-    }
-
-    int removedLength = 0;
-
-    String toPaste = "...";
-    int index;
-    while (true) {
-      index = max(0, (words.size() - 1) / 2);
-      String aWord = words.get(index);
-      words.remove(index);
-      int toCut = length - removedLength - maxWidth + 3;
-      if (words.size() < 2 || (toCut < aWord.length() - 2 && removedLength == 0)) {
-        int pos = (aWord.length() - toCut) / 2;
-        toPaste = aWord.substring(0, pos) + "..." + aWord.substring(pos+toCut);
-        break;
-      }
-      removedLength += aWord.length();
-      if (length - removedLength <= maxWidth - 3) {
-        break;
-      }
-    }
-    for (int i = 0; i < max(1, words.size()); i++) {
-      String word = words.isEmpty() ? "" : words.get(i);
-      if (i == index || words.size() == 1) builder.append(toPaste);
-      builder.append(word);
-    }
-    return builder.toString().replaceAll("\\.{4,}", "...");
-  }
-
   /**
      * Does the string have an uppercase character?
      * @param s  the string to test.
@@ -3427,6 +3374,16 @@ public class StringUtil extends StringUtilRt {
       check();
       return delegate.subSequence(i, i1);
     }
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  @SuppressWarnings("SpellCheckingInspection")
+  public static String toHexString(@NotNull byte[] bytes) {
+    String digits = "0123456789abcdef";
+    StringBuilder sb = new StringBuilder(2 * bytes.length);
+    for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
+    return sb.toString();
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */

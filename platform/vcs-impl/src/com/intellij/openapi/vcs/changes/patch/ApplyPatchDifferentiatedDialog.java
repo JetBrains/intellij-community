@@ -56,14 +56,10 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.UI;
+import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -199,7 +195,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
 
     myChangeListChooser = new ChangeListChooserPanel(project, errorMessage -> {
-      setOKActionEnabled(errorMessage == null);
+      setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
       setErrorText(errorMessage);
     });
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
@@ -247,7 +243,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private void updateOkActions() {
-    setOKActionEnabled(!myChangesTreeList.getIncludedChanges().isEmpty());
+    boolean changeTreeEnabled = isChangeTreeEnabled();
+    setOKActionEnabled(changeTreeEnabled);
+    if (changeTreeEnabled) {
+      myChangeListChooser.updateEnabled();
+    }
+  }
+
+  private boolean isChangeTreeEnabled() {
+    return !myChangesTreeList.getIncludedChanges().isEmpty();
   }
 
   private void queueRequest() {
@@ -374,6 +378,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         myReader = patchReader;
         updateTree(true);
         paintBusy(false);
+        updateOkActions();
       }, ModalityState.stateForComponent(myCenterPanel));
     }
   }
@@ -486,7 +491,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       ++gb.gridy;
       gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      myCenterPanel.add(myChangesTreeList, gb);
+      myCenterPanel.add(ScrollPaneFactory.createScrollPane(myChangesTreeList), gb);
 
       ++gb.gridy;
       gb.weighty = 0;
@@ -522,8 +527,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     protected DefaultTreeModel buildTreeModel(List<AbstractFilePatchInProgress.PatchChange> changes,
                                               ChangeNodeDecorator changeNodeDecorator) {
       TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-      return builder.buildModel(ObjectsConvertor.convert(changes,
-                                                         (Convertor<AbstractFilePatchInProgress.PatchChange, Change>)o -> o), changeNodeDecorator);
+      return builder.buildModel(ObjectsConvertor.convert(changes, o -> o), changeNodeDecorator);
     }
 
     @Override

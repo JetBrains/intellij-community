@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +121,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         refUtil.addReferences(psiField, this, psiField);
       }
 
-      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
+      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant || RefUtil.isImplicitWrite(psiField)) {
         if (!checkFlag(USED_FOR_WRITING_MASK)) {
           setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
           setFlag(true, USED_FOR_WRITING_MASK);

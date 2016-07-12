@@ -44,6 +44,6 @@ fun invokeAndWaitIfNeed(runnable: () -> Unit) {
     if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
   }
   else {
-    app.invokeAndWait(runnable, ModalityState.any())
+    app.invokeAndWait(runnable, ModalityState.defaultModalityState())
   }
 }

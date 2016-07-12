@@ -36,17 +36,8 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Formatting progressable task.
- *
- * @author Denis Zhdanov
- * @since 2/10/11 3:00 PM
- */
 public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
-  /**
-   * Holds flag that indicates whether formatting was cancelled by end-user or not.
-   */
   public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
@@ -54,9 +45,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     }
   };
 
-  /**
-   * Holds max allowed progress bar value (defined at ProgressWindow.MyDialog.initDialog()).
-   */
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT;
 
@@ -178,12 +166,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     update(FormattingStateId.APPLYING_CHANGES, MAX_PROGRESS_VALUE * myModifiedBlocksNumber / myBlocksToModifyNumber);
   }
 
-  /**
-   * Updates current progress state if necessary.
-   *
-   * @param state          current state
-   * @param completionRate completion rate of the given state. Is assumed to belong to <code>[0; 1]</code> interval
-   */
   private void update(@NotNull FormattingStateId state, double completionRate) {
     ProgressIndicator indicator = getIndicator();
     if (indicator == null) {
@@ -199,7 +181,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     }
     newFraction += completionRate * state.getProgressWeight() / TOTAL_WEIGHT;
 
-    // We don't bother about imprecise floating point arithmetic here because that is enough for progress representation.
     double currentFraction = indicator.getFraction();
     if (newFraction - currentFraction < MAX_PROGRESS_VALUE / 100) {
       return;

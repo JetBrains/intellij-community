@@ -34,10 +34,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private static final String SYNTHETIC_TYPE = "L" + SYNTHETIC_CLASS_NAME + ";";
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
-  private static final String STRING_CLASS_NAME = "java/lang/String";
-  private static final String OBJECT_CLASS_NAME = "java/lang/Object";
-  private static final String CONSTRUCTOR_NAME = "<init>";
-  private static final String EXCEPTION_INIT_SIGNATURE = "(L" + STRING_CLASS_NAME + ";)V";
 
   private static final String ANNOTATION_DEFAULT_METHOD = "value";
 
@@ -50,15 +46,18 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private String myClassName;
   private boolean myIsModification = false;
   private RuntimeException myPostponedError;
+  private final AuxiliaryMethodGenerator myAuxGenerator;
 
   private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader) {
     super(Opcodes.ASM5, classVisitor);
     myMethodParamNames = getAllParameterNames(reader);
+    myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
 
   public static boolean processClassFile(final FailSafeClassReader reader, final ClassVisitor writer) {
     final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader);
     reader.accept(instrumenter, 0);
+    instrumenter.myAuxGenerator.generateReportingMethod(writer);
     return instrumenter.isModification();
   }
 
@@ -204,7 +203,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           String[] args = state.message != null
                           ? EMPTY_STRING_ARRAY 
                           : new String[]{paramName != null ? paramName : String.valueOf(param - mySyntheticCount), myClassName, name};
-          generateThrow(state.exceptionType, end, descrPattern, args);
+          reportError(state.exceptionType, end, descrPattern, args);
         }
       }
 
@@ -225,34 +224,16 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
             mv.visitJumpInsn(IFNONNULL, skipLabel);
             String descrPattern = myMethodNotNull.message != null ? myMethodNotNull.message : NULL_RESULT_MESSAGE;
             String[] args = myMethodNotNull.message != null ? EMPTY_STRING_ARRAY : new String[]{myClassName, name};
-            generateThrow(myMethodNotNull.exceptionType, skipLabel, descrPattern, args);
+            reportError(myMethodNotNull.exceptionType, skipLabel, descrPattern, args);
           }
         }
 
         mv.visitInsn(opcode);
       }
 
-      private void generateThrow(final String exceptionClass, final Label end, final String descrPattern, final String[] args) {
-        mv.visitTypeInsn(NEW, exceptionClass);
-        mv.visitInsn(DUP);
+      private void reportError(final String exceptionClass, final Label end, final String descrPattern, final String[] args) {
+        myAuxGenerator.reportError(mv, myClassName, exceptionClass, descrPattern, args);
 
-        mv.visitLdcInsn(descrPattern);
-
-        mv.visitLdcInsn(args.length);
-        mv.visitTypeInsn(ANEWARRAY, OBJECT_CLASS_NAME);
-
-        for (int i = 0; i < args.length; i++) {
-          mv.visitInsn(DUP);
-          mv.visitLdcInsn(i);
-          mv.visitLdcInsn(args[i]);
-          mv.visitInsn(AASTORE);
-        }
-
-        //noinspection SpellCheckingInspection
-        mv.visitMethodInsn(INVOKESTATIC, STRING_CLASS_NAME, "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);
-
-        mv.visitMethodInsn(INVOKESPECIAL, exceptionClass, CONSTRUCTOR_NAME, EXCEPTION_INIT_SIGNATURE, false);
-        mv.visitInsn(ATHROW);
         mv.visitLabel(end);
 
         myIsModification = true;

@@ -66,10 +66,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Element;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
+import javax.swing.plaf.UIResource;
+import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
@@ -284,8 +282,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
 
             if (!sticky) {
-              ((BalloonImpl)balloon).startFadeoutTimer(0);
-              ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              if (newEnabled()) {
+                ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+              }
+              else {
+                ((BalloonImpl)balloon).startFadeoutTimer(0);
+                ((BalloonImpl)balloon).setHideOnClickOutside(true);
+              }
             }
             else //noinspection ConstantConditions
               if (noProjects && !newEnabled()) {
@@ -504,6 +507,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     else {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
     }
     layoutDataRef.set(layoutData);
 
@@ -670,6 +674,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
       pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
       pane.setPreferredSize(size);
 
+      text.setCaret(new TextCaret(layoutData));
+
       expandAction = new LinkLabel<Void>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
         @Override
         public void linkSelected(LinkLabel link, Void ignored) {
@@ -685,6 +691,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             link.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
           }
           else {
+            text.select(0, 0);
             size.height = layoutData.fullHeight;
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
             link.setIcon(AllIcons.Ide.Notification.Collapse);
@@ -774,15 +781,32 @@ public class NotificationsManagerImpl extends NotificationsManager {
     JPanel buttons = createButtons(notification, content, listener);
     if (buttons != null) {
       layoutData.groupId = null;
+      layoutData.mergeData = null;
       buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
     }
 
     HoverAdapter hoverAdapter = new HoverAdapter();
     hoverAdapter.addSource(content);
     hoverAdapter.addSource(centerPanel);
+    hoverAdapter.addSource(text);
+    hoverAdapter.addSource(pane);
 
     if (expandAction != null) {
-      hoverAdapter.addComponent(expandAction, JBUI.insets(5, 5, 7, 7));
+      hoverAdapter.addComponent(expandAction, component -> {
+        Rectangle bounds;
+        Point location = SwingUtilities.convertPoint(content.getParent(), content.getLocation(), component.getParent());
+        if (layoutData.showMinSize) {
+          Component centerComponent = layoutData.welcomeScreen ? text : pane;
+          Point centerLocation =
+            SwingUtilities.convertPoint(centerComponent.getParent(), centerComponent.getLocation(), component.getParent());
+          bounds = new Rectangle(location.x, centerLocation.y, content.getWidth(), centerComponent.getHeight());
+        }
+        else {
+          bounds = new Rectangle(location.x, component.getY(), content.getWidth(), component.getHeight());
+          JBInsets.addTo(bounds, JBUI.insets(5, 0, 7, 0));
+        }
+        return bounds;
+      });
     }
 
     if (buttons == null && actions) {
@@ -811,6 +835,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       .setCloseButtonEnabled(buttons == null)
       .setShowCallout(showCallout)
       .setShadow(false)
+      .setAnimationCycle(200)
       .setHideOnClickOutside(hideOnClickOutside)
       .setHideOnAction(hideOnClickOutside)
       .setHideOnKeyOutside(hideOnClickOutside)
@@ -909,9 +934,14 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static class HoverAdapter extends MouseAdapter implements MouseMotionListener {
-    private final List<Pair<Component, Insets>> myComponents = new ArrayList<>();
+    private final List<Pair<Component, ?>> myComponents = new ArrayList<>();
     private List<Component> mySources = new ArrayList<>();
+
     private Component myLastComponent;
+
+    public void addComponent(@NotNull Component component, @NotNull Function<Component, Rectangle> hover) {
+      myComponents.add(Pair.create(component, hover));
+    }
 
     public void addComponent(@NotNull Component component, @NotNull Insets hover) {
       myComponents.add(Pair.create(component, hover));
@@ -951,10 +981,16 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
-      for (Pair<Component, Insets> p : myComponents) {
+      for (Pair<Component, ?> p : myComponents) {
         Component component = p.first;
-        Rectangle bounds = component.getBounds();
-        JBInsets.addTo(bounds, p.second);
+        Rectangle bounds;
+        if (p.second instanceof Insets) {
+          bounds = component.getBounds();
+          JBInsets.addTo(bounds, (Insets)p.second);
+        }
+        else {
+          bounds = ((Function<Component, Rectangle>)p.second).fun(component);
+        }
         if (bounds.contains(SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getParent()))) {
           if (myLastComponent != null && myLastComponent != component) {
             mouseExited(e, myLastComponent);
@@ -980,6 +1016,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
               }
             }
           }
+
+          e.getComponent().setCursor(component.getCursor());
           return;
         }
         else if (component == myLastComponent) {
@@ -990,6 +1028,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     private static void mouseExited(MouseEvent e, Component component) {
+      e.getComponent().setCursor(null);
+
       MouseEvent event = createEvent(e, component);
       MouseListener[] listeners = component.getMouseListeners();
       for (MouseListener listener : listeners) {
@@ -1400,6 +1440,63 @@ public class NotificationsManagerImpl extends NotificationsManager {
         updateTitle();
       }
       updateContent();
+    }
+  }
+
+  private static class TextCaret extends DefaultCaret implements UIResource {
+    private final BalloonLayoutData myLayoutData;
+
+    public TextCaret(@NotNull BalloonLayoutData layoutData) {
+      myLayoutData = layoutData;
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseClicked(e);
+      }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mousePressed(e);
+      }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseReleased(e);
+      }
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseEntered(e);
+      }
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseExited(e);
+      }
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseDragged(e);
+      }
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+      if (!myLayoutData.showMinSize) {
+        super.mouseMoved(e);
+      }
     }
   }
 }

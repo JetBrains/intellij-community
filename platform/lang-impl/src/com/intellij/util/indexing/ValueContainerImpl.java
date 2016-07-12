@@ -21,7 +21,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IdSet;
-import com.intellij.util.indexing.containers.SortedFileIdSetIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
@@ -70,6 +69,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   }
 
   private void resetFileSetForValue(Value value, Object fileSet) {
+    if (value == null) value = (Value)myNullValue;
     if (!(myInputIdMapping instanceof THashMap)) myInputIdMappingValue = fileSet;
     else ((THashMap<Value, Object>)myInputIdMapping).put(value, fileSet);
   }
@@ -446,11 +446,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       } else {
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
-        IntIterator intIterator = originalInput.rawIntIterator();
-        if (!intIterator.hasAscendingOrder()) {
-          // remove possible dupes
-          intIterator = SortedFileIdSetIterator.getTransientIterator(intIterator);
-        }
+        IntIterator intIterator = originalInput.sortedIntIterator();
+        if (DebugAssertions.DEBUG) DebugAssertions.assertTrue(intIterator.hasAscendingOrder());
 
         if (intIterator.size() == 1) {
           DataInputOutputUtil.writeINT(out, intIterator.next());

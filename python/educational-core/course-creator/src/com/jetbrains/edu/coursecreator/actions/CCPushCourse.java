@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,7 @@ public class CCPushCourse extends DumbAwareAction {
       return;
     }
     EduStepicConnector.postCourseWithProgress(project, course);
+    EduUsagesCollector.courseUploaded();
   }
 
 }

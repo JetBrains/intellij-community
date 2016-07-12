@@ -20,7 +20,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +37,9 @@ public class BuildScriptClasspathData extends AbstractExternalEntityData {
   public static final Key<BuildScriptClasspathData> KEY =
     Key.create(BuildScriptClasspathData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
 
+  @Nullable
+  private File gradleHomeDir;
+
   @NotNull
   private final List<ClasspathEntry> myClasspathEntries;
 
@@ -42,6 +47,15 @@ public class BuildScriptClasspathData extends AbstractExternalEntityData {
   public BuildScriptClasspathData(@NotNull ProjectSystemId owner, @NotNull List<ClasspathEntry> classpathEntries) {
     super(owner);
     myClasspathEntries = classpathEntries;
+  }
+
+  @Nullable
+  public File getGradleHomeDir() {
+    return gradleHomeDir;
+  }
+
+  public void setGradleHomeDir(@Nullable File gradleHomeDir) {
+    this.gradleHomeDir = gradleHomeDir;
   }
 
   @NotNull

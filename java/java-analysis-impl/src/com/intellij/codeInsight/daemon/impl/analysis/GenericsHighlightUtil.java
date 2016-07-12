@@ -125,7 +125,7 @@ public class GenericsHighlightUtil {
       if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
         if (!typeParameterListOwner.hasTypeParameters()) {
           final String description = JavaErrorMessages.message("generics.diamond.not.applicable");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceElements[0]).descriptionAndTooltip(description).create();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(description).create();
         }
         inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
         final String errorMessage = inferenceResult.getErrorMessage();
@@ -133,7 +133,7 @@ public class GenericsHighlightUtil {
           final PsiType expectedType = detectExpectedType(referenceParameterList);
           if (!(inferenceResult.failedToInfer() && expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
             return HighlightInfo
-              .newHighlightInfo(HighlightInfoType.ERROR).range(referenceElements[0]).descriptionAndTooltip(errorMessage).create();
+              .newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(errorMessage).create();
           }
         }
       }
@@ -753,7 +753,9 @@ public class GenericsHighlightUtil {
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",
                                                      JavaHighlightUtil.formatType(expression.getType()));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNotIterableForEachLoopFix(expression));
+      return highlightInfo;
     }
     return null;
   }

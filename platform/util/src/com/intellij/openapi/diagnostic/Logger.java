@@ -17,6 +17,8 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -27,19 +29,21 @@ import java.lang.reflect.Constructor;
 
 public abstract class Logger {
   public interface Factory {
-    Logger getLoggerInstance(String category);
+    @NotNull
+    Logger getLoggerInstance(@NotNull String category);
   }
 
   private static class DefaultFactory implements Factory {
+    @NotNull
     @Override
-    public Logger getLoggerInstance(String category) {
+    public Logger getLoggerInstance(@NotNull String category) {
       return new DefaultLogger(category);
     }
   }
 
   private static Factory ourFactory = new DefaultFactory();
 
-  public static void setFactory(Class<? extends Factory> factory) {
+  public static void setFactory(@NotNull Class<? extends Factory> factory) {
     if (isInitialized()) {
       if (factory.isInstance(ourFactory)) {
         return;
@@ -65,12 +69,13 @@ public abstract class Logger {
     return !(ourFactory instanceof DefaultFactory);
   }
 
-  public static Logger getInstance(@NonNls String category) {
+  @NotNull
+  public static Logger getInstance(@NotNull @NonNls String category) {
     return ourFactory.getLoggerInstance(category);
   }
 
   @NotNull
-  public static Logger getInstance(Class cl) {
+  public static Logger getInstance(@NotNull Class cl) {
     return getInstance("#" + cl.getName());
   }
 
@@ -82,12 +87,12 @@ public abstract class Logger {
 
   public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
-  public void debug(@NotNull String message, Object... details) {
+  public void debug(@NotNull String message, @NotNull Object... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
       sb.append(message);
       for (Object detail : details) {
-        sb.append(String.valueOf(detail));
+        sb.append(detail);
       }
       debug(sb.toString());
     }
@@ -130,11 +135,18 @@ public abstract class Logger {
     error(String.valueOf(message));
   }
 
-  public void error(@NonNls String message, Attachment... attachments) {
-    error(message);
+  static final Function<Attachment, String> ATTACHMENT_TO_STRING = new Function<Attachment, String>() {
+    @Override
+    public String fun(Attachment attachment) {
+      return attachment.getPath() + "\n" + attachment.getDisplayText();
+    }
+  };
+
+  public void error(@NonNls String message, @NotNull Attachment... attachments) {
+    error(message, null, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
   }
 
-  public void error(@NonNls String message, @NonNls String... details) {
+  public void error(@NonNls String message, @NonNls @NotNull String... details) {
     error(message, new Throwable(), details);
   }
 

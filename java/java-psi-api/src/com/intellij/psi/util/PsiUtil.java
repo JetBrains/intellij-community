@@ -16,7 +16,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -24,7 +23,6 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -153,10 +151,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
-    if (expression == null) return false;
-    IsConstantExpressionVisitor visitor = new IsConstantExpressionVisitor();
-    expression.accept(visitor);
-    return visitor.myIsConstant;
+    return expression != null && JavaPsiFacade.getInstance(expression.getProject()).isConstantExpression(expression);
   }
 
   // todo: move to PsiThrowsList?
@@ -275,7 +270,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLocalClass(@NotNull PsiClass psiClass) {
     PsiElement parent = psiClass.getParent();
-    return parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock;
+    if (parent instanceof PsiDeclarationStatement && parent.getParent() instanceof PsiCodeBlock) {
+      return true;
+    }
+
+    if (parent instanceof PsiClass) {
+      return isLocalOrAnonymousClass((PsiClass)parent);
+    }
+    return false;
   }
 
   public static boolean isAbstractClass(@NotNull PsiClass clazz) {
@@ -625,7 +627,10 @@ public final class PsiUtil extends PsiUtilCore {
    * <code>class Foo&lt;T extends Number&gt;{}</code> types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
-  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
+  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,
+                                                 @NotNull PsiClass aClass,
+                                                 PsiClassType otherClassType,
+                                                 @NotNull PsiClass bClass) {
     final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
                                   ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
     final PsiClassType capture2 = !PsiCapturedWildcardType.isCapture()
@@ -637,17 +642,10 @@ public final class PsiUtil extends PsiUtilCore {
     return equalOnEquivalentClasses(result1.getSubstitutor(), aClass, result2.getSubstitutor(), bClass);
   }
 
-  @Deprecated
-  public static boolean equalOnClass(@NotNull PsiSubstitutor s1, @NotNull PsiSubstitutor s2, @NotNull PsiClass aClass) {
-    return equalOnEquivalentClasses(s1, aClass, s2, aClass);
-  }
-
-  /**
-   * @deprecated to remove in v.16
-   * Checks if substitutors maps are identical. If substitutor map values contain wildcard type, type parameter bounds are IGNORED.
-   * Please use {@link PsiUtil#equalOnEquivalentClasses(PsiClassType, PsiClass, PsiClassType, PsiClass)} instead.
-   */
-  public static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1, @NotNull PsiClass aClass, @NotNull PsiSubstitutor s2, @NotNull PsiClass bClass) {
+  private static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
+                                                  @NotNull PsiClass aClass,
+                                                  @NotNull PsiSubstitutor s2,
+                                                  @NotNull PsiClass bClass) {
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
     final PsiTypeParameter[] typeParameters1 = aClass.getTypeParameters();
@@ -669,9 +667,8 @@ public final class PsiUtil extends PsiUtilCore {
     return containingClass1 == null && containingClass2 == null;
   }
 
-  /**
-   * @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead
-   */
+  /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
+  @SuppressWarnings("unused")
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return isCompileTimeConstant((PsiVariable)field);
   }
@@ -811,10 +808,6 @@ public final class PsiUtil extends PsiUtilCore {
         }
       }
     }
-    else if (type instanceof PsiArrayType) {
-      return captureToplevelWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
-    }
-
     return type;
   }
 
@@ -881,11 +874,6 @@ public final class PsiUtil extends PsiUtilCore {
     if (!(element instanceof PsiAnnotationMethod)) return false;
     PsiClass psiClass = ((PsiAnnotationMethod)element).getContainingClass();
     return psiClass != null && psiClass.isAnnotationType();
-  }
-
-  @PsiModifier.ModifierConstant
-  public static String getMaximumModifierForMember(final PsiClass aClass) {
-    return getMaximumModifierForMember(aClass, true);
   }
 
   @PsiModifier.ModifierConstant
@@ -972,7 +960,9 @@ public final class PsiUtil extends PsiUtilCore {
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
-  public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+  public static boolean isRawSubstitutor(@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) return false;
+
     for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
     }
@@ -1228,6 +1218,11 @@ public final class PsiUtil extends PsiUtilCore {
     return className + "." + member.getName();
   }
 
+  public static boolean isFromDefaultPackage(PsiClass aClass) {
+    final PsiFile containingFile = aClass.getContainingFile();
+    return containingFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
+  }
+
   static boolean checkSameExpression(PsiElement templateExpr, final PsiExpression expression) {
     return templateExpr.equals(skipParenthesizedExprDown(expression));
   }
@@ -1287,281 +1282,7 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
-  public static class NullPsiClass extends NullPsiElement implements PsiClass {
-    @Nullable
-    @Override
-    public ItemPresentation getPresentation() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiDocComment getDocComment() {
-      throw createException();
-    }
-
-    @Override
-    public boolean hasTypeParameters() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiModifierList getModifierList() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public String getName() {
-      throw createException();
-    }
-
-    @Override
-    public boolean isDeprecated() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiTypeParameterList getTypeParameterList() {
-      throw createException();
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      throw createException();
-    }
-
-    @Override
-    public boolean canNavigate() {
-      throw createException();
-    }
-
-    @Override
-    public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name) {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiTypeParameter[] getTypeParameters() {
-      throw createException();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public String getQualifiedName() {
-      throw createException();
-    }
-
-    @Override
-    public boolean isInterface() {
-      throw createException();
-    }
-
-    @Override
-    public boolean isAnnotationType() {
-      throw createException();
-    }
-
-    @Override
-    public boolean isEnum() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiReferenceList getExtendsList() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiReferenceList getImplementsList() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClassType[] getExtendsListTypes() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClassType[] getImplementsListTypes() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiClass getSuperClass() {
-      throw createException();
-    }
-
-    @Override
-    public PsiClass[] getInterfaces() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClass[] getSupers() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClassType[] getSuperTypes() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiField[] getFields() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiMethod[] getMethods() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiMethod[] getConstructors() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClass[] getInnerClasses() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClassInitializer[] getInitializers() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiField[] getAllFields() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiMethod[] getAllMethods() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiClass[] getAllInnerClasses() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases) {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiElement getLBrace() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiElement getRBrace() {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiIdentifier getNameIdentifier() {
-      throw createException();
-    }
-
-    @Override
-    public PsiElement getScope() {
-      throw createException();
-    }
-
-    @Override
-    public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
-      throw createException();
-    }
-
-    @Override
-    public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
-      throw createException();
-    }
-
-    @Nullable
-    @Override
-    public PsiClass getContainingClass() {
-      throw createException();
-    }
-
-    @NotNull
-    @Override
-    public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
-      throw createException();
-    }
-
-    @Override
-    public PsiElement setName(@NonNls @NotNull String name) {
-      throw createException();
-    }
+  public static boolean isModuleFile(@NotNull PsiFile file) {
+    return file instanceof PsiJavaFile && ((PsiJavaFile)file).getModuleDeclaration() != null;
   }
-
-  public static final PsiClass NULL_PSI_CLASS = new NullPsiClass();
 }

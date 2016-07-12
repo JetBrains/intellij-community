@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -70,6 +71,7 @@ import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Git utility/helper methods
@@ -1053,5 +1055,38 @@ public class GitUtil {
   @NotNull
   public static Collection<GitRepository> getRepositories(@NotNull Project project) {
     return getRepositoryManager(project).getRepositories();
+  }
+
+  /**
+   * Checks if the given paths are equal only by case.
+   * It is expected that the paths are different at least by the case.
+   */
+  public static boolean isCaseOnlyChange(@NotNull String oldPath, @NotNull String newPath) {
+    if (oldPath.equalsIgnoreCase(newPath)) {
+      if (oldPath.equals(newPath)) {
+        LOG.error("Comparing perfectly equal paths: " + newPath);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  public static String getLogString(@NotNull String root, @NotNull Collection<Change> changes) {
+    return StringUtil.join(changes, change -> {
+      ContentRevision after = change.getAfterRevision();
+      ContentRevision before = change.getBeforeRevision();
+      switch (change.getType()) {
+        case NEW: return "A: " + getRelativePath(root, assertNotNull(after));
+        case DELETED: return "D: " + getRelativePath(root, assertNotNull(before));
+        case MOVED: return "M: " + getRelativePath(root, assertNotNull(before)) + " -> " + getRelativePath(root, assertNotNull(after));
+        default: return "M: " + getRelativePath(root, assertNotNull(after));
+      }
+    }, ", ");
+  }
+
+  @Nullable
+  public static String getRelativePath(@NotNull String root, @NotNull ContentRevision after) {
+    return FileUtil.getRelativePath(root, after.getFile().getPath(), File.separatorChar);
   }
 }

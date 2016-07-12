@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.*;
@@ -107,7 +109,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
-    super.fireActionPerformed(event);
+    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
 
   @Override

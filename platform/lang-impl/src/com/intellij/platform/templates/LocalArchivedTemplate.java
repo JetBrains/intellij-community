@@ -42,9 +42,13 @@ import java.util.zip.ZipInputStream;
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
   static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
+  static final String TEMPLATE_META_XML = "template-meta.xml";
+  static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
+  public static final String UNENCODED_ATTRIBUTE = "unencoded";
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
+  private boolean myEscaped = true;
   private Icon myIcon;
 
   public LocalArchivedTemplate(@NotNull URL archivePath,
@@ -67,6 +71,20 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
         throw new RuntimeException(e);
       }
     }
+
+    String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
+    if(meta != null){
+      try {
+        Element templateElement = JDOMUtil.loadDocument(meta).getRootElement();
+        String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
+        if (unencoded != null) {
+          myEscaped = !Boolean.valueOf(unencoded);
+        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private static String getTemplateName(URL url) {
@@ -82,6 +100,10 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Override
   public Icon getIcon() {
     return myIcon == null ? super.getIcon() : myIcon;
+  }
+
+  public boolean isEscaped(){
+    return myEscaped;
   }
 
   @Nullable

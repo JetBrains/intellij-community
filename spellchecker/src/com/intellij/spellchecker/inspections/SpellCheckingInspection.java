@@ -92,6 +92,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         if (node == null) {
           return;
         }
+
         // Extract parser definition from element
         final Language language = element.getLanguage();
         final IElementType elementType = node.getElementType();
@@ -165,7 +166,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     }
     assert textRange.getStartOffset() >= 0;
 
-    final String description = SpellCheckerBundle.message("typo.in.word.ref", wordWithTypo);
+    final String description = SpellCheckerBundle.message("typo.in.word.ref");
     return holder.getManager()
       .createProblemDescriptor(element, textRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
   }

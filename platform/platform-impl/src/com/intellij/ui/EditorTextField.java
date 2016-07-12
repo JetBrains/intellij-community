@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -71,26 +72,26 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Document myDocument;
   private final Project myProject;
   private FileType myFileType;
-  private EditorEx myEditor = null;
-  private Component myNextFocusable = null;
-  private boolean myWholeTextSelected = false;
+  private EditorEx myEditor;
+  private Component myNextFocusable;
+  private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean myIsListenerInstalled = false;
+  private boolean myIsListenerInstalled;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
   private boolean myInheritSwingFont = true;
-  private Color myEnforcedBgColor = null;
+  private Color myEnforcedBgColor;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;
-  private boolean myIsRendererWithSelection = false;
+  private boolean myIsRendererWithSelection;
   private Color myRendererBg;
   private Color myRendererFg;
   private int myPreferredWidth = -1;
   private int myCaretPosition = -1;
-  private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<EditorSettingsProvider>();
+  private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
 
   public EditorTextField() {
     this("");
@@ -392,7 +393,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myEditor = null;
     
     // releasing an editor implies removing it from a component hierarchy
-    // invokeLater in required because releaseEditor() may be called from
+    // invokeLater is required because releaseEditor() may be called from
     // removeNotify(), so we need to let swing complete its removeNotify() chain
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
@@ -531,34 +532,42 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
-      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-        editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
-        editor.addFocusListener(new FocusChangeListener() {
-          @Override
-          public void focusGained(Editor editor) {
-            repaint();
-          }
+      setupBorder(editor);
+    }
+  }
 
-          @Override
-          public void focusLost(Editor editor) {
-            repaint();
-          }
-        });
-      }
-      else if (UIUtil.isUnderAlloyLookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
-        editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1)));
-      }
-      else {
-        editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-      }
+  protected void setupBorder(@NotNull EditorEx editor) {
+    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(Editor editor) {
+          repaint();
+        }
+
+        @Override
+        public void focusLost(Editor editor) {
+          repaint();
+        }
+      });
+    }
+    else if (UIUtil.isUnderAlloyLookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
+      editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1)));
+    }
+    else {
+      editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
     }
   }
 
   private void setupEditorFont(final EditorEx editor) {
     if (myInheritSwingFont) {
+      ((EditorImpl)editor).setUseEditorAntialiasing(false);
       editor.getColorsScheme().setEditorFontName(getFont().getFontName());
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+      return;
     }
+    UISettings settings = UISettings.getInstance();
+    if (settings.PRESENTATION_MODE) editor.setFontSize(settings.PRESENTATION_MODE_FONT_SIZE);
   }
 
   protected boolean shouldHaveBorder() {
@@ -795,11 +804,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myRendererFg = foregroundColor;
   }
   
-  public void addSettingsProvider(EditorSettingsProvider provider) {
+  public void addSettingsProvider(@NotNull EditorSettingsProvider provider) {
     mySettingsProviders.add(provider);
   }
 
-  public boolean removeSettingsProvider(EditorSettingsProvider provider) {
+  public boolean removeSettingsProvider(@NotNull EditorSettingsProvider provider) {
     return mySettingsProviders.remove(provider);
   }
 

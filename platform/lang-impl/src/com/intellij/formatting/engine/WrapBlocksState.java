@@ -68,7 +68,7 @@ public class WrapBlocksState extends State {
       myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
       FormattingDocumentModel model = myWrapper.getFormattingDocumentModel();
       CommonCodeStyleSettings.IndentOptions options = myBlockIndentOptions.getIndentOptions();
-      myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), model, options);
+      myLastWhiteSpace.changeEndOffset(Math.max(lastBlockOffset, myWrapper.getEndOffset()), model, options);
     }
     return myLastWhiteSpace;
   }

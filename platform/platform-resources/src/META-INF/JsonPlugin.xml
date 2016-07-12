@@ -67,6 +67,7 @@
                          instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
+    <applicationService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeManager"/>
     <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator"/>
     <completion.contributor order="last, before JsonSchemaCompletionContributor" language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"

@@ -430,6 +430,19 @@ bool FindValidVMOptions(std::vector<std::wstring> files, std::wstring& used, std
   return false;
 }
 
+std::string getVMOption(int resource){
+  TCHAR buffer[_MAX_PATH];
+  TCHAR copy[_MAX_PATH];
+  std::string vmOption = "";
+  if (LoadString(hInst, resource, buffer, _MAX_PATH))
+  {
+    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH);
+    std::wstring module(copy);
+    vmOption = std::string(module.begin(), module.end());
+  }
+  return vmOption;
+}
+
 void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
 {
   std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
@@ -441,6 +454,11 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
     while (pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
     vmOptions = vmOptions.substr(pos);
   }
+
+  std::string errorFile = getVMOption(IDS_VM_OPTION_ERRORFILE);
+  std::string heapDumpPath = getVMOption(IDS_VM_OPTION_HEAPDUMPPATH);
+  if (errorFile != "") vmOptionLines.push_back(errorFile);
+  if (heapDumpPath != "") vmOptionLines.push_back(heapDumpPath);
 
   char propertiesFile[_MAX_PATH];
   if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH))

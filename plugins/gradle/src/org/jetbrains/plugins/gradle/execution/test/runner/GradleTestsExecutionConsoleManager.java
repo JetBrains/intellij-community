@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -34,15 +33,12 @@ import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionCons
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -192,19 +188,16 @@ public class GradleTestsExecutionConsoleManager
       final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
 
-      return ContainerUtil.find(taskTask.getTasksToExecute(), new Condition<ExternalTaskPojo>() {
-        @Override
-        public boolean value(final ExternalTaskPojo pojo) {
-          final ExternalProjectInfo externalProjectInfo =
-            ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
-          if (externalProjectInfo == null) return false;
+      return ContainerUtil.find(taskTask.getTasksToExecute(), pojo -> {
+        final ExternalProjectInfo externalProjectInfo =
+          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
+        if (externalProjectInfo == null) return false;
 
-          final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-            externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
-          return taskDataNode != null &&
-                 (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
-                   || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
-        }
+        final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
+          externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
+        return taskDataNode != null &&
+               (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
+                 || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
       }) != null;
     }
     return false;
@@ -214,12 +207,7 @@ public class GradleTestsExecutionConsoleManager
   public AnAction[] getRestartActions(@NotNull final GradleTestsExecutionConsole consoleView) {
     JavaRerunFailedTestsAction rerunFailedTestsAction =
       new GradleRerunFailedTestsAction(consoleView);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return consoleView.getResultsViewer();
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
     return new AnAction[]{rerunFailedTestsAction};
   }
 }

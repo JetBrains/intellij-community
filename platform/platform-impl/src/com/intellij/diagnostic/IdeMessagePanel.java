@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Ref;
@@ -52,10 +53,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
   private IdeErrorsDialog myDialog;
   private boolean myOpeningInProgress;
+  private final IdeFrame myFrame;
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
 
-  public IdeMessagePanel(@NotNull MessagePool messagePool) {
+  public IdeMessagePanel(@NotNull IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
     myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -66,6 +68,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
 
     add(myIdeFatal, BorderLayout.CENTER);
+
+    myFrame = frame;
 
     myMessagePool = messagePool;
     messagePool.addListener(this);
@@ -218,7 +222,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = false;
     }
     else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
         if (NotificationsManagerImpl.newEnabled()) {
           showErrorNotification(notificationText);
@@ -229,7 +233,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
         }
         final JLabel label = new JLabel(notificationText);
         label.setIcon(AllIcons.Ide.FatalError);
-        new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
+        new NotificationPopup(this, label, LightColors.RED, false, new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             _openFatals(null);
           }
@@ -256,11 +260,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       });
     }
 
-    Window window = SwingUtilities.getWindowAncestor(this);
-    assert window instanceof IdeFrame : window;
-
-    IdeFrame frame = (IdeFrame)window;
-    BalloonLayout layout = frame.getBalloonLayout();
+    BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null;
 
     BalloonLayoutData layoutData = new BalloonLayoutData();
@@ -270,10 +270,10 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
     layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);
 
-    Project project = frame.getProject();
+    Project project = myFrame.getProject();
     assert project != null;
 
-    Balloon balloon = NotificationsManagerImpl.createBalloon(frame, notification, false, false, new Ref<>(layoutData), project);
+    Balloon balloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     layout.add(balloon);
 }
 

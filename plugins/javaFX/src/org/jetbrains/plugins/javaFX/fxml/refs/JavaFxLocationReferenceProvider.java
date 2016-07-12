@@ -23,32 +23,30 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  */
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   private boolean mySupportCommaInValue = false;
-  private final FileType[] myAcceptedFileTypes;
+  private final Set<FileType> myAcceptedFileTypes;
 
   JavaFxLocationReferenceProvider() {
     this(false);
   }
 
-  JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileTypes) {
+  JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileExtensions) {
     mySupportCommaInValue = supportCommaInValue;
-    myAcceptedFileTypes = new FileType[acceptedFileTypes.length];
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    for (int i = 0; i < acceptedFileTypes.length; i++) {
-      myAcceptedFileTypes[i] = fileTypeManager.getFileTypeByExtension(acceptedFileTypes[i]);
-    }
+    myAcceptedFileTypes = ContainerUtil.map2Set(acceptedFileExtensions, fileTypeManager::getFileTypeByExtension);
   }
 
   @NotNull
@@ -84,15 +82,12 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
     final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true) {
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-        return new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            if (item instanceof PsiDirectory) return true;
-            final VirtualFile virtualFile = item.getVirtualFile();
-            if (virtualFile == null) return false;
-            final FileType fileType = virtualFile.getFileType();
-            return ArrayUtilRt.find(myAcceptedFileTypes, fileType) >= 0;
-          }
+        return item -> {
+          if (item instanceof PsiDirectory) return true;
+          final VirtualFile virtualFile = item.getVirtualFile();
+          if (virtualFile == null) return false;
+          final FileType fileType = virtualFile.getFileType();
+          return myAcceptedFileTypes.contains(fileType);
         };
       }
     };

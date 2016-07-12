@@ -37,7 +37,7 @@ public class QuickFixesViewActionGroup extends ActionGroup {
     if (view == null) {
       return AnAction.EMPTY_ARRAY;
     }
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
     if (wrapper == null) return AnAction.EMPTY_ARRAY;
 
     final QuickFixAction[] fixes = view.getProvider().getQuickFixes(wrapper, view.getTree());

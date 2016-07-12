@@ -331,36 +331,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       ++ myUpdateNumber;
     }
 
-    private void suspendIfNeeded() {
-      if (! myActionInfo.canChangeFileStatus()) {
-        // i.e. for update but not for integrate or status
-        myChangeListManager.freezeImmediately(null);
-      }
-    }
-
-    private void releaseIfNeeded() {
-      if (! myActionInfo.canChangeFileStatus()) {
-        // i.e. for update but not for integrate or status
-        myChangeListManager.letGo();
-      }
-    }
-
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
-      suspendIfNeeded();
-      try {
-        runImpl();
-      }
-      catch (Throwable t) {
-        releaseIfNeeded();
-        if (t instanceof Error) {
-          throw ((Error)t);
-        }
-        else if (t instanceof RuntimeException) {
-          throw ((RuntimeException)t);
-        }
-        throw new RuntimeException(t);
-      }
+      runImpl();
     }
 
     private void runImpl() {
@@ -475,12 +448,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     @Override
     public void onSuccess() {
-      try {
-        onSuccessImpl(false);
-      }
-      finally {
-        releaseIfNeeded();
-      }
+      onSuccessImpl(false);
     }
 
     private void onSuccessImpl(final boolean wasCanceled) {
@@ -621,12 +589,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     @Override
     public void onCancel() {
-      try {
-        onSuccessImpl(true);
-      }
-      finally {
-        releaseIfNeeded();
-      }
+      onSuccessImpl(true);
     }
   }
 }

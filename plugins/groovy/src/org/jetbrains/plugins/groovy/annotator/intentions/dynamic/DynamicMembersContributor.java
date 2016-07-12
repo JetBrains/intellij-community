@@ -34,7 +34,7 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
                                      @NotNull ResolveState state) {
     if (aClass == null) return;
 
-    final DynamicManager manager = DynamicManager.getInstance(place.getProject());
+    final DynamicManager manager = DynamicManager.getInstance(aClass.getProject());
 
     for (String qName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {

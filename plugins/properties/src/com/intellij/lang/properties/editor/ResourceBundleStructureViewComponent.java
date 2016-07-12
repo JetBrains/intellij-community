@@ -37,12 +37,10 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
@@ -120,7 +118,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
           ContainerUtil.mapNotNull(selectedElements, (NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>)element -> {
             final IProperty[] properties = element.getProperties();
             return properties == null ? null : ContainerUtil.newArrayList(properties);
-          })), count -> new IProperty[count]);
+          })), IProperty[]::new);
       }
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

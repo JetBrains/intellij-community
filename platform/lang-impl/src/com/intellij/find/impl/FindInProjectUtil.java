@@ -105,21 +105,22 @@ public class FindInProjectUtil {
       model.setModuleName(module.getName());
     }
 
+    // model contains previous find in path settings
+    // apply explicit settings from context
+    if (module != null) {
+      model.setModuleName(module.getName());
+    }
+
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (model.getModuleName() == null || editor == null) {
-      model.setDirectoryName(directoryName);
-      model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
       if (directoryName != null) {
+        model.setDirectoryName(directoryName);
         model.setCustomScope(false); // to select "Directory: " radio button
       }
-
-      // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
-      if (directoryName == null) {
-        VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-        if (virtualFile != null && !virtualFile.isDirectory()) virtualFile = virtualFile.getParent();
-        if (virtualFile != null) model.setDirectoryName(virtualFile.getPresentableUrl());
-      }
     }
+
+    // set project scope if we have no other settings
+    model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
   /**

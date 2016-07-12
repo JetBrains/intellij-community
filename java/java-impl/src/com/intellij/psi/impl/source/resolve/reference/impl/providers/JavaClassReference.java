@@ -284,12 +284,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
 
-    final List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        return StringUtil.isNotEmpty(psiClass.getName());
-      }
-    });
+    final List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), psiClass -> StringUtil.isNotEmpty(psiClass.getName()));
     final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
       final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);

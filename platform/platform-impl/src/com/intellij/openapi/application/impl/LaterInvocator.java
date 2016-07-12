@@ -172,9 +172,9 @@ public class LaterInvocator {
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
     if (!exception.isNull()) {
-      Throwable throwable = exception.get();
-      if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
-      throw new RuntimeException(throwable);
+      // wrap everything to keep the current thread stacktrace
+      // also TC ComparisonFailure feature depends on this
+      throw new RuntimeException(exception.get());
     }
   }
 

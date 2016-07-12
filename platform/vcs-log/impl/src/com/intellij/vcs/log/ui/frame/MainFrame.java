@@ -86,7 +86,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), initialDataPack, this);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
-    myChangesBrowser.getViewer().setScrollPaneBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myChangesBrowser.getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     myChangesBrowser.getViewer().setEmptyText("");
@@ -104,15 +104,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setFirstComponent(setupScrolledGraph());
     setupDetailsSplitter(uiProperties.isShowDetails());
 
-    JComponent toolbars = new JPanel(new BorderLayout());
-    toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
-    JComponent toolbarsAndTable = new JPanel(new BorderLayout());
-    toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
-    toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
-
     ProgressStripe progressStripe =
-      new ProgressStripe(toolbarsAndTable, toolbars, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      new ProgressStripe(myDetailsSplitter, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
         @Override
         public void updateUI() {
           super.updateUI();
@@ -131,8 +124,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     }, this);
 
+
+    JComponent toolbars = new JPanel(new BorderLayout());
+    toolbars.add(myToolbar, BorderLayout.NORTH);
+    toolbars.add(myBranchesPanel.getMainComponent(), BorderLayout.CENTER);
+    JComponent toolbarsAndTable = new JPanel(new BorderLayout());
+    toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
+    toolbarsAndTable.add(progressStripe, BorderLayout.CENTER);
+
     myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
-    myChangesBrowserSplitter.setFirstComponent(progressStripe);
+    myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     myChangesBrowserSplitter.setSecondComponent(myChangesLoadingPane);
 
     setLayout(new BorderLayout());
@@ -140,7 +141,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     Disposer.register(ui, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
-    setFocusTraversalPolicyProvider(true);
+    setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
   }
 

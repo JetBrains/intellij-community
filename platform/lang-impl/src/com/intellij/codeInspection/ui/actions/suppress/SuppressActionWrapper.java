@@ -65,7 +65,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     if (view == null) return AnAction.EMPTY_ARRAY;
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
     if (wrapper == null) return AnAction.EMPTY_ARRAY;
     final Set<SuppressIntentionAction> suppressActions = view.getSuppressActions(wrapper);
 
@@ -105,7 +105,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
         Project project = view.getProject();
         final String templatePresentationText = getTemplatePresentation().getText();
         LOG.assertTrue(templatePresentationText != null);
-        final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper();
+        final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
         LOG.assertTrue(wrapper != null);
         final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
         final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
@@ -150,29 +150,30 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     public boolean isSuppressAll() {
       return mySuppressAction.isSuppressAll();
     }
-  }
 
-  private static Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
-    final TreePath[] paths = view.getTree().getSelectionPaths();
-    if (paths == null) return Collections.emptySet();
-    final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
-    for (TreePath path : paths) {
-      final Object node = path.getLastPathComponent();
-      if (!(node instanceof TreeNode)) continue;
-      TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {    //fetch leaves
-          final InspectionTreeNode n = (InspectionTreeNode)node;
-          if (n instanceof SuppressableInspectionTreeNode &&
-              ((SuppressableInspectionTreeNode)n).canSuppress() &&
-              !((SuppressableInspectionTreeNode)n).isAlreadySuppressedFromView() &&
-              n.isValid()) {
-            result.add((SuppressableInspectionTreeNode)n);
+    private Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
+      final TreePath[] paths = view.getTree().getSelectionPaths();
+      if (paths == null) return Collections.emptySet();
+      final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
+      for (TreePath path : paths) {
+        final Object node = path.getLastPathComponent();
+        if (!(node instanceof TreeNode)) continue;
+        TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
+          @Override
+          public boolean accept(final Object node) {    //fetch leaves
+            final InspectionTreeNode n = (InspectionTreeNode)node;
+            if (n instanceof SuppressableInspectionTreeNode &&
+                ((SuppressableInspectionTreeNode)n).canSuppress() &&
+                ((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction) &&
+                n.isValid()) {
+              result.add((SuppressableInspectionTreeNode)n);
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      return result;
     }
-    return result;
+
   }
 }

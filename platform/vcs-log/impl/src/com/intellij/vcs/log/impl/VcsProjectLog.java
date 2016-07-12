@@ -111,7 +111,7 @@ public class VcsProjectLog {
       logManager.scheduleInitialization();
     }
     else if (PostponableLogRefresher.keepUpToDate()) {
-      new HeavyAwareExecutor(myProject).execute(logManager::scheduleInitialization);
+      HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
     }
   }
 

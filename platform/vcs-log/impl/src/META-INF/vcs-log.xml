@@ -11,16 +11,10 @@
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.data.VcsLogUiPropertiesDeprecated"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogTabsProperties"
                     serviceImplementation="com.intellij.vcs.log.data.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsRootsRegistry"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsRootsRegistryImpl"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>

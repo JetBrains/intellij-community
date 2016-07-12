@@ -2,15 +2,13 @@ import os
 import sys
 import time
 import traceback
-from _pydev_bundle import pydev_imports
-from _pydevd_bundle.pydevd_utils import save_main_module
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
 from _prof_imports import ProfilerResponse
 from prof_io import ProfWriter, ProfReader
-from prof_util import generate_snapshot_filepath, statsToResponse
+from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath, save_main_module, execfile
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
@@ -40,13 +38,20 @@ def StartClient(host, port):
 class Profiler(object):
     def __init__(self):
         try:
-            import yappi_profiler
-            self.profiling_backend = yappi_profiler.YappiProfile()
-            print('Starting yappi profiler\n')
+            import vmprof_profiler
+            self.profiling_backend = vmprof_profiler.VmProfProfile()
+            self.profiling_backend.basepath = get_snapshot_basepath(base_snapshot_path, remote_run)
+
+            print('Starting vmprof profiler\n')
         except ImportError:
-            import cProfile
-            self.profiling_backend = cProfile.Profile()
-            print('Starting cProfile profiler\n')
+            try:
+                import yappi_profiler
+                self.profiling_backend = yappi_profiler.YappiProfile()
+                print('Starting yappi profiler\n')
+            except ImportError:
+                import cProfile
+                self.profiling_backend = cProfile.Profile()
+                print('Starting cProfile profiler\n')
 
     def connect(self, host, port):
         s = StartClient(host, port)
@@ -66,7 +71,7 @@ class Profiler(object):
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
-            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run), remote_run)
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run, self.snapshot_extension()), remote_run)
         else:
             raise AssertionError("Unknown request %s" % dir(message))
 
@@ -81,10 +86,10 @@ class Profiler(object):
         self.start_profiling()
 
         try:
-            pydev_imports.execfile(file, globals, globals)  # execute the script
+            execfile(file, globals, globals)  # execute the script
         finally:
             self.stop_profiling()
-            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run), remote_run)
+            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run, self.snapshot_extension()), remote_run)
 
     def start_profiling(self):
         self.profiling_backend.enable()
@@ -92,9 +97,20 @@ class Profiler(object):
     def stop_profiling(self):
         self.profiling_backend.disable()
 
-    def get_snapshot(self):
+    def get_stats(self):
         self.profiling_backend.create_stats()
         return self.profiling_backend.stats
+
+    def has_tree_stats(self):
+        return hasattr(self.profiling_backend, 'tree_stats_to_response')
+    
+    def tree_stats_to_response(self, filename, response):
+        return self.profiling_backend.tree_stats_to_response(filename, response)
+    
+    def snapshot_extension(self):
+        if hasattr(self.profiling_backend, 'snapshot_extension'):
+            return self.profiling_backend.snapshot_extension()
+        return '.pstat'
 
     def dump_snapshot(self, filename):
         dir = os.path.dirname(filename)
@@ -106,6 +122,7 @@ class Profiler(object):
 
     def save_snapshot(self, id, filename, send_stat=False):
         self.stop_profiling()
+    
         if filename is not None:
             filename = self.dump_snapshot(filename)
             print('Snapshot saved to %s' % filename)
@@ -114,7 +131,9 @@ class Profiler(object):
             response = ProfilerResponse(id=id, snapshot_filepath=filename)
         else:
             response = ProfilerResponse(id=id)
-            statsToResponse(self.get_snapshot(), response)
+            stats_to_response(self.get_stats(), response)
+            if self.has_tree_stats():
+                self.tree_stats_to_response(filename, response)
 
         self.writer.addCommand(response)
         self.start_profiling()

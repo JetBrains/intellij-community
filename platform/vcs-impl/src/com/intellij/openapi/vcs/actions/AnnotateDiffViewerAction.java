@@ -51,10 +51,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -304,6 +301,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
                                                                 @Nullable final FilePath path,
                                                                 @Nullable final VcsRevisionNumber revisionNumber) {
     if (vcs == null || path == null || revisionNumber == null) return null;
+    if (revisionNumber instanceof TextRevisionNumber) return null;
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
 

@@ -17,24 +17,23 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.fragments.MergeWordFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoDiffFragments;
+import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoMergeWordFragments;
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.TrimUtil.trim;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
@@ -66,7 +65,7 @@ public class ByWord {
     FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, wordChanges, indicator);
     DiffIterable iterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy, indicator);
 
-    return convertIntoFragments(iterable);
+    return convertIntoDiffFragments(iterable);
   }
 
   @NotNull
@@ -92,7 +91,7 @@ public class ByWord {
     List<MergeRange> wordConflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
     List<MergeRange> result = matchAdjustmentWhitespaces(text1, text2, text3, wordConflicts, policy, indicator);
 
-    return convertIntoFragments(result);
+    return convertIntoMergeWordFragments(result);
   }
 
   @NotNull
@@ -144,7 +143,7 @@ public class ByWord {
                                                                       offsets.start1, offsets.start2, indicator);
       DiffIterable iterable = matchAdjustmentWhitespaces(subtext1, subtext2, delimitersIterable, policy, indicator);
 
-      List<DiffFragment> fragments = convertIntoFragments(iterable);
+      List<DiffFragment> fragments = convertIntoDiffFragments(iterable);
 
       int newlines1 = countNewlines(subwords1);
       int newlines2 = countNewlines(subwords2);
@@ -158,16 +157,6 @@ public class ByWord {
   //
   // Impl
   //
-
-  @NotNull
-  private static List<MergeWordFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
-  }
-
-  @NotNull
-  private static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable iterable) {
-    return DiffIterableUtil.convertIntoFragments(iterable);
-  }
 
   @NotNull
   private static FairDiffIterable optimizeWordChunks(@NotNull CharSequence text1,
@@ -863,12 +852,30 @@ public class ByWord {
     int getOffset2();
   }
 
-  static class WordChunk extends TextChunk implements InlineChunk {
+  static class WordChunk implements InlineChunk {
+    @NotNull private final CharSequence myText;
+    private final int myOffset1;
+    private final int myOffset2;
     private final int myHash;
 
     public WordChunk(@NotNull CharSequence text, int offset1, int offset2, int hash) {
-      super(text, offset1, offset2);
+      myText = text;
+      myOffset1 = offset1;
+      myOffset2 = offset2;
       myHash = hash;
+    }
+
+    @NotNull
+    public CharSequence getContent() {
+      return myText.subSequence(myOffset1, myOffset2);
+    }
+
+    public int getOffset1() {
+      return myOffset1;
+    }
+
+    public int getOffset2() {
+      return myOffset2;
     }
 
     @Override

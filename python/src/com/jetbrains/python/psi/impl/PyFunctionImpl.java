@@ -752,13 +752,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
      * Need to save stubs and use them somehow.
      *
      */
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, new CachedValueProvider<List<PyAssignmentStatement>>() {
-      @Nullable
-      @Override
-      public Result<List<PyAssignmentStatement>> compute() {
-        final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, () -> {
+      final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 

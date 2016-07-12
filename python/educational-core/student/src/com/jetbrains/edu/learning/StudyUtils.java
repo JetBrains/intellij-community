@@ -15,16 +15,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -35,6 +42,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.MarkdownUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
@@ -43,18 +54,24 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
+import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class StudyUtils {
   private StudyUtils() {
@@ -62,6 +79,26 @@ public class StudyUtils {
 
   private static final Logger LOG = Logger.getInstance(StudyUtils.class.getName());
   private static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final String ourPrefix = "<html><head><script type=\"text/x-mathjax-config\">\n" +
+                                          "            MathJax.Hub.Config({\n" +
+                                          "                tex2jax: {\n" +
+                                          "                    inlineMath: [ ['$','$'], [\"\\\\(\",\"\\\\)\"] ],\n" +
+                                          "                    displayMath: [ ['$$','$$'], [\"\\\\[\",\"\\\\]\"] ],\n" +
+                                          "                    processEscapes: true,\n" +
+                                          "                    processEnvironments: true\n" +
+                                          "                },\n" +
+                                          "                displayAlign: 'center',\n" +
+                                          "                \"HTML-CSS\": {\n" +
+                                          "                    styles: {'#mydiv': {\"font-size\": %s}},\n" +
+                                          "                    preferredFont: null,\n" +
+                                          "                    linebreaks: { automatic: true }\n" +
+                                          "                }\n" +
+                                          "            });\n" +
+                                          "</script><script type=\"text/javascript\"\n" +
+                                          " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
+                                          " </script></head><body><div id=\"mydiv\">";
+
+  private static final String ourPostfix = "</div></body></html>";
 
   public static void closeSilently(@Nullable final Closeable stream) {
     if (stream != null) {
@@ -79,7 +116,11 @@ public class StudyUtils {
   }
 
   public static <T> T getFirst(@NotNull final Iterable<T> container) {
-    return container.iterator().next();
+    Iterator<T> iterator = container.iterator();
+    if (!iterator.hasNext()) {
+      return null;
+    }
+    return iterator.next();
   }
 
   public static boolean indexIsValid(int index, @NotNull final Collection collection) {
@@ -128,10 +169,17 @@ public class StudyUtils {
   }
 
   public static void updateToolWindows(@NotNull final Project project) {
-    updateStudyToolWindow(project);
-
-    final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    createProgressToolWindowContent(project, windowManager);
+    final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
+    if (studyToolWindow != null) {
+      String taskText = getTaskText(project);
+      if (taskText != null) {
+        studyToolWindow.setTaskText(taskText, null, project);
+      }
+      else {
+        LOG.warn("Task text is null");
+      }
+      studyToolWindow.updateCourseProgress(project);
+    }
   }
 
   public static void initToolWindows(@NotNull final Project project) {
@@ -140,15 +188,8 @@ public class StudyUtils {
     StudyToolWindowFactory factory = new StudyToolWindowFactory();
     factory.createToolWindowContent(project, windowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW));
 
-    createProgressToolWindowContent(project, windowManager);
   }
 
-  private static void createProgressToolWindowContent(@NotNull Project project, ToolWindowManager windowManager) {
-    windowManager.getToolWindow(StudyProgressToolWindowFactory.ID).getContentManager().removeAllContents(false);
-    StudyProgressToolWindowFactory windowFactory = new StudyProgressToolWindowFactory();
-    windowFactory.createToolWindowContent(project, windowManager.getToolWindow(StudyProgressToolWindowFactory.ID));
-  }
-  
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
@@ -272,7 +313,7 @@ public class StudyUtils {
       return null;
     }
     //need this because of multi-module generation
-    if ("src".equals(taskDir.getName())) {
+    if (EduNames.SRC.equals(taskDir.getName())) {
       taskDir = taskDir.getParent();
       if (taskDir == null) {
         return null;
@@ -389,7 +430,7 @@ public class StudyUtils {
         return false;
       }
       String name = virtualFile.getName();
-      return !isTestsFile(project, name) && !EduNames.TASK_HTML.equals(name);
+      return !isTestsFile(project, name) && !isTaskDescriptionFile(name);
     }
     if (element instanceof PsiDirectory) {
       VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
@@ -429,7 +470,7 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static String getTaskTextFromTask(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
+  public static String getTaskTextFromTask(@Nullable final VirtualFile taskDirectory, @Nullable final Task task) {
     if (task == null) {
       return null;
     }
@@ -438,25 +479,36 @@ public class StudyUtils {
       return text;
     }
     if (taskDirectory != null) {
-      VirtualFile taskTextFile = taskDirectory.findChild(EduNames.TASK_HTML);
-      if (taskTextFile == null) {
-        VirtualFile srcDir = taskDirectory.findChild("src");
-        if (srcDir != null) {
-           taskTextFile = srcDir.findChild(EduNames.TASK_HTML);
-        }
+      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
+      if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
+      
+      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
+      if (taskTextFileMd != null) return prefix + convertToHtml(taskTextFileMd) + ourPostfix;      
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
+    if (taskTextFile == null) {
+      VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
+      if (srcDir != null) {
+         taskTextFile = srcDir.findChild(taskTextFilename);
       }
-      if (taskTextFile != null) {
-        try {
-          return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
+    }
+    if (taskTextFile != null) {
+      try {
+        return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
+      }
+      catch (IOException e) {
+        LOG.info(e);
       }
     }
     return null;
   }
-  
+
   @Nullable
   public static StudyPluginConfigurator getConfigurator(@NotNull final Project project) {
     StudyPluginConfigurator[] extensions = StudyPluginConfigurator.EP_NAME.getExtensions();
@@ -479,7 +531,7 @@ public class StudyUtils {
     return null;
   }
 
-
+  @Nullable
   public static String getTaskText(@NotNull final Project project) {
     TaskFile taskFile = getSelectedTaskFile(project);
     if (taskFile == null) {
@@ -487,7 +539,7 @@ public class StudyUtils {
     }
     final Task task = taskFile.getTask();
     if (task != null) {
-      return getTaskTextFromTask(task, task.getTaskDir(project));
+      return getTaskTextFromTask(task.getTaskDir(project), task);
     }
     return null;
   }
@@ -503,17 +555,41 @@ public class StudyUtils {
     }
     return taskFile;
   }
-
-  public static void updateStudyToolWindow(Project project) {
-    final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
-    if (studyToolWindow != null) {
-      String taskText = getTaskText(project);
-      studyToolWindow.setTaskText(taskText, null, project);
-    }
+  
+  @Nullable
+  public static Task getCurrentTask(@NotNull final Project project) {
+    final TaskFile taskFile = getSelectedTaskFile(project);
+    return taskFile != null ? taskFile.getTask() : null;
   }
 
   public static boolean isStudyProject(@NotNull Project project) {
     return StudyTaskManager.getInstance(project).getCourse() != null;
+  }
+
+  @Nullable
+  public static Project getStudyProject() {
+    Project studyProject = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : openProjects) {
+      if (StudyTaskManager.getInstance(project).getCourse() != null) {
+         studyProject = project;
+      }
+    }
+    return studyProject;
+  }
+
+  @NotNull
+  public static File getCourseDirectory(@NotNull Project project, Course course) {
+    final File courseDirectory;
+    if (course.isAdaptive()) {
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
+                                 StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
+                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
+    }
+    else {
+      courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
+    }
+    return courseDirectory;
   }
 
   public static boolean hasJavaFx() {
@@ -557,5 +633,86 @@ public class StudyUtils {
       return parent.getParent();
     }
     return null;
+  }
+
+  // supposed to be called under progress
+  @Nullable
+  public static <T> T execCancelable(@NotNull final Callable<T> callable) {
+    final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+
+    while (!future.isCancelled() && !future.isDone()) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(500);
+    }
+    T result = null;
+    try {
+      result = future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.warn(e.getMessage());
+    }
+    return result;
+  }
+
+  @Nullable
+  public static Task getTaskFromSelectedEditor(Project project) {
+    final StudyEditor editor = getSelectedStudyEditor(project);
+    Task task = null;
+    if (editor != null) {
+      final TaskFile file = editor.getTaskFile();
+      task = file.getTask();
+    }
+    return task;
+  }
+
+  private static String convertToHtml(@NotNull final String content) {
+    ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
+    MarkdownUtil.replaceHeaders(lines);
+    MarkdownUtil.replaceCodeBlock(lines);
+    
+    return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
+  }
+  
+  public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
+    return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
+  }
+  
+  @Nullable
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull final VirtualFile parent) {
+    return ObjectUtils.chooseNotNull(parent.findChild(EduNames.TASK_HTML), parent.findChild(EduNames.TASK_MD));
+  }
+  
+  @NotNull
+  public static String getTaskDescriptionFileName(final boolean useHtml) {
+    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
+  }
+  
+  @Nullable
+  public static File createTaskDescriptionFile(@NotNull final File parent) {
+    if(new File(parent, EduNames.TASK_HTML).exists()) {
+      return new File(parent, EduNames.TASK_HTML);
+    }
+    else {
+      return new File(parent, EduNames.TASK_MD);
+    }
+  }
+
+  @Nullable
+  public static Document getDocument(String basePath, int lessonIndex, int taskIndex, String fileName) {
+    String taskPath = FileUtil.join(basePath, EduNames.LESSON + lessonIndex, EduNames.TASK + taskIndex);
+    VirtualFile taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, fileName));
+    if (taskFile == null) {
+      taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, EduNames.SRC, fileName));
+    }
+    if (taskFile == null) {
+      return null;
+    }
+    return FileDocumentManager.getInstance().getDocument(taskFile);
+  }
+
+  public static void showErrorPopupOnToolbar(@NotNull Project project) {
+    final Balloon balloon =
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
+    showCheckPopUp(project, balloon);
   }
 }

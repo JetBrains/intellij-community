@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,6 +34,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -128,23 +131,45 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
-  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus,
-                                    final FileIndexFacade excludedFileIndex) {
+  public ProjectLevelVcsManagerImpl(Project project,
+                                    final FileStatusManager manager,
+                                    MessageBus messageBus,
+                                    final FileIndexFacade excludedFileIndex,
+                                    ProjectManager projectManager,
+                                    DefaultVcsRootPolicy defaultVcsRootPolicy,
+                                    VcsFileListenerContextHelper vcsFileListenerContextHelper) {
     myProject = project;
     myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
-    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
+    myDefaultVcsRootPolicy = defaultVcsRootPolicy;
 
     myInitialization = new VcsInitialization(myProject);
+    Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
+    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        Disposer.dispose(myInitialization);
+      }
+    });
+    if (project.isDefault()) {
+      // default project is disposed in write action, so treat it differently
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+        @Override
+        public void appClosing() {
+          Disposer.dispose(myInitialization);
+        }
+      });
+    }
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
     myConnect = myMessageBus.connect();
-    myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
+    myVcsFileListenerContextHelper = vcsFileListenerContextHelper;
     VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {

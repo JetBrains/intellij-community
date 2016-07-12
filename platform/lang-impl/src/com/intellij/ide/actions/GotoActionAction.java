@@ -26,6 +26,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -53,10 +54,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Set;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
@@ -110,6 +108,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             if (text != null && myDropdownPopup != null) {
               myDropdownPopup.setAdText(text, SwingConstants.LEFT);
             }
+
+            String description = getValueDescription(value);
+            ActionMenu.showDescriptionInStatusBar(true, myList, description);
           }
 
           @Nullable
@@ -124,6 +125,28 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             return getAdText();
           }
         });
+        myList.addMouseMotionListener(new MouseMotionAdapter() {
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            int index = myList.locationToIndex(e.getPoint());
+            if (index == -1) return;
+            Object value = myList.getModel().getElementAt(index);
+            String description = getValueDescription(value);
+            ActionMenu.showDescriptionInStatusBar(true, myList, description);
+          }
+        });
+      }
+
+      @Nullable
+      private String getValueDescription(@Nullable Object value) {
+        if (value instanceof GotoActionModel.MatchedValue) {
+          GotoActionModel.MatchedValue mv = (GotoActionModel.MatchedValue)value;
+          if (mv.value instanceof GotoActionModel.ActionWrapper) {
+            AnAction action = ((GotoActionModel.ActionWrapper)mv.value).getAction();
+            return action.getTemplatePresentation().getDescription();
+          }
+        }
+        return null;
       }
 
       @NotNull
@@ -144,7 +167,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       public void setDisposed(boolean disposedFlag) {
         super.setDisposed(disposedFlag);
         Disposer.dispose(disposable);
-        
+
+        ActionMenu.showDescriptionInStatusBar(true, myList, null);
+
         for (ListSelectionListener listener : myList.getListSelectionListeners()) {
           myList.removeListSelectionListener(listener);
         }
@@ -218,8 +243,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else if (value instanceof GotoActionModel.ActionWrapper) {
       AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
       if (action instanceof ToggleAction) {
-        performAction(action, component, e);
-        repaint(popup);
+        performAction(action, component, e, () -> repaint(popup));
         return true;
       }
     }
@@ -234,12 +258,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                final String enteredText,
-                                               final Project project,
+                                               @Nullable final Project project,
                                                Component component,
                                                @Nullable AnActionEvent e) {
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
-      TransactionGuard.submitTransaction(project, () ->
+      TransactionGuard.getInstance().submitTransactionLater(project != null ? project : ApplicationManager.getApplication(), () ->
         ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
     }
     else {
@@ -248,10 +272,17 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   }
 
   public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
+    performAction(element, component, e, null);
+  }
+
+  public static void performAction(Object element,
+                                   @Nullable final Component component,
+                                   @Nullable final AnActionEvent e,
+                                   @Nullable final Runnable callback) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
         InputEvent inputEvent = e == null ? null : e.getInputEvent();
@@ -260,7 +291,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
             if (window != null) {
               popup.showInCenterOf(window);
@@ -271,6 +302,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }
           else {
             ActionUtil.performActionDumbAware(action, event);
+            if (callback != null) callback.run();
           }
         }
     });

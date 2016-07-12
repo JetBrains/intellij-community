@@ -464,9 +464,8 @@ public class JUnit4TestListener extends RunListener {
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.isTest()) {
       final String methodName = getFullMethodName((Description)description, parent);
-      if (methodName != null && parent != null) {
-
-        if (isWarning(methodName, className)) {
+      if (methodName != null ) {
+        if (isWarning(methodName, className) && parent != null) {
           className = JUnit4ReflectionUtil.getClassName(parent);
         }
         myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + getTestMethodLocation(methodName, className) + "]");

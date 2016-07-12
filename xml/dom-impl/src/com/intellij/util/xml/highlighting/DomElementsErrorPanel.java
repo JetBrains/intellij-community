@@ -179,21 +179,13 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     }
 
     protected boolean isInspectionCompleted() {
-      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
-        @Override
-        public boolean value(final DomElement element) {
-          return myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED;
-        }
-      });
+      return ContainerUtil.and(myDomElements,
+                               element -> myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED);
     }
 
     protected boolean isErrorAnalyzingFinished() {
-      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
-        @Override
-        public boolean value(final DomElement element) {
-          return myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0;
-        }
-      });
+      return ContainerUtil.and(myDomElements,
+                               element -> myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0);
     }
 
   }

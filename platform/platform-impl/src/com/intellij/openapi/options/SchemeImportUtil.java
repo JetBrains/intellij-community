@@ -58,7 +58,7 @@ public class SchemeImportUtil {
       preselectFiles[0] = preselect;
     }
     else {
-      preselectFiles = new VirtualFile[0];
+      preselectFiles = VirtualFile.EMPTY_ARRAY;
     }
     final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles); 
                                                           //CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());

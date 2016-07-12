@@ -155,7 +155,7 @@ public class QuickDocOnMouseOverManager {
   }
   
   private void processMouseMove(@NotNull EditorMouseEvent e) {
-    if (!myApplicationActive || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+    if (!myApplicationActive || !myEnabled || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
       // Skip if the mouse is not at the editing area.
       closeQuickDocIfPossible();
       return;
@@ -205,7 +205,6 @@ public class QuickDocOnMouseOverManager {
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile instanceof PsiCompiledFile) psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
     if (psiFile == null) {
       closeQuickDocIfPossible();
       return;
@@ -329,13 +328,6 @@ public class QuickDocOnMouseOverManager {
 
         // Skip the request if there is a control shown as a result of explicit 'show quick doc' (Ctrl + Q) invocation.
         if (docManager.getDocInfoHint() != null && !docManager.isCloseOnSneeze()) {
-          return;
-        }
-
-        // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
-        // and corresponding error info is shown).
-        if (!docManager.hasActiveDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-          myAlarm.addRequest(MyShowQuickDocRequest.this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
           return;
         }
 

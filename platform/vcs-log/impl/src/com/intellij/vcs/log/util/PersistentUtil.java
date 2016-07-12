@@ -45,8 +45,8 @@ public class PersistentUtil {
   }
 
   @NotNull
-  private static File getStorageFile(@NotNull String logId, @NotNull String logKind, int version) {
-    File subdir = new File(LOG_CACHE, logKind);
+  private static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
+    File subdir = new File(LOG_CACHE, storageKind);
     String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
     final File mapFile = new File(subdir, safeLogId + "." + version);
     if (!mapFile.exists()) {
@@ -55,21 +55,17 @@ public class PersistentUtil {
     return mapFile;
   }
 
-  @NotNull
-  public static <T> PersistentEnumerator<T> createPersistentEnumerator(@NotNull final KeyDescriptor<T> keyDescriptor,
-                                                                       @NotNull String logKind,
-                                                                       @NotNull String logId,
-                                                                       int version) throws IOException {
-    final File storageFile = getStorageFile(logId, logKind, version);
-
-    return IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE), storageFile);
+  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
+    IOUtil.deleteAllFilesStartingWith(getStorageFile(storageKind, logId, version));
   }
 
   @NotNull
-  public static PersistentStringEnumerator createPersistentStringEnumerator(@NotNull String logKind, @NotNull String logId, int version)
-    throws IOException {
-    final File storageFile = getStorageFile(logId, logKind, version);
+  public static <T> PersistentEnumeratorBase<T> createPersistentEnumerator(@NotNull KeyDescriptor<T> keyDescriptor,
+                                                                       @NotNull String storageKind,
+                                                                       @NotNull String logId,
+                                                                       int version) throws IOException {
+    File storageFile = getStorageFile(storageKind, logId, version);
 
-    return IOUtil.openCleanOrResetBroken(() -> new PersistentStringEnumerator(storageFile), storageFile);
+    return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version), storageFile);
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -107,12 +106,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
           final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
           VcsTaskHandler.TaskInfo info = null;
           if (startFrom != null) {
-            info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
-              @Override
-              public boolean value(VcsTaskHandler.TaskInfo taskInfo) {
-                return startFrom.equals(taskInfo.getName());
-              }
-            });
+            info = ContainerUtil.find(tasks, taskInfo -> startFrom.equals(taskInfo.getName()));
           }
           if (info == null) {
             VcsTaskHandler.TaskInfo[] current = handler.getCurrentTasks();
@@ -174,7 +168,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     if (myCreateBranch.isSelected()) {
       VcsTaskHandler.TaskInfo branchFrom = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
       Runnable createBranch = () -> myTaskManager.createBranch(localTask, myPreviousTask, myBranchName.getText(), branchFrom);
-      if (branchFrom != null) {
+      VcsTaskHandler.TaskInfo[] current = myVcsTaskHandler.getCurrentTasks();
+      if (branchFrom != null && (current.length == 0 || !current[0].equals(branchFrom)))  {
         myVcsTaskHandler.switchToTask(branchFrom, createBranch);
       }
       else {
@@ -186,12 +181,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       if (branch != null) {
         VcsTaskHandler.TaskInfo[] tasks = myVcsTaskHandler.getCurrentTasks();
         TaskManagerImpl.addBranches(myPreviousTask, tasks, true);
-        myVcsTaskHandler.switchToTask(branch, new Runnable() {
-          @Override
-          public void run() {
-            TaskManagerImpl.addBranches(localTask, new VcsTaskHandler.TaskInfo[]{branch}, false);
-          }
-        });
+        myVcsTaskHandler.switchToTask(branch, () -> TaskManagerImpl.addBranches(localTask, new VcsTaskHandler.TaskInfo[]{branch}, false));
       }
     }
   }

@@ -174,14 +174,14 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       StringRef qname = dataStream.readName();
       int languageLevelId = dataStream.readByte();
       StringRef sourceFileName = dataStream.readName();
-      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, StringRef.toString(qname), StringRef.toString(name), null, flags);
       classStub.setLanguageLevel(LanguageLevel.values()[languageLevelId]);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
       StringRef baseRef = dataStream.readName();
-      return new PsiClassStubImpl(type, parentStub, null, null, baseRef, flags);
+      return new PsiClassStubImpl(type, parentStub, null, null, StringRef.toString(baseRef), flags);
     }
   }
 

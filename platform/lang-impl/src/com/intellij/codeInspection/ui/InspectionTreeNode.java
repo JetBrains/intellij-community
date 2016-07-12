@@ -51,12 +51,12 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public int getProblemCount() {
+  public int getProblemCount(boolean allowSuppressed) {
     int sum = 0;
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      sum += child.getProblemCount();
+      sum += child.getProblemCount(allowSuppressed);
     }
     return sum;
   }
@@ -100,15 +100,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
-  public void insertByOrder(InspectionTreeNode child) {
-    if (getIndex(child) != -1) {
-      return;
+  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
+    if (!allowDuplication) {
+      int index = getIndex(child);
+      if (index != -1) {
+        return (InspectionTreeNode)getChildAt(index);
+      }
     }
-    final int i = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-    if (i >= 0){
-      return;
+    int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
+    if (!allowDuplication && index >= 0){
+      return (InspectionTreeNode)getChildAt(index);
     }
-    insert(child, -i -1);
+    insert(child, Math.abs(index + 1));
+    return child;
   }
 
   @Override

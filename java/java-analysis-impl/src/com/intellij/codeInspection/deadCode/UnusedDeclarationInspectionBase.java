@@ -18,7 +18,6 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInspection.*;
@@ -37,7 +36,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +92,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     List<EntryPoint> deadCodeAddIns = new ArrayList<EntryPoint>(extensions.length);
     for (EntryPoint entryPoint : extensions) {
       try {
-        deadCodeAddIns.add(entryPoint);
+        deadCodeAddIns.add(entryPoint.clone());
       }
       catch (Exception e) {
         LOG.error(e);
@@ -372,7 +370,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
-    if (RefUtil.isImplicitUsage(element)) return true;
+    if (isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
       if (entryPointsManager.isEntryPoint(element)) {
@@ -387,6 +385,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
     return false;
+  }
+
+  private static boolean isImplicitUsage(PsiElement element) {
+    return element instanceof PsiField ? RefUtil.isImplicitRead(element)
+                                       : RefUtil.isImplicitUsage(element);
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
@@ -417,11 +420,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-    for (ImplicitUsageProvider provider : implicitUsageProviders) {
-      if (provider.isImplicitUsage(element)) return true;
-    }
-    return false;
+    return isImplicitUsage(element);
   }
 
   public boolean isGlobalEnabledInEditor() {
@@ -731,12 +730,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        boolean alreadyAdded = ContainerUtil.find(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return point.getClass().equals(extension.getClass());
-          }
-        }) != null;
+        boolean alreadyAdded = ContainerUtil.find(myExtensions, point1 -> point1.getClass().equals(extension.getClass())) != null;
         if (!alreadyAdded) {
           try {
             myExtensions.add(extension.clone());
@@ -749,12 +743,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
       @Override
       public void extensionRemoved(@NotNull final EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ContainerUtil.retainAll(myExtensions, new Condition<EntryPoint>() {
-          @Override
-          public boolean value(EntryPoint point) {
-            return !point.getClass().equals(extension.getClass());
-          }
-        });
+        ContainerUtil.retainAll(myExtensions, point12 -> !point12.getClass().equals(extension.getClass()));
       }
     }, getEntryPointsManager());
   }
@@ -768,5 +757,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @Override
   public boolean isGraphNeeded() {
     return true;
+  }
+
+  @TestOnly
+  public List<EntryPoint> getExtensions() {
+    return myExtensions;
   }
 }

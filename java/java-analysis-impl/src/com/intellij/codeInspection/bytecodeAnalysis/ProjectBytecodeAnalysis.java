@@ -92,13 +92,8 @@ public class ProjectBytecodeAnalysis {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation[]> compute() {
-        return Result.create(collectInferredAnnotations(listOwner), listOwner);
-      }
-    });
+    return CachedValuesManager.getCachedValue(listOwner,
+                                              () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
   /**
@@ -459,7 +454,7 @@ public class ProjectBytecodeAnalysis {
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
-    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).markReadOnly();
+    ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
   }
 }

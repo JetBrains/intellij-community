@@ -17,10 +17,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -67,12 +67,8 @@ import java.util.*;
 public class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
-  private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
-    @Override
-    public boolean value(PsiClassType psiClassType) {
-      return TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
-    }
-  };
+  private static final Condition<PsiClassType> IS_GROOVY_OBJECT =
+    psiClassType -> TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
 
   private GrClassImplUtil() {
   }
@@ -187,14 +183,11 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
-    return CachedValuesManager.getCachedValue(grType, new CachedValueProvider<PsiMethod[]>() {
-      @Nullable
-      @Override
-      public Result<PsiMethod[]> compute() {
-        List<PsiMethod> list = ContainerUtil.newArrayList();
-        getAllMethodsInner(grType, list, new HashSet<PsiClass>());
-        return Result.create(list.toArray(new PsiMethod[list.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
-      }
+    return CachedValuesManager.getCachedValue(grType, () -> {
+      List<PsiMethod> list = ContainerUtil.newArrayList();
+      getAllMethodsInner(grType, list, new HashSet<PsiClass>());
+      return CachedValueProvider.Result
+        .create(list.toArray(new PsiMethod[list.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
     });
   }
 
@@ -425,21 +418,20 @@ public class GrClassImplUtil {
       return Arrays.asList(grType.getCodeInnerClasses());
     }
 
-    List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, false, new Computable<List<PsiClass>>() {
-      @Override
-      public List<PsiClass> compute() {
-        List<PsiClass> result = new ArrayList<PsiClass>();
-        for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, true).values()) {
-          final PsiClass inner = (PsiClass)info.getElement();
-          final PsiClass containingClass = inner.getContainingClass();
-          assert containingClass != null;
+    boolean includeSynthetic = !PsiTreeUtil.isContextAncestor(grType, place, true);
+    Object key = Trinity.create(grType, lastParent, place);
+    List<PsiClass> classes = RecursionManager.doPreventingRecursion(key, false, () -> {
+      List<PsiClass> result = new ArrayList<PsiClass>();
+      for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, includeSynthetic).values()) {
+        final PsiClass inner = (PsiClass)info.getElement();
+        final PsiClass containingClass = inner.getContainingClass();
+        assert containingClass != null;
 
-          if (lastParent == null || !containingClass.isInterface() || PsiTreeUtil.isAncestor(containingClass, place, false)) {
-            ContainerUtil.addIfNotNull(result, inner);
-          }
+        if (lastParent == null || !containingClass.isInterface() || PsiTreeUtil.isAncestor(containingClass, place, false)) {
+          ContainerUtil.addIfNotNull(result, inner);
         }
-        return result;
       }
+      return result;
     });
 
     if (classes == null) {

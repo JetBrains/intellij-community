@@ -176,12 +176,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       final Set<Collection<LookupElement>> arraysProcessed = newIdentityTroveSet();
 
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
-      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return processed.add(element);
-        }
-      });
+      Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), element -> processed.add(element));
       return new FlatteningIterator<LookupElement, LookupElement>(base) {
         @Override
         protected Iterator<LookupElement> createValueIterator(LookupElement element) {

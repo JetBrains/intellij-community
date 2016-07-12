@@ -129,27 +129,41 @@ public class HashSetQueueTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
-  public void testResettableIterator() {
+  public void testIterator() {
     assertTrue(myQueue.add("1"));
-    HashSetQueue.ResettableIterator<String> iterator = myQueue.iterator();
-    Object position = iterator.markPosition();
+    Iterator<String> iterator = myQueue.iterator();
     assertTrue(iterator.hasNext());
     assertEquals("1", iterator.next());
     assertFalse(iterator.hasNext());
-    Object pos2 = iterator.markPosition();
+  }
 
-    boolean reset = iterator.resetPosition(position);
-    assertTrue(reset);
+  public void testIteratorPosition() {
+    String o = "1";
+    assertTrue(myQueue.add(o));
+    HashSetQueue.PositionalIterator<String> iterator = myQueue.iterator();
+    HashSetQueue.PositionalIterator.IteratorPosition<String> position = iterator.position();
+    try {
+      position.peek();
+      fail("Must have thrown ISE");
+    }
+    catch (IllegalStateException ignored) {
+    }
+
+    HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos = position.next();
+    assertTrue(position.compareTo(nextPos) < 0);
+    assertTrue(position.compareTo(position) == 0);
+    assertTrue(nextPos.compareTo(position) > 0);
+    assertSame(o, nextPos.peek());
+
+    assertNull(nextPos.next());
+
+    HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos2 = position.next();
+    assertTrue(nextPos2.compareTo(nextPos) == 0);
+    assertSame(o, nextPos2.peek());
 
     assertTrue(iterator.hasNext());
-    assertEquals("1", iterator.next());
-    assertFalse(iterator.hasNext());
-
-    reset = iterator.resetPosition(position);
-    assertTrue(reset);
-    assertTrue(iterator.hasNext());
-
-    boolean reset2 = iterator.resetPosition(pos2);
-    assertFalse(reset2);
+    assertSame(o, iterator.next());
+    assertSame(o, nextPos.peek());
+    assertNull(nextPos.next());
   }
 }

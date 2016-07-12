@@ -353,7 +353,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
-    "-XX:ReservedCodeCacheSize=240m",
+    "-XX:ReservedCodeCacheSize=300m",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
@@ -538,6 +538,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: vmOptions)
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
+    replacefilter(token: "@@idea.paths.selector@@", value: args.system_selector)
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
@@ -742,6 +743,7 @@ binding.setVariable("zipSources", { String home, String targetDir ->
         include(name: "**/*.$it")
       }
       exclude(name: "**/testData/**")
+      exclude(name: "out/**")
     }
   }
 
@@ -885,9 +887,9 @@ private bundledJDK(boolean win64) {
   requireProperty("artifact.linux.no.jdk", "true")
   requireProperty("artifact.mac.no.jdk", "true")
   requireProperty("jdk.oracle.win", "jdk8u")
-  requireProperty("jdk.win",   "openjdk.1.8")
-  requireProperty("jdk.mac",   "openjdk.1.8")
-  requireProperty("jdk.linux", "openjdk.1.8")
+  requireProperty("jdk.win",   "jbre8")
+  requireProperty("jdk.mac",   "jbre8")
+  requireProperty("jdk.linux", "jbre8")
 
   if (new File("${home}/build/jdk").exists()) {
     def jdkDir = new File("${home}/build/jdk/win")
@@ -896,8 +898,8 @@ private bundledJDK(boolean win64) {
       extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
     }
     if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
-      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x32.tar.gz")))
-      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win")
+      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
+      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win/jre")
     }
     jdkDir = new File("${home}/build/jdk/mac")
     if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
@@ -906,7 +908,7 @@ private bundledJDK(boolean win64) {
     jdkDir = new File("${home}/build/jdk/linux")
     if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
       setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
-      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux")
+      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux/jre")
     }
   }
 }
@@ -1137,6 +1139,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     def paths = getProperty("paths")
     def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
     copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector,
+                                                                  "product_uc" : p("component.names.product").toLowerCase(),
                                                                   "IDE-NAME": p("component.names.product").toUpperCase()])
     launcherProperties = launcherPropertiesTemp
   }

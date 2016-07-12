@@ -86,7 +86,7 @@ public class ResolveUtil {
   private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
-  public static final Key<PsiElement> DOCUMENTATION_DELEGATE = Key.create("groovy.documentation.delegate");
+  public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
 
   private ResolveUtil() {
   }
@@ -308,13 +308,7 @@ public class ResolveUtil {
     if (type instanceof PsiEllipsisType) {
       type = ((PsiEllipsisType)type).toArrayType();
     }
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
-      if (!NonCodeMembersContributor.runContributors(type, each, place, state)) {
-        return false;
-      }
-    }
-
-    return true;
+    return NonCodeMembersContributor.runContributors(type, processor, place, state);
   }
 
   private static final Key<PsiType> COMPARABLE = Key.create(CommonClassNames.JAVA_LANG_COMPARABLE);
@@ -358,12 +352,9 @@ public class ResolveUtil {
 
   public static Set<String> getAllSuperTypes(@NotNull PsiType base, final Project project) {
     final Map<String, Set<String>> cache =
-      CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Set<String>>>() {
-        @Override
-        public Result<Map<String, Set<String>>> compute() {
-          final Map<String, Set<String>> result = ContainerUtil.newConcurrentMap();
-          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
+      CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+        final Map<String, Set<String>> result = ContainerUtil.newConcurrentMap();
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);
@@ -764,7 +755,7 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull PsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
-    return getMethodCandidates(thisType, methodName, place, true, false, false, argumentTypes);
+    return getMethodCandidates(thisType, methodName, place, true, false, argumentTypes);
   }
 
   @NotNull
@@ -773,7 +764,6 @@ public class ResolveUtil {
                                                           @NotNull PsiElement place,
                                                           boolean resolveClosures,
                                                           boolean allVariants,
-                                                          boolean byShape,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
     thisType = TypesUtil.boxPrimitiveType(thisType, place.getManager(), place.getResolveScope());
@@ -926,19 +916,6 @@ public class ResolveUtil {
     final PsiElement element = result.getElement();
     if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) return (PsiClass)element;
     return null;
-  }
-
-  @NotNull
-  public static String inferExpectedPackageName(PsiElement place) {
-    PsiFile file = place.getContainingFile();
-    PsiDirectory psiDirectory = file.getContainingDirectory();
-    if (psiDirectory != null && file instanceof GroovyFile) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-      if (aPackage != null) {
-        return aPackage.getQualifiedName();
-      }
-    }
-    return "";
   }
 
   public static PsiNamedElement findDuplicate(@NotNull GrVariable variable) {

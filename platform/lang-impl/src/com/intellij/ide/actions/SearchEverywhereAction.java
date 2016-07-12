@@ -85,7 +85,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -178,17 +181,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
 
-    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent event) {
-        if (event instanceof KeyEvent) {
-          final int keyCode = ((KeyEvent)event).getKeyCode();
-          if (keyCode == KeyEvent.VK_SHIFT) {
-            ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
-          }
+    IdeEventQueue.getInstance().addPostprocessor(event -> {
+      if (event instanceof KeyEvent) {
+        final int keyCode = ((KeyEvent)event).getKeyCode();
+        if (keyCode == KeyEvent.VK_SHIFT) {
+          ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
         }
-        return false;
       }
+      return false;
     }, null);
   }
 
@@ -255,15 +255,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
   }
 
-  public SearchEverywhereAction() {
-    updateComponents();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> onFocusLost());
-
-  }
-
   private void updateComponents() {
-    myRenderer = new MyListRenderer();
     myList = new JBList(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
@@ -291,6 +283,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     };
+    myRenderer = new MyListRenderer(myList);
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
       @Override
@@ -711,12 +704,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return !mySkipFocusGain;
-        }
-      })
+      .setCancelCallback(() -> !mySkipFocusGain)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
@@ -1033,6 +1021,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Project myProject;
     private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    MyListRenderer(@NotNull JBList myList) {
+      assert myList == SearchEverywhereAction.this.myList;
+    }
 
     private class MyAccessibleComponent extends JPanel {
       private Accessible myAccessible;
@@ -1970,10 +1962,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private GotoActionItemProvider createActionProvider() {
       GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
         @Override
-        protected MatchMode actionMatches(@NotNull String pattern, @NotNull AnAction anAction) {
-          String text = anAction.getTemplatePresentation().getText();
-          return text != null && NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE)
-                   .matches(text) ? MatchMode.NAME : MatchMode.NONE;
+        protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
+          MatchMode mode = super.actionMatches(pattern, matcher, anAction);
+          return mode == MatchMode.NAME ? mode : MatchMode.NONE;
         }
       };
       return new GotoActionItemProvider(model);
@@ -2023,22 +2014,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
               .setResizable(true)
-              .setCancelCallback(new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-                  if (event instanceof MouseEvent) {
-                    final Component comp = ((MouseEvent)event).getComponent();
-                    if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
-                      return false;
-                    }
+              .setCancelCallback(() -> {
+                final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+                if (event instanceof MouseEvent) {
+                  final Component comp = ((MouseEvent)event).getComponent();
+                  if (UIUtil.getWindow(comp) == UIUtil.getWindow(myBalloon.getContent())) {
+                    return false;
                   }
-                  final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
-                  if (canClose) {
-                    PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
-                  }
-                  return canClose;
                 }
+                final boolean canClose = myBalloon == null || myBalloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
+                if (canClose) {
+                  PropertiesComponent.getInstance().setValue("search.everywhere.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
+                }
+                return canClose;
               })
               .setShowShadow(false)
               .setShowBorder(false)

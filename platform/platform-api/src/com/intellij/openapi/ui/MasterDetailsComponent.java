@@ -616,21 +616,13 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Nullable
   protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
     if (profileName == null) return null; //do not suggest root node
-    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
-      public boolean value(final NamedConfigurable configurable) {
-        return Comparing.strEqual(profileName, configurable.getDisplayName());
-      }
-    });
+    return findNodeByCondition(root, configurable -> Comparing.strEqual(profileName, configurable.getDisplayName()));
   }
 
   @Nullable
   public static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
     if (editableObject == null) return null; //do not suggest root node
-    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
-      public boolean value(final NamedConfigurable configurable) {
-        return Comparing.equal(editableObject, configurable.getEditableObject());
-      }
-    });
+    return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
 
   protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
@@ -838,14 +830,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected static Condition<Object[]> forAll(final Condition<Object> condition) {
-    return new Condition<Object[]>() {
-      @Override
-      public boolean value(Object[] objects) {
-        for (Object object : objects) {
-          if (!condition.value(object)) return false;
-        }
-        return true;
+    return objects -> {
+      for (Object object : objects) {
+        if (!condition.value(object)) return false;
       }
+      return true;
     };
   }
 

@@ -58,7 +58,7 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
   @Override
   public ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context) {
     SocketClient client = new SocketClient(context.channel());
-    context.attr(ClientManagerKt.getCLIENT()).set(client);
+    context.channel().attr(ClientManagerKt.getCLIENT()).set(client);
     clientManager.getValue().addClient(client);
     connected(client, null);
     return new MyDecoder(client);
@@ -127,10 +127,10 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
 
     @Override
     public void channelInactive(ChannelHandlerContext context) throws Exception {
-      Client client = context.attr(ClientManagerKt.getCLIENT()).get();
+      Client client = context.channel().attr(ClientManagerKt.getCLIENT()).get();
       // if null, so, has already been explicitly removed
       if (client != null) {
-        clientManager.getValue().disconnectClient(context, client, false);
+        clientManager.getValue().disconnectClient(context.channel(), client, false);
       }
     }
   }

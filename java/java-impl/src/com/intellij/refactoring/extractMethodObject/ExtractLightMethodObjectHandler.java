@@ -32,7 +32,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -294,6 +293,7 @@ public class ExtractLightMethodObjectHandler {
       return inputVariables.getInputVariables().toArray(new VariableData[inputVariables.getInputVariables().size()]);
     }
 
+    @NotNull
     @Override
     public String getVisibility() {
       return PsiModifier.PUBLIC;

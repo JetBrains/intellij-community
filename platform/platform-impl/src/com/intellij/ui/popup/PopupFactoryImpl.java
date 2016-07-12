@@ -453,14 +453,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
                                                                   showDisabledActions, honorActionMnemonics);
     return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                               new Condition<AnAction>() {
-                                 @Override
-                                 public boolean value(AnAction action) {
-                                   return defaultOptionIndex >= 0 &&
-                                          defaultOptionIndex < items.size() &&
-                                          items.get(defaultOptionIndex).getAction().equals(action);
-                                 }
-                               }, autoSelectionEnabled, showDisabledActions);
+                               action -> defaultOptionIndex >= 0 &&
+                                      defaultOptionIndex < items.size() &&
+                                      items.get(defaultOptionIndex).getAction().equals(action), autoSelectionEnabled, showDisabledActions);
   }
 
   @NotNull
@@ -680,7 +675,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return visibleArea.contains(p) ? p : null;
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - editor.getLineHeight())
+           ? null : p;
   }
 
   @Override

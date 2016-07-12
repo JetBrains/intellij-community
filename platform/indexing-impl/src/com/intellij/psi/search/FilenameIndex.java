@@ -80,7 +80,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
+    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
   }
 
   public static String[] getAllFilenames(Project project) {
@@ -193,6 +193,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     }
     //noinspection SuspiciousToArrayCall
     return result.toArray(new PsiFile[result.size()]);
+  }
+
+  public static void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @NotNull IdFilter filter) {
+    FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {

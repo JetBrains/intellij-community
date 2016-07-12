@@ -25,6 +25,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
@@ -39,11 +40,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.TitledSeparator;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +61,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class RunInspectionAction extends GotoActionBase {
-  private static final Logger LOGGER = Logger.getInstance("#" + RunInspectionAction.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
 
   public RunInspectionAction() {
     getTemplatePresentation().setText(IdeBundle.message("goto.inspection.action.text"));
@@ -92,14 +96,15 @@ public class RunInspectionAction extends GotoActionBase {
     }, false);
   }
 
-  private static void runInspection(final @NotNull Project project,
-                                    @NotNull String shortName,
-                                    @Nullable VirtualFile virtualFile,
-                                    PsiElement psiElement,
-                                    PsiFile psiFile) {
+  public static void runInspection(final @NotNull Project project,
+                                   @NotNull String shortName,
+                                   @Nullable VirtualFile virtualFile,
+                                   PsiElement psiElement,
+                                   PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
     final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    final InspectionToolWrapper toolWrapper = currentProfile.getInspectionTool(shortName, project);
+    final InspectionToolWrapper toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
+                                                              : currentProfile.getInspectionTool(shortName, project);
     LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
 
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -135,9 +140,23 @@ public class RunInspectionAction extends GotoActionBase {
       project, analysisScope, module != null ? module.getName() : null,
       true, options, psiElement) {
 
+      private InspectionToolWrapper myUpdatedSettingsToolWrapper;
+
+      @Nullable
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
-        return fileFilterPanel.getPanel();
+        final JPanel fileFilter = fileFilterPanel.getPanel();
+        if (toolWrapper.getTool().createOptionsPanel() != null) {
+          JPanel additionPanel = new JPanel();
+          additionPanel.setLayout(new BoxLayout(additionPanel, BoxLayout.Y_AXIS));
+          additionPanel.add(fileFilter);
+          myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);//new InheritOptionsForToolPanel(toolWrapper.getShortName(), project);
+          additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
+          additionPanel.add(myUpdatedSettingsToolWrapper.getTool().createOptionsPanel());
+          return additionPanel;
+        } else {
+          return fileFilter;
+        }
       }
 
       @NotNull
@@ -156,8 +175,11 @@ public class RunInspectionAction extends GotoActionBase {
       }
 
       private AnalysisScope getScope() {
-        final AnalysisUIOptions uiOptions = options;
-        return getScope(uiOptions, initialAnalysisScope, project, module);
+        return getScope(options, initialAnalysisScope, project, module);
+      }
+
+      private InspectionToolWrapper getToolWrapper() {
+        return myUpdatedSettingsToolWrapper == null ? toolWrapper : myUpdatedSettingsToolWrapper;
       }
 
       @NotNull
@@ -172,7 +194,7 @@ public class RunInspectionAction extends GotoActionBase {
           }
           @Override
           public void actionPerformed(ActionEvent e) {
-            RunInspectionIntention.rerunInspection(toolWrapper, managerEx, getScope(), element);
+            RunInspectionIntention.rerunInspection(getToolWrapper(), managerEx, getScope(), null);
             close(DialogWrapper.OK_EXIT_CODE);
           }
         });
@@ -180,8 +202,10 @@ public class RunInspectionAction extends GotoActionBase {
           actions.add(new AbstractAction("Fix All") {
             @Override
             public void actionPerformed(ActionEvent e) {
+              InspectionToolWrapper wrapper = getToolWrapper();
+              InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
               managerEx.createNewGlobalContext(false)
-                .codeCleanup(project, getScope(), currentProfile, "Cleanup by " + toolWrapper.getDisplayName(), null, false);
+                .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }
           });
@@ -195,5 +219,18 @@ public class RunInspectionAction extends GotoActionBase {
     };
 
     dialog.showAndGet();
+  }
+
+  private static InspectionToolWrapper copyToolWithSettings(@NotNull final InspectionToolWrapper tool) {
+    final Element options = new Element("copy");
+    tool.getTool().writeSettings(options);
+    final InspectionToolWrapper copiedTool = tool.createCopy();
+    try {
+      copiedTool.getTool().readSettings(options);
+    }
+    catch (InvalidDataException e) {
+      throw new RuntimeException(e);
+    }
+    return copiedTool;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
@@ -58,6 +59,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
 
   private final File myStorageFile;
+  private final boolean myIsReadOnly;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private PersistentHashMapValueStorage myValueStorage;
   protected final DataExternalizer<Value> myValueExternalizer;
@@ -127,10 +129,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize);
+    this(file, keyDescriptor, valueExternalizer, initialSize, 0);
+  }
+
+  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize, int version) throws IOException {
+    super(checkDataFiles(file), keyDescriptor, initialSize, null, version);
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
+    myIsReadOnly = isReadOnly();
 
     myAppendCache = createAppendCache(keyDescriptor);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
@@ -175,7 +182,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if(myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath(), myIsReadOnly);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -208,6 +215,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   protected boolean wantNonnegativeIntegralValues() {
+    return false;
+  }
+  protected boolean isReadOnly() {
     return false;
   }
 
@@ -293,6 +303,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @TestOnly // public for tests
   public boolean makesSenseToCompact() {
+    if (myIsReadOnly) return false;
+
     final long fileSize = myValueStorage.getSize();
     final int megabyte = 1024 * 1024;
 
@@ -332,6 +344,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final void put(Key key, Value value) throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
       doPut(key, value);
     }
@@ -387,6 +400,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final int enumerate(Key name) throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
       myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
       return super.enumerate(name);
@@ -406,6 +420,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * @throws IOException
    */
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
       doAppendData(key, appender);
     }
@@ -566,6 +581,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public final void remove(Key key) throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
       doRemove(key);
     }
@@ -604,6 +620,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final void force() {
+    if (myIsReadOnly) return;
     if(myDoTrace) LOG.info("Forcing " + myStorageFile);
     synchronized (myEnumerator) {
       doForce();
@@ -678,6 +695,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   // made public for tests
   public void compact() throws IOException {
+    if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
       force();
       LOG.info("Compacting "+myEnumerator.myFile.getPath());
@@ -692,7 +710,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final File[] oldFiles = getFilesInDirectoryWithNameStartingWith(oldDataFile, oldDataFileBaseName);
 
       final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
-      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
+      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, myIsReadOnly);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -747,7 +765,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         }
       }
 
-      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath());
+      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath(), myIsReadOnly);
       LOG.info("Compacted " + myEnumerator.myFile.getPath() + ":" + sizeBefore + " bytes into " + newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
       myEnumerator.putMetaData2( myLargeIndexWatermarkId );

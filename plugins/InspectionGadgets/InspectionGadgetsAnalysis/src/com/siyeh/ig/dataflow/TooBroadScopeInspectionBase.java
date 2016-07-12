@@ -20,17 +20,15 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.intellij.psi.util.FileTypeUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +82,15 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (PsiUtil.isConstantExpression(expression) || ExpressionUtils.isNullLiteral(expression)) {
       return true;
     }
+    if (expression instanceof PsiArrayInitializerExpression) {
+      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+      for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
+        if (!isMoveable(initializer)) {
+          return false;
+        }
+      }
+      return true;
+    }
     if (expression instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
@@ -96,32 +103,35 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return true;
       }
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-      boolean result = true;
       if (arrayInitializer != null) {
         final PsiExpression[] initializers = arrayInitializer.getInitializers();
         for (final PsiExpression initializerExpression : initializers) {
-          result &= isMoveable(initializerExpression);
+          if (!isMoveable(initializerExpression)) {
+            return false;
+          }
         }
+        return true;
       }
       final PsiType type = newExpression.getType();
       if (type == null) {
         return false;
       }
       else if (!m_allowConstructorAsInitializer) {
-        // constructors located in java.* packages probably have no non-local side effects
-        if (!ClassUtils.isImmutable(type) && !type.getCanonicalText().startsWith("java.")) {
+        if (!isAllowedType(type)) {
           return false;
         }
       }
       final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
-        return result;
+        return false;
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
       for (final PsiExpression argumentExpression : expressions) {
-        result &= isMoveable(argumentExpression);
+        if (!isMoveable(argumentExpression)) {
+          return false;
+        }
       }
-      return result;
+      return true;
     }
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
@@ -130,6 +140,9 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return false;
       }
       final PsiVariable variable = (PsiVariable)target;
+      if (!ClassUtils.isImmutable(variable.getType()) && !CollectionUtils.isEmptyArray(variable)) {
+        return false;
+      }
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
@@ -146,7 +159,61 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       return true;
     }
+    if (expression instanceof PsiMethodCallExpression) {
+      if (!isAllowedType(expression.getType())) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (!isAllowedMethod(method)) {
+        return false;
+      }
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      for (PsiExpression argument : argumentList.getExpressions()){
+        if (!isMoveable(argument)) {
+          return false;
+        }
+      }
+      return true;
+    }
     return false;
+  }
+
+  private static boolean isAllowedMethod(PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return false;
+    }
+    final String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null || !qualifiedName.startsWith("java.")) {
+      return false;
+    }
+    final String methodName = method.getName();
+    return !"now".equals(methodName) && !"currentTimeMillis".equals(methodName) && !"nanoTime".equals(methodName);
+  }
+
+  private static boolean isAllowedType(PsiType type) {
+    if (ClassUtils.isImmutable(type)) {
+      return true;
+    }
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    return isAllowedClass(aClass);
+  }
+
+  private static boolean isAllowedClass(@Nullable PsiClass aClass) {
+    // allow some "safe" jdk types
+    if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+        InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP)) {
+      return true;
+    }
+    return aClass != null && aClass.isEnum();
   }
 
   @Override

@@ -28,12 +28,12 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testNoseRunner() {
 
-    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>( "/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
 
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test1.py", 0);
+        return new PyNoseTestProcessRunner("test1.py", 0);
       }
 
       @Override
@@ -49,11 +49,11 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
   @Test
   public void testNoseRunner2() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test2.py", 0);
+        return new PyNoseTestProcessRunner( "test2.py", 0);
       }
 
       @Override

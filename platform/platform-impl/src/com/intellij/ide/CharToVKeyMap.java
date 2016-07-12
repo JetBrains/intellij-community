@@ -52,7 +52,7 @@ class CharToVKeyMap {
     charToVKeyMap.put('{',KeyEvent.VK_BRACELEFT);
     charToVKeyMap.put('}',KeyEvent.VK_BRACERIGHT);
     charToVKeyMap.put('@',KeyEvent.VK_AT);
-    charToVKeyMap.put(';',KeyEvent.VK_COLON);
+    charToVKeyMap.put(':',KeyEvent.VK_COLON);
     charToVKeyMap.put('$',KeyEvent.VK_DOLLAR);
     charToVKeyMap.put('€',KeyEvent.VK_EURO_SIGN);
     charToVKeyMap.put('!',KeyEvent.VK_EXCLAMATION_MARK);

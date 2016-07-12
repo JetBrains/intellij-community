@@ -127,7 +127,6 @@ class ApplyPatchChange {
     boolean resolved = isRangeApplied();
 
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false));
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
   }
 
   private void createStatusHighlighter() {

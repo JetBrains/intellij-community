@@ -20,10 +20,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -35,10 +32,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -73,6 +72,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -85,6 +86,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -107,7 +110,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
-  private final Alarm myAlarm = new Alarm();
+  // use scheduler instead of Alarm because the latter requires ModalityState.current() which is obtainable from EDT only which requires too many invokeLaters
+  private final ScheduledExecutorService myAlarm = EdtExecutorService.getScheduledExecutorInstance();
+  @NotNull
+  private volatile Future myUpdateRunnableFuture = new FixedFuture<>(null);
   private boolean myUpdateByTimerEnabled = true;
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<>();
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<>();
@@ -125,6 +131,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final PassExecutorService myPassExecutorService;
 
   private volatile boolean allowToInterrupt = true;
+  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(5, 1000);
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project,
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
@@ -326,7 +333,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
     }
-    DaemonProgressIndicator.setDebug(true);
+    DaemonProgressIndicator.setDebug(!ApplicationInfoImpl.isInPerformanceTest());
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
@@ -362,7 +369,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
-    myAlarm.cancelAllRequests();
+    myUpdateRunnableFuture.cancel(false);
+
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
@@ -373,7 +381,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          waitInOtherThread(50);
+          waitInOtherThread(50, canChangeDocument);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
@@ -386,7 +394,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       final HighlightingSessionImpl session =
         (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, textEditors.get(0).getEditor(), progress, null);
       wrap(() -> {
-        if (!waitInOtherThread(60000)) {
+        if (!waitInOtherThread(60000, canChangeDocument)) {
           throw new TimeoutException("Unable to complete in 60s");
         }
         session.waitForHighlightInfosApplied();
@@ -410,13 +418,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   }
 
-  private boolean waitInOtherThread(int millis) throws Throwable {
+  private boolean waitInOtherThread(int millis, boolean canChangeDocument) throws Throwable {
     Disposable disposable = Disposer.newDisposable();
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
     myProject.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
       () -> {
-        throw new IllegalStateException( "You must not perform PSI modifications from inside highlighting");
+        throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
       });
+    if (!canChangeDocument) {
+      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListenerAdapter() {
+        @Override
+        public void daemonCancelEventOccurred(@NotNull String reason) {
+          throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
+        }
+      });
+    }
 
     try {
       Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -599,21 +615,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   
   @TestOnly
   boolean isRunningOrPending() {
-    return isRunning() || !myAlarm.isEmpty();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return isRunning() || !myUpdateRunnableFuture.isDone();
   }
 
-  synchronized void stopProcess(boolean toRestartAlarm, @NonNls String reason) {
+  synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
 
     cancelUpdateProgress(toRestartAlarm, reason);
-    myAlarm.cancelAllRequests();
+    myUpdateRunnableFuture.cancel(false);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (myAlarm.isEmpty()) {
-          myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
-        }
-      });
+      if (LOG.isDebugEnabled()) {
+        myFrequentEventDetector.eventHappened(reason);
+      }
+      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -829,7 +845,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       }
       // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
       cancelUpdateProgress(true, "Cancel by alarm");
-      myAlarm.cancelAllRequests();
+      myUpdateRunnableFuture.cancel(false);
       DaemonProgressIndicator progress = createUpdateProgress();
       myPassExecutorService.submitPasses(passes, progress);
     }
@@ -845,27 +861,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         if (myDisposed || !myProject.isInitialized() || PowerSaveMode.isEnabled()) {
           return;
         }
+        // wait for heavy processing to stop, re-schedule daemon but not too soon
         if (HeavyProcessLatch.INSTANCE.isRunning()) {
-          final Disposable removeListenerDisposable = Disposer.newDisposable();
-          // wait for heavy processing to stop, re-schedule daemon but not too soon
-          HeavyProcessLatch.HeavyProcessListener heavyProcessListener = new HeavyProcessLatch.HeavyProcessListener() {
-            @Override
-            public void processStarted() {
-            }
-
-            @Override
-            public void processFinished() {
-              Disposer.dispose(removeListenerDisposable);
-              myAlarm.addRequest(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), ModalityState.NON_MODAL);
-            }
-          };
-          HeavyProcessLatch.INSTANCE.addListener(removeListenerDisposable, heavyProcessListener);
-          Disposer.register(DaemonCodeAnalyzerImpl.this, removeListenerDisposable);
-
-          if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-            // in case heavy operation finished right before listener added
-            heavyProcessListener.processFinished();
-          }
+          HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
+              myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, Math.max(mySettings.AUTOREPARSE_DELAY, 100), TimeUnit.MILLISECONDS));
           return;
         }
         Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();

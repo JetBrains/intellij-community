@@ -14,56 +14,33 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
-import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.ContextUtil
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind
-import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
-import com.intellij.debugger.impl.DebuggerContextUtil
-import com.intellij.debugger.impl.DebuggerManagerImpl
-import com.intellij.debugger.impl.DebuggerSession
-import com.intellij.debugger.impl.GenericDebuggerRunner
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
-import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.*
-import com.intellij.execution.runners.ProgramRunner
+
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.Semaphore
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyFileType
 
 /**
  * @author peter
  */
-class GroovyDebuggerTest extends GroovyCompilerTestCase {
+@CompileStatic
+class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
-  private static final int ourTimeout = 60000
+
+  @Override
+  Logger getLogger() { LOG }
 
   @Override
   protected void setUp() {
@@ -101,48 +78,15 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   @Override
-  protected void tearDown() {
-    super.tearDown()
-  }
-
-  @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder)
     def javaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome())
     moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
   }
 
-  private void runDebugger(PsiFile script, Closure cl) {
+  void runDebugger(PsiFile script, Closure cl) {
     def configuration = createScriptConfiguration(script.virtualFile.path, myModule)
-    edt {
-      ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      def listener = [onTextAvailable: { ProcessEvent evt, type ->
-        if (type == ProcessOutputTypes.STDERR)
-          println evt.text
-      }] as ProcessAdapter
-      runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
-    }
-    LOG.debug("after start")
-    try {
-      cl.call()
-    }
-    catch (Throwable t) {
-      t.printStackTrace()
-      throw t
-    }
-    finally {
-      def handler = debugProcess.processHandler
-      resume()
-      if (!handler.waitFor(ourTimeout)) {
-        if (handler instanceof OSProcessHandler) {
-          OSProcessManager.instance.killProcessTree(handler.process)
-        }
-        else {
-          println "can't terminate $handler"
-        }
-        fail('too long waiting for process termination')
-      }
-    }
+    runDebugger(configuration, cl)
   }
 
   public void testVariableInScript() {
@@ -351,14 +295,6 @@ int b = 3 //1
     }
   }
 
-  private SourcePosition getSourcePosition() {
-    managed {
-      EvaluationContextImpl context = evaluationContext()
-      Computable<SourcePosition> a = { ContextUtil.getSourcePosition(context) } as Computable<SourcePosition>
-      return ApplicationManager.getApplication().runReadAction(a)
-    }
-  }
-
   void testAnonymousClassInScript() {
     def file = myFixture.addFileToProject('Foo.groovy', '''\
 new Runnable() {
@@ -391,6 +327,7 @@ foo()
       eval 'x', '5'
     }
   }
+
   void "test non-identifier script name"() {
     def file = myFixture.addFileToProject('foo-bar.groovy', '''\
 int x = 1
@@ -576,115 +513,11 @@ public class Main {
     }
   }
 
-  private def addBreakpoint(String fileName, int line) {
+  void addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {
       file = myFixture.tempDirFixture.getFile(fileName)
     }
     addBreakpoint(file, line)
-  }
-
-  private def addBreakpoint(VirtualFile file, int line) {
-    edt {
-      DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(FileDocumentManager.instance.getDocument(file), line)
-    }
-  }
-
-  private def resume() {
-    if (debugSession == null) return
-    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
-  }
-
-  private SuspendContextImpl waitForBreakpoint() {
-    LOG.debug("waitForBreakpoint")
-    Semaphore semaphore = new Semaphore()
-    semaphore.down()
-    def process = debugProcess
-    // wait for all events processed
-    process.managerThread.schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() throws Exception {
-        semaphore.up();
-      }
-    });
-    def finished = semaphore.waitFor(ourTimeout);
-    assert finished: 'Too long debugger actions'
-
-    int i = 0
-    def suspendManager = process.suspendManager
-    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !process.processHandler.processTerminated) {
-      Thread.sleep(10)
-    }
-
-    def context = suspendManager.pausedContext
-    assert context: "too long process, terminated=${process.processHandler.processTerminated}"
-    return context
-  }
-
-  private DebugProcessImpl getDebugProcess() {
-    return debugSession?.process
-  }
-
-  private DebuggerSession getDebugSession() {
-    return DebuggerManagerEx.getInstanceEx(project).getContext().debuggerSession
-  }
-
-  private <T> T managed(Closure cl) {
-    def result = null
-    def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
-    Semaphore semaphore = new Semaphore()
-    semaphore.down()
-    debugProcess.managerThread.invoke(new DebuggerContextCommandImpl(ctx) {
-      @Override
-      void threadAction() {
-        try {
-          result = cl()
-        }
-        finally {
-          semaphore.up()
-        }
-      }
-
-      @Override
-      protected void commandCancelled() {
-        println DebugUtil.currentStackTrace()
-      }
-    })
-    def finished = semaphore.waitFor(ourTimeout)
-    assert finished: 'Too long debugger action'
-    return result
-  }
-
-  private void eval(final String codeText, String expected) throws EvaluateException {
-    eval(codeText, expected, null);
-  }
-
-  private void eval(final String codeText, String expected, FileType fileType) throws EvaluateException {
-    Semaphore semaphore = new Semaphore()
-    semaphore.down()
-
-    EvaluationContextImpl ctx
-    def item = new WatchItemDescriptor(project, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText, "", fileType))
-    managed {
-      ctx = evaluationContext()
-      item.setContext(ctx)
-      item.updateRepresentation(ctx, {} as DescriptorLabelListener)
-      semaphore.up()
-    }
-    assert semaphore.waitFor(ourTimeout): "too long evaluation: $item.label $item.evaluateException"
-
-    String result = managed {
-      def e = item.evaluateException
-      if (e) {
-        return ExceptionUtil.getThrowableText(e)
-      }
-      return DebuggerUtils.getValueAsString(ctx, item.value)
-    }
-    assert result == expected
-  }
-
-  private EvaluationContextImpl evaluationContext() {
-    final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
-    new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject())
   }
 }

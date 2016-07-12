@@ -105,12 +105,8 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
 
   protected void doSetup(ModifiableModelsProvider modifiableModelsProvider, final Module module) {
     final ModifiableFacetModel model = modifiableModelsProvider.getFacetModifiableModel(module);
-    final String name = UniqueNameGenerator.generateUniqueName(myFacetType.getDefaultFacetName(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return FacetManager.getInstance(module).findFacet(myFacetType.getId(), s) == null;
-      }
-    });
+    final String name = UniqueNameGenerator.generateUniqueName(myFacetType.getDefaultFacetName(),
+                                                               s -> FacetManager.getInstance(module).findFacet(myFacetType.getId(), s) == null);
     final F facet = FacetManager.getInstance(module).createFacet(myFacetType, name, myConfiguration,
                                                                  findUnderlyingFacet(module));
     model.addFacet(facet);

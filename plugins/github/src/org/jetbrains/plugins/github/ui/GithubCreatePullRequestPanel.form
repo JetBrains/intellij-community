@@ -8,12 +8,53 @@
     <properties/>
     <border type="none"/>
     <children>
+      <component id="fb73f" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="952ec"/>
+          <text value="Base fork:"/>
+        </properties>
+      </component>
+      <component id="952ec" class="com.intellij.openapi.ui.ComboBox" binding="myForkComboBox">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="a5106" class="javax.swing.JButton" binding="mySelectForkButton">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Select Other Fork"/>
+        </properties>
+      </component>
       <component id="3f5fd" class="com.intellij.ui.components.JBLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <labelFor value="78a64"/>
           <text value="Base branch:"/>
+        </properties>
+      </component>
+      <component id="78a64" class="com.intellij.openapi.ui.ComboBox" binding="myBranchComboBox">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <editable value="false"/>
+          <toolTipText value=""/>
+        </properties>
+      </component>
+      <component id="90c93" class="javax.swing.JButton" binding="myShowDiffButton">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Show Diff"/>
         </properties>
       </component>
       <component id="d2b10" class="com.intellij.ui.components.JBLabel">
@@ -21,15 +62,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <labelFor value="996e9"/>
           <text value="Title:"/>
-        </properties>
-      </component>
-      <component id="f7387" class="com.intellij.ui.components.JBLabel">
-        <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Description:"/>
         </properties>
       </component>
       <component id="996e9" class="javax.swing.JTextField" binding="myTitleTextField">
@@ -39,6 +73,15 @@
           </grid>
         </constraints>
         <properties/>
+      </component>
+      <component id="f7387" class="com.intellij.ui.components.JBLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="21aa4"/>
+          <text value="Description:"/>
+        </properties>
       </component>
       <scrollpane id="61e54" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
@@ -55,45 +98,6 @@
           </component>
         </children>
       </scrollpane>
-      <component id="90c93" class="javax.swing.JButton" binding="myShowDiffButton">
-        <constraints>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Show Diff"/>
-        </properties>
-      </component>
-      <component id="fb73f" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Base fork:"/>
-        </properties>
-      </component>
-      <component id="a5106" class="javax.swing.JButton" binding="mySelectForkButton">
-        <constraints>
-          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Select Other Fork"/>
-        </properties>
-      </component>
-      <component id="78a64" class="com.intellij.openapi.ui.ComboBox" binding="myBranchComboBox">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <editable value="false"/>
-          <toolTipText value=""/>
-        </properties>
-      </component>
-      <component id="952ec" class="com.intellij.openapi.ui.ComboBox" binding="myForkComboBox">
-        <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-      </component>
     </children>
   </grid>
 </form>

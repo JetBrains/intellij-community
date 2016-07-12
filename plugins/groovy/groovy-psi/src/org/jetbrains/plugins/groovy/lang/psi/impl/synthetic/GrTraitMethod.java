@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethod;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 25/04/14
- */
-public class GrTraitMethod extends GrMethodWrapper {
-  private final PsiSubstitutor mySubstitutor;
+public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
 
-  protected GrTraitMethod(PsiMethod method, PsiSubstitutor substitutor) {
-    super(method, substitutor);
-    mySubstitutor = substitutor;
+  public GrTraitMethod(@NotNull PsiClass containingClass,
+                       @NotNull PsiMethod method,
+                       @NotNull PsiSubstitutor substitutor) {
+    super(containingClass, method, substitutor);
+    setNavigationElement(method);
   }
 
   @Override
-  public PsiType getReturnType() {
-    return mySubstitutor.substitute(super.getReturnType());
+  public boolean hasModifierProperty(@NotNull String name) {
+    return name != PsiModifier.ABSTRACT && super.hasModifierProperty(name);
   }
 
-  public static GrTraitMethod create(PsiMethod method, PsiSubstitutor substitutor) {
-    return new GrTraitMethod(method, substitutor);
+  @NotNull
+  @Override
+  public PsiMethod getPrototype() {
+    return myMethod;
   }
 }

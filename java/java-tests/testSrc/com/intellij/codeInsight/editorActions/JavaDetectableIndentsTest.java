@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.psi.codeStyle.autodetect.DetectableIndentOptionsProvider;
+import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 

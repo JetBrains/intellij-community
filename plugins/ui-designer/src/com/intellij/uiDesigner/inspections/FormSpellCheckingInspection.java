@@ -32,7 +32,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.PopupQuickFix;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.util.Consumer;
 
 import java.util.List;
 
@@ -60,7 +59,7 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
     PlainTextSplitter.getInstance().split(value, TextRange.allOf(value), textRange -> {
       final String word = textRange.substring(value);
       if (manager.hasProblem(word)) {
-        final List<String> suggestions = manager.getSuggestions(value);
+        final List<String> suggestions = manager.getSuggestions(word);
         if (suggestions.size() > 0 && prop instanceof IntroStringProperty) {
           EditorQuickFixProvider changeToProvider = new EditorQuickFixProvider() {
             @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -79,12 +78,8 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     };
   private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
-  private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION = new Condition<BuildFileProperty>() {
-    @Override
-    public boolean value(BuildFileProperty property) {
-      return !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
-    }
-  };
+  private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION =
+    property -> !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
   private final AntArtifactProperties myProperties;
   private final ArtifactEditorContext myContext;
   private final AntConfigurationListener myAntConfigurationListener;
@@ -178,18 +173,6 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
           myTarget = myProperties.findTarget(antConfiguration);
           updatePanel();
         }
-      }
-
-      @Override
-      public void buildFileChanged(AntBuildFile buildFile) {
-      }
-
-      @Override
-      public void buildFileAdded(AntBuildFile buildFile) {
-      }
-
-      @Override
-      public void buildFileRemoved(AntBuildFile buildFile) {
       }
     };
     antConfiguration.addAntConfigurationListener(myAntConfigurationListener);

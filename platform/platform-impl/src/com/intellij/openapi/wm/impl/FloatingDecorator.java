@@ -28,6 +28,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +67,7 @@ public final class FloatingDecorator extends JDialog {
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
 
-  FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
+  FloatingDecorator(final IdeFrameImpl owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
     MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
@@ -107,7 +108,7 @@ public final class FloatingDecorator extends JDialog {
 
     //
 
-    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane());
+    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
     getRootPane().setGlassPane(ideGlassPane);
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
@@ -154,7 +155,7 @@ public final class FloatingDecorator extends JDialog {
     super.dispose();
   }
 
-  final void apply(final WindowInfoImpl info){
+  final void apply(@NotNull WindowInfoImpl info){
     LOG.assertTrue(info.isFloating());
     myInfo=info;
     // Set alpha mode

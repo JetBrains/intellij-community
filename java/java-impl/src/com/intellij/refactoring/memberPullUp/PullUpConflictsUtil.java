@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class PullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                           new UsageInfo[0], targetRepresentativeElement, conflicts);
+                                                    UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
 
     final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
     final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),

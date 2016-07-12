@@ -21,14 +21,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -37,7 +40,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
@@ -49,8 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.regex.Pattern;
 
@@ -82,12 +82,17 @@ public class CheckRegExpForm {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
 
     myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
-    myRegExp.setPreferredWidth(Math.max(JBUI.scale(300), myRegExp.getPreferredSize().width));
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
-    mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE);
-    mySampleText.setBorder(
-      new CompoundBorder(JBUI.Borders.empty(2, 2, 2, 4), new LineBorder(UIUtil.isUnderDarcula() ? Gray._100 : JBColor.border())));
+    mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
+      @Override
+      protected void updateBorder(@NotNull EditorEx editor) {
+        setupBorder(editor);
+      }
+    };
     mySampleText.setOneLineMode(false);
+    int preferredWidth = Math.max(JBUI.scale(250), myRegExp.getPreferredSize().width);
+    myRegExp.setPreferredWidth(preferredWidth);
+    mySampleText.setPreferredWidth(preferredWidth);
 
     myRootPanel = new JPanel(new BorderLayout()) {
       Disposable disposable;
@@ -112,7 +117,7 @@ public class CheckRegExpForm {
           public void documentChanged(DocumentEvent e) {
             updater.cancelAllRequests();
             if (!updater.isDisposed()) {
-              updater.addRequest(() -> updateBalloon(), 200);
+              updater.addRequest(CheckRegExpForm.this::updateBalloon, 200);
             }
           }
         };
@@ -130,6 +135,7 @@ public class CheckRegExpForm {
         PropertiesComponent.getInstance(myProject).setValue(LAST_EDITED_REGEXP, mySampleText.getText());
       }
     };
+    myRootPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
   }
 
   @NotNull
@@ -149,12 +155,9 @@ public class CheckRegExpForm {
       mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
       myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
       myRootPanel.revalidate();
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return false;
-      }
-    });
+      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
+      if (balloon != null) balloon.revalidate();
+    }, ModalityState.current());
   }
 
   @TestOnly

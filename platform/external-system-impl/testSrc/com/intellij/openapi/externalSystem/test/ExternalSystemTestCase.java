@@ -99,28 +99,20 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     setUpFixtures();
     myProject = myTestFixture.getProject();
 
-    edt(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              setUpInWriteAction();
-            }
-            catch (Throwable e) {
-              try {
-                tearDown();
-              }
-              catch (Exception e1) {
-                e1.printStackTrace();
-              }
-              throw new RuntimeException(e);
-            }
-          }
-        });
+    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        setUpInWriteAction();
       }
-    });
+      catch (Throwable e) {
+        try {
+          tearDown();
+        }
+        catch (Exception e1) {
+          e1.printStackTrace();
+        }
+        throw new RuntimeException(e);
+      }
+    }));
 
     List<String> allowedRoots = new ArrayList<String>();
     collectAllowedRoots(allowedRoots);
@@ -137,19 +129,16 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   public static Collection<String> collectRootsInside(String root) {
     final List<String> roots = ContainerUtil.newSmartList();
     roots.add(root);
-    FileUtil.processFilesRecursively(new File(root), new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        try {
-          String path = file.getCanonicalPath();
-          if (!FileUtil.isAncestor(path, path, false)) {
-            roots.add(path);
-          }
+    FileUtil.processFilesRecursively(new File(root), file -> {
+      try {
+        String path = file.getCanonicalPath();
+        if (!FileUtil.isAncestor(path, path, false)) {
+          roots.add(path);
         }
-        catch (IOException ignore) {
-        }
-        return true;
       }
+      catch (IOException ignore) {
+      }
+      return true;
     });
 
     return roots;

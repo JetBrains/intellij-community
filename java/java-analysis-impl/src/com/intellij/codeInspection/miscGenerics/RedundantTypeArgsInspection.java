@@ -173,7 +173,9 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceParameterList)) return;
+      final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(typeArgumentList)) return;
       try {
         final PsiMethodCallExpression expr =

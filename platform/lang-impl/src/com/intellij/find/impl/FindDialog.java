@@ -32,12 +32,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -56,6 +56,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -72,7 +73,10 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -478,6 +482,7 @@ public class FindDialog extends DialogWrapper {
       }
 
       final AtomicInteger resultsCount = new AtomicInteger();
+      final AtomicInteger resultsFilesCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
 
@@ -490,10 +495,19 @@ public class FindDialog extends DialogWrapper {
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+          Ref<VirtualFile> lastUsageFileRef = new Ref<VirtualFile>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
             final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
             usage.getPresentation().getIcon(); // cache icon
+
+            VirtualFile file = lastUsageFileRef.get();
+            VirtualFile usageFile = info.getVirtualFile();
+            if (file == null || !file.equals(usageFile)) {
+              resultsFilesCount.incrementAndGet();
+              lastUsageFileRef.set(usageFile);
+            }
+
             ApplicationManager.getApplication().invokeLater(() -> {
               model.addRow(new Object[]{usage});
               if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
@@ -502,13 +516,23 @@ public class FindDialog extends DialogWrapper {
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
           }, processPresentation, filesToScanInitially);
+
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             return new Continuation(() -> {
               if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
                 int occurrences = resultsCount.get();
+                int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");
+                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+
+                myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX,
+                                     PREVIEW_TITLE +
+                                     " (" + (foundAllUsages ? Integer.valueOf(occurrences) : occurrences + "+") +
+                                     UIBundle.message("message.matches", occurrences) +
+                                     " in " + (foundAllUsages ? Integer.valueOf(filesWithOccurrences) : filesWithOccurrences + "+") +
+                                     UIBundle.message("message.files", filesWithOccurrences) +
+                                     ")");
               }
             }, state);
           }
@@ -621,13 +645,7 @@ public class FindDialog extends DialogWrapper {
         new NavigateToSourceListener().installOn(table);
 
         Splitter previewSplitter = new Splitter(true, 0.5f, 0.1f, 0.9f);
-        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), true) {
-          @Override
-          protected void customizeEditorSettings(EditorSettings settings) {
-            super.customizeEditorSettings(settings);
-            settings.setUseSoftWraps(true);
-          }
-        };
+        myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), true);
         myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         registerNavigateToSourceShortcutOnComponent(table, myUsagePreviewPanel);
         myResultsPreviewTable = table;
@@ -1673,13 +1691,20 @@ public class FindDialog extends DialogWrapper {
           TextChunk[] text = usageAdapter.getPresentation().getText();
           // line number / file info
           VirtualFile file = usageAdapter.getFile();
-          String uniqueVirtualFilePath = myOmitFileExtension ? file.getNameWithoutExtension() : file.getName();
+          String uniqueVirtualFilePath = getFilePath(usageAdapter);
           VirtualFile prevFile = findPrevFile(table, row, column);
           SimpleTextAttributes attributes = Comparing.equal(file, prevFile) ? REPEATED_FILE_ATTRIBUTES : ORDINAL_ATTRIBUTES;
           append(uniqueVirtualFilePath, attributes);
-          append(" " + text[0].getText(), ORDINAL_ATTRIBUTES);
+          if (text.length > 0) append(" " + text[0].getText(), ORDINAL_ATTRIBUTES);
         }
         setBorder(null);
+      }
+
+      @NotNull
+      private String getFilePath(@NotNull UsageInfo2UsageAdapter ua) {
+        String uniquePath =
+          UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(ua.getUsageInfo().getProject(), ua.getFile());
+        return myOmitFileExtension ? StringUtil.trimExtension(uniquePath) : uniquePath;
       }
 
       @Nullable

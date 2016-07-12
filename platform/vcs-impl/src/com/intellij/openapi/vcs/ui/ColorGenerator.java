@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -26,38 +25,36 @@ import java.util.List;
 
 public class ColorGenerator {
   @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull List<Color> anchorColors, int count) {
-    if (count == 0) return Collections.emptyList();
-    if (anchorColors.isEmpty()) return Collections.nCopies(count, JBColor.GRAY);
-    if (anchorColors.size() == 1) return Collections.nCopies(count, anchorColors.get(0));
-
-    List<Color> result = new ArrayList<>();
-    result.add(anchorColors.get(0));
+  public static List<Color> generateLinearColorSequence(@NotNull List<Color> anchorColors, int colorsBetweenAnchors) {
+    assert colorsBetweenAnchors >= 0;
+    if (anchorColors.isEmpty()) return Collections.singletonList(JBColor.GRAY);
+    if (anchorColors.size() == 1) return Collections.singletonList(anchorColors.get(0));
 
     int segmentCount = anchorColors.size() - 1;
-    int colorPerSegment = (count - 1) / segmentCount;
-    if (count - 1 > colorPerSegment * segmentCount) colorPerSegment++; // divide rounding up
+    List<Color> result = new ArrayList<>(anchorColors.size() + segmentCount * colorsBetweenAnchors);
+    result.add(anchorColors.get(0));
 
     for (int i = 0; i < segmentCount; i++) {
       Color color1 = anchorColors.get(i);
       Color color2 = anchorColors.get(i + 1);
 
-      List<Color> linearColors = generateLinearColorSequence(color1, color2, colorPerSegment + 1);
+      List<Color> linearColors = generateLinearColorSequence(color1, color2, colorsBetweenAnchors);
 
       // skip first element from sequence to avoid duplication from connected segments
       result.addAll(linearColors.subList(1, linearColors.size()));
     }
-    return result.subList(0, count);
+    return result;
   }
 
   @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int count) {
-    if (count == 1) return ContainerUtil.list(color1);
-    if (count == 2) return ContainerUtil.list(color1, color2);
+  public static List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
+    assert colorsBetweenAnchors >= 0;
 
-    List<Color> result = new ArrayList<>();
-    for (int i = 0; i < count; i++) {
-      float ratio = (float)i / (count - 1);
+    List<Color> result = new ArrayList<>(colorsBetweenAnchors + 2);
+    result.add(color1);
+
+    for (int i = 1; i <= colorsBetweenAnchors; i++) {
+      float ratio = (float)i / (colorsBetweenAnchors + 1);
 
       //noinspection UseJBColor
       result.add(new Color(
@@ -67,6 +64,7 @@ public class ColorGenerator {
       ));
     }
 
+    result.add(color2);
     return result;
   }
 

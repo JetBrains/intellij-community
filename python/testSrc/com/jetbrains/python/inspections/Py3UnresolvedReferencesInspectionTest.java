@@ -136,4 +136,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testDecodeBytesAfterSlicing() {
     doTest();
   }
+
+  // PY-13734
+  public void testDunderClass() {
+    doTest();
+  }
 }

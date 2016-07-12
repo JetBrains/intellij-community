@@ -87,8 +87,8 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
     assertNotNull(installation2);
     assertContainsElements(toFiles(installation2.getClasspath()),
                            PathManagerEx.findFileUnderCommunityHome("lib/ant/lib/ant.jar"),
-                           PathManagerEx.findFileUnderCommunityHome("lib/asm.jar"),
-                           PathManagerEx.findFileUnderCommunityHome("lib/dev/easymock.jar"));
+                           PathManagerEx.findFileUnderCommunityHome("lib/trove4j.jar"),
+                           PathManagerEx.findFileUnderCommunityHome("lib/dev/easymock-3.4.jar"));
   }
 
   @Override

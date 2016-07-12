@@ -994,4 +994,16 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testNestedCaptures() throws Exception {
     doTest();
   }
+
+  public void testErasureOfReturnTypeOfNonGenericMethod() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedCastWithCapturedWildcards() throws Exception {
+    doTest(true);
+  }
+
+  public void testReifiableCapturedWildcards() throws Exception {
+    doTest(true);
+  }
 }

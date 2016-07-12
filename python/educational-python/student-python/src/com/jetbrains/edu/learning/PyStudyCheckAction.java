@@ -15,12 +15,14 @@ import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
-import com.jetbrains.edu.learning.checker.StudyTestsOutputParser;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
   public static final String ACTION_ID = "PyCheckAction";
   
   public void check(@NotNull Project project) {
+    EduUsagesCollector.taskChecked();
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
       final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
       if (selectedEditor == null) return;
@@ -41,8 +44,8 @@ public class PyStudyCheckAction extends StudyCheckAction {
       }
       if (StudyCheckUtils.hasBackgroundProcesses(project)) return;
 
-
-      if (!runTask(project)) return;
+      final Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (course != null && !course.isAdaptive() && !runTask(project)) return;
 
       final Task task = studyState.getTask();
       final VirtualFile taskDir = studyState.getTaskDir();
@@ -90,34 +93,48 @@ public class PyStudyCheckAction extends StudyCheckAction {
                                       final Process testProcess,
                                       final String commandLine) {
     return new StudyCheckTask(project, studyState, myCheckInProgress, testProcess, commandLine) {
-            @Override
-            protected void onTaskFailed(StudyTestsOutputParser.TestsOutput testsOutput) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (myTaskDir == null) return;
-                myTaskManger.setStatus(myTask, StudyStatus.Failed);
-                for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
-                  final String name = entry.getKey();
-                  final TaskFile taskFile = entry.getValue();
-                  if (taskFile.getAnswerPlaceholders().size() < 2) {
-                    myTaskManger.setStatus(taskFile, StudyStatus.Failed);
-                    continue;
-                  }
-                  if (EduNames.STUDY.equals(myTaskManger.getCourse().getCourseMode())) {
-                    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project)));
-                  }
-                }
-                StudyCheckUtils.showTestResultPopUp(testsOutput.getMessage(), MessageType.ERROR.getPopupBackground(), project);
-                StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
-              });
+      @Override
+      protected void onTaskFailed(String message) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myTaskDir == null) return;
+          myTask.setStatus(StudyStatus.Failed);
+          for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+            final String name = entry.getKey();
+            final TaskFile taskFile = entry.getValue();
+            if (taskFile.getAnswerPlaceholders().size() < 2) {
+              continue;
             }
-          };
+            final Course course = myTaskManger.getCourse();
+            if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
+              CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+                StudyCheckUtils.runSmartTestProcess(myTaskDir, testRunner, name, taskFile, project);
+              }));
+            }
+          }
+          final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
+          if (toolWindow != null) {
+            final Course course = StudyTaskManager.getInstance(project).getCourse();
+            if (course != null) {
+              if (course.isAdaptive()) {
+                StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), project);
+                StudyCheckUtils.showTestResultsToolWindow(project, message, false);
+              }
+              else {
+                StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
+              }
+            }
+            StudyCheckUtils.navigateToFailedPlaceholder(myStudyState, myTask, myTaskDir, project);
+          }
+        });
+      }
+    };
   }
 
 
   @Nullable
   private static VirtualFile getTaskVirtualFile(@NotNull final StudyState studyState,
-                                         @NotNull final Task task,
-                                         @NotNull final VirtualFile taskDir) {
+                                                @NotNull final Task task,
+                                                @NotNull final VirtualFile taskDir) {
     VirtualFile taskVirtualFile = studyState.getVirtualFile();
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
@@ -131,7 +148,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
     }
     return taskVirtualFile;
   }
-  
+
   @NotNull
   @Override
   public String getActionId() {

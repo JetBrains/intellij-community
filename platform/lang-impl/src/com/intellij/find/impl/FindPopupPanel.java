@@ -90,9 +90,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -129,6 +127,7 @@ public class FindPopupPanel extends JBPanel {
 
   @NotNull private final Project myProject;
   @NotNull private final FindModel myModel;
+  private FindModel myPreviousModel;
   @NotNull private final DataContext myDataContext;
   @NotNull private final Disposable myDisposable;
 
@@ -783,6 +782,19 @@ public class FindPopupPanel extends JBPanel {
     };
 
     model.addColumn("Usages");
+    // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
+    final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<VirtualFile>();
+
+    if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < myModel.getStringToFind().length()) {
+      final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
+      for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
+        final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
+        final VirtualFile file = usage.getFile();
+        if (file != null) filesToScanInitially.add(file);
+      }
+    }
+
+    myPreviousModel = myModel.clone();
 
     myCodePreviewComponent.setVisible(false);
 
@@ -797,6 +809,7 @@ public class FindPopupPanel extends JBPanel {
     myResultsPreviewTable.getEmptyText().setText("Searching...");
 
     final AtomicInteger resultsCount = new AtomicInteger();
+    final AtomicInteger resultsFilesCount = new AtomicInteger();
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
@@ -807,9 +820,19 @@ public class FindPopupPanel extends JBPanel {
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+        Ref<VirtualFile> lastUsageFileRef = new Ref<VirtualFile>();
+
         FindInProjectUtil.findUsages(myModel.clone(), myProject, info -> {
           final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
           usage.getPresentation().getIcon(); // cache icon
+
+          VirtualFile file = lastUsageFileRef.get();
+          VirtualFile usageFile = info.getVirtualFile();
+          if (file == null || !file.equals(usageFile)) {
+            resultsFilesCount.incrementAndGet();
+            lastUsageFileRef.set(usageFile);
+          }
+
           ApplicationManager.getApplication().invokeLater(() -> {
             model.addRow(new Object[]{usage});
             myCodePreviewComponent.setVisible(true);
@@ -819,21 +842,30 @@ public class FindPopupPanel extends JBPanel {
             scheduleUpdateResultsPopupBounds();
           }, state);
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
-        }, processPresentation);
+        }, processPresentation, filesToScanInitially);
+
         boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
         if (succeeded) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
               int occurrences = resultsCount.get();
+              int filesWithOccurrences = resultsFilesCount.get();
               if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
               myCodePreviewComponent.setVisible(occurrences > 0);
               StringBuilder info = new StringBuilder();
               if (occurrences > 0) {
                 info.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
-                if (occurrences >= ShowUsagesAction.USAGES_PAGE_SIZE) {
+                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+                if (!foundAllUsages) {
                   info.append("+");
                 }
                 info.append(UIBundle.message("message.matches", occurrences));
+                info.append(" in ");
+                info.append(filesWithOccurrences);
+                if (!foundAllUsages) {
+                  info.append("+");
+                }
+                info.append(UIBundle.message("message.files", filesWithOccurrences));
               }
               mySearchTextArea.setInfoText(info.toString());
               scheduleUpdateResultsPopupBounds();
@@ -894,24 +926,21 @@ public class FindPopupPanel extends JBPanel {
             .setShowShadow(false)
             .setShowBorder(false)
             .setResizable(true)
-            .setCancelCallback(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
-                if (canClose.get()) return Boolean.TRUE;
-                Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-                Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
-                if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
-                  return Boolean.FALSE;
-                }
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  if (myFindBalloon != null) {
-                    Disposer.dispose(myFindBalloon);
-                    myFindBalloon = null;
-                  }
-                });
-                return Boolean.TRUE;
+            .setCancelCallback(() -> {
+              DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
+              if (canClose.get()) return Boolean.TRUE;
+              Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+              Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
+              if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
+                return Boolean.FALSE;
               }
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (myFindBalloon != null) {
+                  Disposer.dispose(myFindBalloon);
+                  myFindBalloon = null;
+                }
+              });
+              return Boolean.TRUE;
             })
             .setKeyEventHandler(event -> {
               if (AbstractPopup.isCloseRequest(event)) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -465,5 +466,34 @@ public class ChangesUtil {
 
   public static String getDefaultChangeListName() {
     return VcsBundle.message("changes.default.changelist.name");
+  }
+
+  /**
+   * Find common ancestor for changes (included both before and after files)
+   */
+  @Nullable
+  public static File findCommonAncestor(@NotNull Collection<Change> changes) {
+    File ancestor = null;
+    for (Change change : changes) {
+      File currentChangeAncestor = getCommonBeforeAfterAncestor(change);
+      if (currentChangeAncestor == null) return null;
+      if (ancestor == null) {
+        ancestor = currentChangeAncestor;
+      }
+      else {
+        ancestor = FileUtil.findAncestor(ancestor, currentChangeAncestor);
+        if (ancestor == null) return null;
+      }
+    }
+    return ancestor;
+  }
+
+  @Nullable
+  private static File getCommonBeforeAfterAncestor(@NotNull Change change) {
+    FilePath before = getBeforePath(change);
+    FilePath after = getAfterPath(change);
+    return before == null
+           ? ObjectUtils.assertNotNull(after).getIOFile()
+           : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
   }
 }

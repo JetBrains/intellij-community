@@ -234,10 +234,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = highlightErrors();
     assertEquals(0, infos.size());
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
 
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
-    assertEquals(getFile().getTextRange(), dirty);
+      TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+      assertEquals(getFile().getTextRange(), dirty);
+    });
+
     highlightErrors();
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
   }
@@ -353,7 +356,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
-    assertEmpty(errors);
+    assertEmpty(getFile().getText(), errors);
   }
 
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
@@ -551,15 +554,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
-    int visitedCount = tool.visited.size();
+    int visitedCount = new HashSet<>(tool.visited).size();
     tool.visited.clear();
 
-    type("  ");  // white space modification
+    type(" ");  // white space modification
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
-    int countAfter = tool.visited.size();
+    int countAfter = new HashSet<>(tool.visited).size();
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
@@ -807,15 +810,54 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(changed);
   }
 
+  public void testTypeParametersMustNotBlinkWhenTypingInsideClass() throws Throwable {
+    configureByText(JavaFileType.INSTANCE, "package x; \n" +
+                                           "abstract class ToRun<TTTTTTTTTTTTTTT> implements Comparable<TTTTTTTTTTTTTTT> {\n" +
+                                           "  private ToRun<TTTTTTTTTTTTTTT> delegate;\n"+
+                                           "  <caret>\n"+
+                                           "  \n"+
+                                           "}");
+
+    List<HighlightInfo> errors = highlightErrors();
+    assertEmpty(errors);
+
+    MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        if (TextRange.create(highlighter).substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
+          throw new RuntimeException("Must not remove type parameter highlighter");
+        }
+      }
+    });
+
+    assertEmpty(highlightErrors());
+
+    type("//xxx");
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    assertEmpty(highlightErrors());
+    backspace();
+    backspace();
+    assertEmpty(highlightErrors());
+  }
+
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
+    StringBuffer log = new StringBuffer();
     final LineMarkerProvider provider = new LineMarkerProvider() {
       @Nullable
       @Override
       public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+        log.append("getLineMarkerInfo(" + element + ")\n");
         if (element instanceof PsiComment) {
-          return new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null,
-                                      GutterIconRenderer.Alignment.LEFT);
+          LineMarkerInfo<PsiComment> info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          log.append(info + "\n");
+          return info;
         }
         return null;
       }
@@ -827,23 +869,38 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     };
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
+    myDaemonCodeAnalyzer.restart();
+    try {
+      List<HighlightInfo> infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
+      log.append("infos: " + infos + "\n");
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
-    assertEmpty(highlightErrors());
+      List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
 
-    List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      type(' ');
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
+      log.append("infos: " + infos + "\n");
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
-    type(' ');
-    assertEmpty(highlightErrors());
+      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
 
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      backspace();
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
+      log.append("infos: " + infos + "\n");
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
-    backspace();
-    assertEmpty(highlightErrors());
-
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertOneElement(lineMarkers);
+      lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+      assertOneElement(lineMarkers);
+    }
+    catch (AssertionError e) {
+      System.err.println("Log:\n"+log+"\n---");
+      throw e;
+    }
   }
 
   public void testWhenTypingOverWrongReferenceItsColorChangesToBlackAndOnlyAfterHighlightingFinishedItReturnsToRed() throws Throwable {
@@ -1388,18 +1445,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         return visitor;
       }
     };
-    enableInspectionTool(tool);
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    enableInspectionTool(tool);
 
     List<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
 
     List<PsiElement> allPsi = CollectHighlightsUtil.getElementsInRange(myFile, 0, myFile.getTextLength());
-    assertEquals(allPsi, visitedElements);
+    assertEquals(new HashSet<>(allPsi), new HashSet<>(visitedElements));
 
     // inside code block modification
-    type("//");
     visitedElements.clear();
+    type("//");
 
     infos = highlightErrors();
     assertEmpty(infos);
@@ -1408,7 +1465,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiMethod method = ((PsiJavaFile)myFile).getClasses()[0].getMethods()[0];
     List<PsiElement> methodAndParents =
       CollectHighlightsUtil.getElementsInRange(myFile, method.getTextRange().getStartOffset(), method.getTextRange().getEndOffset(), true);
-    assertEquals(methodAndParents, visitedElements);
+    assertEquals(new HashSet<>(methodAndParents), new HashSet<>(visitedElements));
   }
 
   
@@ -1494,7 +1551,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReactivityPerformance() throws Throwable {
-    List<Thread> watchers = new ArrayList<>();
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     type(' ');
@@ -1508,6 +1564,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
     System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
+    List<Thread> watchers = new ArrayList<>();
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
       final int finalI = i;
@@ -1543,14 +1600,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                                         "; Progress canceled=" +
                                                         progress.isCanceled() +
                                                         "\n----------------------------");
-                System.out.println("----all threads---");
+                System.err.println("----all threads---");
                 for (Thread thread : Thread.getAllStackTraces().keySet()) {
                   boolean canceled = CoreProgressManager.isCanceledThread(thread);
                   if (canceled) {
-                    System.out.println("Thread " + thread + " is canceled");
+                    System.err.println("Thread " + thread + " is canceled");
                   }
                 }
-                System.out.println("----///////---");
+                System.err.println("----///////---");
                 break;
               }
             }
@@ -1576,8 +1633,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, false, interrupt);
-
-        throw new RuntimeException("should have been interrupted");
+        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
+        throw new RuntimeException("should have been interrupted: "+progress);
       }
       catch (ProcessCanceledException ignored) {
       }
@@ -1986,7 +2043,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final DaemonCodeAnalyzerImpl di = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     final AtomicReference<ProgressIndicator> indicator = new AtomicReference<>();
     final List<HighlightInfo> errors = filter(
-      di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> {
+      di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, false, () -> {
         if (indicator.get() == null) {
           indicator.set(di.getUpdateProgress());
         }

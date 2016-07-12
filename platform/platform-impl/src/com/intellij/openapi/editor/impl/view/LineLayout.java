@@ -266,7 +266,7 @@ abstract class LineLayout {
     assert startOffset <= endOffset;
     final BidiRun[] runs;
     if (startOffset == endOffset) {
-      runs = new BidiRun[0];
+      runs = BidiRun.EMPTY_ARRAY;
     }
     else {
       List<BidiRun> runList = new ArrayList<BidiRun>();
@@ -338,7 +338,7 @@ abstract class LineLayout {
     }
     
     private BidiRun[] createRuns() {
-      if (myChunk == null) return new BidiRun[0];
+      if (myChunk == null) return BidiRun.EMPTY_ARRAY;
       BidiRun run = new BidiRun(myChunk.endOffset);
       run.chunks = new Chunk[] {myChunk};
       return new BidiRun[] {run};
@@ -474,6 +474,7 @@ abstract class LineLayout {
   }
 
   private static class BidiRun {
+    public static final BidiRun[] EMPTY_ARRAY = new BidiRun[0];
     private static final int CHUNK_CHARACTERS = 1024;
     
     private final byte level;
@@ -556,10 +557,12 @@ abstract class LineLayout {
       FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;
+      Color currentColor = null;
       int currentStart = start;
       while (!it.atEnd()) {
         int fontType = it.getMergedAttributes().getFontType();
-        if (fontType != currentFontType) {
+        Color color = it.getMergedAttributes().getForegroundColor();
+        if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
             addFragments(run, this, chars, currentStart - start, tokenStart - start,
@@ -567,6 +570,7 @@ abstract class LineLayout {
           }
           currentStart = tokenStart;
           currentFontType = fontType;
+          currentColor = color;
         }
         it.advance();
       }

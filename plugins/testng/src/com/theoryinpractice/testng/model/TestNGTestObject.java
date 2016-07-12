@@ -72,6 +72,10 @@ public abstract class TestNGTestObject {
     if (testObject.equals(TestType.SUITE.getType())){
       return new TestNGTestSuite(config);
     }
+
+    if (testObject.equals(TestType.SOURCE.getType())) {
+      return new TestNGSource(config);
+    }
     assert false : testObject;
     return null;
   }

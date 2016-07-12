@@ -91,7 +91,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private Project myProject;
 
   private IdeRootPane myRootPane;
-  private final BalloonLayout myBalloonLayout;
+  private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private PropertyChangeListener myWindowsBorderUpdater = null;
   private boolean myRestoreFullScreen;
@@ -101,7 +101,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
                       DataManager dataManager,
                       Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = createRootPane(actionManager, UISettings.getInstance(), dataManager, application);
+    myRootPane = createRootPane(actionManager, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
@@ -207,10 +207,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   protected IdeRootPane createRootPane(ActionManagerEx actionManager,
-                                       UISettings uiSettings,
                                        DataManager dataManager,
                                        Application application) {
-    return new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
+    return new IdeRootPane(actionManager, dataManager, application, this);
   }
 
   @NotNull
@@ -472,6 +471,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       return;
     }
     MouseGestureManager.getInstance().remove(this);
+
+    if (myBalloonLayout != null) {
+      ((BalloonLayoutImpl)myBalloonLayout).dispose();
+      myBalloonLayout = null;
+    }
 
     // clear both our and swing hard refs
     if (myRootPane != null) {

@@ -245,6 +245,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testClassReference() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testClassReference2() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testCodeDuplicates() throws Exception {
     doDuplicatesTest();
   }
@@ -270,6 +278,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testCodeDuplicatesWithOutputValue1() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testCodeDuplicatesWithEmptyStatementsBlocksParentheses() throws Exception {
     doDuplicatesTest();
   }
 
@@ -350,7 +362,15 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testStopFoldingForArrayWriteAccessInConsequentUsages() throws Exception {
+    doTest();
+  }
+
   public void testStopFoldingPostfixInside() throws Exception {
+    doTest();
+  }
+
+  public void testFoldedWithNestedExpressions() throws Exception {
     doTest();
   }
 
@@ -782,6 +802,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testSingleExitPOintWithTryFinally() throws Exception {
+    doTest();
+  }
+
+  public void testLocalVariableModifierList() throws Exception {
+    doTest();
+  }
+
+  public void testLocalVariableAnnotationsOrder()  throws Exception {
+    doTest();
+  }
+
+  public void testMethodAnnotations() throws Exception {
     doTest();
   }
 

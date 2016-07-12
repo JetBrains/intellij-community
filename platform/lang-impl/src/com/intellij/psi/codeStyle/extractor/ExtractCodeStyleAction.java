@@ -138,12 +138,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                     if (apply && myDialog != null) {
                       //create new settings named after the file
                       final ExtractedSettingsDialog finalMyDialog = myDialog;
-                      forSelection.applyConditioned(new Condition<Value>() {
-                        @Override
-                        public boolean value(Value value) {
-                          return finalMyDialog.valueIsSelectedInTree(value);
-                        }
-                      }, backup);
+                      forSelection.applyConditioned(value -> finalMyDialog.valueIsSelectedInTree(value), backup);
                       CodeStyleScheme derivedScheme = CodeStyleSchemes.getInstance().createNewScheme("Derived from " + file.getName(), null);
                       derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
                       CodeStyleSchemes.getInstance().addScheme(derivedScheme);

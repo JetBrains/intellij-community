@@ -57,15 +57,14 @@ public class DFAEngine<E> {
 
     final boolean[] visited = new boolean[myFlow.length];
 
-    final boolean forward = myDfa.isForward();
     final int[] order = ControlFlowUtil.postOrder(myFlow);
 
 // Count limit for number of iterations per worklist
-    final int limit = getIterationLimit(forward);
+    final int limit = getIterationLimit();
     int dfaCount = 0;
     final long startTime = System.nanoTime();
 
-    for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0; ) {
+    for (int i = 0; i < myFlow.length; i++) {
       // Check if canceled
       ProgressManager.checkCanceled();
 
@@ -124,12 +123,6 @@ public class DFAEngine<E> {
       }
 
       // Move to another worklist
-      if (forward) {
-        i++;
-      }
-      else {
-        i--;
-      }
       dfaCount += count;
     }
     if (LOG.isDebugEnabled()) {
@@ -144,10 +137,10 @@ public class DFAEngine<E> {
    * Every node in dfa should be processed <= pred times * 2
    * Multiplier 2 is because of cycles.
    */
-  private int getIterationLimit(final boolean forward) {
+  private int getIterationLimit() {
     int allPred = myFlow.length;
     for (Instruction instruction : myFlow) {
-      allPred += forward ? instruction.allPred().size() : instruction.allSucc().size();
+      allPred += instruction.allPred().size();
     }
     return allPred * 2;
   }

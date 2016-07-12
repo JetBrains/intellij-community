@@ -5,6 +5,8 @@
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
+    <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
+    <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
@@ -374,6 +376,7 @@
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+    <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>

@@ -19,7 +19,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
@@ -66,7 +65,10 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      final PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
+      PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
+      if (contextClass instanceof PsiCompiledElement) {
+        contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+      }
       if(contextClass == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }
@@ -90,11 +92,7 @@ public abstract class CachedEvaluator {
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {
     Cache cache = myCache.get();
     if(cache == null) {
-      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<Cache>() {
-        public Cache compute() {
-          return initEvaluatorAndChildrenExpression(project);
-        }
-      });
+      cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> initEvaluatorAndChildrenExpression(project));
     }
 
     if(cache.myException != null) {

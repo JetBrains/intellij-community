@@ -19,7 +19,6 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.done
 import org.jetbrains.concurrency.rejected
 import org.jetbrains.concurrency.thenAsyncAccept
@@ -45,9 +44,9 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
     promise
       .done(node) {
         context.memberFilter
-          .thenAsyncAccept(node) { memberFilter ->
-            if (memberFilter.hasNameMappings()) {
-              memberFilter.sourceNameToRaw(RECEIVER_NAME)?.let {
+          .thenAsyncAccept(node) {
+            if (it.hasNameMappings()) {
+              it.sourceNameToRaw(RECEIVER_NAME)?.let {
                 return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
                   .done(node) {
                     VariableImpl(RECEIVER_NAME, it.value, null)
@@ -56,21 +55,11 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
               }
             }
 
-            computeReceiverVariable(callFrame, node)
+            context.viewSupport.computeReceiverVariable(context, callFrame, node)
           }
           .rejected(node) {
-            computeReceiverVariable(callFrame, node)
+            context.viewSupport.computeReceiverVariable(context, callFrame, node)
           }
-      }
-  }
-
-  private fun computeReceiverVariable(callFrame: CallFrame, node: XCompositeNode): Promise<*> {
-    return callFrame.receiverVariable
-      .done(node) {
-        node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true)
-      }
-      .rejected(node) {
-        node.addChildren(XValueChildrenList.EMPTY, true)
       }
   }
 }

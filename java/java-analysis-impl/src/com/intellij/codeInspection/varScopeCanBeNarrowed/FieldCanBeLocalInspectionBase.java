@@ -37,7 +37,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -214,8 +213,8 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                      Set<PsiField> ignored) {
     try {
       final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
-      final ControlFlow
-        controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
+          .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), false, false);
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
       for (PsiVariable usedVariable : usedVars) {
         if (usedVariable instanceof PsiField) {

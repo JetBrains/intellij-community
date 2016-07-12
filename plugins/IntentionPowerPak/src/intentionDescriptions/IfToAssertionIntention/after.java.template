@@ -1,5 +1,0 @@
-public class X {
-  void f(Object foo) {
-     assert foo != null : "Argument is null";
-  }
-}

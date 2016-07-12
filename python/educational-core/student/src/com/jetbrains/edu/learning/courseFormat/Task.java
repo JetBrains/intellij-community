@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +25,9 @@ public class Task implements StudyItem {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
-  private StudyStatus myStatus = StudyStatus.Uninitialized;
+  private StudyStatus myStatus = StudyStatus.Unchecked;
 
-  private int myStepicId;
+  @Expose private int myStepicId;
 
   @Expose
   @SerializedName("task_files")
@@ -147,7 +148,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild(EduNames.TASK_HTML);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -213,5 +214,10 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
+    for (TaskFile taskFile : taskFiles.values()) {
+      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        placeholder.setStatus(status);
+      }
+    }
   }
 }

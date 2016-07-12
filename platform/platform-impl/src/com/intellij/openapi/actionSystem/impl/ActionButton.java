@@ -176,12 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           }
         }
       });
-      popupMenu.setDataContextProvider(new Getter<DataContext>() {
-        @Override
-        public DataContext get() {
-          return ActionButton.this.getDataContext();
-        }
-      });
+      popupMenu.setDataContextProvider(() -> ActionButton.this.getDataContext());
       if (ActionPlaces.isToolbarPlace(event.getPlace())) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }

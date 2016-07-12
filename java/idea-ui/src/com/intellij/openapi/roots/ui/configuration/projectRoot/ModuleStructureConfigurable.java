@@ -788,16 +788,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.addAll(actions);
         }
 
-        final NullableComputable<MyNode> selectedNodeRetriever = new NullableComputable<MyNode>() {
-          @Override
-          public MyNode compute() {
-            final TreePath selectionPath = myTree.getSelectionPath();
-            final Object lastPathComponent = selectionPath == null ? null : selectionPath.getLastPathComponent();
-            if (lastPathComponent instanceof MyNode) {
-              return (MyNode)lastPathComponent;
-            }
-            return null;
+        final NullableComputable<MyNode> selectedNodeRetriever = () -> {
+          final TreePath selectionPath = myTree.getSelectionPath();
+          final Object lastPathComponent = selectionPath == null ? null : selectionPath.getLastPathComponent();
+          if (lastPathComponent instanceof MyNode) {
+            return (MyNode)lastPathComponent;
           }
+          return null;
         };
 
         Collection<AnAction> actionsFromExtensions = new ArrayList<AnAction>();

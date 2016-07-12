@@ -34,7 +34,6 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.ConnectionParameters;
 import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
@@ -146,12 +145,7 @@ public class GradleExecutionHelper {
                                   : jvmArgs;
 
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return StringUtil.isEmpty(s) ? null : s;
-        }
-      });
+      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);
 
       operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
     }
@@ -169,12 +163,7 @@ public class GradleExecutionHelper {
     if (!commandLineArgs.isEmpty()) {
       LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return StringUtil.isEmpty(s) ? null : s;
-        }
-      });
+      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
@@ -261,8 +250,10 @@ public class GradleExecutionHelper {
       return;
     }
 
+    final long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
+      settings.setRemoteProcessIdleTtlInMs(100);
       try {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
@@ -293,6 +284,7 @@ public class GradleExecutionHelper {
       LOG.warn("Can't update wrapper", e);
     }
     finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
       try {
         connection.close();
       }
@@ -550,12 +542,9 @@ public class GradleExecutionHelper {
 
   @NotNull
   private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
-    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, new Function<Class, String>() {
-      @Override
-      public String fun(Class aClass) {
-        String path = PathManager.getJarPathForClass(aClass);
-        return path == null ? null : PathUtil.getCanonicalPath(path);
-      }
+    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
+      String path = PathManager.getJarPathForClass(aClass);
+      return path == null ? null : PathUtil.getCanonicalPath(path);
     });
     StringBuilder buf = new StringBuilder();
     buf.append('[');

@@ -54,42 +54,39 @@ public class JavaTestGenerator implements TestGenerator {
   }
 
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
-    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<PsiElement>() {
-      public PsiElement compute() {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-          public PsiElement compute() {
-            try {
-              IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+      () -> ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+        public PsiElement compute() {
+          try {
+            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              PsiClass targetClass = createTestClass(d);
-              if (targetClass == null) {
-                return null;
-              }
-              final TestFramework frameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
-              final String defaultSuperClass = frameworkDescriptor.getDefaultSuperClass();
-              final String superClassName = d.getSuperClassName();
-              if (!Comparing.strEqual(superClassName, defaultSuperClass)) {
-                addSuperClass(targetClass, project, superClassName);
-              }
-
-              Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
-              addTestMethods(editor,
-                             targetClass,
-                             d.getTargetClass(),
-                             frameworkDescriptor,
-                             d.getSelectedMethods(),
-                             d.shouldGeneratedBefore(),
-                             d.shouldGeneratedAfter());
-              return targetClass;
-            }
-            catch (IncorrectOperationException e) {
-              showErrorLater(project, d.getClassName());
+            PsiClass targetClass = createTestClass(d);
+            if (targetClass == null) {
               return null;
             }
+            final TestFramework frameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
+            final String defaultSuperClass = frameworkDescriptor.getDefaultSuperClass();
+            final String superClassName = d.getSuperClassName();
+            if (!Comparing.strEqual(superClassName, defaultSuperClass)) {
+              addSuperClass(targetClass, project, superClassName);
+            }
+
+            Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
+            addTestMethods(editor,
+                           targetClass,
+                           d.getTargetClass(),
+                           frameworkDescriptor,
+                           d.getSelectedMethods(),
+                           d.shouldGeneratedBefore(),
+                           d.shouldGeneratedAfter());
+            return targetClass;
           }
-        });
-      }
-    });
+          catch (IncorrectOperationException e) {
+            showErrorLater(project, d.getClassName());
+            return null;
+          }
+        }
+      }));
   }
 
   @Nullable

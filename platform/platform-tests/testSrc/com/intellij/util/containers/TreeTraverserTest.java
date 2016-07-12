@@ -18,7 +18,10 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.PairFunction;
+import com.intellij.util.Processor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,27 +77,12 @@ public class TreeTraverserTest extends TestCase {
       build();
   }
 
-  private static final Condition<Integer> IS_ODD = new Condition<Integer>() {
-    @Override
-    public boolean value(Integer integer) {
-      return integer.intValue() % 2 == 1;
-    }
-  };
+  private static final Condition<Integer> IS_ODD = integer -> integer.intValue() % 2 == 1;
 
-  private static final Condition<Integer> IS_POSITIVE = new Condition<Integer>() {
-    @Override
-    public boolean value(Integer integer) {
-      return integer.intValue() > 0;
-    }
-  };
+  private static final Condition<Integer> IS_POSITIVE = integer -> integer.intValue() > 0;
 
   private static Condition<Integer> inRange(final int s, final int e) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return s <= integer && integer <= e;
-      }
-    };
+    return integer -> s <= integer && integer <= e;
   }
 
   public static final Function<Integer, List<Integer>> WRAP_TO_LIST = integer -> ContainerUtil.newArrayList(integer);
@@ -119,22 +107,12 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   private static Condition<Integer> LESS_THAN(final int max) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer < max;
-      }
-    };
+    return integer -> integer < max;
   }
 
   @NotNull
   private static Condition<Integer> LESS_THAN_MOD(final int max) {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer % max < max / 2;
-      }
-    };
+    return integer -> integer % max < max / 2;
   }
 
   @NotNull
@@ -218,6 +196,13 @@ public class TreeTraverserTest extends TestCase {
   }
 
   // JBIterable ----------------------------------------------
+
+  public void testOfAppendNulls() {
+    Integer o = null;
+    JBIterable<Integer> it = JBIterable.of(o).append(o).append(JBIterable.empty());
+    assertTrue(it.isEmpty());
+    assertSame(it, JBIterable.empty());
+  }
 
   public void testAppend() {
     JBIterable<Integer> it = JBIterable.of(1, 2, 3).append(JBIterable.of(4, 5, 6)).append(JBIterable.empty()).append(7);
@@ -450,21 +435,16 @@ public class TreeTraverserTest extends TestCase {
   // GuidedTraversal ----------------------------------------------
 
   @NotNull
-  private static Function.Mono<TreeTraversal.GuidedIt<Integer>> initGuide(@NotNull final TreeTraversal traversal) {
-    return new Function.Mono<TreeTraversal.GuidedIt<Integer>>() {
-      @Override
-      public TreeTraversal.GuidedIt<Integer> fun(TreeTraversal.GuidedIt<Integer> it) {
-        return it.setGuide(it1 -> {
-          if (traversal == TreeTraversal.PRE_ORDER_DFS) {
-            it1.queueNext(it1.curChild).result(it1.curChild);
-          }
-          else if (traversal == TreeTraversal.POST_ORDER_DFS) {
-            it1.queueNext(it1.curChild).result(it1.curChild == null ? it1.curParent : null);
-          }
-          else if (traversal == TreeTraversal.PLAIN_BFS) {
-            it1.queueLast(it1.curChild).result(it1.curChild);
-          }
-        });
+  private static TreeTraversal.GuidedIt.Guide<Integer> newGuide(@NotNull final TreeTraversal traversal) {
+    return it -> {
+      if (traversal == TreeTraversal.PRE_ORDER_DFS) {
+        it.queueNext(it.curChild).result(it.curChild);
+      }
+      else if (traversal == TreeTraversal.POST_ORDER_DFS) {
+        it.queueNext(it.curChild).result(it.curChild == null ? it.curParent : null);
+      }
+      else if (traversal == TreeTraversal.PLAIN_BFS) {
+        it.queueLast(it.curChild).result(it.curChild);
       }
     };
   }
@@ -476,7 +456,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   private static void verifyGuidedTraversal(TreeTraversal traversal) {
-    assertEquals(numTraverser2(TreeTraversal.GUIDED_TRAVERSAL).fun(1).intercept(initGuide(traversal)).toList(),
+    assertEquals(numTraverser2(TreeTraversal.GUIDED_TRAVERSAL(newGuide(traversal))).fun(1).toList(),
                  numTraverser2(traversal).fun(1).toList());
   }
 

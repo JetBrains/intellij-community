@@ -180,6 +180,8 @@
     <extensionPoint name="functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
 
+    <extensionPoint name="hierarchy.indexer" interface="com.intellij.psi.stubsHierarchy.StubHierarchyIndexer"/>
+
     <extensionPoint name="compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
@@ -308,6 +310,8 @@
     </extensionPoint>
 
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+
+    <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -353,6 +357,7 @@
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>
     <annotatedPackagesSearch implementation="com.intellij.psi.impl.search.AnnotatedPackagesSearcher"/>
     <directClassInheritorsSearch implementation="com.intellij.psi.impl.search.JavaDirectInheritorsSearcher"/>
+    <directClassInheritorsSearch implementation="com.intellij.psi.impl.search.StubHierarchyInheritorSearcher"/>
     <classInheritorsSearch implementation="com.intellij.psi.impl.search.JavaClassInheritorsSearcher"/>
     <overridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaOverridingMethodsSearcher"/>
     <allOverridingMethodsSearch implementation="com.intellij.psi.impl.search.JavaAllOverridingMethodsSearcher"/>
@@ -372,6 +377,7 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
                            id="excludeFromCompletion" order="last"/>
 
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaReferenceCompletionConfidence"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
@@ -438,6 +444,9 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+
+    <projectService serviceInterface="com.intellij.execution.testDiscovery.JavaAutoRunManager"
+                    serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
 
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
@@ -543,6 +552,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
 
+    <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
+
     <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
 
@@ -627,6 +638,10 @@
                      key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MakeTypeGeneric" bundle="messages.InspectionsBundle"
+                     key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.MakeTypeGenericInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
@@ -729,7 +744,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with stream api"
+    <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with Stream API"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
@@ -791,11 +806,12 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      displayName="Simplify stream API call chains"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
+                     displayName="Remove redundant lambda parameter types"/>
 
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>
@@ -814,10 +830,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
-      <category>Java/Control Flow</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
@@ -941,18 +953,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.MakeTypeGenericAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
-      <category>Java/Annotations</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
@@ -1135,6 +1135,7 @@
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
+    <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
 
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
 
@@ -1314,6 +1315,8 @@
 
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiLambdaExpression"
+                             implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiClass"
                              implementationClass="com.intellij.codeInsight.hint.ClassDeclarationRangeHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer"
@@ -1537,7 +1540,6 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
-    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaUnitIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1729,8 +1731,11 @@
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
                     serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
-    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.impl.HierarchyService"
-                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyService"/>
+    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.HierarchyService"
+                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyServiceImpl"/>
+    <fileBasedIndex implementation="com.intellij.psi.stubsHierarchy.impl.StubHierarchyIndex"/>
+    <hierarchy.indexer implementation="com.intellij.psi.stubsHierarchy.impl.JavaStubIndexer"/>
+
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
@@ -1764,6 +1769,9 @@
     </action>
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
+    </action>
+    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
+      <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>
 

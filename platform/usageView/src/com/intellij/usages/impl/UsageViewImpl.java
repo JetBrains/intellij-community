@@ -37,7 +37,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,7 +106,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final ExclusionHandler<Node> myExclusionHandler;
+  private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
@@ -153,6 +156,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
   private boolean expandingAll;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
+  private Usage myOriginUsage;
 
   UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
@@ -248,27 +252,27 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("Insert usages", runnable -> {
       runnable.run();
       return true;
-    }, new Condition<Object>() {
+    }, o -> isDisposed || project.isDisposed(), 200);
+    myExclusionHandler = new ExclusionHandler<DefaultMutableTreeNode>() {
       @Override
-      public boolean value(Object o) {
-        return isDisposed || project.isDisposed();
-      }
-    }, 200);
-    myExclusionHandler = new ExclusionHandler<Node>() {
-      @Override
-      public boolean isNodeExcluded(@NotNull Node node) {
-        return node.isDataExcluded();
+      public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
+        return node instanceof UsageNode;
       }
 
       @Override
-      public void excludeNode(@NotNull Node node) {
+      public boolean isNodeExcluded(@NotNull DefaultMutableTreeNode node) {
+        return ((UsageNode)node).isDataExcluded();
+      }
+
+      @Override
+      public void excludeNode(@NotNull DefaultMutableTreeNode node) {
         final HashSet<Usage> usages = new HashSet<>();
         collectUsages(node, usages);
         excludeUsages(usages.toArray(new Usage[usages.size()]));
       }
 
       @Override
-      public void includeNode(@NotNull Node node) {
+      public void includeNode(@NotNull DefaultMutableTreeNode node) {
         final HashSet<Usage> usages = new HashSet<>();
         collectUsages(node, usages);
         includeUsages(usages.toArray(new Usage[usages.size()]));
@@ -276,7 +280,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       @Override
       public boolean isActionEnabled(boolean isExcludeAction) {
-        return true;
+        return getPresentation().isExcludeAvailable();
       }
 
       @Override
@@ -366,12 +370,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       };
 
       UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
-      myUsageContextPanelProviders = ContainerUtil.filter(extensions, new Condition<UsageContextPanel.Provider>() {
-        @Override
-        public boolean value(UsageContextPanel.Provider provider) {
-          return provider.isAvailableFor(UsageViewImpl.this);
-        }
-      });
+      myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(UsageViewImpl.this));
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
         if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
@@ -875,7 +874,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         Processor<Usage> processor = usage -> {
           if (searchHasBeenCancelled()) return false;
-          TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
+          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
 
           boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
@@ -1572,7 +1571,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
         sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
-
       else if (key == PlatformDataKeys.HELP_ID) {
         sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
       }
@@ -1712,7 +1710,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       close();
 
       CommandProcessor.getInstance().executeCommand(
-        myProject, () -> myProcessRunnable.run(),
+        myProject, myProcessRunnable::run,
         myCommandName,
         null
       );
@@ -1734,5 +1732,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @NotNull
   public UsageTarget[] getTargets() {
     return myTargets;
+  }
+
+  /**
+   * The element the "find usages" action was invoked on.
+   * E.g. if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
+   */
+  public void setOriginUsage(@NotNull Usage usage) {
+    myOriginUsage = usage;
+  }
+
+  /** true if the {@param usage} points to the element the "find usages" action was invoked on */
+  public boolean isOriginUsage(@NotNull Usage usage) {
+    return
+      myOriginUsage instanceof UsageInfo2UsageAdapter &&
+      usage instanceof UsageInfo2UsageAdapter &&
+      ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(((UsageInfo2UsageAdapter)myOriginUsage).getUsageInfo());
   }
 }

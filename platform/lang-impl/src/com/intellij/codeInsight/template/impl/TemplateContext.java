@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.impl;
 
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,11 +26,20 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TemplateContext {
-  private final Map<String, Boolean> myContextStates = ContainerUtil.newLinkedHashMap();
+  private final Map<String, Boolean> myContextStates = ContainerUtil.newTroveMap();
+
+  private static class ContextInterner {
+    private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
+      .map(TemplateContextType::getContextId)
+      .collect(Collectors.toMap(Function.identity(), Function.identity()));
+  }
 
   public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
@@ -49,23 +57,10 @@ public class TemplateContext {
       Boolean storedValue = getOwnValue(contextType);
       if (storedValue == null) {
         TemplateContextType baseContextType = contextType.getBaseContextType();
-        if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
-          return isEnabled(baseContextType);
-        }
-        return false;
+        return baseContextType != null && isEnabled(baseContextType);
       }
       return storedValue.booleanValue();
     }
-  }
-
-  public void putValue(TemplateContextType context, boolean enabled) {
-    synchronized (myContextStates) {
-      myContextStates.put(context.getContextId(), enabled);
-    }
-  }
-
-  public boolean isExplicitlyEnabled(TemplateContextType contextType) {
-    return Boolean.TRUE.equals(getOwnValue(contextType));
   }
 
   @Nullable
@@ -82,7 +77,8 @@ public class TemplateContext {
   }
 
   // used during initialization => no sync
-  void setDefaultContext(@NotNull TemplateContext defContext) {
+  @VisibleForTesting
+  public void setDefaultContext(@NotNull TemplateContext defContext) {
     HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
@@ -96,18 +92,34 @@ public class TemplateContext {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(name, Boolean.parseBoolean(value));
+        myContextStates.put(ContainerUtil.getOrElse(ContextInterner.internMap, name, name), Boolean.parseBoolean(value));
       }
     }
 
+    myContextStates.putAll(makeInheritanceExplicit());
+  }
+
+  /**
+   * Mark contexts explicitly as excluded which are excluded because some of their bases is explicitly marked as excluded.
+   * Otherwise that `excluded` status will be forgotten if the base context is enabled.
+   */
+  @NotNull
+  private Map<String, Boolean> makeInheritanceExplicit() {
     Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
-    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      if (getOwnValue(type) == null) {
-        Iterable<TemplateContextType> bases = JBIterable.generate(type, TemplateContextType::getBaseContextType);
-        explicitStates.put(type.getContextId(), ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(bases, this::getOwnValue), false));
-      }
+    for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
+      explicitStates.put(type.getContextId(), false);
     }
-    myContextStates.putAll(explicitStates);
+    return explicitStates;
+  }
+
+  private boolean isDisabledByInheritance(TemplateContextType type) {
+    return !hasOwnValue(type) &&
+           !isEnabled(type) &&
+           JBIterable.generate(type, TemplateContextType::getBaseContextType).filter(this::hasOwnValue).first() != null;
+  }
+
+  private boolean hasOwnValue(TemplateContextType t) {
+    return getOwnValue(t) != null;
   }
 
   @VisibleForTesting

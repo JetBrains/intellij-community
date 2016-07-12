@@ -35,8 +35,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -251,7 +249,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     }, this);
-    HeavyProcessLatch.INSTANCE.addListener(this, new HeavyProcessLatch.HeavyProcessListener() {
+    HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
       }
@@ -260,7 +258,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       public void processFinished() {
         wakeUp();
       }
-    });
+    }, this);
   }
 
   // return true if file was added to queue
@@ -548,11 +546,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       return false;
     });
 
-    return !ContainerUtil.exists(results, new Condition<Boolean>() {
-      @Override
-      public boolean value(Boolean result) {
-        return result != null && !result;  // null means PCE
-      }
+    return !ContainerUtil.exists(results, result -> {
+      return result != null && !result;  // null means PCE
     });
   }
 
@@ -709,23 +704,20 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
     final TIntHashSet forward = new TIntHashSet();
 
-    final PsiFile psiFile = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        if (fileCount.incrementAndGet() % 100 == 0) {
-          PsiManager.getInstance(myProject).dropResolveCaches();
-          try {
-            storage.flush();
-            log.flush();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+    final PsiFile psiFile = ApplicationUtil.tryRunReadAction(() -> {
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      if (fileCount.incrementAndGet() % 100 == 0) {
+        PsiManager.getInstance(myProject).dropResolveCaches();
+        try {
+          storage.flush();
+          log.flush();
         }
-
-        return PsiManager.getInstance(myProject).findFile(virtualFile);
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
+
+      return PsiManager.getInstance(myProject).findFile(virtualFile);
     });
     final int fileId = getAbsId(virtualFile);
     if (psiFile != null) {

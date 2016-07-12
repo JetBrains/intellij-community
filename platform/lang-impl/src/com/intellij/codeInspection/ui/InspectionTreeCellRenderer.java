@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
@@ -64,9 +63,6 @@ class InspectionTreeCellRenderer extends ColoredTreeCellRenderer {
                                     : getMainForegroundAttributes(node)));
     myTailRenderer.appendTailText(node);
     setIcon(node.getIcon(expanded));
-    // do not need reset model (for recalculation of prefered size) when digit number of problemCount is growth
-    // or INVALID marker appears
-    append(StringUtil.repeat(" ", 50));
   }
 
   private SimpleTextAttributes patchMainTextAttrs(InspectionTreeNode node, SimpleTextAttributes attributes) {

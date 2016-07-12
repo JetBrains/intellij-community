@@ -388,22 +388,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void freeze(final ContinuationPause context, final String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
-    // this update is nessesary for git, to refresh local changes before
-    invokeAfterUpdate(new Runnable() {
-      @Override
-      public void run() {
-        freezeImmediately(reason);
-        context.ping();
-      }
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.NON_MODAL);
+    invokeAfterUpdate(() -> {
+      myUpdater.setIgnoreBackgroundOperation(false);
+      myUpdater.pause();
+      myFreezeName.set(reason);
+      context.ping();
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
     context.suspend();
-  }
-
-  @Override
-  public void freezeImmediately(@Nullable String reason) {
-    myUpdater.setIgnoreBackgroundOperation(false);
-    myUpdater.pause();
-    myFreezeName.set(reason);
   }
 
   @Override
@@ -842,13 +833,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     synchronized (myDataLock) {
       return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
     }
   }
 
-  Couple<Integer> getUnversionedFilesSize() {
+  @NotNull
+  public Couple<Integer> getUnversionedFilesSize() {
     synchronized (myDataLock) {
       final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
       return Couple.of(holder.getSize(), holder.getNumDirs());

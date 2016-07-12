@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -73,12 +74,7 @@ import java.util.concurrent.ConcurrentMap;
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
-  private static final Condition<PsiFile> FILE_FILTER = new Condition<PsiFile>() {
-    @Override
-    public boolean value(PsiFile file) {
-      return HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file);
-    }
-  };
+  private static final Condition<PsiFile> FILE_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(file);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
   private final ConcurrentMap<PsiFile, List<InspectionResult>> result = ContainerUtil.newConcurrentMap();
@@ -642,7 +638,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
-      if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), getFile())) continue;
+      final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+      if (!profile.isToolEnabled(key, getFile())) continue;
+      if (HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, getFile()))) continue;
       LocalInspectionToolWrapper wrapper = null;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         wrapper = (LocalInspectionToolWrapper)toolWrapper;

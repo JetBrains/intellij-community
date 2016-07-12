@@ -38,18 +38,20 @@ import java.util.Stack;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
   private static class CommandDescriptor {
+    @NotNull
     public final Runnable myCommand;
     public final Project myProject;
     public String myName;
     public Object myGroupId;
     public final Document myDocument;
+    @NotNull
     public final UndoConfirmationPolicy myUndoConfirmationPolicy;
 
-    public CommandDescriptor(Runnable command,
+    CommandDescriptor(@NotNull Runnable command,
                              Project project,
                              String name,
                              Object groupId,
-                             UndoConfirmationPolicy undoConfirmationPolicy,
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                              Document document) {
       myCommand = command;
       myProject = project;
@@ -65,16 +67,10 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
   }
 
-  protected CommandDescriptor myCurrentCommand = null;
+  protected CommandDescriptor myCurrentCommand;
   private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<CommandDescriptor>();
-
-//  private HashMap myStatisticsMap = new HashMap(); // command name --> count
-
-  //  private HashMap myStatisticsMap = new HashMap(); // command name --> count
-
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private int myUndoTransparentCount = 0;
+  private int myUndoTransparentCount;
 
   @Override
   public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
@@ -138,12 +134,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   @Nullable
-  public Object startCommand(final Project project,
+  public Object startCommand(@NotNull final Project project,
                              @Nls final String name,
                              final Object groupId,
-                             final UndoConfirmationPolicy undoConfirmationPolicy) {
+                             @NotNull final UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (project != null && project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
@@ -211,7 +207,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public void leaveModal() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + String.valueOf(myCurrentCommand));
+    CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
     if (myCurrentCommand != null) {

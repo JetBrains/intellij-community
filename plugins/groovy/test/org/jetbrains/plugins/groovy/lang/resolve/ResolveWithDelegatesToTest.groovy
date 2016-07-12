@@ -23,8 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author Max Medvedev
  */
 class ResolveWithDelegatesToTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() { null }
 
   @Override
   public void setUp() throws Exception {
@@ -806,5 +804,26 @@ foo {
   get(0).aft<caret>er(null)
 }
 ''', 'java.util.Date'
+  }
+
+  void 'test @DelegateTo in trait method'() {
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(String) Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  toUpp<caret>erCase()
+}
+''', 'java.lang.String'
+    assertScript '''\
+trait T {
+  def foo(@DelegatesTo(type = 'List<String>') Closure c) {}
+}
+class A implements T {}
+new A().foo {
+  get(0).toUpp<caret>erCase()
+}
+''', 'java.lang.String'
   }
 }

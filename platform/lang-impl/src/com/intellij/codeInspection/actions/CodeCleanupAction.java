@@ -25,8 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
-
-import javax.swing.*;
+import com.intellij.profile.codeInspection.ui.header.ProfilesComboBox;
 
 public class CodeCleanupAction extends CodeInspectionAction {
 
@@ -41,7 +40,7 @@ public class CodeCleanupAction extends CodeInspectionAction {
     final InspectionProfile profile = myExternalProfile != null ? myExternalProfile : InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionManager managerEx = InspectionManager.getInstance(project);
     final GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)managerEx.createNewGlobalContext(false);
-    globalContext.codeCleanup(project, scope, profile, getTemplatePresentation().getText(), null, false);
+    globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), null, false);
   }
 
   @Override
@@ -52,7 +51,7 @@ public class CodeCleanupAction extends CodeInspectionAction {
   @Override
   protected InspectionToolsConfigurable createConfigurable(InspectionProjectProfileManager projectProfileManager,
                                                            InspectionProfileManager profileManager,
-                                                           JComboBox profilesCombo) {
+                                                           ProfilesComboBox profilesCombo) {
     return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profileManager, profilesCombo) {
       @Override
       protected boolean acceptTool(InspectionToolWrapper entry) {

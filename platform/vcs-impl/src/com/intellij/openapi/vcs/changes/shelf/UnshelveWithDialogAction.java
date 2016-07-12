@@ -29,14 +29,12 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.UnshelvePatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,13 +71,9 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
         VcsBalloonProblemNotifier.showOverChangesView(project, "Can not find path file", MessageType.ERROR);
         return;
       }
+      virtualFile.refresh(false, false);
       List<ShelvedBinaryFilePatch> binaryShelvedPatches =
-        ContainerUtil.map(changeList.getBinaryFiles(), new Function<ShelvedBinaryFile, ShelvedBinaryFilePatch>() {
-          @Override
-          public ShelvedBinaryFilePatch fun(ShelvedBinaryFile file) {
-            return new ShelvedBinaryFilePatch(file);
-          }
-        });
+        ContainerUtil.map(changeList.getBinaryFiles(), ShelvedBinaryFilePatch::new);
       final ApplyPatchDifferentiatedDialog dialog =
         new MyUnshelveDialog(project, virtualFile, changeList, binaryShelvedPatches, e.getData(VcsDataKeys.CHANGES));
       dialog.setHelpId("reference.dialogs.vcs.unshelve");
@@ -137,8 +131,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             @NotNull ShelvedChangeList changeList,
                             @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                             @Nullable Change[] preselectedChanges) {
-      super(project, new UnshelvePatchDefaultExecutor(project, changeList, binaryShelvedPatches),
-            Collections.<ApplyPatchExecutor>emptyList(), ApplyPatchMode.UNSHELVE,
+      super(project, new UnshelvePatchDefaultExecutor(project, changeList),
+            Collections.emptyList(), ApplyPatchMode.UNSHELVE,
             patchFile, null, getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
             changeList.DESCRIPTION, true);

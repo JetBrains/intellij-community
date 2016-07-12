@@ -100,18 +100,14 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     assert parent != null;
     final DomElement parentCopy = parent.createStableCopy();
     final int index = description.getValues(parent).indexOf(getProxy());
-    return getManager().createStableValue(new Factory<DomElement>() {
-      @Override
-      @Nullable
-      public DomElement create() {
-        if (parentCopy.isValid()) {
-          final List<? extends DomElement> list = description.getValues(parentCopy);
-          if (list.size() > index) {
-            return list.get(index);
-          }
+    return getManager().createStableValue((Factory<DomElement>)() -> {
+      if (parentCopy.isValid()) {
+        final List<? extends DomElement> list = description.getValues(parentCopy);
+        if (list.size() > index) {
+          return list.get(index);
         }
-        return null;
       }
+      return null;
     });
   }
 

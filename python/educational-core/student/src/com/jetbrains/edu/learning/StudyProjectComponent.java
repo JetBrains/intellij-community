@@ -25,15 +25,17 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
+import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
+import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
-import com.jetbrains.edu.learning.ui.StudyProgressToolWindowFactory;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
@@ -81,6 +83,7 @@ public class StudyProjectComponent implements ProjectComponent {
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
               registerShortcuts();
+              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
             }
           }
         });
@@ -93,13 +96,9 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindows(toolWindowManager);
       final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      final ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
       if (studyToolWindow != null) {
         studyToolWindow.show(null);
-      }
-      if (progressToolWindow != null) {
         StudyUtils.initToolWindows(myProject);
-        progressToolWindow.show(null);
       }
     }
   }
@@ -118,6 +117,8 @@ public class StudyProjectComponent implements ProjectComponent {
             }
           }
         }
+        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
       }
       else {
         LOG.warn("Actions on toolbar are nulls");
@@ -129,10 +130,6 @@ public class StudyProjectComponent implements ProjectComponent {
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow == null) {
       toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
-    }
-    ToolWindow progressToolWindow = toolWindowManager.getToolWindow(StudyProgressToolWindowFactory.ID);
-    if (progressToolWindow == null) {
-      toolWindowManager.registerToolWindow(StudyProgressToolWindowFactory.ID, true, ToolWindowAnchor.LEFT, myProject, true, true);
     }
   }
 
@@ -161,12 +158,18 @@ public class StudyProjectComponent implements ProjectComponent {
         final File[] tasks = file.listFiles();
         if (tasks == null) continue;
         for (File task : tasks) {
-          final File taskDescr = new File(task, EduNames.TASK_HTML);
-          String testFileName = manager.getTestFileName();
-          final File taskTests = new File(task, testFileName);
-          copyFile(taskDescr, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()), EduNames.TASK_HTML));
-          copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
-                                       testFileName));
+          final File taskDescrFrom = StudyUtils.createTaskDescriptionFile(task);
+          if (taskDescrFrom != null) {
+            String testFileName = manager.getTestFileName();
+            final File taskTests = new File(task, testFileName);
+            final File taskDescrTo =
+              StudyUtils.createTaskDescriptionFile(new File(new File(myProject.getBasePath(), file.getName()), task.getName()));
+            if (taskDescrTo != null) {
+              copyFile(taskDescrFrom, taskDescrTo);
+              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
+                                           testFileName));
+            }
+          }
         }
       }
     }
@@ -214,10 +217,6 @@ public class StudyProjectComponent implements ProjectComponent {
       final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
       if (toolWindow != null) {
         toolWindow.getContentManager().removeAllContents(false);
-      }
-      final ToolWindow progressToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(StudyProgressToolWindowFactory.ID);
-      if (progressToolWindow != null) {
-        progressToolWindow.getContentManager().removeAllContents(false);
       }
       KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
       for (Keymap keymap : keymapManager.getAllKeymaps()) {

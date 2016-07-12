@@ -24,8 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 @CompileStatic
 class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
 
-  final String basePath = null
-
   void 'test aliased import'() {
     def iface = myFixture.addClass '''
 package pckg;

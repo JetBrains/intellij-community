@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Representation of Java type (primitive type, array or class type).
  */
-public abstract class PsiType implements PsiAnnotationOwner {
+public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte", "java.lang.Byte");
   @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char", "java.lang.Character");
   @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double", "java.lang.Double");
@@ -46,14 +45,13 @@ public abstract class PsiType implements PsiAnnotationOwner {
       return count == 0 ? EMPTY_ARRAY : new PsiType[count];
     }
   };
-  private static final Logger LOG = Logger.getInstance("#" + PsiType.class.getName());
 
   @NotNull
   public static PsiType[] createArray(int count) {
     return ARRAY_FACTORY.create(count);
   }
 
-  private final TypeAnnotationProvider myAnnotationProvider;
+  private TypeAnnotationProvider myAnnotationProvider;
 
   /**
    * Constructs a PsiType with given annotations
@@ -71,8 +69,16 @@ public abstract class PsiType implements PsiAnnotationOwner {
 
   @NotNull
   public PsiType annotate(@NotNull TypeAnnotationProvider provider) {
-    LOG.error("Not implemented for " + getClass());
-    return this;
+    if (provider == myAnnotationProvider) return this;
+
+    try {
+      PsiType copy = (PsiType)clone();
+      copy.myAnnotationProvider = provider;
+      return copy;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

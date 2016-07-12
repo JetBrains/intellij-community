@@ -3,6 +3,8 @@ import imp
 import os
 import fnmatch
 
+roots = sys.path[:]
+
 helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])
 if sys.path[0] != helpers_dir:
   sys.path.insert(0, helpers_dir)
@@ -24,23 +26,50 @@ def loadSource(fileName):
   baseName = os.path.basename(fileName)
   moduleName = os.path.splitext(baseName)[0]
 
+  if os.path.isdir(fileName):
+    fileName = fileName.rstrip('/\\') + os.path.sep
+
   # for users wanted to run unittests under django
-  #because of django took advantage of module name
+  # because of django took advantage of module name
   settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
+
   if settings_file and moduleName == "models":
     baseName = os.path.realpath(fileName)
     moduleName = ".".join((baseName.split(os.sep)[-2], "models"))
+  else:
+    path = fileName
+    for p in roots:
+      # Python 2.6+
+      try:
+        rel_path = os.path.relpath(fileName, start=p)
+        if rel_path.find('..') == -1 and len(rel_path) < len(path):
+          path = rel_path
+      except:
+        pass # relpath can raise an error in case of different drives for a path and start on Windows
 
-  if moduleName in modules and len(sys.argv[1:-1]) == 1: # add unique number to prevent name collisions
+    if path.endswith('.py'):
+      path = path[0:-3]
+
+    moduleName = path.replace('/', '.').replace('\\', '.')
+
+  if moduleName in modules and len(sys.argv[1:-1]) == 1:  # add unique number to prevent name collisions
     cnt = 2
     prefix = moduleName
     while getModuleName(prefix, cnt) in modules:
       cnt += 1
     moduleName = getModuleName(prefix, cnt)
+
   debug("/ Loading " + fileName + " as " + moduleName)
-  if os.path.isdir(fileName):
-    fileName = fileName + os.path.sep
-  module = imp.load_source(moduleName, fileName)
+
+  try:
+    module = imp.load_source(moduleName, fileName)
+  except SystemError:  # probably failed because of the relative imports
+    # first we import module with all its parents
+    __import__(moduleName)
+
+    # then load it by filename to be sure it is the one we need
+    module = imp.load_source(moduleName, fileName)
+
   modules[moduleName] = module
   return module
 
@@ -93,6 +122,9 @@ if __name__ == "__main__":
     all = unittest.TestSuite()
     pure_unittest = True
 
+    if len(sys.argv) == 2:  # If folder not provided, we need pretend folder is current
+     sys.argv.insert(1, ".")
+
   options = {}
   for arg in sys.argv[1:-1]:
     arg = arg.strip()
@@ -113,7 +145,7 @@ if __name__ == "__main__":
           debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
           modules = loadModulesFromFolderRec(a_splitted[0], a_splitted[1])
       else:
-        if  os.path.isdir(a[0]):
+        if os.path.isdir(a[0]):
           debug("/ from folder " + a[0])
           modules = loadModulesFromFolderRec(a[0])
         else:

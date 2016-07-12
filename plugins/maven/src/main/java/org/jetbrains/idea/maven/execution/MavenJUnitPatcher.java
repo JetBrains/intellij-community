@@ -52,8 +52,20 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (mavenProject == null) return;
 
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    if (config == null) return;
+    if (config != null) {
+        patchJavaParameters(module, javaParameters, mavenProject, "surefire", config);
+    }
+    config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-failsafe-plugin");
+    if (config != null) {
+        patchJavaParameters(module, javaParameters, mavenProject, "failsafe", config);
+    }
+  }
 
+  private static void patchJavaParameters(@NotNull Module module,
+                                          @NotNull JavaParameters javaParameters,
+                                          @NotNull MavenProject mavenProject,
+                                          @NotNull String plugin,
+                                          @NotNull Element config) {
     MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
     MavenTestRunningSettings testRunningSettings = MavenProjectSettings.getInstance(module.getProject()).getTestRunningSettings();
@@ -62,20 +74,20 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     if (paths.size() > 0) {
       for (String path : paths) {
-        javaParameters.getClassPath().add(resolveSurefireProperties(path, domModel));
+        javaParameters.getClassPath().add(resolvePluginProperties(plugin, path, domModel));
       }
     }
 
-    if (testRunningSettings.isPassSystemProperties() && isEnabled("systemPropertyVariables")) {
+    if (testRunningSettings.isPassSystemProperties() && isEnabled(plugin, "systemPropertyVariables")) {
       Element systemPropertyVariables = config.getChild("systemPropertyVariables");
       if (systemPropertyVariables != null) {
         for (Element element : systemPropertyVariables.getChildren()) {
           String propertyName = element.getName();
 
           if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
-            String value = resolveSurefireProperties(element.getValue(), domModel);
+            String value = resolvePluginProperties(plugin, element.getValue(), domModel);
             value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-            if (isResolved(value)) {
+            if (isResolved(plugin, value)) {
               javaParameters.getVMParametersList().addProperty(propertyName, value);
             }
           }
@@ -83,16 +95,16 @@ public class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    if (testRunningSettings.isPassEnvironmentVariables() && isEnabled("environmentVariables")) {
+    if (testRunningSettings.isPassEnvironmentVariables() && isEnabled(plugin, "environmentVariables")) {
       Element environmentVariables = config.getChild("environmentVariables");
       if (environmentVariables != null) {
         for (Element element : environmentVariables.getChildren()) {
           String variableName = element.getName();
 
           if (!javaParameters.getEnv().containsKey(variableName)) {
-            String value = resolveSurefireProperties(element.getValue(), domModel);
+            String value = resolvePluginProperties(plugin, element.getValue(), domModel);
             value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-            if (isResolved(value)) {
+            if (isResolved(plugin, value)) {
               javaParameters.addEnv(variableName, value);
             }
           }
@@ -100,23 +112,23 @@ public class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    if (testRunningSettings.isPassArgLine() && isEnabled("argLine")) {
+    if (testRunningSettings.isPassArgLine() && isEnabled(plugin, "argLine")) {
       Element argLine = config.getChild("argLine");
       if (argLine != null) {
-        String value = resolveSurefireProperties(argLine.getTextTrim(), domModel);
+        String value = resolvePluginProperties(plugin, argLine.getTextTrim(), domModel);
         value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-        if (StringUtil.isNotEmpty(value) && isResolved(value)) {
+        if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
           javaParameters.getVMParametersList().addParametersString(value);
         }
       }
     }
   }
 
-  private static String resolveSurefireProperties(@NotNull String value, @Nullable MavenDomProjectModel domModel) {
+  private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
     if (domModel != null) {
       value = MavenPropertyResolver.resolve(value, domModel);
     }
-    return value.replaceAll("\\$\\{surefire\\.(forkNumber|threadNumber)\\}", "1");
+    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)\\}", "1");
   }
 
   private static String resolveVmProperties(@NotNull ParametersList vmParameters, @NotNull String value) {
@@ -135,11 +147,11 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     return value;
   }
 
-  private static boolean isEnabled(String s) {
-    return !Boolean.valueOf(System.getProperty("idea.maven.surefire.disable." + s));
+  private static boolean isEnabled(String plugin, String s) {
+    return !Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".disable." + s));
   }
 
-  private static boolean isResolved(String s) {
-    return !s.contains("${") || Boolean.valueOf(System.getProperty("idea.maven.surefire.allPropertiesAreResolved"));
+  private static boolean isResolved(String plugin, String s) {
+    return !s.contains("${") || Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".allPropertiesAreResolved"));
   }
 }

@@ -47,8 +47,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,12 +180,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setTitle(title).
       setItemChoosenCallback(runnable).
       setMovable(true).
-      setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          HintUpdateSupply.hideHint(list);
-          return true;
+      setCancelCallback(() -> {
+        HintUpdateSupply.hideHint(list);
+        final ListBackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        if (task != null) {
+          task.cancelTask();
         }
+        return true;
       }).
       setCouldPin(popup1 -> {
         usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
@@ -207,6 +206,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     popup.showInBestPositionFor(editor);
   }
 
+  @NotNull
   private static PsiElementListCellRenderer getRenderer(Object value,
                                                         Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
                                                         GotoData gotoData) {
@@ -222,6 +222,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
   }
 
+  @NotNull
   protected static Comparator<PsiElement> createComparator(final Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
                                                            final GotoData gotoData) {
     return new Comparator<PsiElement>() {
@@ -250,7 +251,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
 
-  protected void navigateToElement(Navigatable descriptor) {
+  protected void navigateToElement(@NotNull Navigatable descriptor) {
     descriptor.navigate(true);
   }
 
@@ -266,12 +267,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length, boolean finished) {
+  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
     return getChooserTitle(sourceElement, name, length);
   }
 
   @NotNull
-  protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
+  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return getChooserTitle(sourceElement, name, length, true);
   }
 

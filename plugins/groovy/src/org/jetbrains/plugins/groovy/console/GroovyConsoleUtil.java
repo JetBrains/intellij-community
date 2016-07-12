@@ -37,12 +37,7 @@ import java.util.Arrays;
 
 public class GroovyConsoleUtil {
 
-  public static final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
-    @Override
-    public boolean value(Module module) {
-      return GroovyFacetUtil.isSuitableModule(module);
-    }
-  };
+  public static final Condition<Module> APPLICABLE_MODULE = module -> GroovyFacetUtil.isSuitableModule(module);
 
   private static final Function<Module, String> MODULE_VERSION = module -> {
     final String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);

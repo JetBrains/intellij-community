@@ -140,12 +140,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
       setModified();
       int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
       myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, new Condition<T>() {
-        @Override
-        public boolean value(T t) {
-          return canDeleteElement(t);
-        }
-      });
+      selected = ContainerUtil.filter(selected, t -> canDeleteElement(t));
       myElements.removeAll(selected);
       myTableView.getSelectionModel().clearSelection();
       myTableView.getTableViewModel().setItems(myElements);

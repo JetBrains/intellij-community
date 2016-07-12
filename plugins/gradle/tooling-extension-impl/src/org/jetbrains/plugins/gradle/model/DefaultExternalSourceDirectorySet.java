@@ -34,8 +34,8 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   private String myName;
   @NotNull
   private Set<File> mySrcDirs;
-  @NotNull
   private File myOutputDir;
+  private File myGradleOutputDir;
   @NotNull
   private Set<String> myExcludes;
   @NotNull
@@ -57,6 +57,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     myName = sourceDirectorySet.getName();
     mySrcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
     myOutputDir = sourceDirectorySet.getOutputDir();
+    myGradleOutputDir = sourceDirectorySet.getGradleOutputDir();
     myExcludes = new HashSet<String>(sourceDirectorySet.getExcludes());
     myIncludes = new HashSet<String>(sourceDirectorySet.getIncludes());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
@@ -89,6 +90,23 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
   @Override
   public File getOutputDir() {
     return myOutputDir;
+  }
+
+  public void setOutputDir(@NotNull File outputDir) {
+    myOutputDir = outputDir;
+  }
+
+  @NotNull
+  @Override
+  public File getGradleOutputDir() {
+    return myGradleOutputDir;
+  }
+
+  public void setGradleOutputDir(@NotNull File outputDir) {
+    myGradleOutputDir = outputDir;
+    if (myOutputDir == null) {
+      myOutputDir = outputDir;
+    }
   }
 
   @Override
@@ -128,9 +146,5 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
 
   public void setFilters(@NotNull List<ExternalFilter> filters) {
     myFilters = filters;
-  }
-
-  public void setOutputDir(@NotNull File outputDir) {
-    myOutputDir = outputDir;
   }
 }

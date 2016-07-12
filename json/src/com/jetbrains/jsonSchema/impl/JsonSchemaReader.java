@@ -147,6 +147,7 @@ public class JsonSchemaReader {
         }
 
         final JsonSchemaObject copy = new JsonSchemaObject();
+        copy.setDefinitionAddress(current.getRef());
         copy.mergeValues(definition);
         copy.mergeValues(current);
         current.copyValues(copy);

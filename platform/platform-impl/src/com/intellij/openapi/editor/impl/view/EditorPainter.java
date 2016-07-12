@@ -33,9 +33,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.EffectPainter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
@@ -400,6 +400,7 @@ class EditorPainter implements TextDrawingCallback {
       });
       visLinesIterator.advance();
     }
+    ComplexTextFragment.flushDrawingCache(g);
   }
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
@@ -428,7 +429,7 @@ class EditorPainter implements TextDrawingCallback {
     int xEnd = (int)xTo;
     g.setColor(effectColor);
     if (effectType == EffectType.LINE_UNDERSCORE) {
-      UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
     }
     else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
       int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
@@ -439,7 +440,7 @@ class EditorPainter implements TextDrawingCallback {
       UIUtil.drawLine(g, xStart, y1, xEnd, y1);
     }
     else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      UIUtil.drawWave(g, new Rectangle(xStart, y + 1, xEnd - xStart, myView.getDescent() - 1));
+      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
       UIUtil.drawBoldDottedLine(g, xStart, xEnd, SystemInfo.isMac ? y : y + 1, myEditor.getBackgroundColor(), g.getColor(), false);
@@ -707,11 +708,17 @@ class EditorPainter implements TextDrawingCallback {
       float startX = ranges.get(i);
       float endX = ranges.get(i + 1);
       if (startX == endX) {
-        endX++;
+        if (startX > 0) {
+          startX--;
+        }
+        else {
+          endX++;
+        }
       }
       else {
         endX--;
       }
+      ranges.set(i, startX);
       ranges.set(i + 1, endX);
     }
     return ranges;
@@ -832,6 +839,7 @@ class EditorPainter implements TextDrawingCallback {
               break;
             }
           }
+          ComplexTextFragment.flushDrawingCache(g);
         }
       }
     }

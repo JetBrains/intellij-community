@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -59,12 +58,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
       protected DataNode<? extends ModuleData> compute() {
         final String mainSourceSetModuleId = ideModule.getData().getId() + ":main";
         DataNode<? extends ModuleData> targetModuleNode =
-          ExternalSystemApiUtil.find(ideModule, GradleSourceSetData.KEY, new BooleanFunction<DataNode<GradleSourceSetData>>() {
-            @Override
-            public boolean fun(DataNode<GradleSourceSetData> node) {
-              return mainSourceSetModuleId.equals(node.getData().getId());
-            }
-          });
+          ExternalSystemApiUtil.find(ideModule, GradleSourceSetData.KEY, node -> mainSourceSetModuleId.equals(node.getData().getId()));
         if (targetModuleNode == null) {
           targetModuleNode = ideModule;
         }
@@ -119,25 +113,19 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   }
 
   private static List<WebResource> mapWebResources(List<WebConfiguration.WebResource> webResources) {
-    return ContainerUtil.mapNotNull(webResources, new Function<WebConfiguration.WebResource, WebResource>() {
-      @Override
-      public WebResource fun(WebConfiguration.WebResource resource) {
-        if (resource == null) return null;
+    return ContainerUtil.mapNotNull(webResources, resource -> {
+      if (resource == null) return null;
 
-        final WarDirectory warDirectory = WarDirectory.fromPath(resource.getWarDirectory());
-        return new WebResource(warDirectory, resource.getRelativePath(), resource.getFile());
-      }
+      final WarDirectory warDirectory = WarDirectory.fromPath(resource.getWarDirectory());
+      return new WebResource(warDirectory, resource.getRelativePath(), resource.getFile());
     });
   }
 
   private static List<EarResource> mapEarResources(List<EarConfiguration.EarResource> resources) {
-    return ContainerUtil.mapNotNull(resources, new Function<EarConfiguration.EarResource, EarResource>() {
-      @Override
-      public EarResource fun(EarConfiguration.EarResource resource) {
-        if (resource == null) return null;
+    return ContainerUtil.mapNotNull(resources, resource -> {
+      if (resource == null) return null;
 
-        return  new EarResource(resource.getEarDirectory(), resource.getRelativePath(), resource.getFile());
-      }
+      return  new EarResource(resource.getEarDirectory(), resource.getRelativePath(), resource.getFile());
     });
   }
 

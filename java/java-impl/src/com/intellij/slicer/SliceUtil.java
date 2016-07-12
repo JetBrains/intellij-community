@@ -440,7 +440,7 @@ class SliceUtil {
         // for erased method calls for which we cannot determine target substitutor,
         // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
         if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
-          PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
+          PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
 
           PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
           substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList,

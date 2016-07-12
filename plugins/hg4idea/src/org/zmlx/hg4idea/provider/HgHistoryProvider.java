@@ -57,7 +57,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
   public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
                                                           JComponent forShortcutRegistration) {
-    return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
+    return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
   public AnAction[] getAdditionalActions(Runnable runnable) {

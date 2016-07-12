@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,17 +139,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
   @Override
   @NotNull
   public Condition getDisposed() {
-    return new Condition() {
-      @Override
-      public boolean value(final Object o) {
-        return isDisposed();
-      }
-    };
+    return o -> isDisposed();
   }
 
   @NotNull
   public ComponentConfig[] getComponentConfigurations() {
-    return new ComponentConfig[0];
+    return ComponentConfig.EMPTY_ARRAY;
   }
 
   @Nullable

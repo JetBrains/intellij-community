@@ -286,8 +286,7 @@ public class GenericsUtil {
   }
 
   public static boolean isFromExternalTypeLanguage(@NotNull PsiType type) {
-    String internalCanonicalText = type.getInternalCanonicalText();
-    return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
+    return type.getInternalCanonicalText().equals(type.getCanonicalText());
   }
 
   @Contract("null -> null")

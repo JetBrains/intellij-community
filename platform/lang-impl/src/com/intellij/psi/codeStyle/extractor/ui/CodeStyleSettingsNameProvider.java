@@ -194,12 +194,9 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   public static Value getValue(final CodeStyleSettingPresentation representation, List<Value> values) {
-    Value myValue = ContainerUtil.find(values, new Condition<Value>() {
-      @Override
-      public boolean value(Value value) {
-        return value.state == Value.STATE.SELECTED && value.name.equals(representation.getFieldName());
-        //return value.name.equals(representation.getFieldName()); //TODO this is here only to test the UI!!
-      }
+    Value myValue = ContainerUtil.find(values, value -> {
+      return value.state == Value.STATE.SELECTED && value.name.equals(representation.getFieldName());
+      //return value.name.equals(representation.getFieldName()); //TODO this is here only to test the UI!!
     });
     return myValue;
   }
@@ -214,12 +211,8 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
           boolean firstSettingGroupTop = entry.getKey().isNull();
           boolean groupReported = false;
           for (final CodeStyleSettingPresentation setting : entry.getValue()) {
-            Value myValue = ContainerUtil.find(values, new Condition<Value>() {
-              @Override
-              public boolean value(Value value) {
-                return value.state == Value.STATE.SELECTED && value.name.equals(setting.getFieldName());
-              }
-            });
+            Value myValue = ContainerUtil.find(values,
+                                               value -> value.state == Value.STATE.SELECTED && value.name.equals(setting.getFieldName()));
             if (myValue == null) {
               continue;
             }

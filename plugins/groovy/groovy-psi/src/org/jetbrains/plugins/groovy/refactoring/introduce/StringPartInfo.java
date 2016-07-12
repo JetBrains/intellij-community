@@ -72,12 +72,7 @@ public class StringPartInfo {
 
     if (literal instanceof GrString) {
       final GrStringInjection[] injections = ((GrString)literal).getInjections();
-      myInjections = ContainerUtil.filter(injections, new Condition<GrStringInjection>() {
-        @Override
-        public boolean value(GrStringInjection injection) {
-          return range.contains(injection.getTextRange());
-        }
-      });
+      myInjections = ContainerUtil.filter(injections, injection -> range.contains(injection.getTextRange()));
     }
     else {
       myInjections = Collections.emptyList();

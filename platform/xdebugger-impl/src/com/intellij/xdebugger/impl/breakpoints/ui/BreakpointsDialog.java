@@ -25,14 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
-import com.intellij.util.Function;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -413,12 +411,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private void saveBreakpointsDialogState() {
     final XBreakpointsDialogState dialogState = new XBreakpointsDialogState();
     saveTreeState(dialogState);
-    final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, new Condition<XBreakpointGroupingRule>() {
-      @Override
-      public boolean value(XBreakpointGroupingRule rule) {
-        return !rule.isAlwaysEnabled();
-      }
-    });
+    final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
     dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);

@@ -1,22 +1,10 @@
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.IGInspectionTestCase;
-import com.siyeh.ig.LightInspectionTestCase;
 
-public class TooBroadScopeInspectionTest extends LightInspectionTestCase {
-
+public class TooBroadScopeInspectionTest extends IGInspectionTestCase {
   public void testTooBroadScope() {
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new TooBroadScopeInspection();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/dataflow/scope";
+    final TooBroadScopeInspection inspection = new TooBroadScopeInspection();
+    doTest("com/siyeh/igtest/dataflow/scope", inspection);
   }
 }

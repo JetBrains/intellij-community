@@ -39,7 +39,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -328,7 +327,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected List<Tools> getUsedTools() {
-    InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
+    InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<InspectionToolWrapper>();
     for (Tools tool : tools) {
@@ -379,8 +378,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  public void codeCleanup(@NotNull Project project,
-                          @NotNull AnalysisScope scope,
+  public void codeCleanup(@NotNull AnalysisScope scope,
                           @NotNull InspectionProfile profile,
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
@@ -389,7 +387,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    globalContext.codeCleanup(project, scope, profile, null, runnable, false);
+    globalContext.codeCleanup(scope, profile, null, runnable, false);
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {
@@ -419,7 +417,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
-      globalContext.codeCleanup(project, analysisScope, profile, null, runnable, true);
+      globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
 
     Application application = ApplicationManager.getApplication();

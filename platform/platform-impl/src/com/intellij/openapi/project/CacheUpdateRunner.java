@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
@@ -55,18 +56,20 @@ public class CacheUpdateRunner {
     final double total = files.size();
     queue.startLoading();
 
-    Consumer<VirtualFile> progressUpdater = new Consumer<VirtualFile>() {
-      // need set here to handle queue push-backs after checkCancelled() in order
-      // not to count the same file several times
-      final Set<VirtualFile> processed = new THashSet<VirtualFile>();
+    ProgressUpdater progressUpdater = new ProgressUpdater() {
+      final Set<VirtualFile> myFilesBeingProcessed = new THashSet<VirtualFile>();
+      final AtomicInteger myNumberOfFilesProcessed = new AtomicInteger();
       private boolean fileNameWasShown;
 
       @Override
-      public void consume(VirtualFile virtualFile) {
+      public void processingStarted(VirtualFile virtualFile) {
         indicator.checkCanceled();
-        synchronized (processed) {
-          boolean added = processed.add(virtualFile);
-          indicator.setFraction(processed.size() / total);
+        synchronized (myFilesBeingProcessed) {
+          boolean added = myFilesBeingProcessed.add(virtualFile);
+          if (added) {
+            indicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
+          }
+
           if (!added || (virtualFile.isValid() && virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD)) {
             indicator.setText2(virtualFile.getPresentableUrl());
             fileNameWasShown = true;
@@ -74,6 +77,14 @@ public class CacheUpdateRunner {
             indicator.setText2("");
             fileNameWasShown = false;
           }
+        }
+      }
+
+      @Override
+      public void processingSuccessfullyFinished(VirtualFile virtualFile) {
+        synchronized (myFilesBeingProcessed) {
+          boolean removed = myFilesBeingProcessed.remove(virtualFile);
+          assert removed;
         }
       }
     };
@@ -92,8 +103,13 @@ public class CacheUpdateRunner {
     }
   }
 
+  interface ProgressUpdater {
+    void processingStarted(VirtualFile file);
+    void processingSuccessfullyFinished(VirtualFile file);
+  }
+
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
-                                                             @NotNull Consumer<VirtualFile> progressUpdater,
+                                                             @NotNull ProgressUpdater progressUpdater,
                                                              final boolean processInReadAction,
                                                              @NotNull Project project,
                                                              @NotNull Consumer<FileContent> fileProcessor) {
@@ -175,7 +191,7 @@ public class CacheUpdateRunner {
     private final ProgressIndicatorBase myInnerIndicator;
     private final FileContentQueue myQueue;
     private final AtomicBoolean myFinished;
-    private final Consumer<VirtualFile> myProgressUpdater;
+    private final ProgressUpdater myProgressUpdater;
     private final boolean myProcessInReadAction;
     @NotNull private final Project myProject;
     @NotNull private final Consumer<FileContent> myProcessor;
@@ -183,7 +199,7 @@ public class CacheUpdateRunner {
     public MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
                       @NotNull FileContentQueue queue,
                       @NotNull AtomicBoolean finished,
-                      @NotNull Consumer<VirtualFile> progressUpdater,
+                      @NotNull ProgressUpdater progressUpdater,
                       boolean processInReadAction,
                       @NotNull Project project,
                       @NotNull Consumer<FileContent> fileProcessor) {
@@ -214,17 +230,17 @@ public class CacheUpdateRunner {
             if (!myProject.isDisposed()) {
               final VirtualFile file = fileContent.getVirtualFile();
               try {
-                myProgressUpdater.consume(file);
+                myProgressUpdater.processingStarted(file);
                 if (!file.isDirectory() && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
                   myProcessor.consume(fileContent);
                 }
+                myProgressUpdater.processingSuccessfullyFinished(file);
               }
               catch (ProcessCanceledException e) {
                 throw e;
               }
               catch (Throwable e) {
-                LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
-                file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
+                handleIndexingException(file, e);
               }
             }
           };
@@ -256,6 +272,18 @@ public class CacheUpdateRunner {
           return;
         }
       }
+    }
+
+    @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+    private static void handleIndexingException(VirtualFile file, Throwable e) {
+      String message = "Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted";
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        System.err.println(message);
+        e.printStackTrace();
+      } else {
+        LOG.error(message, e);
+      }
+      file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
     }
   }
 }

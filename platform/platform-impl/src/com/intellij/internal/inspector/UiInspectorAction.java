@@ -50,10 +50,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -468,6 +465,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       propertyColumn.setMinWidth(JBUI.scale(200));
       propertyColumn.setMaxWidth(JBUI.scale(200));
       propertyColumn.setResizable(false);
+      propertyColumn.setCellRenderer(new PropertyNameRenderer());
 
       TableColumn valueColumn = columnModel.getColumn(1);
       valueColumn.setMinWidth(JBUI.scale(200));
@@ -502,6 +500,29 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myModel.refresh();
       myDimensionComponent.update();
       myDimensionComponent.repaint();
+    }
+
+    private class PropertyNameRenderer extends DefaultTableCellRenderer {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        final TableModel model = table.getModel();
+        boolean changed = false;
+        if (model instanceof InspectorTableModel) {
+          changed = ((InspectorTableModel)model).myProperties.get(row).changed;
+        }
+
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? UI.getColor("link.foreground") : table.getForeground();
+        final JBFont font = JBUI.Fonts.label();
+        setFont(changed ? font.asBold() : font);
+        setForeground(fg);
+        return this;
+      }
     }
   }
 
@@ -758,10 +779,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class PropertyBean {
     final String propertyName;
     final Object propertyValue;
+    final boolean changed;
 
     PropertyBean(String name, Object value) {
+      this(name, value, false);
+    }
+
+    PropertyBean(String name, Object value, boolean changed) {
       propertyName = name;
       propertyValue = value;
+      this.changed = changed;
     }
   }
 
@@ -771,9 +798,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "ui", "getLocation", "getLocationOnScreen",
       "getSize", "isOpaque", "getBorder",
       "getForeground", "getBackground", "getFont",
+      "getCellRenderer", "getCellEditor",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
-      "isForegroundSet", "isBackgroundSet", "isFontSet",
-      "isMinimumSizeSet", "isMaximumSizeSet", "isPreferredSizeSet",
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
@@ -781,6 +807,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
       "isValid", "isDisplayable", "isLightweight"
+    );
+
+    final List<String> CHECKERS = Arrays.asList(
+      "isForegroundSet", "isBackgroundSet", "isFontSet",
+      "isMinimumSizeSet", "isMaximumSizeSet", "isPreferredSizeSet"
     );
 
     final List<String> ACCESSIBLE_CONTEXT_PROPERTIES = Arrays.asList(
@@ -832,7 +863,17 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           catch (Exception e) {
             propertyValue = ReflectionUtil.findField(clazz, null, name).get(component);
           }
-          myProperties.add(new PropertyBean(prefix + propertyName, propertyValue));
+          boolean changed = false;
+          try {
+            final String checkerMethodName = "is" + StringUtil.capitalize(propertyName) + "Set";
+            if (CHECKERS.contains(checkerMethodName)) {
+              final Object value = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), checkerMethodName).invoke(component);
+              if (value instanceof Boolean) {
+                changed = ((Boolean)value).booleanValue();
+              }
+            }
+          } catch (Exception e) {changed = false;}
+          myProperties.add(new PropertyBean(prefix + propertyName, propertyValue, changed));
         }
         catch (Exception ignored) {
         }

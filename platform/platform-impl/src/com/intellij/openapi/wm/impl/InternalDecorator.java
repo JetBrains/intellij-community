@@ -35,7 +35,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +116,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
 
       @Override
-      protected void toolWindowTypeChanged(ToolWindowType type) {
+      protected void toolWindowTypeChanged(@NotNull ToolWindowType type) {
         fireTypeChanged(type);
       }
 
@@ -215,7 +214,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myProject = null;
   }
 
-  private void fireAnchorChanged(ToolWindowAnchor anchor) {
+  private void fireAnchorChanged(@NotNull ToolWindowAnchor anchor) {
     myDispatcher.getMulticaster().anchorChanged(this, anchor);
   }
 
@@ -244,7 +243,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().activated(this);
   }
 
-  private void fireTypeChanged(ToolWindowType type) {
+  private void fireTypeChanged(@NotNull ToolWindowType type) {
     myDispatcher.getMulticaster().typeChanged(this, type);
   }
 
@@ -256,7 +255,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().sideStatusChanged(this, isSide);
   }
 
-  private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
+  private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
     myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
   }
 
@@ -500,6 +499,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return myHeader.getPreferredSize().height;
   }
 
+  public void setHeaderVisible(boolean value) {
+    myHeader.setVisible(value);
+  }
+
   @Override
   protected final void processComponentEvent(final ComponentEvent e) {
     super.processComponentEvent(e);
@@ -509,9 +512,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ChangeAnchorAction extends AnAction implements DumbAware {
-    private final ToolWindowAnchor myAnchor;
+    @NotNull private final ToolWindowAnchor myAnchor;
 
-    public ChangeAnchorAction(final String title, final ToolWindowAnchor anchor) {
+    public ChangeAnchorAction(@NotNull String title, @NotNull ToolWindowAnchor anchor) {
       super(title);
       myAnchor = anchor;
     }

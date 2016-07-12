@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,47 +19,50 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author cdr
  */
 public class ProjectWizardUtil {
-  private ProjectWizardUtil() {
-  }
+  private ProjectWizardUtil() { }
 
-  public static String findNonExistingFileName(String searchDirectory, @NonNls String preferredName, String extension){
-    for (int idx = 0; ; idx++){
-      final String fileName = (idx > 0? preferredName + idx : preferredName) + extension;
-      if(!new File(searchDirectory + File.separator + fileName).exists()) {
+  public static String findNonExistingFileName(String searchDirectory, String preferredName, String extension) {
+    for (int idx = 0; ; idx++) {
+      String fileName = (idx > 0 ? preferredName + idx : preferredName) + extension;
+      if (!new File(searchDirectory, fileName).exists()) {
         return fileName;
       }
     }
   }
 
-  public static boolean createDirectoryIfNotExists(final String promptPrefix, String directoryPath, boolean promptUser) {
+  public static boolean createDirectoryIfNotExists(String promptPrefix, String directoryPath, boolean promptUser) {
     File dir = new File(directoryPath);
+
     if (!dir.exists()) {
       if (promptUser) {
-        final int answer = Messages.showOkCancelDialog(IdeBundle.message("promot.projectwizard.directory.does.not.exist", promptPrefix,
-                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getFullProductName()),
-                                                       IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
+        String ide = ApplicationNamesInfo.getInstance().getFullProductName();
+        String message = IdeBundle.message("prompt.project.wizard.directory.does.not.exist", promptPrefix, dir, ide);
+        int answer = Messages.showOkCancelDialog(message, IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
         if (answer != Messages.OK) {
           return false;
         }
       }
-      try {
-        VfsUtil.createDirectories(dir.getPath());
-      }
-      catch (IOException e) {
+
+      if (!FileUtil.createDirectory(dir)) {
         Messages.showErrorDialog(IdeBundle.message("error.failed.to.create.directory", dir.getPath()), CommonBundle.getErrorTitle());
         return false;
       }
     }
+
+    if (SystemInfo.isUnix && !dir.canWrite()) {
+      Messages.showErrorDialog(IdeBundle.message("error.directory.read.only", dir.getPath()), CommonBundle.getErrorTitle());
+      return false;
+    }
+
     return true;
   }
 }

@@ -72,12 +72,7 @@ public abstract class StaticMemberProcessor {
             showHint(shouldImport);
             if (member instanceof PsiMethod && classes.add(containingClass)) {
               final PsiMethod[] allMethods = containingClass.getAllMethods();
-              final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, new Condition<PsiMethod>() {
-                @Override
-                public boolean value(PsiMethod psiMethod) {
-                  return memberName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod);
-                }
-              });
+              final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, psiMethod -> memberName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod));
 
               assert !overloads.isEmpty();
               if (overloads.size() == 1) {

@@ -451,12 +451,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
       content.setIcon(newPane.getIcon());
       content.setPopupIcon(subId != null ? AllIcons.General.Bullet : newPane.getIcon());
-      content.setPreferredFocusedComponent(new Computable<JComponent>() {
-        @Override
-        public JComponent compute() {
-          final AbstractProjectViewPane current = getCurrentProjectViewPane();
-          return current != null ? current.getComponentToFocus() : null;
-        }
+      content.setPreferredFocusedComponent(() -> {
+        final AbstractProjectViewPane current = getCurrentProjectViewPane();
+        return current != null ? current.getComponentToFocus() : null;
       });
       content.setBusyObject(this);
       if (first && subId != null) {

@@ -22,21 +22,26 @@ import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ExecutorAction extends AnAction {
+  private static final Key<List<ConfigurationFromContext>> CONFIGURATION_CACHE = Key.create("ConfigurationFromContext");
+
   @NotNull
   public static AnAction[] getActions(final int order) {
     return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class,
@@ -68,13 +73,25 @@ public class ExecutorAction extends AnAction {
     myOrigin.actionPerformed(e);
   }
 
-  private String getActionName(DataContext dataContext, @NotNull Executor executor) {
+  @NotNull
+  private static List<ConfigurationFromContext> getConfigurations(DataContext dataContext) {
+    List<ConfigurationFromContext> result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE);
+    if (result == null) {
+      DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result = calcConfigurations(dataContext));
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<ConfigurationFromContext> calcConfigurations(DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (context.getLocation() == null) return null;
+    if (context.getLocation() == null) return Collections.emptyList();
     List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(context.getProject());
-    List<ConfigurationFromContext> list = ContainerUtil.mapNotNull(producers,
-                                                                   producer -> createConfiguration(producer, context)
-    );
+    return ContainerUtil.mapNotNull(producers, producer -> createConfiguration(producer, context));
+  }
+
+  private String getActionName(DataContext dataContext, @NotNull Executor executor) {
+    List<ConfigurationFromContext> list = getConfigurations(dataContext);
     if (list.isEmpty()) return null;
     ConfigurationFromContext configuration = list.get(myOrder < list.size() ? myOrder : 0);
     String actionName = BaseRunConfigurationAction.suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());

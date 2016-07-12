@@ -20,8 +20,6 @@ PsiJavaFile:Unclosed7.java
     PsiWhiteSpace(' ')
     PsiArrayInitializerMemberValue:{
       PsiJavaToken:LBRACE('{')
-      PsiErrorElement:Value expected
-        <empty list>
       PsiErrorElement:'}' expected
         <empty list>
     PsiErrorElement:'{' or ';' expected

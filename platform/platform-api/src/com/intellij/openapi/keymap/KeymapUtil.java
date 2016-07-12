@@ -216,6 +216,13 @@ public class KeymapUtil {
     return shortcut == null ? "" : getShortcutText(shortcut);
   }
 
+  @NotNull
+  public static String getPreferredShortcutText(@NotNull Shortcut[] shortcuts) {
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut != null ? getShortcutText(shortcut) :
+           shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
+  }
+
   public static String getShortcutsText(Shortcut[] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
@@ -239,6 +246,11 @@ public class KeymapUtil {
    * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
+
+    if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
+      return new PressureShortcut(2);
+    }
+
     int button = -1;
     int modifiers = 0;
     int clickCount = 1;

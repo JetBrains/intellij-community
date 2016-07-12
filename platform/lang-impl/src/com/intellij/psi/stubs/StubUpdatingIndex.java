@@ -369,9 +369,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
     try {
       ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
-      if (root instanceof PsiFileStub) {
-        root.putUserData(IndexingDataKeys.VIRTUAL_FILE_ID, fileId);
-      }
       ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
                                       new ObjectStubTree(root, false);
       Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();

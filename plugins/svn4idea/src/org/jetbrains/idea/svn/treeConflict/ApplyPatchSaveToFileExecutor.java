@@ -87,7 +87,8 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
       final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
       try {
         final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroupsToApply, baseForPatch);
-        PatchWriter.writePatches(myProject, save.getFile().getPath(), textPatches, commitContext, CharsetToolkit.UTF8_CHARSET);
+        PatchWriter.writePatches(myProject, save.getFile().getPath(), baseForPatch.getPath(), textPatches, commitContext,
+                                 CharsetToolkit.UTF8_CHARSET);
       }
       catch (final IOException e) {
         LOG.info(e);

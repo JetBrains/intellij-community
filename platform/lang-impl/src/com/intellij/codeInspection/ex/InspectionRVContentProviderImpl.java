@@ -24,7 +24,6 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
@@ -83,14 +82,15 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
 
   @Override
-  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                    @NotNull final InspectionNode toolNode,
-                                    @NotNull final InspectionTreeNode parentNode,
-                                    final boolean showStructure,
-                                    @NotNull final Map<String, Set<RefEntity>> contents,
-                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                                  @NotNull final InspectionNode toolNode,
+                                                  @NotNull final InspectionTreeNode parentNode,
+                                                  final boolean showStructure,
+                                                  boolean groupBySeverity,
+                                                  @NotNull final Map<String, Set<RefEntity>> contents,
+                                                  @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-    merge(toolNode, parentNode, false);
+    InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final Set<RefModule> moduleProblems = presentation.getModuleProblems();
@@ -106,26 +106,26 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               contents,
               false,
               toolWrapper,
-              refElement -> new RefElementContainer(refElement, problems.get(refElement)),
+              refElement -> new RefEntityContainer<CommonProblemDescriptor>(refElement, problems.get(refElement)),
               showStructure,
-              node -> merge(node, toolNode, true));
+              node -> merge(node, mergedToolNode, true));
+    return mergedToolNode;
   }
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
-                                  @NotNull final UserObjectContainer container,
+                                  @NotNull final RefEntityContainer container,
                                   @NotNull final InspectionTreeNode pNode,
                                   final boolean canPackageRepeat) {
-    final RefElementContainer refElementDescriptor = (RefElementContainer)container;
-    final RefEntity refElement = refElementDescriptor.getUserObject();
+    final RefEntity refElement = container.getRefEntity();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
+    final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
     if (problems != null) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          elemNode.insertByOrder(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
+          elemNode.insertByOrder(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), true);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
@@ -140,62 +140,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
       }
       addNodeToParent(container, presentation, pNode);
-    }
-  }
-
-  private static class RefElementContainer implements UserObjectContainer<RefEntity> {
-    @NotNull
-    private final RefEntity myElement;
-    private final CommonProblemDescriptor[] myDescriptors;
-
-    public RefElementContainer(@NotNull RefEntity element, CommonProblemDescriptor[] descriptors) {
-      myElement = element;
-      myDescriptors = descriptors;
-    }
-
-    @Override
-    @Nullable
-    public RefElementContainer getOwner() {
-      final RefEntity entity = myElement.getOwner();
-      if (entity instanceof RefElement && !(entity instanceof RefDirectory)) {
-        return new RefElementContainer(entity, myDescriptors);
-      }
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public RefElementNode createNode(@NotNull InspectionToolPresentation presentation) {
-      return new RefElementNode(myElement, presentation);
-    }
-
-    @Override
-    @NotNull
-    public RefEntity getUserObject() {
-      return myElement;
-    }
-
-    @Override
-    @Nullable
-    public String getModule() {
-      final RefModule refModule = myElement instanceof RefElement
-                                  ? ((RefElement)myElement).getModule()
-                                  : myElement instanceof RefModule ? (RefModule)myElement : null;
-      return refModule != null ? refModule.getName() : null;
-    }
-
-    @Override
-    public boolean areEqual(final RefEntity o1, final RefEntity o2) {
-      return Comparing.equal(o1, o2);
-    }
-
-    @Override
-    public boolean supportStructure() {
-      return myElement instanceof RefElement && !(myElement instanceof RefDirectory); //do not show structure for refModule and refPackage
-    }
-
-    public CommonProblemDescriptor[] getProblemDescriptors() {
-      return myDescriptors;
     }
   }
 }

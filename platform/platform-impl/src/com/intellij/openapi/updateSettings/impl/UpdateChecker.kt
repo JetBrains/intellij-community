@@ -222,14 +222,13 @@ object UpdateChecker {
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
-        val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
+        val list = RepositoryHelper.loadPlugins(host, buildNumber, null, forceHttps, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
             updateable.remove(id)
             state.onDescriptorDownload(descriptor)
-            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
-            downloader.setForceHttps(forceHttps)
+            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber, forceHttps)
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
             if (updateable.isEmpty()) {
               break@outer
@@ -589,8 +588,8 @@ object UpdateChecker {
   @JvmStatic
   fun checkForUpdate(event: IdeaLoggingEvent) {
     if (!ourHasFailedPlugins) {
-      val settings = UpdateSettings.getInstance()
-      if (settings != null && settings.isCheckNeeded) {
+      val app = ApplicationManager.getApplication()
+      if (!app.isDisposed && !app.isDisposeInProgress && UpdateSettings.getInstance().isCheckNeeded) {
         val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true

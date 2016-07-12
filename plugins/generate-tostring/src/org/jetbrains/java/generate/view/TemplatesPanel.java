@@ -54,11 +54,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         }
     };
 
-    private static final Factory<TemplateResource> FACTORY = new Factory<TemplateResource>() {
-        public TemplateResource create() {
-            return new TemplateResource();
-        }
-    };
+    private static final Factory<TemplateResource> FACTORY = () -> new TemplateResource();
 
     private static final Cloner<TemplateResource> CLONER = new Cloner<TemplateResource>() {
         public TemplateResource cloneOf(TemplateResource templateResource) {

@@ -64,7 +64,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher {
+public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher, UISettingsListener {
   private static final int COLLAPSED_HEIGHT = 2;
 
   private enum State {
@@ -270,13 +270,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
-    UISettingsListener UISettingsListener = new UISettingsListener() {
-      public void uiSettingsChanged(final UISettings source) {
-        updateMnemonicsVisibility();
-        myPresentationFactory.reset();
-      }
-    };
-    UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -290,6 +283,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       Disposer.dispose(myDisposable);
     }
     super.removeNotify();
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    updateMnemonicsVisibility();
+    myPresentationFactory.reset();
   }
 
   @Override

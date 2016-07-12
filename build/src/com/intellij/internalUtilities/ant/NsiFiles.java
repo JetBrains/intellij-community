@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.internalUtilities.ant;
 
 import org.apache.tools.ant.BuildException;
@@ -10,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * Ant task to facilitate building NSIS installer.
@@ -103,10 +119,10 @@ public class NsiFiles extends MatchingTask {
       for (String file : allFiles) {
         uninstWriter.newLine();
         final String relPath = myAbsoluteToRelative.get(file);
-        uninstWriter.write("Delete \"$INSTDIR\\" + relPath + "\"");
+        uninstWriter.write("Delete \"$INSTDIR\\" + toWinPath(relPath) + "\"");
         if (relPath.endsWith(".py")) {
           uninstWriter.newLine();
-          uninstWriter.write("Delete \"$INSTDIR\\" + relPath + "c\"");  // .pyc
+          uninstWriter.write("Delete \"$INSTDIR\\" + toWinPath(relPath) + "c\"");  // .pyc
         }
       }
 
@@ -117,9 +133,9 @@ public class NsiFiles extends MatchingTask {
         final String dir = dirs.get(i);
         if (dir.length() == 0) continue;
         uninstWriter.newLine();
-        uninstWriter.write("RmDir /r \"$INSTDIR\\" + dir + "\\__pycache__\"");
+        uninstWriter.write("RmDir /r \"$INSTDIR\\" + toWinPath(dir) + "\\__pycache__\"");
         uninstWriter.newLine();
-        uninstWriter.write("RmDir \"$INSTDIR\\" + dir + "\"");
+        uninstWriter.write("RmDir \"$INSTDIR\\" + toWinPath(dir) + "\"");
       }
       uninstWriter.newLine();
       uninstWriter.write("RmDir \"$INSTDIR\"");
@@ -139,7 +155,7 @@ public class NsiFiles extends MatchingTask {
         instWriter.newLine();
         instWriter.newLine();
         if (dir.length() > 0) {
-          instWriter.write("SetOutPath $INSTDIR\\" + dir);
+          instWriter.write("SetOutPath $INSTDIR" + "\\" + toWinPath(dir));
         }
         else {
           instWriter.write("SetOutPath $INSTDIR");
@@ -156,16 +172,20 @@ public class NsiFiles extends MatchingTask {
     }
   }
 
+  private static String toWinPath(String dir) {
+    return File.separatorChar == '\\' ? dir : dir.replaceAll(File.separator, Matcher.quoteReplacement("\\"));
+  }
+
   private void processFileSet(final FileSet fileSet) throws IOException {
     final DirectoryScanner scanner = fileSet.getDirectoryScanner(getProject());
     final String[] files = scanner.getIncludedFiles();
-    String base = fileSet.getDir(getProject()).getCanonicalPath() + "\\";
+    String base = fileSet.getDir(getProject()).getCanonicalPath() + File.separator;
     for (String file : files) {
       String lastDir = "";
       getDirFileList(lastDir);
       int idx = -1;
       do {
-        idx = file.indexOf('\\', idx + 1);
+        idx = file.indexOf(File.separator, idx + 1);
         if (idx == -1) break;
         lastDir = file.substring(0, idx);
         getDirFileList(lastDir);

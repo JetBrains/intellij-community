@@ -114,6 +114,31 @@ class StdIn(BaseStdIn):
             return '\n'
 
 
+#=======================================================================================================================
+# DebugConsoleStdIn
+#=======================================================================================================================
+class DebugConsoleStdIn(BaseStdIn):
+    '''
+        Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
+    '''
+
+    def __init__(self, dbg, original_stdin):
+        BaseStdIn.__init__(self)
+        self.debugger = dbg
+        self.original_stdin = original_stdin
+
+    def readline(self, *args, **kwargs):
+        # Notify Java side about input and call original function
+        try:
+            cmd = self.debugger.cmd_factory.make_input_requested_message()
+            self.debugger.writer.add_command(cmd)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            return '\n'
+        return self.original_stdin.readline(*args, **kwargs)
+
+
 class CodeFragment:
     def __init__(self, text, is_single_line=True):
         self.text = text
@@ -164,10 +189,13 @@ class BaseInterpreterInterface:
 
         return self.need_more_for_code(self.buffer.text)
 
-    def create_std_in(self):
-        return StdIn(self, self.host, self.client_port)
+    def create_std_in(self, debugger=None, original_std_in=None):
+        if debugger is None:
+            return StdIn(self, self.host, self.client_port)
+        else:
+            return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
-    def add_exec(self, code_fragment):
+    def add_exec(self, code_fragment, debugger=None):
         original_in = sys.stdin
         try:
             help = None
@@ -185,7 +213,7 @@ class BaseInterpreterInterface:
 
         more = False
         try:
-            sys.stdin = self.create_std_in()
+            sys.stdin = self.create_std_in(debugger, original_in)
             try:
                 if help is not None:
                     #This will enable the help() function to work.
@@ -434,20 +462,9 @@ class BaseInterpreterInterface:
         return xml
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
-        xml = "<xml>"
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-
-        array, metaxml, r, c, f = pydevd_vars.array_to_meta_xml(array, name, format)
-        xml += metaxml
-        format = '%' + f
-        if rows == -1 and cols == -1:
-            rows = r
-            cols = c
-        xml += pydevd_vars.array_to_xml(array, roffset, coffset, rows, cols, format)
-        xml += "</xml>"
-
-        return xml
+        return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
         xml = "<xml>"

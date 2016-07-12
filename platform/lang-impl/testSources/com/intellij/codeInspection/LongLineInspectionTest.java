@@ -31,12 +31,16 @@ public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestC
     doTest("java");
   }
 
-  public void _testLongLine() {
+  public void testLongLine() {
     doTest("java");
   }
 
   public void testXmlLongLine() {
     doTest("xml");
+  }
+
+  public void testPlain() {
+    doTest("txt");
   }
 
   private void doTest(final String extension) {

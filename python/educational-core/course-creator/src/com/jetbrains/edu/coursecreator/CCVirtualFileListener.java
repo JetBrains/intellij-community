@@ -1,21 +1,22 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CCVirtualFileListener extends VirtualFileAdapter {
+import java.io.File;
 
-  private static final Logger LOG = Logger.getInstance(CCVirtualFileListener.class);
+public class CCVirtualFileListener extends VirtualFileAdapter {
 
   @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -34,8 +35,14 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
 
     String name = createdFile.getName();
+
+    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
+    if (manager != null && manager.doNotPackFile(new File(createdFile.getPath()))) {
+      return;
+    }
+
     if (CCUtils.isTestsFile(project, createdFile)
-        || EduNames.TASK_HTML.equals(name)
+        || StudyUtils.isTaskDescriptionFile(name)
         || name.contains(EduNames.WINDOW_POSTFIX)
         || name.contains(EduNames.WINDOWS_POSTFIX)
         || name.contains(EduNames.ANSWERS_POSTFIX)) {

@@ -107,13 +107,9 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     final Key<CachedValue<GrGdkMethodImpl>> cachedValueKey = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     CachedValue<GrGdkMethodImpl> cachedValue = original.getUserData(cachedValueKey);
     if (cachedValue == null) {
-      cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(new CachedValueProvider<GrGdkMethodImpl>() {
-        @Override
-        public Result<GrGdkMethodImpl> compute() {
-          return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
-                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
+      cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(
+        () -> CachedValueProvider.Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
+                                                PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
       original.putUserData(cachedValueKey, cachedValue);
     }
 

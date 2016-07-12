@@ -56,6 +56,11 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        for (VirtualFile openedFile : source.getOpenFiles()) {
+          if (StudyUtils.getTaskFile(project, openedFile) != null) {
+            return;
+          }
+        }
         toolWindow.setEmptyText(project);
       }
 
@@ -66,6 +71,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
           Task task = getTask(file);
           setTaskText(task, file.getParent());
         }
+        toolWindow.setBottomComponent(null);
       }
 
       @Nullable
@@ -80,7 +86,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       }
 
       private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
-        String text = StudyUtils.getTaskTextFromTask(task, taskDirectory);
+        String text = StudyUtils.getTaskTextFromTask(taskDirectory, task);
         if (text == null) {
           toolWindow.setEmptyText(project);
           return;

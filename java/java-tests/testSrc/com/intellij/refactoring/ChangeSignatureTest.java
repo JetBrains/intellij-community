@@ -52,6 +52,30 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
+  public void testDelegateWithoutChangesWarnAboutSameMethodInClass() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[0], true);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testDuplicatedSignatureInInheritor() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "i", PsiType.INT)}, true);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testConflictForUsedParametersInMethodBody() throws Exception {
+    try {
+      doTest(null, new ParameterInfoImpl[0], true);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
   public void testGenericTypes() {
     doTest(null, null, "T", method -> new ParameterInfoImpl[]{
       new ParameterInfoImpl(-1, "x", myFactory.createTypeFromText("T", method.getParameterList()), "null"),

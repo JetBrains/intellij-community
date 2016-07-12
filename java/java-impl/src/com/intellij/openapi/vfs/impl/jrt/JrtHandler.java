@@ -15,39 +15,21 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
-  private static final URI ROOT_URI = URI.create("jrt:/");
-
-  private static class JrtEntryInfo extends EntryInfo {
-    private final String myModule;
-
-    public JrtEntryInfo(@NotNull String shortName, @NotNull String module, long length, long timestamp, EntryInfo parent) {
-      super(shortName, false, length, timestamp, parent);
-      myModule = module;
-    }
-  }
-
   private SoftReference<FileSystem> myFileSystem;
-  private final StringInterner myInterner = new StringInterner();
 
   public JrtHandler(@NotNull String path) {
     super(path);
@@ -56,14 +38,7 @@ class JrtHandler extends ArchiveHandler {
   private synchronized FileSystem getFileSystem() throws IOException {
     FileSystem fs = SoftReference.dereference(myFileSystem);
     if (fs == null) {
-      if (SystemInfo.isJavaVersionAtLeast("9")) {
-        fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", getFile().getPath()));
-      }
-      else {
-        URL url = new File(getFile(), "jrt-fs.jar").toURI().toURL();
-        ClassLoader loader = new URLClassLoader(new URL[]{url}, null);
-        fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), loader);
-      }
+      fs = JrtFileSystem.getFileSystem(getFile().getPath());
       myFileSystem = new SoftReference<>(fs);
     }
     return fs;
@@ -93,23 +68,17 @@ class JrtHandler extends ArchiveHandler {
 
       private void process(Path entry, BasicFileAttributes attrs) throws IOException {
         int pathLength = entry.getNameCount();
-        if (pathLength <= 2) return;
+        if (pathLength > 1) {
+          Path relativePath = entry.subpath(1, pathLength);
+          String path = relativePath.toString();
+          if (!map.containsKey(path)) {
+            EntryInfo parent = map.get(pathLength > 2 ? relativePath.getParent().toString() : "");
+            if (parent == null) throw new IOException("Out of order: " + entry);
 
-        Path relativePath = entry.subpath(2, pathLength);
-        String path = relativePath.toString(), shortName = entry.getFileName().toString();
-        if (map.containsKey(path) || "module-info.class".equals(shortName)) return;
-
-        EntryInfo parent = map.get(pathLength > 3 ? relativePath.getParent().toString() : "");
-        if (parent == null) throw new IOException("Out of order: " + entry);
-
-        long length = attrs.size();
-        long modified = attrs.lastModifiedTime().toMillis();
-        if (attrs.isDirectory()) {
-          map.put(path, new EntryInfo(shortName, true, length, modified, parent));
-        }
-        else {
-          String module = myInterner.intern(entry.getName(1).toString());
-          map.put(path, new JrtEntryInfo(shortName, module, length, modified, parent));
+            String shortName = entry.getFileName().toString();
+            long modified = attrs.lastModifiedTime().toMillis();
+            map.put(path, new EntryInfo(shortName, attrs.isDirectory(), attrs.size(), modified, parent));
+          }
         }
       }
     });
@@ -121,8 +90,8 @@ class JrtHandler extends ArchiveHandler {
   @Override
   public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
     EntryInfo entry = getEntryInfo(relativePath);
-    if (!(entry instanceof JrtEntryInfo)) throw new FileNotFoundException(getFile() + " : " + relativePath);
-    Path path = getFileSystem().getPath("/modules/" + ((JrtEntryInfo)entry).myModule + '/' + relativePath);
+    if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
+    Path path = getFileSystem().getPath("/modules/" + relativePath);
     return Files.readAllBytes(path);
   }
 }

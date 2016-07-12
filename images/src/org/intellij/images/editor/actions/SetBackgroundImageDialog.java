@@ -15,14 +15,12 @@
  */
 package org.intellij.images.editor.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -30,14 +28,19 @@ import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
@@ -61,6 +64,7 @@ import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
 public class SetBackgroundImageDialog extends DialogWrapper {
   private final String myPropertyTmp;
+  private final Project myProject;
   private JPanel myRoot;
   private JBRadioButton myEditorRb;
   private JBRadioButton myScaleRb;
@@ -69,9 +73,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JSpinner myOpacitySpinner;
   private JPanel myPreviewPanel;
   private ComboboxWithBrowseButton myPathField;
+  private JBCheckBox myThisProjectOnlyCb;
 
   boolean myAdjusting;
-  private String mySelectedPath;
   private Map<String, String> myResults = ContainerUtil.newHashMap();
 
   private final SimpleEditorPreview myEditorPreview;
@@ -79,17 +83,32 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
   public SetBackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
+    myProject = project;
     setTitle("Background Image");
-    mySelectedPath = selectedPath;
     myEditorPreview = createEditorPreview();
     myIdePreview = createIdePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
     setupComponents();
     restoreRecentImages();
-    setSelectedPath(mySelectedPath);
+    if (StringUtil.isNotEmpty(selectedPath)) {
+      myResults.put(getSystemProp(true), selectedPath);
+      myResults.put(getSystemProp(false), selectedPath);
+      setSelectedPath(selectedPath);
+    }
     targetChanged(null);
     init();
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    return ArrayUtil.append(super.createActions(), new AbstractAction("Clear") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doClearAction();
+      }
+    });
   }
 
   private void createUIComponents() {
@@ -171,17 +190,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myPreviewPanel.add(myIdePreview, "ide");
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, "editor");
     myPathField.getComboBox().setEditable(true);
-    myPathField.getButton().setAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-          .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
-        VirtualFile file = FileChooser.chooseFile(descriptor, myRoot, null, null);
-        if (file != null) {
-          setSelectedPath(file.getPath());
-        }
-      }
-    });
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
+    myPathField.addBrowseFolderListener(null, null, null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     JTextComponent textComponent = getComboEditor();
     textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -231,6 +242,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myScaleRb.setSelected(true);
     myCenterRb.setSelected(true);
     myEditorRb.setSelected(true);
+    boolean perProject = !Comparing.equal(getBackgroundSpec(myProject, getSystemProp(true)), getBackgroundSpec(null, getSystemProp(true)));
+    myThisProjectOnlyCb.setSelected(perProject);
     myAdjusting = false;
   }
 
@@ -250,9 +263,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     if (event != null && event.getStateChange() == ItemEvent.DESELECTED) {
       return;
     }
-    if (StringUtil.isEmptyOrSpaces(mySelectedPath)) {
-      retrieveExistingValue();
-    }
+    retrieveExistingValue();
 
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, myEditorRb.isSelected() ? "editor" : "ide");
     if (myEditorRb.isSelected()) {
@@ -262,26 +273,31 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   public void setSelectedPath(String path) {
-    mySelectedPath = path;
-    if (StringUtil.isEmptyOrSpaces(path)) return;
-    CollectionComboBoxModel<String> comboModel = getComboModel();
-    if (!comboModel.contains(path)) {
-      comboModel.add(path);
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      getComboEditor().setText("");
     }
-    comboModel.setSelectedItem(path);
-    getComboEditor().setCaretPosition(0);
+    else {
+      CollectionComboBoxModel<String> comboModel = getComboModel();
+      if (!comboModel.contains(path)) {
+        comboModel.add(path);
+      }
+      comboModel.setSelectedItem(path);
+      getComboEditor().setCaretPosition(0);
+    }
   }
 
   private void retrieveExistingValue() {
     myAdjusting = true;
     String prop = getSystemProp();
-    String value = StringUtil.notNullize(myResults.get(prop), getBackgroundSpec(prop));
+    JBIterable<String> possibleValues = JBIterable.of(myResults.get(prop))
+      .append(StringUtil.nullize(getBackgroundSpec(myProject, prop)))
+      .append(myResults.values());
+    String value = StringUtil.notNullize(ObjectUtils.coalesce(possibleValues));
     String[] split = value.split(",");
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
     String place = split.length > 3 ? split[3] : "center";
     setSelectedPath(split[0]);
-    mySelectedPath = null;
     myOpacitySlider.setValue(opacity);
     myOpacitySpinner.setValue(opacity);
     setSelected(getFillRbGroup(), fill);
@@ -291,8 +307,17 @@ public class SetBackgroundImageDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    storeRecentImages();
     super.doCancelAction();
+    storeRecentImages();
+  }
+
+  private void doClearAction() {
+    close(OK_EXIT_CODE);
+    storeRecentImages();
+    String prop = getSystemProp();
+    PropertiesComponent.getInstance(myProject).setValue(prop, null);
+    PropertiesComponent.getInstance().setValue(prop, null);
+    repaintAllWindows();
   }
 
   @Override
@@ -305,7 +330,12 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myResults.put(prop, value);
 
     if (value.startsWith(",")) value = null;
-    PropertiesComponent.getInstance().setValue(prop, value);
+
+    boolean perProject = myThisProjectOnlyCb.isSelected();
+    PropertiesComponent.getInstance(myProject).setValue(prop, perProject ? value : null);
+    if (!perProject) {
+      PropertiesComponent.getInstance().setValue(prop, value);
+    }
 
     repaintAllWindows();
   }
@@ -337,7 +367,12 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   private String getSystemProp() {
-    return myEditorRb.isSelected() ? EDITOR_PROP : FRAME_PROP;
+    return getSystemProp(myEditorRb.isSelected());
+  }
+
+  @NotNull
+  private static String getSystemProp(boolean forEditor) {
+    return forEditor ? EDITOR_PROP : FRAME_PROP;
   }
 
   private void updatePreview() {
@@ -349,7 +384,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     myPreviewPanel.validate();
     myPreviewPanel.repaint();
     boolean clear = value.startsWith(",");
-    getOKAction().putValue(Action.NAME, clear ? "Clear" : CommonBundle.getOkButtonText());
+    getOKAction().setEnabled(!clear);
   }
 
   @NotNull

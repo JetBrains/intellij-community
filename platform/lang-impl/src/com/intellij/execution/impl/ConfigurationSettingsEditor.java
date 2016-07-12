@@ -190,13 +190,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
   public <T extends SettingsEditor> T selectExecutorAndGetEditor(final ProgramRunner runner, Class<T> editorClass) {
     myGroupSettingsBuilder.selectEditor(RUNNERS_TAB_NAME);
-    Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(), new Condition<Executor>() {
-
-      @Override
-      public boolean value(Executor executor) {
-        return runner.equals(RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration));
-      }
-    });
+    Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(),
+                                           executor1 -> runner.equals(RunnerRegistry.getInstance().getRunner(executor1.getId(), myConfiguration)));
     if (executor == null) {
       return null;
     }

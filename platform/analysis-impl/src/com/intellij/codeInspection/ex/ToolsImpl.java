@@ -168,7 +168,7 @@ public class ToolsImpl implements Tools {
     final ProfileManager profileManager = profile.getProfileManager();
     final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getOwnSeverityRegistrar();
     HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
-    if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {//from old profiles
+    if (level == null) {
       level = HighlightDisplayLevel.WARNING;
     }
     myDefaultState.setLevel(level);
@@ -357,25 +357,30 @@ public class ToolsImpl implements Tools {
     return myDefaultState.isEnabled();
   }
 
-  @Override
   @Nullable
-  public InspectionToolWrapper getEnabledTool(PsiElement element) {
+  @Override
+  public InspectionToolWrapper getEnabledTool(@Nullable PsiElement element, boolean includeDoNotShow) {
     if (!myEnabled) return null;
-    if (myTools == null || element == null) {
-      return myDefaultState.isEnabled() ? myDefaultState.getTool() : null;
-    }
-    final Project project = element.getProject();
-    final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
-    for (ScopeToolState state : myTools) {
-      final NamedScope scope = state.getScope(project);
-      if (scope != null) {
-        final PackageSet set = scope.getValue();
-        if (set != null && set.contains(element.getContainingFile(), manager)) {
-          return state.isEnabled() ? state.getTool() : null;
+    if (myTools != null && element != null) {
+      final Project project = element.getProject();
+      final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
+      for (ScopeToolState state : myTools) {
+        final NamedScope scope = state.getScope(project);
+        if (scope != null) {
+          final PackageSet set = scope.getValue();
+          if (set != null && set.contains(element.getContainingFile(), manager)) {
+            return state.isEnabled() && (includeDoNotShow || !HighlightDisplayLevel.DO_NOT_SHOW.equals(state.getLevel())) ? state.getTool() : null;
+          }
         }
       }
     }
-    return myDefaultState.isEnabled() ? myDefaultState.getTool() : null;
+    return myDefaultState.isEnabled() && (includeDoNotShow || !HighlightDisplayLevel.DO_NOT_SHOW.equals(myDefaultState.getLevel())) ? myDefaultState.getTool() : null;
+  }
+
+  @Nullable
+  @Override
+  public InspectionToolWrapper getEnabledTool(@Nullable PsiElement element) {
+    return getEnabledTool(element, true);
   }
 
   public void setEnabled(boolean enabled) {

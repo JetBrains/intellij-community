@@ -22,6 +22,8 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -39,6 +41,7 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.IOException;
 
 public class VcsHistoryUtil {
@@ -213,5 +216,10 @@ public class VcsHistoryUtil {
                (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }
     }.queue();
+  }
+
+  @NotNull
+  public static Font getCommitDetailsFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 }

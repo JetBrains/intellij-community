@@ -52,7 +52,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
   private final Options myOptions;
   private final char[] myInputBuffer = new char[8192];
   private final StringBuilder myLineBuffer = new StringBuilder();
-  private boolean myCarry = false;
+  private boolean myCarry;
 
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
     this(createInputStreamReader(inputStream, charset));
@@ -93,6 +93,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @return true if non-zero amount of data has been read
    * @throws IOException If an I/O error occurs
    */
+  @Override
   protected final boolean readAvailableNonBlocking() throws IOException {
     boolean read = false;
 
@@ -127,6 +128,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
    * @return true if non-zero amount of data has been read, false if end of the stream is reached
    * @throws IOException If an I/O error occurs
    */
+  @Override
   protected final boolean readAvailableBlocking() throws IOException {
     boolean read = false;
 
@@ -136,9 +138,6 @@ public abstract class BaseOutputReader extends BaseDataReader {
         if (n > 0) {
           read = true;
           processInput(myInputBuffer, myLineBuffer, n);
-        }
-        if (!myReader.ready()) {
-          onBufferExhaustion();
         }
       }
     }
@@ -207,18 +206,20 @@ public abstract class BaseOutputReader extends BaseDataReader {
     myReader.close();
   }
 
-  protected void onBufferExhaustion() { }
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
+  protected void onBufferExhaustion() {
+  }
 
   protected abstract void onTextAvailable(@NotNull String text);
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #BaseOutputReader(InputStream, Charset, Options)} (to be removed in IDEA 18) */
+  /** @deprecated use {@link #BaseOutputReader(InputStream, Charset, Options)} (to be removed in IDEA 2018.1) */
   @SuppressWarnings("unused")
   public BaseOutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy policy) {
     this(inputStream, charset, Options.withPolicy(policy));
   }
 
-  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 18) */
+  /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
   @SuppressWarnings("unused")
   public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
     this(reader, Options.withPolicy(policy));

@@ -691,12 +691,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
           }
           Condition<RadComponent> filter = null;
           if (name.equals(SwingProperties.LABEL_FOR)) {
-            filter = new Condition<RadComponent>() {
-              @Override
-              public boolean value(final RadComponent t) {
-                ComponentItem item = getItem(t.getComponentClassName());
-                return item != null && item.isCanAttachLabel();
-              }
+            filter = t -> {
+              ComponentItem item = getItem(t.getComponentClassName());
+              return item != null && item.isCanAttachLabel();
             };
           }
           property = new IntroComponentProperty(name, readMethod, writeMethod, propertyType, filter, storeAsClient);

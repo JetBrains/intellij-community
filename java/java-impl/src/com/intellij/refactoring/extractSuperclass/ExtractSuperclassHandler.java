@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,12 +99,17 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }
 
 
-    final List<MemberInfo> memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter<PsiMember>() {
+    List<MemberInfo> memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter<PsiMember>() {
       @Override
       public boolean includeMember(PsiMember element) {
         return true;
       }
     }, false);
+
+    if (mySubclass instanceof PsiAnonymousClass) {
+      memberInfos = ContainerUtil.filter(memberInfos, memberInfo -> !(memberInfo.getMember() instanceof PsiClass &&
+                                                                      memberInfo.getOverrides() != null));
+    }
 
     final ExtractSuperclassDialog dialog =
       new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);

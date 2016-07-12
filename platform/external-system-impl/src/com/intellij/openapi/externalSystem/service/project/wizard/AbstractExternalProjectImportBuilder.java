@@ -138,7 +138,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         modules.add(module);
         return module;
       }
-    } : new IdeModifiableModelsProviderImpl(project);
+    } : new IdeModifiableModelsProviderImpl(project){
+      @NotNull
+      @Override
+      public Module newModule(@NotNull @NonNls String filePath,
+                              String moduleTypeId) {
+        final Module module = super.newModule(filePath, moduleTypeId);
+        modules.add(module);
+        return module;
+      }
+    };
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
@@ -165,12 +174,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       }
 
       if (!project.isInitialized()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-          @Override
-          public void run() {
-            finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
-          }
-        });
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(
+          () -> finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings));
       }
       else finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
     }
@@ -186,35 +191,27 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     myExternalProjectNode = null;
 
     // resolve dependencies
-    final Runnable resolveDependenciesTask = new Runnable() {
-      @Override
-      public void run() {
-        ExternalSystemUtil.refreshProject(
-          project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
-          ProgressExecutionMode.IN_BACKGROUND_ASYNC);
-      }
-    };
+    final Runnable resolveDependenciesTask = () -> ExternalSystemUtil.refreshProject(
+      project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
+      ProgressExecutionMode.IN_BACKGROUND_ASYNC);
     if (!isFromUI) {
       resolveDependenciesTask.run();
     }
     else {
       // execute when current dialog is closed
-      ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
-        @Override
-        public void run() {
-          final Module[] committedModules = ModuleManager.getInstance(project).getModules();
-          if (ContainerUtil.list(committedModules).containsAll(modules)) {
-            resolveDependenciesTask.run();
-          }
-          else {
-            ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
-              Collections.singleton(projectSettings.getExternalProjectPath()));
-            ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
-              projectSettings.getExternalProjectPath());
+      ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+        final Module[] committedModules = ModuleManager.getInstance(project).getModules();
+        if (ContainerUtil.list(committedModules).containsAll(modules)) {
+          resolveDependenciesTask.run();
+        }
+        else {
+          ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
+            Collections.singleton(projectSettings.getExternalProjectPath()));
+          ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
+            projectSettings.getExternalProjectPath());
 
-            ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
-              myExternalSystemId, projectSettings.getExternalProjectPath());
-          }
+          ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
+            myExternalSystemId, projectSettings.getExternalProjectPath());
         }
       });
     }
@@ -274,23 +271,20 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final File finalProjectFile = projectFile;
     final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
     final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
-    executeAndRestoreDefaultProjectSettings(project, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ExternalSystemUtil.refreshProject(
-            project,
-            myExternalSystemId,
-            externalProjectPath,
-            callback,
-            true,
-            ProgressExecutionMode.MODAL_SYNC
-          );
-        }
-        catch (IllegalArgumentException e) {
-          exRef.set(
-            new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
-        }
+    executeAndRestoreDefaultProjectSettings(project, () -> {
+      try {
+        ExternalSystemUtil.refreshProject(
+          project,
+          myExternalSystemId,
+          externalProjectPath,
+          callback,
+          true,
+          ProgressExecutionMode.MODAL_SYNC
+        );
+      }
+      catch (IllegalArgumentException e) {
+        exRef.set(
+          new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName)));
       }
     });
     ConfigurationException ex = exRef.get();

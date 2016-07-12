@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         Document beforeReformat = null;
-        beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+        if (myEditor.getDocument().getTextLength() > 0) {
+          beforeReformat = collectChangesBeforeCurrentSettingsAppliance(project);
+        }
 
         //important not mark as generated not to get the classes before setting language level
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
@@ -227,7 +229,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
         Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.getText());
-        if (document != null && beforeReformat != null) {
+        if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }
       }
@@ -492,13 +494,11 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
                                  || isWithinBounds(myEditor.offsetToVisualPosition(range.getEndOffset()), visualStart, visualEnd);
           scrollToChange = !rangeVisible;
           if (offsetToScroll < 0) {
-            if (offsetToScroll < 0) {
-              if (text.charAt(range.getStartOffset()) != '\n') {
-                offsetToScroll = range.getStartOffset();
-              }
-              else if (range.getEndOffset() > 0 && text.charAt(range.getEndOffset() - 1) != '\n') {
-                offsetToScroll = range.getEndOffset() - 1;
-              }
+            if (text.charAt(range.getStartOffset()) != '\n') {
+              offsetToScroll = range.getStartOffset();
+            }
+            else if (range.getEndOffset() > 0 && text.charAt(range.getEndOffset() - 1) != '\n') {
+              offsetToScroll = range.getEndOffset() - 1;
             }
           }
         }

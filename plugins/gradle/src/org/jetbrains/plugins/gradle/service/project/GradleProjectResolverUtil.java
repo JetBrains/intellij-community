@@ -29,8 +29,6 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
@@ -262,18 +260,8 @@ public class GradleProjectResolverUtil {
     DataNode fakeNode = new DataNode(CONTAINER_KEY, moduleDataNode.getData(), null);
     buildDependencies(sourceSetMap, artifactsMap, fakeNode, dependencies, null);
     final Collection<DataNode<?>> dataNodes =
-      ExternalSystemApiUtil.findAllRecursively(fakeNode, new BooleanFunction<DataNode<?>>() {
-        @Override
-        public boolean fun(DataNode<?> node) {
-          return node.getData() instanceof DependencyData;
-        }
-      });
-    return ContainerUtil.map(dataNodes, new Function<DataNode<?>, DependencyData>() {
-      @Override
-      public DependencyData fun(DataNode<?> node) {
-        return (DependencyData)node.getData();
-      }
-    });
+      ExternalSystemApiUtil.findAllRecursively(fakeNode, node -> node.getData() instanceof DependencyData);
+    return ContainerUtil.map(dataNodes, node -> (DependencyData)node.getData());
   }
 
   public static void buildDependencies(@NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
@@ -409,12 +397,7 @@ public class GradleProjectResolverUtil {
           moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
           moduleDependencyData.setExported(mergedDependency.getExported());
           moduleDependencyData.setModuleDependencyArtifacts(ContainerUtil.map(
-            projectDependency.getProjectDependencyArtifacts(), new Function<File, String>() {
-              @Override
-              public String fun(File file) {
-                return file.getPath();
-              }
-            }));
+            projectDependency.getProjectDependencyArtifacts(), file -> file.getPath()));
 
           depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
         }
@@ -503,12 +486,7 @@ public class GradleProjectResolverUtil {
     if (ideProject == null) return;
 
     DataNode<LibraryData> libraryData =
-      ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
-        @Override
-        public boolean fun(DataNode<LibraryData> node) {
-          return library.equals(node.getData());
-        }
-      });
+      ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, node -> library.equals(node.getData()));
     if (libraryData == null) {
       ideProject.createChild(ProjectKeys.LIBRARY, library);
     }
@@ -523,23 +501,14 @@ public class GradleProjectResolverUtil {
   public static DataNode<ModuleData> findModule(@Nullable final DataNode<ProjectData> projectNode, @NotNull final String modulePath) {
     if (projectNode == null) return null;
 
-    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-      @Override
-      public boolean fun(DataNode<ModuleData> node) {
-        return node.getData().getLinkedExternalProjectPath().equals(modulePath);
-      }
-    });
+    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE,
+                                      node -> node.getData().getLinkedExternalProjectPath().equals(modulePath));
   }
 
   @Nullable
   public static DataNode<ModuleData> findModuleById(@Nullable final DataNode<ProjectData> projectNode, @NotNull final String path) {
     if (projectNode == null) return null;
-    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-      @Override
-      public boolean fun(DataNode<ModuleData> node) {
-        return node.getData().getId().equals(path);
-      }
-    });
+    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, node -> node.getData().getId().equals(path));
   }
 
   @Nullable
@@ -563,12 +532,9 @@ public class GradleProjectResolverUtil {
     }
     if (moduleNode == null) return null;
 
-    return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {
-      @Override
-      public boolean fun(DataNode<TaskData> node) {
-        String name = node.getData().getName();
-        return name.equals(taskName) || name.equals(taskPath);
-      }
+    return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, node -> {
+      String name = node.getData().getName();
+      return name.equals(taskName) || name.equals(taskPath);
     });
   }
 }

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -445,17 +444,12 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  public static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
-    e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(enabled);
-  }
-
   @NotNull
   public static String getErrorTextFromException(@NotNull Exception e) {
     if (e instanceof UnknownHostException) {
       return "Unknown host: " + e.getMessage();
     }
-    return e.getMessage();
+    return StringUtil.notNullize(e.getMessage(), "Unknown error");
   }
 
   @Nullable

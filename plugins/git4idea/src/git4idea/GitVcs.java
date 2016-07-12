@@ -168,7 +168,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param task the task to run
    */
   public static void runInBackground(Task.Backgroundable task) {
-    UIUtil.invokeLaterIfNeeded(() -> task.queue());
+    task.queue();
   }
 
   @Override

@@ -16,83 +16,54 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+import com.intellij.util.io.DataInputOutputUtil;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
-public class NameEnvironment extends UserDataHolderBase {
-
-  public final QualifiedName empty;
-  public final QualifiedName java_lang_Object;
+class NameEnvironment extends UserDataHolderBase {
+  public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
+  public static final int NO_NAME = 0;
+  @QNameHash final int java_lang;
   public final QualifiedName java_lang_Enum;
-  public final QualifiedName[] annotation;
-  public final NamesEnumerator myNamesEnumerator;
+  public final QualifiedName java_lang_annotation_Annotation;
 
-  public NameEnvironment() {
-    myNamesEnumerator = new NamesEnumerator();
-    empty = myNamesEnumerator.getFullName(new int[]{}, true);
-    java_lang_Object = fromString("java.lang.Object", true);
-    java_lang_Enum = fromString("java.lang.Enum", true);
-    annotation = new QualifiedName[]{fromString("java.lang.annotation.Annotation", true)};
+  NameEnvironment() {
+    java_lang = fromString("java.lang");
+    java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
+    java_lang_annotation_Annotation = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
   }
 
-  @Nullable
-  public QualifiedName fromString(String s, boolean create) {
-    List<String> comps = StringUtil.split(s, ".");
-    int[] ids = new int[comps.size()];
-    for (int i = 0; i < comps.size(); i++) {
-      int name = simpleName(comps.get(i), create);
-      if (name == NamesEnumerator.NO_NAME) {
-        return null;
-      }
-      ids[i] = name;
+  @QNameHash int fromString(String s) {
+    int id = 0;
+    for (int shortName : IndexTree.hashQualifiedName(s)) {
+      id = qualifiedName(id, shortName);
     }
-    return myNamesEnumerator.getFullName(ids, create);
+    return id;
   }
 
-  public int simpleName(String s, boolean create) {
-    if (s == null)
-      return NamesEnumerator.NO_NAME;
-    return myNamesEnumerator.getSimpleName(s, create);
-  }
-
-  public QualifiedName prefix(QualifiedName name) {
-    if (name.myComponents.length <= 1) {
-      return empty;
+  /**
+   * @see SerializedUnit#writeQualifiedName(DataOutput, int[])
+   */
+  @QNameHash int readQualifiedName(DataInput in) throws IOException {
+    int id = 0;
+    int len = DataInputOutputUtil.readINT(in);
+    for (int i = 0; i < len; i++) {
+      id = qualifiedName(id, in.readInt());
     }
-    return myNamesEnumerator.getFullName(Arrays.copyOf(name.myComponents, name.myComponents.length - 1), true);
+    return id;
   }
 
-  public QualifiedName qualifiedName(int id) {
-    return myNamesEnumerator.qualifiedName(id);
+  int memberQualifiedName(@QNameHash int ownerName, @ShortName int name) {
+    return name == NO_NAME || ownerName == 0 ? 0 : qualifiedName(ownerName, name);
   }
 
-  public int shortName(QualifiedName name) {
-    int[] ids = name.myComponents;
-    return ids[ids.length - 1];
+  @QNameHash int qualifiedName(@QNameHash int prefix, @ShortName int shortName) {
+    int hash = prefix * 31 + shortName;
+    return hash == 0 ? 1 : hash;
   }
 
-  public QualifiedName qualifiedName(Symbol owner, int shortName) {
-    if (shortName == NamesEnumerator.NO_NAME || owner == null || owner.myQualifiedName == null) {
-      return null;
-    }
-    return qualifiedName(owner.myQualifiedName, shortName, true);
-  }
-
-  public QualifiedName qualifiedName(QualifiedName prefix, int shortName, boolean create) {
-    if (shortName == NamesEnumerator.NO_NAME)
-      return null;
-    if (prefix == null || prefix.isEmpty())
-      return myNamesEnumerator.getFullName(new int[]{shortName}, create);
-
-    int[] ids = Arrays.copyOf(prefix.myComponents, prefix.myComponents.length + 1);
-    ids[ids.length - 1] = shortName;
-    return myNamesEnumerator.getFullName(ids, create);
-  }
-
-  QualifiedName concat(int[] ids, boolean create) {
-    return myNamesEnumerator.getFullName(ids, create);
-  }
 }

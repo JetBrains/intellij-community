@@ -97,7 +97,7 @@ public class RedundantThrowsDeclaration extends BaseJavaBatchLocalInspectionTool
       return null;
     }
 
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method);
+    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
     Collection<PsiClassType> unhandled = new HashSet<PsiClassType>(types);
     if (method.isConstructor()) {
       // there may be field initializer throwing exception

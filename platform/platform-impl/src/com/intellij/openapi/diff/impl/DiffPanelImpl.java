@@ -263,18 +263,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       getEditor2().getSettings().setAdditionalPageAtBottom(false);
     }
     myPanel.setPrefferedWidth(20);
-    myPanel.setPreferredHeightGetter(new Getter<Integer>() {
-      @Override
-      public Integer get() {
-        final int size1 = getEditor1() == null ? 10 : getEditor1().getComponent().getPreferredSize().height;
-        final int size2 = getEditor2() == null ? 10 : getEditor2().getComponent().getPreferredSize().height;
-        final int lineHeight = getEditor1() == null ? getEditor2().getLineHeight() : getEditor1().getLineHeight();
-        final int size = Math.max(size1, size2);
-        if (maximumLines > 0) {
-          return Math.min(size, maximumLines * lineHeight);
-        }
-        return size;
+    myPanel.setPreferredHeightGetter(() -> {
+      final int size1 = getEditor1() == null ? 10 : getEditor1().getComponent().getPreferredSize().height;
+      final int size2 = getEditor2() == null ? 10 : getEditor2().getComponent().getPreferredSize().height;
+      final int lineHeight = getEditor1() == null ? getEditor2().getLineHeight() : getEditor1().getLineHeight();
+      final int size = Math.max(size1, size2);
+      if (maximumLines > 0) {
+        return Math.min(size, maximumLines * lineHeight);
       }
+      return size;
     });
   }
 

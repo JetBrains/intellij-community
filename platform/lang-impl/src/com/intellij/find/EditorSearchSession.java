@@ -20,17 +20,21 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -77,6 +81,8 @@ public class EditorSearchSession implements SearchSession,
   }
 
   public EditorSearchSession(@NotNull final Editor editor, Project project, FindModel findModel) {
+    assert !editor.isDisposed();
+
     myClickToHighlightLabel.setVisible(false);
 
     myFindModel = findModel;
@@ -117,12 +123,7 @@ public class EditorSearchSession implements SearchSession,
       .withDataProvider(this)
       .withCloseAction(() -> close())
       .withReplaceAction(() -> replaceCurrent())
-      .withSecondarySearchActionsIsModifiedGetter(new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return myFindModel.getSearchContext() != FindModel.SearchContext.ANY;
-        }
-      })
+      .withSecondarySearchActionsIsModifiedGetter(() -> myFindModel.getSearchContext() != FindModel.SearchContext.ANY)
       .build();
 
     myComponent.addListener(this);
@@ -162,6 +163,17 @@ public class EditorSearchSession implements SearchSession,
       initLivePreview();
     }
     updateMultiLineStateIfNeed();
+
+    Disposable disposable = Disposer.newDisposable(EditorSearchSession.class.getName());
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor() == myEditor) {
+          Disposer.dispose(disposable);
+          myLivePreviewController.dispose();
+        }
+      }
+    }, disposable);
   }
 
   @Nullable

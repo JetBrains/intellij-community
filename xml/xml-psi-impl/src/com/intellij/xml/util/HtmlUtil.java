@@ -43,6 +43,8 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -628,7 +630,7 @@ public class HtmlUtil {
 
   public static boolean isHtmlFile(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
+    return language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE;
   }
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {
@@ -702,13 +704,57 @@ public class HtmlUtil {
   public static String getTagPresentation(final @Nullable XmlTag tag) {
     if (tag == null) return null;
     StringBuilder builder = new StringBuilder(tag.getLocalName());
-    String id = StringUtil.nullize(tag.getAttributeValue(ID_ATTRIBUTE_NAME), true);
-    if (id != null) {
-      builder.append('#').append(id);
+    String idValue = getAttributeValue(tag, ID_ATTRIBUTE_NAME);
+    if (idValue != null) {
+      builder.append('#').append(idValue);
     }
-    for (String className : splitClassNames(tag.getAttributeValue(CLASS_ATTRIBUTE_NAME))) {
-      builder.append('.').append(className);
+    String classValue = getAttributeValue(tag, CLASS_ATTRIBUTE_NAME);
+    if (classValue != null) {
+      for (String className : splitClassNames(classValue)) {
+        builder.append('.').append(className);
+      }
     }
     return builder.toString();
+  }
+
+  @Nullable
+  private static String getAttributeValue(@NotNull XmlTag tag, @NotNull String attrName) {
+    XmlAttribute classAttribute = getAttributeByName(tag, attrName);
+    if (classAttribute != null && !containsOuterLanguageElements(classAttribute)) {
+      String value = classAttribute.getValue();
+      if (!StringUtil.isEmptyOrSpaces(value)) return value;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static XmlAttribute getAttributeByName(@NotNull XmlTag tag, @NotNull String name) {
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlAttribute) {
+        PsiElement nameElement = child.getFirstChild();
+        if (nameElement != null &&
+            nameElement.getNode().getElementType() == XmlTokenType.XML_NAME &&
+            name.equalsIgnoreCase(nameElement.getText())) {
+          return (XmlAttribute)child;
+        }
+      }
+      child = child.getNextSibling();
+    }
+    return null;
+  }
+
+  private static boolean containsOuterLanguageElements(@NotNull PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      if (child instanceof CompositeElement) {
+        return containsOuterLanguageElements(child);
+      }
+      else if (child instanceof OuterLanguageElement) {
+        return true;
+      }
+      child = child.getNextSibling();
+    }
+    return false;
   }
 }

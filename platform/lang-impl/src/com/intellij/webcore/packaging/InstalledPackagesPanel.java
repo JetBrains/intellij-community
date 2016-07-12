@@ -520,7 +520,19 @@ public class InstalledPackagesPanel extends JPanel {
     });
   }
 
-  private static Map<String, RepoPackage> buildNameToPackageMap(List<RepoPackage> packages) {
+  private Map<String, RepoPackage> buildNameToPackageMap(List<RepoPackage> packages) {
+    try {
+      return doBuildNameToPackageMap(packages);
+    }
+    catch (Exception e) {
+      PackageManagementService service = myPackageManagementService;
+      LOG.error("Failure in " + getClass().getName() +
+                ", service: " + (service != null ? service.getClass().getName() : null), e);
+      return Collections.emptyMap();
+    }
+  }
+
+  private static Map<String, RepoPackage> doBuildNameToPackageMap(List<RepoPackage> packages) {
     final Map<String, RepoPackage> packageMap = new HashMap<String, RepoPackage>();
     for (RepoPackage aPackage : packages) {
       packageMap.put(aPackage.getName(), aPackage);

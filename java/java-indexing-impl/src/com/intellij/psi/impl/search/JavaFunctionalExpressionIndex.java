@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<String, Collection<JavaFunctionalExpressionIndex.IndexHolder>> implements PsiDependentIndex {
-  public static final ID<String, Collection<IndexHolder>> JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID = ID.create("java.functional.expression");
+  static final ID<String, Collection<IndexHolder>> JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID = ID.create("java.functional.expression");
   private static final String THIS_REF_NAME = "this";
   private static final String SUPER_REF_NAME = "super";
 
@@ -47,84 +47,80 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Strin
   @NotNull
   @Override
   public DataIndexer<String, Collection<IndexHolder>, FileContent> getIndexer() {
-    return new DataIndexer<String, Collection<IndexHolder>, FileContent>() {
-      @NotNull
-      @Override
-      public Map<String, Collection<IndexHolder>> map(@NotNull FileContent inputData) {
-        if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
-          return Collections.emptyMap();
-        }
-        final CharSequence contentAsText = inputData.getContentAsText();
-        if (!StringUtil.contains(contentAsText, "::") && !StringUtil.contains(contentAsText, "->")) {
-          return Collections.emptyMap();
-        }
+    return inputData -> {
+      if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
+        return Collections.emptyMap();
+      }
+      final CharSequence contentAsText = inputData.getContentAsText();
+      if (!StringUtil.contains(contentAsText, "::") && !StringUtil.contains(contentAsText, "->")) {
+        return Collections.emptyMap();
+      }
 
-        final PsiFile file = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex();
-        if (!(file instanceof PsiJavaFile)) {
-          return Collections.emptyMap();
-        }
+      final PsiFile file = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex();
+      if (!(file instanceof PsiJavaFile)) {
+        return Collections.emptyMap();
+      }
 
-        final HashMap<String, Collection<IndexHolder>> methodsMap = ContainerUtil.newHashMap();
-        for (PsiFunctionalExpression expression : SyntaxTraverser.psiTraverser().withRoot(file).filter(PsiFunctionalExpression.class)) {
-          final PsiExpressionList expressionList =
-            PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiStatement.class, PsiModifierListOwner.class);
-          if (expressionList != null) {
-            final PsiElement parent = expressionList.getParent();
-            String methodName = null;
-            if (parent instanceof PsiMethodCallExpression) {
-              methodName = ((PsiMethodCallExpression)parent).getMethodExpression().getReferenceName();
-              if (methodName != null) {
-                final boolean thisRef = methodName.equals(THIS_REF_NAME);
-                if (thisRef || methodName.equals(SUPER_REF_NAME)) {
-                  methodName = null;
-                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-                  if (containingClass != null) {
-                    if (thisRef) {
-                      methodName = containingClass.getName();
-                    } else {
-                      final PsiReferenceList extendsList = containingClass.getExtendsList();
-                      if (extendsList != null) {
-                        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-                        if (referenceElements.length > 0) {
-                          methodName = referenceElements[0].getReferenceName();
-                        }
+      final HashMap<String, Collection<IndexHolder>> methodsMap = ContainerUtil.newHashMap();
+      for (PsiFunctionalExpression expression : SyntaxTraverser.psiTraverser().withRoot(file).filter(PsiFunctionalExpression.class)) {
+        final PsiExpressionList expressionList =
+          PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, true, PsiStatement.class, PsiModifierListOwner.class);
+        if (expressionList != null) {
+          final PsiElement parent = expressionList.getParent();
+          String methodName = null;
+          if (parent instanceof PsiMethodCallExpression) {
+            methodName = ((PsiMethodCallExpression)parent).getMethodExpression().getReferenceName();
+            if (methodName != null) {
+              final boolean thisRef = methodName.equals(THIS_REF_NAME);
+              if (thisRef || methodName.equals(SUPER_REF_NAME)) {
+                methodName = null;
+                final PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+                if (containingClass != null) {
+                  if (thisRef) {
+                    methodName = containingClass.getName();
+                  } else {
+                    final PsiReferenceList extendsList = containingClass.getExtendsList();
+                    if (extendsList != null) {
+                      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+                      if (referenceElements.length > 0) {
+                        methodName = referenceElements[0].getReferenceName();
                       }
                     }
                   }
                 }
               }
             }
-            else if (parent instanceof PsiNewExpression) {
-              final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-              if (classReference != null) {
-                methodName = classReference.getReferenceName();
-              }
-            }
-            else if (parent instanceof PsiEnumConstant) {
-              final PsiClass containingClass = ((PsiEnumConstant)parent).getContainingClass();
-              if (containingClass != null) {
-                final String shortEnumName = containingClass.getName();
-                if (shortEnumName != null) { //should be always true as enums can't be local
-                  methodName = shortEnumName;
-                }
-              }
-            }
-
-            if (methodName != null) {
-              Collection<IndexHolder> holders = methodsMap.get(methodName);
-              if (holders == null) {
-                holders = new HashSet<IndexHolder>();
-                methodsMap.put(methodName, holders);
-              }
-              holders.add(new IndexHolder(expression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)expression).getParameterList().getParametersCount() : -1,
-                                          expressionList.getExpressions().length,
-                                          LambdaUtil.getLambdaIdx(expressionList, expression)));
+          }
+          else if (parent instanceof PsiNewExpression) {
+            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
+            if (classReference != null) {
+              methodName = classReference.getReferenceName();
             }
           }
-        }
+          else if (parent instanceof PsiEnumConstant) {
+            final PsiClass containingClass = ((PsiEnumConstant)parent).getContainingClass();
+            if (containingClass != null) {
+              final String shortEnumName = containingClass.getName();
+              if (shortEnumName != null) { //should be always true as enums can't be local
+                methodName = shortEnumName;
+              }
+            }
+          }
 
-        return methodsMap;
+          if (methodName != null) {
+            Collection<IndexHolder> holders = methodsMap.get(methodName);
+            if (holders == null) {
+              holders = new HashSet<>();
+              methodsMap.put(methodName, holders);
+            }
+            holders.add(new IndexHolder(expression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)expression).getParameterList().getParametersCount() : -1,
+                                        expressionList.getExpressions().length,
+                                        LambdaUtil.getLambdaIdx(expressionList, expression)));
+          }
+        }
       }
+
+      return methodsMap;
     };
   }
 
@@ -151,7 +147,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Strin
       @Override
       public Collection<IndexHolder> read(@NotNull DataInput in) throws IOException {
         int l = DataInputOutputUtil.readINT(in);
-        final Collection<IndexHolder> holders = new HashSet<IndexHolder>(l);
+        final Collection<IndexHolder> holders = new HashSet<>(l);
         while (l-- > 0) {
           holders.add(new IndexHolder(DataInputOutputUtil.readINT(in),
                                       DataInputOutputUtil.readINT(in),
@@ -178,26 +174,26 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Strin
     return 0;
   }
 
-  public static class IndexHolder {
+  static class IndexHolder {
     private final int myLambdaParamsNumber;
     private final int myMethodArgsLength;
     private final int myFunctionExpressionIndex;
 
-    public IndexHolder(int lambdaParamsNumber, int methodArgsLength, int functionExpressionIndex) {
+    IndexHolder(int lambdaParamsNumber, int methodArgsLength, int functionExpressionIndex) {
       myLambdaParamsNumber = lambdaParamsNumber;
       myMethodArgsLength = methodArgsLength;
       myFunctionExpressionIndex = functionExpressionIndex;
     }
 
-    public int getLambdaParamsNumber() {
+    int getLambdaParamsNumber() {
       return myLambdaParamsNumber;
     }
 
-    public int getMethodArgsLength() {
+    int getMethodArgsLength() {
       return myMethodArgsLength;
     }
 
-    public int getFunctionExpressionIndex() {
+    int getFunctionExpressionIndex() {
       return myFunctionExpressionIndex;
     }
 

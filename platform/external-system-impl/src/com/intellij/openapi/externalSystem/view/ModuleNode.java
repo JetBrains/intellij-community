@@ -30,7 +30,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 11/7/2014
  */
-@Order(1)
+@Order(ExternalSystemNode.BUILTIN_MODULE_DATA_NODE_ORDER)
 public class ModuleNode extends ExternalSystemNode<ModuleData> {
   private final boolean myIsRoot;
   private final ModuleData myData;

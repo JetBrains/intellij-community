@@ -499,8 +499,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
     final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    if (dominantArea != null) {
+      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
+    }
+
     JRootPane rootPane = editor.getComponent().getRootPane();
-    if (dominantArea == null && rootPane != null) {
+    if (rootPane != null) {
       JLayeredPane lp = rootPane.getLayeredPane();
       for (HintInfo info : getHintsStackArray()) {
         if (!info.hint.isSelectingHint()) continue;
@@ -544,17 +548,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
         }
       }
     }
-    else {
-      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
-    }
 
     return getHintPosition(hint, editor, pos, constraint);
   }
 
-  private static Point getHintPositionRelativeTo(final LightweightHint hint,
-                                                 final Editor editor,
-                                                 @PositionFlags  short constraint,
-                                                 final Rectangle lookupBounds,
+  private static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
+                                                 @NotNull final Editor editor,
+                                                 @PositionFlags short constraint,
+                                                 @NotNull final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
 
     JComponent externalComponent = getExternalComponent(editor);
@@ -948,6 +949,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       myQuestionAction = null;
       myQuestionHint = null;
+      if (myLastEditor != null && project == myLastEditor.getProject()) {
+        updateLastEditor(null);
+      }
     }
   }
 

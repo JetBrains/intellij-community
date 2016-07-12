@@ -27,6 +27,7 @@ import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 
 public interface XmlElementType extends XmlTokenType {
@@ -67,8 +68,9 @@ public interface XmlElementType extends XmlTokenType {
   IFileElementType DTD_FILE = new IFileElementType("DTD_FILE", DTDLanguage.INSTANCE);
 
   IElementType XML_MARKUP_DECL = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
+    @NotNull
     @Override
-    public ASTNode parse(CharSequence text, CharTable table) {
+    public ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table) {
       return new DtdParsing(text, XML_MARKUP_DECL, DtdParsing.TYPE_FOR_MARKUP_DECL, null).parse();
     }
   };

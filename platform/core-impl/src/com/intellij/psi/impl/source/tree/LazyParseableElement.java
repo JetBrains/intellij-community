@@ -60,8 +60,6 @@ public class LazyParseableElement extends CompositeElement {
   @NotNull private Getter<CharSequence> myText;
   private boolean myParsed;
 
-  private static final ThreadLocal<Boolean> ourSuppressEagerPsiCreation = new ThreadLocal<Boolean>();
-
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
     synchronized (lock) {
@@ -210,18 +208,23 @@ public class LazyParseableElement extends CompositeElement {
           super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
         }
 
+        AstPath.cacheNodePaths(this);
+
+        assertTextLengthIntact(text.length());
         myText = new SoftReference<CharSequence>(text);
       }
     }
     finally {
       DebugUtil.finishPsiModification();
     }
+  }
 
-    if (!Boolean.TRUE.equals(ourSuppressEagerPsiCreation.get())) {
-      // create PSI all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-      // create PSI outside the 'lock' since this method grabs PSI_LOCK and deadlock is possible when someone else locks in the other order.
-      createAllChildrenPsiIfNecessary();
+  private void assertTextLengthIntact(int expected) {
+    int length = 0;
+    for (ASTNode node : getChildren(null)) {
+      length += node.getTextLength();
     }
+    assert length == expected : "Text mismatch in " + getElementType();
   }
 
   @Override
@@ -261,7 +264,4 @@ public class LazyParseableElement extends CompositeElement {
     ourParsingAllowed = allowed;
   }
   
-  public static void setSuppressEagerPsiCreation(boolean suppress) {
-    ourSuppressEagerPsiCreation.set(suppress);
-  }
 }

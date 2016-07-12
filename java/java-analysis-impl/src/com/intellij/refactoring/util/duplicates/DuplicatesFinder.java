@@ -30,6 +30,7 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +120,7 @@ public class DuplicatesFinder {
   }
 
   @Nullable
-  public Match isDuplicate(PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
+  public Match isDuplicate(@NotNull PsiElement element, boolean ignoreParameterTypesAndPostVariableUsages) {
     annotatePattern();
     Match match = isDuplicateFragment(element, ignoreParameterTypesAndPostVariableUsages);
     deannotatePattern();
@@ -174,7 +175,7 @@ public class DuplicatesFinder {
 
 
   @Nullable
-  private Match isDuplicateFragment(PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
+  private Match isDuplicateFragment(@NotNull PsiElement candidate, boolean ignoreParameterTypesAndPostVariableUsages) {
     if (isSelf(candidate)) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
@@ -182,7 +183,7 @@ public class DuplicatesFinder {
       if (sibling == null) return null;
       if (!canBeEquivalent(element, sibling)) return null;
       candidates.add(sibling);
-      sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class);
+      sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class, PsiEmptyStatement.class);
     }
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
@@ -215,7 +216,7 @@ public class DuplicatesFinder {
     return match;
   }
 
-  protected boolean isSelf(PsiElement candidate) {
+  protected boolean isSelf(@NotNull PsiElement candidate) {
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
         return true;
@@ -340,7 +341,7 @@ public class DuplicatesFinder {
     }
 
     if (pattern instanceof PsiAssignmentExpression) {
-      final PsiExpression lExpression = ((PsiAssignmentExpression)pattern).getLExpression();
+      final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)pattern).getLExpression());
       if (lExpression.getType() instanceof PsiPrimitiveType &&
           lExpression instanceof PsiReferenceExpression &&
           ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
@@ -518,6 +519,8 @@ public class DuplicatesFinder {
         final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
         return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getContextOfType(candidate, PsiClass.class));
       }
+    } else if (pattern instanceof PsiModifierList) {
+      return candidate instanceof PsiModifierList && matchModifierList((PsiModifierList)pattern, (PsiModifierList)candidate);
     }
 
     PsiElement[] children1 = getFilteredChildren(pattern);
@@ -541,9 +544,45 @@ public class DuplicatesFinder {
     return true;
   }
 
-  private static boolean checkParameterModification(final PsiExpression expression,
+  private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
+    if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
+      // local variables can only have a final modifier, and are considered equivalent with or without it.
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (modifierList1.hasModifierProperty(modifier)) {
+          if (!modifierList2.hasModifierProperty(modifier)) {
+            return false;
+          }
+        }
+        else if (modifierList2.hasModifierProperty(modifier)) {
+          return false;
+        }
+      }
+    }
+    final List<PsiAnnotation> annotations1 = ContainerUtil.newArrayList(modifierList1.getAnnotations());
+    final List<PsiAnnotation> annotations2 = ContainerUtil.newArrayList(modifierList2.getAnnotations());
+    annotations1.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
+    annotations2.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
+    if (annotations1.size() != annotations2.size()) {
+      return false;
+    }
+    for (final Iterator<PsiAnnotation> iterator = annotations1.iterator(); iterator.hasNext(); ) {
+      final PsiAnnotation annotation1 = iterator.next();
+      for (final Iterator<PsiAnnotation> iterator2 = annotations2.iterator(); iterator2.hasNext(); ) {
+        final PsiAnnotation annotation2 = iterator2.next();
+        if (PsiEquivalenceUtil.areElementsEquivalent(annotation1, annotation2)) {
+          iterator.remove();
+          iterator2.remove();
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean checkParameterModification(PsiExpression expression,
                                                     final IElementType sign,
                                                     PsiExpression candidate) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    candidate = PsiUtil.skipParenthesizedExprDown(candidate);
     if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiParameter &&
         (sign.equals(JavaTokenType.MINUSMINUS)|| sign.equals(JavaTokenType.PLUSPLUS))) {
       if (candidate instanceof PsiReferenceExpression && ((PsiReferenceExpression)candidate).resolve() instanceof PsiParameter) {
@@ -597,7 +636,7 @@ public class DuplicatesFinder {
       return match.registerReturnValue(new VariableReturnValue(variable));
     }
     else if (candidate instanceof PsiReturnStatement) {
-      final PsiExpression returnValue = ((PsiReturnStatement)candidate).getReturnValue();
+      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(((PsiReturnStatement)candidate).getReturnValue());
       if (myMultipleExitPoints) {
         return match.registerReturnValue(new ConditionalReturnStatementValue(returnValue));
       }
@@ -607,18 +646,18 @@ public class DuplicatesFinder {
         if (classOrLambda == null || !PsiTreeUtil.isAncestor(commonParent, classOrLambda, false)) {
           if (returnValue != null && !match.registerReturnValue(ReturnStatementReturnValue.INSTANCE)) return false; //do not register return value for return; statement
         }
-        return matchPattern(patternReturnStatement.getReturnValue(), returnValue, candidates, match);
+        return matchPattern(PsiUtil.skipParenthesizedExprDown(patternReturnStatement.getReturnValue()), returnValue, candidates, match);
       }
     }
     else return false;
   }
 
   private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2, PsiElement qualifier2) {
-    final boolean b = Comparing.equal(resolveResult1, resolveResult2);
-    if (b) return b;
+    if (Comparing.equal(resolveResult1, resolveResult2)) return true;
     if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
       final PsiMethod method1 = (PsiMethod)resolveResult1;
       final PsiMethod method2 = (PsiMethod)resolveResult2;
+      if (method1.hasModifierProperty(PsiModifier.STATIC)) return false; // static methods don't inherit
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
 
@@ -654,20 +693,27 @@ public class DuplicatesFinder {
     return false;
   }
 
-  private static PsiElement[] getFilteredChildren(PsiElement element1) {
+  public static PsiElement[] getFilteredChildren(PsiElement element1) {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child : children1) {
-      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment)) {
+      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment) && !(child instanceof PsiEmptyStatement)) {
         if (child instanceof PsiBlockStatement) {
-          Collections.addAll(array, getFilteredChildren(child));
-          continue;
-        } else if (child instanceof PsiCodeBlock) {
+          child = ((PsiBlockStatement)child).getCodeBlock();
+        }
+        if (child instanceof PsiCodeBlock) {
           final PsiStatement[] statements = ((PsiCodeBlock)child).getStatements();
-          if (statements.length == 1) {
-            array.add(statements[0]);
-            continue;
+          for (PsiStatement statement : statements) {
+            if (statement instanceof PsiBlockStatement) {
+              Collections.addAll(array, getFilteredChildren(statement));
+            } else if (!(statement instanceof PsiEmptyStatement)) {
+              array.add(statement);
+            }
           }
+          continue;
+        } else if (child instanceof PsiParenthesizedExpression) {
+          array.add(PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)child));
+          continue;
         }
         array.add(child);
       }

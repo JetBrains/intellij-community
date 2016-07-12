@@ -265,12 +265,7 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     Computable<PsiElementListCellRenderer> renderer =
-      myCellRenderer == null ? new Computable<PsiElementListCellRenderer>() {
-        @Override
-        public PsiElementListCellRenderer compute() {
-          return new DefaultPsiElementCellRenderer();
-        }
-      } : myCellRenderer;
+      myCellRenderer == null ? (Computable<PsiElementListCellRenderer>)() -> new DefaultPsiElementCellRenderer() : myCellRenderer;
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 

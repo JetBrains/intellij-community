@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -48,28 +48,18 @@ public class _LastInSuiteTest extends TestCase {
         catch (Exception e) {
           throw new RuntimeException(e);
         }
-      }
-    });
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
+        // disposes default project too
         LightPlatformTestCase.closeAndDeleteProject();
-      }
-    }.execute().throwException();
-
-    // disposes default project too
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-        application.setDisposeInProgress(true);
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
         System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+        System.out.println("ProcessIOExecutorService threads created: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
+
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
 
@@ -77,11 +67,7 @@ public class _LastInSuiteTest extends TestCase {
       LeakHunter.checkProjectLeak();
       Disposer.assertIsEmpty(true);
     }
-    catch (AssertionError e) {
-      captureMemorySnapshot();
-      throw e;
-    }
-    catch (Exception e) {
+    catch (AssertionError | Exception e) {
       captureMemorySnapshot();
       throw e;
     }

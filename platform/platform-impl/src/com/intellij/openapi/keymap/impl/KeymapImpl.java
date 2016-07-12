@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.ArrayUtil;
@@ -88,7 +89,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   private Map<MouseShortcut, List<String>> myMouseShortcut2ListOfIds = null;
   // TODO[vova,anton] it should be final member
 
-  private static final Shortcut[] ourEmptyShortcutsArray = new Shortcut[0];
+  private static final Shortcut[] ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private KeymapManagerEx myKeymapManager;
 
@@ -123,6 +124,8 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
     otherKeymap.cleanShortcutsCache();
 
+    List<String> changedActionIds = getChangedActionIds(otherKeymap);
+
     otherKeymap.myActionId2ListOfShortcuts.clear();
     otherKeymap.myActionId2ListOfShortcuts.ensureCapacity(myActionId2ListOfShortcuts.size());
     myActionId2ListOfShortcuts.forEachEntry(new TObjectObjectProcedure<String, OrderedSet<Shortcut>>() {
@@ -132,7 +135,36 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
         return true;
       }
     });
+
+    if (!ContainerUtil.isEmpty(changedActionIds)) {
+      otherKeymap.fireShortcutChanged(changedActionIds);
+    }
+
     return otherKeymap;
+  }
+
+  @Nullable
+  private List<String> getChangedActionIds(@NotNull KeymapImpl otherKeymap) {
+    if (!otherKeymap.isInternalKeymapListener()) {
+      return null;
+    }
+    List<String> changedActionIds = new ArrayList<>();
+    Set<String> oldKeys = otherKeymap.myActionId2ListOfShortcuts.keySet();
+    Set<String> newKeys = new HashSet<>(myActionId2ListOfShortcuts.keySet());
+
+    for (String key : oldKeys) {
+      if (newKeys.remove(key)) {
+        if (!Comparing.equal(otherKeymap.myActionId2ListOfShortcuts.get(key), myActionId2ListOfShortcuts.get(key))) {
+          changedActionIds.add(key);
+        }
+      }
+      else {
+        changedActionIds.add(key);
+      }
+    }
+    changedActionIds.addAll(newKeys);
+
+    return changedActionIds;
   }
 
   public boolean equals(Object object) {
@@ -544,6 +576,10 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return myKeymapManager;
   }
 
+  public void setKeymapManager(@NotNull KeymapManagerEx keymapManager) {
+    myKeymapManager = keymapManager;
+  }
+
   /**
    * @param keymapElement element which corresponds to "keymap" tag.
    */
@@ -746,7 +782,12 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    * @return string representation of passed mouse shortcut. This method should
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
-  private static String getMouseShortcutString(MouseShortcut shortcut) {
+  public static String getMouseShortcutString(MouseShortcut shortcut) {
+
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
     StringBuilder buffer = new StringBuilder();
 
     // modifiers
@@ -881,6 +922,23 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @Override
   public void removeShortcutChangeListener(Listener listener) {
     myListeners.remove(listener);
+  }
+
+  private boolean isInternalKeymapListener() {
+    for (Listener listener : myListeners) {
+      if (listener instanceof KeymapChangeListener) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void fireShortcutChanged(@NotNull List<String> actionIds) {
+    for (Listener listener : myListeners) {
+      if (listener instanceof KeymapChangeListener) {
+        ((KeymapChangeListener)listener).onShortcutChanged(actionIds);
+      }
+    }
   }
 
   private void fireShortcutChanged(String actionId) {

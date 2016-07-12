@@ -652,6 +652,8 @@
               use-shortcut-of="RecentFiles"/>
       <separator/>
       <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
     </group>
 
     <!-- <action id="UsageView.ImportToFavorites" class="com.intellij.ide.favoritesTreeView.ImportUsagesAction"/> -->
@@ -987,13 +989,11 @@
       <separator/>
       <action id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
       <separator/>
+      <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
+      <separator/>
       <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
-      <group id="InspectionsOptions">
-        <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
-        <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
-        <separator/>
-        <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
-      </group>
+      <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
+      <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     </group>
   </actions>
 </idea-plugin>

@@ -80,13 +80,14 @@ public class MatcherImpl {
   }
 
   private static SoftReference<LastMatchData> lastMatchData;
+  private static final Object lastMatchDataLock = new Object();
 
   protected MatcherImpl(Project project) {
     this(project, null);
   }
 
   public static void validate(Project project, MatchOptions options) {
-    synchronized(MatcherImpl.class) {
+    synchronized (lastMatchDataLock) {
       final LastMatchData data = new LastMatchData();
       data.lastPattern =  PatternCompiler.compilePattern(project, options);
       data.lastOptions = options;
@@ -295,7 +296,7 @@ public class MatcherImpl {
 
     if (compiledPattern == null) {
 
-      synchronized(getClass()) {
+      synchronized (lastMatchDataLock) {
         final LastMatchData data = com.intellij.reference.SoftReference.dereference(lastMatchData);
         if (data != null && options == data.lastOptions) {
           compiledPattern = data.lastPattern;

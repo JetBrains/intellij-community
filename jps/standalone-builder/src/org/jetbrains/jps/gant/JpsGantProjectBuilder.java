@@ -406,8 +406,9 @@ public class JpsGantProjectBuilder {
     private static AntMessageHandler ourMessageHandler;
     private static Logger.Factory ourFileLoggerFactory;
 
+    @NotNull
     @Override
-    public Logger getLoggerInstance(String category) {
+    public Logger getLoggerInstance(@NotNull String category) {
       DefaultLogger antLogger = new DefaultLogger(category) {
         @Override
         public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {

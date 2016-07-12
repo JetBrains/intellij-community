@@ -109,6 +109,18 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void test_format_only_selected_range() {
+    myTextRange = new TextRange(18, 19);
+    doTextTest(
+      "public class X {\n" +
+      " public int a =       2;\n" +
+      "}",
+      "public class X {\n" +
+      "    public int a =       2;\n" +
+      "}"
+    );
+  }
 
   public void testNew() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();

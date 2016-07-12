@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 class GroovyTraitCoercionTest extends GroovyResolveTestCase {
 
-  String basePath = null
   LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +111,7 @@ public class PyDefUseUtil {
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
     if (instr < 0) {
-      return new PyElement[0];
+      return PyElement.EMPTY_ARRAY;
     }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<PyElement> result = Sets.newHashSet();

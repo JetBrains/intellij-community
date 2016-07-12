@@ -65,7 +65,7 @@ import java.util.List;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             QuickActionProvider, Accessible {
+             UISettingsListener, QuickActionProvider, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
@@ -255,33 +255,6 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings source) {
-        myImage = null;
-        for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-          entry.getKey().revalidate();
-          entry.getValue().setInactiveStateImage(null);
-        }
-        boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-        boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
-        boolean wasSingleRow = isSingleRow();
-        if (oldHideTabsIfNeed != newHideTabsIfNeed) {
-          if (mySingleRowLayout != null) {
-            remove(mySingleRowLayout.myLeftGhost);
-            remove(mySingleRowLayout.myRightGhost);
-          }
-          mySingleRowLayout = createSingleRowLayout();
-          if (wasSingleRow) {
-            myLayout = mySingleRowLayout;
-          }
-          add(mySingleRowLayout.myLeftGhost);
-          add(mySingleRowLayout.myRightGhost);
-          relayout(true, true);
-        }
-      }
-    }, this);
-
     myAnimator = new Animator("JBTabs Attractions", 2, 500, true) {
       @Override
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
@@ -353,6 +326,31 @@ public class JBTabsImpl extends JComponent
             info -> info.getComponent()).iterator();
         }
       });
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    myImage = null;
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      entry.getKey().revalidate();
+      entry.getValue().setInactiveStateImage(null);
+    }
+    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeed = UISettings.getInstance().HIDE_TABS_IF_NEED;
+    boolean wasSingleRow = isSingleRow();
+    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+      if (mySingleRowLayout != null) {
+        remove(mySingleRowLayout.myLeftGhost);
+        remove(mySingleRowLayout.myRightGhost);
+      }
+      mySingleRowLayout = createSingleRowLayout();
+      if (wasSingleRow) {
+        myLayout = mySingleRowLayout;
+      }
+      add(mySingleRowLayout.myLeftGhost);
+      add(mySingleRowLayout.myRightGhost);
+      relayout(true, true);
+    }
   }
 
   protected SingleRowLayout createSingleRowLayout() {
@@ -608,13 +606,10 @@ public class JBTabsImpl extends JComponent
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
-      updateTab(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
-          changed.set(changed.get().booleanValue() || changes);
-          return changes;
-        }
+      updateTab(() -> {
+        final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
+        changed.set(changed.get().booleanValue() || changes);
+        return changes;
       }, eachInfo);
     }
 
@@ -799,6 +794,10 @@ public class JBTabsImpl extends JComponent
     return addTab(info, -1);
   }
 
+  public TabLabel getTabLabel(TabInfo info) {
+    return myInfo2Label.get(info);
+  }
+
   @Nullable
   public ActionGroup getPopupGroup() {
     return myPopupGroup != null ? myPopupGroup.get() : null;
@@ -811,12 +810,7 @@ public class JBTabsImpl extends JComponent
   @Override
   @NotNull
   public JBTabs setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup) {
-    return setPopupGroup(new Getter<ActionGroup>() {
-      @Override
-      public ActionGroup get() {
-        return popupGroup;
-      }
-    }, place, addNavigationGroup);
+    return setPopupGroup(() -> popupGroup, place, addNavigationGroup);
   }
 
   @NotNull
@@ -1161,24 +1155,18 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateIcon(final TabInfo tabInfo) {
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-        return true;
-      }
+    updateTab(() -> {
+      myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+      return true;
     }, tabInfo);
   }
 
   private void updateColor(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setInactiveStateImage(null);
 
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        repaint();
-        return true;
-      }
+    updateTab(() -> {
+      repaint();
+      return true;
     }, tabInfo);
   }
 
@@ -1241,14 +1229,11 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateText(final TabInfo tabInfo) {
-    updateTab(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final TabLabel label = myInfo2Label.get(tabInfo);
-        label.setText(tabInfo.getColoredText());
-        label.setToolTipText(tabInfo.getTooltipText());
-        return true;
-      }
+    updateTab(() -> {
+      final TabLabel label = myInfo2Label.get(tabInfo);
+      label.setText(tabInfo.getColoredText());
+      label.setToolTipText(tabInfo.getTooltipText());
+      return true;
     }, tabInfo);
   }
 

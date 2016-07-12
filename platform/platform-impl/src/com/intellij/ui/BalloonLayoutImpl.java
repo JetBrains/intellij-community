@@ -38,16 +38,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
 public class BalloonLayoutImpl implements BalloonLayout {
-  protected final JLayeredPane myLayeredPane;
+  private final ComponentAdapter myResizeListener = new ComponentAdapter() {
+    @Override
+    public void componentResized(@NotNull ComponentEvent e) {
+      queueRelayout();
+    }
+  };
+
+  protected JLayeredPane myLayeredPane;
   private final Insets myInsets;
 
-  private final List<Balloon> myBalloons = new ArrayList<Balloon>();
+  protected final List<Balloon> myBalloons = new ArrayList<Balloon>();
   private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<Balloon, BalloonLayoutData>();
   private Integer myWidth;
 
@@ -56,7 +61,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     relayout();
     fireRelayout();
   };
-  private final JRootPane myParent;
+  private JRootPane myParent;
 
   private final Runnable myCloseAll = () -> {
     for (Balloon balloon : new ArrayList<Balloon>(myBalloons)) {
@@ -77,21 +82,24 @@ public class BalloonLayoutImpl implements BalloonLayout {
     myParent = parent;
     myLayeredPane = parent.getLayeredPane();
     myInsets = insets;
-    myLayeredPane.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(@NotNull ComponentEvent e) {
-        queueRelayout();
-      }
-    });
-    UIUtil.addParentChangeListener(parent, new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent event) {
-        if (event.getOldValue() != null && event.getNewValue() == null && myLafListener != null) {
-          LafManager.getInstance().removeLafManagerListener(myLafListener);
-          myLafListener = null;
-        }
-      }
-    });
+    myLayeredPane.addComponentListener(myResizeListener);
+  }
+
+  public void dispose() {
+    myLayeredPane.removeComponentListener(myResizeListener);
+    if (myLafListener != null) {
+      LafManager.getInstance().removeLafManagerListener(myLafListener);
+      myLafListener = null;
+    }
+    for (Balloon balloon : new ArrayList<>(myBalloons)) {
+      Disposer.dispose(balloon);
+    }
+    myRelayoutAlarm.cancelAllRequests();
+    myBalloons.clear();
+    myLayoutData.clear();
+    myListeners.clear();
+    myLayeredPane = null;
+    myParent = null;
   }
 
   public void addListener(Runnable listener) {

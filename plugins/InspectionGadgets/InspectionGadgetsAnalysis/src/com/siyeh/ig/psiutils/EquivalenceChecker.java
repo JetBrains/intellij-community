@@ -781,6 +781,9 @@ public class EquivalenceChecker {
     }
     final PsiExpression operand1 = typeCastExpression1.getOperand();
     final PsiExpression operand2 = typeCastExpression2.getOperand();
+    if (operand1 instanceof PsiFunctionalExpression || operand2 instanceof PsiFunctionalExpression) {
+      return EXACTLY_UN_MATCHES;
+    }
     return expressionsAreEquivalentDecision(operand1, operand2).setConcreteIfExactUnMatches(operand1, operand2);
   }
 

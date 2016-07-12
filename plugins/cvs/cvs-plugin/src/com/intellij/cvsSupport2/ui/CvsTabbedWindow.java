@@ -55,29 +55,26 @@ public class CvsTabbedWindow implements Disposable {
 
   public CvsTabbedWindow(Project project) {
     myProject = project;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        final ToolWindow toolWindow = getToolWindow();
-        final ContentManager contentManager = toolWindow.getContentManager();
-        contentManager.addContentManagerListener(new ContentManagerAdapter() {
-          public void contentRemoved(ContentManagerEvent event) {
-            final JComponent component = event.getContent().getComponent();
-            final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
-                                                ((CvsTabbedWindowComponent)component).getComponent() : component;
-            if (removedComponent == myErrorsView) {
-              myErrorsView.dispose();
-              myErrorsView = null;
-            }
-            else if (myOutput != null && removedComponent == myOutput.getComponent()) {
-              EditorFactory.getInstance().releaseEditor(myOutput);
-              myOutput = null;
-            }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      final ToolWindow toolWindow = getToolWindow();
+      final ContentManager contentManager = toolWindow.getContentManager();
+      contentManager.addContentManagerListener(new ContentManagerAdapter() {
+        public void contentRemoved(ContentManagerEvent event) {
+          final JComponent component = event.getContent().getComponent();
+          final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
+                                              ((CvsTabbedWindowComponent)component).getComponent() : component;
+          if (removedComponent == myErrorsView) {
+            myErrorsView.dispose();
+            myErrorsView = null;
           }
-        });
-        toolWindow.installWatcher(contentManager);
-      }
+          else if (myOutput != null && removedComponent == myOutput.getComponent()) {
+            EditorFactory.getInstance().releaseEditor(myOutput);
+            myOutput = null;
+          }
+        }
+      });
+      toolWindow.installWatcher(contentManager);
     });
   }
 

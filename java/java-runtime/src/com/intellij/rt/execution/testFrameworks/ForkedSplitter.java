@@ -15,6 +15,8 @@
  */
 package com.intellij.rt.execution.testFrameworks;
 
+import com.intellij.rt.execution.junit.RepeatCount;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -39,9 +41,13 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     }
     sendTree(myRootDescription);
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
+      final String classpath = System.getProperty("java.class.path");
+      if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {
+        return startChildFork(createChildArgs(myRootDescription), null, classpath, repeatCount);
+      }
       final List children = getChildren(myRootDescription);
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
-      return splitChildren(children, 0, forkTillMethod, null, System.getProperty("java.class.path"), repeatCount);
+      return splitChildren(children, 0, forkTillMethod, null, classpath, repeatCount);
     }
     else {
       return splitPerModule(repeatCount);

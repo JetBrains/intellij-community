@@ -72,13 +72,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, new Runnable() {
       @Override
       public void run() {
+        boolean ready = false;
         synchronized (LOCK) {
           if (!myProject.isDisposed()) {
-            myReady = true;
+            myReady = ready = true;
           }
         }
-        VcsDirtyScopeVfsListener.install(myProject);
-        markEverythingDirty();
+        if (ready) {
+          VcsDirtyScopeVfsListener.install(myProject);
+          markEverythingDirty();
+        }
       }
     });
   }

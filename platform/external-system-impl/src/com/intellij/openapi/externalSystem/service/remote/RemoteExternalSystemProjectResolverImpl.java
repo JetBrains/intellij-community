@@ -34,13 +34,7 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
                                                   final S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
-    return execute(id, new Producer<DataNode<ProjectData>>() {
-      @Nullable
-      @Override
-      public DataNode<ProjectData> produce() {
-        return myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, getNotificationListener());
-      }
-    });
+    return execute(id, () -> myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, getNotificationListener()));
   }
 
   @Override

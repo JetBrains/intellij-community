@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import com.intellij.openapi.util.SystemInfo
 
 import java.util.regex.Pattern
@@ -29,8 +28,17 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     echo "Acceptable architecture (32 or 64 bit) is not defined, JRE download skipped"
     return
   }
-  def buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
-  def buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
+
+  String buildId, buildNumber
+  try {
+    buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
+    buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
+  }
+  catch (IOException e) {
+    echo "Build server connection failed: ${e.message}, JRE download skipped"
+    return
+  }
+
   java(jvm: SystemInfo.isMac ? "$workIdeaHome/jre/jdk/Contents/Home/jre/bin/java" : "$workIdeaHome/jre/jre/bin/java",
        fork: "true", classname: "dummy", outputproperty: "jvmVersionOutput") {
     jvmarg(value: "-version")

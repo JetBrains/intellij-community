@@ -23,6 +23,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
     super(fix.getName(), toolWrapper);
     myFix = fix;
-    setText(myFix.getName());
+    setText(StringUtil.escapeMnemonics(myFix.getName()));
   }
 
   public void setText(@NotNull String text) {

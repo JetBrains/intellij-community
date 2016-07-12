@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Irina.Chernushina on 4/15/2016.
  */
 public class JsonBySchemaObjectReferenceContributor extends PsiReferenceContributor {
-  private static final PsiElementPattern.Capture<JsonStringLiteral> REF_PATTERN = createPropertyNamePattern();
+  public static final PsiElementPattern.Capture<JsonStringLiteral> REF_PATTERN = createPropertyNamePattern();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

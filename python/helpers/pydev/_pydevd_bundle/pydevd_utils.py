@@ -7,9 +7,14 @@ try:
 except:
     from urllib.parse import quote  # @UnresolvedImport
 
-from _pydevd_bundle import pydevd_constants
+import inspect
+from _pydevd_bundle.pydevd_constants import IS_PY3K, GC_SUPPORTED
 import sys
 from _pydev_bundle import pydev_log
+try:
+    import gc
+except ImportError:
+    GC_SUPPORTED = False
 
 def save_main_module(file, module_name):
     # patch provided by: Scott Schlesier - when script is run, it does not
@@ -67,7 +72,7 @@ def compare_object_attrs(x, y):
 
         return x.__cmp__(y)
     except:
-        if pydevd_constants.IS_PY3K:
+        if IS_PY3K:
             return (to_string(x) > to_string(y)) - (to_string(x) < to_string(y))
         else:
             return cmp(to_string(x), to_string(y))
@@ -91,7 +96,7 @@ def cmp_to_key(mycmp):
             return mycmp(self.obj, other.obj) != 0
     return K
 
-if pydevd_constants.IS_PY3K:
+if IS_PY3K:
     def is_string(x):
         return isinstance(x, str)
 
@@ -109,7 +114,7 @@ def print_exc():
     if traceback:
         traceback.print_exc()
 
-if pydevd_constants.IS_PY3K:
+if IS_PY3K:
     def quote_smart(s, safe='/'):
         return quote(s, safe)
 else:
@@ -118,6 +123,56 @@ else:
             s =  s.encode('utf-8')
 
         return quote(s, safe)
+
+
+def get_clsname_for_code(code, frame):
+    clsname = None
+    if GC_SUPPORTED:
+        ## use of gc.get_referrers() was suggested by Michael Hudson
+        # all functions which refer to this code object
+        funcs = [f for f in gc.get_referrers(code)
+                 if inspect.isfunction(f)]
+        # require len(func) == 1 to avoid ambiguity caused by calls to
+        # new.function(): "In the face of ambiguity, refuse the
+        # temptation to guess."
+        if len(funcs) == 1:
+            dicts = [d for d in gc.get_referrers(funcs[0])
+                     if isinstance(d, dict)]
+            if len(dicts) == 1:
+                classes = [c for c in gc.get_referrers(dicts[0])
+                           if hasattr(c, "__bases__") or inspect.isclass(c)]
+            elif len(dicts) > 1:   #new-style classes
+                classes = [c for c in gc.get_referrers(dicts[1])
+                           if hasattr(c, "__bases__") or inspect.isclass(c)]
+            else:
+                classes = []
+
+            if len(classes) == 1:
+                # ditto for new.classobj()
+                clsname = classes[0].__name__
+
+    if clsname is None:
+        # If gc is not supported we are checking the first argument of the function
+        # (`self` or `cls` for methods).
+        func_name = code.co_name
+        if len(code.co_varnames) > 0:
+            first_arg_name = code.co_varnames[0]
+            if first_arg_name in frame.f_locals:
+                first_arg_obj = frame.f_locals[first_arg_name]
+                if inspect.isclass(first_arg_obj):  # class method
+                    first_arg_class = first_arg_obj
+                else:  # instance method
+                    first_arg_class = first_arg_obj.__class__
+                if hasattr(first_arg_class, func_name):
+                    method = getattr(first_arg_class, func_name)
+                    func_code = None
+                    if hasattr(method, 'func_code'):  # Python2
+                        func_code = method.func_code
+                    elif hasattr(method, '__code__'):  # Python3
+                        func_code = method.__code__
+                    if func_code and func_code == code:
+                        clsname = first_arg_class.__name__
+    return clsname
 
 
 def _get_project_roots(project_roots_cache=[]):
@@ -150,23 +205,26 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
         return filename_to_not_in_scope_cache[filename]
     except:
         project_roots = _get_project_roots()
+        original_filename = filename
+        if not os.path.isabs(filename) and not filename.startswith('<'):
+            filename = os.path.abspath(filename)
         filename = os.path.normcase(filename)
         for root in project_roots:
             if filename.startswith(root):
-                filename_to_not_in_scope_cache[filename] = False
+                filename_to_not_in_scope_cache[original_filename] = False
                 break
         else: # for else (only called if the break wasn't reached).
-            filename_to_not_in_scope_cache[filename] = True
+            filename_to_not_in_scope_cache[original_filename] = True
 
-        if not filename_to_not_in_scope_cache[filename]:
+        if not filename_to_not_in_scope_cache[original_filename]:
             # additional check if interpreter is situated in a project directory
             library_roots = _get_library_roots()
             for root in library_roots:
                 if root != '' and filename.startswith(root):
-                    filename_to_not_in_scope_cache[filename] = True
+                    filename_to_not_in_scope_cache[original_filename] = True
 
         # at this point it must be loaded.
-        return filename_to_not_in_scope_cache[filename]
+        return filename_to_not_in_scope_cache[original_filename]
 
 
 def is_filter_enabled():

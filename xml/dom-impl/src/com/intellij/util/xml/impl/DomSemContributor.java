@@ -157,12 +157,8 @@ public class DomSemContributor extends SemContributor {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
 
-        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true, new NullableComputable<DomInvocationHandler>() {
-          @Override
-          public DomInvocationHandler compute() {
-            return getParentDom(parentTag);
-          }
-        });
+        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true,
+                                                                    (NullableComputable<DomInvocationHandler>)() -> getParentDom(parentTag));
         if (parent == null) return null;
 
         DomGenericInfoEx info = parent.getGenericInfo();

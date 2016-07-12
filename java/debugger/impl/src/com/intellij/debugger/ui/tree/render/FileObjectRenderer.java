@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.openapi.util.registry.Registry;
 
 /**
  * @author egor
@@ -25,5 +26,10 @@ public class FileObjectRenderer extends ToStringBasedRenderer {
     super(rendererSettings, "File", null, NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null));
     setClassName("java.io.File");
     setEnabled(true);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return Registry.is("debugger.renderers.file");
   }
 }

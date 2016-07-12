@@ -52,12 +52,7 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
 
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
-      @Override
-      public boolean value(SdkTypeId id) {
-        return PythonSdkType.getInstance() == id;
-      }
-    }) {
+    return new SdkSettingsStep(settingsStep, this, id -> PythonSdkType.getInstance() == id) {
       @Override
       protected void onSdkSelected(Sdk sdk) {
         setSdk(sdk);

@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -54,6 +55,8 @@ import java.util.zip.GZIPInputStream;
  * }</pre>
  */
 public final class HttpRequests {
+  private static final Logger LOG = Logger.getInstance(HttpRequests.class);
+
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
@@ -353,6 +356,11 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
+    LOG.assertTrue(ApplicationManager.getApplication() == null ||
+                   ApplicationManager.getApplication().isUnitTestMode() ||
+                   !ApplicationManager.getApplication().isReadAccessAllowed(),
+                   "Network shouldn't be accessed in EDT or inside read action");
+
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     if (Patches.JDK_BUG_ID_8032832 && !UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)

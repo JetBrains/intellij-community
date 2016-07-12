@@ -1267,22 +1267,27 @@ public class AllIcons {
   }
   
   public static class Windows {
-    public static final Icon Close = IconLoader.getIcon("/windows/close.png"); // 16x16
-    public static final Icon Iconify = IconLoader.getIcon("/windows/iconify.png"); // 16x16
-    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
+    public static final Icon CloseActive = IconLoader.getIcon("/windows/closeActive.png"); // 16x16
+    public static final Icon CloseHover = IconLoader.getIcon("/windows/closeHover.png"); // 16x16
+    public static final Icon CloseInactive = IconLoader.getIcon("/windows/closeInactive.png"); // 16x16
+    public static final Icon MaximizeInactive = IconLoader.getIcon("/windows/maximizeInactive.png"); // 16x16
     public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
+    public static final Icon MinimizeInactive = IconLoader.getIcon("/windows/minimizeInactive.png"); // 16x16
+    public static final Icon Restore = IconLoader.getIcon("/windows/restore.png"); // 16x16
+    public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.png"); // 16x16
     
     public static class Shadow {
-      public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x8
-      public static final Icon BottomLeft = IconLoader.getIcon("/windows/shadow/bottomLeft.png"); // 8x8
-      public static final Icon BottomRight = IconLoader.getIcon("/windows/shadow/bottomRight.png"); // 8x8
-      public static final Icon Left = IconLoader.getIcon("/windows/shadow/left.png"); // 8x1
-      public static final Icon Right = IconLoader.getIcon("/windows/shadow/right.png"); // 8x1
-      public static final Icon Top = IconLoader.getIcon("/windows/shadow/top.png"); // 1x8
-      public static final Icon TopLeft = IconLoader.getIcon("/windows/shadow/topLeft.png"); // 8x8
-      public static final Icon TopRight = IconLoader.getIcon("/windows/shadow/topRight.png"); // 8x8
+      public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x13
+      public static final Icon BottomLeft = IconLoader.getIcon("/windows/shadow/bottomLeft.png"); // 24x24
+      public static final Icon BottomRight = IconLoader.getIcon("/windows/shadow/bottomRight.png"); // 24x24
+      public static final Icon Left = IconLoader.getIcon("/windows/shadow/left.png"); // 13x1
+      public static final Icon Right = IconLoader.getIcon("/windows/shadow/right.png"); // 13x1
+      public static final Icon Top = IconLoader.getIcon("/windows/shadow/top.png"); // 1x13
+      public static final Icon TopLeft = IconLoader.getIcon("/windows/shadow/topLeft.png"); // 24x24
+      public static final Icon TopRight = IconLoader.getIcon("/windows/shadow/topRight.png"); // 24x24
 
     }
+    public static final Icon WinHelp = IconLoader.getIcon("/windows/winHelp.png"); // 16x16
 
   }
   

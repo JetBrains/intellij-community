@@ -111,12 +111,7 @@ public class LibrariesDownloadAssistant {
 
   @Nullable
   private static Artifact findVersion(@Nullable Artifact[] versions, @NotNull final String versionId) {
-    return versions == null ? null : ContainerUtil.find(versions, new Condition<Artifact>() {
-      @Override
-      public boolean value(final Artifact springVersion) {
-        return versionId.equals(springVersion.getVersion());
-      }
-    });
+    return versions == null ? null : ContainerUtil.find(versions, springVersion -> versionId.equals(springVersion.getVersion()));
   }
 
   @NotNull

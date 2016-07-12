@@ -60,10 +60,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private void cleanup() {
-    for (final VirtualFile file : new ArrayList<VirtualFile>(myMappings.keySet())) {
-      if (file != null //PROJECT, top-level
-          && !file.isValid()) {
-        myMappings.remove(file);
+    for (Iterator<VirtualFile> i = myMappings.keySet().iterator(); i.hasNext();) {
+      VirtualFile file = i.next();
+      if (file != null /* PROJECT, top-level */ && !file.isValid()) {
+        i.remove();
       }
     }
   }

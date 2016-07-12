@@ -217,12 +217,9 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
                 .setResizable(true)
                 .setMovable(true)
                 .setRequestFocus(false)
-                .setCancelCallback(new Computable<Boolean>() {
-                  @Override
-                  public Boolean compute() {
-                    myTree.removeTreeSelectionListener(listener);
-                    return true;
-                  }
+                .setCancelCallback(() -> {
+                  myTree.removeTreeSelectionListener(listener);
+                  return true;
                 })
                 .setTitle("Image Preview")
                 .createPopup();

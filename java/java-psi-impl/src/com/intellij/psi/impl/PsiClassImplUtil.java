@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -24,14 +25,22 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.scope.*;
+import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
@@ -115,13 +124,9 @@ public class PsiClassImplUtil {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
-      final PsiSubstitutor substitutor;
-      if (checkBases && !aClass.equals(superClass) && superClass != null) {
-        substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      }
-      else {
-        substitutor = PsiSubstitutor.EMPTY;
-      }
+      final PsiSubstitutor substitutor = checkBases && !aClass.equals(superClass) && superClass != null ?
+                                         TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY) :
+                                         PsiSubstitutor.EMPTY;
       final MethodSignature signature = method.getSignature(substitutor);
       if (signature.equals(patternSignature)) {
         methods.add(method);
@@ -321,7 +326,7 @@ public class PsiClassImplUtil {
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name) || !"agentmain".equals(name))) return false;
+    if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -349,7 +354,7 @@ public class PsiClassImplUtil {
     private final PsiClass myPsiClass;
     private final GlobalSearchScope myResolveScope;
 
-    public MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
+    MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
       myPsiClass = psiClass;
       myResolveScope = scope;
     }
@@ -401,7 +406,6 @@ public class PsiClassImplUtil {
                                           PsiUtil.getLanguageLevel(myPsiClass), myResolveScope);
       Map<String, PsiMember[]> result = ContainerUtil.newTroveMap();
       for (String name : map.keySet()) {
-        //noinspection unchecked
         result.put(name, map.get(name).toArray(PsiMember.EMPTY_ARRAY));
       }
       return result;
@@ -430,11 +434,11 @@ public class PsiClassImplUtil {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
-      if ((nameHint == null || VALUES_METHOD.equals(nameHint.getName(state)))) {
+      if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
         PsiMethod method = innerStuffCache.getValuesMethod();
         if (method != null && !processor.execute(method, ResolveState.initial())) return false;
       }
-      if ((nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state)))) {
+      if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
         PsiMethod method = innerStuffCache.getValueOfMethod();
         if (method != null && !processor.execute(method, ResolveState.initial())) return false;
       }
@@ -757,10 +761,8 @@ public class PsiClassImplUtil {
 
   @Nullable
   public static PsiClass getSuperClass(@NotNull PsiClass psiClass) {
-
     if (psiClass.isInterface()) {
-      String className = CommonClassNames.JAVA_LANG_OBJECT;
-      return findSpecialSuperClass(psiClass, className);
+      return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
     }
     if (psiClass.isEnum()) {
       return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_ENUM);
@@ -875,7 +877,7 @@ public class PsiClassImplUtil {
 
   @NotNull
   private static PsiClassType getAnnotationSuperType(@NotNull PsiClass psiClass, @NotNull PsiElementFactory factory) {
-    return factory.createTypeByFQClassName("java.lang.annotation.Annotation", psiClass.getResolveScope());
+    return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, psiClass.getResolveScope());
   }
 
   private static PsiClassType getEnumSuperType(@NotNull PsiClass psiClass, @NotNull PsiElementFactory factory) {
@@ -1008,7 +1010,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
-    PsiType upperBound = psiClass.getUserData(InferenceSession.UPPER_BOUND);
+    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1022,7 +1024,7 @@ public class PsiClassImplUtil {
       }
       return result.toArray(new PsiClassType[result.size()]);
     }
-    else if (upperBound instanceof PsiClassType) {
+    if (upperBound instanceof PsiClassType) {
       return new PsiClassType[] {(PsiClassType)upperBound};
     }
     final PsiReferenceList extendsList = psiClass.getExtendsList();
@@ -1039,6 +1041,92 @@ public class PsiClassImplUtil {
       return extendsList.getReferencedTypes();
     }
     return PsiClassType.EMPTY_ARRAY;
+  }
+
+  static boolean isInExtendsList(@NotNull PsiClass psiClass,
+                                 @NotNull PsiClass baseClass,
+                                 @Nullable String baseName,
+                                 @NotNull PsiManager manager) {
+    if (psiClass.isEnum()) {
+      return CommonClassNames.JAVA_LANG_ENUM.equals(baseClass.getQualifiedName());
+    }
+    if (psiClass.isAnnotationType()) {
+      return CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseClass.getQualifiedName());
+    }
+    PsiType upperBound = InferenceSession.getUpperBound(psiClass);
+    if (upperBound == null && psiClass instanceof PsiTypeParameter) {
+      upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
+    }
+    if (upperBound instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
+      for (PsiType conjunct : conjuncts) {
+        if (conjunct instanceof PsiClassType && ((PsiClassType)conjunct).getClassName().equals(baseName) && baseClass.equals(((PsiClassType)conjunct).resolve())) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if (upperBound instanceof PsiClassType) {
+      return ((PsiClassType)upperBound).getClassName().equals(baseName) && baseClass.equals(((PsiClassType)upperBound).resolve());
+    }
+
+    return isInReferenceList(psiClass.getExtendsList(), baseClass, baseName, manager);
+  }
+
+  static boolean isInReferenceList(@Nullable PsiReferenceList list,
+                                   @NotNull PsiClass baseClass,
+                                   @Nullable String baseName,
+                                   @NotNull PsiManager manager) {
+    if (list == null) return false;
+    if (list instanceof StubBasedPsiElement) {
+      StubElement stub = ((StubBasedPsiElement)list).getStub();
+      if (stub instanceof PsiClassReferenceListStub && baseName != null) {
+        // classStub.getReferencedNames() is cheaper than getReferencedTypes()
+        PsiClassReferenceListStub classStub = (PsiClassReferenceListStub)stub;
+        String[] names = classStub.getReferencedNames();
+        for (int i = 0; i < names.length; i++) {
+          String name = names[i];
+          int typeParam = name.indexOf('<');
+          if (typeParam != -1) {
+            name = name.substring(0, typeParam);
+          }
+          // baseName=="ArrayList" classStub.getReferenceNames()[i]=="java.util.ArrayList"
+          if (name.endsWith(baseName)) {
+            PsiClassType[] referencedTypes = classStub.getReferencedTypes();
+            PsiClass resolved = referencedTypes[i].resolve();
+            if (manager.areElementsEquivalent(baseClass, resolved)) return true;
+          }
+        }
+        return false;
+      }
+      if (stub != null) {
+        // groovy etc
+        for (PsiClassType type : list.getReferencedTypes()) {
+          if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    if (list.getLanguage() == JavaLanguage.INSTANCE) {
+      // groovy doesn't have list.getReferenceElements()
+      for (PsiJavaCodeReferenceElement referenceElement : list.getReferenceElements()) {
+        if (Comparing.strEqual(baseName, referenceElement.getReferenceName()) &&
+            manager.areElementsEquivalent(baseClass, referenceElement.resolve())) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    for (PsiClassType type : list.getReferencedTypes()) {
+      if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isClassEquivalentTo(@NotNull PsiClass aClass, PsiElement another) {

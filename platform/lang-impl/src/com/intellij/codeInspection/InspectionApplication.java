@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
@@ -182,7 +183,7 @@ public class InspectionApplication {
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
       if (!myRunWithEditorSettings) {
-        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log message", inspectionProfile.getName()));
+        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log.message", inspectionProfile.getName()));
       }
 
       InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
@@ -257,7 +258,8 @@ public class InspectionApplication {
       });
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
-                          myRunWithEditorSettings ? null : inspectionProfile.getName());
+                          myRunWithEditorSettings ? null : inspectionProfile.getName(),
+                          (InspectionProfile)inspectionProfile);
       inspectionsResults.add(new File(descriptionsFile));
       // convert report
       if (reportConverter != null) {
@@ -448,8 +450,8 @@ public class InspectionApplication {
     }
   }
 
-  private static void describeInspections(@NonNls String myOutputPath, final String name) throws IOException {
-    final InspectionToolWrapper[] toolWrappers = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
+  private static void describeInspections(@NonNls String myOutputPath, final String name, final InspectionProfile profile) throws IOException {
+    final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     final Map<String, Set<InspectionToolWrapper>> map = new HashMap<String, Set<InspectionToolWrapper>>();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       final String groupName = toolWrapper.getGroupDisplayName();
@@ -474,14 +476,17 @@ public class InspectionApplication {
         final Set<InspectionToolWrapper> entries = map.get(groupName);
         for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
-          xmlWriter.addAttribute("shortName", toolWrapper.getShortName());
+          final String shortName = toolWrapper.getShortName();
+          xmlWriter.addAttribute("shortName", shortName);
           xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
+          final boolean toolEnabled = profile.isToolEnabled(HighlightDisplayKey.find(shortName));
+          xmlWriter.addAttribute("enabled", Boolean.toString(toolEnabled));
           final String description = toolWrapper.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(toolWrapper.getShortName() + " descriptionUrl==" + toolWrapper);
+            LOG.error(shortName + " descriptionUrl==" + toolWrapper);
           }
           xmlWriter.endNode();
         }

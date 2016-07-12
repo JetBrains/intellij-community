@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRemoveParameterListFix(@NotNull PsiMethod parent);
 
-  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element);
-  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module);
+  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull Module module);
 
   @NotNull public abstract IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level);
 
@@ -255,8 +255,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
   @Nullable
-  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar,
-                                                                                          @NotNull PsiReference reference);
+  public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference);
 
   @NotNull
   public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
@@ -274,5 +273,7 @@ public abstract class QuickFixFactory {
   @NotNull
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     throw new UnsupportedOperationException();
-  };
+  }
+
+  public abstract IntentionAction createNotIterableForEachLoopFix(PsiExpression expression);
 }

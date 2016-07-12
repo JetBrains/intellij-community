@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.util.ui.JBUI;
+
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -39,7 +40,7 @@ public class DarculaMenuBarBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(0, 0, 2, 0);
+    return JBUI.insetsBottom(2).asUIResource();
   }
 
   @Override

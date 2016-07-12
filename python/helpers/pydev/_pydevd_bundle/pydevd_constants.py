@@ -38,7 +38,7 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 # Prefix for saving functions return values in locals
-RETURN_VALUES_PREFIX = '__pydevd_ret_val_'
+RETURN_VALUES_DICT = '__pydevd_ret_val_dict'
 
 import os
 
@@ -52,6 +52,7 @@ if IS_JYTHON:
         IS_JYTH_LESS25 = True
 
 CYTHON_SUPPORTED = False
+GC_SUPPORTED = False
 
 try:
     import platform
@@ -60,6 +61,7 @@ except:
     pass
 else:
     if python_implementation == 'CPython':
+        GC_SUPPORTED = True
         # Only available for CPython!
         if (
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
@@ -187,9 +189,13 @@ if IS_PY3K:
         return list(d.items())
 
 else:
+    dict_keys = None
     try:
         dict_keys = dict.keys
     except:
+        pass
+
+    if IS_JYTHON or not dict_keys:
         def dict_keys(d):
             return d.keys()
 

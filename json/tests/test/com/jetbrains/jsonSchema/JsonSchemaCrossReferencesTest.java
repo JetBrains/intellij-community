@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
@@ -74,11 +75,11 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/base.json", false, Collections.emptyList());
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/base.json", false, Collections.emptyList());
     instance.addSchema(base);
 
     final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/inherited.json", false,
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/inherited.json", false,
                                                            Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
 
     instance.addSchema(inherited);
@@ -113,7 +114,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/baseProperties.json", false,
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/baseProperties.json", false,
                                                          Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
     instance.addSchema(base);
 
@@ -140,11 +141,11 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/base.json", false, Collections.emptyList());
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/base.json", false, Collections.emptyList());
     instance.addSchema(base);
 
     final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/inherited.json", false,
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/inherited.json", false,
                                                            Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
 
     instance.addSchema(inherited);
@@ -208,16 +209,21 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", "/" + moduleDir + "/localRefSchema.json", false, Collections.emptyList());
+      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
     instance.addSchema(base);
 
     final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/referencingSchema.json", false, Collections.emptyList());
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingSchema.json", false, Collections.emptyList());
 
     instance.addSchema(inherited);
 
+    testIsSchemaFile(moduleFile, "localRefSchema.json");
+    testIsSchemaFile(moduleFile, "referencingSchema.json");
+
     try {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+      JsonSchemaService.Impl.get(getProject()).reset();
+
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
       Assert.assertNotNull(referenceAt);
@@ -233,6 +239,13 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.removeSchema(inherited);
     instance.removeSchema(base);
+  }
+
+  private void testIsSchemaFile(VirtualFile moduleFile, String name) {
+    final VirtualFile child = moduleFile.findChild(name);
+    Assert.assertNotNull(child);
+    Assert.assertTrue(JsonSchemaFileType.INSTANCE.equals(child.getFileType()));
+    Assert.assertTrue(JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).isRegisteredSchemaFile(child));
   }
 
   public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
@@ -257,7 +270,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
 
     instance.addSchema(inherited);
 
@@ -296,7 +309,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", "/" + moduleDir + "/baseProperties.json", false,
+      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/baseProperties.json", false,
                                                            Collections.singletonList(
                                                              new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
 
@@ -304,6 +317,16 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     JsonSchemaService.Impl.get(getProject()).reset();
 
     int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+    PsiElement element = myFile.findElementAt(offset);
+    boolean found = false;
+    while (element.getTextRange().contains(offset)) {
+      if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
+        found = true;
+        break;
+      }
+      element = element.getParent();
+    }
+    Assert.assertTrue(found);
     final PsiReference referenceAt = myFile.findReferenceAt(offset);
     Assert.assertNotNull(referenceAt);
     final PsiElement resolve = referenceAt.resolve();

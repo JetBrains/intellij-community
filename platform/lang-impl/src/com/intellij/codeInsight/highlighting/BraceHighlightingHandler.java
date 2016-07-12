@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,13 +126,7 @@ public class BraceHighlightingHandler {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
         final PsiFile injected;
         try {
-          if (psiFile instanceof PsiCompiledFile) {
-            injected = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
-          }
-          else if (psiFile instanceof PsiCompiledElement ||
-                   psiFile instanceof PsiBinaryFile ||
-                   !isValidEditor(editor) ||
-                   !isValidFile(psiFile)) {
+          if (psiFile instanceof PsiBinaryFile || !isValidEditor(editor) || !isValidFile(psiFile)) {
             injected = null;
           }
           else {
@@ -489,9 +483,7 @@ public class BraceHighlightingHandler {
         }
       }
       else {
-        if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-          removeLineMarkers();
-        }
+        removeLineMarkers();
       }
 
       if (!scopeHighlighting) {
@@ -540,7 +532,9 @@ public class BraceHighlightingHandler {
     LogicalPosition bracePosition = myEditor.offsetToLogicalPosition(lbraceStart);
     Point braceLocation = myEditor.logicalPositionToXY(bracePosition);
     final int y = braceLocation.y;
-    myAlarm.addRequest(() -> PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+    myAlarm.addRequest(() -> {
+      if (myProject.isDisposed()) return;
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         if (!myEditor.getComponent().isShowing()) return;
         Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
         if (y < viewRect.y) {
@@ -557,7 +551,8 @@ public class BraceHighlightingHandler {
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
           myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
         }
-      }), 300, ModalityState.stateForComponent(myEditor.getComponent()));
+      });
+    }, 300, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
   void clearBraceHighlighters() {

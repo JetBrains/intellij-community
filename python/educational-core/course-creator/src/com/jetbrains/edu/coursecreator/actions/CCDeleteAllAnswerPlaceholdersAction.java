@@ -28,7 +28,7 @@ import java.util.List;
 
 public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
 
-  public static final String ACTION_NAME = "Delete All " + EduNames.PLACEHOLDER + "s";
+  public static final String ACTION_NAME = "Delete All " + EduNames.ANSWER_PLACEHOLDER + "s";
 
   public CCDeleteAllAnswerPlaceholdersAction() {
     super(ACTION_NAME);
@@ -107,7 +107,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
   private static class ClearPlaceholders implements UndoableAction {
     private final List<AnswerPlaceholder> myPlaceholders;
     private final Editor myEditor;
-    TaskFile myTaskFile;
+    private final TaskFile myTaskFile;
 
     public ClearPlaceholders(TaskFile taskFile, List<AnswerPlaceholder> placeholders, Editor editor) {
       myTaskFile = taskFile;

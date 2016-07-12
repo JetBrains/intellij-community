@@ -1521,6 +1521,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     else {
       aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
+      if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, false)) {
+        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+      }
     }
     if (aClass == null) return null;
 
@@ -1784,7 +1787,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
     }
 
-    return null;
+    String text = JavaErrorMessages.message("declaration.or.variable.expected");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
   }
 
   @Nullable
@@ -2752,12 +2756,11 @@ public class HighlightUtil extends HighlightUtilBase {
       highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
     else if (resolved instanceof PsiClass) {
-      if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
-        final PsiElement parent = ref.getParent();
-        if (parent instanceof PsiImportStaticReferenceElement || parent instanceof PsiImportStatementBase) {
-          String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
-        }
+      if (((PsiClass)resolved).getContainingClass() == null &&
+          PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
+          PsiUtil.isFromDefaultPackage((PsiClass)resolved)) {
+        String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
       }
     }
     return highlightInfo;
@@ -2981,7 +2984,8 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
     RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
-    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs");
+    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
+    MODULES(LanguageLevel.JDK_1_9, "feature.modules");
 
     private final LanguageLevel level;
     private final String key;

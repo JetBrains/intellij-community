@@ -68,7 +68,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,7 +133,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  private static boolean ourHaveShutdownHook;
 
   private ThreadTracker myThreadTracker;
 
@@ -222,13 +220,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
+    if (ourProject != null) {
+      closeAndDeleteProject();
+    }
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (ourProject != null) {
-        closeAndDeleteProject();
-      }
-      else {
-        cleanPersistedVFSContent();
-      }
+      cleanPersistedVFSContent();
     });
 
     final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
@@ -239,10 +235,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer);
     ourPathToKeep = projectFile.getPath();
-    if (!ourHaveShutdownHook) {
-      ourHaveShutdownHook = true;
-      registerShutdownHook();
-    }
     ourPsiManager = null;
 
     ourProjectDescriptor.setUpProject(ourProject, new LightProjectDescriptor.SetupHandler() {
@@ -273,7 +265,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
-      LightPlatformTestCase.super.setUp();
+      super.setUp();
       initApplication();
       ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
@@ -413,27 +405,23 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    List<Throwable> errors = new SmartList<>();
+    List<Throwable> errors = ContainerUtil.newSmartList();
+    Function<ThrowableRunnable<?>, ?> runSafe = c -> {
+      try {
+        c.run();
+      }
+      catch (Throwable e) {
+        errors.add(e);
+      }
+      return true;
+    };
     try {
-      checkForSettingsDamage(errors);
-      doTearDown(project, ourApplication, true, errors);
-    }
-    catch (Throwable e) {
-      errors.add(e);
-    }
-
-    try {
-      //noinspection SuperTearDownInFinally
-      super.tearDown();
-    }
-    catch (Throwable e) {
-      errors.add(e);
-    }
-
-    try {
-      myThreadTracker.checkLeak();
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed();
+      runSafe.fun(() -> checkForSettingsDamage(errors));
+      runSafe.fun(() -> doTearDown(project, ourApplication, true, errors));
+      runSafe.fun(super::tearDown);
+      runSafe.fun(() -> myThreadTracker.checkLeak());
+      runSafe.fun(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project));
+      runSafe.fun(() -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed());
     }
     catch (Throwable e) {
       errors.add(e);
@@ -700,43 +688,39 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
-    if (ourProject != null) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-      if (!ourProject.isDisposed()) {
-        File ioFile = new File(ourProject.getProjectFilePath());
-        Disposer.dispose(ourProject);
-        if (ioFile.exists()) {
-          File dir = ioFile.getParentFile();
-          if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-            FileUtil.delete(dir);
-          }
-          else {
-            FileUtil.delete(ioFile);
-          }
-        }
-      }
-
-      ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
-
-      // project may be disposed but empty folder may still be there
-      if (ourPathToKeep != null) {
-        File parent = new File(ourPathToKeep).getParentFile();
-        if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-          parent.delete(); // delete only empty folders
-        }
-      }
-
-      ourProject = null;
-      ourPathToKeep = null;
+    if (ourProject == null) {
+      return;
     }
-  }
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call closeAndDeleteProject from under write action");
+    }
 
-  private static void registerShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(
-      () -> ShutDownTracker.invokeAndWait(true, true,
-                                          () -> ApplicationManager.getApplication().runWriteAction(
-                                            LightPlatformTestCase::closeAndDeleteProject)));
+    if (!ourProject.isDisposed()) {
+      File ioFile = new File(ourProject.getProjectFilePath());
+      Disposer.dispose(ourProject);
+      if (ioFile.exists()) {
+        File dir = ioFile.getParentFile();
+        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          FileUtil.delete(dir);
+        }
+        else {
+          FileUtil.delete(ioFile);
+        }
+      }
+    }
+
+    ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
+
+    // project may be disposed but empty folder may still be there
+    if (ourPathToKeep != null) {
+      File parent = new File(ourPathToKeep).getParentFile();
+      if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+        parent.delete(); // delete only empty folders
+      }
+    }
+
+    ourProject = null;
+    ourPathToKeep = null;
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {

@@ -34,6 +34,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testEmptySuite() throws Exception {
     doTest(Description.createSuiteDescription("empty suite"), "##teamcity[enteredTheMatrix]\n" +
+                                                              "##teamcity[suiteTreeNode name='empty suite' locationHint='java:test://empty suite.empty suite']\n" +
                                                               "##teamcity[treeEnded]\n");
   }
 
@@ -569,6 +570,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final Description rootDescription = Description.createTestDescription("TestA", "testName");
     doTest(rootDescription, Collections.singletonList(rootDescription),
            "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[suiteTreeNode name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
            "##teamcity[treeEnded]\n",
            "##teamcity[rootName name = 'TestA' location = 'java:suite://TestA']\n" +
            "\n" +

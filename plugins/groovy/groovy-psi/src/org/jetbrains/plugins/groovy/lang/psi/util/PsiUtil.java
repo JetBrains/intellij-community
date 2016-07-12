@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -181,10 +180,7 @@ public class PsiUtil {
                                                                                 PsiElement place,
                                                                                 final boolean eraseParameterTypes) {
     if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
-
-    GrClosureSignature signature = eraseParameterTypes
-                                   ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method)
-                                   : GrClosureSignatureUtil.createSignature(method, substitutor);
+    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
 
     //check for default constructor
     if (method.isConstructor()) {
@@ -321,7 +317,7 @@ public class PsiUtil {
 
     if (namedArgs.length > 0) {
       GrNamedArgument context = namedArgs[0];
-      result.add(GrMapType.createFromNamedArgs(context, byShape ? new GrNamedArgument[0] : namedArgs));
+      result.add(GrMapType.createFromNamedArgs(context, byShape ? GrNamedArgument.EMPTY_ARRAY : namedArgs));
     }
 
     for (GrExpression expression : expressions) {
@@ -1330,12 +1326,8 @@ public class PsiUtil {
 
   public static boolean scopeClassImplementsTrait(@NotNull final PsiClass trait, @NotNull final PsiElement place) {
     GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true);
-    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(), new Condition<PsiClassType>() {
-      @Override
-      public boolean value(PsiClassType type) {
-        return place.getManager().areElementsEquivalent(type.resolve(), trait);
-      }
-    }) != null;
+    return scopeClass != null && ContainerUtil.find(scopeClass.getSuperTypes(),
+                                                    type -> place.getManager().areElementsEquivalent(type.resolve(), trait)) != null;
   }
 
   public static boolean isThisOrSuperRef(@Nullable PsiElement qualifier) {
@@ -1417,18 +1409,12 @@ public class PsiUtil {
   }
 
   public static boolean isBlockReturnVoid(@NotNull final GrCodeBlock block) {
-    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Boolean>() {
-      @Nullable
+    return CachedValuesManager.getCachedValue(block, () -> CachedValueProvider.Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
-      public Result<Boolean> compute() {
-        return Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            return returnValue == null || !(returnValue instanceof GrLiteral);
-          }
-        }), PsiModificationTracker.MODIFICATION_COUNT);
+      public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+        return returnValue == null || !(returnValue instanceof GrLiteral);
       }
-    });
+    }), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   public static boolean checkPsiElementsAreEqual(PsiElement l, PsiElement r) {

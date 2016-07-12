@@ -44,38 +44,18 @@ public class ComputableIcon {
   }
 
   public static ComputableIcon create(final Icon icon) {
-    return new ComputableIcon(new Computable<Icon>() {
-      @Override
-      public Icon compute() {
-        return icon;
-      }
-    });
+    return new ComputableIcon(() -> icon);
   }
 
   public static ComputableIcon create(final ItemPresentation presentation, final boolean isOpen) {
-    return new ComputableIcon(new Computable<Icon>() {
-      @Override
-      public Icon compute() {
-        return presentation.getIcon(isOpen);
-      }
-    });
+    return new ComputableIcon(() -> presentation.getIcon(isOpen));
   }
 
   public static ComputableIcon create(final PsiPresentableMetaData data) {
-    return new ComputableIcon(new Computable<Icon>() {
-      @Override
-      public Icon compute() {
-        return data.getIcon();
-      }
-    });
+    return new ComputableIcon(() -> data.getIcon());
   }
 
   public static ComputableIcon create(final VirtualFile file) {
-    return new ComputableIcon(new Computable<Icon>() {
-      @Override
-      public Icon compute() {
-        return VirtualFilePresentation.getIcon(file);
-      }
-    });
+    return new ComputableIcon(() -> VirtualFilePresentation.getIcon(file));
   }
 }

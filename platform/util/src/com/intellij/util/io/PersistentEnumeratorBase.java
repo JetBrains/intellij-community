@@ -65,10 +65,17 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   private Flushable myMarkCleanCallback;
 
   public static class Version {
+    private static final int DIRTY_MAGIC = 0xbabe1977;
+    private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
+
     private final int correctlyClosedMagic;
     private final int dirtyMagic;
 
-    public Version(int _correctlyClosedMagic, int _dirtyMagic) {
+    public Version(int version) {
+      this(CORRECTLY_CLOSED_MAGIC + version, DIRTY_MAGIC);
+    }
+
+    private Version(int _correctlyClosedMagic, int _dirtyMagic) {
       correctlyClosedMagic = _correctlyClosedMagic;
       dirtyMagic = _dirtyMagic;
       assert correctlyClosedMagic != dirtyMagic;

@@ -103,12 +103,7 @@ public class ChangeProjectIconForm {
     public void actionPerformed(AnActionEvent e) {
       VirtualFile[] files = FileChooserFactory.getInstance()
         .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
-          new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile file) {
-              return "png".equalsIgnoreCase(file.getExtension());
-            }
-          }), null, null).choose(null);
+          file -> "png".equalsIgnoreCase(file.getExtension())), null, null).choose(null);
 
       if (files.length == 1) {
         try {

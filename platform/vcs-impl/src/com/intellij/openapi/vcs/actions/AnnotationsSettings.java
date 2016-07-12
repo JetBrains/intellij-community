@@ -29,10 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AnnotationsSettings {
-  static final List<ColorKey> ANCHOR_COLOR_KEYS = createColorKeys(5);
-
-  static final int COLOR_COUNT = 20;
+  private static final int ANCHORS_COUNT = 5;
+  private static final int COLORS_BETWEEN_ANCHORS = 4;
   private static final int SHUFFLE_STEP = 4;
+
+  static final List<ColorKey> ANCHOR_COLOR_KEYS = createColorKeys(ANCHORS_COUNT);
 
   @NotNull
   private static List<ColorKey> createColorKeys(int count) {
@@ -72,6 +73,26 @@ public class AnnotationsSettings {
       ContainerUtil.addIfNotNull(anchorColors, scheme.getColor(key));
     }
 
-    return ColorGenerator.generateLinearColorSequence(anchorColors, COLOR_COUNT);
+    return ColorGenerator.generateLinearColorSequence(anchorColors, COLORS_BETWEEN_ANCHORS);
+  }
+
+  @NotNull
+  List<Integer> getAnchorIndexes(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    List<Integer> result = new ArrayList<>(ANCHORS_COUNT);
+
+    int count = 0;
+    for (ColorKey key : ANCHOR_COLOR_KEYS) {
+      if (scheme.getColor(key) != null) {
+        result.add(count);
+        count += COLORS_BETWEEN_ANCHORS + 1;
+      }
+      else {
+        result.add(null);
+      }
+    }
+
+    return result;
   }
 }

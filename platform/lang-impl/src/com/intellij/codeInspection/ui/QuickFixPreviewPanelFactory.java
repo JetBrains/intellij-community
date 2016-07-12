@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -47,13 +46,12 @@ public class QuickFixPreviewPanelFactory {
   private static final int MAX_FIX_COUNT = 3;
 
   @Nullable
-  public static JComponent create(@Nullable EditorEx editor,
-                                  @NotNull InspectionResultsView view) {
+  public static JComponent create(@NotNull InspectionResultsView view) {
     if (view.isUpdating() && !view.getTree().areDescriptorNodesSelected()) {
       return new LoadingInProgressPreview(view);
     }
     else {
-      final QuickFixReadyPanel panel = new QuickFixReadyPanel(view, editor);
+      final QuickFixReadyPanel panel = new QuickFixReadyPanel(view);
       return panel.isEmpty() ? null : panel;
     }
   }
@@ -63,14 +61,11 @@ public class QuickFixPreviewPanelFactory {
     private final InspectionToolWrapper myWrapper;
     private final boolean myEmpty;
 
-    public QuickFixReadyPanel(@NotNull InspectionResultsView view, EditorEx editor) {
+    public QuickFixReadyPanel(@NotNull InspectionResultsView view) {
       myView = view;
-      myWrapper = view.getTree().getSelectedToolWrapper();
+      myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
-      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors();
-      if (editor != null) {
-        new ProblemPreviewEditorPresentation(editor, view, descriptors);
-      }
+      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors(false, null, false, true);
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
       myEmpty = fillPanel(fixes, descriptors);
     }
@@ -87,8 +82,9 @@ public class QuickFixPreviewPanelFactory {
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
       boolean hasComponents = false;
 
-      if (multipleDescriptors) {
-        add(getLabel(problemCount));
+      final int actualProblemCount = myView.getTree().getSelectedDescriptors().length;
+      if (actualProblemCount > 1 || (actualProblemCount == 1 && problemCount > 1)) {
+        add(getLabel(actualProblemCount));
         hasComponents = true;
       }
 
@@ -182,7 +178,7 @@ public class QuickFixPreviewPanelFactory {
       setBorder(IdeBorderFactory.createEmptyBorder(16, 9, 13, 0));
       AsyncProcessIcon waitingIcon = new AsyncProcessIcon("Inspection preview panel updating...");
       Disposer.register(this, waitingIcon);
-      myWaitingLabel = getLabel(myView.getTree().getSelectedProblemCount());
+      myWaitingLabel = getLabel(myView.getTree().getSelectedProblemCount(false));
       add(myWaitingLabel);
       add(waitingIcon);
     }
@@ -192,7 +188,7 @@ public class QuickFixPreviewPanelFactory {
       if (myWaitingLabel != null) {
         myWaitingLabel.clear();
         final InspectionTree tree = myView.getTree();
-        appendTextToLabel(myWaitingLabel, tree.getSelectedProblemCount());
+        appendTextToLabel(myWaitingLabel, tree.getSelectedProblemCount(false));
       }
     }
 

@@ -118,12 +118,7 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
       final String attributeValue = attribute.getValue();
       return attributeValue != null &&
              attribute.isNamespaceDeclaration() &&
-             ContainerUtil.find(refs, new Condition<PsiReference>() {
-               @Override
-               public boolean value(PsiReference ref) {
-                 return ref.getCanonicalText().equals(attributeValue);
-               }
-             }) == null ? attributeValue + " " : null;
+             ContainerUtil.find(refs, ref -> ref.getCanonicalText().equals(attributeValue)) == null ? attributeValue + " " : null;
     }, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 }

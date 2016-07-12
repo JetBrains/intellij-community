@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

@@ -15,14 +15,12 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -42,6 +40,23 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   public JavaRegExpHost() {
     myPropertiesProvider = DefaultRegExpPropertiesProvider.getInstance();
+  }
+
+  @Override
+  public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
+    switch (flag) {
+      case 'i': // case-insensitive matching
+      case 'd': // Unix lines mode
+      case 'm': // multiline mode
+      case 's': // dotall mode
+      case 'u': // Unicode-aware case folding
+      case 'x': // whitespace and comments in pattern
+        return true;
+      case 'U': // Enables the Unicode version of Predefined character classes and POSIX character classes
+        return hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
+      default:
+        return false;
+    }
   }
 
   @Override
@@ -107,15 +122,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   private static boolean hasAtLeastJdkVersion(PsiElement element, JavaSdkVersion version) {
-    final JavaSdkVersion version1 = getJavaVersion(element);
-    return version1 != null && version1.isAtLeast(version);
+    return getJavaVersion(element).isAtLeast(version);
   }
 
-  @Nullable
+  @NotNull
   private static JavaSdkVersion getJavaVersion(PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return JavaSdkVersion.JDK_1_9;
-    }
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -126,11 +137,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         }
       }
     }
-    final Sdk sdk = ProjectRootManager.getInstance(element.getProject()).getProjectSdk();
-    if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-      return JavaSdk.getInstance().getVersion(sdk);
-    }
-    return null;
+    return JavaSdkVersion.JDK_1_9;
   }
 
   @Override

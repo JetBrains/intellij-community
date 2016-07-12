@@ -321,27 +321,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
       }
 
-      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption() {
+      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption.Adapter() {
         @Override
-        public boolean isToBeShown() {
-          return true;
-        }
-
-        @Override
-        public void setToBeShown(boolean toBeShown, int exitCode) {
-          if (exitCode == Messages.OK) {
-            GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(toBeShown);
-          }
-        }
-
-        @Override
-        public boolean canBeHidden() {
-          return true;
-        }
-
-        @Override
-        public boolean shouldSaveOptionsOnCancel() {
-          return false;
+        public void rememberChoice(boolean isSelected, int exitCode) {
+          GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(!isSelected);
         }
 
         @NotNull

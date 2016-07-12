@@ -52,6 +52,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   private volatile boolean myCanceled;
   private volatile boolean myFinished;
+  private volatile ProgressIndicator myIndicator;
 
   public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
@@ -132,6 +133,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     paintBusy(true);
+    myIndicator = indicator;
   }
 
   @Override
@@ -147,5 +149,13 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   public boolean isFinished() {
     return myFinished;
+  }
+
+  public boolean cancelTask() {
+    ProgressIndicator indicator = myIndicator;
+    if (indicator != null) {
+      indicator.cancel();
+    }
+    return setCanceled();
   }
 }

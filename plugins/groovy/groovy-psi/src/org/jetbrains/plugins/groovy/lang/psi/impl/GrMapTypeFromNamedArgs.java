@@ -144,12 +144,8 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
 
   @Nullable
   private PsiType inferTypePreventingRecursion(final GrExpression expression) {
-    return RecursionManager.doPreventingRecursion(expression, false, new Computable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope);
-      }
-    });
+    return RecursionManager.doPreventingRecursion(expression, false,
+                                                  () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope));
   }
 
   @NotNull

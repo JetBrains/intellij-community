@@ -50,21 +50,12 @@ import java.util.Map;
 public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
 
   @NotNull
-  public static final Function<DataNode<TaskData>, ExternalTaskPojo> MAPPER = new Function<DataNode<TaskData>, ExternalTaskPojo>() {
-    @Override
-    public ExternalTaskPojo fun(DataNode<TaskData> node) {
-      return ExternalTaskPojo.from(node.getData());
-    }
-  };
+  public static final Function<DataNode<TaskData>, ExternalTaskPojo> MAPPER = node -> ExternalTaskPojo.from(node.getData());
 
   public static final NullableFunction<DataNode<TaskData>, ExternalConfigPathAware> TASK_HOLDER_RETRIEVAL_STRATEGY =
-    new NullableFunction<DataNode<TaskData>, ExternalConfigPathAware>() {
-      @Nullable
-      @Override
-      public ExternalConfigPathAware fun(DataNode<TaskData> node) {
-        ModuleData moduleData = node.getData(ProjectKeys.MODULE);
-        return moduleData == null ? node.getData(ProjectKeys.PROJECT) : moduleData;
-      }
+    node -> {
+      ModuleData moduleData = node.getData(ProjectKeys.MODULE);
+      return moduleData == null ? node.getData(ProjectKeys.PROJECT) : moduleData;
     };
 
   @NotNull

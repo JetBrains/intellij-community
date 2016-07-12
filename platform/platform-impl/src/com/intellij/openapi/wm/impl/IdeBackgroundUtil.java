@@ -27,14 +27,18 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -47,6 +51,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.net.URL;
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -81,6 +86,7 @@ public class IdeBackgroundUtil {
     return allInclusive && spec.contains("-" + type) || !allInclusive && !spec.contains(type);
   }
 
+  private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
   private static String getComponentType(JComponent component) {
     return component instanceof JTree ? "tree" :
            component instanceof JList ? "list" :
@@ -90,10 +96,11 @@ public class IdeBackgroundUtil {
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
            component instanceof EditorGutterComponentEx ? "editor" :
+           component instanceof JBLoadingPanel ? "loading" :
            component instanceof JBTabs ? "tabs" :
            component instanceof ToolWindowHeader ? "title" :
-           component instanceof JPanel && "navbar".equals(component.getName()) ? "navbar" :
-           component instanceof JPanel && "terminal".equals(component.getName()) ? "terminal" :
+           component instanceof JBPanelWithEmptyText ? "panel" :
+           component instanceof JPanel && ourKnownNames.contains(component.getName()) ? component.getName() :
            null;
   }
 
@@ -159,8 +166,10 @@ public class IdeBackgroundUtil {
   }
 
   @NotNull
-  public static String getBackgroundSpec(@NotNull String propertyName) {
-    return StringUtil.notNullize(PropertiesComponent.getInstance().getValue(propertyName), System.getProperty(propertyName, ""));
+  public static String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
+    String spec = project == null ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
+    if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
+    return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
   }
 
   public static void repaintAllWindows() {

@@ -87,11 +87,7 @@ public class UsedIconsListingAction extends AnAction {
 
       private void processValue(Object value, PsiCallExpression call, PsiFile file) {
         if (value instanceof String) {
-          String str = (String)value;
-          if (str.startsWith("\"")) {
-            str = str.substring(0);
-            str = StringUtil.trimEnd(str, "\"");
-          }
+          String str = StringUtil.unquoteString((String)value, '\"');
 
           if (!str.startsWith("/")) {
 

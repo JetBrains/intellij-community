@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rustam Vishnyakov
@@ -27,10 +29,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class SemanticEditorPosition {
   public interface SyntaxElement {}
   
+  private final EditorEx myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
 
   public SemanticEditorPosition(@NotNull EditorEx editor, int offset) {
+    myEditor = editor;
     myChars = editor.getDocument().getCharsSequence();
     myIterator = editor.getHighlighter().createIterator(offset);
   }
@@ -52,6 +56,13 @@ public abstract class SemanticEditorPosition {
   public SemanticEditorPosition before() {
     if (!myIterator.atEnd()) {
       myIterator.retreat();
+    }
+    return this;
+  }
+  
+  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+    if (!myIterator.atEnd()) {
+      if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.advance();
     }
     return this;
   }
@@ -80,6 +91,32 @@ public abstract class SemanticEditorPosition {
     }
     return this;
   }
+
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                                            @NotNull SyntaxElement rightParenthesis) {
+    while (!myIterator.atEnd()) {
+      if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
+        beforeParentheses(leftParenthesis, rightParenthesis);
+      }
+      else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
+        break; 
+      }
+      myIterator.retreat();
+    }
+    return this;
+  }
+  
+  public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
+    myIterator.retreat();
+    while (!myIterator.atEnd() && !isAtMultiline()) {
+      SyntaxElement currElement = map(myIterator.getTokenType());
+      for (SyntaxElement element : syntaxElements) {
+        if (element.equals(currElement)) return true;
+      }
+      myIterator.retreat();
+    }
+    return false;
+  }
   
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
     return !myIterator.atEnd() && syntaxElement.equals(map(myIterator.getTokenType()));
@@ -102,6 +139,40 @@ public abstract class SemanticEditorPosition {
       }
     }
     return false;
+  }
+
+  public CharSequence getChars() {
+    return myChars;
+  }
+  
+  
+  public int findStartOf(@NotNull SyntaxElement element) {
+    while (!myIterator.atEnd()) {
+      if (element.equals(map(myIterator.getTokenType()))) return myIterator.getStart();
+      myIterator.retreat();
+    }
+    return -1;
+  }
+
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+  
+  @Nullable
+  public Language getLanguage() {
+    return !myIterator.atEnd() ? myIterator.getTokenType().getLanguage() : null;
+  }
+  
+  public boolean isAtLanguage(@Nullable Language language) {
+    if (language != null && !myIterator.atEnd()) {
+      return language== Language.ANY || myIterator.getTokenType().getLanguage().is(language); 
+    }
+    return false;
+  }
+
+  @Nullable
+  public SyntaxElement getCurrElement() {
+    return !myIterator.atEnd() ? map(myIterator.getTokenType()) : null;
   }
   
   public boolean matchesRule(@NotNull Rule rule) {

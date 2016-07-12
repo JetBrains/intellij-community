@@ -27,10 +27,6 @@ public class Continuation {
     myGeneralRunner = generalRunner;
   }
 
-  public static Continuation createForCurrentProgress(final Project project, final boolean cancellable) {
-    return new Continuation(new SameProgressRunner(project, cancellable));
-  }
-
   public static Continuation createFragmented(final Project project, final boolean cancellable) {
     SeparatePiecesRunner generalRunner = new SeparatePiecesRunner(project, cancellable);
     return new Continuation(generalRunner);
@@ -56,21 +52,6 @@ public class Continuation {
 
   public void resume() {
     myGeneralRunner.ping();
-  }
-
-  public void resumeOnNewIndicator(final Project project, final boolean cancellable, final String commonTitle) {
-    final SameProgressRunner runner = new SameProgressRunner(project, cancellable);
-    runner.next(myGeneralRunner.myQueue);
-    myGeneralRunner = runner;
-    resume();
-  }
-
-  public void clearQueue() {
-    myGeneralRunner.cancelEverything();
-  }
-
-  public void cancelCurrent() {
-    myGeneralRunner.cancelCurrent();
   }
 
   public void add(List<TaskDescriptor> list) {

@@ -145,7 +145,7 @@ public class SuppressActionSequentialTask implements SequentialTask {
             final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
             if (descriptors != null) {
               for (CommonProblemDescriptor problemDescriptor : descriptors) {
-                myContext.getView().getSuppressedNodes().add(problemDescriptor);
+                myContext.getView().getSuppressedNodes(wrapper.getShortName()).add(problemDescriptor);
               }
             }
             final List<RefEntity> children = entity.getChildren();
@@ -156,11 +156,13 @@ public class SuppressActionSequentialTask implements SequentialTask {
             }
           }
         }
-        myContext.getView().getSuppressedNodes().add(descriptor);
+        myContext.getView().getSuppressedNodes(wrapper.getShortName()).add(descriptor);
       }
       catch (IncorrectOperationException e1) {
         LOG.error(e1);
       }
     });
+
+    node.removeSuppressActionFromAvailable(mySuppressAction);
   }
 }

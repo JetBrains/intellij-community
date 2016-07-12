@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -85,19 +86,6 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
     myContext = context;
-  }
-
-  @NotNull
-  protected static FileStatus calcStatus(boolean old, boolean current) {
-    if (old) {
-      if (!current) {
-        return FileStatus.DELETED;
-      }
-    }
-    else if (current) {
-      return FileStatus.ADDED;
-    }
-    return FileStatus.NOT_CHANGED;
   }
 
   public static String stripUIRefsFromInspectionDescription(String description) {
@@ -231,9 +219,10 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (view.getTreeStructureUpdateLock()) {
           final InspectionNode toolNode;
+          final AnalysisUIOptions uiOptions = context.getUIOptions();
           toolNode = myToolNode == null ?
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                  context.getUIOptions().GROUP_BY_SEVERITY, context.isSingleInspectionRun()) : myToolNode;
+                                  uiOptions.GROUP_BY_SEVERITY, view.isSingleInspectionRun()) : myToolNode;
 
           final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
           problems.put(refElement, descriptors);
@@ -246,9 +235,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           }
           content.add(refElement);
 
-          view.getProvider().appendToolNodeContent(context, toolNode,
-                                                   (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
-                                                   contents, problems);
+          view.getProvider().appendToolNodeContent(context,
+                                                   toolNode,
+                                                   (InspectionTreeNode)toolNode.getParent(),
+                                                   uiOptions.SHOW_STRUCTURE,
+                                                   true,
+                                                   contents,
+                                                   problems);
 
         }
       }
@@ -368,6 +361,14 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
+  public void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor) {
+    final CommonProblemDescriptor[] ignoredDescriptors = getIgnoredElements().get(refEntity);
+    if (ignoredDescriptors != null) {
+      getIgnoredElements().put(refEntity, ArrayUtil.remove(ignoredDescriptors, descriptor));
+    }
+  }
+
+  @Override
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {
     if (refEntity == null) return;
     final Set<QuickFix> localQuickFixes = getQuickFixActions().get(refEntity);
@@ -414,7 +415,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public void ignoreCurrentElementProblem(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);
     if (descriptors == null) {
-      descriptors = new CommonProblemDescriptor[0];
+      descriptors = CommonProblemDescriptor.EMPTY_ARRAY;
     }
     getIgnoredElements().put(refEntity, ArrayUtil.append(descriptors, descriptor));
   }
@@ -643,7 +644,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                   final QuickFixAction quickFixAction = result.get(clazz);
                   try {
                     String familyName = fix.getFamilyName();
-                    ((LocalQuickFixWrapper)quickFixAction).setText(familyName);
+                    ((LocalQuickFixWrapper)quickFixAction).setText(StringUtil.escapeMnemonics(familyName));
                   }
                   catch (AbstractMethodError e) {
                     //for plugin compatibility
@@ -747,7 +748,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure) {
+                                       boolean showStructure,
+                                       boolean groupBySeverity) {
     return node;
   }
 

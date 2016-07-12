@@ -15,10 +15,11 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -45,7 +46,7 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
       }
     }
 
-    final Set<PsiClass> processed = new HashSet<PsiClass>();
+    final Set<PsiClass> processed = new HashSet<>();
     AnnotatedElementsSearch.searchPsiMembers(queryParameters.getAnnotationClass(), scope).forEach(member -> {
       PsiClass psiClass;
       AccessToken token = ReadAction.start();

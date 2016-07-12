@@ -32,7 +32,7 @@ import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -77,7 +77,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -295,12 +294,14 @@ public class CompileDriver {
         switch (eventType) {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
-            final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            final CompilationStatusListener publisher = !myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
             Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
               final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
-              publisher.fileGenerated(root, relativePath);
+              if (publisher != null) {
+                publisher.fileGenerated(root, relativePath);
+              }
               if (outputToArtifact != null) {
                 Collection<Artifact> artifacts = outputToArtifact.get(root);
                 if (!artifacts.isEmpty()) {
@@ -470,14 +471,11 @@ public class CompileDriver {
 
       if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
-        final Set<File> outputs = new HashSet<File>();
-        for (final String path : CompilerPathsEx.getOutputPaths(affectedModules)) {
-          outputs.add(new File(path));
-        }
-        if (!outputs.isEmpty()) {
-          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPathsEx.getOutputPaths(affectedModules));
+        if (!affectedRoots.isEmpty()) {
+          ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText("Synchronizing output directories...");
-          CompilerUtil.refreshOutputDirectories(outputs, false);
+          CompilerUtil.refreshOutputRoots(affectedRoots);
           indicator.setText("");
         }
       }
@@ -508,7 +506,7 @@ public class CompileDriver {
           messageType.toNotificationType(),
           new MessagesActivationListener(compileContext)
         ).setImportant(false);
-        compileContext.getBuildSession().registerCloseAction(() -> notification.expire());
+        compileContext.getBuildSession().registerCloseAction(notification::expire);
         notification.notify(myProject);
 
         if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
@@ -614,7 +612,7 @@ public class CompileDriver {
         statusBar.setInfo("");
       }
       if (progressIndicator instanceof CompilerTask) {
-        ApplicationManager.getApplication().invokeLater(() -> ((CompilerTask)progressIndicator).showCompilerContent());
+        ApplicationManager.getApplication().invokeLater(((CompilerTask)progressIndicator)::showCompilerContent);
       }
     }
     return true;
@@ -690,7 +688,7 @@ public class CompileDriver {
             }
           }
   
-          LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
           if (languageLevel == null) {
             languageLevel = moduleLanguageLevel;
           }

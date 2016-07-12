@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
     PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
     if (elementAt instanceof PsiNameIdentifierOwner) {
+      LOG.assertTrue(elementAt.isValid(), elementAt);
       return (PsiNameIdentifierOwner)elementAt;
     }
     return null;
@@ -262,14 +263,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
-
-    if (file instanceof PsiCompiledFile) {
-      PsiFile decompiled = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (decompiled != null) file = decompiled;
-    }
 
     PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {

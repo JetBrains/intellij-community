@@ -46,12 +46,7 @@ public class BorderEffect {
              effectType == attributes2.getEffectType();
     }
   };
-  private static final Condition<TextAttributes> BOX_FILTER = new Condition<TextAttributes>() {
-                              @Override
-                              public boolean value(TextAttributes attributes) {
-                                return isBorder(attributes);
-                              }
-                            };
+  private static final Condition<TextAttributes> BOX_FILTER = attributes -> isBorder(attributes);
 
   public BorderEffect(EditorImpl editor, Graphics graphics, int clipStartOffset, int clipEndOffset) {
     myEditor = editor;

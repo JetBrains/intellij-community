@@ -296,6 +296,11 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, startOffset);
       myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, endOffset);
     }
+    else if (myFoldingChangeEndOffset != Integer.MIN_VALUE) {
+      // during batch folding processing we delay invalidation requests, as we cannot perform coordinate conversions immediately
+      myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, startOffset);
+      myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, endOffset);
+    }
     else {
       doInvalidateRange(startOffset, endOffset);
     }

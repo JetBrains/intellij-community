@@ -18,7 +18,6 @@ package com.intellij.util.indexing;
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +33,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -64,10 +62,14 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
-    snapshot.logResponsivenessSinceCreation("Pushing properties");
+    boolean trackResponsiveness = !ApplicationManager.getApplication().isUnitTestMode();
+
+    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Pushing properties");
 
     indicator.setIndeterminate(true);
     indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+
+    myIndex.clearIndicesIfNecessary();
 
     CollectingContentIterator finder = myIndex.createContentIterator(indicator);
     snapshot = PerformanceWatcher.takeSnapshot();
@@ -76,7 +78,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     myIndex.filesUpdateEnumerationFinished();
 
-    snapshot.logResponsivenessSinceCreation("Indexable file iteration");
+    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Indexable file iteration");
 
     List<VirtualFile> files = finder.getFiles();
 
@@ -91,14 +93,14 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     snapshot = PerformanceWatcher.takeSnapshot();
 
-    LOG.info("Unindexed files update started: " + files.size() + " files to update");
+    if (trackResponsiveness) LOG.info("Unindexed files update started: " + files.size() + " files to update");
 
     indicator.setIndeterminate(false);
     indicator.setText(IdeBundle.message("progress.indexing.updating"));
 
     indexFiles(indicator, files);
 
-    snapshot.logResponsivenessSinceCreation("Unindexed files update");
+    if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
   }
 
   private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {

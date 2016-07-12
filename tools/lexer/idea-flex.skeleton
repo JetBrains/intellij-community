@@ -201,7 +201,6 @@
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
     CharSequence zzBufferL = zzBuffer;
-    char [] zzCMapL = ZZ_CMAP;
 
 --- local declarations
 

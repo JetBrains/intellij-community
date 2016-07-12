@@ -46,7 +46,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
                                 @NotNull InspectionNode node,
                                 @NotNull InspectionRVContentProvider provider,
                                 @NotNull InspectionTreeNode parentNode,
-                                final boolean showStructure);
+                                final boolean showStructure,
+                                final boolean groupBySeverity);
   void updateContent();
 
   boolean hasReportedProblems();
@@ -56,6 +57,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void ignoreCurrentElement(RefEntity refEntity);
   void amnesty(RefEntity refEntity);
+  void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor);
   void cleanup();
   void finalCleanup();
   boolean isGraphNeeded();

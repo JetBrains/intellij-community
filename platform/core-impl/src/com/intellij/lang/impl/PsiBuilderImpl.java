@@ -1145,13 +1145,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new BlockSupport.ReparsedSuccessfullyException(diffLog);
     }
 
-    final ASTNode rootNode = createRootAST(rootMarker);
+    final TreeElement rootNode = createRootAST(rootMarker);
     bind(rootMarker, (CompositeElement)rootNode);
 
     if (isTooDeep && !(rootNode instanceof FileElement)) {
       final ASTNode childNode = rootNode.getFirstChildNode();
       childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
+
+    assert rootNode.getTextLength() == myText.length() : rootNode.getElementType();
 
     return rootNode;
   }
@@ -1164,10 +1166,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private ASTNode createRootAST(@NotNull StartMarker rootMarker) {
+  private TreeElement createRootAST(@NotNull StartMarker rootMarker) {
     final IElementType type = rootMarker.getTokenType();
     @SuppressWarnings("NullableProblems")
-    final ASTNode rootNode = type instanceof ILazyParseableElementType ?
+    final TreeElement rootNode = type instanceof ILazyParseableElementType ?
                              ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
@@ -1560,7 +1562,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         if (oldNode.getElementType() instanceof ILazyParseableElementType && type instanceof ILazyParseableElementType ||
-            oldNode.getElementType() instanceof CustomParsingType && type instanceof CustomParsingType) {
+            oldNode.getElementType() instanceof ICustomParsingType && type instanceof ICustomParsingType) {
           return ((TreeElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
@@ -1851,8 +1853,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return new PsiWhiteSpaceImpl(text);
     }
 
-    if (type instanceof CustomParsingType) {
-      return (TreeElement)((CustomParsingType)type).parse(text, myCharTable);
+    if (type instanceof ICustomParsingType) {
+      return (TreeElement)((ICustomParsingType)type).parse(text, myCharTable);
     }
 
     if (type instanceof ILazyParseableElementType) {

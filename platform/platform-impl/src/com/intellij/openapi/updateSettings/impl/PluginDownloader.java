@@ -63,18 +63,20 @@ public class PluginDownloader {
   private String myDescription;
   private List<PluginId> myDepends;
   private IdeaPluginDescriptor myDescriptor;
-  private boolean myForceHttps;
+  private final boolean myForceHttps;
 
   private PluginDownloader(@NotNull String pluginId,
                            @NotNull String pluginUrl,
                            @Nullable String pluginName,
                            @Nullable String pluginVersion,
-                           @Nullable BuildNumber buildNumber) {
+                           @Nullable BuildNumber buildNumber,
+                           boolean forceHttps) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
     myPluginName = pluginName;
     myBuildNumber = buildNumber;
+    myForceHttps = forceHttps;
   }
 
   public String getPluginId() {
@@ -115,10 +117,6 @@ public class PluginDownloader {
 
   public void setDescriptor(IdeaPluginDescriptor descriptor) {
     myDescriptor = descriptor;
-  }
-
-  public void setForceHttps(boolean forceHttps) {
-    myForceHttps = forceHttps;
   }
 
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
@@ -295,10 +293,20 @@ public class PluginDownloader {
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
+    boolean forceHttps = host == null
+                         && (ApplicationManager.getApplication() == null || UpdateSettings.getInstance().canUseSecureConnection());
+    return createDownloader(descriptor, host, buildNumber, forceHttps);
+  }
+
+  @NotNull
+  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
+                                                  @Nullable String host,
+                                                  @Nullable BuildNumber buildNumber,
+                                                  boolean forceHttps) throws IOException {
     try {
       String url = getUrl(descriptor, host, buildNumber);
       String id = descriptor.getPluginId().getIdString();
-      PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber);
+      PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber, forceHttps);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
       List<PluginId> depends;

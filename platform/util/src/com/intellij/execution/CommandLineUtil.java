@@ -21,7 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 public class CommandLineUtil {
@@ -95,25 +95,27 @@ public class CommandLineUtil {
     return s.length() >= 2 && s.charAt(0) == ch && s.charAt(s.length() - 1) == ch;
   }
 
+  public static boolean VERBOSE_COMMAND_LINE_MODE;
   @NotNull
   public static String extractPresentableName(@NotNull String commandLine) {
     String executable = commandLine.trim();
 
-    if (StringUtil.startsWithChar(executable, '\"') || StringUtil.startsWithChar(executable, '\'')) {
-      char quote = executable.charAt(0);
-      for (int i = 1; i < executable.length(); i++) {
-        if (executable.charAt(i) == quote &&
-            (executable.charAt(i - 1) != '\'' || StringUtil.isEscapedBackslash(executable, 0, i - 1))) {
-          executable = executable.substring(1, i);
-          break;
-        }
-      }
+    List<String> words = StringUtil.splitHonorQuotes(executable, ' ');
+    String execName;
+    List<String> args;
+    if (words.isEmpty()) {
+      execName = executable;
+      args = Collections.emptyList();
     }
     else {
-      Iterator<String> words = StringUtil.tokenize(commandLine, " \t\n\r\f").iterator();
-      executable = words.hasNext() ? words.next() : executable;
+      execName = words.get(0);
+      args = words.subList(1, words.size());
     }
 
-    return new File(executable.trim()).getName();
+    if (VERBOSE_COMMAND_LINE_MODE) {
+      return StringUtil.shortenPathWithEllipsis(execName + " " + StringUtil.join(args, " "), 250);
+    }
+
+    return new File(StringUtil.unquoteString(execName)).getName();
   }
 }

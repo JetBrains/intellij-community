@@ -29,4 +29,10 @@ public interface RunManagerListener extends EventListener {
   void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings);
 
   void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId);
+
+  default void beginUpdate() {
+  }
+
+  default void endUpdate() {
+  }
 }

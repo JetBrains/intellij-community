@@ -34,27 +34,29 @@ class _JqlLexer implements FlexLexer {
 
   /** 
    * Translates characters to character classes
+   * Chosen bits are [8, 6, 7]
+   * Total runtime size is 1296 bytes
    */
-  private static final String ZZ_CMAP_PACKED = 
-    "\11\0\1\1\1\10\2\0\1\10\22\0\1\6\1\43\1\12\3\10"+
-    "\1\51\1\11\1\47\1\50\2\10\1\53\1\13\1\10\1\0\12\2"+
-    "\1\0\1\10\1\44\1\42\1\45\2\10\1\20\1\3\1\14\1\23"+
-    "\1\30\1\15\1\40\1\37\1\41\2\0\1\34\1\31\1\21\1\24"+
-    "\1\32\1\0\1\25\1\36\1\27\1\7\1\0\1\35\1\0\1\33"+
-    "\1\0\1\16\1\4\1\17\1\10\2\0\1\20\1\3\1\14\1\23"+
-    "\1\30\1\15\1\40\1\37\1\41\2\0\1\34\1\31\1\22\1\24"+
-    "\1\32\1\0\1\26\1\36\1\5\1\7\1\0\1\35\1\0\1\33"+
-    "\1\0\1\10\1\52\1\10\1\46\261\0\2\41\115\0\1\36\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\uffff\0\ufe90\0";
+  public static int ZZ_CMAP(int ch) {
+    return ZZ_CMAP_A[(ZZ_CMAP_Y[ZZ_CMAP_Z[ch>>13]|((ch>>7)&0x3f)]<<7)|(ch&0x7f)];
+  }
 
-  /** 
-   * Translates characters to character classes
-   */
-  private static final int ZZ_SX = 0x0700;
-  private static final int ZZ_MX = 0x10000;
-  private static final int ZZ_LX = 0x110000;
-  private static char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_SX);
-  private static class M { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_MX); }
-  private static class L { static final char [] MAP = zzUnpackCMap(ZZ_CMAP_PACKED, ZZ_LX); }
+  /* The ZZ_CMAP_Z table has 136 entries */
+  static final char ZZ_CMAP_Z[] = zzUnpackCMap(
+    "\1\0\207\100");
+
+  /* The ZZ_CMAP_Y table has 128 entries */
+  static final char ZZ_CMAP_Y[] = zzUnpackCMap(
+    "\1\0\1\1\1\2\175\1");
+
+  /* The ZZ_CMAP_A table has 384 entries */
+  static final char ZZ_CMAP_A[] = zzUnpackCMap(
+    "\11\0\1\1\1\10\2\0\1\10\22\0\1\6\1\43\1\12\3\10\1\51\1\11\1\47\1\50\2\10\1"+
+    "\53\1\13\1\10\1\0\12\2\1\0\1\10\1\44\1\42\1\45\2\10\1\20\1\3\1\14\1\23\1\30"+
+    "\1\15\1\40\1\37\1\41\2\0\1\34\1\31\1\21\1\24\1\32\1\0\1\25\1\36\1\27\1\7\1"+
+    "\0\1\35\1\0\1\33\1\0\1\16\1\4\1\17\1\10\2\0\1\20\1\3\1\14\1\23\1\30\1\15\1"+
+    "\40\1\37\1\41\2\0\1\34\1\31\1\22\1\24\1\32\1\0\1\26\1\36\1\5\1\7\1\0\1\35"+
+    "\1\0\1\33\1\0\1\10\1\52\1\10\1\46\261\0\2\41\115\0\1\36");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -363,14 +365,18 @@ class _JqlLexer implements FlexLexer {
    * @param packed   the packed character translation table
    * @return         the unpacked character translation table
    */
-  private static char [] zzUnpackCMap(String packed, int limit) {
-    char [] map = new char[limit];
+  private static char [] zzUnpackCMap(String packed) {
+    int size = 0;
+    for (int i = 0, length = packed.length(); i < length; i += 2) {
+      size += packed.charAt(i);
+    }
+    char[] map = new char[size];
     int i = 0;  /* index in packed string  */
     int j = 0;  /* index in unpacked array */
-    while (i < 212 && j < limit) {
+    while (i < packed.length()) {
       int  count = packed.charAt(i++);
       char value = packed.charAt(i++);
-      do map[j++] = value; while (--count > 0 && j < limit);
+      do map[j++] = value; while (--count > 0);
     }
     return map;
   }
@@ -513,7 +519,6 @@ class _JqlLexer implements FlexLexer {
     int zzMarkedPosL;
     int zzEndReadL = zzEndRead;
     CharSequence zzBufferL = zzBuffer;
-    char [] zzCMapL = ZZ_CMAP;
 
     int [] zzTransL = ZZ_TRANS;
     int [] zzRowMapL = ZZ_ROWMAP;
@@ -565,8 +570,7 @@ class _JqlLexer implements FlexLexer {
               zzCurrentPosL += Character.charCount(zzInput);
             }
           }
-          if (zzInput >= zzCMapL.length) ZZ_CMAP = zzCMapL = zzInput >= ZZ_MX ? L.MAP : M.MAP;
-          int zzNext = zzTransL[ zzRowMapL[zzState] + zzCMapL[zzInput] ];
+          int zzNext = zzTransL[ zzRowMapL[zzState] + ZZ_CMAP(zzInput) ];
           if (zzNext == -1) break zzForAction;
           zzState = zzNext;
 

@@ -26,11 +26,16 @@ import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.EditorTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("A quick brown fox");
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().clickAt(0, 1);
-    mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
+    mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
     checkResultByText("A<selection> q<caret></selection>uick brown fox");
   }
 
@@ -359,5 +364,65 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getCaretModel().removeCaretListener(caretListener);
     assertEquals("caret:LogicalPosition: (0, 7)selection:(4,7)", output.toString());
     checkResultByText(" abc<selection>def<caret></selection>");
+  }
+
+  public void testChangingHighlightersInBulkModeListener() throws Exception {
+    DocumentBulkUpdateListener.Adapter listener = new DocumentBulkUpdateListener.Adapter() {
+      @Override
+      public void updateFinished(@NotNull Document doc) {
+        if (doc == myEditor.getDocument()) {
+          myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+    };
+    getProject().getMessageBus().connect(myTestRootDisposable).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
+    initText("abcdef");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        document.setInBulkUpdate(true);
+        document.insertString(3, "\n\n");
+        document.setInBulkUpdate(false);
+      }
+    }.execute();
+    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+    assertEquals(1, highlighters.length);
+    assertEquals(7, highlighters[0].getStartOffset());
+    assertEquals(8, highlighters[0].getEndOffset());
+  }
+
+  public void testChangingHighlightersAfterClearingFoldingsDuringFoldingBatchUpdate() throws Exception {
+    initText("abc\n\ndef");
+    addCollapsedFoldRegion(2, 6, "...");
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+      ((FoldingModelEx)myEditor.getFoldingModel()).clearFoldRegions();
+      myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
+                                                    HighlighterTargetArea.EXACT_RANGE);
+    });
+    RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+    assertEquals(1, highlighters.length);
+    assertEquals(7, highlighters[0].getStartOffset());
+    assertEquals(8, highlighters[0].getEndOffset());
+  }
+
+  public void testShiftPressedBeforeDragOverLineNumbersIsFinished() throws Exception {
+    initText("abc\ndef\nghi");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
+    mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
+    checkResultByText("<selection>abc\ndef\nghi</selection>");
+  }
+
+  public void testScrollingInEditorOfSmallHeight() throws Exception {
+    initText("abc\n<caret>");
+    int heightInPixels = (int)(myEditor.getLineHeight() * 1.5);
+    EditorTestUtil.setEditorVisibleSizeInPixels(myEditor,
+                                                1000 * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor),
+                                                heightInPixels);
+    myEditor.getSettings().setAnimatedScrolling(false);
+    type('a');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
+    type('b');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
   }
 }

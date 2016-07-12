@@ -74,7 +74,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @NotNull
   @Override
   public String getDisplayName() {
-    return "foreach loop can be collapsed with stream api";
+    return "foreach loop can be collapsed with Stream API";
   }
 
   @Override
@@ -278,12 +278,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static boolean isThrowsCompatible(PsiMethod method) {
-    return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), new Condition<PsiClassType>() {
-      @Override
-      public boolean value(PsiClassType type) {
-        return !ExceptionUtil.isUncheckedException(type);
-      }
-    }) != null;
+    return ContainerUtil.find(method.getThrowsList().getReferencedTypes(), type -> !ExceptionUtil.isUncheckedException(type)) != null;
   }
 
   private static boolean isIdentityMapping(PsiParameter parameter, PsiExpression mapperCall) {

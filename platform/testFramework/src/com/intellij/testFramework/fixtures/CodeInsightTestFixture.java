@@ -537,6 +537,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testFoldingWithCollapseStatus(@NotNull String fileName);
 
+  void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
+
   void assertPreferredCompletionItems(int selected, @NotNull String... expected);
 
   /**

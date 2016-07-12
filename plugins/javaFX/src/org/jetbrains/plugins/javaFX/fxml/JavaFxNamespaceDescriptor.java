@@ -11,7 +11,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +58,7 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
         return result.toArray(new XmlElementDescriptor[result.size()]);
       }
     }
-    return new XmlElementDescriptor[0];
+    return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
   @Nullable

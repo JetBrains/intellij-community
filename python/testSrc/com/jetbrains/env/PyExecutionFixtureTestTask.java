@@ -3,13 +3,16 @@ package com.jetbrains.env;
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
@@ -23,19 +26,60 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * <h1>Task to execute code using {@link CodeInsightTestFixture}</h1>
+ * <h2>How to use it</h2>
+ * <p>
+ * Each test may have some test data somewhere in VCS (like <strong>testData</strong> folder).
+ * It is called <strong>test data path</strong>.
+ * This task copies test data to some temporary location, and launches your test against it.
+ * To get this location, use {@link CodeInsightTestFixture#getTempDirFixture()}
+ * or {@link CodeInsightTestFixture#getTempDirPath()}.
+ * </p>
+ * <p>
+ * You provide path to test data using 2 parts: base ({@link #getTestDataPath()} and relative
+ * path as argument to {@link PyExecutionFixtureTestTask#PyExecutionFixtureTestTask(String)}.
+ * Path is merged then, and data copied to temporary location, available with {@link CodeInsightTestFixture#getTempDirFixture()}.
+ * You may provide <strong>null</strong> to argument if you do not want to copy anything.
+ * </p>
+ * <h2>Things to check to make sure you use this code correctly</h2>
+ * <ol>
+ * <li>
+ * You never access {@link #getTestDataPath()} or {@link CodeInsightTestFixture#getTempDirPath()} in tests.
+ * <strong>Always</strong> work with {@link CodeInsightTestFixture#getTempDirFixture()}
+ * </li>
+ * <li>
+ * When overwriting {@link #getTestDataPath()} you return path to your <strong>testData</strong> (see current impl.)
+ * </li>
+ * </ol>
+ *
  * @author traff
+ * @author Ilya.Kazakevich
  */
 public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
   public static final int LONG_TIMEOUT = 120000;
   protected int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
+
+  @Nullable
+  private final String myRelativeTestDataPath;
+
+
+  /**
+   * @param relativeTestDataPath path that will be added to {@link #getTestDataPath()} to obtain test data path (the one
+   *                             that will be copied to temp folder. See class doc.).
+   *                             Pass null if you do not want to copy anything.
+   */
+  protected PyExecutionFixtureTestTask(@Nullable final String relativeTestDataPath) {
+    myRelativeTestDataPath = relativeTestDataPath;
+  }
 
   public Project getProject() {
     return myFixture.getProject();
@@ -49,36 +93,70 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myTimeout = LONG_TIMEOUT;
   }
 
-  public void setUp(final String testName) throws Exception {
-    initFixtureBuilder();
+  /**
+   * Returns virt file by path. May be relative or not.
+   *
+   * @return file or null if file does not exist
+   */
+  @Nullable
+  protected VirtualFile getFileByPath(@NotNull final String path) {
+    final File fileToWorkWith = new File(path);
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(
-      testName);
-
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.getFixture());
-
-    ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
-    moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-    moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
-    final List<String> contentRoots = getContentRoots();
-    for (String contentRoot : contentRoots) {
-      moduleFixtureBuilder.addContentRoot(getTestDataPath() + contentRoot);
-    }
-
-    myFixture.setUp();
-    myFixture.setTestDataPath(getTestDataPath());
+    return (fileToWorkWith.isAbsolute()
+            ? LocalFileSystem.getInstance().findFileByIoFile(fileToWorkWith)
+            : myFixture.getTempDirFixture().getFile(path));
   }
 
+  @Override
+  public void setUp(final String testName) throws Exception {
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    fixtureFactory.registerFixtureBuilder(MyModuleFixtureBuilder.class, MyModuleFixtureBuilderImpl.class);
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+      fixtureFactory.createFixtureBuilder(testName);
+    fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
+    myFixture = fixtureFactory.createCodeInsightFixture(fixtureBuilder.getFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+
+    final Module module = myFixture.getModule();
+    assert module != null;
+
+    if (StringUtil.isNotEmpty(myRelativeTestDataPath)) {
+      myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath();
+    }
+
+    final VirtualFile projectRoot = myFixture.getTempDirFixture().getFile(".");
+    PsiTestUtil.addSourceRoot(module, projectRoot);
+    PsiTestUtil.addContentRoot(module, projectRoot);
+
+    for (final String contentRoot : getContentRoots()) {
+      final VirtualFile file = myFixture.getTempDirFixture().getFile(contentRoot);
+      assert file != null && file.exists() : String.format("Content root does not exist %s", file);
+      PsiTestUtil.addContentRoot(module, file);
+    }
+  }
+
+  /**
+   * @return additional content roots
+   */
+  @NotNull
   protected List<String> getContentRoots() {
     return Lists.newArrayList();
   }
 
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
+  protected String getFilePath(@NotNull final String path) {
+    final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(path);
+    assert virtualFile != null && virtualFile.exists() : String.format("No file in %s", myFixture.getTempDirPath());
+    return virtualFile.getPath();
   }
 
-  protected void initFixtureBuilder() {
-    IdeaTestFixtureFactory.getFixtureFactory().registerFixtureBuilder(MyModuleFixtureBuilder.class, MyModuleFixtureBuilderImpl.class);
+  /**
+   * @return root of your test data path on filesystem (this is base folder: class will add its relative path from ctor
+   * to create full path and copy it to temp folder, see class doc.)
+   */
+  @NotNull
+  protected String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath();
   }
 
   public void tearDown() throws Exception {

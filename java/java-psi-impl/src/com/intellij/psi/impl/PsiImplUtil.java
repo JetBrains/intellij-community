@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -527,22 +527,16 @@ public class PsiImplUtil {
 
   @Nullable
   public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
-    return skipWhitespaceCommentsAndTokens(node, TokenSet.EMPTY);
+    return TreeUtil.skipWhitespaceAndComments(node, true);
   }
 
   @Nullable
   public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, TokenSet alsoSkip) {
-    ASTNode element = node;
-    while (true) {
-      if (element == null) return null;
-      if (!isWhitespaceOrComment(element) && !alsoSkip.contains(element.getElementType())) break;
-      element = element.getTreeNext();
-    }
-    return element;
+    return TreeUtil.skipWhitespaceCommentsAndTokens(node, alsoSkip, true);
   }
 
   public static boolean isWhitespaceOrComment(ASTNode element) {
-    return element.getPsi() instanceof PsiWhiteSpace || element.getPsi() instanceof PsiComment;
+    return TreeUtil.isWhitespaceOrComment(element);
   }
 
   @Nullable

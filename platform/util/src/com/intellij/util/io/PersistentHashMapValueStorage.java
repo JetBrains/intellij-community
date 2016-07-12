@@ -37,6 +37,7 @@ public class PersistentHashMapValueStorage {
   private volatile long mySize;
   private final File myFile;
   private final String myPath;
+  private final boolean myReadOnly;
   private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
   private boolean myCompactionMode = false;
 
@@ -45,6 +46,7 @@ public class PersistentHashMapValueStorage {
 
   public static class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
+    public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
   }
 
   public interface ExceptionalIOCancellationCallback {
@@ -99,6 +101,7 @@ public class PersistentHashMapValueStorage {
 
   public PersistentHashMapValueStorage(String path) throws IOException {
     myExceptionalIOCancellationCallback = CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
+    myReadOnly = CreationTimeOptions.READONLY.get() == Boolean.TRUE;
     myPath = path;
     myFile = new File(path);
 
@@ -109,7 +112,7 @@ public class PersistentHashMapValueStorage {
       mySize = myFile.length();  // volatile write
     }
 
-    if (mySize == 0) {
+    if (mySize == 0 && !myReadOnly) {
       appendBytes(new ByteSequence("Header Record For PersistentHashMapValueStorage".getBytes()), 0);
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
@@ -140,7 +143,7 @@ public class PersistentHashMapValueStorage {
   }
 
   public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
-    assert !myCompactionMode;
+    assert !myCompactionMode && !myReadOnly;
     long result = mySize; // volatile read
     final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null? null : ourAppendersCache.get(myPath);
 
@@ -425,7 +428,7 @@ public class PersistentHashMapValueStorage {
       }
     }
 
-    if (chunkCount > 1 && !myCompactionMode) {
+    if (chunkCount > 1 && !myCompactionMode && !myReadOnly) {
       checkCancellation();
       long endCompactionTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
       long diff = endCompactionTime - startedTime;
@@ -483,6 +486,7 @@ public class PersistentHashMapValueStorage {
   }
 
   public void force() {
+    if (myReadOnly) return;
     if (myCompressedAppendableFile != null) {
       myCompressedAppendableFile.force();
     }
@@ -547,8 +551,13 @@ public class PersistentHashMapValueStorage {
     myCompactionMode = true;
   }
 
-  public static PersistentHashMapValueStorage create(final String path) throws IOException {
-    return new PersistentHashMapValueStorage(path);
+  public static PersistentHashMapValueStorage create(final String path, boolean readOnly) throws IOException {
+    if (readOnly) CreationTimeOptions.READONLY.set(Boolean.TRUE);
+    try {
+      return new PersistentHashMapValueStorage(path);
+    } finally {
+      if (readOnly) CreationTimeOptions.READONLY.set(null);
+    }
   }
 
   private interface RAReader {

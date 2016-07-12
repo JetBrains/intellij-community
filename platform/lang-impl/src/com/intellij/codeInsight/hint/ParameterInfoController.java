@@ -282,13 +282,15 @@ public class ParameterInfoController implements Disposable {
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (!myDisposed && myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
+      if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
+          myEditor.getComponent().getRootPane() != null) {
         myComponent.update();
         IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
                          : HintManager.UNDER;
-        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,
+        Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, elementForUpdating instanceof PsiElement
+                                                                         ? (PsiElement)elementForUpdating : null,
                                                                  myEditor.getCaretModel().getOffset(), true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }

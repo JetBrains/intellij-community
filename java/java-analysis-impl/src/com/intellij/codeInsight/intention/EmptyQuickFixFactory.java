@@ -283,7 +283,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement psiElement) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement psiElement) {
     return QuickFixes.EMPTY_ACTION;
   }
 
@@ -586,7 +586,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull Module module) {
     return QuickFixes.EMPTY_ACTION;
   }
 
@@ -624,6 +624,11 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @Override
+  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
 }

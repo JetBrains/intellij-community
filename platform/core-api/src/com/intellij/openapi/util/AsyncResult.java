@@ -22,9 +22,6 @@ import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
 
@@ -63,18 +60,6 @@ public class AsyncResult<T> extends ActionCallback {
                                                                                              @NotNull Function<T, SubResult> doneHandler) {
     doWhenDone(new SubResultDoneCallback<T, SubResult, SubAsyncResult>(subResult, doneHandler)).notifyWhenRejected(subResult);
     return subResult;
-  }
-
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
-  public ActionCallback subCallback(@NotNull Consumer<T> doneHandler) {
-    ActionCallback subCallback = new ActionCallback();
-    doWhenDone(new SubCallbackDoneCallback<T>(subCallback, doneHandler)).notifyWhenRejected(subCallback);
-    return subCallback;
   }
 
   /**
@@ -205,16 +190,6 @@ public class AsyncResult<T> extends ActionCallback {
     return new AsyncResult<R>().setDone(result);
   }
 
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @NotNull
-  @Deprecated
-  public static <R extends List> AsyncResult<R> doneList() {
-    //noinspection unchecked
-    return done((R)Collections.emptyList());
-  }
-
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
   private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Consumer<Result> {
     private final AsyncSubResult subResult;
@@ -237,29 +212,6 @@ public class AsyncResult<T> extends ActionCallback {
         return;
       }
       subResult.setDone(v);
-    }
-  }
-
-  private static class SubCallbackDoneCallback<Result> implements Consumer<Result> {
-    private final ActionCallback subResult;
-    private final Consumer<Result> doneHandler;
-
-    public SubCallbackDoneCallback(ActionCallback subResult, Consumer<Result> doneHandler) {
-      this.subResult = subResult;
-      this.doneHandler = doneHandler;
-    }
-
-    @Override
-    public void consume(Result result) {
-      try {
-        doneHandler.consume(result);
-      }
-      catch (Throwable e) {
-        subResult.reject(e.getMessage());
-        LOG.error(e);
-        return;
-      }
-      subResult.setDone();
     }
   }
 }

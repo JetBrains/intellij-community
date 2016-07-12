@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -67,10 +66,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
   public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
   public String DEFAULT_PATCH_EXTENSION = PATCH;
-  public boolean SHORT_DIFF_HORIZONTALLY = true;
-  public int SHORT_DIFF_EXTRA_LINES = 2;
-  public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
-  public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;

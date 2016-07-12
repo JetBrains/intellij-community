@@ -152,12 +152,9 @@ public class InspectionEngine {
       tool.inspectionFinished(session, holder);
 
       if (holder.hasResults()) {
-        resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), new Condition<ProblemDescriptor>() {
-          @Override
-          public boolean value(ProblemDescriptor descriptor) {
-            PsiElement element = descriptor.getPsiElement();
-            return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
-          }
+        resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), descriptor -> {
+          PsiElement element = descriptor.getPsiElement();
+          return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
         }));
       }
 
@@ -269,7 +266,7 @@ public class InspectionEngine {
   }
 
   @Nullable("null means not specified")
-  private static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
+  public static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
     String langId = wrapper.getLanguage();
     if (langId == null) {
       return null;

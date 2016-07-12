@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +134,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           return;
         }
         final PsiVariable variable = (PsiVariable)target;
-        if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
+        if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
         if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
@@ -181,7 +181,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
             return;
           }
           final PsiVariable variable = (PsiVariable)target;
-          if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
+          if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }
           PsiClass parentClass = ClassUtils.getContainingClass(expression);

@@ -203,7 +203,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
         }
       }
       else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        collectInheritingClasses((PsiClass)element, result);
+        result.addAll(collectInheritingClasses((PsiClass)element));
       }
     }
     collectOverridingMethods(methods, result);

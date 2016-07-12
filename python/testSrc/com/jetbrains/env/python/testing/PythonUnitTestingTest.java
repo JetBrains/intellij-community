@@ -1,8 +1,15 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer;
@@ -11,8 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -62,6 +71,62 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String all) {
         assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
+      }
+    });
+  }
+
+
+  /**
+   * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI
+   * from that moment
+   */
+  @Test
+  public void testCantRerun() throws Exception {
+    startMessagesCapture();
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_with_skips_and_errors.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assert runner.getFailedTestsCount() > 0 : "We need failed tests to test broken rerun";
+
+        startMessagesCapture();
+
+        EdtTestUtil.runInEdtAndWait((Runnable)() -> {
+          deleteAllTestFiles(myFixture);
+          runner.rerunFailedTests();
+        });
+
+        final List<Throwable> throwables = getCapturesMessages().first;
+        Assert.assertThat("Exception shall be thrown", throwables, not(emptyCollectionOf(Throwable.class)));
+        final Throwable exception = throwables.get(0);
+        Assert.assertThat("ExecutionException should be thrown", exception, instanceOf(ExecutionException.class));
+        Assert.assertThat("Wrong text", exception.getMessage(), equalTo(PyBundle.message("runcfg.tests.cant_rerun")));
+        Assert.assertThat("No messages displayed for exception", getCapturesMessages().second, not(emptyCollectionOf(String.class)));
+
+
+        stopMessageCapture();
+      }
+    });
+  }
+
+  /**
+   * Deletes all files in temp. folder
+   */
+  private static void deleteAllTestFiles(@NotNull final CodeInsightTestFixture fixture) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile testRoot = fixture.getTempDirFixture().getFile(".");
+      assert testRoot != null : "No temp path?";
+      try {
+        for (final VirtualFile child : testRoot.getChildren()) {
+          child.delete(null);
+        }
+      }
+      catch (final IOException e) {
+        throw new AssertionError(String.format("Failed to delete files in  %s : %s", testRoot, e));
       }
     });
   }
@@ -201,6 +266,21 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testDependent() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "dependentTests/test_my_class.py") {
 
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getPassedTestsCount());
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testRelativeImports() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit/relativeImports", "relative_imports/tests/test_imps.py") {
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,

@@ -54,7 +54,7 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +161,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       private ComponentAdapter getDelegate() {
         if (myDelegate == null) {
           Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
+          myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
         return myDelegate;
       }

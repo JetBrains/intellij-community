@@ -52,7 +52,7 @@ public class PyPackagingTest extends PyEnvTestCase {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
-          packages = PyPackageManager.getInstance(sdk).getPackages(false);
+          packages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false);
         }
         catch (ExecutionException ignored) {
         }
@@ -82,7 +82,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
-          final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).getPackages(false);
+          final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).refreshAndGetPackages(false);
           final PyPackage setuptools = findPackage("setuptools", packages);
           assertNotNull(setuptools);
           assertEquals("setuptools", setuptools.getName());
@@ -114,11 +114,11 @@ public class PyPackagingTest extends PyEnvTestCase {
           final Sdk venvSdk = createTempSdk(venvSdkHome, SdkCreationType.EMPTY_SDK);
           assertNotNull(venvSdk);
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
-          final List<PyPackage> packages1 = manager.getPackages(false);
+          final List<PyPackage> packages1 = manager.refreshAndGetPackages(false);
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
                                new PyRequirement("httplib2")), Collections.<String>emptyList());
-          final List<PyPackage> packages2 = manager.getPackages(false);
+          final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);
           assertNotNull(markdown2);
           assertTrue(markdown2.isInstalled());
@@ -126,7 +126,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
           manager.uninstall(list(pip1));
-          final List<PyPackage> packages3 = manager.getPackages(false);
+          final List<PyPackage> packages3 = manager.refreshAndGetPackages(false);
           final PyPackage pip2 = findPackage("pip", packages3);
           assertNull(pip2);
         }
@@ -156,6 +156,10 @@ public class PyPackagingTest extends PyEnvTestCase {
 
 
   private abstract static class PyPackagingTestTask extends PyExecutionFixtureTestTask {
+    PyPackagingTestTask() {
+      super(null);
+    }
+
     @NotNull
     @Override
     public Set<String> getTags() {

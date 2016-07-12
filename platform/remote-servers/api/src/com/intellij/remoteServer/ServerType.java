@@ -35,6 +35,11 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract String getPresentableName();
 
   @NotNull
+  public String getHelpTopic() {
+    return "reference.settings.clouds";
+  }
+
+  @NotNull
   public abstract Icon getIcon();
 
   @NotNull

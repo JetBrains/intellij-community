@@ -16,7 +16,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
@@ -148,17 +147,20 @@ public abstract class TreeTraversal {
   }
 
   public static abstract class GuidedIt<T> extends It<T> {
+
+    public interface Guide<T> {
+      void guide(@NotNull GuidedIt<T> guidedIt);
+    }
+
     @Nullable
     public T curChild, curParent;
     @Nullable
     public Iterable<? extends T> curChildren;
     public boolean curNoChildren;
 
-    public abstract GuidedIt<T> setGuide(Consumer<GuidedIt<T>> guide);
-
-    public abstract GuidedIt<T> queueNext(T child);
-    public abstract GuidedIt<T> result(T node);
-    public abstract GuidedIt<T> queueLast(T child);
+    public abstract GuidedIt<T> queueNext(@Nullable T child);
+    public abstract GuidedIt<T> result(@Nullable T node);
+    public abstract GuidedIt<T> queueLast(@Nullable T child);
 
     protected GuidedIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
@@ -166,13 +168,16 @@ public abstract class TreeTraversal {
   }
 
   @NotNull
-  public static final TreeTraversal GUIDED_TRAVERSAL = new TreeTraversal("GUIDED_TRAVERSAL") {
-    @NotNull
-    @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
-      return new GuidedItImpl<T>(roots, tree);
-    }
-  };
+  public static TreeTraversal GUIDED_TRAVERSAL(@NotNull final GuidedIt.Guide<?> guide) {
+    return new TreeTraversal("GUIDED_TRAVERSAL") {
+      @NotNull
+      @Override
+      public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
+        //noinspection unchecked
+        return new GuidedItImpl<T>(roots, tree, (GuidedIt.Guide<T>)guide);
+      }
+    };
+  }
 
   /**
    * Returns an iterator over the nodes in a tree structure, using pre-order
@@ -503,19 +508,17 @@ public abstract class TreeTraversal {
   // Misc
   // -----------------------------------------------------------------------------
   private static final class GuidedItImpl<T> extends GuidedIt<T> {
-    P1<T> first, last;
+    final Guide<T> guide;
 
-    Consumer<GuidedIt<T>> guide;
+    P1<T> first, last;
     T curResult;
 
-    GuidedItImpl(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
+    GuidedItImpl(@NotNull Iterable<? extends T> roots,
+                 @NotNull Function<T, ? extends Iterable<? extends T>> tree,
+                 @NotNull Guide<T> guide) {
       super(tree);
       first = last = P1.create(roots);
-    }
-
-    public GuidedIt<T> setGuide(Consumer<GuidedIt<T>> guide) {
       this.guide = guide;
-      return this;
     }
 
     public GuidedIt<T> queueNext(T child) {
@@ -546,7 +549,7 @@ public abstract class TreeTraversal {
           curParent = top.node;
           curChildren = top.itle;
           curNoChildren = top.empty;
-          guide.consume(this);
+          guide.guide(this);
         }
         if (!hasNext) {
           last = last.remove();

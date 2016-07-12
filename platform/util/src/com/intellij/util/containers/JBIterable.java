@@ -149,6 +149,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Returns a {@code JBIterable} containing the one {@code element}.
+   */
+  @NotNull
+  public static <E> JBIterable<E> of(@Nullable E element) {
+    return element == null ? JBIterable.<E>empty() : from(Collections.singletonList(element));
+  }
+
+  /**
    * Returns a {@code JBIterable} containing {@code elements} in the specified order.
    */
   @NotNull

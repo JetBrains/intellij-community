@@ -31,9 +31,9 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
-  private final StringRef myQualifiedName;
-  private final StringRef myName;
-  private final StringRef myBaseRefText;
+  private final String myQualifiedName;
+  private final String myName;
+  private final String myBaseRefText;
   private final byte myFlags;
 
   private static final int DEPRECATED = 0x01;
@@ -50,18 +50,9 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   public PsiClassStubImpl(final JavaClassElementType type,
                           final StubElement parent,
-                          final String qualifiedName,
-                          final String name,
+                          @Nullable final String qualifiedName,
+                          @Nullable final String name,
                           @Nullable final String baseRefText,
-                          final byte flags) {
-    this(type, parent, StringRef.fromString(qualifiedName), StringRef.fromString(name), StringRef.fromString(baseRefText), flags);
-  }
-
-  public PsiClassStubImpl(final JavaClassElementType type,
-                          final StubElement parent,
-                          final StringRef qualifiedName,
-                          final StringRef name,
-                          final StringRef baseRefText,
                           final byte flags) {
     super(parent, type);
     myQualifiedName = qualifiedName;
@@ -76,17 +67,17 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   @Override
   public String getQualifiedName() {
-    return StringRef.toString(myQualifiedName);
+    return myQualifiedName;
   }
 
   @Override
   public String getBaseClassReferenceText() {
-    return StringRef.toString(myBaseRefText);
+    return myBaseRefText;
   }
 
   @Override

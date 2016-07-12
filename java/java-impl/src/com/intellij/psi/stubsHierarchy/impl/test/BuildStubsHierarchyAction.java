@@ -17,15 +17,35 @@ package com.intellij.psi.stubsHierarchy.impl.test;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.stubsHierarchy.impl.SingleClassHierarchyBuilder;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.psi.stubsHierarchy.ClassHierarchy;
+import com.intellij.psi.stubsHierarchy.HierarchyService;
+import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
+
+import java.util.List;
 
 public class BuildStubsHierarchyAction extends InheritanceAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction");
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project != null) {
-      SingleClassHierarchyBuilder.build(project);
-    }
+    if (project == null) return;
+
+    HierarchyService service = HierarchyService.getService(project);
+    service.clearHierarchy();
+
+    long start = System.currentTimeMillis();
+    ThrowableComputable<ClassHierarchy, RuntimeException> computable = () -> ReadAction.compute(service::getHierarchy);
+    ClassHierarchy hierarchy = ProgressManager.getInstance().runProcessWithProgressSynchronously(computable, "Building Hierarchy", false, project);
+    long elapsed = System.currentTimeMillis() - start;
+    List<? extends SmartClassAnchor> covered = hierarchy.getCoveredClasses();
+    LOG.info("Building stub hierarchy took " + elapsed + " ms" +
+             "; classes=" + hierarchy.getAllClasses().size() +
+             "; covered=" + covered.size() +
+             "; ambiguous=" + covered.stream().filter(hierarchy::hasAmbiguousSupers).count());
   }
 }

@@ -124,12 +124,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   @Override
   public DomElement createPathStableCopy() {
     final DomFileElement stableCopy = myParent.createStableCopy();
-    return getManager().createStableValue(new NullableFactory<DomElement>() {
-      @Override
-      public DomElement create() {
-        return stableCopy.isValid() ? stableCopy.getRootElement() : null;
-      }
-    });
+    return getManager().createStableValue((NullableFactory<DomElement>)() -> stableCopy.isValid() ? stableCopy.getRootElement() : null);
   }
 
   @Override

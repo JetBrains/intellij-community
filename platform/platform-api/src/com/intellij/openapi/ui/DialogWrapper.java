@@ -18,7 +18,6 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -45,8 +44,10 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -433,6 +434,10 @@ public abstract class DialogWrapper {
     return ourDefaultBorder;
   }
 
+  protected static boolean isMoveHelpButtonLeft() {
+    return UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"));
+  }
+
   /**
    * Creates panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
@@ -447,8 +452,7 @@ public abstract class DialogWrapper {
     Map<Action, JButton> buttonMap = new LinkedHashMap<Action, JButton>();
 
     boolean hasHelpToMoveToLeftSide = false;
-    if ((UIUtil.isUnderAquaBasedLookAndFeel())
-        && Arrays.asList(actions).contains(getHelpAction())) {
+    if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
       actions = ArrayUtil.remove(actions, getHelpAction());
     } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
@@ -469,8 +473,18 @@ public abstract class DialogWrapper {
       actions = ArrayUtil.remove(actions, getHelpAction());
     }
 
-    JPanel panel = new JPanel(new BorderLayout());
-    final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
+        if (getStyle() == DialogStyle.COMPACT && bg != null) {
+          return bg;
+        }
+        return super.getBackground();
+      }
+    };
+    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
@@ -510,6 +524,12 @@ public abstract class DialogWrapper {
         }
 
         JPanel buttonsPanel = createButtons(actions, buttonMap);
+        if (shouldAddErrorNearButtons()) {
+          lrButtonsPanel.add(myErrorText, new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                 insets, 0, 0));
+          lrButtonsPanel.add(Box.createHorizontalStrut(10), new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
+                                                                                   GridBagConstraints.NONE, insets, 0, 0));
+        }
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
                                                   0));
@@ -524,11 +544,7 @@ public abstract class DialogWrapper {
     }
 
     if (hasHelpToMoveToLeftSide) {
-      JButton helpButton = new JButton(getHelpAction());
-      helpButton.putClientProperty("JButton.buttonType", "help");
-      helpButton.setText("");
-      helpButton.setMargin(insets);
-      helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
+      JButton helpButton = createHelpButton(insets);
       panel.add(helpButton, BorderLayout.WEST);
     }
 
@@ -552,13 +568,43 @@ public abstract class DialogWrapper {
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
-      Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
+      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
       panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
     } else {
       panel.setBorder(JBUI.Borders.emptyTop(8));
     }
-
     return panel;
+  }
+
+  @NotNull
+  protected JButton createHelpButton(Insets insets) {
+    final JButton helpButton;
+    if ((SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+      helpButton = new JButton(getHelpAction()) {
+        @Override
+        public void paint(Graphics g) {
+          IconUtil.paintInCenterOf(this, g, AllIcons.Windows.WinHelp);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+          return new Dimension(AllIcons.Windows.WinHelp.getIconWidth(), AllIcons.Windows.WinHelp.getIconHeight());
+        }
+      };
+      helpButton.setOpaque(false);
+    } else {
+      helpButton = new JButton(getHelpAction());
+    }
+    helpButton.putClientProperty("JButton.buttonType", "help");
+    helpButton.setText("");
+    helpButton.setMargin(insets);
+    helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
+    return helpButton;
+  }
+
+  protected boolean shouldAddErrorNearButtons() {
+    return false;
   }
 
   @NotNull
@@ -595,7 +641,7 @@ public abstract class DialogWrapper {
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
       JButton helpButton = null;
       for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
         if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
@@ -637,7 +683,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
@@ -699,7 +745,7 @@ public abstract class DialogWrapper {
           final char mnemonic = (char)eachInfo.getMnemonic();
           JRootPane rootPane = getPeer().getRootPane();
           if (rootPane != null) {
-            new DumbAwareAction() {
+            new NoTransactionAction() {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 final JBOptionButton buttonToActivate = eachInfo.getButton();
@@ -924,8 +970,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
-    processDoNotAskOnCancel();
-
     if (getCancelAction().isEnabled()) {
       close(CANCEL_EXIT_CODE);
     }
@@ -967,8 +1011,6 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
-    processDoNotAskOnOk(OK_EXIT_CODE);
-
     if (getOKAction().isEnabled()) {
       close(OK_EXIT_CODE);
     }
@@ -1186,7 +1228,7 @@ public abstract class DialogWrapper {
 
   protected void init() {
     ensureEventDispatchThread();
-    myErrorText = new ErrorText();
+    myErrorText = new ErrorText(getErrorTextAlignment());
     myErrorText.setVisible(false);
     final ComponentAdapter resizeListener = new ComponentAdapter() {
       private int myHeight;
@@ -1202,7 +1244,7 @@ public abstract class DialogWrapper {
           if (root != null) {
             root.validate();
           }
-          if (myActualSize != null) {
+          if (myActualSize != null && !shouldAddErrorNearButtons()) {
             myPeer.setSize(myActualSize.width, myActualSize.height + height);
           }
           myErrorText.revalidate();
@@ -1231,7 +1273,7 @@ public abstract class DialogWrapper {
     myPeer.setContentPane(root);
 
     final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
-    final AnAction toggleShowOptions = new DumbAwareAction() {
+    final AnAction toggleShowOptions = new NoTransactionAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         expandNextOptionButton();
@@ -1281,13 +1323,17 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.setActivationComponent(root);
   }
 
+  protected int getErrorTextAlignment() {
+    return SwingConstants.LEADING;
+  }
+
   @NotNull
   LayoutManager createRootLayout() {
     return new BorderLayout();
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
-    new DumbAwareAction() {
+    new NoTransactionAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -1943,10 +1989,11 @@ public abstract class DialogWrapper {
     private final JLabel myLabel = new JLabel();
     private String myText;
 
-    private ErrorText() {
+    private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
       myLabel.setIcon(AllIcons.Actions.Lightning);
       myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
+      myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       pane.setBorder(JBUI.Borders.empty());
@@ -1996,9 +2043,60 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @see PropertyDoNotAskOption
+   * @see Adapter
    */
   public interface DoNotAskOption {
+
+    abstract class Adapter implements DoNotAskOption {
+
+      /**
+       * Save the state of the checkbox in the settings, or perform some other related action.
+       * This method is called right after the dialog is {@link #close(int) closed}.
+       * <br/>
+       * Note that this method won't be called in the case when the dialog is closed by {@link #CANCEL_EXIT_CODE Cancel}
+       * if {@link #shouldSaveOptionsOnCancel() saving the choice on cancel is disabled} (which is by default).
+       *
+       * @param isSelected true if user selected "don't show again".
+       * @param exitCode   the {@link #getExitCode() exit code} of the dialog.
+       * @see #shouldSaveOptionsOnCancel()
+       */
+      public abstract void rememberChoice(boolean isSelected, int exitCode);
+
+      /**
+       * Tells whether the checkbox should be selected by default or not.
+       *
+       * @return true if the checkbox should be selected by default.
+       */
+      public boolean isSelectedByDefault() {
+        return false;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.ask");
+      }
+
+      @Override
+      public final boolean isToBeShown() {
+        return !isSelectedByDefault();
+      }
+
+      @Override
+      public final void setToBeShown(boolean toBeShown, int exitCode) {
+        rememberChoice(!toBeShown, exitCode);
+      }
+
+      @Override
+      public final boolean canBeHidden() {
+        return true;
+      }
+    }
 
     /**
      * @return default selection state of checkbox (false -> checkbox selected)
@@ -2020,41 +2118,6 @@ public abstract class DialogWrapper {
 
     @NotNull
     String getDoNotShowMessage();
-  }
-
-  public static class PropertyDoNotAskOption implements DoNotAskOption {
-    @NotNull
-    private final String myProperty;
-
-    public PropertyDoNotAskOption(@NotNull String property) {
-      myProperty = property;
-    }
-
-    @Override
-    public boolean isToBeShown() {
-      return PropertiesComponent.getInstance().getBoolean(myProperty);
-    }
-
-    @Override
-    public void setToBeShown(boolean value, int exitCode) {
-      PropertiesComponent.getInstance().setValue(myProperty, value);
-    }
-
-    @Override
-    public boolean canBeHidden() {
-      return false;
-    }
-
-    @Override
-    public boolean shouldSaveOptionsOnCancel() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDoNotShowMessage() {
-      return CommonBundle.message("dialog.options.do.not.ask");
-    }
   }
 
   @NotNull
@@ -2105,4 +2168,11 @@ public abstract class DialogWrapper {
   private enum ErrorPaintingType {DOT, SIGN, LINE}
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  private static abstract class NoTransactionAction extends DumbAwareAction {
+    @Override
+    public boolean startInTransaction() {
+      return false;
+    }
+  }
 }

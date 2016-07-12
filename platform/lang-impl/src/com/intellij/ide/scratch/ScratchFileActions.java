@@ -194,12 +194,7 @@ public class ScratchFileActions {
 
     @NotNull
     protected Condition<VirtualFile> fileFilter(Project project) {
-      return new Condition<VirtualFile>() {
-        @Override
-        public boolean value(@NotNull VirtualFile file) {
-          return ScratchRootType.getInstance().containsFile(file);
-        }
-      };
+      return file -> ScratchRootType.getInstance().containsFile(file);
     }
 
     @NotNull

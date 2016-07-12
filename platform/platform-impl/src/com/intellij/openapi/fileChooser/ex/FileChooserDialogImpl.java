@@ -194,7 +194,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected void saveRecent(String path) {
-    final List<String> files = new ArrayList<String>(Arrays.asList(getRecentFiles()));
+    final List<String> files = new ArrayList<>(Arrays.asList(getRecentFiles()));
     files.remove(path);
     files.add(0, path);
     while (files.size() > 30) {
@@ -440,7 +440,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     internalTree.setShowsRootHandles(true);
     Disposer.register(myDisposable, myFileSystemTree);
 
-    myFileSystemTree.addOkAction(() -> doOKAction());
+    myFileSystemTree.addOkAction(this::doOKAction);
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(new NodeRenderer());
     tree.getSelectionModel().addTreeSelectionListener(new FileTreeSelectionListener());
@@ -501,7 +501,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myFileSystemTree.getSelectedFiles();
   }
 
-  private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
+  private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<>();
 
   private static boolean isToShowTextField() {
     return PropertiesComponent.getInstance().getBoolean(FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
@@ -604,11 +604,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
 
       if (PATH_FIELD.is(dataId)) {
-        return new PathField() {
-          public void toggleVisible() {
-            toggleShowTextField();
-          }
-        };
+        return (PathField)FileChooserDialogImpl.this::toggleShowTextField;
       }
 
       if (FileSystemTree.DATA_KEY.is(dataId)) {
@@ -632,7 +628,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
     if (isToShowTextField()) {
-      final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
+      final ArrayList<VirtualFile> selection = new ArrayList<>();
       if (myFileSystemTree.getSelectedFile() != null) {
         selection.add(myFileSystemTree.getSelectedFile());
       }

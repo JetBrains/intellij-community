@@ -80,12 +80,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends AnAct
       return;
     }
 
-    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, new Condition<T>() {
-      @Override
-      public boolean value(T targetNode) {
-        return isVisible4(targetNode) && isEnabled4(targetNode);
-      }
-    });
+    List<T> verifiedTargetNodes = ContainerUtil.filter(targetNodes, targetNode -> isVisible4(targetNode) && isEnabled4(targetNode));
     doActionPerformed(getContent(e), e, verifiedTargetNodes);
   }
 

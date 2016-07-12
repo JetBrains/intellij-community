@@ -27,9 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +35,15 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
+  private final boolean myCheckCompletionChar;
 
-  protected BaseCompleteMacro(@NonNls String name) {
+  protected BaseCompleteMacro(@NonNls final String name) {
+    this(name, true);
+  }
+
+  protected BaseCompleteMacro(@NonNls final String name, final boolean checkCompletionChar) {
     myName = name;
+    myCheckCompletionChar = checkCompletionChar;
   }
 
   @Override
@@ -84,36 +88,22 @@ public abstract class BaseCompleteMacro extends Macro {
         Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
         if (lookup != null) {
-          lookup.addLookupListener(new MyLookupListener(context));
+          lookup.addLookupListener(new MyLookupListener(context, myCheckCompletionChar));
         }
       }, "", null);
     };
     ApplicationManager.getApplication().invokeLater(runnable);
   }
 
-  private static void considerNextTab(Editor editor) {
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState != null) {
-      TextRange range = templateState.getCurrentVariableRange();
-      if (range != null && range.getLength() > 0) {
-        int caret = editor.getCaretModel().getOffset();
-        if (caret == range.getEndOffset()) {
-          templateState.nextTab();
-        }
-        else if (caret > range.getEndOffset()) {
-          templateState.gotoEnd(true);
-        }
-      }
-    }
-  }
-
   protected abstract void invokeCompletionHandler(Project project, Editor editor);
 
   private static class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;
+    private final boolean myCheckCompletionChar;
 
-    public MyLookupListener(@NotNull ExpressionContext context) {
+    public MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
+      myCheckCompletionChar = checkCompletionChar;
     }
 
     @Override
@@ -122,27 +112,24 @@ public abstract class BaseCompleteMacro extends Macro {
       if (item == null) return;
 
       char c = event.getCompletionChar();
-      if (!LookupEvent.isSpecialCompletionChar(c)) {
+      if (myCheckCompletionChar && !LookupEvent.isSpecialCompletionChar(c)) {
         return;
-      }
-
-      for(TemplateCompletionProcessor processor: Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
-        if (!processor.nextTabOnItemSelected(myContext, item)) {
-          return;
-        }
       }
 
       final Project project = myContext.getProject();
       if (project == null) {
         return;
       }
-      
+
       Runnable runnable = () -> new WriteCommandAction(project) {
         @Override
         protected void run(@NotNull com.intellij.openapi.application.Result result) throws Throwable {
           Editor editor = myContext.getEditor();
           if (editor != null) {
-            considerNextTab(editor);
+            TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+            if (templateState != null) {
+              templateState.considerNextTabOnLookupItemSelected(item);
+            }
           }
         }
       }.execute();

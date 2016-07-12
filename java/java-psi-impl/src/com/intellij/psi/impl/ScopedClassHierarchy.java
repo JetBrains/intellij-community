@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,20 +165,35 @@ class ScopedClassHierarchy {
     List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
     if (list == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      list = ContainerUtil.newArrayList();
-      for (PsiClassType type : myPlaceClass.getSuperTypes()) {
-        PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
-        if (corrected == null) continue;
-
-        PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, myPlaceClass)).resolveGenerics();
-        PsiClass superClass = result.getElement();
-        if (superClass == null || !PsiSearchScopeUtil.isInScope(myResolveScope, superClass)) continue;
-
-        list.add(result);
+      list = ourGuard.doPreventingRecursion(this, true, new Computable<List<PsiClassType.ClassResolveResult>>() {
+        @Override
+        public List<PsiClassType.ClassResolveResult> compute() {
+          return calcImmediateSupersWithCapturing();
+        }
+      });
+      if (list == null) {
+        return Collections.emptyList();
       }
       if (stamp.mayCacheNow()) {
         myImmediateSupersWithCapturing = list;
       }
+    }
+    return list;
+  }
+
+  @NotNull
+  private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
+    List<PsiClassType.ClassResolveResult> list;
+    list = ContainerUtil.newArrayList();
+    for (PsiClassType type : myPlaceClass.getSuperTypes()) {
+      PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
+      if (corrected == null) continue;
+
+      PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, myPlaceClass)).resolveGenerics();
+      PsiClass superClass = result.getElement();
+      if (superClass == null || !PsiSearchScopeUtil.isInScope(myResolveScope, superClass)) continue;
+
+      list.add(result);
     }
     return list;
   }

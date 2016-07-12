@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -181,13 +182,25 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
   }
 
   public void testStaticPropertyFromLibrary() throws Exception {
-    doTestErrorHint("Foo", "Cannot perform refactoring.\n" +
-                           "Selected method is not located inside the project");
+    doTestErrorHint("Foo", RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed")));
   }
 
   public void testControllerMethod() throws Exception {
     final PsiClass psiClass = doTestHandler("newName", null);
     assertMethodExists(psiClass, "getNewName");
+  }
+
+  public void testNestedControllerIdFromFxml() throws Exception {
+    doTestHandler("newName", getTestName(false) + "Internal");
+    myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", false);
+  }
+
+  public void testNestedControllerIdFromJava() throws Exception {
+    myFixture.configureByFiles(getTestName(false) + ".java", getTestName(false) + "Internal.java", getTestName(true) + ".fxml");
+    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    new RenameProcessor(getProject(), elementAtCaret, "newName", false, false).run();
+    myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", false);
+    myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", false);
   }
 
   public void testControllerStringProperty() throws Exception {

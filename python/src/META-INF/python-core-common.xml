@@ -10,6 +10,7 @@
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.treeChangePreprocessor implementation="com.jetbrains.python.PythonPsiManager"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
@@ -688,12 +689,6 @@
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction" text="Fo_rce Step Into"
             icon="AllIcons.Debugger.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
@@ -799,7 +794,7 @@
       <add-to-group group-id="Internal"/>
     </action>
 
-    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.array.PyViewArrayAction" text="View as Array">
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction" text="View as Array">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 

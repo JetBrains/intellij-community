@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -36,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -62,7 +58,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.io.File;
 import java.util.*;
@@ -190,7 +185,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   public static PsiClassType processScriptSuperClasses(@NotNull GroovyFile scriptFile) {
     if (!scriptFile.isScript()) return null;
 
-    final VirtualFile virtualFile = scriptFile.getVirtualFile();
+    final VirtualFile virtualFile = scriptFile.getOriginalFile().getVirtualFile();
     if (virtualFile == null) return null;
     final String filePath = virtualFile.getPath();
 
@@ -261,23 +256,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
-    final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          return processor.execute(element, state);
-        }
-        else if (element instanceof PsiNamedElement) {
-          return ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
-        }
-        else {
-          return processor.execute(element, state);
-        }
-      }
-    };
-
-    for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(nameChecker, psiType, place, placeFile, state)) {
+    NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
+    for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
+      if (!script.processExecutor(processor, psiType, place, placeFile, state, typeText)) {
         return false;
       }
     }
@@ -371,57 +352,54 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static List<GroovyDslScript> getDslScripts(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, new CachedValueProvider<List<GroovyDslScript>>() {
-      @Override
-      public Result<List<GroovyDslScript>> compute() {
-        if (GdslUtil.ourGdslStopped) {
-          return Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
+    return CachedValuesManager.getManager(project).getCachedValue(project, SCRIPTS_CACHE, () -> {
+      if (GdslUtil.ourGdslStopped) {
+        return CachedValueProvider.Result.create(Collections.<GroovyDslScript>emptyList(), ModificationTracker.NEVER_CHANGED);
+      }
+
+      // eagerly initialize some services used by background gdsl parsing threads
+      // because service init requires a read action
+      // and there could be a deadlock with a write action waiting already on EDT
+      // if current thread is inside a non-cancellable read action
+      GdslScriptBase.getIdeaVersion();
+      DslActivationStatus.getInstance();
+
+      int count = 0;
+
+      List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
+
+      final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
+        new LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>();
+
+      for (VirtualFile vfile : getGdslFiles(project)) {
+        final long stamp = vfile.getModificationStamp();
+        final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
+        if (cached == null) {
+          scheduleParsing(queue, project, vfile, stamp, LoadTextUtil.loadText(vfile).toString());
+          count++;
         }
-
-        // eagerly initialize some services used by background gdsl parsing threads
-        // because service init requires a read action
-        // and there could be a deadlock with a write action waiting already on EDT
-        // if current thread is inside a non-cancellable read action
-        GdslScriptBase.getIdeaVersion();
-        DslActivationStatus.getInstance();
-
-        int count = 0;
-
-        List<GroovyDslScript> result = new ArrayList<GroovyDslScript>();
-
-        final LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue =
-          new LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>();
-
-        for (VirtualFile vfile : getGdslFiles(project)) {
-          final long stamp = vfile.getModificationStamp();
-          final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
-          if (cached == null) {
-            scheduleParsing(queue, project, vfile, stamp, LoadTextUtil.loadText(vfile).toString());
-            count++;
-          }
-          else {
-            result.add(new GroovyDslScript(project, vfile, cached, vfile.getPath()));
-          }
+        else {
+          result.add(new GroovyDslScript(project, vfile, cached, vfile.getPath()));
         }
+      }
 
-        try {
-          while (count > 0 && !GdslUtil.ourGdslStopped) {
-            ProgressManager.checkCanceled();
-            final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
-            if (pair != null) {
-              count--;
-              if (pair.second != null) {
-                result.add(new GroovyDslScript(project, pair.first, pair.second, pair.first.getPath()));
-              }
+      try {
+        while (count > 0 && !GdslUtil.ourGdslStopped) {
+          ProgressManager.checkCanceled();
+          final Pair<VirtualFile, GroovyDslExecutor> pair = queue.poll(20, TimeUnit.MILLISECONDS);
+          if (pair != null) {
+            count--;
+            if (pair.second != null) {
+              result.add(new GroovyDslScript(project, pair.first, pair.second, pair.first.getPath()));
             }
           }
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
     }, false);
   }
 

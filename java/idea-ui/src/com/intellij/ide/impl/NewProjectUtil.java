@@ -84,6 +84,13 @@ public class NewProjectUtil {
   private static Project doCreate(final AbstractProjectWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectUtil.isSameProject(projectFilePath, p)) {
+        ProjectUtil.focusProjectWindow(p, false);
+        return null;
+      }
+    }
+
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {

@@ -330,6 +330,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         addVariablesAndWatches(mySession);
         attachViewToSession(mySession, myViews.get(DebuggerContentInfo.VARIABLES_CONTENT));
         attachViewToSession(mySession, myViews.get(DebuggerContentInfo.WATCHES_CONTENT));
+        myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.VARIABLES_CONTENT), true, false);
         rebuildViews();
       }
     }
@@ -338,13 +339,32 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab tab = session.getSessionTab();
     if (tab != null) {
+      showView(session, tab.getWatchesContentId());
+    }
+  }
+
+  public static void showFramesView(@NotNull XDebugSessionImpl session) {
+    showView(session, DebuggerContentInfo.FRAME_CONTENT);
+  }
+
+  private static void showView(@NotNull XDebugSessionImpl session, String viewId) {
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab != null) {
       tab.toFront(false, null);
       // restore watches tab if minimized
+      tab.restoreContent(viewId);
+
       JComponent component = tab.getUi().getComponent();
       if (component instanceof DataProvider) {
         RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
         if (ui != null) {
-          ui.restoreContent(tab.getWatchesContentId());
+          Content content = ui.findContent(viewId);
+
+          // if the view is not visible (e.g. Console tab is selected, while Debugger tab is not)
+          // make sure we make it visible to the user
+          if (content != null) {
+            ui.select(content, false);
+          }
         }
       }
     }
@@ -394,10 +414,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void removeContent(String contentId) {
+    restoreContent(contentId); //findContent returns null if content is minimized
     myUi.removeContent(myUi.findContent(contentId), true);
     XDebugView view = myViews.remove(contentId);
     if (view != null) {
       Disposer.dispose(view);
+    }
+  }
+
+  private void restoreContent(String contentId) {
+    JComponent component = myUi.getComponent();
+    if (component instanceof DataProvider) {
+      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+      if (ui != null) {
+        ui.restoreContent(contentId);
+      }
     }
   }
 }

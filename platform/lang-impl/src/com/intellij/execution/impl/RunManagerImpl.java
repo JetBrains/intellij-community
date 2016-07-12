@@ -400,13 +400,23 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void saveOrder() {
+    setOrder(null);
+  }
+
+  private void doSaveOrder(@Nullable Comparator<RunnerAndConfigurationSettings> comparator) {
+    List<RunnerAndConfigurationSettings> sorted = new ArrayList<>(
+      ContainerUtil.filter(myConfigurations.values(), o -> !(o.getType() instanceof UnknownConfigurationType)));
+    if (comparator != null) sorted.sort(comparator);
+    
     myOrder.clear();
-    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      if (each.getType() instanceof UnknownConfigurationType) {
-        continue;
-      }
+    for (RunnerAndConfigurationSettings each : sorted) {
       myOrder.add(each.getUniqueID());
     }
+  }
+
+  public void setOrder(@Nullable Comparator<RunnerAndConfigurationSettings> comparator) {
+    doSaveOrder(comparator);
+    setOrdered(false);// force recache of configurations list
   }
 
   @Override
@@ -597,7 +607,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void writeContext(@NotNull Element parentNode) {
-    for (RunnerAndConfigurationSettings configurationSettings : myConfigurations.values()) {
+    Collection<RunnerAndConfigurationSettings> values = new ArrayList<>(myConfigurations.values());
+    for (RunnerAndConfigurationSettings configurationSettings : values) {
       if (configurationSettings.isTemporary()) {
         addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
       }
@@ -1256,6 +1267,14 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     fireRunConfigurationsRemoved(removed);
   }
 
+  public void fireBeginUpdate() {
+    myDispatcher.getMulticaster().beginUpdate();
+  }
+
+  public void fireEndUpdate() {
+    myDispatcher.getMulticaster().endUpdate();
+  }
+  
   public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
     myDispatcher.getMulticaster().runConfigurationChanged(settings, null);
   }

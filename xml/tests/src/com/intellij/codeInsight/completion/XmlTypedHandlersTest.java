@@ -48,8 +48,8 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "<foo><<caret>\n" +
            "<foo><<caret>\n" +
            "</bar>", '/', "<bar>\n" +
-                          "<foo></foo><caret>\n" +
-                          "<foo></foo><caret>\n" +
+                          "    <foo></foo><caret>\n" +
+                          "    <foo></foo><caret>\n" +
                           "</bar>");
   }
 
@@ -68,8 +68,8 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "<foo><<caret>\n" +
            "<fiz><<caret>\n" +
            "</bar>", '/', "<bar>\n" +
-                          "<foo></foo><caret>\n" +
-                          "<fiz></fiz><caret>\n" +
+                          "    <foo></foo><caret>\n" +
+                          "    <fiz></fiz><caret>\n" +
                           "</bar>");
   }
 
@@ -165,6 +165,24 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     doTest("<<caret>", '?', "<?<caret> ?>");
     doTest("<caret>", '?', "?");
     doTest("<<caret> ?>", '?', "<?<caret> ?>");
+  }
+
+  public void testAutoindentEndTag() throws Exception {
+    doTest(
+      "<div>\n" +
+      "    <p>\n" +
+      "        Some text\n" +
+      "    </p>\n" +
+      "    <<caret>",
+
+      '/',
+
+      "<div>\n" +
+      "    <p>\n" +
+      "        Some text\n" +
+      "    </p>\n" +
+      "</div><caret>"
+    );
   }
 
   private void doTest(String text, char c, String result) {

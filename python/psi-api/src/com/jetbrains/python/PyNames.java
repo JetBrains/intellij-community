@@ -139,6 +139,9 @@ public class PyNames {
   public static final String CALLABLE = "Callable";
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
+  public static final String ABC_SET = "Set";
+  public static final String ABC_MUTABLE_SET = "MutableSet";
+  
   public static final String ASYNC_ITERABLE = "AsyncIterable";
 
   public static final String ABC_NUMBER = "Number";
@@ -162,6 +165,7 @@ public class PyNames {
   public static final String DIV = "__div__";
   public static final String TRUEDIV = "__truediv__";
   public static final String AITER = "__aiter__";
+  public static final String SIZEOF = "__sizeof__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
