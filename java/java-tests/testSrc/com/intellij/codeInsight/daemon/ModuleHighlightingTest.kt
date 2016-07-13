@@ -29,22 +29,31 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
+  fun testModuleDuplicate() {
+    additionalFile("""module M { }""")
+    doTest("""module <error descr="Module 'M' already exists in the project">M</error> { }""")
+  }
+
   fun testFileDuplicate() {
-    myFixture.configureFromExistingVirtualFile(runWriteAction {
-      val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
-      VfsUtil.saveText(file, "module M { }")
-      file
-    })
-    myFixture.configureByText("module-info.java", """<error descr="Multiple module declarations">module M</error> { }""")
-    myFixture.checkHighlighting()
+    additionalFile("""module M.bis { }""")
+    doTest("""<error descr="Multiple module declarations">module M</error> { }""")
   }
 
   fun testWrongFileLocation() {
-    myFixture.configureFromExistingVirtualFile(runWriteAction {
-      val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
-      VfsUtil.saveText(file, """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
-      file
-    })
+    additionalFile("""<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
     myFixture.checkHighlighting()
   }
+
+  //<editor-fold desc="Helpers.">
+  private fun additionalFile(text: String) = myFixture.configureFromExistingVirtualFile(runWriteAction {
+    val file = LightPlatformTestCase.getSourceRoot().createChildDirectory(this, "pkg").createChildData(this, "module-info.java")
+    VfsUtil.saveText(file, text)
+    file
+  })
+
+  private fun doTest(text: String) {
+    myFixture.configureByText("module-info.java", text)
+    myFixture.checkHighlighting()
+  }
+  //</editor-fold>
 }
