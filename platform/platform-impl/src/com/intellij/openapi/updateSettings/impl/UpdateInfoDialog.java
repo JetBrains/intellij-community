@@ -32,6 +32,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -182,7 +184,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private void openDownloadPage() {
     String url = myUpdatedChannel.getHomePageUrl();
     assert url != null : "channel: " + myUpdatedChannel.getId();
-    BrowserUtil.browse(url);
+    BrowserUtil.browse(augmentUrl(url));
   }
 
   private static class ButtonAction extends AbstractAction {
@@ -195,7 +197,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      BrowserUtil.browse(myUrl);
+      BrowserUtil.browse(augmentUrl(myUrl));
     }
   }
 
@@ -223,7 +225,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
           message = message.substring(0, idx) +
-                    "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+                    "<a href=\'" + augmentUrl(homePageUrl) + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
@@ -260,5 +262,15 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   protected static String formatVersion(String versionString, String build) {
     return IdeBundle.message("updates.version.info", versionString, build);
+  }
+
+  private static String augmentUrl(String url) {
+    try {
+      return new URIBuilder(url).addParameter("fromIDE", "").build().toString();
+    }
+    catch (URISyntaxException e) {
+      Logger.getInstance(UpdateInfoDialog.class).warn(url, e);
+      return url;
+    }
   }
 }
