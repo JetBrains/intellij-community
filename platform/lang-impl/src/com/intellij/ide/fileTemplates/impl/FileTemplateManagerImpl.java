@@ -459,7 +459,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   public void loadState(State state) {
     XmlSerializerUtil.copyBean(state, myState);
     FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
-    ExportableFileTemplateSettings.getInstance(scheme.getProject());
+    FileTemplateSettings.getInstance(scheme.getProject());
     setScheme(scheme);
   }
 
