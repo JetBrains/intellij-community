@@ -89,7 +89,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -193,29 +192,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public static void configureInspections(@NotNull InspectionProfileEntry[] tools,
-                                          @NotNull final Project project,
-                                          @NotNull final Collection<String> disabledInspections,
+                                          @NotNull Project project,
+                                          @NotNull Collection<String> disabledInspections,
                                           @NotNull Disposable parentDisposable) {
     InspectionToolWrapper[] wrapped = ContainerUtil.map2Array(tools, InspectionToolWrapper.class, InspectionToolRegistrar::wrapTool);
 
-    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
-    profile.disableToolByDefault(new ArrayList<>(disabledInspections), project);
+    InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
+    profile.disableToolByDefault(disabledInspections, project);
 
-    final ApplicationInspectionProfileManager inspectionProfileManager = ApplicationInspectionProfileManager.getInstanceImpl();
-    final Profile oldRootProfile = inspectionProfileManager.getCurrentProfile();
-    inspectionProfileManager.addProfile(profile);
+    ProjectInspectionProfileManager inspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
+
+    InspectionProfileImpl oldRootProfile = inspectionProfileManager.getCurrentProfile();
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        inspectionProfileManager.deleteProfile(profile.getName());
-        inspectionProfileManager.setRootProfile(oldRootProfile.getName());
+        inspectionProfileManager.deleteProfile(profile);
+        inspectionProfileManager.setCurrentProfile(oldRootProfile);
         clearAllToolsIn(InspectionProfileImpl.getDefaultProfile(), project);
       }
     });
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProfileImpl.initAndDo(() -> {
-      InspectionProjectProfileManager.getInstance(project).updateProfile(profile);
-      ProjectInspectionProfileManager.getInstanceImpl(project).setRootProfile(profile.getName());
+      inspectionProfileManager.addProfile(profile);
+      inspectionProfileManager.initInspectionTools(profile);
+      inspectionProfileManager.setCurrentProfile(profile);
       return null;
     });
   }
@@ -225,7 +225,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (ScopeToolState state : tools) {
       InspectionToolWrapper wrapper = state.getTool();
       if (wrapper.getExtension() != null) {
-        ReflectionUtil.resetField(wrapper, InspectionProfileEntry.class, "myTool"); // make it not initialized
+        // make it not initialized
+        ReflectionUtil.resetField(wrapper, InspectionProfileEntry.class, "myTool");
       }
     }
   }

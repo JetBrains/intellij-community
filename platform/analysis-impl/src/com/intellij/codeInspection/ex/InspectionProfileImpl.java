@@ -103,9 +103,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     copyFrom(inspectionProfile);
   }
 
-  public InspectionProfileImpl(@NotNull final String profileName,
+  public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
-                               @NotNull final ProfileManager profileManager) {
+                               @NotNull ProfileManager profileManager) {
     this(profileName, registrar, profileManager, getDefaultProfile(), null);
   }
 
@@ -141,14 +141,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public static InspectionProfileImpl createSimple(@NotNull String name,
                                                    @NotNull final Project project,
                                                    @NotNull final InspectionToolWrapper... toolWrappers) {
-    InspectionToolRegistrar registrar = new InspectionToolRegistrar() {
+    InspectionProfileImpl profile = new InspectionProfileImpl(name, new InspectionToolRegistrar() {
       @NotNull
       @Override
       public List<InspectionToolWrapper> createTools() {
         return Arrays.asList(toolWrappers);
       }
-    };
-    final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, InspectionProfileManager.getInstance());
+    }, InspectionProfileManager.getInstance());
     initAndDo(() -> {
       profile.initInspectionTools(project);
       return null;
@@ -523,8 +522,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId, element.getProject()).disableTool(element);
   }
 
-  public void disableToolByDefault(@NotNull List<String> toolIds, @Nullable Project project) {
-    for (final String toolId : toolIds) {
+  public void disableToolByDefault(@NotNull Collection<String> toolIds, @Nullable Project project) {
+    for (String toolId : toolIds) {
       getToolDefaultState(toolId, project).setEnabled(false);
     }
   }

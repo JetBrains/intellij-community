@@ -132,6 +132,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun updateProfile(profile: Profile) {
     super.updateProfile(profile)
+
     initInspectionTools(profile)
   }
 
@@ -258,6 +259,11 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  @Synchronized fun setCurrentProfile(profile: InspectionProfileImpl?) {
+    schemeManager.setCurrent(profile)
+    state.useProjectProfile = profile != null
+  }
+
   @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
       return applicationProfileManager.currentProfile as InspectionProfileImpl
@@ -268,7 +274,7 @@ class ProjectInspectionProfileManager(val project: Project,
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
         currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
-                                            InspectionProfileImpl.getDefaultProfile(), null)
+                                              InspectionProfileImpl.getDefaultProfile(), null)
         currentScheme.copyFrom(applicationProfileManager.currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.setName(PROJECT_DEFAULT_PROFILE_NAME)

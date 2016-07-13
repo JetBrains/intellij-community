@@ -176,7 +176,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   private void createDefaultProfile() {
-    addProfile(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
+    getSchemeManager().addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
   }
 
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {

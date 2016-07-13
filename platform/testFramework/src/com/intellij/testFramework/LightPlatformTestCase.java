@@ -394,14 +394,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
       profile.enableTool(shortName, project);
 
-      if (disposable != null) {
-        Disposer.register(disposable, new Disposable() {
-          @Override
-          public void dispose() {
-            profile.disableTool(shortName, project);
-          }
-        });
-      }
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          profile.disableTool(shortName, project);
+        }
+      });
       return null;
     });
   }
