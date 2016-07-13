@@ -74,8 +74,8 @@ private class ExportSettingsAction : AnAction(), DumbAware {
     }
 
     val exportFiles = THashSet<Path>()
-    for (markedComponent in markedComponents) {
-      exportFiles.addAll(markedComponent.files)
+    for ((files) in markedComponents) {
+      exportFiles.addAll(files)
     }
 
     val saveFile = dialog.exportFile

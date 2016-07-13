@@ -402,7 +402,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       final TextRange range = item.getPsiElement().getTextRange();
       final TextAttributes attributes = new TextAttributes();
       final CrumbPresentation p = item.getPresentation();
-      final Color color = p != null ? p.getBackgroundColor(false, false, false) : BreadcrumbsComponent.ButtonSettings.DEFAULT_BG_COLOR;
+      final Color color = p != null
+                          ? p.getBackgroundColor(false, false, false)
+                          : BreadcrumbsComponent.ButtonSettings.getBackgroundColor(false, false, false, false);
       final Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR);
       attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background != null ? background : Gray._200, 0.3));
       myHighlighed = new ArrayList<RangeHighlighter>(1);

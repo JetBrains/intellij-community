@@ -272,9 +272,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     val newSchemesOffset = schemes.size
     if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
-        val scheme = loadScheme(name, input, true)
-        if (readOnly && scheme != null) {
-          readOnlyExternalizableSchemes.put(scheme.name, scheme)
+        catchAndLog(name) {
+          input.use {
+            val scheme = loadScheme(name, it, true)
+            if (readOnly && scheme != null) {
+              readOnlyExternalizableSchemes.put(scheme.name, scheme)
+            }
+          }
         }
         true
       }
@@ -286,11 +290,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
             continue
           }
 
-          try {
-            loadScheme(file.fileName.toString(), file.inputStream(), true)
-          }
-          catch (e: Throwable) {
-            LOG.error("Cannot read scheme $file", e)
+          catchAndLog(file.fileName.toString()) { filename ->
+            file.inputStream()?.use { loadScheme(filename, it, true) }
           }
         }
       }
@@ -365,29 +366,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           return@forEachEntry true
         }
 
-        @Suppress("UNCHECKED_CAST")
-        try {
-          externalInfo.digest = (processor.writeScheme(k as MUTABLE_SCHEME) as Element).digest()
-        }
-        catch (e: WriteExternalException) {
-          LOG.error("Cannot update digest", e)
-        }
-        false
-      })
-    }
-  }
-
-  private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): MUTABLE_SCHEME? {
-    try {
-      return doLoadScheme(fileName, input, duringLoad)
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot read scheme $fileName", e)
-      return null
-    }
-  }
-
-  private fun doLoadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): MUTABLE_SCHEME? {
+  private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
     val extension = getFileExtension(fileName, false)
     if (duringLoad && filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
@@ -506,13 +485,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       return null
     }
 
-    try {
-      return loadScheme(fileName, file.inputStream, duringLoad)
+    catchAndLog(fileName) {
+      return file.inputStream.use { loadScheme(fileName, it, duringLoad) }
     }
-    catch (e: Throwable) {
-      LOG.error("Cannot read scheme $fileName", e)
-      return null
-    }
+
+    return null
   }
 
   fun save(errors: MutableList<Throwable>) {
@@ -1007,4 +984,13 @@ fun Element.digest(): ByteArray {
   val digest = MessageDigest.getInstance("SHA-1")
   serializeElementToBinary(this, DigestOutputStream(digest))
   return digest.digest()
+}
+
+private inline fun catchAndLog(fileName: CharSequence, runnable: (fileName: CharSequence) -> Unit) {
+  try {
+    runnable(fileName)
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot read scheme $fileName", e)
+  }
 }

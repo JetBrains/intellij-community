@@ -1,23 +1,5 @@
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
-import com.intellij.diff.contents.FileContentImpl;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -26,11 +8,28 @@ import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContentImpl;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.LineCol;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffNavigationContext;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,6 +40,7 @@ import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -127,8 +127,8 @@ public class MigrateToNewDiffUtil {
       return new DocumentContentImpl(document, oldContent.getContentType(), oldContent.getFile(), oldContent.getLineSeparator(), null) {
         @Nullable
         @Override
-        public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-          return oldContent.getOpenFileDescriptor(offset);
+        public Navigatable getNavigatable(@NotNull LineCol position) {
+          return oldContent.getOpenFileDescriptor(position.toOffset(document));
         }
 
         @Override

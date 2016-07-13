@@ -15,10 +15,11 @@
  */
 package com.intellij.diff.contents;
 
+import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,14 +68,14 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public Navigatable getNavigatable(@NotNull LineCol position) {
     return null;
   }
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor() {
-    return getOpenFileDescriptor(0);
+  public Navigatable getNavigatable() {
+    return getNavigatable(new LineCol(0));
   }
 
   @Nullable

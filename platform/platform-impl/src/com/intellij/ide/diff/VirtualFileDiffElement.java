@@ -32,6 +32,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +87,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+  public Navigatable getNavigatable(@Nullable Project project) {
     if (project == null || project.isDefault() || !myFile.isValid()) return null;
     return new OpenFileDescriptor(project, myFile);
   }

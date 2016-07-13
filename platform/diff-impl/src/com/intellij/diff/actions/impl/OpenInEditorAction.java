@@ -22,13 +22,12 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +57,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
       return;
     }
 
-    if (getDescriptor(e.getDataContext()) == null) {
+    if (e.getData(CommonDataKeys.NAVIGATABLE) == null) {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(false);
       return;
@@ -72,19 +71,14 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
     Project project = e.getProject();
     assert project != null;
 
-    OpenFileDescriptor descriptor = getDescriptor(e.getDataContext());
-    assert descriptor != null;
-
-    openEditor(project, descriptor);
+    Navigatable navigatable = e.getRequiredData(CommonDataKeys.NAVIGATABLE);
+    openEditor(project, navigatable);
   }
 
-  public void openEditor(@NotNull Project project, @NotNull OpenFileDescriptor descriptor) {
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    if (myAfterRunnable != null) myAfterRunnable.run();
-  }
-
-  @Nullable
-  public static OpenFileDescriptor getDescriptor(@NotNull DataContext context) {
-    return DiffDataKeys.OPEN_FILE_DESCRIPTOR.getData(context);
+  public void openEditor(@NotNull Project project, @NotNull Navigatable navigatable) {
+    if (navigatable.canNavigate()) {
+      navigatable.navigate(true);
+      if (myAfterRunnable != null) myAfterRunnable.run();
+    }
   }
 }

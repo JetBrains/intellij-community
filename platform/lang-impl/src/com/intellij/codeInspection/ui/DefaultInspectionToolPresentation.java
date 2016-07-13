@@ -364,7 +364,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public void amnesty(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     final CommonProblemDescriptor[] ignoredDescriptors = getIgnoredElements().get(refEntity);
     if (ignoredDescriptors != null) {
-      getIgnoredElements().put(refEntity, ArrayUtil.remove(ignoredDescriptors, descriptor));
+      final CommonProblemDescriptor[] remainElements = ArrayUtil.remove(ignoredDescriptors, descriptor);
+      if (remainElements.length != 0) {
+        getIgnoredElements().put(refEntity, remainElements);
+      } else {
+        getIgnoredElements().remove(refEntity);
+      }
     }
   }
 
