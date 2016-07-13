@@ -171,6 +171,13 @@ public class PyRegexpTest extends PyTestCase {
     assertEquals(element.getLanguage(), PythonVerboseRegexpLanguage.INSTANCE);
   }
 
+  // PY-16404
+  public void testFullmatch() {
+    doTestInjectedText("import re\n" +
+                       "re.fullmatch(\"<caret>\\w+\", \"string\"",
+                       "\\w+");
+  }
+
   @NotNull
   private PsiElement doTestInjectedText(@NotNull String text, @NotNull String expected) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

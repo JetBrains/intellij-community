@@ -63,6 +63,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
     addMethod("finditer");
     addMethod("sub");
     addMethod("subn");
+    addMethod("fullmatch");
   }
 
   private void addMethod(@NotNull String name) {
