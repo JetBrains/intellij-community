@@ -77,15 +77,18 @@ public class PausesStat {
   }
 
   public String statistics() {
-    int total = 0;
     int number = durations.size();
     int[] duration = durations.toArray();
+    int total = 0;
+    for (int d : duration) {
+      total += d;
+    }
 
     return myName + " Statistics" + (totalNumberRecorded == number ? "" : " ("+totalNumberRecorded+" events was recorded in total, but only last "+number+" are reported here)")+":"+
            "\nEvent number:     " + number +
            "\nTotal time spent: " + total + "ms" +
            "\nAverage duration: " + (number == 0 ? 0 : total / number) + "ms" +
            "\nMedian  duration: " + ArrayUtil.averageAmongMedians(duration, 3) + "ms" +
-           "\nMax  duration:    " + maxDuration + "ms (it was '"+maxDurationDescription+"')";
+           "\nMax  duration:    " + (maxDuration == 65535 ? ">" : "") + maxDuration+ "ms (it was '"+maxDurationDescription+"')";
   }
 }
