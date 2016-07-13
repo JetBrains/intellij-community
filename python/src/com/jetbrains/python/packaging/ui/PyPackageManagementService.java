@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging.ui;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
@@ -380,25 +381,25 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
+    /*
     final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
     return repositories.size() > 1  || (repositories.size() == 1 && !repositories.get(0).equals(PyPIPackageUtil.PYPI_LIST_URL));
+    */
+    return true;
   }
 
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
-    String version = "";
-    try {
-      final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-      if (packageToVersionMap.containsKey(pkg.getName())) {
-        version = packageToVersionMap.get(pkg.getName());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Map<String, String> packageToVersionMap;
+      try {
+        packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
       }
-    }
-    catch (IOException ignored) {
-    }
-    final List<String> releases = PyPIPackageUtil.getPackageReleases(pkg.getName());
-    if (releases != null && !releases.isEmpty()) {
-      version = releases.get(0);
-    }
-    consumer.consume(version);
+      catch (IOException ignored) {
+        packageToVersionMap = Collections.emptyMap();
+      }
+      final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName(), packageToVersionMap);
+      consumer.consume(StringUtil.notNullize(version));
+    });
   }
 }
