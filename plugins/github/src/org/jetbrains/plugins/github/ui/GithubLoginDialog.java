@@ -9,46 +9,36 @@ import org.jetbrains.plugins.github.util.*;
 import javax.swing.*;
 import java.io.IOException;
 
-/**
- * @author oleg
- * @date 10/20/10
- */
 public class GithubLoginDialog extends DialogWrapper {
-
   private static final Logger LOG = GithubUtil.LOG;
 
-  private final GithubLoginPanel myGithubLoginPanel;
-  private final GithubSettings mySettings;
+  private final GithubCredentialsPanel myCredentialsPanel;
 
   @NotNull private final Project myProject;
   @NotNull private final AuthLevel myAuthLevel;
 
-  protected GithubAuthData myAuthData;
+  private GithubAuthData myAuthData;
+  private boolean mySavePassword;
 
-  public GithubLoginDialog(@NotNull final Project project, @NotNull GithubAuthData oldAuthData, @NotNull AuthLevel authLevel) {
+  public GithubLoginDialog(@NotNull Project project, @NotNull GithubAuthData oldAuthData, @NotNull AuthLevel authLevel) {
     super(project, true);
     myProject = project;
     myAuthLevel = authLevel;
 
-    myGithubLoginPanel = new GithubLoginPanel(this);
+    myCredentialsPanel = new GithubCredentialsPanel(project);
+    myCredentialsPanel.setTestButtonVisible(false);
 
-    myGithubLoginPanel.setHost(oldAuthData.getHost());
-    myGithubLoginPanel.setAuthType(oldAuthData.getAuthType());
+    myCredentialsPanel.setHost(oldAuthData.getHost());
+    myCredentialsPanel.setAuthType(oldAuthData.getAuthType());
     GithubAuthData.BasicAuth basicAuth = oldAuthData.getBasicAuth();
     if (basicAuth != null) {
-      myGithubLoginPanel.setLogin(basicAuth.getLogin());
+      myCredentialsPanel.setLogin(basicAuth.getLogin());
     }
 
-    mySettings = GithubSettings.getInstance();
-    if (mySettings.isSavePasswordMakesSense() && !authLevel.isOnetime()) {
-      myGithubLoginPanel.setSavePasswordSelected(mySettings.isSavePassword());
-    }
-    else {
-      myGithubLoginPanel.setSavePasswordVisibleEnabled(false);
-    }
+    if (authLevel.getHost() != null) myCredentialsPanel.lockHost(authLevel.getHost());
+    if (authLevel.getAuthType() != null) myCredentialsPanel.lockAuthType(authLevel.getAuthType());
 
-    if (authLevel.getHost() != null) myGithubLoginPanel.lockHost(authLevel.getHost());
-    if (authLevel.getAuthType() != null) myGithubLoginPanel.lockAuthType(authLevel.getAuthType());
+    if (!authLevel.isOnetime()) setDoNotAskOption(new MyRememberPasswordOption());
 
     setTitle("Login to GitHub");
     setOKButtonText("Login");
@@ -62,7 +52,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myGithubLoginPanel.getPanel();
+    return myCredentialsPanel;
   }
 
   @Override
@@ -71,22 +61,14 @@ public class GithubLoginDialog extends DialogWrapper {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myGithubLoginPanel.getPreferableFocusComponent();
-  }
-
-  @Override
   protected void doOKAction() {
-    final GithubAuthDataHolder authHolder = new GithubAuthDataHolder(myGithubLoginPanel.getAuthData());
+    GithubAuthDataHolder authHolder = new GithubAuthDataHolder(myCredentialsPanel.getAuthData());
     try {
       GithubUtil.computeValueInModalIO(myProject, "Access to GitHub", indicator ->
         GithubUtil.checkAuthData(myProject, authHolder, indicator));
 
       myAuthData = authHolder.getAuthData();
 
-      if (mySettings.isSavePasswordMakesSense()) {
-        mySettings.setSavePassword(myGithubLoginPanel.isSavePasswordSelected());
-      }
       super.doOKAction();
     }
     catch (IOException e) {
@@ -96,7 +78,7 @@ public class GithubLoginDialog extends DialogWrapper {
   }
 
   public boolean isSavePasswordSelected() {
-    return myGithubLoginPanel.isSavePasswordSelected();
+    return mySavePassword;
   }
 
   @NotNull
@@ -107,7 +89,32 @@ public class GithubLoginDialog extends DialogWrapper {
     return myAuthData;
   }
 
-  public void clearErrors() {
-    setErrorText(null);
+  private class MyRememberPasswordOption implements DoNotAskOption {
+    @Override
+    public boolean isToBeShown() {
+      return !GithubSettings.getInstance().isSavePassword();
+    }
+
+    @Override
+    public void setToBeShown(boolean toBeShown, int exitCode) {
+      mySavePassword = !toBeShown;
+      GithubSettings.getInstance().setSavePassword(!toBeShown);
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return GithubSettings.getInstance().isSavePasswordMakesSense();
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getDoNotShowMessage() {
+      return "Save credentials";
+    }
   }
 }
