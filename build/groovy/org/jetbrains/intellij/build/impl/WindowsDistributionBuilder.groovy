@@ -197,7 +197,7 @@ IDS_VM_OPTIONS=$vmOptions
 
   private void buildWinZip(String jreDirectoryPath, String zipNameSuffix) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.rootDirectoryName(buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]
       if (jreDirectoryPath != null) {

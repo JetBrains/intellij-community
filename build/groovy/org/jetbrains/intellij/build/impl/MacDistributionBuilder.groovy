@@ -208,7 +208,7 @@ class MacDistributionBuilder {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(applicationInfo, buildContext.buildNumber)}.mac.zip"
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
