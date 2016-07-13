@@ -149,6 +149,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private boolean myForceLeftFreePaintersAreaShown = false;
   private boolean myForceRightFreePaintersAreaShown = false;
   private int myLastNonDumbModeIconAreaWidth = 0;
+  boolean myDnDInProgress;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -183,6 +184,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (renderer instanceof GutterIconRenderer &&
             ((GutterIconRenderer)renderer).getDraggableObject() != null &&
             (info.isCopy() || info.isMove())) {
+          myDnDInProgress = true;
           return new DnDDragStartBean(renderer);
         }
         return null;
@@ -206,6 +208,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               EditorImpl.handleDrop(myEditor, transferable);
             }
           }
+          myDnDInProgress = false;
         }
       })
       .setTargetChecker(new DnDTargetChecker() {

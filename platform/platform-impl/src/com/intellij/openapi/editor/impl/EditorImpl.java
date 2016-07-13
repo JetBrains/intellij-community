@@ -4577,11 +4577,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void clearDraggedRange() {
+  private void clearDnDContext() {
     if (myDraggedRange != null) {
       myDraggedRange.dispose();
       myDraggedRange = null;
     }
+    myGutterComponent.myDnDInProgress = false;
   }
 
   private void createSelectionTill(@NotNull LogicalPosition targetPosition) {
@@ -5779,7 +5780,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.<CaretState>emptyList();
       myCurrentDragIsSubstantial = false;
-      clearDraggedRange();
+      clearDnDContext();
 
 
       myMousePressedEvent = e;
@@ -6191,7 +6192,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyMouseMotionListener implements MouseMotionListener {
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
-      if (myDraggedRange != null) return; // on Mac we receive events even if drag-n-drop is in progress
+      if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
       runMouseDraggedCommand(e);
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
@@ -6590,7 +6591,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }), EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
 
-      editor.clearDraggedRange();
+      editor.clearDnDContext();
     }
   }
 
