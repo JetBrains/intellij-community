@@ -81,7 +81,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   protected final Project myProject;
   private long myLastModificationCount = -1;
 
-  public EntryPointsManagerBase(final Project project) {
+  public EntryPointsManagerBase(@NotNull Project project) {
     myProject = project;
     myTemporaryEntryPoints = new HashSet<RefElement>();
     myPersistentEntryPoints = new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
@@ -97,11 +97,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         if (ADDITIONAL_ANNOS != null) {
           ADDITIONAL_ANNOS = null;
           UIUtil.invokeLaterIfNeeded(() -> {
-            if (ApplicationManager.getApplication().isDisposed()) return;
-            InspectionProfileManager.getInstance().fireProfileChanged(null);
+            if (!ApplicationManager.getApplication().isDisposed()) {
+              InspectionProfileManager.getInstance().fireProfileChanged(null);
+            }
           });
         }
-        DaemonCodeAnalyzer.getInstance(project).restart(); // annotations changed
+        // annotations changed
+        DaemonCodeAnalyzer.getInstance(myProject).restart();
       }
     }, false, this);
   }
@@ -206,8 +208,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
       else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
-        for (int i = 0; i < refConstructors.size(); i++) {
-          addEntryPoint(refConstructors.get(i), isPersistent);
+        for (RefMethod refConstructor : refConstructors) {
+          addEntryPoint(refConstructor, isPersistent);
         }
       }
     }

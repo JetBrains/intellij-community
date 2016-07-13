@@ -18,7 +18,7 @@ package com.intellij.profile;
 import org.jetbrains.annotations.Nullable;
 
 public interface ProfileChangeAdapter {
-  default void profileChanged(Profile profile) {
+  default void profileChanged(@Nullable Profile profile) {
   }
 
   default void profileActivated(@Nullable Profile oldProfile, @Nullable Profile profile) {

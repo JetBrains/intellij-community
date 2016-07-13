@@ -64,7 +64,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  override final fun fireProfileChanged(profile: Profile) {
+  override final fun fireProfileChanged(profile: Profile?) {
     if (profile is InspectionProfileImpl) {
       profile.profileChanged()
     }
