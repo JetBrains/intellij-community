@@ -141,4 +141,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testDunderClass() {
     doTest();
   }
+
+  // PY-19085
+  public void testReAndRegexFullmatch() {
+    doTest();
+  }
 }
