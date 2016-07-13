@@ -19,8 +19,6 @@ public class RefsModel implements VcsLogRefs {
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHashes;
-
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHeadIndices;
   @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
 
   public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot,
@@ -38,11 +36,6 @@ public class RefsModel implements VcsLogRefs {
     }
 
     myRefsToHashes = prepareRefsToIndicesMap(allRefs, hashMap);
-    myRefsToHeadIndices = prepareRefsToIndicesMap(Iterables.filter(Iterables.concat(refsByRoot.values()),
-                                                                   vcsRef -> heads.contains(
-                                                                     hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()))),
-                                                  hashMap);
-
     myRootsToHeadIndices = prepareRootsMap(heads, hashMap);
   }
 
@@ -75,11 +68,6 @@ public class RefsModel implements VcsLogRefs {
   public Collection<VcsRef> branchesToCommit(int index) {
     Collection<VcsRef> refs = refsToCommit(index);
     return refs.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
-  }
-
-  @NotNull
-  public Collection<VcsRef> refsToHead(int headIndex) {
-    return myRefsToHeadIndices.containsKey(headIndex) ? myRefsToHeadIndices.get(headIndex) : Collections.<VcsRef>emptyList();
   }
 
   @NotNull
