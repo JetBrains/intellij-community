@@ -291,7 +291,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           }
 
           catchAndLog(file.fileName.toString()) { filename ->
-            file.inputStream()?.use { loadScheme(filename, it, true) }
+            file.inputStream().use { loadScheme(filename, it, true) }
           }
         }
       }
@@ -362,11 +362,23 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     override fun updateDigest() {
       schemeToInfo.forEachEntry({ k, v ->
-        if (v !== externalInfo) {
-          return@forEachEntry true
-        }
+                                  if (v !== externalInfo) {
+                                    return@forEachEntry true
+                                  }
 
-  private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): E? {
+                                  @Suppress("UNCHECKED_CAST")
+                                  try {
+                                    externalInfo.digest = (processor.writeScheme(k as MUTABLE_SCHEME) as Element).digest()
+                                  }
+                                  catch (e: WriteExternalException) {
+                                    LOG.error("Cannot update digest", e)
+                                  }
+                                  false
+                                })
+    }
+  }
+
+  private fun loadScheme(fileName: CharSequence, input: InputStream, duringLoad: Boolean): MUTABLE_SCHEME? {
     val extension = getFileExtension(fileName, false)
     if (duringLoad && filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
