@@ -251,7 +251,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
 
   @Override
   public boolean isInsertMode() {
-    throw new UnsupportedOperationException("Not implemented");
+    return true;
   }
 
   @Override

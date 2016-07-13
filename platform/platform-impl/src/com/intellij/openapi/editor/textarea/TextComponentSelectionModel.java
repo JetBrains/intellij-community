@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
@@ -159,7 +160,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void copySelectionToClipboard() {
-    throw new UnsupportedOperationException("Not implemented");
+    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
   }
 
   @Override

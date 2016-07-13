@@ -29,11 +29,10 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.registry.Registry;
 
-public class CutAction extends EditorAction {
+public class CutAction extends TextComponentEditorAction {
   public CutAction() {
     super(new Handler());
   }
