@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,11 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   @Nullable
   @Override
   public PsiJavaModule getModuleDeclaration() {
+    PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    if (stub != null) {
+      return stub.getModule();
+    }
+
     PsiElement element = getFirstChild();
     if (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
       element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
