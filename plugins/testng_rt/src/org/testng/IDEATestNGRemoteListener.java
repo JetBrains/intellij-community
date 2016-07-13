@@ -77,15 +77,19 @@ public class IDEATestNGRemoteListener {
     myCurrentSuites.clear();
   }
 
-  public synchronized void onConfigurationSuccess(ITestResult result) {
+  public synchronized void onConfigurationSuccess(ITestResult result, boolean start) {
     final DelegatedResult delegatedResult = createDelegated(result);
-    onConfigurationStart(delegatedResult);
+    if (start) {
+      onConfigurationStart(delegatedResult);
+    }
     onConfigurationSuccess(delegatedResult);
   }
 
-  public synchronized void onConfigurationFailure(ITestResult result) {
+  public synchronized void onConfigurationFailure(ITestResult result, boolean start) {
     final DelegatedResult delegatedResult = createDelegated(result);
-    onConfigurationStart(delegatedResult);
+    if (start) {
+      onConfigurationStart(delegatedResult);
+    }
     onConfigurationFailure(delegatedResult);
   }
 
