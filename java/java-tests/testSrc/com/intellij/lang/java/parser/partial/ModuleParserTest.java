@@ -30,6 +30,7 @@ public class ModuleParserTest extends JavaParsingTestCase {
   public void testName0() { doParserTest("module A. { }"); }
   public void testName1() { doParserTest("module A..B { }"); }
   public void testName2() { doParserTest("module A B { }"); }
+  public void testName3() { doParserTest("module .A { }"); }
 
   public void testIncomplete0() { doParserTest("module"); }
   public void testIncomplete1() { doParserTest("module X"); }

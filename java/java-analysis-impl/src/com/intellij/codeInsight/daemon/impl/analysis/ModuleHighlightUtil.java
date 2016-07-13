@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
@@ -29,7 +30,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,20 @@ public class ModuleHighlightUtil {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createRenameFileFix(MODULE_INFO_FILE));
       return info;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkModuleDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
+    String name = element.getModuleName();
+    Project project = file.getProject();
+    Collection<PsiJavaModule> others = JavaModuleNameIndex.getInstance().get(name, project, ProjectScope.getAllScope(project));
+    if (others.size() > 1) {
+      String message = JavaErrorMessages.message("module.name.duplicate", name);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element.getNameElement()).description(message).create();
+      //todo show duplicates quick fix
     }
 
     return null;
@@ -79,7 +96,7 @@ public class ModuleHighlightUtil {
       if (root != null && !root.equals(vFile.getParent())) {
         String message = JavaErrorMessages.message("module.file.wrong.location");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(element)).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root));
+        QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
       }
     }
