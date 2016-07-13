@@ -13,27 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.stubs.PsiClassHolderFileStub;
+import com.intellij.psi.stubs.StubElement;
 
-public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
-  PsiJavaModule getModule();
-
-  String getPackageName();
-  LanguageLevel getLanguageLevel();
-  boolean isCompiled();
-
-  StubPsiFactory getPsiFactory();
-
-  /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
-  void setPsiFactory(StubPsiFactory factory);
+public interface PsiJavaModuleStub extends StubElement<PsiJavaModule> {
+  String getName();
 }

@@ -28,7 +28,6 @@ import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
@@ -47,7 +46,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         refText = JavaSourceUtil.getReferenceText(tree, ref);
       }
     }
-    return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);
+    return new PsiJavaFileStubImpl((PsiJavaFile)file, refText, null, false);
   }
 
   @Override
@@ -122,6 +121,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     private boolean seenNew;
 
     @Override
+    @SuppressWarnings("IfStatementWithIdenticalBranches")
     public boolean visit(IElementType type) {
       if (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type)) {
         return true;

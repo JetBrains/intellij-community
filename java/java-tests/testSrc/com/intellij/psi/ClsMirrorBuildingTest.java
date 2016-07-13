@@ -113,7 +113,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
         catch (IOException ignored) { }
       }
     };
-    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
+    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("java.lang", true);
     StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<>(file, strategy, stub, 0, null);
     new ClassReader(file.contentsToByteArray()).accept(visitor, ClassReader.SKIP_FRAMES);
   }
@@ -173,6 +173,11 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
     assertFalse(isInner("pkg/KindaInner$Class"));
     assertFalse(isInner("weird/ToStringStyle"));
+  }
+
+  public void testModuleInfo() {
+    String testDir = getTestDataDir();
+    doTest(testDir + "../stubBuilder/module-info.class", testDir + "module-info.txt");
   }
 
   private static String getTestDataDir() {

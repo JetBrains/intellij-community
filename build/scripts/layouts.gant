@@ -18,6 +18,8 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
@@ -35,14 +37,6 @@ target('default': "Developers update") {
 
 boolean setPluginAndIDEVersionInPluginXml() {
   return !isDefined("productProperties") || productProperties.setPluginAndIDEVersionInPluginXml
-}
-
-String relativeAndroidHome() {
-  return isDefined("productProperties") ? productProperties.relativeAndroidHome : "android"
-}
-
-String relativeAndroidToolsBaseHome() {
-  return isDefined("productProperties") ? productProperties.relativeAndroidToolsBaseHome : relativeAndroidHome() + "/tools-base"
 }
 
 List<String> getExcludedPlugins() {
@@ -251,7 +245,7 @@ def layoutFull(BuildContext context) {
       }
     }
 
-    layoutCommunityPlugins(home, context.productProperties.maySkipAndroidPlugin)
+    layoutCommunityPlugins(home, context)
 
     dir("plugins") {
       dir("javaFX") {
@@ -292,22 +286,22 @@ def layoutFull(BuildContext context) {
   return info
 }
 
-public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = false) {
+public def layoutCommunityPlugins(String home, BuildContext buildContext = null) {
   if (!isDefined("pluginFilter") || pluginFilter.contains("android")) {
-    def androidHome = relativeAndroidHome()
-    def androidToolsBaseHome = relativeAndroidToolsBaseHome()
-    if (new File("$home/$androidHome").exists()) {
-      layoutAndroid("$home/$androidHome", "$home/$androidToolsBaseHome")
+    if (buildContext == null) {
+      projectBuilder.error("Cannot build Android plugin: buildContext isn't defined")
     }
-    else {
-      def message = "Android plugin sources aren't found at ${androidHome}"
-      if (maySkipAndroidPlugin) {
-        projectBuilder.warning("$message. Android plugin is excluded from layout.")
-      }
-      else {
-        projectBuilder.error(message)
-      }
+    def androidModule = buildContext.findModule("android")
+    def sdklibModule = buildContext.findModule("sdklib")
+    if (androidModule == null) projectBuilder.error("Cannot build Android plugin: 'android' module isn't included into the project")
+    if (sdklibModule == null) projectBuilder.error("Cannot build Android plugin: 'sdklib' module isn't included into the project")
+
+    def androidHome = JpsPathUtil.urlToPath(androidModule.contentRootsList.urls.first())
+    def androidToolsBaseHome = JpsPathUtil.urlToFile(sdklibModule.contentRootsList.urls.first()).parentFile.canonicalPath
+    [androidHome, androidToolsBaseHome].each {
+      if (!new File(it).exists()) projectBuilder.error("Cannot build Android plugin: $it doesn't exist")
     }
+    layoutAndroid(androidHome, androidToolsBaseHome)
   }
 
   dir("plugins") {
@@ -784,7 +778,7 @@ def reorder(String home, String targetDirectory) {
 def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
     layoutPlugin("android") {
-      fileset(dir: "${androidHome}/android/lib") {
+      fileset(dir: "$androidHome/lib") {
         include(name: "**/*.jar")
         exclude(name: "**/fest-*.jar")
         exclude(name: "src/*.jar")
@@ -834,13 +828,13 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("instant-run-runtime")
       }
       jar("androidAnnotations.jar") {
-        fileset(dir: "$androidHome/android/annotations")
+        fileset(dir: "$androidHome/annotations")
       }
       dir("jps") {
         jar("android-gradle-jps.jar") { module("android-gradle-jps") }
       }
       dir("device-art-resources") {
-        fileset(dir: "$androidHome/android/device-art-resources")
+        fileset(dir: "$androidHome/device-art-resources")
       }
 
       dir("jps") {

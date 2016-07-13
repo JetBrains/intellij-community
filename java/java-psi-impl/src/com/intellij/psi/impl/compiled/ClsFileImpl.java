@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
@@ -46,7 +45,7 @@ import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -64,7 +63,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
@@ -72,10 +71,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Attribute;
 import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,7 +99,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private volatile SoftReference<StubTree> myStub;
   private volatile TreeElement myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement;
-  private volatile LanguageLevel myLanguageLevel;
   private boolean myIsPhysical = true;
   private boolean myInvalidated;
 
@@ -167,7 +165,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    return getClasses(); // TODO : package statement?
+    PsiJavaModule module = getModuleDeclaration();
+    if (module != null) {
+      return new PsiElement[]{module};
+    }
+    else {
+      PsiPackageStatement pkg = getPackageStatement();
+      return pkg != null ? ArrayUtil.prepend(pkg, getClasses(), PsiElement.class) : getClasses();
+    }
   }
 
   @Override
@@ -178,11 +183,41 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiPackageStatement getPackageStatement() {
-    getStub(); // Make sure myPackageStatement initializes.
-
     ClsPackageStatementImpl statement = myPackageStatement;
-    if (statement == null) statement = new ClsPackageStatementImpl(this);
-    return statement.getPackageName() != null ? statement : null;
+    if (statement == null) {
+      statement = ClsPackageStatementImpl.NULL_PACKAGE;
+      PsiClassHolderFileStub<?> stub = getStub();
+      if (!(stub instanceof PsiJavaFileStub) || stub.findChildStubByType(JavaStubElementTypes.MODULE) == null) {
+        String packageName = findPackageName(stub);
+        if (packageName != null) {
+          statement = new ClsPackageStatementImpl(this, packageName);
+        }
+      }
+      myPackageStatement = statement;
+    }
+    return statement != ClsPackageStatementImpl.NULL_PACKAGE ? statement : null;
+  }
+
+  private static String findPackageName(PsiClassHolderFileStub<?> stub) {
+    String packageName = null;
+
+    if (stub instanceof PsiJavaFileStub) {
+      packageName = ((PsiJavaFileStub)stub).getPackageName();
+    }
+    else {
+      PsiClass[] psiClasses = stub.getClasses();
+      if (psiClasses.length > 0) {
+        String className = psiClasses[0].getQualifiedName();
+        if (className != null) {
+          int index = className.lastIndexOf('.');
+          if (index >= 0) {
+            packageName = className.substring(0, index);
+          }
+        }
+      }
+    }
+
+    return !StringUtil.isEmpty(packageName) ? packageName : null;
   }
 
   @Override
@@ -244,23 +279,21 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    LanguageLevel level = myLanguageLevel;
-    if (level == null) {
-      List classes = ApplicationManager.getApplication().runReadAction(new Computable<List>() {
-        @Override
-        public List compute() {
-          return getStub().getChildrenStubs();
-        }
-      });
-      myLanguageLevel = level = !classes.isEmpty() ? ((PsiClassStub<?>)classes.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
+    PsiClassHolderFileStub<?> stub = getStub();
+    if (stub instanceof PsiJavaFileStub) {
+      LanguageLevel level = ((PsiJavaFileStub)stub).getLanguageLevel();
+      if (level != null) {
+        return level;
+      }
     }
-    return level;
+    return LanguageLevel.HIGHEST;
   }
 
   @Nullable
   @Override
   public PsiJavaModule getModuleDeclaration() {
-    return null;
+    PsiClassHolderFileStub<?> stub = getStub();
+    return stub instanceof PsiJavaFileStub ? ((PsiJavaFileStub)stub).getModule() : null;
   }
 
   @Override
@@ -282,11 +315,17 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     buffer.append(BANNER);
 
-    appendText(getPackageStatement(), 0, buffer, "\n\n");
+    PsiJavaModule module = getModuleDeclaration();
+    if (module != null) {
+      appendText(module, 0, buffer);
+    }
+    else {
+      appendText(getPackageStatement(), 0, buffer, "\n\n");
 
-    PsiClass[] classes = getClasses();
-    if (classes.length > 0) {
-      appendText(classes[0], 0, buffer);
+      PsiClass[] classes = getClasses();
+      if (classes.length > 0) {
+        appendText(classes[0], 0, buffer);
+      }
     }
   }
 
@@ -298,13 +337,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     PsiJavaFile mirrorFile = (PsiJavaFile)mirrorElement;
-    setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
-    setMirrors(getClasses(), mirrorFile.getClasses());
+    PsiJavaModule module = getModuleDeclaration();
+    if (module != null) {
+      setMirror(module, mirrorFile.getModuleDeclaration());
+    }
+    else {
+      setMirrorIfPresent(getPackageStatement(), mirrorFile.getPackageStatement());
+      setMirrors(getClasses(), mirrorFile.getClasses());
+    }
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   @NotNull
+  @SuppressWarnings("deprecation")
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
@@ -535,14 +580,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
     }
 
-    ClsPackageStatementImpl packageStatement = new ClsPackageStatementImpl(this);
     synchronized (myMirrorLock) {
       putUserData(CLS_DOCUMENT_LINK_KEY, null);
       myMirrorFileElement = null;
-      myPackageStatement = packageStatement;
+      myPackageStatement = null;
     }
-
-    myLanguageLevel = null;
   }
 
   @Override
@@ -590,18 +632,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Nullable
   public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
-    return buildFileStub(file, bytes, new Function<String, PsiJavaFileStub>() {
-      @Override
-      public PsiJavaFileStub fun(String packageName) {
-        return new PsiJavaFileStubImpl(packageName, true);
-      }
-    });
-  }
-
-  @Nullable
-  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file,
-                                              @NotNull byte[] bytes,
-                                              @NotNull Function<String, PsiJavaFileStub> stubBuilder) throws ClsFormatException {
     try {
       if (ClassFileViewProvider.isInnerClass(file, bytes)) {
         return null;
@@ -609,21 +639,29 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
-      String packageName = getPackageName(reader.getClassName());
-      PsiJavaFileStub stub = stubBuilder.fun(packageName);
+      String internalName = reader.getClassName();
+      boolean module = internalName.endsWith("/module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
+      String packageName = getPackageName(internalName);
+      LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(reader.readShort(6));
 
-      try {
-        FileContentPair source = new FileContentPair(file, bytes);
-        StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<FileContentPair>(source, STRATEGY, stub, 0, className);
+      if (module) {
+        PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
+        ModuleStubBuildingVisitor visitor = new ModuleStubBuildingVisitor(stub, packageName);
         reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
-        PsiClassStub<?> result = visitor.getResult();
-        if (result == null) return null;
+        if (visitor.getResult() != null) return stub;
       }
-      catch (OutOfOrderInnerClassException e) {
-        return null;
+      else {
+        PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, packageName, level, true);
+        try {
+          FileContentPair source = new FileContentPair(file, bytes);
+          StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<FileContentPair>(source, STRATEGY, stub, 0, className);
+          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+          if (visitor.getResult() != null) return stub;
+        }
+        catch (OutOfOrderInnerClassException ignored) { }
       }
 
-      return stub;
+      return null;
     }
     catch (Exception e) {
       throw new ClsFormatException(file.getPath() + ": " + e.getMessage(), e);

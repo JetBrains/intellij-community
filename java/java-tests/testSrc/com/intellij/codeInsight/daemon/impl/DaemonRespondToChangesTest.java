@@ -846,6 +846,22 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
   }
 
+  public void testOverrideMethodsHighlightingPersistWhenTypeInsideMethodBody() throws Throwable {
+    configureByText(JavaFileType.INSTANCE, "package x; \n" +
+                                           "class ClassA {\n" +
+                                           "    static <T> void sayHello(Class<? extends T> msg) {}\n" +
+                                           "}\n" +
+
+                                           "class ClassB extends ClassA {\n" +
+                                           "    static <T extends String> void sayHello(Class<? extends T> msg) {<caret>\n" +
+                                           "    }\n" +
+                                           "}\n");
+
+    assertSize(1, highlightErrors());
+    type("//my comment inside method body, so class modifier won't be visited");
+    assertSize(1, highlightErrors());
+  }
+
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     StringBuffer log = new StringBuffer();

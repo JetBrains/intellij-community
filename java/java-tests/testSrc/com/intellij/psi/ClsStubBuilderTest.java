@@ -51,6 +51,13 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
+  public void testModuleInfo() {
+    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/module-info.class";
+    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    assertNotNull(clsFile);
+    doTest(clsFile, "module-info.txt");
+  }
+
   private void doTest(String className) {
     VirtualFile clsFile = findFile(className);
     assertNotNull(clsFile);
@@ -79,7 +86,7 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
     try {
       PsiFileStub stub = ClsFileImpl.buildFileStub(clsFile, clsFile.contentsToByteArray());
       assertNotNull(stub);
-      String actual = ((StubBase)stub).printTree();
+      String actual = ((StubBase)stub).printTree().trim();
 
       File resultFile = new File(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + resultFileName);
       if (!resultFile.exists()) {
@@ -88,7 +95,7 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
         fail("No test data found. Created one");
       }
 
-      String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(resultFile));
+      String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(resultFile)).trim();
 
       assertEquals(expected, actual);
     }

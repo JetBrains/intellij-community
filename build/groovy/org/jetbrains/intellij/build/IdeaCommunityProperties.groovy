@@ -25,9 +25,6 @@ class IdeaCommunityProperties extends ProductProperties {
     productCode = "IC"
     applicationInfoModule = "community-resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
-    maySkipAndroidPlugin = true
-    relativeAndroidHome = "android"
-    relativeAndroidToolsBaseHome = "android/tools-base"
     toolsJarRequired = true
   }
 
@@ -98,5 +95,5 @@ class IdeaCommunityProperties extends ProductProperties {
   String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   @Override
-  String baseArtifactName(String buildNumber) { "ideaIC-$buildNumber" }
+  String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "ideaIC-$buildNumber" }
 }

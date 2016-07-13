@@ -18,11 +18,10 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
 
 import java.awt.*;
-import java.awt.geom.Path2D;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.*;
 
 /**
@@ -133,26 +132,13 @@ class ScrollPainter extends RegionPainter.Alpha {
     }
 
     @Override
-    protected void paint(Graphics2D g, int x, int y, int width, int height) {
-      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      super.paint(g, x, y, width, height);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
-    }
-
-    @Override
     protected void fill(Graphics2D g, int x, int y, int width, int height, boolean border) {
-      int arc = Math.min(width, height);
-      g.fillRoundRect(x, y, width, height, arc, arc);
+      RectanglePainter.FILL.paint(g, x, y, width, height, Math.min(width, height));
     }
 
     @Override
     protected void draw(Graphics2D g, int x, int y, int width, int height) {
-      int arc = Math.min(width, height);
-      Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      path.append(new RoundRectangle2D.Double(x, y, width, height, arc, arc), false);
-      path.append(new RoundRectangle2D.Double(x + 1, y + 1, width - 2, height - 2, arc - 2, arc - 2), false);
-      g.fill(path);
+      RectanglePainter.DRAW.paint(g, x, y, width, height, Math.min(width, height));
     }
   }
 

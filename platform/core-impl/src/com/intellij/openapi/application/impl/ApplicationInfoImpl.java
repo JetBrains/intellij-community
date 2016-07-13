@@ -53,7 +53,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myMinorVersion;
   private String myMicroVersion;
   private String myPatchVersion;
-  private String myFullVersion;
+  private String myFullVersionFormat;
   private String myBuildNumber;
   private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
@@ -284,7 +284,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private String doGetFullVersion() {
-    if (myFullVersion == null) {
+    if (myFullVersionFormat == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
           return myMajorVersion + "." + myMinorVersion;
@@ -297,7 +297,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         return getVersionName();
       }
     } else {
-      return MessageFormat.format(myFullVersion, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
   }
 
@@ -627,7 +627,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
       myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
-      myFullVersion = versionElement.getAttributeValue(ATTRIBUTE_FULL);
+      myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
