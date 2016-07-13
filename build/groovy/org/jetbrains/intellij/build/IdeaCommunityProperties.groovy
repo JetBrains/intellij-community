@@ -25,9 +25,6 @@ class IdeaCommunityProperties extends ProductProperties {
     productCode = "IC"
     applicationInfoModule = "community-resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
-    maySkipAndroidPlugin = true
-    relativeAndroidHome = "android"
-    relativeAndroidToolsBaseHome = "android/tools-base"
     toolsJarRequired = true
   }
 

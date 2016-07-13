@@ -97,10 +97,6 @@ public abstract class ProductProperties {
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
-  boolean maySkipAndroidPlugin
-  String relativeAndroidHome
-  String relativeAndroidToolsBaseHome
-
   /**
    * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
    * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
