@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
@@ -79,7 +80,7 @@ public class ModuleHighlightUtil {
       if (root != null && !root.equals(vFile.getParent())) {
         String message = JavaErrorMessages.message("module.file.wrong.location");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(element)).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root));
+        QuickFixAction.registerQuickFixAction(info, new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")));
         return info;
       }
     }

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,17 +29,19 @@ import java.io.IOException;
 public class MoveFileFix implements IntentionAction {
   private final VirtualFile myFile;
   private final VirtualFile myTarget;
+  private final String myMessage;
 
-  public MoveFileFix(@NotNull VirtualFile file, @NotNull VirtualFile target) {
+  public MoveFileFix(@NotNull VirtualFile file, @NotNull VirtualFile target, @NotNull @Nls String message) {
     myFile = file;
     myTarget = target;
+    myMessage = message;
   }
 
   @Nls
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message("move.file.to.source.root.text");
+    return myMessage;
   }
 
   @Nls
