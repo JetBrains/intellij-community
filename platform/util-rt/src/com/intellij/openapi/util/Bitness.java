@@ -17,5 +17,20 @@ package com.intellij.openapi.util;
 
 /**
 * @author egor
+* @author tav
 */
-public enum Bitness {x32, x64}
+public enum Bitness {
+  x32("x86"),
+  x64("x64");
+
+  private final String value;
+
+  Bitness(String value) {
+    this.value = value;
+  }
+
+  @Override
+  public String toString() {
+    return value;
+  }
+}

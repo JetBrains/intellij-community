@@ -108,8 +108,8 @@ private class ImportSettingsAction : AnAction(), DumbAware {
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
     val root = Paths.get(PathManager.getConfigPath())
-    for (chosenComponent in chosenComponents) {
-      for (exportFile in chosenComponent.files) {
+    for ((files) in chosenComponents) {
+      for (exportFile in files) {
         result.add(root.relativize(exportFile).systemIndependentPath)
       }
     }

@@ -28,8 +28,8 @@ import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,8 +140,8 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getContent().getOpenFileDescriptor();
+  protected Navigatable getNavigatable() {
+    return getContent().getNavigatable();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,

@@ -28,16 +28,17 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ControlFlowStatementWithoutBracesInspection
   extends BaseInspection {
 
-  private static final String DO_TEXT = "do";
-  private static final String ELSE_TEXT = "else";
-  private static final String FOR_TEXT = "for";
-  private static final String IF_TEXT = "if";
-  private static final String WHILE_TEXT = "while";
+  @NonNls private static final String DO_TEXT = "do";
+  @NonNls private static final String ELSE_TEXT = "else";
+  @NonNls private static final String FOR_TEXT = "for";
+  @NonNls private static final String IF_TEXT = "if";
+  @NonNls private static final String WHILE_TEXT = "while";
 
   @Override
   @NotNull
@@ -56,30 +57,33 @@ public class ControlFlowStatementWithoutBracesInspection
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
-      return new ControlFlowStatementFix((String)infos[0]);
+      switch ((String)infos[0]) {
+        case DO_TEXT: return new DoBracesFix();
+        case ELSE_TEXT: return new ElseBracesFix();
+        case FOR_TEXT: return new ForBracesFix();
+        case IF_TEXT: return new IfBracesFix();
+        case WHILE_TEXT: return new WhileBracesFix();
+      }
     }
     return null;
   }
 
-  private static class ControlFlowStatementFix extends InspectionGadgetsFix {
-    private final String myKeywordText;
-
-    public ControlFlowStatementFix(String keywordText) {
-      myKeywordText = keywordText;
-    }
-
+  private static abstract class ControlFlowStatementFix extends InspectionGadgetsFix {
     @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
-        "control.flow.statement.without.braces.message", myKeywordText);
+        "control.flow.statement.without.braces.message", getKeywordText());
     }
+
     @Override
     @NotNull
     public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.add.quickfix");
     }
+
+    abstract String getKeywordText();
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -246,4 +250,10 @@ public class ControlFlowStatementWithoutBracesInspection
       return false;
     }
   }
+
+  private static class DoBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return DO_TEXT; } }
+  private static class ElseBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return ELSE_TEXT; } }
+  private static class ForBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return FOR_TEXT; } }
+  private static class IfBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return IF_TEXT; } }
+  private static class WhileBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return WHILE_TEXT; } }
 }

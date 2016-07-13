@@ -8,7 +8,7 @@ public class TooBroadScope
     public void test() {
         // Example #1
         {
-            Collection<Integer> list = null; //scope too broad
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; //scope too broad
             {
                 list = new ArrayList<Integer>();
                 list.add(new Integer(0));
@@ -18,7 +18,7 @@ public class TooBroadScope
         // Example #2
         {
 
-            Collection<Integer> list; // scope too broad
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>; // scope too broad
             list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
@@ -26,14 +26,14 @@ public class TooBroadScope
         // Example #3
         {
 
-            Collection<Integer> list = null; // nope
+            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; // nope
             list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
     }
 
     public void join() {
-        String test;
+        String <warning descr="Scope of variable 'test' is too broad">test</warning>;
         test = "asdf";
     }
 
@@ -112,7 +112,7 @@ public class TooBroadScope
     }
 
     void forLoop() {
-        int i  = 0;
+        int <warning descr="Scope of variable 'i' is too broad">i</warning>  = 0;
         for ( ; i < 10; i++) {
             System.out.println(i);
         }
@@ -134,7 +134,7 @@ public class TooBroadScope
     }
 
     void useConstant() {
-        int yes = NON_STATIC_CONSTANT;
+        int <warning descr="Scope of variable 'yes' is too broad">yes</warning> = NON_STATIC_CONSTANT;
         System.out.println();
         System.out.println();
         System.out.println();
@@ -152,27 +152,27 @@ public class TooBroadScope
     private final String[] EMPTY = {};
     private final String[] ONE = {"one"};
     void abc() {
-        String[] strings = EMPTY;
+        String[] <warning descr="Scope of variable 'strings' is too broad">strings</warning> = EMPTY;
         System.out.println();
         System.out.println();
         System.out.println(strings);
 
-        List<String> list = new ArrayList<>(Arrays.asList(EMPTY));
+        List<String> <warning descr="Scope of variable 'list' is too broad">list</warning> = new ArrayList<>(Arrays.asList(EMPTY));
         System.out.println();
         System.out.println();
         System.out.println(list);
 
-        String[] ss = new String[10];
+        String[] <warning descr="Scope of variable 'ss' is too broad">ss</warning> = new String[10];
         System.out.println();
         System.out.println();
         System.out.println(ss);
 
-        String[] ss2 = new String[] {""};
+        String[] <warning descr="Scope of variable 'ss2' is too broad">ss2</warning> = new String[] {""};
         System.out.println();
         System.out.println();
         System.out.println(ss2);
 
-        String[] ss3 = {};
+        String[] <warning descr="Scope of variable 'ss3' is too broad">ss3</warning> = {};
         System.out.println();
         System.out.println();
         System.out.println(ss3);

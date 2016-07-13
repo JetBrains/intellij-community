@@ -15,9 +15,7 @@
  */
 package org.testng;
 
-import org.testng.internal.IResultListener;
-
-public class IDEATestNGTestListener implements IResultListener {
+public class IDEATestNGTestListener implements ITestListener {
   private final IDEATestNGRemoteListener myListener;
 
   public IDEATestNGTestListener(IDEATestNGRemoteListener listener) {
@@ -50,17 +48,5 @@ public class IDEATestNGTestListener implements IResultListener {
 
   public void onFinish(ITestContext context) {
     myListener.onFinish(context);
-  }
-
-  public void onConfigurationSuccess(ITestResult itr) {
-    myListener.onConfigurationSuccess(itr);
-  }
-
-  public void onConfigurationFailure(ITestResult itr) {
-    myListener.onConfigurationFailure(itr);
-  }
-
-  public void onConfigurationSkip(ITestResult itr) {
-    myListener.onConfigurationSkip(itr);
   }
 }

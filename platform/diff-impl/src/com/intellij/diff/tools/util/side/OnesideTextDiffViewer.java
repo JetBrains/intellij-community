@@ -28,13 +28,13 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -163,9 +163,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    int offset = getEditor().getCaretModel().getOffset();
-    return getContent().getOpenFileDescriptor(offset);
+  protected Navigatable getNavigatable() {
+    return getContent().getNavigatable(LineCol.fromCaret(getEditor()));
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -178,11 +177,9 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
-    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+    protected Navigatable getNavigatable(@NotNull Editor editor, int line) {
       if (editor != getEditor()) return null;
-
-      int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
-      return getContent().getOpenFileDescriptor(offset);
+      return getContent().getNavigatable(new LineCol(line));
     }
   }
 

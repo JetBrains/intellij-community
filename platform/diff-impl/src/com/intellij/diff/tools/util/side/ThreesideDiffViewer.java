@@ -33,9 +33,9 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -169,8 +169,8 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
+  protected Navigatable getNavigatable() {
+    return getCurrentSide().select(getRequest().getContents()).getNavigatable();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,

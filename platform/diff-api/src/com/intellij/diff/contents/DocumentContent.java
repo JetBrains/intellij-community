@@ -15,10 +15,13 @@
  */
 package com.intellij.diff.contents;
 
+import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +45,7 @@ public interface DocumentContent extends DiffContent {
    * Provides a way to open given text place in editor
    */
   @Nullable
-  OpenFileDescriptor getOpenFileDescriptor(int offset);
+  Navigatable getNavigatable(@NotNull LineCol position);
 
   /**
    * @return original file line separator
@@ -55,4 +58,11 @@ public interface DocumentContent extends DiffContent {
    */
   @Nullable
   Charset getCharset();
+
+  @Nullable
+  @Deprecated
+  default OpenFileDescriptor getOpenFileDescriptor(int offset) {
+    LineCol position = LineCol.fromOffset(getDocument(), offset);
+    return ObjectUtils.tryCast(getNavigatable(position), OpenFileDescriptor.class);
+  }
 }

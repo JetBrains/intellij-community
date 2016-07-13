@@ -170,6 +170,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
       final PsiElement resolvedExpression = expression.resolve();
       if (!(resolvedExpression instanceof PsiField)) {
         return;

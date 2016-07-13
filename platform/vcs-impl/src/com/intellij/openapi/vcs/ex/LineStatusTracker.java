@@ -44,10 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledWithWriteLock;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -348,6 +345,12 @@ public class LineStatusTracker {
       }
       return result;
     }
+  }
+
+  @NotNull
+  @TestOnly
+  public List<Range> getRangesInner() {
+    return myRanges;
   }
 
   @CalledInAwt

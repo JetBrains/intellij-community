@@ -22,7 +22,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 
 public interface DiffDataKeys {
   DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
@@ -33,7 +32,6 @@ public interface DiffDataKeys {
   DataKey<DiffContext> DIFF_CONTEXT = DataKey.create("diff_context");
   DataKey<FrameDiffTool.DiffViewer> DIFF_VIEWER = DataKey.create("diff_frame_viewer");
   DataKey<FrameDiffTool.DiffViewer> WRAPPING_DIFF_VIEWER = DataKey.create("main_diff_frame_viewer"); // if DiffViewerWrapper is used
-  DataKey<OpenFileDescriptor> OPEN_FILE_DESCRIPTOR = DataKey.create("diff_open_file_descriptor");
 
   DataKey<PrevNextDifferenceIterable> PREV_NEXT_DIFFERENCE_ITERABLE = DataKey.create("prev_next_difference_iterable");
 }

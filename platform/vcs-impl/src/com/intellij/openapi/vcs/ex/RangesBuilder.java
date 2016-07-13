@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.TrimUtil;
+import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.DiffUtil;
@@ -145,8 +146,6 @@ public class RangesBuilder {
         range.shift(myCurrentShift);
       }
       innerRanges.trimToSize();
-
-      change = TrimUtil.expand(myVcs, myCurrent, change.start1, change.start2, change.end1, change.end2);
 
       int currentLine1 = myCurrentShift + change.start2;
       int currentLine2 = myCurrentShift + change.end2;

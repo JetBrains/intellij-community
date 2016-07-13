@@ -27,10 +27,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RainbowHighlighter {
   private final float[] myFloats;
@@ -52,10 +55,24 @@ public class RainbowHighlighter {
 
   @NotNull
   public TextAttributes getAttributes(@NotNull String name, @NotNull TextAttributes origin) {
+    final Color fg = calculateForeground(name);
+    return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(fg));
+  }
+
+  @NotNull
+  protected Color calculateForeground(@NotNull String name) {
     int hash = StringHash.murmur(name, 0);
+    final List<String> registryColors = StringUtil.split(Registry.get("rainbow.highlighter.colors").asString(), ",");
+    if (!registryColors.isEmpty()) {
+      final List<Color> colors = registryColors.stream().map((s -> ColorUtil.fromHex(s.trim()))).collect(Collectors.toList());
+      if (!colors.isEmpty()) {
+        return colors.get(hash % colors.size());
+      }
+    }
+
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
-    return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(Color.getHSBColor(v, 0.7f, myFloats[2] + .3f)));
+    return Color.getHSBColor(v, 0.7f, myFloats[2] + .3f);
   }
 
   public HighlightInfo getInfo(@Nullable String nameKey, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
