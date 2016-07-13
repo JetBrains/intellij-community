@@ -278,7 +278,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           return 0;
         });
 
-        LOG.debug("All passes for " + psiFile.getName()+ " started (" + passes+"). progress canceled: "+progress.isCanceled());
         try {
           for (TextEditorHighlightingPass pass : passes) {
             pass.doCollectInformation(progress);
@@ -289,7 +288,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           LOG.debug("Canceled: " + progress);
           throw e;
         }
-        LOG.debug("All passes for " + psiFile.getName()+ " run. progress canceled: "+progress.isCanceled()+"; infos: "+result);
       }
     }
     finally {
