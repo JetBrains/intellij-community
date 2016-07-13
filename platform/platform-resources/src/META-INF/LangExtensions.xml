@@ -2,6 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
+    <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
@@ -358,6 +359,7 @@
     <fileIconProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <editorTabTitleProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
+    <indexedRootsProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$IndexSetContributor"/>
 
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType" />
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>

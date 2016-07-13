@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] getEncryptedPassword(byte[] key) {
+  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
     return database.get().get(new ByteArrayWrapper(key));
   }
 
@@ -82,11 +82,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
-  }
-
-  @Override
-  public boolean isSupported() {
-    return true;
   }
 
   @Override

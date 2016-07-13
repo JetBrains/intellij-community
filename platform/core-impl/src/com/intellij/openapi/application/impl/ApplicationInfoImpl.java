@@ -35,6 +35,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,40 +48,40 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private String myCodeName = null;
-  private String myMajorVersion = null;
-  private String myMinorVersion = null;
-  private String myMicroVersion = null;
-  private String myPatchVersion = null;
-  private String myFullVersion = null;
-  private String myBuildNumber = null;
-  private String myApiVersion = null;
+  private String myCodeName;
+  private String myMajorVersion;
+  private String myMinorVersion;
+  private String myMicroVersion;
+  private String myPatchVersion;
+  private String myFullVersionFormat;
+  private String myBuildNumber;
+  private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private Color myProgressColor = null;
+  private Color myProgressColor;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
-  private Color myAboutLinkColor = null;
-  private String myProgressTailIconName = null;
-  private Icon myProgressTailIcon = null;
+  private Color myAboutLinkColor;
+  private String myProgressTailIconName;
+  private Icon myProgressTailIcon;
 
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
   private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
-  private String mySplashImageUrl = null;
-  private String myAboutImageUrl = null;
+  private String mySplashImageUrl;
+  private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl = null;
+  private String myBigIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
-  private String myWelcomeScreenLogoUrl = null;
-  private String myEditorBackgroundImageUrl = null;
+  private String myWelcomeScreenLogoUrl;
+  private String myEditorBackgroundImageUrl;
 
-  private Calendar myBuildDate = null;
-  private Calendar myMajorReleaseBuildDate = null;
-  private String myPackageCode = null;
+  private Calendar myBuildDate;
+  private Calendar myMajorReleaseBuildDate;
+  private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
@@ -283,7 +284,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private String doGetFullVersion() {
-    if (myFullVersion == null) {
+    if (myFullVersionFormat == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
           return myMajorVersion + "." + myMinorVersion;
@@ -296,7 +297,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         return getVersionName();
       }
     } else {
-      return MessageFormat.format(myFullVersion, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
   }
 
@@ -626,7 +627,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
       myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
-      myFullVersion = versionElement.getAttributeValue(ATTRIBUTE_FULL);
+      myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
@@ -1013,6 +1014,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public static boolean isInPerformanceTest() {
     return myInPerformanceTest;
   }
+  @TestOnly
   public static void setInPerformanceTest(boolean inPerformanceTest) {
     myInPerformanceTest = inPerformanceTest;
   }

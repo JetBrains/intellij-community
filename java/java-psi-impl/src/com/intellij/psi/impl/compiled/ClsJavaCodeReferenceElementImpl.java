@@ -34,7 +34,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -331,11 +330,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
-  @NonNls
-  public String toString() {
-    return "PsiJavaCodeReferenceElement:" + getText();
-  }
-
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
@@ -360,5 +354,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   public PsiElement getQualifier() {
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiJavaCodeReferenceElement:" + getText();
   }
 }

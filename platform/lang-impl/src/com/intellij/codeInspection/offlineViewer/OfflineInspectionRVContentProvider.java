@@ -28,8 +28,10 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,13 @@ import java.util.*;
 
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
+  private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor = new FactoryMap<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>>() {
+    @Nullable
+    @Override
+    protected Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult> create(String key) {
+       return new THashMap<>();
+    }
+  };
 
   public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
                                             @NotNull Project project) {
@@ -179,7 +188,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
-      elemNode.insertByOrder(OfflineProblemDescriptorNode.create(descriptor, toolWrapper, presentation), true);
+      final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
+        .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
+      elemNode.insertByOrder(OfflineProblemDescriptorNode.create(descriptor, resolveResult, toolWrapper, presentation), true);
     }
   }
 }

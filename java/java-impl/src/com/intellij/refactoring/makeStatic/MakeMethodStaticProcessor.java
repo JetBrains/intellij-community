@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -304,7 +303,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     PsiElement anchor = null;
     PsiExpressionList argList = null;
-    PsiExpression[] exprs = new PsiExpression[0];
+    PsiExpression[] exprs = PsiExpression.EMPTY_ARRAY;
     if (parent instanceof PsiMethodCallExpression) {
       argList = ((PsiMethodCallExpression)parent).getArgumentList();
       exprs = argList.getExpressions();

@@ -659,7 +659,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
       createViewIfNeed();
       if (!myView.isDisposed()) {
-        ReadAction.run(() -> myView.addTools(globalTools));
+        myView.addTools(globalTools);
       }
     }
   }
@@ -736,7 +736,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       @Nullable
       @Override
       public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-        return new CommonProblemDescriptor[0];
+        return CommonProblemDescriptor.EMPTY_ARRAY;
       }
 
       @Override

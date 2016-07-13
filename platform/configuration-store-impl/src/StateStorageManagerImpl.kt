@@ -223,7 +223,14 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
     }
 
-    val effectiveRoamingType = if (roamingType == RoamingType.DEFAULT && collapsedPath == StoragePathMacros.WORKSPACE_FILE) RoamingType.DISABLED else roamingType
+    val effectiveRoamingType: RoamingType
+    if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+      effectiveRoamingType = RoamingType.DISABLED
+    }
+    else {
+      effectiveRoamingType = roamingType
+    }
+
     val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType)
     if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage) {
       virtualFileTracker?.put(filePath, storage)

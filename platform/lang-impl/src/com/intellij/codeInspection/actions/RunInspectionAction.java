@@ -96,11 +96,11 @@ public class RunInspectionAction extends GotoActionBase {
     }, false);
   }
 
-  private static void runInspection(final @NotNull Project project,
-                                    @NotNull String shortName,
-                                    @Nullable VirtualFile virtualFile,
-                                    PsiElement psiElement,
-                                    PsiFile psiFile) {
+  public static void runInspection(final @NotNull Project project,
+                                   @NotNull String shortName,
+                                   @Nullable VirtualFile virtualFile,
+                                   PsiElement psiElement,
+                                   PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
     final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionToolWrapper toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)

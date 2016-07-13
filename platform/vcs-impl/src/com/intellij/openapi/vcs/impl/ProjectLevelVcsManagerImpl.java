@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -152,6 +153,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         Disposer.dispose(myInitialization);
       }
     });
+    if (project.isDefault()) {
+      // default project is disposed in write action, so treat it differently
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+        @Override
+        public void appClosing() {
+          Disposer.dispose(myInitialization);
+        }
+      });
+    }
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -50,6 +51,42 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
   public void testBoundsPromotionWithCapturedWildcards() throws Exception {
     myFixture.addClass("package a; public interface Provider<A> {}");
     myFixture.addClass("package b; public interface Provider<B> {}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testStaticImportCompoundWithInheritance() throws Exception {
+    myFixture.addClass("package a; public interface A { static void foo(Object o){} static void foo(String str) {}}");
+
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testSuppressedInGenerated() throws Exception {
+    myFixture.addClass("package javax.annotation; public @interface Generated {}");
+    final RedundantCastInspection inspection = new RedundantCastInspection();
+    try {
+      myFixture.enableInspections(inspection);
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    }
+    finally {
+      myFixture.disableInspections(inspection);
+    }
+
+  }
+
+  public void testUsageOfProtectedAnnotationOutsideAPackage() throws Exception {
+    myFixture.addClass("package a;\n" +
+                       "import java.lang.annotation.ElementType;\n" +
+                       "import java.lang.annotation.Target;\n" +
+                       "\n" +
+                       "public class A {\n" +
+                       "    @Target( { ElementType.METHOD, ElementType.TYPE } )\n" +
+                       "    protected @interface Test{\n" +
+                       "    }\n" +
+                       "}");
 
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

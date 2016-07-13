@@ -20,9 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +41,16 @@ public class JdkBundle {
   @NotNull
   private static final Pattern ARCH_64_BIT_PATTERN = Pattern.compile(".*64-Bit.*", Pattern.MULTILINE);
 
+  @NotNull public static final Bitness runtimeBitness = is64BitJVM(System.getProperty("java.vm.name")) ? Bitness.x64 : Bitness.x32;
+
+  private static boolean is64BitRuntime() { return runtimeBitness == Bitness.x64; }
+
   @NotNull private File myBundleAsFile;
   @NotNull private String myBundleName;
   @Nullable private Pair<Version, Integer> myVersionUpdate;
   private boolean myBoot;
   private boolean myBundled;
+  private volatile Bitness bitness;
 
   JdkBundle(@NotNull File bundleAsFile,
             @NotNull String bundleName,
@@ -59,15 +62,17 @@ public class JdkBundle {
     myBundled = bundled;
   }
 
-
-  @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
+    return createBundle(jvm, boot, bundled, true);
+  }
+
+  public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled, boolean matchArch) {
     String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
-    return createBundle(jvm, homeSubPath, boot, bundled);
+    return createBundle(jvm, homeSubPath, boot, bundled, matchArch);
   }
 
   @Nullable
-  static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
+  static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled, boolean matchArch) {
     File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
     if (bundled) javaHome = new File(PathManager.getHomePath(), javaHome.getPath());
 
@@ -82,8 +87,11 @@ public class JdkBundle {
 
     File absJvmLocation = bundled ? new File(PathManager.getHomePath(), jvm.getPath()) : jvm;
     Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(absJvmLocation, homeSubPath);
-    if (nameArchVersionAndUpdate.first.second == null || (nameArchVersionAndUpdate.first.second != SystemInfo.is64Bit)) {
-      return null; // Skip unknown or incompatible arch
+    if (nameArchVersionAndUpdate.first.second == null) {
+      return null; // Skip unknown arch
+    }
+    if (matchArch && nameArchVersionAndUpdate.first.second != is64BitRuntime()) {
+      return null; // Skip incompatible arch
     }
 
     if (SystemInfo.isMac && nameArchVersionAndUpdate.second != null && nameArchVersionAndUpdate.second.first.isOrGreaterThan(1, 7) &&
@@ -91,7 +99,10 @@ public class JdkBundle {
       return null; // Skip jre
     }
 
-    return new JdkBundle(jvm, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
+    JdkBundle bundle = new JdkBundle(jvm, nameArchVersionAndUpdate.first.first, nameArchVersionAndUpdate.second, boot, bundled);
+    // init already computed bitness
+    bundle.bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
+    return bundle;
   }
 
   @Nullable
@@ -106,7 +117,7 @@ public class JdkBundle {
       bootJDK = bootJDK.getParentFile().getParentFile();
       return createBundle(bootJDK, true, false);
     }
-    return createBundle(bootJDK, "", true, false);
+    return createBundle(bootJDK, "", true, false, true);
   }
 
   @NotNull
@@ -140,6 +151,16 @@ public class JdkBundle {
 
   public boolean isBoot() {
     return myBoot;
+  }
+
+  public Bitness getBitness() {
+    if (bitness == null) {
+      String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
+      Pair<Pair<String, Boolean>, Pair<Version, Integer>> nameArchVersionAndUpdate = getJDKNameArchVersionAndUpdate(getAbsoluteLocation(), homeSubPath);
+      assert nameArchVersionAndUpdate.first.second != null;
+      bitness = nameArchVersionAndUpdate.first.second ? Bitness.x64 : Bitness.x32;
+    }
+    return bitness;
   }
 
   @NotNull
@@ -195,8 +216,7 @@ public class JdkBundle {
       versionAndUpdate = VersionUtil.parseVersionAndUpdate(versionLine, VERSION_UPDATE_PATTERNS);
       displayVersion = versionLine.replaceFirst("\".*\"", "");
       if (outputLines.size() >= 3) {
-        String archLine = outputLines.get(2);
-        is64Bit = ARCH_64_BIT_PATTERN.matcher(archLine).find();
+        is64Bit = is64BitJVM(outputLines.get(2));
       }
     }
     else {
@@ -204,6 +224,10 @@ public class JdkBundle {
     }
 
     return Pair.create(Pair.create(displayVersion, is64Bit), versionAndUpdate);
+  }
+
+  private static boolean is64BitJVM(String archLine) {
+    return ARCH_64_BIT_PATTERN.matcher(archLine).find();
   }
 
   public boolean isBundled() {

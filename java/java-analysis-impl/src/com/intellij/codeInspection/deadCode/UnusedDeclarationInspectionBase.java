@@ -92,7 +92,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     List<EntryPoint> deadCodeAddIns = new ArrayList<EntryPoint>(extensions.length);
     for (EntryPoint entryPoint : extensions) {
       try {
-        deadCodeAddIns.add(entryPoint);
+        deadCodeAddIns.add(entryPoint.clone());
       }
       catch (Exception e) {
         LOG.error(e);
@@ -757,5 +757,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @Override
   public boolean isGraphNeeded() {
     return true;
+  }
+
+  @TestOnly
+  public List<EntryPoint> getExtensions() {
+    return myExtensions;
   }
 }

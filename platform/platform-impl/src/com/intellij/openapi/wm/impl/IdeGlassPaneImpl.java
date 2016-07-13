@@ -25,7 +25,9 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -90,6 +92,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     if (installPainters) {
       IdeBackgroundUtil.initFramePainters(this);
       IdeBackgroundUtil.initEditorPainters(this);
+    }
+    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter")) {
+      getPainters().addPainter(new WindowShadowPainter(), null);
     }
   }
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -59,13 +60,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
   
-  private int myPlainSpaceWidth; // accessed only in EDT
+  private int myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
   private int myAscent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
   private int myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
-  
+  private int myTopOverhang; //guarded by myLock
+  private int myBottomOverhang; //guarded by myLock
+
   private final Object myLock = new Object();
   
   public EditorView(EditorImpl editor) {
@@ -280,12 +283,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   public void reinitSettings() {
     assertIsDispatchThread();
-    myPlainSpaceWidth = -1;
     synchronized (myLock) {
-      myLineHeight = -1;
-      myAscent = -1;
-      myCharHeight = -1;
-      myMaxCharWidth = -1;
+      myPlainSpaceWidth = -1;
       myTabSize = -1;
     }
     setFontRenderContext();
@@ -365,21 +364,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   }
 
   int getPlainSpaceWidth() {
-    if (myPlainSpaceWidth < 0) {
-      FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-      int width = FontLayoutService.getInstance().charWidth(fm, ' ');
-      myPlainSpaceWidth = width > 0 ? width : 1;
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myPlainSpaceWidth;
     }
-    return myPlainSpaceWidth;
   }
 
   public int getLineHeight() {
     synchronized (myLock) {
-      if (myLineHeight < 0) {
-        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
-        myLineHeight = (int)Math.ceil(fontMetricsHeight * getVerticalScalingFactor());
-      }
+      initMetricsIfNeeded();
       return myLineHeight;
     }
   }
@@ -392,40 +385,69 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   public int getDescent() {
     synchronized (myLock) {
-      return getLineHeight() - getAscent();
+      return myLineHeight - myAscent;
     }
   }
 
   public int getCharHeight() {
     synchronized (myLock) {
-      if (myCharHeight < 0) {
-        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
-      }
+      initMetricsIfNeeded();
       return myCharHeight;
     }
   }
 
   int getMaxCharWidth() {
     synchronized (myLock) {
-      if (myMaxCharWidth < 0) {
-        // assuming that bold italic 'W' gives a good approximation of font's widest character
-        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
-        myMaxCharWidth = FontLayoutService.getInstance().charWidth(fm, 'W'); 
-      }
+      initMetricsIfNeeded();
       return myMaxCharWidth;
     }
   }
 
   public int getAscent() {
     synchronized (myLock) {
-      if (myAscent < 0) {
-        FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
-        int ascent = FontLayoutService.getInstance().getAscent(fm);
-        myAscent = (int)Math.ceil(ascent * getVerticalScalingFactor());
-      }
+      initMetricsIfNeeded();
       return myAscent;
     }
+  }
+
+  public int getTopOverhang() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myTopOverhang;
+    }
+  }
+
+  public int getBottomOverhang() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myBottomOverhang;
+    }
+  }
+
+  // guarded by myLock
+  private void initMetricsIfNeeded() {
+    if (myPlainSpaceWidth >= 0) return;
+
+    FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+
+    int width = FontLayoutService.getInstance().charWidth(fm, ' ');
+    myPlainSpaceWidth = width > 0 ? width : 1;
+
+    myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
+
+    float verticalScalingFactor = getVerticalScalingFactor();
+
+    int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
+    myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+
+    int ascent = FontLayoutService.getInstance().getAscent(fm);
+    myAscent = (int)Math.ceil(ascent * verticalScalingFactor);
+    myTopOverhang = Math.max(ascent - myAscent, 0);
+    myBottomOverhang = Math.max(fontMetricsHeight - ascent - myLineHeight + myAscent, 0);
+
+    // assuming that bold italic 'W' gives a good approximation of font's widest character
+    FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
+    myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
   }
   
   public int getTabSize() {
@@ -451,7 +473,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
       TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
-      layout = LineLayout.create(this, foldRegion.getPlaceholderText(), 
+      layout = LineLayout.create(this, StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
                               placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }
@@ -484,17 +506,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   @Override
   public String dumpState() {
-    return "[prefix text: " + myPrefixText + 
-           ", prefix attributes: " + myPrefixAttributes + 
-           ", space width: " + myPlainSpaceWidth +
-           ", line height: " + myLineHeight +
-           ", ascent: " + myAscent +
-           ", char height: " + myCharHeight +
-           ", max char width: " + myMaxCharWidth +
-           ", tab size: " + myTabSize + 
-           " ,size manager: " + mySizeManager.dumpState() + 
-           " ,logical position cache: " + myLogicalPositionCache.dumpState() +
-           "]";
+    String prefixText = myPrefixText;
+    TextAttributes prefixAttributes = myPrefixAttributes;
+    synchronized (myLock) {
+      return "[prefix text: " + prefixText +
+             ", prefix attributes: " + prefixAttributes +
+             ", space width: " + myPlainSpaceWidth +
+             ", line height: " + myLineHeight +
+             ", ascent: " + myAscent +
+             ", char height: " + myCharHeight +
+             ", max char width: " + myMaxCharWidth +
+             ", tab size: " + myTabSize +
+             " ,size manager: " + mySizeManager.dumpState() +
+             " ,logical position cache: " + myLogicalPositionCache.dumpState() +
+             "]";
+    }
   }
 
   @TestOnly

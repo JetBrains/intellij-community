@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final Runnable callCleanupWorker = new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
-        new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
+        new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
           @Override
           protected void chanceToFillRoots() {
             final List<WCInfo> infos = getAllWcInfos();

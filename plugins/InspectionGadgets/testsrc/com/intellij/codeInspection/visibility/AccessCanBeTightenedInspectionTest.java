@@ -23,13 +23,25 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 @SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
+  private VisibilityInspection myVisibilityInspection = createTool();
+
   @Override
   protected LocalInspectionTool getInspection() {
+    return myVisibilityInspection.getSharedLocalInspectionTool();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myVisibilityInspection = null;
+    super.tearDown();
+  }
+
+  private static VisibilityInspection createTool() {
     VisibilityInspection inspection = new VisibilityInspection();
     inspection.SUGGEST_PRIVATE_FOR_INNERS = true;
     inspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     inspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
-    return inspection.getSharedLocalInspectionTool();
+    return inspection;
   }
 
   public void testSimple() {
@@ -72,6 +84,15 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testUseOfPackagePrivateInAnnotation() {
+    doTest("import java.util.*;\n" +
+           "@interface Ann{ String value(); }\n" +
+           "@Ann(value = C.VAL\n)" +
+           "class C {\n" +
+           "    static final String VAL = \"xx\";\n" +
+           "}");
+  }
+
   public void testSameFile() {
     doTest("class C {\n" +
            "  private static class Err {\n" +
@@ -101,12 +122,8 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
   }
 
   public void testDoNotSuggestPrivateInAnonymousClassIfPrivatesForInnersIsOff() {
-    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
-    AccessCanBeTightenedInspection inspection = (AccessCanBeTightenedInspection)profile.getInspectionTool(VisibilityInspection.SHORT_NAME, getProject()).getTool();
-    VisibilityInspection visibilityInspection =
-      ReflectionUtil.getField(inspection.getClass(), inspection, VisibilityInspection.class, "myVisibilityInspection");
-    visibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
-    visibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
+    myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+    myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
 
     doTest("class C {\n" +
            " {\n" +
@@ -216,6 +233,27 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "public class Consumer {\n" +
       "    public void doIt() {\n" +
       "        Outer.makeInner().frob();\n" +
+      "    }\n" +
+      "}" +
+      "");
+    myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testSuggestPackagePrivateForTopLevelClassSetting() {
+    myFixture.allowTreeAccessForAllFiles();
+    myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
+    myFixture.addFileToProject("x/Outer.java",
+      "package x;\n" +
+      "public class Outer {\n" +
+      "\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("x/Consumer.java",
+      "package x;\n" +
+      "public class Consumer {\n" +
+      "    public void doIt() {\n" +
+      "        System.out.println(Outer.class.hashCode());\n" +
       "    }\n" +
       "}" +
       "");

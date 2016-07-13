@@ -51,10 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
   public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
@@ -356,6 +353,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   @Override
   protected String getRefactoringId() {
     return "refactoring.inline.class";
+  }
+
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+    return myCurrentInheritor != null ? Collections.emptyList()
+                                      : super.getElementsToWrite(descriptor);
   }
 
   private void replaceInnerTypeUsages() {

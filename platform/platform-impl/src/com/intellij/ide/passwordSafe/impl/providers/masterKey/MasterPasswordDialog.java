@@ -1,18 +1,18 @@
 /*
-* Copyright 2000-2010 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
@@ -38,10 +38,6 @@ import java.util.List;
 public class MasterPasswordDialog extends DialogWrapper {
   private final static int NUMBER_OF_RETRIES = 5;
 
-  /**
-   * @noinspection FieldCanBeLocal
-   */
-  private final Class<?> myRequestor;
   private final JPanel myRootPanel = new JPanel(new CardLayout());
   private final List<PasswordComponentBase> myComponents = ContainerUtil.newArrayList();
   private final DialogWrapperAction myCardAction;
@@ -68,26 +64,24 @@ public class MasterPasswordDialog extends DialogWrapper {
   }
 
   public static MasterPasswordDialog resetMasterPasswordDialog(@Nullable Project project,
-                                                               @NotNull MasterKeyPasswordSafe safe,
-                                                               @NotNull Class<?> requestor) {
-    return new MasterPasswordDialog(project, requestor, new ResetPasswordComponent(safe, true));
+                                                               @NotNull MasterKeyPasswordSafe safe) {
+    return new MasterPasswordDialog(project, new ResetPasswordComponent(safe, true));
   }
 
   public static MasterPasswordDialog changeMasterPasswordDialog(@Nullable Project project,
-                                                                @NotNull MasterKeyPasswordSafe safe,
-                                                                Class<?> requestor) {
-    return new MasterPasswordDialog(project, requestor, new ChangePasswordComponent(safe), new ResetPasswordComponent(safe, false));
+                                                                @NotNull MasterKeyPasswordSafe safe) {
+    return new MasterPasswordDialog(project, new ChangePasswordComponent(safe), new ResetPasswordComponent(safe, false));
   }
 
   public static MasterPasswordDialog enterMasterPasswordDialog(@Nullable Project project,
                                                                @NotNull MasterKeyPasswordSafe safe,
                                                                @NotNull Class<?> requestor) {
-    return new MasterPasswordDialog(project, requestor, new EnterPasswordComponent(safe, requestor), new ResetPasswordComponent(safe, false));
+    return new MasterPasswordDialog(project, new EnterPasswordComponent(safe, requestor), new ResetPasswordComponent(safe, false));
   }
 
-  protected MasterPasswordDialog(@Nullable Project project, Class<?> requestor, PasswordComponentBase... components) {
+  protected MasterPasswordDialog(@Nullable Project project, PasswordComponentBase... components) {
     super(project, false);
-    myRequestor = requestor;
+
     setResizable(false);
     assert components.length > 0;
     myComponents.addAll(Arrays.asList(components));

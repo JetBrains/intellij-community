@@ -771,7 +771,7 @@ public class InferenceSession {
           restParamSubstitution = restParamSubstitution.put(typeParameters[i], parameter);
         }
       }
-      return initBounds(null, restParamSubstitution, capturedParams.toArray(new PsiTypeParameter[0]));
+      return initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
     }
     return initBounds(null, typeParameters);
   }

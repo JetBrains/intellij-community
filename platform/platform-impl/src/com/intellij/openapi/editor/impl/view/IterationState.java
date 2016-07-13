@@ -516,14 +516,14 @@ public class IterationState {
         guard = null;
       }
 
-      if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
-        cachedAttributes.add(caret);
-        caret = null;
-      }
-
       if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
         cachedAttributes.add(syntax);
         syntax = null;
+      }
+
+      if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
+        cachedAttributes.add(caret);
+        caret = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes();
@@ -535,8 +535,8 @@ public class IterationState {
     if (selection != null) cachedAttributes.add(selection);
     if (fold != null) cachedAttributes.add(fold);
     if (guard != null) cachedAttributes.add(guard);
-    if (caret != null) cachedAttributes.add(caret);
     if (syntax != null) cachedAttributes.add(syntax);
+    if (caret != null) cachedAttributes.add(caret);
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;

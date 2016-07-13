@@ -17,11 +17,13 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
@@ -246,7 +248,8 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
-    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
+    final Project project = myClass.getProject();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     String baseNameForIndex = baseName;
     int index = 0;
@@ -262,7 +265,9 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiVariable variable = (PsiVariable)declaration.getDeclaredElements()[0];
-      PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+        PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
+      }
       final PsiElement parent = myNewStatement.getParent();
       if (parent instanceof PsiCodeBlock) {
         variable = (PsiVariable)((PsiDeclarationStatement)parent.addBefore(declaration, myNewStatement)).getDeclaredElements()[0];

@@ -21,6 +21,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.*;
+import com.intellij.psi.impl.compiled.ClsJavaModuleImpl;
 
 public class ClsStubPsiFactory extends StubPsiFactory {
   public static final ClsStubPsiFactory INSTANCE = new ClsStubPsiFactory();
@@ -98,5 +99,10 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   @Override
   public PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub) {
     return null; // todo
+  }
+
+  @Override
+  public PsiJavaModule createModule(PsiJavaModuleStub stub) {
+    return new ClsJavaModuleImpl(stub);
   }
 }

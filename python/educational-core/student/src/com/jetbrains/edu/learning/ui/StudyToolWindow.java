@@ -62,22 +62,24 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     mySplitPane = new OnePixelSplitter(myVertical = true);
   }
 
-  public void init(Project project) {
+  public void init(@NotNull final Project project, final boolean isToolwindow) {
     String taskText = StudyUtils.getTaskText(project);
     if (taskText == null) return;
 
-    JPanel toolbarPanel = createToolbarPanel(getActionGroup(project));
-    setToolbar(toolbarPanel);
+    final DefaultActionGroup group = getActionGroup(project);
+    setActionToolbar(group);
 
     final JPanel panel = new JPanel(new BorderLayout());
     final Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course != null && course.isAdaptive()) {
+    if (isToolwindow && course != null && course.isAdaptive()) {
       panel.add(new StepicAdaptiveReactionsPanel(project), BorderLayout.NORTH);
     }
+    
     JComponent taskInfoPanel = createTaskInfoPanel(project);
     panel.add(taskInfoPanel, BorderLayout.CENTER);
+    
     final JPanel courseProgress = createCourseProgress(project);
-    if (course != null && !course.isAdaptive() && EduNames.STUDY.equals(course.getCourseMode())) {
+    if (isToolwindow && course != null && !course.isAdaptive() && EduNames.STUDY.equals(course.getCourseMode())) {
       panel.add(courseProgress, BorderLayout.SOUTH);
     }
 
@@ -87,24 +89,39 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
 
     setContent(mySplitPane);
+    
+    if (isToolwindow) {
+      StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
+      if (configurator != null) {
+        final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
+        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+      }
 
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    if (configurator != null) {
-      final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
-      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-    }
-
-    if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
-        StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
-      TaskFile file = StudyUtils.getSelectedTaskFile(project);
-      if (file != null) {
-        VirtualFile taskDir = file.getTask().getTaskDir(project);
-        setTaskText(taskText, taskDir, project);
+      if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
+          StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
+        TaskFile file = StudyUtils.getSelectedTaskFile(project);
+        if (file != null) {
+          VirtualFile taskDir = file.getTask().getTaskDir(project);
+          setTaskText(taskText, taskDir, project);
+        }
+      }
+      else {
+        setTaskText(taskText, null, project);
       }
     }
-    else {
-      setTaskText(taskText, null, project);
-    }
+  }
+  
+  public void setTopComponent(@NotNull final JComponent component) {
+    mySplitPane.setFirstComponent(component);
+  }
+  
+  public void setDefaultTopComponent() {
+    mySplitPane.setFirstComponent(myContentPanel);
+  }
+
+  public void setActionToolbar(DefaultActionGroup group) {
+    JPanel toolbarPanel = createToolbarPanel(group);
+    setToolbar(toolbarPanel);
   }
 
   private void addAdditionalPanels(Project project) {

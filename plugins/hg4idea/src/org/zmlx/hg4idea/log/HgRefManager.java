@@ -42,7 +42,7 @@ public class HgRefManager implements VcsLogRefManager {
   public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG);
   public static final VcsRefType LOCAL_TAG = new SimpleRefType(false, LOCAL_TAG_COLOR);
   public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType(false, MQ_TAG_COLOR);
-  
+
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(TIP, HEAD, BRANCH, BOOKMARK, TAG);
 
@@ -71,18 +71,19 @@ public class HgRefManager implements VcsLogRefManager {
         return typeComparison;
       }
 
-      if (type1 == BRANCH) {
-        if (ref1.getName().equals(DEFAULT)) {
-          return -1;
-        }
-        if (ref2.getName().equals(DEFAULT)) {
-          return 1;
-        }
-      }
       int nameComparison = ref1.getName().compareTo(ref2.getName());
       if (nameComparison != 0) {
+        if (type1 == BRANCH) {
+          if (ref1.getName().equals(DEFAULT)) {
+            return -1;
+          }
+          if (ref2.getName().equals(DEFAULT)) {
+            return 1;
+          }
+        }
         return nameComparison;
       }
+
       return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
     }
   };

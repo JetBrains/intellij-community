@@ -344,12 +344,17 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       PsiVariable local = iterator.next();
       final String localName = local.getName();
       if (localName == null ||
-          helper.resolveReferencedVariable(localName, lambdaExpression) == null ||
+          shadowingResolve(localName, lambdaExpression, helper) ||
           !PsiTreeUtil.isAncestor(lambdaExpression, local, false)) {
         iterator.remove();
         namesOfVariablesInTheBlock.add(localName);
       }
     }
+  }
+
+  private static boolean shadowingResolve(String localName, PsiLambdaExpression lambdaExpression, PsiResolveHelper helper) {
+    final PsiVariable variable = helper.resolveReferencedVariable(localName, lambdaExpression);
+    return variable == null || variable instanceof PsiField;
   }
 
   private static class ReplaceWithLambdaFix implements LocalQuickFix, HighPriorityAction {

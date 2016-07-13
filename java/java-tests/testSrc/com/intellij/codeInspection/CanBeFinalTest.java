@@ -9,8 +9,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 public class CanBeFinalTest extends InspectionTestCase {
   @Override
@@ -119,5 +125,26 @@ public class CanBeFinalTest extends InspectionTestCase {
     tool.REPORT_METHODS = true;
 
     doTest(tool);
+  }
+
+  public void testfieldImplicitWrite() throws Exception {
+    PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+      @Override
+      public boolean isImplicitUsage(PsiElement element) {
+        return isImplicitWrite(element);
+      }
+
+      @Override
+      public boolean isImplicitRead(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitWrite(PsiElement element) {
+        return element instanceof PsiField && "implicitWrite".equals(((PsiNamedElement)element).getName());
+      }
+    }, myTestRootDisposable);
+
+    doTest();
   }
 }

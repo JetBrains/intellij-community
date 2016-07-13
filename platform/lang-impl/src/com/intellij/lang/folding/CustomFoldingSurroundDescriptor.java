@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,10 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     if (startOffset >= endOffset) return PsiElement.EMPTY_ARRAY;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
-    if (commenter == null || commenter.getLineCommentPrefix() == null) return PsiElement.EMPTY_ARRAY;
+    if (commenter == null || commenter.getLineCommentPrefix() == null && 
+                             (commenter.getBlockCommentPrefix() == null || commenter.getBlockCommentSuffix() == null)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
     PsiElement startElement = file.findElementAt(startOffset);
     PsiElement endElement = file.findElementAt(endOffset - 1);
     if (startElement instanceof PsiWhiteSpace) {
@@ -280,8 +283,14 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
       if (commenter == null) return null;
       String linePrefix = commenter.getLineCommentPrefix();
+      String lineSuffix = "";
+      if (linePrefix == null) {
+        linePrefix = commenter.getBlockCommentPrefix();
+        lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
+      }
       if (linePrefix == null) return null;
       int prefixLength = linePrefix.length();
+
       int startOffset = firstElement.getTextRange().getStartOffset();
       final Document document = editor.getDocument();
       final int startLineNumber = document.getLineNumber(startOffset);
@@ -296,8 +305,8 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         rangeToSelect = TextRange.from(startOffset + descPos, DEFAULT_DESC_TEXT.length());
       }
 
-      String startString = linePrefix + startText + "\n" + startIndent;
-      String endString = "\n" + linePrefix + myProvider.getEndString();
+      String startString = linePrefix + startText + lineSuffix + "\n" + startIndent;
+      String endString = "\n" + linePrefix + myProvider.getEndString() + lineSuffix;
       document.insertString(endOffset, endString);
       delta += endString.length();
       document.insertString(startOffset, startString);

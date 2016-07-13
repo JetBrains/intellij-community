@@ -123,7 +123,6 @@ public abstract class ThreesideDiffChangeBase {
     boolean ignored = !resolved && getInnerFragments() != null;
     boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, resolved, shouldHideWithoutLineNumbers));
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
   }
 
   protected void createInnerHighlighter(@NotNull ThreeSide side) {

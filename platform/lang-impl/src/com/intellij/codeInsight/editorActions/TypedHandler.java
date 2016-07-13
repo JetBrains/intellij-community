@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -308,14 +309,15 @@ public class TypedHandler extends TypedActionHandlerBase {
     for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
-        final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-        // IDEA-52375 fix: last quote sign should be handled by outer language quote handler
-        final CharSequence charsSequence = editor.getDocument().getCharsSequence();
-        if (injectedEditor.getCaretModel().getOffset() == injectedEditor.getDocument().getTextLength() &&
-            offset < charsSequence.length() && charTyped == charsSequence.charAt(offset)) {
-          return editor;
+        if (injectedFile != null) {
+          Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+          // IDEA-52375/WEB-9105 fix: last quote in editable fragment should be handled by outer language quote handler
+          TextRange hostRange = documentWindow.getHostRange(offset);
+          CharSequence sequence = editor.getDocument().getCharsSequence();
+          if (sequence.length() > offset && charTyped != sequence.charAt(offset) || hostRange != null && hostRange.contains(offset)) {
+            return injectedEditor;
+          }
         }
-        return injectedEditor;
       }
     }
 

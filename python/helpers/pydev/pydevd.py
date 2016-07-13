@@ -96,7 +96,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
             self.py_db.SetTrace(None) # no debugging on this thread
 
         try:
@@ -129,7 +129,7 @@ class CheckOutputThread(PyDBDaemonThread):
         py_db.output_checker = self
 
     def _on_run(self):
-        if self.dontTraceMe:
+        if self.pydev_do_not_trace:
 
             disable_tracing = True
 
@@ -1283,7 +1283,7 @@ class Dispatcher(object):
         self.port = port
         self.client = start_client(self.host, self.port)
         self.reader = DispatchReader(self)
-        self.reader.dontTraceMe = False #we run reader in the same thread so we don't want to loose tracing
+        self.reader.pydev_do_not_trace = False #we run reader in the same thread so we don't want to loose tracing
         self.reader.run()
 
     def close(self):

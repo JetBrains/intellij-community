@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,4 +51,8 @@ public abstract class StubPsiFactory {
   public abstract PsiAnnotationParameterList createAnnotationParameterList(PsiAnnotationParameterListStub stub);
 
   public abstract PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub);
+
+  public PsiJavaModule createModule(PsiJavaModuleStub stub) {
+    return null;
+  }
 }

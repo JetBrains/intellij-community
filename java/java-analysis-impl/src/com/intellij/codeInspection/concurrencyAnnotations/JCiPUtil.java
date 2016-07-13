@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class JCiPUtil {
+public class JCiPUtil {
   static boolean isJCiPAnnotation(String ref) {
     return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }

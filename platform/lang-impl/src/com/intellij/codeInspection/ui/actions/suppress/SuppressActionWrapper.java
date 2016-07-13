@@ -150,29 +150,30 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     public boolean isSuppressAll() {
       return mySuppressAction.isSuppressAll();
     }
-  }
 
-  private static Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
-    final TreePath[] paths = view.getTree().getSelectionPaths();
-    if (paths == null) return Collections.emptySet();
-    final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
-    for (TreePath path : paths) {
-      final Object node = path.getLastPathComponent();
-      if (!(node instanceof TreeNode)) continue;
-      TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(final Object node) {    //fetch leaves
-          final InspectionTreeNode n = (InspectionTreeNode)node;
-          if (n instanceof SuppressableInspectionTreeNode &&
-              ((SuppressableInspectionTreeNode)n).canSuppress() &&
-              !((SuppressableInspectionTreeNode)n).isAlreadySuppressedFromView() &&
-              n.isValid()) {
-            result.add((SuppressableInspectionTreeNode)n);
+    private Set<SuppressableInspectionTreeNode> getNodesToSuppress(@NotNull InspectionResultsView view) {
+      final TreePath[] paths = view.getTree().getSelectionPaths();
+      if (paths == null) return Collections.emptySet();
+      final Set<SuppressableInspectionTreeNode> result = new HashSet<>();
+      for (TreePath path : paths) {
+        final Object node = path.getLastPathComponent();
+        if (!(node instanceof TreeNode)) continue;
+        TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
+          @Override
+          public boolean accept(final Object node) {    //fetch leaves
+            final InspectionTreeNode n = (InspectionTreeNode)node;
+            if (n instanceof SuppressableInspectionTreeNode &&
+                ((SuppressableInspectionTreeNode)n).canSuppress() &&
+                ((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction) &&
+                n.isValid()) {
+              result.add((SuppressableInspectionTreeNode)n);
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      return result;
     }
-    return result;
+
   }
 }

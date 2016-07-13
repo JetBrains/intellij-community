@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class GrPullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
-    GrRefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, new UsageInfo[0], targetRepresentativeElement, conflicts);
+    GrRefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
     final String fqName = subclass.getQualifiedName();
     final String packageName;
     if (fqName != null) {

@@ -466,14 +466,14 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return editor != null ? editor.getFile() : null;
     } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return editor != null ? new VirtualFile[]{editor.getFile()} : new VirtualFile[]{};
+      return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
     } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return getData(CommonDataKeys.PSI_ELEMENT.getName());
     } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       VirtualFile file = editor != null ? editor.getFile() : null;
       return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return editor != null ? new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())} : new PsiElement[]{} ;
+      return editor != null ? new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())} : PsiElement.EMPTY_ARRAY;
     } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return this;
     } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {

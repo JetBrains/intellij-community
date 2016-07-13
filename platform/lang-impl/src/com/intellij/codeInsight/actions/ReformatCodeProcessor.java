@@ -29,8 +29,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.FormatRangesInfo;
+import com.intellij.psi.codeStyle.DiffInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -38,10 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -123,9 +122,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
 
         if (processChangedTextOnly) {
-          FormatRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedTextHelper(file);
+          ChangedRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
           if (helper != null) {
-            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, helper);
+            List<TextRange> ranges = helper.changedRanges;
+            DiffInfo info = helper.diffInfo;
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges, info);
           }
         }
         else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
         final PsiType functionalInterfaceType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
         final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
         if (functionalInterfaceMethod != null) {
-          PsiParameter[] params = new PsiParameter[0];
+          PsiParameter[] params = PsiParameter.EMPTY_ARRAY;
           final PsiElement originalPosition = parameters.getPosition();
           final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(functionalInterfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
           if (!functionalInterfaceMethod.hasTypeParameters()) {

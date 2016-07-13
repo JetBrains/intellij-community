@@ -89,6 +89,12 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         }
       }
     }
+    else if (refElement instanceof RefField) {
+      final PsiElement element = refElement.getElement();
+      if (element != null && RefUtil.isImplicitWrite(element)) {
+        ((RefElementImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
+      }
+    }
   }
 
 

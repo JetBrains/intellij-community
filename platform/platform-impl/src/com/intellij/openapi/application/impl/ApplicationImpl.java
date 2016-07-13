@@ -112,7 +112,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
-  private final Splash mySplash;
+  private Splash mySplash;
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress;
 
@@ -390,13 +390,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void load(@Nullable final String configPath) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      long t = System.currentTimeMillis();
-      init(mySplash == null ? null : new EmptyProgressIndicator() {
+      long start = System.currentTimeMillis();
+      ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
           mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
         }
-      }, () -> {
+      };
+      init(indicator, () -> {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
@@ -413,13 +414,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
       });
-      t = System.currentTimeMillis() - t;
-      LOG.info(getComponentConfigCount() + " application components initialized in " + t + " ms");
+      LOG.info(getComponentConfigCount() + " application components initialized in " + (System.currentTimeMillis() - start) + "ms");
     }
     finally {
       token.finish();
     }
     myLoaded = true;
+    mySplash = null;
 
     createLocatorFile();
   }

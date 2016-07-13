@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 
@@ -331,8 +328,12 @@ public class StudyProjectGenerator {
       if (!createCacheFile(cacheFile)) return;
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
 
+      final Set<CourseInfo> courseInfos = new HashSet<>();
+      courseInfos.addAll(courses);
+      courseInfos.addAll(getCoursesFromCache());
+
       writer = new PrintWriter(cacheFile);
-      for (CourseInfo courseInfo : courses) {
+      for (CourseInfo courseInfo : courseInfos) {
         final String json = gson.toJson(courseInfo);
         writer.println(json);
       }

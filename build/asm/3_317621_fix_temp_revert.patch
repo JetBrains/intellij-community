@@ -1,0 +1,22 @@
+Index: org/objectweb/asm/Type.java
+===================================================================
+--- org/objectweb/asm/Type.java
++++ org/objectweb/asm/Type.java
+@@ -377,16 +377,7 @@
+      */
+     public static Type getReturnType(final String methodDescriptor) {
+         char[] buf = methodDescriptor.toCharArray();
+-        int off = 1;
+-        while (true) {
+-            char car = buf[off++];
+-            if (car == ')') {
+-                return getType(buf, off);
+-            } else if (car == 'L') {
+-                while (buf[off++] != ';') {
+-                }
+-            }
+-        }
++        return getType(buf, methodDescriptor.lastIndexOf(')') + 1);
+     }
+
+     /**

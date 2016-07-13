@@ -449,7 +449,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           }
           ++ cntCorrect;
         } else {
-          if (errors.isEmpty() || !checker.getErrors().containsKey(value)) {
+          if (errors.isEmpty() || notTypeError(value, checker)) {
             errors.clear();
             errors.putAll(checker.getErrors());
           }
@@ -467,6 +467,11 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       }
     }
 
+    private static boolean notTypeError(JsonValue value, BySchemaChecker checker) {
+      if (!checker.isHadTypeError()) return true;
+      return !checker.getErrors().containsKey(value);
+    }
+
     private void processAnyOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> anyOf = schema.getAnyOf();
       final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
@@ -478,7 +483,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           validatedProperties.addAll(local);
           return;
         }
-        if (errors.isEmpty() && !checker.getErrors().containsKey(value)) {
+        if (errors.isEmpty() && notTypeError(value, checker)) {
           errors.clear();
           errors.putAll(checker.getErrors());
         }

@@ -1,5 +1,5 @@
 interface I {
-  boolean equals(I i);
+  boolean <warning descr="'equals()' should take 'Object' as its argument">equals</warning>(I i);
 }
 class A {
 
@@ -26,6 +26,11 @@ class C {
 class D implements I {
   @Override
   public boolean equals(I i) {
+    return false;
+  }
+}
+class E {
+  boolean <warning descr="'equals()' should take 'Object' as its argument">equals</warning>(E e) {
     return false;
   }
 }

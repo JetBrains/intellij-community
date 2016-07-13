@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PasswordSafeImpl extends PasswordSafe {
-  private static final Logger LOG = Logger.getInstance(PasswordSafeImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(PasswordSafeImpl.class);
+
   private final PasswordSafeSettings mySettings;
   private final MasterKeyPasswordSafe myMasterKeyProvider;
   private final NilProvider myNilProvider;
@@ -59,7 +60,7 @@ public class PasswordSafeImpl extends PasswordSafe {
       default:
         LOG.error("Unknown provider type: " + mySettings.getProviderType());
     }
-    if (p == null || !p.isSupported()) {
+    if (!p.isSupported()) {
       p = myMemoryProvider;
     }
     return p;

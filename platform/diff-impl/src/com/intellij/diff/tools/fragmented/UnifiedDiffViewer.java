@@ -47,7 +47,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,6 +55,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -898,8 +898,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   @Override
-  protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getOpenFileDescriptor(myEditor.getCaretModel().getOffset());
+  protected Navigatable getNavigatable() {
+    return getNavigatable(myEditor.getCaretModel().getOffset());
   }
 
   @CalledInAwt
@@ -936,20 +936,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  protected Navigatable getNavigatable(int offset) {
     LogicalPosition position = myEditor.offsetToLogicalPosition(offset);
     Pair<int[], Side> pair = transferLineFromOneside(position.line);
-    int offset1 = DiffUtil.getOffset(getContent1().getDocument(), pair.first[0], position.column);
-    int offset2 = DiffUtil.getOffset(getContent2().getDocument(), pair.first[1], position.column);
+    int line1 = pair.first[0];
+    int line2 = pair.first[1];
 
-    // TODO: issue: non-optimal GoToSource position with caret on deleted block for "Compare with local"
-    //       we should transfer using calculated diff, not jump to "somehow related" position from old content's descriptor
-
-    OpenFileDescriptor descriptor1 = getContent1().getOpenFileDescriptor(offset1);
-    OpenFileDescriptor descriptor2 = getContent2().getOpenFileDescriptor(offset2);
-    if (descriptor1 == null) return descriptor2;
-    if (descriptor2 == null) return descriptor1;
-    return pair.second.select(descriptor1, descriptor2);
+    Navigatable navigatable1 = getContent1().getNavigatable(new LineCol(line1, position.column));
+    Navigatable navigatable2 = getContent2().getNavigatable(new LineCol(line2, position.column));
+    if (navigatable1 == null) return navigatable2;
+    if (navigatable2 == null) return navigatable1;
+    return pair.second.select(navigatable1, navigatable2);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -991,10 +988,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
-    protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
+    protected Navigatable getNavigatable(@NotNull Editor editor, int line) {
       if (editor != myEditor) return null;
 
-      return getOpenFileDescriptor(myEditor.logicalPositionToOffset(new LogicalPosition(line, 0)));
+      return getNavigatable(myEditor, line);
     }
   }
 

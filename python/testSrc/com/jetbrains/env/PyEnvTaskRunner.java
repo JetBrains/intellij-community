@@ -75,7 +75,7 @@ public class PyEnvTaskRunner {
         // Exception is thrown anyway, so we escape message before logging
         if (e.getMessage().contains("enteredTheMatrix")) {
           // .error( may lead to new exception with out of stacktrace.
-          logger.warn(e.getMessage().replace("##", "from test: \\##"));
+          logger.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
         }
         else {
           logger.error(e);

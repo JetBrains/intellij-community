@@ -425,7 +425,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE) {
+              if (selectionIndex != 0 || UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE || !isPinnedMode()) {
                 firstRecentMarked = true;
               }
             }

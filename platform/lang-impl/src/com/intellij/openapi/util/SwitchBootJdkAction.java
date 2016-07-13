@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Consumer;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +41,6 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.io.*;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -144,14 +142,30 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         public void contentsChanged(ListDataEvent e) {
           if (myComboBox.getSelectedItem() == null) {
             FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+              JdkBundle selectedBundle;
+
               @Override
               public boolean isFileSelectable(final VirtualFile file) {
+                selectedBundle = null;
                 if (!super.isFileSelectable(file)) return false;
-                JdkBundle bundle = JdkBundle.createBundle(new File(file.getPath()), false, false);
+                // allow selection of JDK of any arch, so that to warn about possible arch mismatch during validation
+                JdkBundle bundle = JdkBundle.createBundle(new File(file.getPath()), false, false, false);
                 if (bundle == null) return false;
                 Version version =  bundle.getVersion();
-
+                selectedBundle = bundle;
                 return version != null && !version.lessThan(JDK8_VERSION.major, JDK8_VERSION.minor, JDK8_VERSION.bugfix);
+              }
+
+              @Override
+              public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+                super.validateSelectedFiles(files);
+                assert files.length == 1;
+                if (selectedBundle == null) {
+                  throw new Exception("Invalid JDK bundle!");
+                }
+                if (selectedBundle.getBitness() != JdkBundle.runtimeBitness) {
+                  throw new Exception("JDK arch mismatch! Your IDE's arch is " + JdkBundle.runtimeBitness);
+                }
               }
             };
 

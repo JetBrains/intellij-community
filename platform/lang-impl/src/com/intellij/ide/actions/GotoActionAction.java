@@ -243,8 +243,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else if (value instanceof GotoActionModel.ActionWrapper) {
       AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
       if (action instanceof ToggleAction) {
-        performAction(action, component, e);
-        repaint(popup);
+        performAction(action, component, e, () -> repaint(popup));
         return true;
       }
     }
@@ -273,6 +272,13 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   }
 
   public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
+    performAction(element, component, e, null);
+  }
+
+  public static void performAction(Object element,
+                                   @Nullable final Component component,
+                                   @Nullable final AnActionEvent e,
+                                   @Nullable final Runnable callback) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
     final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
@@ -285,7 +291,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
             if (window != null) {
               popup.showInCenterOf(window);
@@ -296,6 +302,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }
           else {
             ActionUtil.performActionDumbAware(action, event);
+            if (callback != null) callback.run();
           }
         }
     });

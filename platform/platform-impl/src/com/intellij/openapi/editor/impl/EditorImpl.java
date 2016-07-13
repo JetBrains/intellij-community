@@ -74,6 +74,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -324,6 +325,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myErrorStripeNeedsRepaint;
   
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
+
+  private boolean myUseEditorAntialiasing = true;
 
   private final ImmediatePainter myImmediatePainter;
 
@@ -2411,7 +2414,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-          UIUtil.drawWave((Graphics2D)g, new Rectangle(end.x, y, charWidth - 1, getDescent()- 1));
+          EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
           final int dottedAt = SystemInfo.isMac ? y - 1 : y;
@@ -2426,7 +2429,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           drawBoldLineUnderScore(g, end.x, y - 1, charWidth - 1);
         }
         else if (attributes.getEffectType() != EffectType.BOXED) {
-          UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
+          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
       }
     }
@@ -3544,8 +3547,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (effectType == EffectType.LINE_UNDERSCORE) {
-        g.setColor(effectColor);
-        UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+        EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
@@ -3560,8 +3562,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
-        g.setColor(effectColor);
-        UIUtil.drawWave((Graphics2D)g, new Rectangle(xStart, y+1, xEnd - xStart, getDescent() - 1));
+        EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
@@ -6175,6 +6176,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     e.consume();
     return true;
+  }
+
+  public boolean useEditorAntialiasing() {
+    return myUseEditorAntialiasing;
+  }
+
+  public void setUseEditorAntialiasing(boolean value) {
+    myUseEditorAntialiasing = value;
   }
 
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);

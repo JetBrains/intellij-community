@@ -788,7 +788,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
       }
 
-      if (mySynchronizer.isInsideAtomicChange(file)) {
+      if (PsiToDocumentSynchronizer.isInsideAtomicChange(file)) {
         psiCause = file;
       }
     }
@@ -826,7 +826,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     boolean commitNecessary = true;
     for (PsiFile file : files) {
 
-      if (mySynchronizer.isInsideAtomicChange(file)) {
+      if (PsiToDocumentSynchronizer.isInsideAtomicChange(file)) {
         commitNecessary = false;
         continue;
       }

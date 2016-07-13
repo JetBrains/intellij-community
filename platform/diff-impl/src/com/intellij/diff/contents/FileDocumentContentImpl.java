@@ -16,12 +16,14 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +42,9 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public Navigatable getNavigatable(@NotNull LineCol position) {
     if (myProject == null || myProject.isDefault() || !myFile.isValid()) return null;
-    return new OpenFileDescriptor(myProject, myFile, offset);
+    return new OpenFileDescriptor(myProject, myFile, position.line, position.column);
   }
 
   @Nullable

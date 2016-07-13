@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public abstract class CreateClassFix {
 
       method = (GrMethod)targetClass.addBefore(method, null);
       final PsiElement context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class, PsiFile.class);
-      IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, new TypeConstraint[0], true, context);
+      IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, TypeConstraint.EMPTY_ARRAY, true, context);
     }
     finally {
       writeLock.finish();

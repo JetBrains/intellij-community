@@ -32,25 +32,9 @@ import javax.swing.*;
 
 
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
-  private final String myQualifiedName;
-
   public RefPackageImpl(@NotNull String name, @NotNull RefManager refManager) {
-    super(getPackageSuffix(name), refManager);
-    myQualifiedName = name;
+    super(name, refManager);
   }
-
-  @NotNull
-  @Override
-  public String getQualifiedName() {
-    return myQualifiedName;
-  }
-
-  @NotNull
-  private static String getPackageSuffix(@NotNull String fullName) {
-    int dotIndex = fullName.lastIndexOf('.');
-    return (dotIndex >= 0) ? fullName.substring(dotIndex + 1) : fullName;
-  }
-
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
@@ -59,11 +43,6 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     } else {
       super.accept(visitor);
     }
-  }
-
-  @Override
-  public String getExternalName() {
-    return getQualifiedName();
   }
 
   public static RefEntity packageFromFQName(final RefManager manager, final String name) {

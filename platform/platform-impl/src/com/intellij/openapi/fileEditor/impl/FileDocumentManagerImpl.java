@@ -61,7 +61,9 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
@@ -107,13 +109,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     projectManager.addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
-    InvocationHandler handler = new InvocationHandler() {
-      @Nullable
-      @Override
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        multiCast(method, args);
-        return null;
-      }
+    InvocationHandler handler = (proxy, method, args) -> {
+      multiCast(method, args);
+      return null;
     };
 
     final ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
@@ -300,8 +298,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
 
-    final Map<Document, IOException> failedToSave = new HashMap<Document, IOException>();
-    final Set<Document> vetoed = new HashSet<Document>();
+    final Map<Document, IOException> failedToSave = new HashMap<>();
+    final Set<Document> vetoed = new HashSet<>();
     while (true) {
       int count = 0;
 
@@ -428,7 +426,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       }
 
       Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-      LoadTextUtil.write(project, file, FileDocumentManagerImpl.this, text, document.getModificationStamp());
+      LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
 
       myUnsavedDocuments.remove(document);
       LOG.assertTrue(!myUnsavedDocuments.contains(document));
@@ -524,7 +522,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       return Document.EMPTY_ARRAY;
     }
 
-    List<Document> list = new ArrayList<Document>(myUnsavedDocuments);
+    List<Document> list = new ArrayList<>(myUnsavedDocuments);
     return list.toArray(new Document[list.size()]);
   }
 
@@ -545,12 +543,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final Document document = getCachedDocument(file);
       if (document != null) {
-        ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
-          @Override
-          public void run() {
-            document.setReadOnly(!file.isWritable());
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> document.setReadOnly(!file.isWritable()));
       }
     }
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
@@ -621,35 +614,44 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       return;
     }
 
-    if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
-      unbindFileFromDocument(file, document);
-      myUnsavedDocuments.remove(document);
-      myMultiCaster.fileWithNoDocumentChanged(file);
-      return;
-    }
-
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-      new ExternalChangeAction.ExternalDocumentChange(document, project) {
-        @Override
-        public void run() {
-          boolean wasWritable = document.isWritable();
-          DocumentEx documentEx = (DocumentEx)document;
-          documentEx.setReadOnly(false);
-          LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
-          file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-          file.setCharset(null, null, false);
-          if (!isBinaryWithoutDecompiler(file)) {
-            documentEx.replaceText(LoadTextUtil.loadText(file), file.getModificationStamp());
-            documentEx.setReadOnly(!wasWritable);
+    boolean[] isReloadable = {isReloadable(file, document, project)};
+    if (isReloadable[0]) {
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+        new ExternalChangeAction.ExternalDocumentChange(document, project) {
+          @Override
+          public void run() {
+            if (!isBinaryWithoutDecompiler(file)) {
+              LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
+              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+              file.setCharset(null, null, false);
+              boolean wasWritable = document.isWritable();
+              document.setReadOnly(false);
+              CharSequence reloaded = LoadTextUtil.loadText(file);
+              isReloadable[0] = isReloadable(file, document, project);
+              if (isReloadable[0]) {
+                DocumentEx documentEx = (DocumentEx)document;
+                documentEx.replaceText(reloaded, file.getModificationStamp());
+              }
+              document.setReadOnly(!wasWritable);
+            }
           }
         }
-      }
-    ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
-
+      ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+    }
+    if (isReloadable[0]) {
+      myMultiCaster.fileContentReloaded(file, document);
+    }
+    else {
+      unbindFileFromDocument(file, document);
+      myMultiCaster.fileWithNoDocumentChanged(file);
+    }
     myUnsavedDocuments.remove(document);
+  }
 
-    myMultiCaster.fileContentReloaded(file, document);
+  private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
+    PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+    return file.getLength() <= FileUtilRt.LARGE_FOR_CONTENT_LOADING && (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl);
   }
 
   private volatile PairProcessor<VirtualFile, Document> askReloadFromDisk = (file, document) -> {
@@ -697,12 +699,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
                                    @NotNull PairProcessor<VirtualFile, Document> newProcessor) {
     final PairProcessor<VirtualFile, Document> old = askReloadFromDisk;
     askReloadFromDisk = newProcessor;
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        askReloadFromDisk = old;
-      }
-    });
+    Disposer.register(disposable, () -> askReloadFromDisk = old);
   }
 
   private boolean askReloadFromDisk(final VirtualFile file, final Document document) {
@@ -826,7 +823,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       LOG.warn(exception);
     }
 
-    final String text = StringUtil.join(failures.values(), e -> e.getMessage(), "\n");
+    final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
 
     final DialogWrapper dialog = new DialogWrapper(null) {
       {

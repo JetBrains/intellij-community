@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
-import com.intellij.formatting.VcsAwareFormatRangesInfo;
+import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -34,7 +34,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.FormatRangesInfo;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.vcsUtil.VcsUtil;
@@ -48,18 +48,18 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
-    FormatRangesInfo helper = getChangedTextHelper(file);
-    return helper != null ? helper.getRangesToFormat() : ContainerUtil.newArrayList();
+    ChangedRangesInfo helper = getChangedRangesInfo(file);
+    return helper != null ? helper.changedRanges : ContainerUtil.newArrayList();
   }
 
   @Override
   @Nullable
-  public FormatRangesInfo getChangedTextHelper(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
 
-    FormatRangesInfo cachedChangedTextHelper = getCachedChangedLines(project, document);
+    ChangedRangesInfo cachedChangedTextHelper = getCachedChangedLines(project, document);
     if (cachedChangedTextHelper != null) {
       return cachedChangedTextHelper;
     }
@@ -76,7 +76,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       return null;
     }
     if (change.getType() == Change.Type.NEW) {
-      return new VcsAwareFormatRangesInfo(file.getTextRange());
+      TextRange fileRange = file.getTextRange();
+      return new ChangedRangesInfo(null, ContainerUtil.newArrayList(fileRange));
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
@@ -100,7 +101,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @Nullable
-  private static FormatRangesInfo getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
+  private static ChangedRangesInfo getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
     if (tracker != null) {
       List<Range> ranges = tracker.getRanges();
@@ -112,8 +113,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @NotNull
-  protected static FormatRangesInfo calculateContextReformatHelper(@NotNull Document document,
-                                                                   @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
+  protected static ChangedRangesInfo calculateContextReformatHelper(@NotNull Document document,
+                                                                    @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
   {
     return getChangedTextRanges(document, getRanges(document, contentFromVcs));
   }
@@ -159,7 +160,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @NotNull
-  private static FormatRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<Range> changedRanges) {
+  private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<Range> changedRanges) {
     List<TextRange> ranges = ContainerUtil.newArrayList();
     List<TextRange> insertedRanges = ContainerUtil.newArrayList();
     
@@ -178,7 +179,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
         }
       }
     }
-    return new VcsAwareFormatRangesInfo(ranges, insertedRanges);
+    return new ChangedRangesInfo(new DiffInfoImpl(insertedRanges), ranges);
   }
 
   @Override

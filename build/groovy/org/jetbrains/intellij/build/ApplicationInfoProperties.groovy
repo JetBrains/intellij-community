@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
-import groovy.transform.Immutable
+import java.text.MessageFormat
 
 /**
  * @author nik
@@ -23,12 +23,33 @@ import groovy.transform.Immutable
 class ApplicationInfoProperties {
   final String majorVersion
   final String minorVersion
+  final String microVersion
+  final String patchVersion
+  final String fullVersionFormat
+  final String shortProductName
+  final String minorVersionMainPart
+  final String productName
+  final String companyName
   final boolean isEAP
 
+  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   ApplicationInfoProperties(String appInfoXmlPath) {
     def root = new XmlParser().parse(new File(appInfoXmlPath))
     majorVersion = root.version.first().@major
-    minorVersion = root.version.first().@minor
+    minorVersion = root.version.first().@minor ?: "0"
+    microVersion = root.version.first().@micro ?: "0"
+    patchVersion = root.version.first().@patch ?: "0"
+    fullVersionFormat = root.version.first().@full ?: "{0}.{1}"
+    shortProductName = root.names.first().@product
+    productName = root.names.first().@fullname
+    companyName = root.company.first().@name
+    minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
+  }
+
+  public String getUpperCaseProductName() { shortProductName.toUpperCase() }
+
+  public String getFullVersion() {
+    MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   }
 }

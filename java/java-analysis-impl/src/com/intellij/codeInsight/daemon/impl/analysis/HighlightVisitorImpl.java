@@ -48,6 +48,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,6 +89,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   };
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new THashMap<>();
+  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new THashSet<>();
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
 
@@ -194,6 +196,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myFile = null;
       myHolder = null;
       myDuplicateMethods.clear();
+      myOverrideEquivalentMethodsVisitedClasses.clear();
     }
 
     return success;
@@ -896,6 +899,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallsBaseClassConstructor(method, myRefCountHolder, myResolveHelper));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkStaticMethodOverride(method,myFile));
+      if (!myHolder.hasErrorResults() && aClass != null &&
+          myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
+        myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+      }
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -909,7 +916,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
         }
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
-        if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+        if (!myHolder.hasErrorResults() && myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
+          myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+        }
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
       }
       catch (IndexNotReadyException ignored) {
@@ -1067,7 +1076,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
+    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference()) &&
+        myOverrideEquivalentMethodsVisitedClasses.add((PsiClass)parent)) {
       PsiClass aClass = (PsiClass)parent;
       myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
     }

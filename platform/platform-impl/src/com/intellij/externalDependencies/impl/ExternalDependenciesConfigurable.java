@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
@@ -111,6 +112,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
         }
       }
     });
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        return editSelectedDependency(dependenciesList);
+      }
+    }.installOn(dependenciesList);
+
     dependenciesList.setModel(myListModel);
     JPanel dependenciesPanel = ToolbarDecorator.createDecorator(dependenciesList)
       .disableUpDownActions()
@@ -123,16 +131,22 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          DependencyOnPlugin selected = (DependencyOnPlugin)dependenciesList.getSelectedValue();
-          if (selected != null) {
-            replaceDependency(selected, dependenciesList);
-          }
+          editSelectedDependency(dependenciesList);
         }
       })
       .createPanel();
     return FormBuilder.createFormBuilder()
       .addLabeledComponentFillVertically("Plugins which are required to work on this project.", dependenciesPanel)
       .getPanel();
+  }
+
+  public boolean editSelectedDependency(JBList dependenciesList) {
+    DependencyOnPlugin selected = (DependencyOnPlugin)dependenciesList.getSelectedValue();
+    if (selected != null) {
+      replaceDependency(selected, dependenciesList);
+      return true;
+    }
+    return false;
   }
 
   private void replaceDependency(DependencyOnPlugin original, JBList dependenciesList) {

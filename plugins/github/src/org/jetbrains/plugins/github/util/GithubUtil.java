@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -450,7 +449,7 @@ public class GithubUtil {
     if (e instanceof UnknownHostException) {
       return "Unknown host: " + e.getMessage();
     }
-    return e.getMessage();
+    return StringUtil.notNullize(e.getMessage(), "Unknown error");
   }
 
   @Nullable

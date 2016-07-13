@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -106,10 +107,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
     byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
-
-    LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(version);
-    if (languageLevel == null) languageLevel = LanguageLevel.HIGHEST;
-    ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
 
@@ -787,47 +784,64 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   private static Function<String, String> createMapping(Object classSource) {
-    if (classSource instanceof VirtualFile) {
-      final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
+    Function<String, String> mapping = null;
 
-      try {
-        byte[] bytes = ((VirtualFile)classSource).contentsToByteArray(false);
-        new ClassReader(bytes).accept(new ClassVisitor(ASM_API) {
-          @Override
-          public void visitInnerClass(String name, String outerName, String innerName, int access) {
-            if (outerName != null && innerName != null) {
-              mapping.put(name, pair(outerName, innerName));
-            }
-          }
-        }, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
-      }
-      catch (Exception ignored) { }
-
-      if (!mapping.isEmpty()) {
-        return new Function<String, String>() {
-          @Override
-          public String fun(String internalName) {
-            String className = internalName;
-
-            if (className.indexOf('$') >= 0) {
-              Pair<String, String> p = mapping.get(className);
-              if (p == null) {
-                return GUESSING_MAPPER.fun(className);
-              }
-              className = p.first;
-              if (p.second != null) {
-                className = fun(p.first) + '.' + p.second;
-                mapping.put(className, pair(className, (String)null));
-              }
-            }
-
-            return className.replace('/', '.');
-          }
-        };
+    if (classSource instanceof Pair) {
+      Object second = ((Pair)classSource).second;
+      if (second instanceof byte[]) {
+        mapping = createMapping((byte[])second);
       }
     }
+    else if (classSource instanceof VirtualFile) {
+      try {
+        byte[] bytes = ((VirtualFile)classSource).contentsToByteArray(false);
+        mapping = createMapping(bytes);
+      }
+      catch (IOException ignored) { }
+    }
 
-    return GUESSING_MAPPER;
+    return mapping != null ? mapping : GUESSING_MAPPER;
+  }
+
+  private static Function<String, String> createMapping(byte[] classBytes) {
+    final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
+
+    try {
+      new ClassReader(classBytes).accept(new ClassVisitor(ASM_API) {
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int access) {
+          if (outerName != null && innerName != null) {
+            mapping.put(name, pair(outerName, innerName));
+          }
+        }
+      }, ClsFileImpl.EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+    }
+    catch (Exception ignored) { }
+
+    if (!mapping.isEmpty()) {
+      return new Function<String, String>() {
+        @Override
+        public String fun(String internalName) {
+          String className = internalName;
+
+          if (className.indexOf('$') >= 0) {
+            Pair<String, String> p = mapping.get(className);
+            if (p == null) {
+              return GUESSING_MAPPER.fun(className);
+            }
+            className = p.first;
+            if (p.second != null) {
+              className = fun(p.first) + '.' + p.second;
+              mapping.put(className, pair(className, (String)null));
+            }
+          }
+
+          return className.replace('/', '.');
+        }
+      };
+    }
+
+    return null;
   }
 
   public static final Function<String, String> GUESSING_MAPPER = new Function<String, String>() {

@@ -17,16 +17,17 @@ package com.intellij.diff.actions;
 
 import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +75,11 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    return myOriginal.getOpenFileDescriptor(offset + mySynchonizer.getStartOffset());
+  public Navigatable getNavigatable(@NotNull LineCol position) {
+    int offset = position.toOffset(getDocument());
+    int originalOffset = offset + mySynchonizer.getStartOffset();
+    LineCol originalPosition = LineCol.fromOffset(myOriginal.getDocument(), originalOffset);
+    return myOriginal.getNavigatable(originalPosition);
   }
 
   @Nullable
@@ -98,8 +102,8 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
 
   @Nullable
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor() {
-    return getOpenFileDescriptor(0);
+  public Navigatable getNavigatable() {
+    return getNavigatable(new LineCol(0));
   }
 
   @Override

@@ -54,7 +54,7 @@ public class AddAntBuildFile extends AnAction {
 
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     files.addAll(Arrays.asList(contextFiles));
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       files.remove(buildFile.getVirtualFile());
     }
     

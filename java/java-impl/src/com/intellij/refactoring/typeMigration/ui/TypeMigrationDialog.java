@@ -192,6 +192,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
+      if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
     }
 
     @Override
@@ -311,6 +312,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
 
       return element.toString();
     }
+
+    private boolean isVoidVariableMigration() {
+      if (!PsiType.VOID.equals(getMigrationType())) return false;
+      for (PsiElement root : myRoots) {
+        if (root instanceof PsiVariable) return true;
+      }
+      return false;
+    }
+
     private static boolean checkType(final PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;

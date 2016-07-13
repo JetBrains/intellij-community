@@ -159,6 +159,7 @@ public abstract class OutputLineSplitter {
   private static class OutputChunk {
     private final Key myKey;
     private String myText;
+    private StringBuilder myBuilder;
 
     private OutputChunk(Key key, String text) {
       myKey = key;
@@ -170,11 +171,19 @@ public abstract class OutputLineSplitter {
     }
 
     public String getText() {
+      if (myBuilder != null) {
+        myText = myBuilder.toString();
+        myBuilder = null;
+      }
       return myText;
     }
 
     public void append(String text) {
-      myText += text;
+      if (myBuilder == null) {
+        myBuilder = new StringBuilder(myText);
+        myText = null;
+      }
+      myBuilder.append(text);
     }
   }
 }

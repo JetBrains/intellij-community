@@ -19,6 +19,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -221,7 +222,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     try {
       Graphics2D gg = (Graphics2D)g;
       UIUtil.setupComposite(gg);
-      EditorUIUtil.setupAntialiasing(gg);
+      if (myEditor.useEditorAntialiasing()) {
+        EditorUIUtil.setupAntialiasing(gg);
+      }
+      else {
+        UISettings.setupAntialiasing(gg);
+      }
       myEditor.paint(gg);
     }
     finally {
@@ -245,7 +251,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
-    repaint(x, y, width, height);
+    int topOverhang = myEditor.myView.getTopOverhang();
+    int bottomOverhang = myEditor.myView.getBottomOverhang();
+    repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
   }
 
   //--implementation of Scrollable interface--------------------------------------

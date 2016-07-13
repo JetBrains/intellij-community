@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,11 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @throws IllegalStateException if the method is called from the read action.
    */
   @NotNull
-  protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor) throws PasswordSafeException;
+  protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor);
 
   @Nullable
-  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
-    byte[] k = dbKey(project, requestor, key);
-    byte[] ct = getEncryptedPassword(k);
+  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) {
+    byte[] ct = getEncryptedPassword(dbKey(project, requestor, key));
     return ct == null ? null : EncryptionUtil.decryptText(key(project, requestor), ct);
   }
 
@@ -59,7 +58,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @param key the key to get
    * @return the encrypted password
    */
-  protected abstract byte[] getEncryptedPassword(byte[] key);
+  protected abstract byte[] getEncryptedPassword(@NotNull byte[] key);
 
   /**
    * Get database key
@@ -69,7 +68,8 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @param key       the key to use
    * @return the key to use for map
    */
-  private byte[] dbKey(@Nullable Project project, Class requestor, String key) throws PasswordSafeException {
+  @NotNull
+  private byte[] dbKey(@Nullable Project project, Class requestor, String key) {
     return EncryptionUtil.dbKey(key(project, requestor), requestor, key);
   }
 

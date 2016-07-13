@@ -29,13 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 /**
  * @author max
  */
 public class RefElementNode extends SuppressableInspectionTreeNode {
-  private boolean myHasDescriptorsUnder = false;
-  private CommonProblemDescriptor mySingleDescriptor = null;
+  private volatile boolean myHasDescriptorsUnder;
+  private volatile CommonProblemDescriptor mySingleDescriptor;
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject, presentation);
@@ -76,13 +77,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myPresentation.ignoreCurrentElement(getElement());
     super.excludeElement(excludedManager);
   }
 
   @Override
   public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    myPresentation.amnesty(getElement());
     super.amnestyElement(excludedManager);
   }
 
@@ -93,10 +92,14 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public void add(MutableTreeNode newChild) {
+    checkHasDescriptorUnder(newChild);
     super.add(newChild);
-    if (newChild instanceof ProblemDescriptionNode) {
-      myHasDescriptorsUnder = true;
-    }
+  }
+
+  @Override
+  public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
+    checkHasDescriptorUnder(child);
+    return super.insertByOrder(child, allowDuplication);
   }
 
   public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
@@ -118,8 +121,8 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount() {
-    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) ? 0 : 1 : super.getProblemCount();
+  public int getProblemCount(boolean allowSuppressed) {
+    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
   }
 
   @Override
@@ -142,5 +145,18 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
       return customizedText;
     }
     return isLeaf() ? "" : null;
+  }
+
+  private void checkHasDescriptorUnder(MutableTreeNode newChild) {
+    if (myHasDescriptorsUnder) return;
+    if (newChild instanceof ProblemDescriptionNode ||
+        newChild instanceof RefElementNode && ((RefElementNode)newChild).hasDescriptorsUnder()) {
+      myHasDescriptorsUnder = true;
+      TreeNode parent = getParent();
+      while (parent instanceof RefElementNode) {
+        ((RefElementNode)parent).myHasDescriptorsUnder = true;
+        parent = parent.getParent();
+      }
+    }
   }
 }

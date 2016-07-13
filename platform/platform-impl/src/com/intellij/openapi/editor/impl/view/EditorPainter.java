@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -428,7 +429,7 @@ class EditorPainter implements TextDrawingCallback {
     int xEnd = (int)xTo;
     g.setColor(effectColor);
     if (effectType == EffectType.LINE_UNDERSCORE) {
-      UIUtil.drawLine(g, xStart, y + 1, xEnd, y + 1);
+      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
     }
     else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
       int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
@@ -439,7 +440,7 @@ class EditorPainter implements TextDrawingCallback {
       UIUtil.drawLine(g, xStart, y1, xEnd, y1);
     }
     else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      UIUtil.drawWave(g, new Rectangle(xStart, y + 1, xEnd - xStart, myView.getDescent() - 1));
+      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
       UIUtil.drawBoldDottedLine(g, xStart, xEnd, SystemInfo.isMac ? y : y + 1, myEditor.getBackgroundColor(), g.getColor(), false);

@@ -61,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("A quick brown fox");
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().clickAt(0, 1);
-    mouse().shift().clickAt(0, 2).dragTo(0, 3).release();
+    mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
     checkResultByText("A<selection> q<caret></selection>uick brown fox");
   }
 
@@ -411,5 +411,18 @@ public class EditorImplTest extends AbstractEditorTest {
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // enable drag testing
     mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
     checkResultByText("<selection>abc\ndef\nghi</selection>");
+  }
+
+  public void testScrollingInEditorOfSmallHeight() throws Exception {
+    initText("abc\n<caret>");
+    int heightInPixels = (int)(myEditor.getLineHeight() * 1.5);
+    EditorTestUtil.setEditorVisibleSizeInPixels(myEditor,
+                                                1000 * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor),
+                                                heightInPixels);
+    myEditor.getSettings().setAnimatedScrolling(false);
+    type('a');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
+    type('b');
+    assertEquals(heightInPixels - myEditor.getLineHeight(), myEditor.getScrollingModel().getVerticalScrollOffset());
   }
 }

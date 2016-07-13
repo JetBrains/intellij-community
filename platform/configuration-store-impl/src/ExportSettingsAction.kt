@@ -74,8 +74,8 @@ private class ExportSettingsAction : AnAction(), DumbAware {
     }
 
     val exportFiles = THashSet<Path>()
-    for (markedComponent in markedComponents) {
-      exportFiles.addAll(markedComponent.files)
+    for ((files) in markedComponents) {
+      exportFiles.addAll(files)
     }
 
     val saveFile = dialog.exportFile
@@ -204,7 +204,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
 
     var additionalExportFile: Path? = null
-    var additionalExportPath = stateAnnotation.additionalExportFile
+    val additionalExportPath = stateAnnotation.additionalExportFile
     if (additionalExportPath.isNotEmpty()) {
       // backward compatibility - path can contain macro
       if (additionalExportPath[0] == '$') {
@@ -281,7 +281,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
     resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
   }
 
-  var classLoader = pluginDescriptor?.pluginClassLoader ?: aClass.classLoader
+  val classLoader = pluginDescriptor?.pluginClassLoader ?: aClass.classLoader
   if (classLoader != null) {
     val message = messageOrDefault(classLoader, resourceBundleName, defaultName)
     if (message !== defaultName) {

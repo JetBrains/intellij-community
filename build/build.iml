@@ -13,7 +13,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="library" exported="" name="Ant" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="asm5" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="ASM" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="cli-parser" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="JDOM" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Netty" level="project" />
@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/gant/lib/gant-1.9.11_groovy-2.3.0.jar!/" />

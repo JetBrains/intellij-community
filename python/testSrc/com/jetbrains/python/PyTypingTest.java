@@ -303,6 +303,17 @@ public class PyTypingTest extends PyTestCase {
            "    expr = c1, c2\n");
   }
 
+  // PY-19220
+  public void testMultiLineAssignmentComment() {
+    doTest("List[str]", 
+           "from typing import List\n" +
+           "\n" +
+           "expr = [\n" +
+           "    a,\n" +
+           "    b,\n" +
+           "]  # type: List[str]");
+  }
+
   public void testForLoopComment() {
     doTest("int",
            "def foo(xs):\n" +

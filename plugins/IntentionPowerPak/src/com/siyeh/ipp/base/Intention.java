@@ -65,39 +65,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
-  protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression, @NotNull PsiExpression expression){
-    final Project project = expression.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiExpression expressionToReplace = expression;
-    final String newExpressionText = newExpression.getText();
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expression);
-      expString = newExpressionText;
-    }
-    else if (ComparisonUtils.isComparison(newExpression)) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)newExpression;
-      final String negatedComparison = ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      assert rhs != null;
-      expString = lhs.getText() + negatedComparison + rhs.getText();
-    }
-    else {
-      if (ParenthesesUtils.getPrecedence(newExpression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-        expString = "!(" + newExpressionText + ')';
-      }
-      else {
-        expString = '!' + newExpressionText;
-      }
-    }
-    final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
-    assert expressionToReplace != null;
-    final PsiElement insertedElement = expressionToReplace.replace(newCall);
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(insertedElement);
-  }
-
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

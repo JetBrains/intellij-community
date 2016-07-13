@@ -13,7 +13,7 @@ import java.util.*;
  * User: anna
  * Date: 5/22/13
  */
-public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener {
+public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
   private final List<String> myCurrentSuites = new ArrayList<String>();
@@ -77,15 +77,19 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myCurrentSuites.clear();
   }
 
-  public synchronized void onConfigurationSuccess(ITestResult result) {
+  public synchronized void onConfigurationSuccess(ITestResult result, boolean start) {
     final DelegatedResult delegatedResult = createDelegated(result);
-    onConfigurationStart(delegatedResult);
+    if (start) {
+      onConfigurationStart(delegatedResult);
+    }
     onConfigurationSuccess(delegatedResult);
   }
 
-  public synchronized void onConfigurationFailure(ITestResult result) {
+  public synchronized void onConfigurationFailure(ITestResult result, boolean start) {
     final DelegatedResult delegatedResult = createDelegated(result);
-    onConfigurationStart(delegatedResult);
+    if (start) {
+      onConfigurationStart(delegatedResult);
+    }
     onConfigurationFailure(delegatedResult);
   }
 

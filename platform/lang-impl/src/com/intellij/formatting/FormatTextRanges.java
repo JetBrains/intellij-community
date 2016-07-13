@@ -17,7 +17,8 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.FormatRangesInfo;
+import com.intellij.psi.codeStyle.DiffInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,19 +26,19 @@ import java.util.List;
 public class FormatTextRanges {
 
   private final List<FormatTextRange> myRanges = new ArrayList<>();
-  private final FormatRangesInfo myHelper;
+  private final DiffInfo myDiffInfo;
 
   public FormatTextRanges() {
-    myHelper = null;
+    myDiffInfo = null;
   }
 
   public FormatTextRanges(TextRange range, boolean processHeadingWhitespace) {
-    myHelper = null;
+    myDiffInfo = null;
     add(range, processHeadingWhitespace);
   }
   
-  public FormatTextRanges(FormatRangesInfo helper) {
-    myHelper = helper;
+  public FormatTextRanges(DiffInfo info) {
+    myDiffInfo = info;
   }
 
   public void add(TextRange range, boolean processHeadingWhitespace) {
@@ -84,9 +85,9 @@ public class FormatTextRanges {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
   
-  public boolean isInsertedBlock(Block block) {
-    int offset = block.getTextRange().getStartOffset();
-    return myHelper != null && myHelper.isOnInsertedLine(offset);
+  @Nullable
+  protected DiffInfo getDiffInfo() {
+    return myDiffInfo;
   }
   
 }

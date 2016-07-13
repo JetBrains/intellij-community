@@ -30,6 +30,7 @@ public interface TabbedContent extends Content {
 
   void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
   void removeContent(@NotNull JComponent content);
+  void renameContent(@NotNull JComponent tab, @NotNull String newTabName);
   void selectContent(int index);
   List<Pair<String, JComponent>> getTabs();
   String getTitlePrefix();

@@ -220,13 +220,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
+    if (ourProject != null) {
+      closeAndDeleteProject();
+    }
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (ourProject != null) {
-        closeAndDeleteProject();
-      }
-      else {
-        cleanPersistedVFSContent();
-      }
+      cleanPersistedVFSContent();
     });
 
     final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
@@ -690,36 +688,39 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
-    if (ourProject != null) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-      if (!ourProject.isDisposed()) {
-        File ioFile = new File(ourProject.getProjectFilePath());
-        Disposer.dispose(ourProject);
-        if (ioFile.exists()) {
-          File dir = ioFile.getParentFile();
-          if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-            FileUtil.delete(dir);
-          }
-          else {
-            FileUtil.delete(ioFile);
-          }
-        }
-      }
-
-      ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
-
-      // project may be disposed but empty folder may still be there
-      if (ourPathToKeep != null) {
-        File parent = new File(ourPathToKeep).getParentFile();
-        if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-          parent.delete(); // delete only empty folders
-        }
-      }
-
-      ourProject = null;
-      ourPathToKeep = null;
+    if (ourProject == null) {
+      return;
     }
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call closeAndDeleteProject from under write action");
+    }
+
+    if (!ourProject.isDisposed()) {
+      File ioFile = new File(ourProject.getProjectFilePath());
+      Disposer.dispose(ourProject);
+      if (ioFile.exists()) {
+        File dir = ioFile.getParentFile();
+        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          FileUtil.delete(dir);
+        }
+        else {
+          FileUtil.delete(ioFile);
+        }
+      }
+    }
+
+    ProjectManagerEx.getInstanceEx().closeAndDispose(ourProject);
+
+    // project may be disposed but empty folder may still be there
+    if (ourPathToKeep != null) {
+      File parent = new File(ourPathToKeep).getParentFile();
+      if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+        parent.delete(); // delete only empty folders
+      }
+    }
+
+    ourProject = null;
+    ourPathToKeep = null;
   }
 
   private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {

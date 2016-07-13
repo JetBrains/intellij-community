@@ -15,29 +15,40 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class PsiJavaModuleImpl extends CompositePsiElement implements PsiJavaModule {
-  public PsiJavaModuleImpl() {
-    super(JavaElementType.MODULE);
+public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
+  public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
+    super(stub, JavaStubElementTypes.MODULE);
   }
 
-  @Nullable
+  public PsiJavaModuleImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  @NotNull
   @Override
   public PsiJavaModuleReference getNameElement() {
-    return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReference.class);
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReference.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getModuleName() {
-    PsiJavaModuleReference nameElement = getNameElement();
-    return nameElement != null ? nameElement.getReferenceText() : null;
+    PsiJavaModuleStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+
+    return getNameElement().getReferenceText();
   }
 
   @Override

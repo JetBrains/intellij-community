@@ -486,6 +486,15 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
+  public void testModuleInfo() {
+    doTest("module M. /*ignore me*/ N {\n" +
+           "  requires A.B;\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  MODULE:PsiJavaModuleStub:M.N\n");
+  }
+
   public void testSOEProof() {
     StringBuilder sb = new StringBuilder();
     SecureRandom random = new SecureRandom();

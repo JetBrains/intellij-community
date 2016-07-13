@@ -54,6 +54,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -883,7 +884,20 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, main);
     }
+    installQuickSearch(list);
     return Pair.create(main, list);
+  }
+
+  public static void installQuickSearch(JBList list) {
+    new ListSpeedSearch(list, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
+          return ((AbstractActionWithPanel)o).getTemplatePresentation().getText();
+        }
+        return null;
+      }
+    });
   }
 
   private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {

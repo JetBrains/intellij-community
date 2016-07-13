@@ -356,7 +356,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
-    assertEmpty(errors);
+    assertEmpty(getFile().getText(), errors);
   }
 
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
@@ -846,6 +846,22 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
   }
 
+  public void testOverrideMethodsHighlightingPersistWhenTypeInsideMethodBody() throws Throwable {
+    configureByText(JavaFileType.INSTANCE, "package x; \n" +
+                                           "class ClassA {\n" +
+                                           "    static <T> void sayHello(Class<? extends T> msg) {}\n" +
+                                           "}\n" +
+
+                                           "class ClassB extends ClassA {\n" +
+                                           "    static <T extends String> void sayHello(Class<? extends T> msg) {<caret>\n" +
+                                           "    }\n" +
+                                           "}\n");
+
+    assertSize(1, highlightErrors());
+    type("//my comment inside method body, so class modifier won't be visited");
+    assertSize(1, highlightErrors());
+  }
+
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     StringBuffer log = new StringBuffer();
@@ -855,8 +871,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
         log.append("getLineMarkerInfo(" + element + ")\n");
         if (element instanceof PsiComment) {
-          return new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null,
-                                      GutterIconRenderer.Alignment.LEFT);
+          LineMarkerInfo<PsiComment> info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          log.append(info + "\n");
+          return info;
         }
         return null;
       }
@@ -868,33 +885,36 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     };
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
-
+    myDaemonCodeAnalyzer.restart();
     try {
-      List<HighlightInfo> infos = highlightErrors();
+      List<HighlightInfo> infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       type(' ');
-      infos = highlightErrors();
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
 
       backspace();
-      infos = highlightErrors();
+      infos = doHighlighting();
+      log.append("File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
-      assertEmpty(infos);
+      assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
       lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
       assertOneElement(lineMarkers);
     }
     catch (AssertionError e) {
-      System.err.println("Log:\n"+log);
+      System.err.println("Log:\n"+log+"\n---");
       throw e;
     }
   }

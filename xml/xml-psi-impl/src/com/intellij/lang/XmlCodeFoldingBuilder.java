@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -226,6 +226,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
+    if (psi instanceof XmlAttribute && "src".equalsIgnoreCase(((XmlAttribute)psi).getName())) {
+      return "data:";
+    }
     if (psi instanceof XmlTag ||
         psi instanceof XmlComment ||
         psi instanceof XmlAttribute ||
@@ -256,8 +259,16 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && foldingSettings.isCollapseHtmlStyleAttribute())
+           || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
            || isEntity(psi) && foldingSettings.isCollapseEntities();
+  }
+
+  private static boolean foldSrc(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseDataUri() && "src".equals(psi.getName());
+  }
+
+  private static boolean foldStyle(XmlAttribute psi, XmlCodeFoldingSettings settings) {
+    return settings.isCollapseHtmlStyleAttribute() && HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(psi.getName());
   }
 
   protected boolean isEntity(PsiElement psi) {
@@ -266,8 +277,9 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
-    return child.getContainingFile() instanceof HtmlFileImpl &&
-           HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName());
+    return HtmlUtil.isHtmlFile(child.getContainingFile()) &&
+           (HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(child.getName()) ||
+            "src".equals(child.getName()) && child.getValue() != null && URLUtil.isDataUri(child.getValue()));
   }
 
   protected abstract XmlCodeFoldingSettings getFoldingSettings();

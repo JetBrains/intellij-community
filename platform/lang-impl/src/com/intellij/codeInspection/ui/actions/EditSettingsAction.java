@@ -80,7 +80,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       if (toolWrapper != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null) {
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), (InspectionProfileImpl)inspectionProfile, true)) {
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), (InspectionProfileImpl)inspectionProfile, false)) {
             view.updateCurrentProfile();
           }
           return;
@@ -88,7 +88,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       }
 
       final String[] path = view.getTree().getSelectedGroupPath();
-      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, true, (c) -> {
+      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, false, (c) -> {
         if (path != null) {
           c.selectInspectionGroup(path);
         }
