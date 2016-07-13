@@ -319,7 +319,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     statements.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyYieldExpression(PyYieldExpression node) {
-        final PyType type = context.getType(node);
+        final PyExpression expr = node.getExpression();
+        final PyType type = expr != null ? context.getType(expr) : null;
         if (node.isDelegating() && type instanceof PyCollectionType) {
           final PyCollectionType collectionType = (PyCollectionType)type;
           // TODO: Select the parameter types that matches T in Iterable[T]
