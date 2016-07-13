@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -377,18 +378,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                            @Nullable String logExpression) {
+  public void setBreakpoint(@NotNull String typeId,
+                            @NotNull String file,
+                            int line,
+                            @Nullable String condition,
+                            @Nullable String logExpression,
+                            @Nullable String funcName,
+                            @NotNull SuspendPolicy policy) {
     for (ProcessDebugger d : allDebuggers()) {
-      d.setBreakpoint(typeId, file, line, condition, logExpression);
-    }
-  }
-
-  @Override
-  public void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                                        @Nullable String logExpression, @Nullable String funcName) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.setBreakpointWithFuncName(typeId, file, line, condition, logExpression, funcName);
+      d.setBreakpoint(typeId, file, line, condition, logExpression, funcName, policy);
     }
   }
 
@@ -537,6 +535,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public void suspendOtherThreads(PyThreadInfo thread) {
     for (RemoteDebugger d : allDebuggers()) {
+      // we should notify the debugger in each process about suspending all threads
       d.suspendOtherThreads(thread);
     }
   }
