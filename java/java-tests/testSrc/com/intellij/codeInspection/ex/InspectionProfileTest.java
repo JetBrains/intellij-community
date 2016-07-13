@@ -319,7 +319,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
                                                "  </inspection_tool>\n" +
                                                "</profile>").getRootElement());
-    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionProfileImpl model = profile.getModifiableModel();
     InspectionToolWrapper toolWrapper = model.getInspectionTool("unused", getProject());
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
     UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
@@ -439,7 +439,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("foo")));
     assertTrue(profile.getToolDefaultState("foo", getProject()).isEnabled());
 
-    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionProfileImpl model = profile.getModifiableModel();
     model.lockProfile(true);
     model.initInspectionTools(getProject()); // todo commit should take care of initialization
     model.commit();

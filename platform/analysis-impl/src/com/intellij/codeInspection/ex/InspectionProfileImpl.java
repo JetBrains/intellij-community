@@ -685,7 +685,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @Override
   @NotNull
-  public ModifiableModel getModifiableModel() {
+  public InspectionProfileImpl getModifiableModel() {
     return new InspectionProfileImpl(this);
   }
 

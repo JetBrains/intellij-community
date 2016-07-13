@@ -224,29 +224,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           descriptors = new ArrayList<CommonProblemDescriptor>();
           globalContext.getRefManager().iterate(new RefVisitor() {
             @Override public void visitElement(@NotNull RefEntity refEntity) {
-              CommonProblemDescriptor[]
-                descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {
-                @Nullable
-                @Override
-                public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-                  return CommonProblemDescriptor.EMPTY_ARRAY;
-                }
-
-                @Override
-                public void ignoreElement(@NotNull RefEntity refEntity) {
-
-                }
-
-                @Override
-                public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
-                  int i =0;
-                }
-
-                @Override
-                public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
-                  return null;
-                }
-              });
+              CommonProblemDescriptor[] descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {});
               if (descriptors1 != null) {
                 ContainerUtil.addAll(descriptors, descriptors1);
               }

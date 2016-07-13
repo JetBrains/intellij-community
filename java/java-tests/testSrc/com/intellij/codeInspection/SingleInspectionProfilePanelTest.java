@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 5/10/12
  */
 public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
+  private final JavaDocLocalInspection myInspection = new JavaDocLocalInspection();
+
   // see IDEA-85700
   public void testSettingsModification() throws Exception {
     Project project = ProjectManager.getInstance().getDefaultProject();
@@ -39,7 +41,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
 
-    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionProfileImpl model = profile.getModifiableModel();
     SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
     panel.reset();
@@ -64,7 +66,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     JavaDocLocalInspection originalTool = getInspection(profile);
     originalTool.myAdditionalJavadocTags = "foo";
 
-    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionProfileImpl model = profile.getModifiableModel();
 
     SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
@@ -91,7 +93,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     JavaDocLocalInspection originalTool = getInspection(profile);
     assertEquals("", originalTool.myAdditionalJavadocTags);
 
-    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    InspectionProfileImpl model = profile.getModifiableModel();
     JavaDocLocalInspection copyTool = getInspection(model);
     copyTool.myAdditionalJavadocTags = "foo";
     // this change IS NOT COMMITTED
@@ -116,8 +118,6 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     InspectionProfileImpl.INIT_INSPECTIONS = false;
     super.tearDown();
   }
-
-  private final JavaDocLocalInspection myInspection = new JavaDocLocalInspection();
 
   @NotNull
   @Override

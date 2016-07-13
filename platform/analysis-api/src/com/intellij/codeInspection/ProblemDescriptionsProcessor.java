@@ -35,7 +35,7 @@ public interface ProblemDescriptionsProcessor {
    */
   @Nullable
   default CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-    return new CommonProblemDescriptor[0];
+    return CommonProblemDescriptor.EMPTY_ARRAY;
   }
 
   /**
