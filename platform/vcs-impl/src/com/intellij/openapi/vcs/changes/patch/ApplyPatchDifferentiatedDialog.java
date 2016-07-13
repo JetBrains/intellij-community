@@ -110,7 +110,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private VirtualFileAdapter myListener;
   private final boolean myCanChangePatchFile;
   private String myHelpId = "reference.dialogs.vcs.patch.apply";
-  private final String myCommitMessage; //may be provided externally; todo: parse with Additional Info Reader from patch meta information
+  private final boolean myShouldUpdateChangeListName;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
@@ -178,7 +178,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
-
+    myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
@@ -189,7 +189,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     });
 
-    myCommitMessage = externalCommitMessage;
     myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
@@ -200,7 +199,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     });
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
-    myChangeListChooser.setDefaultSelection(defaultList != null ? defaultList : changeListManager.getDefaultChangeList());
+    if (defaultList != null) {
+      myChangeListChooser.setDefaultSelection(defaultList);
+    }
+    else if (externalCommitMessage != null) {
+      myChangeListChooser.setDefaultName(externalCommitMessage);
+    }
     myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
@@ -340,6 +344,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return myHelpId;
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myChangeListChooser.getPreferredFocusedComponent();
+  }
+
   private void setPathFileChangeDefault() {
     myRecentPathFileChange.set(new FilePresentationModel(myPatchFile.getText()));
   }
@@ -371,8 +381,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        myChangeListChooser
-          .setDefaultName(myCommitMessage != null ? myCommitMessage : file.getNameWithoutExtension().replace('_', ' ').trim());
+        if (myShouldUpdateChangeListName) {
+          myChangeListChooser.setDefaultName(file.getNameWithoutExtension().replace('_', ' ').trim());
+        }
         myPatches.clear();
         myPatches.addAll(matchedPatches);
         myReader = patchReader;

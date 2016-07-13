@@ -1,7 +1,7 @@
 class Comments2 {
 
   public int methodThree(final int data) {
-    int alph<caret>a = (data) + 5; // !!!
+    int alpha<caret> = (data) + 5; // !!!
     if (data == 0) {
       throw new IllegalArgumentException("DATA_CANT_BE_ZERO");
     }
