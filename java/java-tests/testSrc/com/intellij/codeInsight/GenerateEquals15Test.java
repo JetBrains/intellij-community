@@ -17,7 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.psi.PsiField;
-import com.intellij.util.Function;
+import com.intellij.util.Functions;
 
 /**
  * @author dsl
@@ -28,32 +28,32 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
   }
 
   public void testDifferentTypes() throws Exception {
-    doTest(Function.ID, Function.ID, fields -> PsiField.EMPTY_ARRAY, true
+    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true
     );
   }
 
   public void testDifferentTypesGetters() throws Exception {
-    doTest(Function.ID, Function.ID, fields -> PsiField.EMPTY_ARRAY, true, true);
+    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true, true);
   }
 
   public void testDifferentTypesAllNotNull() throws Exception {
-    doTest(Function.ID, Function.ID, Function.ID, true);
+    doTest(Functions.id(), Functions.id(), Functions.id(), true);
   }
 
   public void testDifferentTypesSuperEqualsAndHashCode() throws Exception {
-    doTest(Function.ID, Function.ID, Function.ID, true);
+    doTest(Functions.id(), Functions.id(), Functions.id(), true);
   }
 
   public void testDifferentTypesNoDouble() throws Exception {
-    doTest(Function.ID, Function.ID, Function.ID, true);
+    doTest(Functions.id(), Functions.id(), Functions.id(), true);
   }
 
   public void testNameConflicts() throws Exception {
-    doTest(Function.ID, Function.ID, Function.ID, true);
+    doTest(Functions.id(), Functions.id(), Functions.id(), true);
   }
 
   public void testClassWithTypeParams() throws Exception {
-    doTest(Function.ID, Function.ID, Function.ID, true);
+    doTest(Functions.id(), Functions.id(), Functions.id(), true);
   }
 
   public void testDifferentTypesSuperEqualsAndHashCodeApache3() throws Exception {
@@ -71,7 +71,7 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
   private void doTestWithTemplate(String templateName) throws Exception {
     try {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);
-      doTest(Function.ID, Function.ID, Function.ID, true);
+      doTest(Functions.id(), Functions.id(), Functions.id(), true);
     }
     finally {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
