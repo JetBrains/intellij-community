@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -75,10 +76,8 @@ public interface ProcessDebugger {
 
   void removeTempBreakpoint(@NotNull String file, int line);
 
-  void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition, @Nullable String logExpression);
-
-  void setBreakpointWithFuncName(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition,
-                                 @Nullable String logExpression, @Nullable String funcName);
+  void setBreakpoint(@NotNull String typeId, @NotNull String file, int line, @Nullable String condition, @Nullable String logExpression,
+                     @Nullable String funcName, @NotNull SuspendPolicy policy);
 
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
