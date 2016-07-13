@@ -157,6 +157,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (!(o instanceof HighlightInfo)) return;
     HighlightInfo info = (HighlightInfo)o;
     HighlightSeverity infoSeverity = info.getSeverity();
+    if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
     final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
     if (severityIdx != -1) {
       errorCount[severityIdx] += delta;
