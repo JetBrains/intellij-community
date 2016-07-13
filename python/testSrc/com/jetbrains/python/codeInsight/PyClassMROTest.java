@@ -110,6 +110,11 @@ public class PyClassMROTest extends PyTestCase {
     assertOrderedEquals(classNames, Arrays.asList(mro));
   }
 
+  // PY-20026
+  public void testDuplicatedBaseClasses() {
+    assertMRO(getClass("MyClass"), "Base", "object");
+  }
+
   @NotNull
   public PyClass getClass(@NotNull String name) {
     myFixture.configureByFile(getPath(getTestName(false)));
