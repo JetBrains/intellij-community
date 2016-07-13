@@ -745,7 +745,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
         string = sb.append("...").toString();
       }
 
-      g2.drawString(string, offset + ROUND_VALUE + 5, height - fm.getDescent() - 3);
+      g2.drawString(string, offset + ROUND_VALUE + 5, height - fm.getDescent() - 5);
 
       g2.setFont(oldFont);
     }
