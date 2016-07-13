@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
@@ -86,7 +85,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by lock
   private boolean myEnabled; // true if we can do commits. set to false temporarily during the write action.  guarded by lock
-  private int runningWriteActions; // accessed in EDT only
 
   public static DocumentCommitThread getInstance() {
     return (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
@@ -97,33 +95,18 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     application.invokeLater(new Runnable() {
       @Override
       public void run() {
-        assert runningWriteActions == 0;
         if (application.isDisposed()) return;
         assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents() inside write action
         application.addApplicationListener(new ApplicationAdapter() {
           @Override
           public void beforeWriteActionStart(@NotNull Object action) {
-            int writeActionsBefore = runningWriteActions++;
-            if (writeActionsBefore == 0) {
-              disable("Write action started: " + action);
-            }
+            disable("Write action started: " + action);
           }
 
           @Override
-          public void writeActionFinished(@NotNull Object action) {
+          public void afterWriteActionFinished(@NotNull Object action) {
             // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
-            int writeActionsAfter = runningWriteActions = Math.max(0,runningWriteActions-1);
-            if (writeActionsAfter == 0) {
-              enable("Write action finished: " + action);
-            }
-            else {
-              if (writeActionsAfter < 0) {
-                System.err.println("mismatched listeners: " + writeActionsAfter + ";\n==== log==="+log+"\n====end log==="+
-                                   ";\n=======threaddump====\n" +
-                                   ThreadDumper.dumpThreadsToString()+"\n=====END threaddump=======");
-                assert false;
-              }
-            }
+            enable("Write action finished: " + action);
           }
         }, DocumentCommitThread.this);
 
@@ -685,7 +668,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   @Override
   public String toString() {
-    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; myEnabled: "+isEnabled()+"; runningWriteActions: "+runningWriteActions;
+    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; myEnabled: "+isEnabled();
   }
 
   @TestOnly
