@@ -16,12 +16,15 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.apache.xmlrpc.*;
@@ -57,7 +60,7 @@ public class PyPIPackageUtil {
   public static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
   public static final String PYPI_HOST = "https://pypi.python.org";
   @NonNls public static final String PYPI_URL = PYPI_HOST + "/pypi";
-  @NonNls public static final String PYPI_LIST_URL = PYPI_HOST + "/pypi?%3Aaction=index";
+  @NonNls public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
   public static Map<String, String> PACKAGES_TOPLEVEL = new HashMap<String, String>();
 
@@ -66,7 +69,6 @@ public class PyPIPackageUtil {
   private XmlRpcClient myXmlRpcClient;
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private static Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
-  private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
   private static Set<RepoPackage> ourAdditionalPackageNames = new TreeSet<RepoPackage>();
   @Nullable private volatile Set<String> myPackageNames = null;
 
@@ -164,28 +166,29 @@ public class PyPIPackageUtil {
     return null;
   }
 
-  public void fillPackageDetails(@NonNls String packageName, final AsyncCallback callback) {
+  public void fillPackageDetails(@NonNls final String packageName, final AsyncCallback callback) {
     final Hashtable details = getPackageDetails(packageName);
-    if (details == null) {
-      final Vector<String> params = new Vector<String>();
+    if (details != null) {
+      callback.handleResult(details, null, "");
+      return;
+    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      final Vector<String> params = new Vector<>();
       params.add(packageName);
       try {
-        String version = getPyPIPackages().get(packageName);
-        if (version == null) {
-          final List<String> releases = getPackageReleases(packageName);
-          if (releases != null && !releases.isEmpty()) {
-            version = releases.get(0);
+        final String version = fetchLatestPackageVersion(packageName, getPyPIPackages());
+        if (version != null) {
+          params.add(version);
+          final Object result = myXmlRpcClient.execute("release_data", params);
+          if (result != null) {
+            callback.handleResult(result, null, "");
           }
         }
-        params.add(version);
-        myXmlRpcClient.executeAsync("release_data", params, callback);
       }
       catch (Exception ignored) {
         LOG.info(ignored);
       }
-    }
-    else
-      callback.handleResult(details, null, "");
+    });
   }
 
   public void addPackageReleases(@NotNull final String packageName, @NotNull final List<String> releases) {
@@ -193,7 +196,7 @@ public class PyPIPackageUtil {
   }
 
   public void usePackageReleases(@NonNls String packageName, final AsyncCallback callback) {
-    final List<String> releases = getPackageReleases(packageName);
+    final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
     if (releases == null) {
       final Vector<String> params = new Vector<String>();
       params.add(packageName);
@@ -206,25 +209,60 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  public static List<String> getPackageReleases(@NonNls String packageName) {
+  private static List<String> getPackageVersionsFromAdditionalRepositories(@NonNls String packageName) {
     if (packageToReleases.containsKey(packageName)) return packageToReleases.get(packageName);
     final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
-    if (!repositories.isEmpty()) {
-      for (String repository : repositories) {
-        repository = composeSimpleUrl(packageName, repository);
-
-        final List<String> versions = parsePackageVersions(repository);
-        if (!versions.isEmpty()) {
-          packageToReleases.put(packageName, versions);
-          return versions;
-        }
+    for (String repository : repositories) {
+      final List<String> versions = getVersionsFromRepository(packageName, repository);
+      if (!versions.isEmpty()) {
+        packageToReleases.put(packageName, versions);
+        return versions;
       }
     }
     return null;
   }
 
-  private static List<String> parsePackageVersions(@NotNull final String repository) {
-    return HttpRequests.request(repository).connect(new HttpRequests.RequestProcessor<List<String>>() {
+  @Nullable
+  private static String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) {
+    final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
+    return ContainerUtil.getFirstItem(versions);
+  }
+
+  @NotNull
+  private static List<String> getPackageVersionsFromPyPI(@Nullable String packageName) {
+    return getVersionsFromRepository(packageName, PYPI_LIST_URL);
+  }
+
+  @Nullable
+  private static String getLatestPackageVersionFromPyPI(@NotNull String packageName) {
+    final List<String> versions = getPackageVersionsFromPyPI(packageName);
+    final String latest = ContainerUtil.getFirstItem(versions);
+    getPyPIPackages().put(packageName, StringUtil.notNullize(latest));
+    return latest;
+  }
+
+  @NotNull
+  private static List<String> getVersionsFromRepository(@NonNls String packageName, String repository) {
+    final String packageArchivesSimpleUrl = composeSimpleUrl(packageName, repository);
+    return parsePackageVersionsFromArchives(packageArchivesSimpleUrl);
+  }
+
+  @Nullable
+  public static String fetchLatestPackageVersion(@NotNull String packageName, @NotNull Map<String, String> versionCache) {
+    String version = versionCache.get(packageName);
+    if (StringUtil.isEmpty(version)) {
+      version = getLatestPackageVersionFromPyPI(packageName);
+    }
+    final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(packageName);
+    if (extraVersion != null) {
+      version = extraVersion;
+    }
+    return version;
+  }
+
+  @NotNull
+  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl) {
+    return HttpRequests.request(archivesUrl).connect(new HttpRequests.RequestProcessor<List<String>>() {
       @Override
       public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
         final List<String> versions = new ArrayList<String>();
@@ -249,6 +287,7 @@ public class PyPIPackageUtil {
           }
 
         }, true);
+        versions.sort(PackageVersionComparator.VERSION_COMPARATOR.reversed());
         return versions;
       }
     }, Collections.emptyList(), LOG);
@@ -258,7 +297,7 @@ public class PyPIPackageUtil {
   private static String composeSimpleUrl(@NonNls @NotNull final String packageName, @NotNull final String rep) {
     String suffix = "";
     final String repository = StringUtil.trimEnd(rep, "/");
-    if (!repository.endsWith("+simple")) {
+    if (!repository.endsWith("+simple") && !repository.endsWith("/simple")) {
       suffix = "/+simple";
     }
     suffix += "/" + packageName;
@@ -281,19 +320,16 @@ public class PyPIPackageUtil {
 
     service.PY_PACKAGES.clear();
     if (service.PYPI_REMOVED) return;
-    parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, false), service);
+    parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true), service);
   }
 
-  public void parsePyPIList(final List<String> packages, final PyPackageService service) {
+  private void parsePyPIList(final List<String> packages, final PyPackageService service) {
     myPackageNames = null;
     for (String pyPackage : packages) {
       try {
-        final Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
-        if (matcher.find()) {
-          final String packageName = matcher.group(1);
-          final String packageVersion = matcher.group(2);
-          if (!packageName.contains(" "))
-            service.PY_PACKAGES.put(packageName, packageVersion);
+        final String packageName = URLDecoder.decode(pyPackage, "UTF-8");
+        if (!packageName.contains(" ")) {
+          service.PY_PACKAGES.put(packageName, "");
         }
       }
       catch (UnsupportedEncodingException e) {
@@ -396,7 +432,7 @@ public class PyPIPackageUtil {
         sslContext.init(null, trustAllCerts, new SecureRandom());
 
         final HttpConfigurable settings = HttpConfigurable.getInstance();
-        con = settings.openConnection(PYPI_LIST_URL);
+        con = settings.openConnection(PYPI_HOST + "/pypi?%3Aaction=index");
         if (con instanceof HttpsURLConnection) {
           ((HttpsURLConnection)con).setSSLSocketFactory(sslContext.getSocketFactory());
         }
