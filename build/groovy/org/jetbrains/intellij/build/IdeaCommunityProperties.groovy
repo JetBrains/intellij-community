@@ -98,5 +98,5 @@ class IdeaCommunityProperties extends ProductProperties {
   String systemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   @Override
-  String baseArtifactName(String buildNumber) { "ideaIC-$buildNumber" }
+  String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "ideaIC-$buildNumber" }
 }

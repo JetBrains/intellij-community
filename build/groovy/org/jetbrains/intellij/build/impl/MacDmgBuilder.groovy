@@ -65,7 +65,7 @@ class MacDmgBuilder {
 
   private void doSignAndBuildDmg(String macZipPath, String jreArchivePath) {
     def suffix = jreArchivePath != null ? "" : "-no-jdk"
-    String targetFileName = buildContext.productProperties.baseArtifactName(buildContext.buildNumber) + suffix
+    String targetFileName = buildContext.productProperties.baseArtifactName(applicationInfo, buildContext.buildNumber) + suffix
     def sitFilePath = "$artifactsPath/${targetFileName}.sit"
     ant.copy(file: macZipPath, tofile: sitFilePath)
     ftpAction("mkdir") {}

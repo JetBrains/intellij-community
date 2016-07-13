@@ -78,7 +78,7 @@ public abstract class ProductProperties {
   /**
    * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
    */
-  abstract String baseArtifactName(String buildNumber)
+  abstract String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
   /**
    * @return instance of the class containing properties specific for Windows distribution or {@code null} if the product doesn't have Windows distribution
