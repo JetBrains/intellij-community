@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.ui.paint;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.RegionPainter;
