@@ -73,6 +73,9 @@ abstract class BuildContext {
 
   abstract void signExeFile(String path)
 
+  /**
+   * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
+   */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
   public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
@@ -113,7 +116,7 @@ abstract class BuildPaths {
   String distAll
 
   /**
-   * Path to a directory where temporary files required for a particular build steps can be stored
+   * Path to a directory where temporary files required for a particular build step can be stored
    */
   String temp
 
