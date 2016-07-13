@@ -36,7 +36,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
 
   fun testFileDuplicate() {
     additionalFile("""module M.bis { }""")
-    doTest("""<error descr="Multiple module declarations">module M</error> { }""")
+    doTest("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
   }
 
   fun testWrongFileLocation() {
