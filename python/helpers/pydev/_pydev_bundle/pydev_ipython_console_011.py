@@ -171,7 +171,6 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                              use_readline=self.has_readline,
                              config=self.config,
                              )
-        self.configurables.append(completer)
         return completer
 
 
@@ -183,7 +182,6 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                              use_readline=self.has_readline,
                              parent=self,
                              )
-        self.configurables.append(completer)
         return completer
 
     def _new_completer_234(self):
@@ -203,7 +201,6 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
                                      use_readline=False,
                                      parent=self
                                      )
-        self.configurables.append(completer)
         return completer
 
     def add_completer_hooks(self):
@@ -239,7 +236,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         # extra information.
         # See getCompletions for where the two sets of results are merged
 
-        if IPythonRelease._version_major == 5:
+        if IPythonRelease._version_major >= 5:
             self.Completer = self._new_completer_500()
         elif IPythonRelease._version_major >= 2:
             self.Completer = self._new_completer_234()
