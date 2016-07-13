@@ -58,3 +58,4 @@ RESTClient 1.2
 krasa.nonProjectFilesUnlocker 1.0 1.1
 com.chrisrm.idea.MaterialThemeUI 0.2.0 0.1.9
 com.hasintech.intellij.angularTemplates 1.0.2 1.1.2
+com.jetbrains.plugins.jade 144.2931 142.4651 141.506 140.2144 140.1212 140.216 138.1744 133.74 130.1520 121.390 122.668 121.185
