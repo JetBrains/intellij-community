@@ -269,6 +269,7 @@ public class PluginDownloader {
     if (fileName == null) {
       // try to find a filename in an URL
       final String usedURL = connection.getURL().toString();
+      LOG.debug("url: " + usedURL);
       fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1);
       if (fileName.length() == 0 || fileName.contains("?")) {
         fileName = myPluginUrl.substring(myPluginUrl.lastIndexOf('/') + 1);
@@ -276,6 +277,7 @@ public class PluginDownloader {
     }
 
     if (!PathUtil.isValidFileName(fileName)) {
+      LOG.debug("fileName: " + fileName);
       FileUtil.delete(file);
       throw new IOException("Invalid filename returned by a server");
     }
