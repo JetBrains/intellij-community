@@ -54,7 +54,7 @@ public class _LastInSuiteTest extends TestCase {
         PlatformTestUtil.cleanupAllProjects();
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
         System.out.println(application.writeActionStatistics());
-        System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+        System.out.println(ActionUtil.ActionPauses.STAT.statistics());
         System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
         System.out.println("ProcessIOExecutorService threads created: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
 
