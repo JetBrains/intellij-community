@@ -43,17 +43,18 @@ public interface PasswordStorage {
    * @throws IllegalStateException if the method is called from the read action.
    */
   @Nullable
-  String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+  String getPassword(@Nullable Project project, @NotNull Class requestor, String key);
+
   /**
    * Remove password stored in a password safe
    *
    * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
    * @param key       the key for the password
-   * @return the plugin key
    * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void removePassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException;
+  void removePassword(@Nullable Project project, @NotNull Class requestor, String key);
+
   /**
    * Store password in password safe
    *
@@ -63,5 +64,5 @@ public interface PasswordStorage {
    * @param value     the value to store
    * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException;
+  void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value);
 }

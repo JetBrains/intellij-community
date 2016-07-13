@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,24 +153,27 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
 
   @NotNull
   @Override
-  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
+  protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) {
     Object key = myKey.get().get();
-    if (key instanceof byte[]) return (byte[])key;
-    if (key instanceof PasswordSafeException && ((PasswordSafeException)key).justHappened()) throw (PasswordSafeException)key;
-
-    if (isPasswordEncrypted()) {
-      try {
-        setMasterPassword(decryptPassword(myDatabase.getPasswordInfo()));
-        key = myKey.get().get();
-        if (key instanceof byte[]) return (byte[])key;
-      }
-      catch (PasswordSafeException e) {
-        // ignore exception and ask password
-      }
+    if (key instanceof byte[]) {
+      return (byte[])key;
     }
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
+    if (key instanceof PasswordSafeException && ((PasswordSafeException)key).justHappened()) {
+      throw (PasswordSafeException)key;
+    }
+
+    if (SystemInfo.isWindows) {
+      try {
+        setMasterPassword(new String(WindowsCryptUtils.unprotect(myDatabase.getPasswordInfo()), CharsetToolkit.UTF8_CHARSET));
+        key = myKey.get().get();
+        if (key instanceof byte[]) {
+          return (byte[])key;
+        }
+      }
+      catch (Exception ignored) {
+        // ignore exception and ask password
+      }
     }
 
     key = invokeAndWait(() -> {
@@ -179,13 +182,11 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         return key1;
       }
       try {
-        if (myDatabase.isEmpty()) {
-          if (!MasterPasswordDialog.resetMasterPasswordDialog(project, MasterKeyPasswordSafe.this, requestor).showAndGet()) {
-            throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
-          }
+        if (!myDatabase.isEmpty()) {
+          MasterPasswordDialog.askPassword(project, this, requestor);
         }
-        else {
-          MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
+        else if (!MasterPasswordDialog.resetMasterPasswordDialog(project, this).showAndGet()) {
+          throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
         }
       }
       catch (PasswordSafeException e) {
@@ -194,8 +195,12 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       return myKey.get().get();
     }, project == null ? Conditions.alwaysFalse() : project.getDisposed());
-    if (key instanceof byte[]) return (byte[])key;
-    if (key instanceof PasswordSafeException) throw (PasswordSafeException)key;
+    if (key instanceof byte[]) {
+      return (byte[])key;
+    }
+    if (key instanceof PasswordSafeException) {
+      throw (PasswordSafeException)key;
+    }
 
     throw new AssertionError();
   }
@@ -251,10 +256,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
 
   @Override
   public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) throws PasswordSafeException {
-    if (myDatabase.isEmpty()) {
-      return null;
-    }
-    return super.getPassword(project, requestor, key);
+    return myDatabase.isEmpty() ? null : super.getPassword(project, requestor, key);
   }
 
   @Override
@@ -266,7 +268,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] getEncryptedPassword(byte[] key) {
+  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
     return myDatabase.get(key);
   }
 
@@ -301,12 +303,9 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return setMasterPassword("");
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean isOsProtectedPasswordSupported() {
-    // TODO extension point needed?
     return SystemInfo.isWindows;
   }
-
 
   /**
    * Encrypt master password
@@ -321,22 +320,10 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return WindowsCryptUtils.protect(EncryptionUtil.getUTF8Bytes(pw));
   }
 
-  /**
-   * Decrypt master password
-   *
-   * @param pw the password to decrypt
-   * @return the decrypted password
-   * @throws MasterPasswordUnavailableException
-   *          if decryption fails
-   */
-  private static String decryptPassword(byte[] pw) throws MasterPasswordUnavailableException {
-    if (!SystemInfo.isWindows) throw new AssertionError("Windows OS expected");
-
-    return new String(WindowsCryptUtils.unprotect(pw), CharsetToolkit.UTF8_CHARSET);
-  }
-
   public boolean isPasswordEncrypted() {
-    if (!isOsProtectedPasswordSupported()) return false;
+    if (!isOsProtectedPasswordSupported()) {
+      return false;
+    }
 
     byte[] info = myDatabase.getPasswordInfo();
     return info != null && info.length > 0;
