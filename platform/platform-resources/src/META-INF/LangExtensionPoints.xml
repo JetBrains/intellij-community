@@ -879,6 +879,9 @@
     <extensionPoint name="lang.sliceProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="projectViewNestingRulesProvider"
+                    interface="com.intellij.ide.projectView.impl.NestingTreeStructureProvider$NestingRulesProvider"/>
   </extensionPoints>
 </idea-plugin>
 

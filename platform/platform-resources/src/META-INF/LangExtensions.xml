@@ -958,6 +958,8 @@
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
     <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.psi.codeStyle.KeepTrailingSpacesOnEmptyLinesFilterFactory"/>
+
+    <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider"/>
   </extensions>
 </idea-plugin>
 
