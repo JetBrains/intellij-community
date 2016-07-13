@@ -17,15 +17,15 @@ package com.intellij.lang.java;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.text.StringUtil.htmlEmphasize;
+import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
 
 /**
@@ -47,12 +47,13 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @Override
   public String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
-      PsiType type = DumbService.isDumb(e.getProject()) ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
-      return type == null ? "->" : "-> " + getShortClassName(type.getCanonicalText());
+      boolean isDumb = DumbService.isDumb(e.getProject());
+      PsiType type = isDumb ? null : ((PsiFunctionalExpression)e).getFunctionalInterfaceType();
+      return type == null ? "->" : "-> " + getTypeText(type, false);
     }
     else if (e instanceof PsiAnonymousClass) {
       String name = ((PsiAnonymousClass)e).getBaseClassReference().getReferenceName();
-      return "new " + StringUtil.notNullize(name, "class");
+      return "new " + notNullize(name, "class");
     }
     String description = ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
     String suffix = e instanceof PsiParameterListOwner? "()" : null;
@@ -73,8 +74,7 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
     StringBuilder sb = new StringBuilder(e.isConstructor() ? "constructor" : "method");
     PsiType type = e.getReturnType();
     if (type != null) {
-      String shortClassName = getShortClassName(type.getCanonicalText(false));
-      sb.append(" ").append(htmlEmphasize(shortClassName));
+      sb.append(" ").append(htmlEmphasize(getTypeText(type, isDumb)));
     }
     sb.append(" ").append(htmlEmphasize(e.getName()));
     appendParameters(e, sb, false, isDumb);
@@ -87,8 +87,7 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
     StringBuilder sb = new StringBuilder("lambda");
     PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
-      String shortClassName = getShortClassName(functionalInterfaceType.getCanonicalText(false));
-      sb.append(" ").append(htmlEmphasize(shortClassName));
+      sb.append(" ").append(htmlEmphasize(getTypeText(functionalInterfaceType, false)));
     }
     appendParameters(e, sb, true, isDumb);
     return sb.toString();
@@ -104,15 +103,25 @@ public class JavaBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
       String typeStr;
       if (isDumb) {
         PsiTypeElement typeElement = parameters[i].getTypeElement();
-        typeStr = typeElement == null ? "" : typeElement.getText();
+        typeStr = typeElement == null ? "" : getShortClassName(typeElement.getText());
       }
       else {
-        typeStr = parameters[i].getType().getCanonicalText(false);
+        typeStr = getTypeText(parameters[i].getType(), false);
       }
-      String str = getShortClassName(typeStr);
-      if (StringUtil.isEmpty(str)) str = StringUtil.notNullize(parameters[i].getName());
+      String str = isEmpty(typeStr)? notNullize(parameters[i].getName()) : getShortClassName(typeStr);
       sb.append(htmlEmphasize(str));
     }
     sb.append(")");
+  }
+
+  @NotNull
+  private static String getTypeText(@Nullable PsiType type, boolean isDumb) {
+    // todo PsiTypeVisitor ?
+    String result;
+    if (type == null) result = "";
+    else if (!isDumb || type instanceof PsiPrimitiveType) result = type.getCanonicalText(false);
+    else if (type instanceof PsiClassReferenceType) result = ((PsiClassReferenceType)type).getReference().getReferenceName();
+    else result = "";
+    return getShortClassName(notNullize(result));
   }
 }
