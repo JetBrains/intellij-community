@@ -88,7 +88,7 @@ def tree_stats_to_response(filename, response):
         tstats.name = node.name
         tstats.count = node.count
         tstats.children = []
-        tstats.line_count = {}
+        tstats.line_count = getattr(node, 'lines', {})
 
         if parent is not None:
             if parent.children is None:
