@@ -943,8 +943,7 @@ class EditorPainter implements TextDrawingCallback {
         prevEndOffset = end;
         assert it != null;
         if (start == end) { // special case of inlays
-          if (start == it.getEndOffset()) {
-            assert !it.atEnd();
+          if (start == it.getEndOffset() && !it.atEnd()) {
             it.advance();
           }
           TextAttributes attributes = it.getStartOffset() == start ? it.getBreakAttributes() : it.getMergedAttributes();

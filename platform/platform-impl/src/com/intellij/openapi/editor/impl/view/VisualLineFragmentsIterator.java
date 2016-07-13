@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -24,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -156,12 +158,10 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     if (mySegmentEndOffset > mySegmentStartOffset) {
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
-      myInlays = mySegmentEndOffset > mySegmentStartOffset
-                 ? myView.getEditor().getInlayModel().getElementsInRange(mySegmentStartOffset,
-                                                                         mySegmentEndOffset + // including inlays at line end
-                                                                         (normalLineEnd ? 1 : 0),
-                                                                         Inlay.Type.INLINE)
-                 : Collections.emptyList();
+      myInlays = myView.getEditor().getInlayModel().getElementsInRange(
+        mySegmentStartOffset,
+        mySegmentEndOffset + ((normalLineEnd && mySegmentEndOffset > mySegmentStartOffset) ? 1 : 0), // including inlays at line end
+        Inlay.Type.INLINE);
       if (!myInlays.isEmpty() && myInlays.get(0).getOffset() == mySegmentStartOffset) {
         myCurrentInlayIndex = 0;
         myFragmentIterator = null;
