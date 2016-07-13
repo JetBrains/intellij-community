@@ -199,7 +199,9 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildDistributions() {
-    layoutShared()
+    buildContext.messages.block("Copy files shared among all distributions") {
+      layoutShared()
+    }
     def propertiesFile = patchIdeaPropertiesFile()
 
     WindowsDistributionBuilder windowsBuilder = null

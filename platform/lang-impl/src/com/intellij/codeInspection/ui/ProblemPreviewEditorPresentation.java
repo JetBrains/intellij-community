@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -39,19 +38,10 @@ import java.util.stream.Collectors;
  */
 public class ProblemPreviewEditorPresentation {
   private final static int VIEW_ADDITIONAL_OFFSET = 4;
-  private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
 
   private final EditorEx myEditor;
   private final InspectionResultsView myView;
-  private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(new Comparator<PreviewEditorFoldingRegion>() {
-    @Override
-    public int compare(PreviewEditorFoldingRegion r1, PreviewEditorFoldingRegion r2) {
-      if (r1 == r2) return 0;
-      final int diff = r1.startLine - r2.startLine;
-      LOG.assertTrue(diff != 0);
-      return diff;
-    }
-  });
+  private final SortedSet<PreviewEditorFoldingRegion> myFoldedRegions = new TreeSet<>(Comparator.comparing(x -> x.startLine));
   private final DocumentEx myDocument;
 
   public ProblemPreviewEditorPresentation(EditorEx editor, InspectionResultsView view) {

@@ -22,15 +22,14 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -340,11 +339,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   @Override
   public Dimension getPreferredSize() {
-    Border border = getBorder();
     Graphics2D g2 = (Graphics2D)getGraphics();
     Dimension dim = new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
-    Insets insets = border != null ? border.getBorderInsets(this) : JBUI.emptyInsets();
-    dim.height += insets.top + insets.bottom;
+    JBInsets.addTo(dim, getInsets());
     return dim;
   }
 
@@ -603,7 +600,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   abstract static class PainterSettings {
-    private static final Color DEFAULT_FOREGROUND_COLOR = new JBColor(Gray._50, UIUtil.getListForeground());
+    private static final Color DEFAULT_FOREGROUND_COLOR = new JBColor(Gray._50, Gray.xBB);
 
     @Nullable
     Color getBackgroundColor(@NotNull final Crumb c) {
@@ -632,7 +629,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     private static final Color CURRENT_BG_COLOR = new JBColor(new Color(250, 250, 220), new Color(97, 97, 75));
     private static final Color HOVERED_BG_COLOR = new JBColor(Gray._220, ColorUtil.shift(DEFAULT_BG_COLOR, 1.2));
 
-    private static final Color LIGHT_TEXT_COLOR = new JBColor(Gray._170, UIUtil.getListForeground());
+    private static final Color LIGHT_TEXT_COLOR = new JBColor(Gray._170, Gray.xBB);
 
     private static final Color DEFAULT_BORDER_COLOR = new JBColor(Gray._170, Gray._50);
     private static final Color LIGHT_BORDER_COLOR = new JBColor(Gray._200, Gray._70);
@@ -717,18 +714,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final Font oldFont = g2.getFont();
       final int offset = c.getOffset() - pageOffset;
 
-      final Color bg = s.getBackgroundColor(c);
       final int width = c.getWidth();
-      if (bg != null) {
-        g2.setColor(bg);
-        g2.fillRoundRect(offset + 2, 2, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
-      }
-
-      final Color borderColor = s.getBorderColor(c);
-      if (borderColor != null) {
-        g2.setColor(borderColor);
-        g2.drawRoundRect(offset + 2, 2, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
-      }
+      RectanglePainter.paint(g2, offset + 2, 2, width - 4, height - 4, ROUND_VALUE + 2, s.getBackgroundColor(c), s.getBorderColor(c));
 
       final Color textColor = s.getForegroundColor(c);
       if (textColor != null) {

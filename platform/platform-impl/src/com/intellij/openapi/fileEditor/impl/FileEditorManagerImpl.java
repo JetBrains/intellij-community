@@ -717,7 +717,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static boolean isOpenInNewWindow(AWTEvent event) {
     // Shift was used while clicking
-    if (event instanceof MouseEvent && ((MouseEvent)event).isShiftDown()) {
+    if (event instanceof MouseEvent &&
+        ((MouseEvent)event).isShiftDown() &&
+        (event.getID() == MouseEvent.MOUSE_CLICKED ||
+         event.getID() == MouseEvent.MOUSE_PRESSED ||
+         event.getID() == MouseEvent.MOUSE_RELEASED)) {
       return true;
     }
 

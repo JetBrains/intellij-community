@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ public class EncryptionUtil {
    * @param rawKey   the raw key to encrypt
    * @return the encrypted key
    */
+  @NotNull
   public static byte[] encryptKey(@NotNull byte[] password, byte[] rawKey) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
@@ -124,7 +125,7 @@ public class EncryptionUtil {
       return c.doFinal(rawKey);
     }
     catch (GeneralSecurityException e) {
-      throw new IllegalStateException(e.getMessage(), e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -136,10 +137,10 @@ public class EncryptionUtil {
    * @param key       the key within requestor
    * @return the key to use in the database
    */
+  @NotNull
   public static byte[] dbKey(@NotNull byte[] password, Class requestor, String key) {
     return encryptKey(password, rawKey(requestor, key));
   }
-
 
   /**
    * Decrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -218,6 +219,7 @@ public class EncryptionUtil {
    * @param data     the bytes to decrypt
    * @return encrypted text
    */
+  @NotNull
   public static String decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);
     int len = ((plain[0] & 0xff) << 24) + ((plain[1] & 0xff) << 16) + ((plain[2] & 0xff) << 8) + (plain[3] & 0xff);

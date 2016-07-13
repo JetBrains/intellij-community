@@ -167,7 +167,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, CommonProblemDescriptor[] allowedDescriptors) {
-    return myQuickFixActions;
+    boolean showFixes = false;
+    for (RefEntity element : refElements) {
+      if (!getIgnoredRefElements().contains(element) && element.isValid()) {
+        showFixes = true;
+        break;
+      }
+    }
+
+    return showFixes ? myQuickFixActions : QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;

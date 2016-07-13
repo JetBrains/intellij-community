@@ -54,6 +54,11 @@ abstract class WindowsDistributionCustomizer {
    */
   abstract String rootDirectoryName(String buildNumber)
 
+  /**
+   * Override this method to copy additional files to Windows distribution of the product.
+   * @param targetDirectory contents of this directory will be packed into zip archive and exe installer, so when the product is installed
+   * it'll be placed under its root directory.
+   */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {}
 
   String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {

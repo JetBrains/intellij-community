@@ -122,7 +122,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount(boolean allowSuppressed) {
-    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
+    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
   }
 
   @Override

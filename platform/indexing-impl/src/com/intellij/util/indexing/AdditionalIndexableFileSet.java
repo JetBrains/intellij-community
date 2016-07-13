@@ -55,7 +55,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   private Set<VirtualFile> getDirectories() {
     Set<VirtualFile> directories = cachedDirectories;
-    if (directories == null || filesInvalidated(directories) || filesInvalidated(cachedFiles)) {
+    if (directories == null || VfsUtilCore.hasInvalidFiles(directories) || VfsUtilCore.hasInvalidFiles(cachedFiles)) {
       directories = collectFilesAndDirectories();
     }
     return directories;
@@ -81,15 +81,6 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     cachedFiles = files;
     cachedDirectories = directories;
     return directories;
-  }
-
-  public static boolean filesInvalidated(Set<VirtualFile> files) {
-    for (VirtualFile file : files) {
-      if (!file.isValid()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override

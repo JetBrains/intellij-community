@@ -26,6 +26,7 @@ import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubConnection.PagedRequest;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
@@ -289,12 +290,12 @@ public class GithubApiUtil {
       try {
         repos.addAll(getMembershipRepos(connection));
       }
-      catch (GithubStatusCodeException ignore) {
+      catch (GithubAuthenticationException | GithubStatusCodeException ignore) {
       }
       try {
         repos.addAll(getWatchedRepos(connection));
       }
-      catch (GithubStatusCodeException ignore) {
+      catch (GithubAuthenticationException | GithubStatusCodeException ignore) {
       }
 
       return repos;

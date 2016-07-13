@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
@@ -183,10 +185,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     if (!location.isPhysical() || location.getTextLength() == 0 && !(location instanceof PsiFile)) {
       return;
     }
-    final InspectionGadgetsFix[] fixes = createFixes(infos);
-    for (InspectionGadgetsFix fix : fixes) {
-      fix.setOnTheFly(onTheFly);
-    }
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
   }
@@ -201,13 +200,30 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     if (location.getTextLength() == 0 || length == 0) {
       return;
     }
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
+    final String description = inspection.buildErrorString(infos);
+    final TextRange range = new TextRange(offset, offset + length);
+    holder.registerProblem(location, description, highlightType, range, fixes);
+  }
+
+  protected final void registerErrorAtRange(@NotNull PsiElement startLocation, @NotNull PsiElement endLocation, Object... infos) {
+    if (startLocation.getTextLength() == 0 && startLocation == endLocation) {
+      return;
+    }
+    final LocalQuickFix[] fixes = createAndInitFixes(infos);
+    final String description = inspection.buildErrorString(infos);
+    final ProblemDescriptor problemDescriptor = holder.getManager()
+      .createProblemDescriptor(startLocation, endLocation, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
+    holder.registerProblem(problemDescriptor);
+  }
+
+  @NotNull
+  private LocalQuickFix[] createAndInitFixes(Object[] infos) {
     final InspectionGadgetsFix[] fixes = createFixes(infos);
     for (InspectionGadgetsFix fix : fixes) {
       fix.setOnTheFly(onTheFly);
     }
-    final String description = inspection.buildErrorString(infos);
-    final TextRange range = new TextRange(offset, offset + length);
-    holder.registerProblem(location, description, highlightType, range, fixes);
+    return fixes;
   }
 
   @NotNull

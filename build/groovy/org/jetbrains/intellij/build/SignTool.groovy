@@ -31,8 +31,13 @@
 package org.jetbrains.intellij.build
 
 /**
+ * Implement this interfaces and pass the implementation to {@link BuildContext#createContext} method to sign the product's *.exe files.
+ *
  * @author nik
  */
 interface SignTool {
+  /**
+   * @param path absolute path (with '/' as a separator) to *.exe file to be signed
+   */
   void signExeFile(String path, BuildContext context)
 }

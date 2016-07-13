@@ -78,7 +78,7 @@ public abstract class ProductProperties {
   /**
    * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
    */
-  abstract String baseArtifactName(String buildNumber)
+  abstract String baseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
   /**
    * @return instance of the class containing properties specific for Windows distribution or {@code null} if the product doesn't have Windows distribution
@@ -97,15 +97,15 @@ public abstract class ProductProperties {
 
   boolean setPluginAndIDEVersionInPluginXml = true
 
-  boolean maySkipAndroidPlugin
-  String relativeAndroidHome
-  String relativeAndroidToolsBaseHome
-
   /**
    * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
    * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
    */
   String yourkitAgentBinariesDirectoryPath = null
+
+  /**
+   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
+   */
   boolean enableYourkitAgentInEAP = false
 
   List<String> excludedPlugins = []
