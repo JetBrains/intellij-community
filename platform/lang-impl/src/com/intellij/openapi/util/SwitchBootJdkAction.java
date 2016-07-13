@@ -163,8 +163,8 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
                 if (selectedBundle == null) {
                   throw new Exception("Invalid JDK bundle!");
                 }
-                if (selectedBundle.getBitness() != (SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32)) {
-                  throw new Exception("JDK arch mismatch! Expected: " + SystemInfo.OS_ARCH);
+                if (selectedBundle.getBitness() != JdkBundle.runtimeBitness) {
+                  throw new Exception("JDK arch mismatch! Your IDE's arch is " + JdkBundle.runtimeBitness);
                 }
               }
             };
