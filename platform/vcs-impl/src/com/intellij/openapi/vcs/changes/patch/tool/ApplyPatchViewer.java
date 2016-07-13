@@ -251,6 +251,11 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     return myFocusTrackerSupport.getCurrentSide();
   }
 
+  @NotNull
+  public List<ApplyPatchChange> getPatchChanges() {
+    return myPatchChanges;
+  }
+
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
