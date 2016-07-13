@@ -155,7 +155,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
     EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
       IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
+    handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
   @Override
