@@ -56,7 +56,7 @@ class ProjectInspectionProfileManager(val project: Project,
                                       private val applicationProfileManager: InspectionProfileManager,
                                       private val scopeManager: DependencyValidationManager,
                                       private val localScopesHolder: NamedScopeManager,
-                                      schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element>, InspectionProjectProfileManager {
+                                      schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project): ProjectInspectionProfileManager {

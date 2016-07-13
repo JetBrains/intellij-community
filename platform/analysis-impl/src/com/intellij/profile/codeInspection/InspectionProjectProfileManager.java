@@ -21,14 +21,15 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 // todo deprecate
-public interface InspectionProjectProfileManager extends InspectionProfileManager {
-  static InspectionProjectProfileManager getInstance(@NotNull Project project){
+// cannot be interface due to backward compatibility
+public abstract class InspectionProjectProfileManager implements InspectionProfileManager {
+  public static InspectionProjectProfileManager getInstance(@NotNull Project project){
     return project.getComponent(InspectionProjectProfileManager.class);
   }
 
   @NotNull
   @Deprecated
-  default InspectionProfile getInspectionProfile() {
+  public InspectionProfile getInspectionProfile() {
     return getCurrentProfile();
   }
 
@@ -37,7 +38,7 @@ public interface InspectionProjectProfileManager extends InspectionProfileManage
    */
   @SuppressWarnings({"UnusedDeclaration"})
   @NotNull
-  default InspectionProfile getInspectionProfile(PsiElement element){
+  public InspectionProfile getInspectionProfile(PsiElement element){
     return getCurrentProfile();
   }
 }

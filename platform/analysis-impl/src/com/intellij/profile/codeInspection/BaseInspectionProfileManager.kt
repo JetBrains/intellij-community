@@ -32,7 +32,7 @@ import com.intellij.util.messages.MessageBus
 @JvmField
 internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
 
-abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProfileManager {
+abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProjectProfileManager() {
   protected abstract val schemeManager: SchemeManager<InspectionProfileImpl>
 
   protected val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
