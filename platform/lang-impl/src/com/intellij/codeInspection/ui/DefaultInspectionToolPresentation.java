@@ -618,7 +618,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                                              @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                              @Nullable CommonProblemDescriptor[] allowedDescriptors) {
     final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
-    Map<Class, QuickFixAction> result = new com.intellij.util.containers.HashMap<>();
+    Map<String, LocalQuickFixWrapper> result = new com.intellij.util.containers.HashMap<>();
     boolean isFirst = true;
     for (RefEntity refElement : refElements) {
       final CommonProblemDescriptor[] descriptors = descriptorMap.get(refElement);
@@ -632,34 +632,34 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           if (isFirst) {
             for (QuickFix fix : fixes) {
               if (fix == null) continue;
-              final Class klass = getFixClass(fix);
               LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, myToolWrapper);
-              result.put(klass, quickFixWrapper);
+              result.put(fix.getFamilyName(), quickFixWrapper);
             }
             isFirst = false;
           }
           else {
-            for (Class clazz : new ArrayList<>(result.keySet())) {
+            for (String familyName : new ArrayList<>(result.keySet())) {
               boolean isFound = false;
               for (QuickFix fix : fixes) {
                 if (fix == null) continue;
-                final Class klass = getFixClass(fix);
-                if (clazz.equals(klass)) {
+                if (familyName.equals(fix.getFamilyName())) {
                   isFound = true;
-                  final QuickFixAction quickFixAction = result.get(clazz);
+                  final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
+                  LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
+                                 "QuickFix-es with the same getFamilyName() should be the same class instances. " +
+                                 "Please assign reported exception for the fix \"" + fix.getClass().getName() + "\" developer");
                   try {
-                    String familyName = fix.getFamilyName();
-                    ((LocalQuickFixWrapper)quickFixAction).setText(StringUtil.escapeMnemonics(familyName));
+                    quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
                   }
                   catch (AbstractMethodError e) {
                     //for plugin compatibility
-                    ((LocalQuickFixWrapper)quickFixAction).setText("Name is not available");
+                    quickFixAction.setText("Name is not available");
                   }
                   break;
                 }
               }
               if (!isFound) {
-                result.remove(clazz);
+                result.remove(familyName);
                 if (result.isEmpty()) {
                   return QuickFixAction.EMPTY;
                 }
