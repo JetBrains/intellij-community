@@ -32,7 +32,8 @@ public class StepicWrappers {
   public static class Step {
     @Expose StepOptions options;
     @Expose String text;
-    @Expose String name = "pycharm";
+    //@Expose String name = "pycharm";
+    @Expose String name;
     @Expose StepOptions source;
 
     public static Step fromTask(Project project, @NotNull final Task task) {
@@ -40,6 +41,16 @@ public class StepicWrappers {
       step.text = task.getTaskText(project);
       step.source = StepOptions.fromTask(project, task);
       return step;
+    }
+
+    @Override
+    public String toString() {
+      return "Step{" +
+        "options=" + options +
+        ", text='" + text + '\'' +
+        ", name='" + name + '\'' +
+        ", source=" + source +
+        '}';
     }
   }
 
@@ -52,6 +63,20 @@ public class StepicWrappers {
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
     @Expose CodeTemplatesWrapper codeTemplates;
+
+    @Override
+    public String toString() {
+      return "StepOptions{" +
+             "test=" + test +
+             ", title='" + title + '\'' +
+             ", files=" + files +
+             ", text='" + text + '\'' +
+             ", samples=" + samples +
+             ", executionMemoryLimit=" + executionMemoryLimit +
+             ", executionTimeLimit=" + executionTimeLimit +
+             ", codeTemplates=" + codeTemplates +
+             '}';
+    }
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
@@ -185,6 +210,14 @@ public class StepicWrappers {
     public TestFileWrapper(String name, String text) {
       this.name = name;
       this.text = text;
+    }
+
+    @Override
+    public String toString() {
+      return "TestFileWrapper{" +
+             "name='" + name + '\'' +
+             ", text='" + text + '\'' +
+             '}';
     }
   }
 
