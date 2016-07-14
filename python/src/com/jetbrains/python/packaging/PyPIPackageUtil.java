@@ -194,8 +194,8 @@ public class PyPIPackageUtil {
           }
         }
       }
-      catch (Exception ignored) {
-        LOG.info(ignored);
+      catch (Exception e) {
+        callback.handleError(e, null, "");
       }
     });
   }
@@ -204,22 +204,27 @@ public class PyPIPackageUtil {
     ourPackageToReleases.put(packageName, releases);
   }
 
-  public void usePackageReleases(@NotNull @NonNls String packageName, @NotNull AsyncCallback callback) {
-    try {
-      final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
-      if (releases == null) {
-        final Vector<String> params = new Vector<>();
-        params.add(packageName);
-        params.add("show_hidden=True");
-        myXmlRpcClient.executeAsync("package_releases", params, callback);
+  public void usePackageReleases(@NotNull String packageName, @NotNull AsyncCallback callback) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
+        if (releases == null) {
+          final Vector<String> params = new Vector<>();
+          params.add(packageName);
+          params.add("show_hidden=True");
+          final Object result = myXmlRpcClient.execute("package_releases", params);
+          if (result != null) {
+            callback.handleResult(result, null, "");
+          }
+        }
+        else {
+          callback.handleResult(releases, null, "");
+        }
       }
-      else {
-        callback.handleResult(releases, null, "");
+      catch (Exception e) {
+        callback.handleError(e, null, "");
       }
-    }
-    catch (IOException e) {
-      callback.handleError(e, null, "");
-    }
+    });
   }
 
   @Nullable
