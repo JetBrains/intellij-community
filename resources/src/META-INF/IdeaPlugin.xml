@@ -1464,6 +1464,7 @@
 
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.JavaModuleNavigationContributor"/>
     <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
     <lang.implementationTextSelectioner language="JAVA"
                                         implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
@@ -1652,6 +1653,8 @@
                               implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
                               implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
+                              implementationClass="com.intellij.psi.presentation.java.JavaModulePresentationProvider"/>
 
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
 
