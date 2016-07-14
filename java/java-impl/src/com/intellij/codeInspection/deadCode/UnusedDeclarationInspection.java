@@ -128,10 +128,13 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       gc.gridy++;
       add(myNonJavaCheckbox, gc);
 
-      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
+      final JButton configureClassPatternsButton = EntryPointsManagerImpl.createConfigureClassPatternsButton();
       gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
-      gc.insets.top = 10;
+      add(configureClassPatternsButton, gc);
+
+      JButton configureAnnotations = EntryPointsManagerImpl.createConfigureAnnotationsButton();
+      gc.gridy++;
       gc.weighty = 1;
 
       add(configureAnnotations, gc);
