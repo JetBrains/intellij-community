@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -621,11 +620,20 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       else {
         //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
-        final boolean useDefault = Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
-        final TerminateRemoteProcessDialog.TerminateOption option = new TerminateRemoteProcessDialog.TerminateOption(processHandler.detachIsDefault(), useDefault);
-        final int rc = TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), option);
-        if (rc != DialogWrapper.OK_EXIT_CODE) return false;
-        destroyProcess = !option.isToBeShown();
+        boolean canDisconnect = !Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
+        int rc = TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), canDisconnect, processHandler.detachIsDefault());
+        switch (rc) {
+          case 0: // terminate
+            destroyProcess = true;
+            break;
+          case 1:
+            if (canDisconnect) { // detach
+              destroyProcess = false;
+              break;
+            }
+          default: // cancel
+            return false;
+        }
       }
       if (destroyProcess) {
         processHandler.destroyProcess();

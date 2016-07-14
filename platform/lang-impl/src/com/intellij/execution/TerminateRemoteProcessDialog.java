@@ -18,59 +18,28 @@ package com.intellij.execution;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TerminateRemoteProcessDialog {
   public static int show(final Project project,
                          final String sessionName,
-                         final TerminateOption option) {
-    final String message = option.myAlwaysUseDefault && !option.myDetach ?
-                           ExecutionBundle.message("terminate.process.confirmation.text", sessionName) :
-                           ExecutionBundle.message("disconnect.process.confirmation.text", sessionName);
-    final String okButtonText = option.myAlwaysUseDefault && !option.myDetach ?
-                                ExecutionBundle.message("button.terminate") :
-                                ExecutionBundle.message("button.disconnect");
-    final String[] options = new String[] {okButtonText, CommonBundle.getCancelButtonText()};
-    return Messages.showDialog(project, message, ExecutionBundle.message("process.is.running.dialog.title", sessionName),
-                        options, 0, Messages.getWarningIcon(),
-                        option);
-  }
-
-  public static class TerminateOption implements DialogWrapper.DoNotAskOption {
-    private boolean myDetach;
-    private final boolean myAlwaysUseDefault;
-
-    public TerminateOption(boolean detachIsDefault, boolean alwaysUseDefault) {
-      myDetach = detachIsDefault;
-      myAlwaysUseDefault = alwaysUseDefault;
+                         boolean canDisconnect,
+                         boolean defaultDisconnect) {
+    List<String> options = new ArrayList<>(3);
+    options.add(ExecutionBundle.message("button.terminate"));
+    if (canDisconnect) {
+      options.add(ExecutionBundle.message("button.disconnect"));
     }
-
-    @Override
-    public boolean isToBeShown() {
-      return myDetach;
-    }
-
-    @Override
-    public void setToBeShown(boolean value, int exitCode) {
-      myDetach = value;
-    }
-
-    @Override
-    public boolean canBeHidden() {
-      return !myAlwaysUseDefault;
-    }
-
-    @Override
-    public boolean shouldSaveOptionsOnCancel() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDoNotShowMessage() {
-      return ExecutionBundle.message("terminate.after.disconnect.checkbox");
-    }
+    options.add(CommonBundle.getCancelButtonText());
+    return Messages.showDialog(project,
+                               ExecutionBundle.message("terminate.process.confirmation.text", sessionName),
+                               ExecutionBundle.message("process.is.running.dialog.title", sessionName),
+                               ArrayUtil.toStringArray(options),
+                               canDisconnect && defaultDisconnect ? 1 : 0,
+                               Messages.getWarningIcon());
   }
 }
