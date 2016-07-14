@@ -17,7 +17,9 @@
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 
@@ -25,21 +27,53 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TerminateRemoteProcessDialog {
-  public static int show(final Project project,
+  public static GeneralSettings.ProcessCloseConfirmation show(final Project project,
                          final String sessionName,
                          boolean canDisconnect,
                          boolean defaultDisconnect) {
+    GeneralSettings.ProcessCloseConfirmation confirmation = GeneralSettings.getInstance().getProcessCloseConfirmation();
+    if (confirmation != GeneralSettings.ProcessCloseConfirmation.ASK) {
+      if (confirmation == GeneralSettings.ProcessCloseConfirmation.DISCONNECT && !canDisconnect) {
+        confirmation = GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+      }
+      return confirmation;
+    }
     List<String> options = new ArrayList<>(3);
     options.add(ExecutionBundle.message("button.terminate"));
     if (canDisconnect) {
       options.add(ExecutionBundle.message("button.disconnect"));
     }
     options.add(CommonBundle.getCancelButtonText());
-    return Messages.showDialog(project,
+    DialogWrapper.DoNotAskOption.Adapter doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
+      @Override
+      public void rememberChoice(boolean isSelected, int exitCode) {
+        if (isSelected) {
+          GeneralSettings.ProcessCloseConfirmation confirmation = getConfirmation(exitCode, canDisconnect);
+          if (confirmation != null) {
+            GeneralSettings.getInstance().setProcessCloseConfirmation(confirmation);
+          }
+        }
+      }
+    };
+    return getConfirmation(Messages.showDialog(project,
                                ExecutionBundle.message("terminate.process.confirmation.text", sessionName),
                                ExecutionBundle.message("process.is.running.dialog.title", sessionName),
                                ArrayUtil.toStringArray(options),
                                canDisconnect && defaultDisconnect ? 1 : 0,
-                               Messages.getWarningIcon());
+                               Messages.getWarningIcon(),
+                               doNotAskOption), canDisconnect);
+  }
+
+  private static GeneralSettings.ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {
+    switch (button) {
+      case 0:
+        return GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+      case 1:
+        if (withDisconnect) {
+          return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
+        }
+      default:
+          return null;
+    }
   }
 }

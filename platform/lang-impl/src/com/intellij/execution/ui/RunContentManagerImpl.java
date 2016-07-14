@@ -23,6 +23,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -621,19 +622,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       else {
         //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
         boolean canDisconnect = !Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
-        int rc = TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), canDisconnect, processHandler.detachIsDefault());
-        switch (rc) {
-          case 0: // terminate
-            destroyProcess = true;
-            break;
-          case 1:
-            if (canDisconnect) { // detach
-              destroyProcess = false;
-              break;
-            }
-          default: // cancel
-            return false;
+        GeneralSettings.ProcessCloseConfirmation rc =
+          TerminateRemoteProcessDialog.show(myProject, descriptor.getDisplayName(), canDisconnect, processHandler.detachIsDefault());
+        if (rc == null) { // cancel
+          return false;
         }
+        destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
       }
       if (destroyProcess) {
         processHandler.destroyProcess();
