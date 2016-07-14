@@ -134,7 +134,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
       final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
       return id != 0? id : Comparing.compare(o1.getUrl(), o2.getUrl());
     });
-    sortedConfigFiles.addAll(myConfigFiles.collectValues());
+    sortedConfigFiles.addAll(myConfigFiles.values());
     for (ConfigFileInfo configuration : sortedConfigFiles) {
       final Element child = new Element(ELEMENT_NAME);
       final ConfigFileMetaData metaData = configuration.getMetaData();
