@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -101,18 +102,20 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
-    if (!allowDuplication) {
-      int index = getIndex(child);
-      if (index != -1) {
+    return ReadAction.compute(() -> {
+      if (!allowDuplication) {
+        int index = getIndex(child);
+        if (index != -1) {
+          return (InspectionTreeNode)getChildAt(index);
+        }
+      }
+      int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
+      if (!allowDuplication && index >= 0){
         return (InspectionTreeNode)getChildAt(index);
       }
-    }
-    int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-    if (!allowDuplication && index >= 0){
-      return (InspectionTreeNode)getChildAt(index);
-    }
-    insert(child, Math.abs(index + 1));
-    return child;
+      insert(child, Math.abs(index + 1));
+      return child;
+    });
   }
 
   @Override

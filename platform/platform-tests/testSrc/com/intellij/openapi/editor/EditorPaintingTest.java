@@ -69,9 +69,10 @@ public class EditorPaintingTest extends AbstractEditorTest {
     checkResult();
   }
   
-  public void testCaretRowHasLowerPriorityThanSyntax() throws Exception {
+  public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
     initText("foo");
     setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
+    addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
   

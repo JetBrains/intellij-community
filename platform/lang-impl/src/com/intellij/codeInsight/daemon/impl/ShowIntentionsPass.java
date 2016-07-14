@@ -47,7 +47,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -314,7 +313,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
-      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, psiElement, offset, intentions);
+      PsiElement adjustedElement = psiElement;
+      int adjustedOffset = offset;
+      if (psiElement instanceof PsiWhiteSpace) {
+        final PsiElement prev = psiElement.getPrevSibling();
+        if (prev != null) {
+          adjustedElement = prev;
+          final TextRange range = prev.getTextRange();
+          adjustedOffset = range.isEmpty() ? range.getEndOffset() : range.getEndOffset() - 1;
+        }
+      }
+      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, adjustedElement, adjustedOffset, intentions);
     }
 
     final int line = hostDocument.getLineNumber(offset);

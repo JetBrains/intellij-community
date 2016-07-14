@@ -2387,6 +2387,10 @@
                      key="control.flow.statement.without.braces.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ControlFlowStatementWithoutBracesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SingleStatementInBlock" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="single.statement.in.block.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.SingleStatementInBlockInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsCalledOnEnumConstant" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equals.called.on.enum.constant.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"

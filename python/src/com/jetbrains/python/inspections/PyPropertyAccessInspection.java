@@ -148,7 +148,7 @@ public class PyPropertyAccessInspection extends PyInspection {
             .stream()
             .filter(PyTargetExpression.class::isInstance)
             .map(declaration -> ((PyTargetExpression)declaration).getContainingClass())
-            .filter(declaringClass -> declaringClass != null && !attributeIsWritable(qualifierClass, declaringClass, target))
+            .filter(declaringClass -> declaringClass != null && !attributeIsWritable(qualifierClass, declaringClass, targetName))
             .findFirst()
             .ifPresent(
               cls -> registerProblem(target, String.format("'%s' object attribute '%s' is read-only", qualifierClass.getName(), targetName))
@@ -157,27 +157,28 @@ public class PyPropertyAccessInspection extends PyInspection {
       }
     }
 
-    private boolean attributeIsWritable(@NotNull PyClass qualifierClass,
-                                        @NotNull PyClass declaringClass,
-                                        @NotNull PyTargetExpression target) {
-      return attributeIsWritableInClass(qualifierClass, declaringClass, target) ||
+    private boolean attributeIsWritable(@NotNull PyClass qualifierClass, @NotNull PyClass declaringClass, @NotNull String targetName) {
+      return attributeIsWritableInClass(qualifierClass, declaringClass, targetName) ||
              qualifierClass
                .getAncestorClasses(myTypeEvalContext)
                .stream()
                .filter(ancestorClass -> !PyUtil.isObjectClass(ancestorClass))
-               .anyMatch(ancestorClass -> attributeIsWritableInClass(ancestorClass, declaringClass, target));
+               .anyMatch(ancestorClass -> attributeIsWritableInClass(ancestorClass, declaringClass, targetName));
     }
 
-    private static boolean attributeIsWritableInClass(@NotNull PyClass cls,
-                                                      @NotNull PyClass declaringClass,
-                                                      @NotNull PyTargetExpression target) {
+    private boolean attributeIsWritableInClass(@NotNull PyClass cls, @NotNull PyClass declaringClass, @NotNull String targetName) {
       final List<String> ownSlots = cls.getOwnSlots();
 
-      return ownSlots == null ||
-             ownSlots.contains(PyNames.DICT) ||
-             (LanguageLevel.forElement(target).isPy3K() &&
-              cls.equals(declaringClass) &&
-              ownSlots.contains(target.getName()));
+      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
+        return true;
+      }
+
+      if (!cls.equals(declaringClass) || !ownSlots.contains(targetName)) {
+        return false;
+      }
+
+      return LanguageLevel.forElement(declaringClass).isAtLeast(LanguageLevel.PYTHON30) ||
+             declaringClass.findClassAttribute(targetName, false, myTypeEvalContext) == null;
     }
   }
 }

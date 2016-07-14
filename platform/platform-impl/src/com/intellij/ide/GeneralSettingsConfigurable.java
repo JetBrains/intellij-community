@@ -59,6 +59,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     settings.setConfirmOpenNewProject(getConfirmOpenNewProject());
+    settings.setProcessCloseConfirmation(getProcessCloseConfirmation());
 
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
@@ -69,6 +70,18 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     }
     catch (NumberFormatException ignored) { }
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
+  }
+
+  private GeneralSettings.ProcessCloseConfirmation getProcessCloseConfirmation() {
+    if (myComponent.myTerminateProcessJBRadioButton.isSelected()) {
+      return GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+    }
+    else if (myComponent.myDisconnectJBRadioButton.isSelected()) {
+      return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
+    }
+    else {
+      return GeneralSettings.ProcessCloseConfirmation.ASK;
+    }
   }
 
   @GeneralSettings.OpenNewProjectOption
@@ -95,6 +108,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
     isModified |= settings.getConfirmOpenNewProject() != getConfirmOpenNewProject();
+    isModified |= settings.getProcessCloseConfirmation() != getProcessCloseConfirmation();
 
     int inactiveTimeout = -1;
     try {
@@ -157,6 +171,17 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
         myComponent.myOpenProjectInSameWindow.setSelected(true);
         break;
     }
+    switch (settings.getProcessCloseConfirmation()) {
+      case TERMINATE:
+        myComponent.myTerminateProcessJBRadioButton.setSelected(true);
+        break;
+      case DISCONNECT:
+        myComponent.myDisconnectJBRadioButton.setSelected(true);
+        break;
+      case ASK:
+        myComponent.myAskJBRadioButton.setSelected(true);
+        break;
+    }
   }
 
   public void disposeUIResources() {
@@ -183,6 +208,9 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     private JBRadioButton myOpenProjectInSameWindow;
     private JBRadioButton myConfirmWindowToOpenProject;
     private JCheckBox myChkSupportScreenReaders;
+    private JBRadioButton myTerminateProcessJBRadioButton;
+    private JBRadioButton myDisconnectJBRadioButton;
+    private JBRadioButton myAskJBRadioButton;
 
     public MyComponent() { }
   }
