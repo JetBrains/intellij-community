@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -72,7 +71,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String USED_LEVELS = "used_levels";
   public static final String DEFAULT_PROFILE_NAME = "Default";
   @TestOnly
-  public static boolean INIT_INSPECTIONS = false;
+  public static boolean INIT_INSPECTIONS;
   private static Map<String, InspectionElementsMerger> ourMergers;
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
@@ -91,7 +90,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private final Object myLock = new Object();
 
-  private SchemeDataHolder myDataHolder;
+  private SchemeDataHolder<InspectionProfileImpl> myDataHolder;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
@@ -139,13 +138,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   @NotNull
   public static InspectionProfileImpl createSimple(@NotNull String name,
-                                                   @NotNull final Project project,
-                                                   @NotNull final InspectionToolWrapper... toolWrappers) {
+                                                   @NotNull Project project,
+                                                   @NotNull List<InspectionToolWrapper> toolWrappers) {
     InspectionProfileImpl profile = new InspectionProfileImpl(name, new InspectionToolRegistrar() {
       @NotNull
       @Override
       public List<InspectionToolWrapper> createTools() {
-        return Arrays.asList(toolWrappers);
+        return toolWrappers;
       }
     }, InspectionProfileManager.getInstance());
     initAndDo(() -> {
@@ -401,12 +400,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void modifyProfile(@NotNull Consumer<ModifiableModel> modelConsumer) {
     ModifiableModel model = getModifiableModel();
     modelConsumer.consume(model);
-    try {
-      model.commit();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    model.commit();
   }
 
   @Override
@@ -557,13 +551,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private void initialize(@Nullable Project project) {
-    SchemeDataHolder dataHolder = myDataHolder;
+    SchemeDataHolder<InspectionProfileImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
       Element element = dataHolder.read();
       if (element.getName().equals("component")) {
         element = element.getChild("profile");
       }
+      assert element != null;
       readExternal(element);
     }
 
@@ -606,7 +601,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myInitialized = true;
     if (dataHolder != null) {
       // should be only after set myInitialized
-      dataHolder.updateDigest();
+      dataHolder.updateDigest(this);
     }
   }
 
@@ -804,7 +799,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   //invoke when isChanged() == true
   @Override
-  public void commit() throws IOException {
+  public void commit() {
     LOG.assertTrue(mySource != null);
     mySource.commit(this);
     getProfileManager().updateProfile(mySource);

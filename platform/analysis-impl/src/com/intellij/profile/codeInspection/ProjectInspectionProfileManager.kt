@@ -84,7 +84,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   init {
     schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
-      override fun createScheme(dataHolder: SchemeDataHolder, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
+      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): InspectionProfileImpl {
         val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, InspectionProfileImpl.getDefaultProfile(), dataHolder)
         profile.isProjectLevel = true
         return profile
@@ -133,7 +133,7 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized override fun updateProfile(profile: Profile) {
     super.updateProfile(profile)
 
-    initInspectionTools(profile)
+    (profile as InspectionProfileImpl).initInspectionTools(project)
   }
 
   override fun schemeRemoved(scheme: InspectionProfile) {
@@ -144,18 +144,18 @@ class ProjectInspectionProfileManager(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstanceImpl(project).apply {
-        schemeManager.loadSchemes()
-
         val inspectionProfile = currentProfile
         val app = ApplicationManager.getApplication()
         val initInspectionProfilesRunnable = {
-          initInspectionTools(inspectionProfile)
+          schemeManager.loadSchemes()
+          inspectionProfile.initInspectionTools(project)
           fireProfilesInitialized()
         }
+
         if (app.isUnitTestMode || app.isHeadlessEnvironment) {
           initInspectionProfilesRunnable.invoke()
           if (app.isDispatchThread) {
-            //do not restart daemon in the middle of the test
+            // do not restart daemon in the middle of the test
             //noinspection TestOnlyProblems
             UIUtil.dispatchAllInvocationEvents()
           }
@@ -176,12 +176,6 @@ class ProjectInspectionProfileManager(val project: Project,
           localScopesHolder.removeScopeListener(scopeListener!!)
         })
       }
-    }
-  }
-
-  fun initInspectionTools(profile: Profile) {
-    if (profile is InspectionProfileImpl) {
-      profile.initInspectionTools(project)
     }
   }
 

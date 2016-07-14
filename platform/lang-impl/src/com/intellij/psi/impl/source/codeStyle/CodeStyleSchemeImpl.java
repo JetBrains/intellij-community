@@ -32,12 +32,12 @@ public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableSchem
 
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private SchemeDataHolder myDataHolder;
+  private SchemeDataHolder<CodeStyleSchemeImpl> myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<CodeStyleSchemeImpl> dataHolder) {
     setName(name);
     myDataHolder = dataHolder;
     myIsDefault = false;
@@ -85,11 +85,11 @@ public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableSchem
 
   @Override
   public CodeStyleSettings getCodeStyleSettings() {
-    SchemeDataHolder dataHolder = myDataHolder;
+    SchemeDataHolder<CodeStyleSchemeImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
       init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
-      dataHolder.updateDigest();
+      dataHolder.updateDigest(this);
       myParentSchemeName = null;
     }
     return myCodeStyleSettings;

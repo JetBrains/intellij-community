@@ -34,11 +34,12 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.FindManager;
@@ -90,7 +91,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -119,7 +119,6 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -155,30 +154,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myTempDirFixture = tempDirTestFixture;
   }
 
-  @NotNull
-  @TestOnly
-  public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
-                                                                           @NotNull final Project project,
-                                                                           @NotNull InspectionManagerEx inspectionManager,
-                                                                           @NotNull final InspectionToolWrapper... toolWrappers) {
-    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", project, toolWrappers);
-    GlobalInspectionContextForTests context = new GlobalInspectionContextForTests(project, inspectionManager.getContentManager()) {
-      @NotNull
-      @Override
-      protected List<Tools> getUsedTools() {
-        return InspectionProfileImpl.initAndDo(() -> {
-          for (InspectionToolWrapper tool : toolWrappers) {
-            profile.enableTool(tool.getShortName(), project);
-          }
-          return profile.getAllEnabledInspectionTools(project);
-        });
-      }
-    };
-    context.setCurrentScope(scope);
-
-    return context;
-  }
-
   private static void addGutterIconRenderer(final GutterMark renderer,
                                             final int offset,
                                             @NotNull SortedMap<Integer, List<GutterMark>> result) {
@@ -189,46 +164,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       result.put(offset, renderers = new SmartList<>());
     }
     renderers.add(renderer);
-  }
-
-  public static void configureInspections(@NotNull InspectionProfileEntry[] tools,
-                                          @NotNull Project project,
-                                          @NotNull Collection<String> disabledInspections,
-                                          @NotNull Disposable parentDisposable) {
-    InspectionToolWrapper[] wrapped = ContainerUtil.map2Array(tools, InspectionToolWrapper.class, InspectionToolRegistrar::wrapTool);
-
-    InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
-    profile.disableToolByDefault(disabledInspections, project);
-
-    ProjectInspectionProfileManager inspectionProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
-
-    InspectionProfileImpl oldRootProfile = inspectionProfileManager.getCurrentProfile();
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        inspectionProfileManager.deleteProfile(profile);
-        inspectionProfileManager.setCurrentProfile(oldRootProfile);
-        clearAllToolsIn(InspectionProfileImpl.getDefaultProfile(), project);
-      }
-    });
-    inspectionProfileManager.setRootProfile(profile.getName());
-    InspectionProfileImpl.initAndDo(() -> {
-      inspectionProfileManager.addProfile(profile);
-      inspectionProfileManager.initInspectionTools(profile);
-      inspectionProfileManager.setCurrentProfile(profile);
-      return null;
-    });
-  }
-
-  private static void clearAllToolsIn(@NotNull InspectionProfileImpl profile, @NotNull Project project) {
-    List<ScopeToolState> tools = profile.getAllTools(project);
-    for (ScopeToolState state : tools) {
-      InspectionToolWrapper wrapper = state.getTool();
-      if (wrapper.getExtension() != null) {
-        // make it not initialized
-        ReflectionUtil.resetField(wrapper, InspectionProfileEntry.class, "myTool");
-      }
-    }
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
@@ -577,8 +512,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     AnalysisScope scope = new AnalysisScope(psiDirectory);
     scope.invalidate();
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    GlobalInspectionContextForTests globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
+    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, getProject(), Collections.<InspectionToolWrapper<?, ?>>singletonList(toolWrapper));
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
@@ -1282,7 +1216,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-        configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.emptyList(), getTestRootDisposable());
+        InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.emptyList(), getTestRootDisposable());
 
         DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
         daemonCodeAnalyzer.prepareForTest();

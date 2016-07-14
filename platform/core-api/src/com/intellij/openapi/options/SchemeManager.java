@@ -79,6 +79,16 @@ public abstract class SchemeManager<T extends Scheme> {
 
   public abstract void removeScheme(@NotNull T scheme);
 
+  @Nullable
+  public T removeScheme(@NotNull String name) {
+    T scheme = findSchemeByName(name);
+    if (scheme != null) {
+      removeScheme(scheme);
+      return scheme;
+    }
+    return null;
+  }
+
   @NotNull
   public abstract Collection<String> getAllSchemeNames();
 

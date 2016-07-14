@@ -43,7 +43,7 @@ import java.util.Map;
  * Date: Dec 20, 2004
  */
 public class InspectionProfileConvertor {
-  private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
+  private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
   @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
   @NonNls public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
@@ -70,8 +70,7 @@ public class InspectionProfileConvertor {
 
   private boolean retrieveOldSettings(@NotNull Element element) {
     boolean hasOldSettings = false;
-    for (final Object obj : element.getChildren(OPTION_TAG)) {
-      Element option = (Element)obj;
+    for (Element option : element.getChildren(OPTION_TAG)) {
       final String name = option.getAttributeValue(NAME_ATT);
       if (name != null) {
         hasOldSettings |= processElement(option, name);
@@ -82,9 +81,7 @@ public class InspectionProfileConvertor {
 
   protected boolean processElement(final Element option, final String name) {
     if (name.equals(DISPLAY_LEVEL_MAP_OPTION)) {
-      final Element levelMap = option.getChild(VALUE_ATT);
-      for (final Object o : levelMap.getChildren()) {
-        Element e = (Element)o;
+      for (Element e : option.getChild(VALUE_ATT).getChildren()) {
         String key = e.getName();
         String levelName = e.getAttributeValue(LEVEL_ATT);
         HighlightSeverity severity = myManager.getSeverityRegistrar().getSeverity(levelName);
@@ -99,16 +96,9 @@ public class InspectionProfileConvertor {
 
   public void storeEditorHighlightingProfile(@NotNull Element element, @NotNull InspectionProfile editorProfile) {
     if (retrieveOldSettings(element)) {
-
-      final ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
-
+      ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
       fillErrorLevels(editorProfileModel);
-      try {
-        editorProfileModel.commit();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      editorProfileModel.commit();
     }
   }
 

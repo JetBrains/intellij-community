@@ -11,4 +11,7 @@
   <item name='java.nio.file.Path java.nio.file.Path getParent()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

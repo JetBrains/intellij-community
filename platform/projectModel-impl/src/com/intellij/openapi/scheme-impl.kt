@@ -15,15 +15,16 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.options.Scheme
 import org.jdom.Element
 
-interface SchemeDataHolder {
+interface SchemeDataHolder<MUTABLE_SCHEME : Scheme> {
   /**
    * You should call updateDigest() after read on init.
    */
   fun read(): Element
 
-  fun updateDigest()
+  fun updateDigest(scheme: MUTABLE_SCHEME)
 }
 
 interface SerializableScheme {

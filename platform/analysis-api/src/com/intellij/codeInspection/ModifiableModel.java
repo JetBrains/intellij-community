@@ -48,7 +48,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
-  void commit() throws IOException;
+  void commit();
 
   boolean isChanged();
 

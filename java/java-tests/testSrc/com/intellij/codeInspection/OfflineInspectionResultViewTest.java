@@ -84,7 +84,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
       @Override
       @NotNull
-      public ModifiableModel getModifiableModel() {
+      public InspectionProfileImpl getModifiableModel() {
         return new InspectionProfileImpl("test") {
           @Override
           @NotNull

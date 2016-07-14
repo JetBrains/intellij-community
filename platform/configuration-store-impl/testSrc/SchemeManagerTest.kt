@@ -68,7 +68,7 @@ internal class SchemeManagerTest {
 
   @Test fun deleteScheme() {
     val manager = createAndLoad("options1")
-    manager.removeScheme(TestScheme("first"))
+    manager.removeScheme("first")
     manager.save()
 
     checkSchemes("2->second")
@@ -201,9 +201,8 @@ internal class SchemeManagerTest {
     val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
-    var schemes = schemeManager.allSchemes
     val customScheme = TestScheme("default")
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
     schemeManager.save()
     assertThat(dir).doesNotExist()
@@ -212,8 +211,7 @@ internal class SchemeManagerTest {
     schemeManager.setSchemes(listOf(customScheme))
     assertThat(dir).doesNotExist()
 
-    schemes = schemeManager.allSchemes
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
     customScheme.data = "foo"
     schemeManager.save()
@@ -223,8 +221,7 @@ internal class SchemeManagerTest {
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     schemeManager.loadSchemes()
 
-    schemes = schemeManager.allSchemes
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
   }
 
   @Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {

@@ -67,11 +67,15 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    myEventSource.dispose();
-    KeymapManagerEx.getInstanceEx().getSchemeManager().removeScheme(keymap);
-    KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
-    ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
-    super.tearDown();
+    try {
+      myEventSource.dispose();
+      KeymapManagerEx.getInstanceEx().getSchemeManager().removeScheme(keymap);
+      KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
+      ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testActionTriggering() throws Exception {

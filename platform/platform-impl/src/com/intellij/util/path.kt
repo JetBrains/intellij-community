@@ -57,7 +57,7 @@ fun Path.delete() {
   catch (ignored: NoSuchFileException) {
   }
   catch (e: Exception) {
-    FileUtil.delete(this.toFile())
+    FileUtil.delete(toFile())
   }
 }
 

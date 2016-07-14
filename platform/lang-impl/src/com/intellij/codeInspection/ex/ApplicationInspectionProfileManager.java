@@ -94,7 +94,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       }
 
       @NotNull
-      public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder dataHolder,
+      public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
@@ -200,12 +200,12 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   @Override
   public void updateProfile(@NotNull Profile profile) {
     super.updateProfile(profile);
-    updateProfileImpl(profile);
+    updateProfileImpl((InspectionProfileImpl)profile);
   }
 
-  private static void updateProfileImpl(@NotNull Profile profile) {
+  private static void updateProfileImpl(@NotNull InspectionProfileImpl profile) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      ProjectInspectionProfileManager.getInstanceImpl(project).initInspectionTools(profile);
+      profile.initInspectionTools(project);
     }
   }
 

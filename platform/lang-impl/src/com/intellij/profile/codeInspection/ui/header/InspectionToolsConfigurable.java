@@ -86,8 +86,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   protected final ProjectInspectionProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
   private final Map<Profile, SingleInspectionProfilePanel> myPanels =
-    new HashMap<Profile, SingleInspectionProfilePanel>();
-  private final List<Profile> myDeletedProfiles = new ArrayList<Profile>();
+    new HashMap<>();
+  private final List<Profile> myDeletedProfiles = new ArrayList<>();
   protected ProfilesChooser myProfiles;
   private JPanel myPanel;
   private AuxiliaryRightPanel myAuxiliaryRightPanel;
@@ -154,7 +154,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     inspectionProfile.initInspectionTools(project);
     inspectionProfile.setModified(true);
 
-    final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)inspectionProfile.getModifiableModel();
+    final InspectionProfileImpl modifiableModel = inspectionProfile.getModifiableModel();
     modifiableModel.setModified(true);
     addProfile(modifiableModel, inspectionProfile);
     return modifiableModel;
@@ -467,7 +467,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
       rootElement = rootElement.getChildren().get(0);
     }
-    final Set<String> levels = new HashSet<String>();
+    final Set<String> levels = new HashSet<>();
     for (Object o : rootElement.getChildren("inspection_tool")) {
       final Element inspectElement = (Element)o;
       addLevelIfNotNull(levels, inspectElement);
@@ -534,13 +534,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void apply() throws ConfigurationException {
-    final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-    for (final Profile inspectionProfile : myPanels.keySet()) {
+    SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
+    for (Profile inspectionProfile : myPanels.keySet()) {
       if (myDeletedProfiles.remove(inspectionProfile)) {
         deleteProfile(getProfilePanel(inspectionProfile).getSelectedProfile());
       }
       else {
-        final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
+        SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
         panel.apply();
         if (setActiveProfileAsDefaultOnApply() && panel == selectedPanel) {
           applyRootProfile(panel.getCurrentProfileName(), panel.isProjectLevel());
@@ -560,18 +560,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myPanels.put(profile, panel);
   }
 
-  private void deleteProfile(Profile profile) {
-    final String name = profile.getName();
+  private void deleteProfile(@NotNull Profile profile) {
     if (profile.getProfileManager() == myApplicationProfileManager) {
-      if (myApplicationProfileManager.getProfile(name, false) != null) {
-        myApplicationProfileManager.deleteProfile(name);
-      }
-      return;
+      myApplicationProfileManager.deleteProfile(profile.getName());
     }
-    if (profile.getProfileManager() == myProjectProfileManager) {
-      if (myProjectProfileManager.getProfile(name, false) != null) {
-        myProjectProfileManager.deleteProfile(name);
-      }
+    else {
+      myProjectProfileManager.deleteProfile(profile.getName());
     }
   }
 
@@ -644,8 +638,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   protected Collection<Profile> getProfiles() {
-    final Collection<Profile> result = new ArrayList<Profile>();
-    result.addAll(new TreeSet<Profile>(myApplicationProfileManager.getProfiles()));
+    final Collection<Profile> result = new ArrayList<>();
+    result.addAll(new TreeSet<>(myApplicationProfileManager.getProfiles()));
     result.addAll(myProjectProfileManager.getProfiles());
     return result;
   }

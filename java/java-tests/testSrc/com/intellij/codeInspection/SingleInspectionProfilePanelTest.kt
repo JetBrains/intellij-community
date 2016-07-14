@@ -34,8 +34,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
   fun testSettingsModification() {
     val project = ProjectManager.getInstance().defaultProject
     val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
-    val profile = profileManager.getProfile(LightPlatformTestCase.PROFILE) as InspectionProfileImpl
-    profile.initInspectionTools(project)
+    val profile = profileManager.currentProfile
 
     val model = profile.modifiableModel
     val panel = SingleInspectionProfilePanel(profileManager, LightPlatformTestCase.PROFILE, model, profile)
@@ -104,12 +103,12 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
   }
 
   override fun setUp() {
-    InspectionProfileImpl.INIT_INSPECTIONS = true
+//    InspectionProfileImpl.INIT_INSPECTIONS = true
     super.setUp()
   }
 
   override fun tearDown() {
-    InspectionProfileImpl.INIT_INSPECTIONS = false
+//    InspectionProfileImpl.INIT_INSPECTIONS = false
     super.tearDown()
   }
 

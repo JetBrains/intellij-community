@@ -40,7 +40,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
       @NotNull
       @Override
-      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder dataHolder, @NotNull String name, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
+      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<CodeStyleSchemeImpl> dataHolder, @NotNull String name, @NotNull Function<String, String> attributeProvider, boolean duringLoad) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }
 
@@ -99,12 +99,13 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
-  public void deleteScheme(CodeStyleScheme scheme) {
+  public void deleteScheme(@NotNull CodeStyleScheme scheme) {
     if (scheme.isDefault()) {
       throw new IllegalArgumentException("Unable to delete default scheme!");
     }
-    CodeStyleSchemeImpl currScheme = (CodeStyleSchemeImpl)getCurrentScheme();
-    if (currScheme == scheme) {
+
+    CodeStyleSchemeImpl currentScheme = (CodeStyleSchemeImpl)getCurrentScheme();
+    if (currentScheme == scheme) {
       CodeStyleScheme newCurrentScheme = getDefaultScheme();
       if (newCurrentScheme == null) {
         throw new IllegalStateException("Unable to load default scheme!");

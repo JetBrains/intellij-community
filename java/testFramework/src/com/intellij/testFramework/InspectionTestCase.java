@@ -41,14 +41,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -141,11 +142,13 @@ public abstract class InspectionTestCase extends PsiTestCase {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     AnalysisScope scope = createAnalysisScope(sourceDir[0].equals(projectDir) ? projectDir : sourceDir[0].getParent());
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{getUnusedDeclarationWrapper(), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
-    toolWrappers = ArrayUtil.mergeArrays(toolWrappers, additional);
-    final GlobalInspectionContextForTests globalContext =
-      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
+    if (runDeadCodeFirst) {
+      toolWrappers.add(getUnusedDeclarationWrapper());
+    }
+    toolWrappers.add(toolWrapper);
+    ContainerUtil.addAll(toolWrappers, additional);
+    GlobalInspectionContextForTests globalContext = InspectionsKt.createGlobalContextForTool(scope, getProject(), toolWrappers);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
     return globalContext;
@@ -222,11 +225,15 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
-    point.unregisterExtension(myUnusedCodeExtension);
-    myUnusedCodeExtension = null;
-    ext_src = null;
-    super.tearDown();
+    try {
+      ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+      point.unregisterExtension(myUnusedCodeExtension);
+      myUnusedCodeExtension = null;
+      ext_src = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

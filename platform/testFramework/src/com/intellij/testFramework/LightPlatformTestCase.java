@@ -93,7 +93,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
@@ -313,8 +312,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     clearUncommittedDocuments(getProject());
 
-    CodeInsightTestFixtureImpl.configureInspections(localInspectionTools, getProject(),
-                                                    Collections.emptyList(), parentDisposable);
+    InspectionsKt.configureInspections(localInspectionTools, getProject(), Collections.emptyList(), parentDisposable);
 
     assertFalse(getPsiManager().isDisposed());
     Boolean passed = null;

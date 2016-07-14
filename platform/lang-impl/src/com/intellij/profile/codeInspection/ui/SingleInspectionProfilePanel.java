@@ -1159,13 +1159,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
 
-    final InspectionProfile parentProfile = selectedProfile.getParentProfile();
-    try {
-      selectedProfile.commit();
-    }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
-    }
+    InspectionProfile parentProfile = selectedProfile.getParentProfile();
+    selectedProfile.commit();
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;

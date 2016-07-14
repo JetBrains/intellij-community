@@ -59,10 +59,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.FileTreeAccessFilter;
-import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,8 +89,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
 
-    CodeInsightTestFixtureImpl.configureInspections(tools, getProject(), Collections.emptyList(),
-                                                    getTestRootDisposable());
+    InspectionsKt.configureInspections(tools, getProject(), Collections.emptyList(), getTestRootDisposable());
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     daemonCodeAnalyzer.prepareForTest();
