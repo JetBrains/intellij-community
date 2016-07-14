@@ -84,6 +84,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
     
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
+
+    public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -523,5 +525,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   
   public void setAddCaretsOnDoubleCtrl(boolean val) {
     myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
+  }
+
+  public BidiTextDirection getBidiTextDirection() {
+    return myOptions.BIDI_TEXT_DIRECTION;
+  }
+
+  public void setBidiTextDirection(BidiTextDirection direction) {
+    myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 }
