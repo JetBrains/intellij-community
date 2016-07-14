@@ -394,12 +394,12 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+        final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName());
+        consumer.consume(StringUtil.notNullize(version));
       }
-      catch (IOException ignored) {
-        // it's ok not to show a version
+      catch (IOException e) {
+        consumer.consume(e);
       }
-      final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName());
-      consumer.consume(StringUtil.notNullize(version));
     });
   }
 }
