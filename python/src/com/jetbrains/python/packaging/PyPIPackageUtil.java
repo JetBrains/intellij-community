@@ -205,20 +205,25 @@ public class PyPIPackageUtil {
   }
 
   public void usePackageReleases(@NotNull @NonNls String packageName, @NotNull AsyncCallback callback) {
-    final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
-    if (releases == null) {
-      final Vector<String> params = new Vector<>();
-      params.add(packageName);
-      params.add("show_hidden=True");
-      myXmlRpcClient.executeAsync("package_releases", params, callback);
+    try {
+      final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
+      if (releases == null) {
+        final Vector<String> params = new Vector<>();
+        params.add(packageName);
+        params.add("show_hidden=True");
+        myXmlRpcClient.executeAsync("package_releases", params, callback);
+      }
+      else {
+        callback.handleResult(releases, null, "");
+      }
     }
-    else {
-      callback.handleResult(releases, null, "");
+    catch (IOException e) {
+      callback.handleError(e, null, "");
     }
   }
 
   @Nullable
-  private static List<String> getPackageVersionsFromAdditionalRepositories(@NotNull @NonNls String packageName) {
+  private static List<String> getPackageVersionsFromAdditionalRepositories(@NotNull @NonNls String packageName) throws IOException {
     if (ourPackageToReleases.containsKey(packageName)) {
       return ourPackageToReleases.get(packageName);
     }
@@ -234,18 +239,18 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  private static String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) {
+  private static String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
     return ContainerUtil.getFirstItem(versions);
   }
 
   @NotNull
-  private static List<String> getPackageVersionsFromPyPI(@NotNull String packageName) {
+  private static List<String> getPackageVersionsFromPyPI(@NotNull String packageName) throws IOException {
     return getVersionsFromRepository(packageName, PYPI_LIST_URL);
   }
 
   @Nullable
-  private static String getLatestPackageVersionFromPyPI(@NotNull String packageName) {
+  private static String getLatestPackageVersionFromPyPI(@NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName);
     final String latest = ContainerUtil.getFirstItem(versions);
@@ -254,13 +259,13 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> getVersionsFromRepository(@NotNull @NonNls String packageName, @NotNull String repository) {
+  private static List<String> getVersionsFromRepository(@NotNull String packageName, @NotNull String repository) throws IOException {
     final String packageArchivesSimpleUrl = composeSimpleUrl(packageName, repository);
     return parsePackageVersionsFromArchives(packageArchivesSimpleUrl);
   }
 
   @Nullable
-  public static String fetchLatestPackageVersion(@NotNull String packageName) {
+  public static String fetchLatestPackageVersion(@NotNull String packageName) throws IOException {
     String version = getPyPIPackages().get(packageName);
     // Package is on PyPI but it's version is unknown
     if (version != null && version.isEmpty()) {
@@ -274,7 +279,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl) {
+  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl) throws IOException {
     return HttpRequests.request(archivesUrl).connect(request -> {
       final List<String> versions = new ArrayList<>();
       final Reader reader = request.getReader();
@@ -300,7 +305,7 @@ public class PyPIPackageUtil {
       }, true);
       versions.sort(PackageVersionComparator.VERSION_COMPARATOR.reversed());
       return versions;
-    }, Collections.emptyList(), LOG);
+    });
   }
 
   @NotNull
