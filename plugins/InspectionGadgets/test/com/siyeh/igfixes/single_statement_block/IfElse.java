@@ -2,7 +2,7 @@ class X {
   {
     if (true) {
       System.out.println();
-    }<caret>
+    <caret>}
     else {
       System.out.println();
     }

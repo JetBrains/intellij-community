@@ -352,11 +352,6 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.braces.RemoveBracesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
