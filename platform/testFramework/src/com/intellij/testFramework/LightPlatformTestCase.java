@@ -135,6 +135,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static LightProjectDescriptor ourProjectDescriptor;
 
   private ThreadTracker myThreadTracker;
+  
+  static {
+    PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
+  }
 
   /**
    * @return Project to be used in tests for example for project components retrieval.

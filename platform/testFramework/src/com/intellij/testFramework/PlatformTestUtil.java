@@ -76,6 +76,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
@@ -88,6 +89,8 @@ public class PlatformTestUtil {
 
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -956,4 +959,16 @@ public class PlatformTestUtil {
     });
     return refs;
   }
+  
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+  
+  public static void cleanupAllProjects() {
+    for (Runnable each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
+  }
+  
 }

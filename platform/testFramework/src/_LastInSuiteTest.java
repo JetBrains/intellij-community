@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -49,8 +50,8 @@ public class _LastInSuiteTest extends TestCase {
           throw new RuntimeException(e);
         }
 
-        // disposes default project too
-        LightPlatformTestCase.closeAndDeleteProject();
+        // disposes default projects too
+        PlatformTestUtil.cleanupAllProjects();
         ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
