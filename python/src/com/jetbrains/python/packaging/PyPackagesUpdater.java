@@ -17,7 +17,6 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -27,14 +26,11 @@ import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * PyPI cache updater
  * User : catherine
  */
 public class PyPackagesUpdater implements StartupActivity {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.PyPIPackagesUpdater");
 
   @Override
   public void runActivity(@NotNull final Project project) {
@@ -45,13 +41,8 @@ public class PyPackagesUpdater implements StartupActivity {
     final PyPackageService service = PyPackageService.getInstance();
     if (checkNeeded(project, service)) {
       application.executeOnPooledThread(() -> {
-        try {
-          PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-          service.LAST_TIME_CHECKED = System.currentTimeMillis();
-        }
-        catch (IOException e) {
-          LOG.warn(e.getMessage());
-        }
+        PyPIPackageUtil.INSTANCE.updatePyPICache(service);
+        service.LAST_TIME_CHECKED = System.currentTimeMillis();
       });
     }
     if (checkCondaUpdateNeeded(project)) {
