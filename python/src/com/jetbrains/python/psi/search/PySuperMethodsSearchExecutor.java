@@ -44,7 +44,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
         if (!queryParameters.isDeepSearch()) {
           boolean isAlreadyFound = false;
           for (PyClass alreadyFound : foundMethodContainingClasses) {
-            if (alreadyFound.isSubclass(superClass, null)) {
+            if (alreadyFound.isSubclass(superClass, context)) {
               isAlreadyFound = true;
             }
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ public class PyABCUtil {
   private PyABCUtil() {
   }
 
-  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass, @Nullable TypeEvalContext context) {
     final String superName = superClass.getName();
     if (superName != null) {
-      return isSubclass(subClass, superName, true, null);
+      return isSubclass(subClass, superName, true, context);
     }
     return false;
   }
@@ -107,11 +107,11 @@ public class PyABCUtil {
         final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
         if (metaClassType instanceof PyClassType) {
           final PyClassType metaClass = (PyClassType)metaClassType;
-          return isSubclass(metaClass.getPyClass(), superClassName, true, null);
+          return isSubclass(metaClass.getPyClass(), superClassName, true, context);
         }
       }
       else {
-        return isSubclass(pyClass, superClassName, true, null);
+        return isSubclass(pyClass, superClassName, true, context);
       }
     }
     if (type instanceof PyUnionType) {

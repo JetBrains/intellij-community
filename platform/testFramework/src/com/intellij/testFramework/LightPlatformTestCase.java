@@ -21,7 +21,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -45,7 +47,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -346,26 +347,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  // todo: use Class<? extends InspectionProfileEntry> once on Java 7
-  protected void enableInspectionTools(@NotNull Class<?>... classes) {
-    final InspectionProfileEntry[] tools = new InspectionProfileEntry[classes.length];
-
-    final List<InspectionEP> eps = ContainerUtil.newArrayList();
-    ContainerUtil.addAll(eps, Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION));
-    ContainerUtil.addAll(eps, Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION));
-
-    next:
-    for (int i = 0; i < classes.length; i++) {
-      for (InspectionEP ep : eps) {
-        if (classes[i].getName().equals(ep.implementationClass)) {
-          tools[i] = ep.instantiateTool();
-          continue next;
-        }
-      }
-      throw new IllegalArgumentException("Unable to find extension point for " + classes[i].getName());
-    }
-
-    enableInspectionTools(tools);
+  protected void enableInspectionTools(@NotNull Class<? extends InspectionProfileEntry>... classes) {
+    List<InspectionProfileEntry> tools = InspectionTestUtil.instantiateTools(Arrays.asList(classes));
+    enableInspectionTools(tools.toArray(new InspectionProfileEntry[tools.size()]));
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
