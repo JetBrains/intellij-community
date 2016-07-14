@@ -286,10 +286,10 @@ public class EduStepicConnector {
   }
 
   @NotNull
-  public static CourseInfo getCourse() {
+  public static CourseInfo getDefaultCourse() {
     CourseInfo courseInfo = null;
     try {
-      courseInfo = getFromStepic(EduStepicNames.COURSES+"/217", StepicWrappers.CoursesContainer.class).courses.get(0);
+      courseInfo = getFromStepic(EduStepicNames.COURSES + "/217", StepicWrappers.CoursesContainer.class).courses.get(0);
     }
     catch (IOException e) {
       e.printStackTrace();
@@ -333,7 +333,7 @@ public class EduStepicConnector {
     if (!course.isAdaptive()) {
       String courseType = info.getType();
       course.setName(info.getName());
-//      course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
+      course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
       try {
         for (Integer section : info.sections) {
           course.addLessons(getLessons(section));
@@ -367,47 +367,58 @@ public class EduStepicConnector {
       sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<Lesson>();
-    for (Integer unitId : unitIds) {
-      StepicWrappers.UnitContainer
-        unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
-      int lessonID = unit.units.get(0).lesson;
-      StepicWrappers.LessonContainer
-        lesson = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
-      Lesson realLesson = lesson.lessons.get(0);
-      realLesson.taskList = new ArrayList<Task>();
-      for (Integer s : realLesson.steps) {
-        createTask(realLesson, s);
-      }
-      if (!realLesson.taskList.isEmpty()) {
-        lessons.add(realLesson);
+
+    StepicWrappers.UnitContainer
+      unitContainer = getFromStepic(EduStepicNames.UNITS + "/" + getIdQuery(unitIds), StepicWrappers.UnitContainer.class);
+    List<Integer> lessonsIds = new ArrayList<>();
+    unitContainer.units.forEach(x -> lessonsIds.add(x.lesson));
+    StepicWrappers.LessonContainer
+      lessonContainer = getFromStepic(EduStepicNames.LESSONS + getIdQuery(lessonsIds), StepicWrappers.LessonContainer.class);
+
+    for (Lesson lesson : lessonContainer.lessons) {
+      createTasks(lesson, lesson.steps);
+      if (!lesson.taskList.isEmpty()) {
+        lessons.add(lesson);
       }
     }
 
     return lessons;
   }
 
-  private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
-    final StepicWrappers.Step step = getStep(stepicId);
-    if (!step.name.equals(PYCHARM_PREFIX)) return;
-    final Task task = new Task();
-    task.setStepicId(stepicId);
-    task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
-    task.setText(step.text);
-    for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
-      task.addTestsTexts(wrapper.name, wrapper.text);
-    }
-
-    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-    if (step.options.files != null) {
-      for (TaskFile taskFile : step.options.files) {
-        task.taskFiles.put(taskFile.name, taskFile);
+  private static void createTasks(Lesson lesson, List<Integer> stepicIds) throws IOException {
+    final StepicWrappers.StepContainer stepContainer = getSteps(stepicIds);
+    List<StepicWrappers.Step> steps = new ArrayList<>();
+    stepContainer.steps.forEach(x -> steps.add(x.block));
+    int i = 0;
+    for (StepicWrappers.Step step : steps) {
+      if (!step.name.equals("code")) continue;
+      final Task task = new Task();
+      task.setStepicId(stepicIds.get(i++));
+      task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
+      task.setText(step.text);
+      if (step.options.test != null) {
+        LOG.warn("step.o = " + step.toString());
+        for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+          task.addTestsTexts(wrapper.name, wrapper.text);
+        }
       }
+
+      task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+      if (step.options.files != null) {
+        for (TaskFile taskFile : step.options.files) {
+          task.taskFiles.put(taskFile.name, taskFile);
+        }
+      }
+      lesson.taskList.add(task);
     }
-    lesson.taskList.add(task);
   }
 
   public static StepicWrappers.Step getStep(Integer step) throws IOException {
     return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0).block;
+  }
+
+  public static StepicWrappers.StepContainer getSteps(List<Integer> steps) throws IOException {
+    return getFromStepic(EduStepicNames.STEPS + "/" + getIdQuery(steps), StepicWrappers.StepContainer.class);
   }
 
 
@@ -771,5 +782,14 @@ public class EduStepicConnector {
     request.addHeader(new BasicHeader("referer", stepicUrl));
     request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
+  }
+
+  public static String getIdQuery(List<Integer> list) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("?");
+    for (Integer id : list) {
+      sb.append("ids[]=" + id + "&");
+    }
+    return sb.toString();
   }
 }
