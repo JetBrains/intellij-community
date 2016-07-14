@@ -15,8 +15,16 @@
  */
 package com.intellij.ide;
 
+import com.android.tools.analytics.UsageTracker;
 import com.google.common.base.Charsets;
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.io.Files;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventCategory;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventKind;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats;
+import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
@@ -25,6 +33,7 @@ import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.analytics.AnalyticsUploader;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +52,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +83,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   @NonNls private static final String STUDIO_EXCEPTION_COUNT_FILE = "studio.exc";
   @NonNls private static final String BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exb";
   @NonNls private static final String NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exp";
+
+  private static final Object ACTION_INVOCATIONS_LOCK = new Object();
+  // Updates to ourActionInvocations need to be done synchronized on ACTION_INVOCATIONS_LOCK to avoid updates during usage reporting.
+  private static Map<String, Multiset<InvocationKind>> ourActionInvocations = new HashMap<>();
 
   private final PropertiesComponent myProperties;
 
@@ -101,6 +117,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         public void appClosing() {
           myProperties.setValue(STUDIO_ACTIVITY_COUNT, Long.toString(ourStudioActionCount.get()));
           StudioCrashDetection.stop();
+          reportActionInvocations();
         }
       });
     }
@@ -303,6 +320,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           AnalyticsUploader.trackExceptionsAndActivity(
             activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0);
         }
+        reportActionInvocations();
       }
     }, INITIAL_DELAY_MINUTES, INTERVAL_IN_MINUTES, TimeUnit.MINUTES);
   }
@@ -345,5 +363,77 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         return 0;
       }
     }
+  }
+
+  /**
+   * Collect usage stats for action invocations.
+   */
+  public static void countActionInvocation(@NotNull Class actionClass, @NotNull AnActionEvent event) {
+    synchronized (ACTION_INVOCATIONS_LOCK) {
+      String actionName = getActionClassName(actionClass);
+      InvocationKind invocationKind = getInvocationKindFromEvent(event);
+      Multiset<InvocationKind> invocations = ourActionInvocations.get(actionName);
+      if (invocations == null) {
+        invocations = LinkedHashMultiset.create();
+        ourActionInvocations.put(actionName, invocations);
+      }
+      invocations.add(invocationKind);
+    }
+  }
+
+  /**
+   * Takes the current stats on action invocations and reports them through the {@link UsageTracker}.
+   * Resets invocation counts by clearing the map.
+   */
+  private static void reportActionInvocations(){
+    Map<String, Multiset<InvocationKind>> currentInvocations = null;
+    synchronized (ACTION_INVOCATIONS_LOCK) {
+      currentInvocations = ourActionInvocations;
+      ourActionInvocations = new HashMap<>();
+    }
+
+    for (Map.Entry<String, Multiset<InvocationKind>> actionEntry : currentInvocations.entrySet()) {
+      for(Multiset.Entry<InvocationKind> invocationEntry : actionEntry.getValue().entrySet()) {
+        UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
+                                       .setCategory(EventCategory.STUDIO_UI)
+                                       .setKind(EventKind.STUDIO_UI_ACTION_STATS)
+                                       .setUiActionStats(UIActionStats.newBuilder()
+                                                         .setActionClassName(actionEntry.getKey())
+                                                         .setInvocationKind(invocationEntry.getElement())
+                                                         .setInvocations(invocationEntry.getCount())));
+      }
+    }
+  }
+
+  /**
+   * Determines the way an event was invoked for usage tracking.
+   */
+  private static InvocationKind getInvocationKindFromEvent(AnActionEvent event) {
+    if (event.getInputEvent() instanceof KeyEvent) {
+      return InvocationKind.KEYBOARD_SHORTCUT;
+    }
+    String place = event.getPlace();
+    if (place.contains("Menu")) {
+      return InvocationKind.MENU;
+    }
+    if (place.contains("Toolbar")) {
+      return InvocationKind.TOOLBAR;
+    }
+    return InvocationKind.UNKNOWN_INVOCATION_KIND;
+  }
+
+  /**
+   * Gets an action name based on its class. For Android Studio code, we use simple names for plugins we use canonical names.
+   */
+  private static String getActionClassName(Class actionClass) {
+    Class currentClass = actionClass;
+    while (currentClass.isAnonymousClass()) {
+      currentClass = currentClass.getSuperclass();
+    }
+    String packageName = currentClass.getPackage().getName();
+    if (packageName.startsWith("com.android.") || packageName.startsWith("com.intellij.") || packageName.startsWith("org.jetbrains.")) {
+      return currentClass.getSimpleName();
+    }
+    return currentClass.getCanonicalName();
   }
 }
