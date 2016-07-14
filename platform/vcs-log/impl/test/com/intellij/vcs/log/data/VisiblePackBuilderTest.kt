@@ -135,7 +135,7 @@ class VisiblePackBuilderTest {
     val hashMap = generateHashMap(commits.maxBy { it.id }!!.id, refs, root)
 
     fun build(filters: VcsLogFilterCollection): VisiblePack {
-      val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys), providers, hashMap, true)
+      val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys).mapValues { CompressedRefs(it.value, hashMap) }, providers, hashMap, true)
       val detailsCache = ContainerUtil.createConcurrentIntObjectMap<VcsCommitMetadata>()
       data.entries.forEach {
         val hash = hashMap.getCommitId(it.key.id)!!.hash

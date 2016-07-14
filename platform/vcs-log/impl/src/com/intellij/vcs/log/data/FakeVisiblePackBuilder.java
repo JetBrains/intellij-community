@@ -30,6 +30,7 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class FakeVisiblePackBuilder {
@@ -73,7 +74,7 @@ public class FakeVisiblePackBuilder {
 
   @NotNull
   private RefsModel createEmptyRefsModel() {
-    return new RefsModel(ContainerUtil.<VirtualFile, Set<VcsRef>>newHashMap(), ContainerUtil.<Integer>newHashSet(), myHashMap);
+    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myHashMap);
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
@@ -89,6 +90,11 @@ public class FakeVisiblePackBuilder {
       }
       return false;
     });
-    return new RefsModel(VcsLogUtil.groupRefsByRoot(branchesAndHeads), heads, myHashMap);
+    Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
+    Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
+    for (VirtualFile root : map.keySet()) {
+      refs.put(root, new CompressedRefs(map.get(root), myHashMap));
+    }
+    return new RefsModel(refs, heads, myHashMap);
   }
 }

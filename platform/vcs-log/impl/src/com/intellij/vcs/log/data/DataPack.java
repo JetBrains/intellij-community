@@ -44,7 +44,7 @@ public class DataPack extends DataPackBase {
 
   @NotNull
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                        @NotNull Map<VirtualFile, Set<VcsRef>> refs,
+                        @NotNull Map<VirtualFile, CompressedRefs> refs,
                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
                         @NotNull final VcsLogHashMap hashMap,
                         boolean full) {
@@ -116,7 +116,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(Collections.<VirtualFile, Set<VcsRef>>emptyMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
+      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 
