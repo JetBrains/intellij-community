@@ -51,34 +51,32 @@ public class JUnitEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (ADD_JUNIT_TO_ENTRIES) {
-      if (psiElement instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)psiElement;
-        if (JUnitUtil.isTestClass(aClass, false, true)) {
-          final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
-          if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
-            final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
-            if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
-              return true;
-            }
-            final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
-              @Override
-              protected boolean accept(PsiClass psiClass) {
-                return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-              }
-            };
-            return !ClassInheritorsSearch.search(aClass).forEach(findProcessor) && findProcessor.isFound();
+    if (psiElement instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)psiElement;
+      if (JUnitUtil.isTestClass(aClass, false, true)) {
+        final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
+        if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
+          final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
+          if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
+            return true;
           }
-          return true;
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+            @Override
+            protected boolean accept(PsiClass psiClass) {
+              return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
+            }
+          };
+          return !ClassInheritorsSearch.search(aClass).forEach(findProcessor) && findProcessor.isFound();
         }
+        return true;
       }
-      else if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
-        if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
-          return JUnitUtil.isTestClass(method.getContainingClass());
-        }
-        if (JUnitUtil.isTestMethodOrConfig(method)) return true;
+    }
+    else if (psiElement instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)psiElement;
+      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+        return JUnitUtil.isTestClass(method.getContainingClass());
       }
+      if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
     return false;
   }
