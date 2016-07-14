@@ -262,7 +262,8 @@ public class PyPIPackageUtil {
   @Nullable
   public static String fetchLatestPackageVersion(@NotNull String packageName) {
     String version = getPyPIPackages().get(packageName);
-    if (StringUtil.isEmpty(version)) {
+    // Package is on PyPI but it's version is unknown
+    if (version != null && version.isEmpty()) {
       version = getLatestPackageVersionFromPyPI(packageName);
     }
     final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(packageName);
