@@ -872,6 +872,8 @@ public class AllIcons {
     public static final Icon J2eeParameter = IconLoader.getIcon("/nodes/j2eeParameter.png"); // 16x16
     public static final Icon JarDirectory = IconLoader.getIcon("/nodes/jarDirectory.png"); // 16x16
     public static final Icon JavaDocFolder = IconLoader.getIcon("/nodes/javaDocFolder.png"); // 16x16
+    public static final Icon JavaModule = IconLoader.getIcon("/nodes/javaModule.png"); // 16x16
+    public static final Icon JavaModuleRoot = IconLoader.getIcon("/nodes/javaModuleRoot.png"); // 16x16
     
     public static class Jsf {
       public static final Icon Component = IconLoader.getIcon("/nodes/jsf/component.png"); // 16x16

@@ -43,7 +43,7 @@ public class JavaModulePresentationProvider implements ItemPresentationProvider<
       @Nullable
       @Override
       public Icon getIcon(boolean unused) {
-        return AllIcons.FileTypes.Java;
+        return AllIcons.Nodes.JavaModule;
       }
     };
   }
