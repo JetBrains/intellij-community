@@ -1216,7 +1216,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-        InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), Collections.emptyList(), getTestRootDisposable());
+        InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), getTestRootDisposable());
 
         DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
         daemonCodeAnalyzer.prepareForTest();

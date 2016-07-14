@@ -77,7 +77,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
@@ -89,7 +88,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
 
-    InspectionsKt.configureInspections(tools, getProject(), Collections.emptyList(), getTestRootDisposable());
+    InspectionsKt.configureInspections(tools, getProject(), getTestRootDisposable());
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     daemonCodeAnalyzer.prepareForTest();

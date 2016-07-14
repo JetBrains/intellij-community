@@ -79,7 +79,6 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -114,7 +113,6 @@ import java.io.PrintStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -122,8 +120,6 @@ import java.util.function.Consumer;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  @NonNls public static final String PROFILE = "Configurable";
-
   @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
 
   private static IdeaTestApplication ourApplication;
@@ -312,7 +308,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     clearUncommittedDocuments(getProject());
 
-    InspectionsKt.configureInspections(localInspectionTools, getProject(), Collections.emptyList(), parentDisposable);
+    InspectionsKt.configureInspections(localInspectionTools, getProject(), parentDisposable);
 
     assertFalse(getPsiManager().isDisposed());
     Boolean passed = null;
@@ -453,7 +449,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         lookupManager.hideActiveLookup();
       }
       ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
-      InspectionProfileManager.getInstance().deleteProfile(PROFILE);
       if (ProjectManager.getInstance() == null) {
         exceptions.add(new AssertionError("Application components damaged"));
       }

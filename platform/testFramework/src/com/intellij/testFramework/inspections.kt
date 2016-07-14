@@ -17,6 +17,7 @@ package com.intellij.testFramework
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -25,13 +26,13 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
-                         disabledInspections: Collection<String>,
-                         parentDisposable: Disposable) {
-  val profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, tools.map { InspectionToolRegistrar.wrapTool(it) })
-  profile.disableToolByDefault(disabledInspections, project)
+                         parentDisposable: Disposable): InspectionProfileImpl {
+  val profile = InspectionProfileImpl.createSimple(UUID.randomUUID().toString(), project, tools.map { InspectionToolRegistrar.wrapTool(it) })
+//  profile.disableToolByDefault(disabledInspections, project)
 
   val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
 
@@ -49,6 +50,7 @@ fun configureInspections(tools: Array<InspectionProfileEntry>,
                                          profileManager.setCurrentProfile(profile)
                                          null
                                        })
+  return profile
 }
 
 @JvmOverloads
@@ -79,4 +81,8 @@ private fun clearAllToolsIn(profile: InspectionProfileImpl, project: Project) {
       ReflectionUtil.resetField(wrapper, InspectionProfileEntry::class.java, "myTool")
     }
   }
+}
+
+fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInspectionTool, disposable: Disposable): InspectionProfileImpl {
+  return configureInspections(arrayOf(localInspectionTool), project, disposable)
 }

@@ -20,11 +20,10 @@ import com.intellij.codeInspection.ex.InspectionProfileTest
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.createProfile
 import junit.framework.TestCase
 
 class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
@@ -37,25 +36,25 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     val profile = profileManager.currentProfile
 
     val model = profile.modifiableModel
-    val panel = SingleInspectionProfilePanel(profileManager, LightPlatformTestCase.PROFILE, model, profile)
+    val panel = SingleInspectionProfilePanel(profileManager, profile.name, model, profile)
     panel.isVisible = true
     panel.reset()
 
     val tool = getInspection(model)
-    TestCase.assertEquals("", tool.myAdditionalJavadocTags)
+    assertEquals("", tool.myAdditionalJavadocTags)
     tool.myAdditionalJavadocTags = "foo"
     model.setModified(true)
     panel.apply()
     TestCase.assertEquals(1, InspectionProfileTest.countInitializedTools(model))
 
-    TestCase.assertEquals("foo", getInspection(profile).myAdditionalJavadocTags)
+    assertEquals("foo", getInspection(profile).myAdditionalJavadocTags)
     panel.disposeUI()
   }
 
   fun testModifyInstantiatedTool() {
     val project = ProjectManager.getInstance().defaultProject
     val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
-    val profile = profileManager.getProfile(LightPlatformTestCase.PROFILE) as InspectionProfileImpl
+    val profile = profileManager.createProfile(myInspection, myTestRootDisposable)
     profile.initInspectionTools(project)
 
     val originalTool = getInspection(profile)
@@ -63,7 +62,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
     val model = profile.modifiableModel
 
-    val panel = SingleInspectionProfilePanel(profileManager, LightPlatformTestCase.PROFILE, model, profile)
+    val panel = SingleInspectionProfilePanel(profileManager, profile.name, model, profile)
     panel.isVisible = true
     panel.reset()
     TestCase.assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1,
@@ -76,14 +75,14 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     panel.apply()
     TestCase.assertEquals(1, InspectionProfileTest.countInitializedTools(model))
 
-    TestCase.assertEquals("bar", getInspection(profile).myAdditionalJavadocTags)
+    assertEquals("bar", getInspection(profile).myAdditionalJavadocTags)
     panel.disposeUI()
   }
 
   fun testDoNotChangeSettingsOnCancel() {
     val project = ProjectManager.getInstance().defaultProject
-    val profileManager = InspectionProjectProfileManager.getInstance(project)
-    val profile = profileManager.getProfile(LightPlatformTestCase.PROFILE) as InspectionProfileImpl
+    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+    val profile = profileManager.createProfile(myInspection, myTestRootDisposable)
     profile.initInspectionTools(project)
 
     val originalTool = getInspection(profile)
@@ -94,21 +93,20 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     copyTool.myAdditionalJavadocTags = "foo"
     // this change IS NOT COMMITTED
 
-    TestCase.assertEquals("", getInspection(profile).myAdditionalJavadocTags)
+    assertEquals("", getInspection(profile).myAdditionalJavadocTags)
   }
 
   private fun getInspection(profile: InspectionProfileImpl): JavaDocLocalInspection {
-    val original = (profile.getInspectionTool(myInspection.shortName, LightPlatformTestCase.getProject()) as LocalInspectionToolWrapper?)!!
-    return original.tool as JavaDocLocalInspection
+    return (profile.getInspectionTool(myInspection.shortName, getProject()) as LocalInspectionToolWrapper?)!!.tool as JavaDocLocalInspection
   }
 
   override fun setUp() {
-//    InspectionProfileImpl.INIT_INSPECTIONS = true
+    InspectionProfileImpl.INIT_INSPECTIONS = true
     super.setUp()
   }
 
   override fun tearDown() {
-//    InspectionProfileImpl.INIT_INSPECTIONS = false
+    InspectionProfileImpl.INIT_INSPECTIONS = false
     super.tearDown()
   }
 
