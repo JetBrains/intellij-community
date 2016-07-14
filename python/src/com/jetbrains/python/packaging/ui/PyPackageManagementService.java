@@ -31,13 +31,11 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -239,11 +237,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new AsyncCallback() {
+    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new CatchingConsumer<List<String>, Exception>() {
       @Override
-      public void handleResult(Object result, URL url, String method) {
-        //noinspection unchecked
-        final List<String> releases = (List<String>)result;
+      public void consume(List<String> releases) {
         if (releases != null) {
           PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
           consumer.consume(releases);
@@ -251,25 +247,24 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       }
 
       @Override
-      public void handleError(Exception exception, URL url, String method) {
-        consumer.consume(exception);
+      public void consume(Exception e) {
+        consumer.consume(e);
       }
     });
   }
 
   @Override
   public void fetchPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<String, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new AsyncCallback() {
+    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<Hashtable, Exception>() {
       @Override
-      public void handleResult(Object result, URL url, String method) {
-        final Hashtable details = (Hashtable)result;
+      public void consume(Hashtable details) {
         PyPIPackageUtil.INSTANCE.addPackageDetails(packageName, details);
         consumer.consume(formatPackageDetails(details));
       }
 
       @Override
-      public void handleError(Exception exception, URL url, String method) {
-        consumer.consume(exception);
+      public void consume(Exception e) {
+        consumer.consume(e);
       }
     });
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
@@ -175,10 +176,10 @@ public class PyPIPackageUtil {
     return packageToDetails.get(packageName);
   }
 
-  public void fillPackageDetails(@NotNull String packageName, @NotNull AsyncCallback callback) {
+  public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<Hashtable, Exception> callback) {
     final Hashtable details = getPackageDetails(packageName);
     if (details != null) {
-      callback.handleResult(details, null, "");
+      callback.consume(details);
       return;
     }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -190,12 +191,12 @@ public class PyPIPackageUtil {
           params.add(version);
           final Object result = myXmlRpcClient.execute("release_data", params);
           if (result != null) {
-            callback.handleResult(result, null, "");
+            callback.consume((Hashtable)result);
           }
         }
       }
       catch (Exception e) {
-        callback.handleError(e, null, "");
+        callback.consume(e);
       }
     });
   }
@@ -204,7 +205,7 @@ public class PyPIPackageUtil {
     ourPackageToReleases.put(packageName, releases);
   }
 
-  public void usePackageReleases(@NotNull String packageName, @NotNull AsyncCallback callback) {
+  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<List<String>, Exception> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final List<String> releases = getPackageVersionsFromAdditionalRepositories(packageName);
@@ -214,15 +215,16 @@ public class PyPIPackageUtil {
           params.add("show_hidden=True");
           final Object result = myXmlRpcClient.execute("package_releases", params);
           if (result != null) {
-            callback.handleResult(result, null, "");
+            //noinspection unchecked
+            callback.consume((List<String>)result);
           }
         }
         else {
-          callback.handleResult(releases, null, "");
+          callback.consume(releases);
         }
       }
       catch (Exception e) {
-        callback.handleError(e, null, "");
+        callback.consume(e);
       }
     });
   }
