@@ -92,7 +92,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @NotNull
   @Override
-  public List<RepoPackage> getAllPackages() {
+  public List<RepoPackage> getAllPackages() throws IOException {
     final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
     final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
     packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
@@ -392,7 +392,12 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+      try {
+        PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+      }
+      catch (IOException ignored) {
+        // it's ok not to show a version
+      }
       final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName());
       consumer.consume(StringUtil.notNullize(version));
     });

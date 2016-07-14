@@ -124,7 +124,7 @@ public class PyPIPackageUtil {
     return repository != null && repository.startsWith(PYPI_HOST);
   }
 
-  private static void fillAdditionalPackages(@NotNull String url) {
+  private static void fillAdditionalPackages(@NotNull String url) throws IOException {
     final boolean simpleIndex = url.endsWith("simple/");
     final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
 
@@ -152,7 +152,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public Set<RepoPackage> getAdditionalPackageNames() {
+  public Set<RepoPackage> getAdditionalPackageNames() throws IOException {
     if (ourAdditionalPackageNames.isEmpty()) {
       for (String url : PyPackageService.getInstance().additionalRepositories) {
         fillAdditionalPackages(url);
@@ -314,7 +314,7 @@ public class PyPIPackageUtil {
     return repository + suffix;
   }
 
-  public void updatePyPICache(@NotNull PyPackageService service) {
+  public void updatePyPICache(@NotNull PyPackageService service) throws IOException {
     service.LAST_TIME_CHECKED = System.currentTimeMillis();
 
     service.PY_PACKAGES.clear();
@@ -338,7 +338,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) {
+  private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) throws IOException {
     return HttpRequests.request(url).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
@@ -379,7 +379,7 @@ public class PyPIPackageUtil {
         }
       }, true);
       return packages;
-    }, Collections.emptyList(), LOG);
+    });
   }
 
   @NotNull
@@ -391,7 +391,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public Map<String, String> loadAndGetPackages() {
+  public Map<String, String> loadAndGetPackages() throws IOException {
     Map<String, String> pyPIPackages = getPyPIPackages();
     if (pyPIPackages.isEmpty()) {
       updatePyPICache(PyPackageService.getInstance());
