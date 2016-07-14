@@ -108,79 +108,7 @@ public class ColoredOutputTypeRegistry {
     if (attribute.equals("0")) {
       return ProcessOutputTypes.STDOUT;
     }
-    boolean inverse = false;
-    TextAttributes attrs = new TextAttributes();
-    final String[] strings = attribute.split(";");
-    for (String string : strings) {
-      int value;
-      try {
-        value = Integer.parseInt(string);
-      }
-      catch (NumberFormatException e) {
-        continue;
-      }
-      if (value == 1) {
-        attrs.setFontType(Font.BOLD);
-      }
-      else if (value == 4) {
-        attrs.setEffectType(EffectType.LINE_UNDERSCORE);
-      }
-      else if (value == 7) {
-        inverse = true;
-      }
-      else if (value == 22) {
-        attrs.setFontType(Font.PLAIN);
-      }
-      else if (value == 24) {  //not underlined
-        attrs.setEffectType(null);
-      }
-      else if (value >= 30 && value <= 37) {
-        attrs.setForegroundColor(getAnsiColor(value - 30));
-      }
-      else if (value == 38) {
-        //TODO: 256 colors foreground
-      }
-      else if (value == 39) {
-        attrs.setForegroundColor(getDefaultForegroundColor());
-      }
-      else if (value >= 40 && value <= 47) {
-        attrs.setBackgroundColor(getAnsiColor(value - 40));
-      }
-      else if (value == 48) {
-        //TODO: 256 colors background
-      }
-      else if (value == 49) {
-        attrs.setBackgroundColor(getDefaultBackgroundColor());
-      }
-      else if (value >= 90 && value <= 97) {
-        attrs.setForegroundColor(
-          getAnsiColor(value - 82));
-      }
-      else if (value >= 100 && value <= 107) {
-        attrs.setBackgroundColor(
-          getAnsiColor(value - 92));
-      }
-    }
-    if (attrs.getEffectType() == EffectType.LINE_UNDERSCORE) {
-      Color foregroundColor = attrs.getForegroundColor();
-      if (foregroundColor == null) {
-        foregroundColor = getDefaultForegroundColor();
-      }
-      attrs.setEffectColor(foregroundColor);
-    }
-    if (inverse) {
-      Color foregroundColor = attrs.getForegroundColor();
-      if (foregroundColor == null) {
-        foregroundColor = getDefaultForegroundColor();
-      }
-      Color backgroundColor = attrs.getBackgroundColor();
-      if (backgroundColor == null) {
-        backgroundColor = getDefaultBackgroundColor();
-      }
-      attrs.setForegroundColor(backgroundColor);
-      attrs.setEffectColor(backgroundColor);
-      attrs.setBackgroundColor(foregroundColor);
-    }
+    TextAttributes attrs = new AnsiTextAttributes(attribute);
     Key newKey = new Key(completeAttribute);
     ConsoleViewContentType contentType = new ConsoleViewContentType(completeAttribute, attrs);
     ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
@@ -222,5 +150,81 @@ public class ColoredOutputTypeRegistry {
       return ConsoleViewContentType.NORMAL_OUTPUT_KEY;
     }
     return myAnsiColorKeys[value];
+  }
+
+  private static class AnsiTextAttributes extends TextAttributes {
+    int myForegroundColor = -1;
+    int myBackgroundColor = -1;
+    boolean myInverse = false;
+
+    public AnsiTextAttributes(String attribute) {
+      setEffectType(null);
+      final String[] strings = attribute.split(";");
+      for (String string : strings) {
+        int value;
+        try {
+          value = Integer.parseInt(string);
+        }
+        catch (NumberFormatException e) {
+          continue;
+        }
+        if (value == 1) {
+          setFontType(Font.BOLD);
+        }
+        else if (value == 4) {
+          setEffectType(EffectType.LINE_UNDERSCORE);
+        }
+        else if (value == 7) {
+          myInverse = true;
+        }
+        else if (value == 22) {
+          setFontType(Font.PLAIN);
+        }
+        else if (value == 24) {  //not underlined
+          setEffectType(null);
+        }
+        else if (value >= 30 && value <= 37) {
+          myForegroundColor = value - 30;
+        }
+        else if (value == 38) {
+          //TODO: 256 colors foreground
+        }
+        else if (value == 39) {
+          myForegroundColor = -1;
+        }
+        else if (value >= 40 && value <= 47) {
+          myBackgroundColor = value - 40;
+        }
+        else if (value == 48) {
+          //TODO: 256 colors background
+        }
+        else if (value == 49) {
+          myBackgroundColor = -1;
+        }
+        else if (value >= 90 && value <= 97) {
+          myForegroundColor = value - 82;
+        }
+        else if (value >= 100 && value <= 107) {
+          myBackgroundColor = value - 92;
+        }
+      }
+    }
+
+    @Override
+    public Color getForegroundColor() {
+      if (myInverse) return myBackgroundColor < 0 ? getDefaultBackgroundColor() : getAnsiColor(myBackgroundColor);
+      return myForegroundColor < 0 ? getDefaultForegroundColor() : getAnsiColor(myForegroundColor);
+    }
+
+    @Override
+    public Color getBackgroundColor() {
+      if (myInverse) return myForegroundColor < 0 ? getDefaultForegroundColor() : getAnsiColor(myForegroundColor);
+      return myBackgroundColor < 0 ? getDefaultBackgroundColor() : getAnsiColor(myBackgroundColor);
+    }
+
+    @Override
+    public Color getEffectColor() {
+      return getEffectType() != null ? getForegroundColor() : null;
+    }
   }
 }
