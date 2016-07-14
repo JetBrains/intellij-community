@@ -62,7 +62,7 @@ public class PyPIPackageUtil {
   
   private static final String PYPI_HOST = "https://pypi.python.org";
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
-  private static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
+  public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
   public static final Map<String, String> PACKAGES_TOPLEVEL = new HashMap<>();
 
