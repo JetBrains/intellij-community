@@ -60,7 +60,7 @@ class DiffInfoImpl(private val insertedRanges: List<TextRange>): DiffInfo {
   override fun isOnInsertedLine(offset: Int) = insertedRanges.find { it.contains(offset) } != null
 }
     
-class AdditionalRangesExtractor(private val diffInfo: DiffInfo?) : BlockProcessor {
+class AdditionalRangesExtractor(private val info: FormattingRangesInfo) : BlockProcessor {
   
   val totalNewRanges = mutableListOf<TextRange>()
 
@@ -68,7 +68,7 @@ class AdditionalRangesExtractor(private val diffInfo: DiffInfo?) : BlockProcesso
 
   override fun processCompositeBlock(block: Block) {
     if (block is AbstractBlock) {
-      val newRanges = block.getExtraRangesToFormat(diffInfo)
+      val newRanges = block.getExtraRangesToFormat(info)
       if (newRanges != null) {
         totalNewRanges.addAll(newRanges)
       }
@@ -79,10 +79,10 @@ class AdditionalRangesExtractor(private val diffInfo: DiffInfo?) : BlockProcesso
 
 
 class AdjustFormatRangesState(var currentRoot: Block,
-                              val formatRanges: FormatTextRanges, 
-                              diffInfo: DiffInfo?) : State() {
+                              val formatRanges: FormatTextRanges,
+                              info: FormattingRangesInfo) : State() {
 
-  private val extractor = AdditionalRangesExtractor(diffInfo)
+  private val extractor = AdditionalRangesExtractor(info)
   private val state = Stack(currentRoot)
 
   init {

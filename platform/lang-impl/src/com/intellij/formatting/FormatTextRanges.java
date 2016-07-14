@@ -18,13 +18,11 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DiffInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FormatTextRanges {
-
+public class FormatTextRanges implements FormattingRangesInfo {
   private final List<FormatTextRange> myRanges = new ArrayList<>();
   private final DiffInfo myDiffInfo;
 
@@ -45,6 +43,7 @@ public class FormatTextRanges {
     myRanges.add(new FormatTextRange(range, processHeadingWhitespace));
   }
 
+  @Override
   public boolean isWhitespaceReadOnly(TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isWhitespaceReadOnly(range)) {
@@ -54,6 +53,7 @@ public class FormatTextRanges {
     return true;
   }
 
+  @Override
   public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isReadOnly(range, rootIsRightBlock)) {
@@ -63,6 +63,11 @@ public class FormatTextRanges {
     return true;
   }
 
+  @Override
+  public boolean isOnInsertedLine(int offset) {
+    return myDiffInfo != null && myDiffInfo.isOnInsertedLine(offset);
+  }
+  
   public List<FormatTextRange> getRanges() {
     return myRanges;
   }
@@ -84,10 +89,4 @@ public class FormatTextRanges {
   public String toString() {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
   }
-  
-  @Nullable
-  protected DiffInfo getDiffInfo() {
-    return myDiffInfo;
-  }
-  
 }
