@@ -72,9 +72,10 @@ public class BoolUtils {
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
-      return conditionalExpression.getCondition().getText() +
-             '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-             ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
+      final String text = conditionalExpression.getCondition().getText() + '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
+                                                                           ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      return needParenthesis ? "(" + text + ")" : text;
     }
     else if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
