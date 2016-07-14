@@ -38,6 +38,7 @@ public class PersistentHashMapValueStorage {
   private final File myFile;
   private final String myPath;
   private final boolean myReadOnly;
+  private final boolean myCompactChunksWithValueDeserialization;
   private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
   private boolean myCompactionMode = false;
 
@@ -47,6 +48,7 @@ public class PersistentHashMapValueStorage {
   public static class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
+    public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<Boolean>();
   }
 
   public interface ExceptionalIOCancellationCallback {
@@ -102,6 +104,7 @@ public class PersistentHashMapValueStorage {
   public PersistentHashMapValueStorage(String path) throws IOException {
     myExceptionalIOCancellationCallback = CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.get();
     myReadOnly = CreationTimeOptions.READONLY.get() == Boolean.TRUE;
+    myCompactChunksWithValueDeserialization = CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE;
     myPath = path;
     myFile = new File(path);
 
@@ -143,14 +146,14 @@ public class PersistentHashMapValueStorage {
   }
 
   public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
-    assert !myCompactionMode && !myReadOnly;
+    assert allowedToCompactChunks();
     long result = mySize; // volatile read
     final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null? null : ourAppendersCache.get(myPath);
 
     DataOutputStream dataOutputStream;
     try {
       if (myCompressedAppendableFile != null) {
-        BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+        BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream(dataLength + 15);
         DataOutputStream testStream = new DataOutputStream(stream);
         saveData(data, offset, dataLength, prevChunkAddress, result, testStream);
         myCompressedAppendableFile.append(stream.getInternalBuffer(), stream.size());
@@ -339,17 +342,21 @@ public class PersistentHashMapValueStorage {
   }
 
   public static class ReadResult {
-    public final long offset;
     public final byte[] buffer;
+    public final int chunksCount;
 
-    public ReadResult(long offset, byte[] buffer) {
-      this.offset = offset;
+    public ReadResult(byte[] buffer, int chunksCount) {
       this.buffer = buffer;
+      this.chunksCount = chunksCount;
     }
   }
 
   private long myChunksRemovalTime;
+  private long myChunksReadingTime;
   private int myChunks;
+  private long myChunksOriginalBytes;
+  private long myChunksBytesAfterRemoval;
+  private int myLastReportedChunksCount;
 
   /**
    * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
@@ -428,22 +435,55 @@ public class PersistentHashMapValueStorage {
       }
     }
 
-    if (chunkCount > 1 && !myCompactionMode && !myReadOnly) {
+    if (chunkCount > 1) {
       checkCancellation();
-      long endCompactionTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
-      long diff = endCompactionTime - startedTime;
 
-      myChunksRemovalTime += diff;
+      myChunksReadingTime += (ourDumpChunkRemovalTime ? System.nanoTime() : 0) - startedTime;
       myChunks += chunkCount;
-      if (ourDumpChunkRemovalTime && chunkCount > 2) {
-        System.out.println("Removed " + chunkCount + " chunks for " + (diff / 1000000) + "ms, bytes: " + result.length + ", total: " +
-                           (myChunksRemovalTime / 1000000) + "ms for " + myChunks + " chunks in " + myPath);
-      }
-      long l = appendBytes(new ByteSequence(result), 0);
-      return new ReadResult(l, result);
+      myChunksOriginalBytes += result.length;
     }
 
-    return new ReadResult(tailChunkAddress, result);
+    return new ReadResult(result, chunkCount);
+  }
+
+  private boolean allowedToCompactChunks() {
+    return !myCompactionMode && !myReadOnly;
+  }
+
+  boolean performChunksCompaction(int chunksCount, int chunksBytesSize) {
+    return chunksCount > 1 && allowedToCompactChunks();
+  }
+
+  long compactChunks(PersistentHashMap.ValueDataAppender appender, ReadResult result) throws IOException {
+    checkCancellation();
+    long startedTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
+    long newValueOffset;
+
+    if (myCompactChunksWithValueDeserialization) {
+      final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream(result.buffer.length);
+      DataOutputStream testStream = new DataOutputStream(stream);
+      appender.append(testStream);
+      newValueOffset = appendBytes(stream.getInternalBuffer(), 0, stream.size(), 0);
+      myChunksBytesAfterRemoval += stream.size();
+    } else {
+      newValueOffset = appendBytes(new ByteSequence(result.buffer), 0);
+      myChunksBytesAfterRemoval += result.buffer.length;
+    }
+
+    if (ourDumpChunkRemovalTime) {
+      myChunksRemovalTime += System.nanoTime() - startedTime;
+
+      if (myChunks - myLastReportedChunksCount > 1000) {
+        myLastReportedChunksCount = myChunks;
+
+        System.out.println(myChunks + " chunks were read " + (myChunksReadingTime / 1000000) +
+                           "ms, bytes: " + myChunksOriginalBytes +
+                           (myChunksOriginalBytes != myChunksBytesAfterRemoval ? "->" + myChunksBytesAfterRemoval : "") +
+                           " compaction:" + (myChunksRemovalTime / 1000000) + "ms in " + myPath);
+      }
+    }
+
+    return newValueOffset;
   }
 
   private static final boolean ourDumpChunkRemovalTime = SystemProperties.getBooleanProperty("idea.phmp.dump.chunk.removal.time", false);
