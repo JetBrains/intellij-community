@@ -759,14 +759,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();
-          ReadAction.run(() -> {
-            if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
-              addTool(toolWrapper,
-                      profile.getErrorLevel(key, state.getScope(myProject), myProject),
-                      isGroupedBySeverity,
-                      singleInspectionRun);
-            }
-          });
+          if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
+            //ReadAction.run(
+            //  () ->
+                addTool(toolWrapper,
+                                         profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                                         isGroupedBySeverity,
+                                         singleInspectionRun)
+            //)
+            ;
+          }
         }
       }
     }

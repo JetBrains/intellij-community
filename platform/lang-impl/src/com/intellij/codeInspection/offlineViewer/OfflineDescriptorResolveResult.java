@@ -30,6 +30,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +72,8 @@ class OfflineDescriptorResolveResult {
                                                 @NotNull InspectionToolWrapper wrapper,
                                                 @NotNull InspectionToolPresentation presentation) {
     final RefEntity element = descriptor.getRefElement(presentation.getContext().getRefManager());
-    final CommonProblemDescriptor resolvedDescriptor = createDescriptor(element, descriptor, wrapper, presentation);
+    final CommonProblemDescriptor resolvedDescriptor =
+      ReadAction.compute(() -> createDescriptor(element, descriptor, wrapper, presentation));
     return new OfflineDescriptorResolveResult(element, resolvedDescriptor);
   }
 
