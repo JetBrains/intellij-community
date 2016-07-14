@@ -75,7 +75,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public List<String> getAllRepositories() {
     final PyPackageService packageService = PyPackageService.getInstance();
     final List<String> result = new ArrayList<>();
-    if (!packageService.PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_URL);
+    if (!packageService.PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
     result.addAll(packageService.additionalRepositories);
     return result;
   }
@@ -102,7 +102,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_URL : "";
+    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
     final List<RepoPackage> packages = new ArrayList<>();
     for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
       packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
