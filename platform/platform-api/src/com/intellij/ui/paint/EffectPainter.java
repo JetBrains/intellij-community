@@ -16,6 +16,7 @@
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.WavePainter;
 
@@ -30,18 +31,54 @@ public enum EffectPainter implements RegionPainter<Paint> {
    * @see com.intellij.openapi.editor.markup.EffectType#LINE_UNDERSCORE
    */
   LINE_UNDERSCORE {
+    /**
+     * Draws a horizontal line under a text.
+     *
+     * @param g      the {@code Graphics2D} object to render to
+     * @param x      text position
+     * @param y      text baseline
+     * @param width  text width
+     * @param height available space under text
+     * @param paint  optional color patterns
+     */
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
       // we assume here that Y is a baseline of a text
-      if (!Registry.is("ide.text.effect.line.new")) {
-        g.setPaint(paint);
+      if (!Registry.is("ide.text.effect.new")) {
+        if (paint != null) g.setPaint(paint);
         g.drawLine(x, y + 1, x + width, y + 1);
       }
-      else if (paint != null && width > 0 && height > 0) {
-        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
-        y += height - 1 - h / 2;
-        g.setPaint(paint);
-        g.drawLine(x, y, x + width, y);
+      else if (width > 0 && height > 0) {
+        if (paint != null) g.setPaint(paint);
+        drawLineUnderscore(g, x, y, width, height, 1);
+      }
+    }
+  },
+  /**
+   * @see com.intellij.openapi.editor.markup.EffectType#BOLD_LINE_UNDERSCORE
+   */
+  BOLD_LINE_UNDERSCORE {
+    /**
+     * Draws a bold horizontal line under a text.
+     *
+     * @param g      the {@code Graphics2D} object to render to
+     * @param x      text position
+     * @param y      text baseline
+     * @param width  text width
+     * @param height available space under text
+     * @param paint  optional color patterns
+     */
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      // we assume here that Y is a baseline of a text
+      if (!Registry.is("ide.text.effect.new")) {
+        if (paint != null) g.setPaint(paint);
+        int h = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
+        g.fillRect(x, y, width, h);
+      }
+      else if (width > 0 && height > 0) {
+        if (paint != null) g.setPaint(paint);
+        drawLineUnderscore(g, x, y, width, height, 2);
       }
     }
   },
@@ -49,19 +86,30 @@ public enum EffectPainter implements RegionPainter<Paint> {
    * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
    */
   WAVE_UNDERSCORE {
-    private final BasicStroke STROKE = new BasicStroke(.5f);
+    private final BasicStroke STROKE = new BasicStroke(.7f);
 
+    /**
+     * Draws a horizontal wave under a text.
+     *
+     * @param g      the {@code Graphics2D} object to render to
+     * @param x      text position
+     * @param y      text baseline
+     * @param width  text width
+     * @param height available space under text
+     * @param paint  optional color patterns
+     */
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
       // we assume here that Y is a baseline of a text
-      if (!Registry.is("ide.text.effect.wave.new")) {
-        g.setPaint(paint);
+      if (!Registry.is("ide.text.effect.new")) {
+        if (paint != null) g.setPaint(paint);
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
-      else if (paint != null && width > 0 && height > 0) {
+      else if (width > 0 && height > 0) {
         g = (Graphics2D)g.create(x, y, width, height);
         g.clipRect(0, 0, width, height);
-        int h = height > 6 && Registry.is("ide.text.effect.wave.new.scale") ? height >> 1 : 3;
+        if (paint != null) g.setPaint(paint);
+        int h = getMaxHeight(height);
         int length = 2 * h - 2; // the spatial period of the wave
 
         double dx = -((x % length + length) % length); // normalize
@@ -95,10 +143,57 @@ public enum EffectPainter implements RegionPainter<Paint> {
           }
         }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setPaint(paint);
         g.draw(path);
         g.dispose();
       }
     }
+  },
+  /**
+   * @see com.intellij.openapi.editor.markup.EffectType#STRIKEOUT
+   */
+  STRIKE_THROUGH {
+    /**
+     * Draws a horizontal line through a text.
+     *
+     * @param g      the {@code Graphics2D} object to render to
+     * @param x      text position
+     * @param y      text baseline
+     * @param width  text width
+     * @param height text height
+     * @param paint  optional color patterns
+     */
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      // we assume here that Y is a baseline of a text
+      if (width > 0 && height > 0) {
+        if (paint != null) g.setPaint(paint);
+        drawLineCentered(g, x, y - height, width, height, 1);
+      }
+    }
+  };
+
+  private static int getMaxHeight(int height) {
+    return height > 7 && Registry.is("ide.text.effect.new.scale") ? height >> 1 : 3;
+  }
+
+  private static void drawLineUnderscore(Graphics2D g, int x, int y, int width, int height, int thickness) {
+    if (height > 3) {
+      int max = getMaxHeight(height);
+      y += height - max;
+      height = max;
+      if (thickness > 1 && height > 3) {
+        thickness = JBUI.scale(thickness);
+      }
+    }
+    drawLineCentered(g, x, y, width, height, thickness);
+  }
+
+  private static void drawLineCentered(Graphics2D g, int x, int y, int width, int height, int thickness) {
+    int offset = height - thickness;
+    if (offset > 0) {
+      y += offset - (offset >> 1);
+      height = thickness;
+    }
+    g.fillRect(x, y, width, height);
   }
 }

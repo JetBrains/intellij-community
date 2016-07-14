@@ -2414,7 +2414,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-          EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
+          EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
           final int dottedAt = SystemInfo.isMac ? y - 1 : y;
@@ -2422,22 +2422,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                     getBackgroundColor(attributes), attributes.getEffectColor(), false);
         }
         else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
-          int y1 = y - getCharHeight() / 2 - 1;
-          UIUtil.drawLine(g, end.x, y1, end.x + charWidth - 1, y1);
+          EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getCharHeight(), null);
         }
         else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
-          drawBoldLineUnderScore(g, end.x, y - 1, charWidth - 1);
+          EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
         }
         else if (attributes.getEffectType() != EffectType.BOXED) {
-          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
+          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
         }
       }
     }
-  }
-
-  private static void drawBoldLineUnderScore(Graphics g, int x, int y, int width) {
-    int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
-    g.fillRect(x, y, width, height);
   }
 
   @Override
@@ -3551,14 +3545,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        g.setColor(effectColor);
-        drawBoldLineUnderScore(g, xStart, y, xEnd-xStart);
+        EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.STRIKEOUT) {
-        g.setColor(effectColor);
-        int y1 = y - getCharHeight() / 2;
-        UIUtil.drawLine(g, xStart, y1, xEnd, y1);
+        EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, xStart, y, xEnd - xStart, getCharHeight(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.WAVE_UNDERSCORE) {

@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
@@ -429,18 +428,16 @@ class EditorPainter implements TextDrawingCallback {
     int xEnd = (int)xTo;
     g.setColor(effectColor);
     if (effectType == EffectType.LINE_UNDERSCORE) {
-      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), null);
     }
     else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-      int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
-      g.fillRect(xStart, y, xEnd - xStart, height);
+      EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), null);
     }
     else if (effectType == EffectType.STRIKEOUT) {
-      int y1 = y - myView.getCharHeight() / 2;
-      UIUtil.drawLine(g, xStart, y1, xEnd, y1);
+      EffectPainter.STRIKE_THROUGH.paint(g, xStart, y, xEnd - xStart, myView.getCharHeight(), null);
     }
     else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), null);
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
       UIUtil.drawBoldDottedLine(g, xStart, xEnd, SystemInfo.isMac ? y : y + 1, myEditor.getBackgroundColor(), g.getColor(), false);
