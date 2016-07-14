@@ -115,6 +115,7 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
@@ -418,16 +419,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(@NotNull final Collection<Class<? extends LocalInspectionTool>> inspections) {
-    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
-    for (Class<? extends LocalInspectionTool> clazz : inspections) {
-      try {
-        LocalInspectionTool inspection = clazz.getConstructor().newInstance();
-        tools.add(inspection);
-      }
-      catch (Exception e) {
-        throw new RuntimeException("Cannot instantiate " + clazz);
-      }
-    }
+    List<InspectionProfileEntry> tools = InspectionTestUtil.instantiateTools(inspections);
     enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
   }
 
@@ -441,22 +433,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(@NotNull InspectionToolProvider... providers) {
-    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
-    for (InspectionToolProvider provider : providers) {
-      for (Class<?> clazz : provider.getInspectionClasses()) {
-        try {
-          Object o = clazz.getConstructor().newInstance();
-          if (o instanceof LocalInspectionTool) {
-            LocalInspectionTool inspection = (LocalInspectionTool)o;
-            tools.add(inspection);
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Cannot instantiate " + clazz, e);
-        }
-      }
-    }
-    enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
+    List<Class<? extends LocalInspectionTool>> classes = JBIterable.of(providers)
+      .flatten((o) -> Arrays.asList(o.getInspectionClasses()))
+      .transform((Function<Class, Class<? extends LocalInspectionTool>>)o ->
+        LocalInspectionTool.class.isAssignableFrom(o) ? (Class<? extends LocalInspectionTool>) o : null)
+      .filter(Conditions.notNull())
+      .toList();
+    enableInspections(classes);
   }
 
   @Override
