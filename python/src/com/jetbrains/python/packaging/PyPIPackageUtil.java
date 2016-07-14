@@ -185,7 +185,7 @@ public class PyPIPackageUtil {
       final Vector<String> params = new Vector<>();
       params.add(packageName);
       try {
-        final String version = fetchLatestPackageVersion(packageName, getPyPIPackages());
+        final String version = fetchLatestPackageVersion(packageName);
         if (version != null) {
           params.add(version);
           final Object result = myXmlRpcClient.execute("release_data", params);
@@ -246,6 +246,7 @@ public class PyPIPackageUtil {
 
   @Nullable
   private static String getLatestPackageVersionFromPyPI(@NotNull String packageName) {
+    LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName);
     final String latest = ContainerUtil.getFirstItem(versions);
     getPyPIPackages().put(packageName, StringUtil.notNullize(latest));
@@ -259,8 +260,8 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  public static String fetchLatestPackageVersion(@NotNull String packageName, @NotNull Map<String, String> versionCache) {
-    String version = versionCache.get(packageName);
+  public static String fetchLatestPackageVersion(@NotNull String packageName) {
+    String version = getPyPIPackages().get(packageName);
     if (StringUtil.isEmpty(version)) {
       version = getLatestPackageVersionFromPyPI(packageName);
     }

@@ -392,8 +392,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-      final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName(), packageToVersionMap);
+      PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+      final String version = PyPIPackageUtil.fetchLatestPackageVersion(pkg.getName());
       consumer.consume(StringUtil.notNullize(version));
     });
   }
