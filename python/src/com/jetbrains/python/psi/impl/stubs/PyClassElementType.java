@@ -24,7 +24,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NonNls;
@@ -90,10 +89,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         return PyPsiUtils.asQualifiedName(superClassExpression);
       }
 
-      final PyResolveProcessor processor = new PyResolveProcessor(referenceName, true);
-      PyResolveUtil.scopeCrawlUp(processor, reference, referenceName, null);
-
-      final Optional<QualifiedName> qualifiedName = processor.getElements().stream()
+      final Optional<QualifiedName> qualifiedName = PyResolveUtil.resolveLocally(reference)
+        .stream()
         .filter(PyImportElement.class::isInstance)
         .map(PyImportElement.class::cast)
         .filter(element -> element.getAsName() != null)
