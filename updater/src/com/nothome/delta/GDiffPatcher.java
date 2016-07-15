@@ -52,82 +52,90 @@ public class GDiffPatcher {
    */
   public void patch(File input, InputStream patch, OutputStream out) throws IOException {
     SeekableSource source = new RandomAccessFileSeekableSource(new RandomAccessFile(input, "r"));
-    DataOutputStream outOS = new DataOutputStream(out);
-    DataInputStream patchIS = new DataInputStream(patch);
+    try {
+      DataOutputStream outOS = new DataOutputStream(out);
+      DataInputStream patchIS = new DataInputStream(patch);
 
-    // the magic string is 'd1 ff d1 ff' + the version number
-    //noinspection DuplicateCondition
-    if (patchIS.readUnsignedByte() != 0xd1 ||
-        patchIS.readUnsignedByte() != 0xff ||
-        patchIS.readUnsignedByte() != 0xd1 ||
-        patchIS.readUnsignedByte() != 0xff ||
-        patchIS.readUnsignedByte() != 0x04) {
+      // the magic string is 'd1 ff d1 ff' + the version number
+      //noinspection DuplicateCondition
+      if (patchIS.readUnsignedByte() != 0xd1 ||
+          patchIS.readUnsignedByte() != 0xff ||
+          patchIS.readUnsignedByte() != 0xd1 ||
+          patchIS.readUnsignedByte() != 0xff ||
+          patchIS.readUnsignedByte() != 0x04) {
 
-      throw new IOException("magic string not found, aborting!");
+        throw new IOException("magic string not found, aborting!");
+      }
+
+      while (true) {
+        int command = patchIS.readUnsignedByte();
+        if (command == EOF) {
+          break;
+        }
+        int length;
+        int offset;
+
+        if (command <= DATA_MAX) {
+          append(command, patchIS, outOS);
+          continue;
+        }
+
+        switch (command) {
+          case DATA_USHORT: // ushort, n bytes following; append
+            length = patchIS.readUnsignedShort();
+            append(length, patchIS, outOS);
+            break;
+          case DATA_INT: // int, n bytes following; append
+            length = patchIS.readInt();
+            append(length, patchIS, outOS);
+            break;
+          case COPY_USHORT_UBYTE:
+            offset = patchIS.readUnsignedShort();
+            length = patchIS.readUnsignedByte();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_USHORT_USHORT:
+            offset = patchIS.readUnsignedShort();
+            length = patchIS.readUnsignedShort();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_USHORT_INT:
+            offset = patchIS.readUnsignedShort();
+            length = patchIS.readInt();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_INT_UBYTE:
+            offset = patchIS.readInt();
+            length = patchIS.readUnsignedByte();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_INT_USHORT:
+            offset = patchIS.readInt();
+            length = patchIS.readUnsignedShort();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_INT_INT:
+            offset = patchIS.readInt();
+            length = patchIS.readInt();
+            copy(offset, length, source, outOS);
+            break;
+          case COPY_LONG_INT:
+            long loffset = patchIS.readLong();
+            length = patchIS.readInt();
+            copy(loffset, length, source, outOS);
+            break;
+          default:
+            throw new IllegalStateException("command " + command);
+        }
+      }
+      outOS.flush();
     }
-
-    while (true) {
-      int command = patchIS.readUnsignedByte();
-      if (command == EOF) {
-        break;
+    finally {
+      try {
+        source.close();
       }
-      int length;
-      int offset;
-
-      if (command <= DATA_MAX) {
-        append(command, patchIS, outOS);
-        continue;
-      }
-
-      switch (command) {
-        case DATA_USHORT: // ushort, n bytes following; append
-          length = patchIS.readUnsignedShort();
-          append(length, patchIS, outOS);
-          break;
-        case DATA_INT: // int, n bytes following; append
-          length = patchIS.readInt();
-          append(length, patchIS, outOS);
-          break;
-        case COPY_USHORT_UBYTE:
-          offset = patchIS.readUnsignedShort();
-          length = patchIS.readUnsignedByte();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_USHORT_USHORT:
-          offset = patchIS.readUnsignedShort();
-          length = patchIS.readUnsignedShort();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_USHORT_INT:
-          offset = patchIS.readUnsignedShort();
-          length = patchIS.readInt();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_INT_UBYTE:
-          offset = patchIS.readInt();
-          length = patchIS.readUnsignedByte();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_INT_USHORT:
-          offset = patchIS.readInt();
-          length = patchIS.readUnsignedShort();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_INT_INT:
-          offset = patchIS.readInt();
-          length = patchIS.readInt();
-          copy(offset, length, source, outOS);
-          break;
-        case COPY_LONG_INT:
-          long loffset = patchIS.readLong();
-          length = patchIS.readInt();
-          copy(loffset, length, source, outOS);
-          break;
-        default:
-          throw new IllegalStateException("command " + command);
-      }
+      catch (IOException ignored) {}
     }
-    outOS.flush();
   }
 
   private void copy(long offset, int length, SeekableSource source, OutputStream output)
