@@ -224,8 +224,9 @@ public enum EffectPainter implements RegionPainter<Paint> {
       if (-dx >= height) {
         dx += length;
       }
+      Integer round = height > 2 ? height : null;
       while (dx <= width) {
-        RectanglePainter.FILL.paint(g, x + dx, y, height, height, height);
+        RectanglePainter.FILL.paint(g, x + dx, y, height, height, round);
         dx += length;
       }
     }
