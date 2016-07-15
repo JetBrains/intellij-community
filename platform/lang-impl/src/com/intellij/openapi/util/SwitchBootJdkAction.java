@@ -38,9 +38,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import java.io.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Locale;
 
 /**
@@ -113,6 +115,18 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   private static class SwitchBootJdkDialog extends DialogWrapper {
 
+    static class JdkBundleItem {
+      @Nullable private JdkBundle myBundle;
+
+      public JdkBundleItem(@Nullable JdkBundle bundle) {
+        myBundle = bundle;
+      }
+
+      @Nullable public JdkBundle getBundle() {
+        return myBundle;
+      }
+    }
+
     @NotNull private final ComboBox myComboBox;
 
     private SwitchBootJdkDialog() {
@@ -122,25 +136,46 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
       myComboBox = new ComboBox();
 
-      final DefaultComboBoxModel<JdkBundle> model = new DefaultComboBoxModel<JdkBundle>();
+      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<JdkBundleItem>();
 
       for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
         //noinspection unchecked
-        model.addElement(jdkBundlePath);
+        model.addElement(new JdkBundleItem(jdkBundlePath));
       }
 
-      model.addElement(null);
+      model.addElement(new JdkBundleItem(null));
 
-      model.addListDataListener(new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) { }
+      //noinspection unchecked
+      myComboBox.setModel(model);
 
+      //noinspection unchecked
+      myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
-        public void intervalRemoved(ListDataEvent e) { }
+        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          JdkBundle jdkBundleDescriptor = ((JdkBundleItem)value).getBundle();
+          if (jdkBundleDescriptor != null) {
+            if (jdkBundleDescriptor.isBoot()) {
+              setForeground(JBColor.DARK_GRAY);
+            }
+            setText(jdkBundleDescriptor.getVisualRepresentation());
+          }
+          else {
+            setText("...");
+          }
+        }
+      });
 
+      myComboBox.addActionListener(new ActionListener() {
         @Override
-        public void contentsChanged(ListDataEvent e) {
+        public void actionPerformed(ActionEvent e) {
           if (myComboBox.getSelectedItem() == null) {
+            LOG.error("Unexpected nullable selection");
+            return;
+          }
+
+          JdkBundleItem item = (JdkBundleItem)myComboBox.getSelectedItem();
+
+          if (item.getBundle() == null) {
             FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
               JdkBundle selectedBundle;
 
@@ -151,7 +186,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
                 // allow selection of JDK of any arch, so that to warn about possible arch mismatch during validation
                 JdkBundle bundle = JdkBundle.createBundle(new File(file.getPath()), false, false, false);
                 if (bundle == null) return false;
-                Version version =  bundle.getVersion();
+                Version version = bundle.getVersion();
                 selectedBundle = bundle;
                 return version != null && !version.lessThan(JDK8_VERSION.major, JDK8_VERSION.minor, JDK8_VERSION.bugfix);
               }
@@ -178,10 +213,10 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
                   if (selectedJdk != null) {
                     pathsList.addBundle(selectedJdk, true);
                     if (model.getSize() > 0) {
-                      model.insertElementAt(selectedJdk, model.getSize() - 1);
+                      model.insertElementAt(new JdkBundleItem(selectedJdk), model.getSize() - 1);
                     }
                     else {
-                      model.addElement(selectedJdk);
+                      model.addElement(new JdkBundleItem(selectedJdk));
                     }
                   }
                   else {
@@ -193,31 +228,18 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               }
             });
           }
-          if (myComboBox.getSelectedItem() == null) {
-            myComboBox.setSelectedItem(model.getElementAt(0));
+
+          item = (JdkBundleItem)myComboBox.getSelectedItem();
+
+          if (item == null || item.getBundle() == null) {
+            item = model.getElementAt(0);
+            myComboBox.setSelectedItem(item);
           }
-          setOKActionEnabled(myComboBox.getSelectedItem() != null && !((JdkBundle)myComboBox.getSelectedItem()).isBoot());
+
+          setOKActionEnabled(item.getBundle() != null && !item.getBundle().isBoot());
         }
       });
-
-      //noinspection unchecked
-      myComboBox.setModel(model);
-
-      myComboBox.setRenderer(new ListCellRendererWrapper() {
-        @Override
-        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value != null) {
-            JdkBundle jdkBundleDescriptor = ((JdkBundle)value);
-            if (jdkBundleDescriptor.isBoot()) {
-              setForeground(JBColor.DARK_GRAY);
-            }
-            setText(jdkBundleDescriptor.getVisualRepresentation());
-          }
-          else {
-            setText("...");
-          }
-        }
-      });
+      myComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 
       setTitle("Switch IDE Boot JDK");
       setOKActionEnabled(false); // First item is a boot jdk
