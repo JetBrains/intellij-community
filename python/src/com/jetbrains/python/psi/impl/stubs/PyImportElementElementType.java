@@ -21,13 +21,13 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +45,7 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportElementImpl(node);

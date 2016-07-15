@@ -36,6 +36,7 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
     super("SINGLE_STAR_PARAMETER");
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PySingleStarParameterImpl(node);

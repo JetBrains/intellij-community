@@ -36,6 +36,7 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
     super("EXCEPT_PART");
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyExceptPartImpl(node);

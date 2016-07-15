@@ -51,6 +51,7 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
     return new PyParameterListStubImpl(parentStub, getStubElementType());
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyParameterListImpl(node);
   }

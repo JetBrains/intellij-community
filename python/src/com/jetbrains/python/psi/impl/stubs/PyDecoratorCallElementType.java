@@ -41,6 +41,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     super("DECORATOR_CALL");
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyDecoratorImpl(node);
   }

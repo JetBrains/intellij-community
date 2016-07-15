@@ -50,6 +50,7 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyAnnotationImpl(node);
   }

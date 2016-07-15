@@ -21,11 +21,11 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +43,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyFromImportStatementImpl(node);

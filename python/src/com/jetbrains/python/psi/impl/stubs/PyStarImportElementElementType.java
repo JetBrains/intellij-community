@@ -36,6 +36,7 @@ public class PyStarImportElementElementType extends PyStubElementType<PyStarImpo
     super("STAR_IMPORT_ELEMENT");
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyStarImportElementImpl(node);
   }

@@ -39,6 +39,7 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
     super("DECORATOR_LIST");
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyDecoratorListImpl(node);
   }

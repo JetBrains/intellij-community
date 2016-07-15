@@ -42,6 +42,7 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportStatementImpl(node);
