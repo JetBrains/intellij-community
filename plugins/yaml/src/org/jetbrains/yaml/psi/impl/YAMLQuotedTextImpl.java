@@ -126,6 +126,9 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         if (!isSingleQuote() && i + 1 < input.length() && YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
           result.add(Pair.create(TextRange.from(i, 1), "\\n\\\n" + indentString + "\\"));
         }
+        else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n') {
+          result.add(Pair.create(TextRange.from(i, 1), "\\\n" + indentString + "\\n"));
+        }
         else {
           result.add(Pair.create(TextRange.from(i, 1), "\n\n" + indentString));
         }
