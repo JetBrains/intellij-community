@@ -4,9 +4,11 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.stepic.StepicUser;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -166,5 +168,15 @@ public class Course {
 
   public void setCourseMode(String courseMode) {
     this.courseMode = courseMode;
+  }
+
+  public Course copy() {
+    Element element = XmlSerializer.serialize(this);
+    Course copy = XmlSerializer.deserialize(element, Course.class);
+    if (copy == null) {
+      return null;
+    }
+    copy.initCourse(true);
+    return copy;
   }
 }

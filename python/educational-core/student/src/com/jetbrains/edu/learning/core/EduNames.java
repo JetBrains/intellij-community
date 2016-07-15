@@ -49,6 +49,9 @@ public class EduNames {
   public static final String ANSWER_PLACEHOLDER = "Answer Placeholder";
   public static final String PLACEHOLDER = "placeholder";
   public static final String SRC = "src";
+
+  public static final String STEP_MARKER = "_step";
+  public static final String STEP = "step";
   private EduNames() {
   }
 

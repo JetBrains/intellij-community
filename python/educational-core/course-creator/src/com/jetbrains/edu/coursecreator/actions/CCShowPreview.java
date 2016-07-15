@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -33,10 +32,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
@@ -44,7 +45,6 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,10 +54,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class CCShowPreview extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
+  public static final String SHOW_PREVIEW = "Show Preview";
 
   public CCShowPreview() {
-    super("Show Preview", "Show Preview", null);
+    super(SHOW_PREVIEW, SHOW_PREVIEW, null);
   }
 
   @Override
@@ -111,9 +111,6 @@ public class CCShowPreview extends DumbAwareAction {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
       return;
     }
-    final TaskFile taskFileCopy = new TaskFile();
-    TaskFile.copy(taskFile, taskFileCopy);
-
 
     VirtualFile generatedFilesFolder = CCUtils.getGeneratedFilesFolder(project, module);
 
@@ -121,15 +118,21 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> EduUtils.createStudentFileFromAnswer(project, generatedFilesFolder, taskDir.getVirtualFile(), virtualFile.getName(), taskFileCopy));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        Pair<VirtualFile, TaskFile> pair =
+          EduUtils.createStudentFile(this, project, virtualFile, taskFile.getTask().getActiveStepIndex(), generatedFilesFolder, null);
+        if (pair != null) {
+          showPreviewDialog(project, pair.getFirst(), pair.getSecond());
+        }
+      }
+    });
+  }
 
-    VirtualFile userFile = generatedFilesFolder.findChild(virtualFile.getName());
-    if (userFile == null) {
-      LOG.info("Generated file " + virtualFile.getName() + "was not found");
-      return;
-    }
+  private static void showPreviewDialog(@NotNull Project project, @NotNull VirtualFile userFile, @NotNull TaskFile taskFile) {
     final FrameWrapper showPreviewFrame = new FrameWrapper(project);
-    showPreviewFrame.setTitle(virtualFile.getName());
+    showPreviewFrame.setTitle(userFile.getName());
     LabeledEditor labeledEditor = new LabeledEditor(null);
     final EditorFactory factory = EditorFactory.getInstance();
     Document document = FileDocumentManager.getInstance().getDocument(userFile);
@@ -142,7 +145,8 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+      answerPlaceholder.setUseLength(true);
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();

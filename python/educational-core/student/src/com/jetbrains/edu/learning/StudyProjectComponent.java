@@ -305,6 +305,7 @@ public class StudyProjectComponent implements ProjectComponent {
               taskFile.setUserCreated(true);
               final String name = createdFile.getName();
               taskFile.name = name;
+              //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);
             }
           }

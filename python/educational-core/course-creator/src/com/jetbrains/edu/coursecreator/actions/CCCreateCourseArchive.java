@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
@@ -26,17 +25,19 @@ import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipOutputStream;
 
 public class CCCreateCourseArchive extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCCreateCourseArchive.class.getName());
+  public static final String GENERATE_COURSE_ARCHIVE = "Generate Course Archive";
   private String myZipName;
   private String myLocationDir;
 
@@ -49,7 +50,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   public CCCreateCourseArchive() {
-    super("Generate Course Archive", "Generate Course Archive", null);
+    super(GENERATE_COURSE_ARCHIVE, GENERATE_COURSE_ARCHIVE, null);
   }
 
   @Override
@@ -100,46 +101,39 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       copyChild(archiveFolder, filter, child, fromFile);
     }
 
-    final List<Lesson> lessons = course.getLessons();
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final Map<TaskFile, TaskFile> savedTaskFiles = new HashMap<TaskFile, TaskFile>();
-        replaceAnswerFilesWithTaskFiles(savedTaskFiles);
-        generateJson(project, archiveFolder);
-        resetTaskFiles(savedTaskFiles);
+        Course courseCopy = course.copy();
+        replaceAnswerFilesWithTaskFiles(courseCopy);
+        generateJson(archiveFolder, courseCopy);
         VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         packCourse(archiveFolder, locationDir, zipName, showMessage);
         synchronize(project);
       }
 
-      private void replaceAnswerFilesWithTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
-        for (Lesson lesson : lessons) {
+      private void replaceAnswerFilesWithTaskFiles(Course courseCopy) {
+        for (Lesson lesson : courseCopy.getLessons()) {
           final VirtualFile lessonDir = baseDir.findChild(EduNames.LESSON + String.valueOf(lesson.getIndex()));
           if (lessonDir == null) continue;
           for (Task task : lesson.getTaskList()) {
             final VirtualFile taskDir = lessonDir.findChild(EduNames.TASK + String.valueOf(task.getIndex()));
             if (taskDir == null) continue;
-            for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
-              TaskFile taskFileCopy = new TaskFile();
-              TaskFile taskFile = entry.getValue();
-              TaskFile.copy(taskFile, taskFileCopy);
-              savedTaskFiles.put(taskFile, taskFileCopy);
-
-              VirtualFile userFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDir.getName());
-              if (userFileDir == null) {
+            VirtualFile studentFileDir = VfsUtil.findRelativeFile(archiveFolder, lessonDir.getName(), taskDir.getName());
+            if (studentFileDir == null) {
+              continue;
+            }
+            for (TaskFile taskFile : task.getTaskFiles().values()) {
+              VirtualFile answerFile = taskDir.findChild(taskFile.name);
+              if (answerFile == null) {
                 continue;
               }
-              String taskFileName = entry.getKey();
-              EduUtils.createStudentFileFromAnswer(project, userFileDir, taskDir, taskFileName, taskFile);
+              EduUtils.createStudentFile(this, project, answerFile, -1, studentFileDir, task);
             }
-          }
         }
       }
+    }
     });
-
-
   }
 
   private static void copyChild(VirtualFile archiveFolder, FileFilter filter, VirtualFile child, File fromFile) {
@@ -157,16 +151,6 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     }
     catch (IOException e) {
       LOG.info("Failed to copy" + fromFile.getPath(), e);
-    }
-  }
-
-  private static void resetTaskFiles(Map<TaskFile, TaskFile> savedTaskFiles) {
-    for (Map.Entry<TaskFile, TaskFile> entry : savedTaskFiles.entrySet()) {
-      List<AnswerPlaceholder> placeholders = entry.getValue().getAnswerPlaceholders();
-      for (AnswerPlaceholder placeholder : placeholders) {
-        placeholder.setUseLength(false);
-      }
-      entry.getKey().setAnswerPlaceholders(placeholders);
     }
   }
 
@@ -194,8 +178,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void generateJson(@NotNull final Project project, VirtualFile parentDir) {
-    final Course course = StudyTaskManager.getInstance(project).getCourse();
+  private static void generateJson(VirtualFile parentDir, Course course) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);

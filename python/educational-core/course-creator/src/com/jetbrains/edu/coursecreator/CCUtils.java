@@ -6,8 +6,6 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -17,14 +15,17 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,30 +214,37 @@ public class CCUtils {
   }
 
 
-  public static void createResources(Project project, Task task, VirtualFile taskDir) {
-    Map<String, TaskFile> files = task.getTaskFiles();
+  public static void updateResources(Project project, Task task, VirtualFile taskDir) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    VirtualFile lessonVF = taskDir.getParent();
+    if (lessonVF == null) {
+      return;
+    }
+
+    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskDir.getName());
+    File taskResourceFile = new File(taskResourcesPath);
+    if (!taskResourceFile.exists()) {
+      if (!taskResourceFile.mkdirs()) {
+        LOG.info("Failed to create resources for task " + taskResourcesPath);
+      }
+    }
+    VirtualFile studentDir = LocalFileSystem.getInstance().findFileByIoFile(taskResourceFile);
+    if (studentDir == null) {
+      return;
+    }
+    Map<String, TaskFile> files = StudyUtils.getTaskFiles(task);
     for (Map.Entry<String, TaskFile> entry : files.entrySet()) {
       String name = entry.getKey();
-      VirtualFile child = taskDir.findChild(name);
-      if (child == null) {
+      VirtualFile answerFile = taskDir.findChild(name);
+      if (answerFile == null) {
         continue;
       }
-      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
-      Document document = FileDocumentManager.getInstance().getDocument(child);
-      if (document == null || patternDocument == null) {
-        LOG.info("pattern file for " +  child.getPath() + " not found");
-        continue;
-      }
-      DocumentUtil.writeInRunUndoTransparentAction(() -> {
-        patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
-        FileDocumentManager.getInstance().saveDocument(patternDocument);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, task.getActiveStepIndex(), studentDir, null);
       });
-      TaskFile target = new TaskFile();
-      TaskFile.copy(entry.getValue(), target);
-      for (AnswerPlaceholder placeholder : target.getAnswerPlaceholders()) {
-        placeholder.setUseLength(false);
-      }
-      EduUtils.createStudentDocument(project, target, child, patternDocument);
     }
   }
 }

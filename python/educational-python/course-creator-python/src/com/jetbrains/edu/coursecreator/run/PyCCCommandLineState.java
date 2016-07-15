@@ -96,7 +96,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
 
   @Override
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    CCUtils.createResources(myRunConfiguration.getProject(), myTask, myTaskDir);
+    CCUtils.updateResources(myRunConfiguration.getProject(), myTask, myTaskDir);
     ApplicationManager.getApplication().runWriteAction(() -> StudyCheckUtils.flushWindows(myTask, myTaskDir));
 
     return super.execute(executor, patchers);

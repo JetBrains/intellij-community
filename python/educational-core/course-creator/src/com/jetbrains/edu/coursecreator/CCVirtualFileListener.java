@@ -66,7 +66,8 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
   @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     VirtualFile removedFile = event.getFile();
-    if (removedFile.getPath().contains(CCUtils.GENERATED_FILES_FOLDER)) {
+    String path = removedFile.getPath();
+    if (path.contains(CCUtils.GENERATED_FILES_FOLDER)) {
       return;
     }
 
@@ -75,7 +76,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
       return;
     }
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
+    if (course == null || path.contains(course.getCourseDirectory())) {
       return;
     }
     final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
@@ -123,6 +124,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     if (task == null) {
       return;
     }
+    //TODO: remove from steps as well
     task.getTaskFiles().remove(removedTaskFile.getName());
   }
 }

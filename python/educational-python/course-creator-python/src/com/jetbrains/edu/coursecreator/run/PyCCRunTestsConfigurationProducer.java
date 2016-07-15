@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.PyCCLanguageManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -77,10 +78,15 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
       return null;
     }
 
+    Task task = StudyUtils.getTask(location.getProject(), taskDir);
+    if (task == null) {
+      return null;
+    }
+    String testsFileName = PyCCLanguageManager.getStepTestsFileName(task.getActiveStepIndex());
     String taskDirPath = FileUtil.toSystemDependentName(taskDir.getPath());
     String testsPath = taskDir.findChild(EduNames.SRC) != null ?
-                       FileUtil.join(taskDirPath, EduNames.SRC, EduNames.TESTS_FILE) :
-                       FileUtil.join(taskDirPath, EduNames.TESTS_FILE);
+                       FileUtil.join(taskDirPath, EduNames.SRC, testsFileName) :
+                       FileUtil.join(taskDirPath, testsFileName);
     String filePath = FileUtil.toSystemDependentName(file.getPath());
     return filePath.equals(testsPath) ? testsPath : null;
   }

@@ -7,13 +7,17 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +42,11 @@ public class Task implements StudyItem {
 
   @Transient private Lesson myLesson;
 
+  @Expose
+  @SerializedName("additionalSteps")
+  private List<Step> myAdditionalSteps = new ArrayList<>();
+  private int myActiveStepIndex = -1;
+
   public Task() {}
 
   public Task(@NotNull final String name) {
@@ -54,6 +63,9 @@ public class Task implements StudyItem {
     if (!isRestarted) myStatus = StudyStatus.Unchecked;
     for (TaskFile taskFile : getTaskFiles().values()) {
       taskFile.initTaskFile(this, isRestarted);
+    }
+    for (Step step : myAdditionalSteps) {
+      step.init(this, isRestarted);
     }
   }
 
@@ -116,7 +128,11 @@ public class Task implements StudyItem {
 
   @Nullable
   public TaskFile getFile(@NotNull final String fileName) {
-    return taskFiles.get(fileName);
+    if (myActiveStepIndex == -1) {
+      return taskFiles.get(fileName);
+    }
+    Step step = myAdditionalSteps.get(myActiveStepIndex);
+    return step.getTaskFiles().get(fileName);
   }
 
   @Transient
@@ -148,7 +164,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -214,10 +230,36 @@ public class Task implements StudyItem {
   
   public void setStatus(StudyStatus status) {
     myStatus = status;
-    for (TaskFile taskFile : taskFiles.values()) {
+    for (TaskFile taskFile : StudyUtils.getTaskFiles(this).values()) {
       for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
         placeholder.setStatus(status);
       }
     }
+  }
+
+  public List<Step> getAdditionalSteps() {
+    return myAdditionalSteps;
+  }
+
+  public void setAdditionalSteps(List<Step> additionalSteps) {
+    myAdditionalSteps = additionalSteps;
+  }
+
+  public int getActiveStepIndex() {
+    return myActiveStepIndex;
+  }
+
+  public void setActiveStepIndex(int activeStepIndex) {
+    myActiveStepIndex = activeStepIndex;
+  }
+
+  public Task copy() {
+    Element element = XmlSerializer.serialize(this);
+    Task copy = XmlSerializer.deserialize(element, Task.class);
+    if (copy == null) {
+      return null;
+    }
+    copy.initTask(null, true);
+    return copy;
   }
 }
