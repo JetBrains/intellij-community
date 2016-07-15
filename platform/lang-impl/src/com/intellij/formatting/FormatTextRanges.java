@@ -17,10 +17,12 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.DiffInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FormatTextRanges implements FormattingRangesInfo {
   private final List<FormatTextRange> myRanges = new ArrayList<>();
@@ -88,5 +90,17 @@ public class FormatTextRanges implements FormattingRangesInfo {
   @Override
   public String toString() {
     return "FormatTextRanges{" + StringUtil.join(myRanges, StringUtil.createToStringFunction(FormatTextRange.class), ",");
+  }
+
+  public boolean isEmpty() {
+    return myRanges.isEmpty();
+  }
+
+  public boolean isFullReformat(PsiFile file) {
+    return myRanges.size() == 1 && file.getTextRange().equals(myRanges.get(0).getTextRange());
+  }
+
+  public List<TextRange> getTextRanges() {
+    return myRanges.stream().map(FormatTextRange::getTextRange).collect(Collectors.toList());
   }
 }
