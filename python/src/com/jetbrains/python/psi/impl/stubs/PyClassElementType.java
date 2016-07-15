@@ -58,13 +58,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   @NotNull
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
-    final Map<QualifiedName, QualifiedName> superClasses = getSuperClassQNames(psi);
-    final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
-    return new PyClassStubImpl(psi.getName(), parentStub,
-                               superClasses,
+    return new PyClassStubImpl(psi.getName(),
+                               parentStub,
+                               getSuperClassQNames(psi),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
-                               PyPsiUtils.strValue(docStringExpression),
+                               PyPsiUtils.strValue(psi.getDocStringExpression()),
                                getStubElementType());
   }
 
@@ -111,31 +110,40 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   public void serialize(@NotNull final PyClassStub pyClassStub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(pyClassStub.getName());
+
     final Map<QualifiedName, QualifiedName> superClasses = pyClassStub.getSuperClasses();
     dataStream.writeByte(superClasses.size());
     for (Map.Entry<QualifiedName, QualifiedName> entry : superClasses.entrySet()) {
       QualifiedName.serialize(entry.getKey(), dataStream);
       QualifiedName.serialize(entry.getValue(), dataStream);
     }
+
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
+
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
+
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
   }
 
   @NotNull
   public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
-    int superClassCount = dataStream.readByte();
-    Map<QualifiedName, QualifiedName> superClasses = new LinkedHashMap<>();
+    final String name = StringRef.toString(dataStream.readName());
+
+    final int superClassCount = dataStream.readByte();
+    final Map<QualifiedName, QualifiedName> superClasses = new LinkedHashMap<>();
     for (int i = 0; i < superClassCount; i++) {
       superClasses.put(QualifiedName.deserialize(dataStream), QualifiedName.deserialize(dataStream));
     }
+
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
-    List<String> slots = PyFileElementType.readNullableList(dataStream);
-    final String docString = dataStream.readUTFFast();
-    return new PyClassStubImpl(name, parentStub, superClasses, metaClass, slots, docString.length() > 0 ? docString : null,
-                               getStubElementType());
+
+    final List<String> slots = PyFileElementType.readNullableList(dataStream);
+
+    final String docStringInStub = dataStream.readUTFFast();
+    final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
+
+    return new PyClassStubImpl(name, parentStub, superClasses, metaClass, slots, docString, getStubElementType());
   }
 
   public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {
@@ -144,18 +152,17 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
-    final PyClass pyClass = createPsi(stub);
-    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(pyClass)) {
+
+    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(createPsi(stub))) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
-    for (QualifiedName s : stub.getSuperClasses().values()) {
-      if (s != null) {
-        String className = s.getLastComponent();
-        if (className != null) {
-          sink.occurrence(PySuperClassIndex.KEY, className);
-        }
-      }
-    }
+
+    stub.getSuperClasses().values()
+      .stream()
+      .filter(Objects::nonNull)
+      .map(QualifiedName::getLastComponent)
+      .filter(Objects::nonNull)
+      .forEach(className -> sink.occurrence(PySuperClassIndex.KEY, className));
   }
 
   protected IStubElementType getStubElementType() {
