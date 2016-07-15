@@ -203,14 +203,18 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
   public void setTaskText(String text, VirtualFile taskDirectory, Project project) {
-    if (StudyTaskManager.getInstance(project).isTurnEditingMode()) {
+    if (!EMPTY_TASK_TEXT.equals(text) && StudyTaskManager.getInstance(project).isTurnEditingMode()) {
       if (taskDirectory == null) {
         LOG.info("Failed to enter editing mode for StudyToolWindow");
         return;
       }
-      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(taskDirectory);
+      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDirectory);
       enterEditingMode(taskTextFile, project);
       StudyTaskManager.getInstance(project).setTurnEditingMode(false);
+    }
+    if (taskDirectory != null && StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
+      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDirectory);
+      enterEditingMode(taskTextFile, project);
     }
     else {
       setText(text);
