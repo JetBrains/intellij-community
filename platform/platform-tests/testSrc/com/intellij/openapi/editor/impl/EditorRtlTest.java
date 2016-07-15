@@ -572,6 +572,13 @@ public class EditorRtlTest extends AbstractEditorTest {
     right();
     checkResult("class C {\n  String s = \"<caret>R\\\\R\";\n}");
   }
+
+  public void testRtlLayoutPersistsAfterEditing() throws Exception {
+    prepare("<caret>\nRR", TestFileType.TEXT);
+    delete();
+    checkResult("<caret>RR");
+    assertTrue(myEditor.getCaretModel().getPrimaryCaret().isAtBidiRunBoundary());
+  }
   
   private void prepareText(String text) throws IOException {
     prepare(text, TestFileType.TEXT);
