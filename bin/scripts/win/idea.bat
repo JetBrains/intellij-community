@@ -10,8 +10,12 @@
 :: ---------------------------------------------------------------------
 IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
 IF NOT "%JDK%" == "" GOTO jdk
+SET BITS=64
+SET USER_JDK64_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+SET BITS=
 SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
-IF EXIST "%USER_JDK_FILE%" SET/pJDK=<%USER_JDK_FILE%
+IF EXIST "%USER_JDK64_FILE%" ( SET/pJDK=<%USER_JDK64_FILE%
+) ELSE ( IF EXIST "%USER_JDK_FILE%" SET/pJDK=<%USER_JDK_FILE% )
 IF "%JDK%" == "" GOTO jdk0
 IF EXIST "%JDK%" GOTO jdk
 SET JDK=%~dp0\..\%JDK%
@@ -33,7 +37,6 @@ IF NOT EXIST "%JAVA_EXE%" GOTO error
 
 SET JRE=%JDK%
 IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
-SET BITS=
 IF EXIST "%JRE%\lib\amd64" SET BITS=64
 
 :: ---------------------------------------------------------------------
