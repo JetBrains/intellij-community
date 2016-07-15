@@ -78,11 +78,9 @@ class AdditionalRangesExtractor(private val info: FormattingRangesInfo) : BlockP
 }
 
 
-class AdjustFormatRangesState(var currentRoot: Block,
-                              val formatRanges: FormatTextRanges,
-                              info: FormattingRangesInfo) : State() {
+class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTextRanges) : State() {
 
-  private val extractor = AdditionalRangesExtractor(info)
+  private val extractor = AdditionalRangesExtractor(formatRanges)
   private val state = Stack(currentRoot)
 
   init {
