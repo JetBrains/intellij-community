@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +68,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                boolean currentSelection,
                                                boolean usageView,
                                                boolean showEmptyScopes) {
-    Collection<SearchScope> result = ContainerUtil.newLinkedHashSet();
+    Collection<SearchScope> result = showEmptyScopes ? ContainerUtil.newArrayList() : ContainerUtil.newLinkedHashSet();
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
       result.add(GlobalSearchScope.allScope(project));
