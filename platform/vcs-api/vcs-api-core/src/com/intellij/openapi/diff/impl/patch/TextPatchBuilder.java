@@ -43,7 +43,6 @@ public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
-  @NonNls private static final String EMPTY_REVISION_INFO = "\\(\\s*revision\\s*\\)";
 
   @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
@@ -63,11 +62,6 @@ public class TextPatchBuilder {
     if (myCancelChecker != null) {
       myCancelChecker.run();
     }
-  }
-
-  @NotNull
-  public static String getEmptyRevisionPattern() {
-    return EMPTY_REVISION_INFO;
   }
 
   public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, @NotNull final String basePath,
