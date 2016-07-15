@@ -165,6 +165,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       .forEach(className -> sink.occurrence(PySuperClassIndex.KEY, className));
   }
 
+  @NotNull
   protected IStubElementType getStubElementType() {
     return PyElementTypes.CLASS_DECLARATION;
   }
