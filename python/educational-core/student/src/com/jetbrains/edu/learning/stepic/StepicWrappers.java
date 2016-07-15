@@ -52,21 +52,8 @@ public class StepicWrappers {
     @Expose List<List<String>> samples;
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
+//    @Expose Map<String, String> codeTemplates;
     @Expose CodeTemplatesWrapper codeTemplates;
-
-    @Override
-    public String toString() {
-      return "StepOptions{" +
-             "test=" + test +
-             ", title='" + title + '\'' +
-             ", files=" + files +
-             ", text='" + text + '\'' +
-             ", samples=" + samples +
-             ", executionMemoryLimit=" + executionMemoryLimit +
-             ", executionTimeLimit=" + executionTimeLimit +
-             ", codeTemplates=" + codeTemplates +
-             '}';
-    }
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
@@ -126,6 +113,8 @@ public class StepicWrappers {
   static class CodeTemplatesWrapper {
     String python3;
     String python27;
+    String java;
+    String java8;
 
     @Nullable
     public String getTemplateForLanguage(@NotNull final String langauge) {
@@ -135,6 +124,14 @@ public class StepicWrappers {
 
       if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
         return python3;
+      }
+
+      if (langauge.equals("java")) {
+        return java;
+      }
+
+      if (langauge.equals("java8")) {
+        return java8;
       }
 
       return null;
@@ -412,12 +409,12 @@ public class StepicWrappers {
   static class AssignmentsWrapper {
     List<Assignment> assignments;
   }
-  
+
   static class Assignment {
     int id;
     int step;
   }
-  
+
   static class ViewsWrapper {
     View view;
 
@@ -425,7 +422,7 @@ public class StepicWrappers {
       this.view = new View(assignment, step);
     }
   }
-  
+
   static class View {
     int assignment;
     int step;
@@ -435,7 +432,7 @@ public class StepicWrappers {
       this.step = step;
     }
   }
-  
+
   static class Enrollment {
     String course;
 
@@ -443,6 +440,7 @@ public class StepicWrappers {
       course = courseId;
     }
   }
+
   static class EnrollmentWrapper {
     Enrollment enrollment;
 

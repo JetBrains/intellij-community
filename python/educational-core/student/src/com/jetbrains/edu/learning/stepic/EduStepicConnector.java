@@ -63,6 +63,9 @@ public class EduStepicConnector {
 
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
+  public static final String CODE_PREFIX = "code";
+  public static final String PYTHON27 = "python27";
+  public static final String PYTHON3 = "python3";
   private static BasicCookieStore ourCookieStore;
 
   static final private Gson GSON =
@@ -341,7 +344,7 @@ public class EduStepicConnector {
     return course;
   }
 
-  private static Course getRegularCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info){
+  private static Course getRegularCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info) {
     String courseType = info.getType();
     course.setName(info.getName());
     course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
@@ -402,33 +405,75 @@ public class EduStepicConnector {
     stepContainer.steps.forEach(x -> steps.add(x.block));
     int i = 0;
     for (StepicWrappers.Step step : steps) {
-      if (!step.name.equals("code")) continue;
-      final Task task = new Task();
-      task.setStepicId(stepicIds.get(i++));
-      //      task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
-      task.setName("step" + i);
-      task.setText(step.text);
-      if (step.options.test != null) {
-        LOG.warn("step.o = " + step.toString());
-        for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
-          task.addTestsTexts(wrapper.name, wrapper.text);
-        }
-      }
-      task.addTestsTexts("test_name.java", "test text");
+      if (supported(step.name)) {
+        final Task task = new Task();
+        task.setStepicId(stepicIds.get(i++));
 
-      task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-      if (step.options.files != null) {
-        for (TaskFile taskFile : step.options.files) {
-          task.taskFiles.put(taskFile.name, taskFile);
+        switch (step.name) {
+          case (CODE_PREFIX):
+            createCodeTask(task, step, i);
+            break;
+          case (PYCHARM_PREFIX):
+            createPyCharmTask(task, step);
+            break;
         }
+        lesson.taskList.add(task);
       }
-
-      TaskFile tf = new TaskFile();
-      tf.name = "name";
-      tf.text = "text";
-      task.taskFiles.put("Main.java", tf);
-      lesson.taskList.add(task);
     }
+  }
+
+  private static boolean supported(String name) {
+    return CODE_PREFIX.equals(name) || PYCHARM_PREFIX.equals(name);
+  }
+
+  private static void createPyCharmTask(Task task, StepicWrappers.Step step) {
+    task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
+    task.setText(step.text);
+    for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+      task.addTestsTexts(wrapper.name, wrapper.text);
+    }
+
+    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+    if (step.options.files != null) {
+      for (TaskFile taskFile : step.options.files) {
+        task.taskFiles.put(taskFile.name, taskFile);
+      }
+    }
+  }
+
+  private static void createCodeTask(Task task, StepicWrappers.Step step, int i) {
+    task.setName("step" + i);
+    if (step.options.samples != null) {
+      final StringBuilder builder = new StringBuilder();
+      for (List<String> sample : step.options.samples) {
+        if (sample.size() == 2) {
+          builder.append("<b>Sample Input:</b><br>");
+          builder.append(StringUtil.replace(sample.get(0), "\n", "<br>"));
+          builder.append("<br>");
+          builder.append("<b>Sample Output:</b><br>");
+          builder.append(StringUtil.replace(sample.get(1), "\n", "<br>"));
+          builder.append("<br><br>");
+        }
+      }
+      task.setText(step.text + "<br>" + builder.toString());
+    }
+
+    if (step.options.executionMemoryLimit != null && step.options.executionTimeLimit != null) {
+      String builder = "<b>Memory limit</b>: " +
+        step.options.executionMemoryLimit + " Mb" +
+        "<br>" +
+        "<b>Time limit</b>: " +
+        step.options.executionTimeLimit + "s" +
+        "<br><br>";
+      task.setText(task.getText() + builder);
+    }
+
+    final TaskFile taskFile = new TaskFile();
+    taskFile.name = "code";
+    //final String templateForTask = getCodeTemplateForTask();
+    final String templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
+    taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
+    task.taskFiles.put("code.java", taskFile);
   }
 
   public static StepicWrappers.Step getStep(Integer step) throws IOException {
