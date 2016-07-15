@@ -89,100 +89,105 @@ public class TextPatchBuilder {
         beforeRevision = c.getBefore();
         afterRevision = c.getAfter();
       }
-      if (beforeRevision != null && beforeRevision.getPath().isDirectory()) {
-        continue;
-      }
-      if (afterRevision != null && afterRevision.getPath().isDirectory()) {
-        continue;
-      }
 
-      if ((beforeRevision != null) && beforeRevision.isBinary() || (afterRevision != null) && afterRevision.isBinary()) {
-        result.add(buildBinaryPatch(beforeRevision, afterRevision));
-        continue;
-      }
-
-      if (beforeRevision == null) {
-        result.add(buildAddedFile(afterRevision));
-        continue;
-      }
-      if (afterRevision == null) {
-        result.add(buildDeletedFile(beforeRevision));
-        continue;
-      }
-
-      DiffString beforeContent = getContent(beforeRevision);
-      DiffString afterContent = getContent(afterRevision);
-      DiffString[] beforeLines = tokenize(beforeContent);
-      DiffString[] afterLines = tokenize(afterContent);
-
-      DiffFragment[] woFormattingBlocks;
-      DiffFragment[] step1lineFragments;
-      try {
-        woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
-        step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
-      }
-      catch (FilesTooBigForDiffException e) {
-        throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
-      }
-      ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
-
-      if (fragments.size() > 1 ||
-          (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
-        TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
-        result.add(patch);
-
-        int lastLine1 = 0;
-        int lastLine2 = 0;
-
-        while (fragments.size() > 0) {
-          checkCanceled();
-
-          List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
-          if (adjacentFragments.size() > 0) {
-            LineFragment first = adjacentFragments.get(0);
-            LineFragment last = adjacentFragments.get(adjacentFragments.size() - 1);
-
-            int start1 = first.getStartingLine1();
-            int start2 = first.getStartingLine2();
-            int end1 = last.getStartingLine1() + last.getModifiedLines1();
-            int end2 = last.getStartingLine2() + last.getModifiedLines2();
-            int contextStart1 = Math.max(start1 - CONTEXT_LINES, lastLine1);
-            int contextStart2 = Math.max(start2 - CONTEXT_LINES, lastLine2);
-            int contextEnd1 = Math.min(end1 + CONTEXT_LINES, beforeLines.length);
-            int contextEnd2 = Math.min(end2 + CONTEXT_LINES, afterLines.length);
-
-            PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
-            patch.addHunk(hunk);
-
-            for (LineFragment fragment : adjacentFragments) {
-              checkCanceled();
-
-              for (int i = contextStart1; i < fragment.getStartingLine1(); i++) {
-                addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
-              }
-              for (int i = fragment.getStartingLine1(); i < fragment.getStartingLine1() + fragment.getModifiedLines1(); i++) {
-                addLineToHunk(hunk, beforeLines[i], PatchLine.Type.REMOVE);
-              }
-              for (int i = fragment.getStartingLine2(); i < fragment.getStartingLine2() + fragment.getModifiedLines2(); i++) {
-                addLineToHunk(hunk, afterLines[i], PatchLine.Type.ADD);
-              }
-              contextStart1 = fragment.getStartingLine1() + fragment.getModifiedLines1();
-            }
-            for (int i = contextStart1; i < contextEnd1; i++) {
-              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
-            }
-          }
-        }
-
-        checkPathEndLine(patch, afterRevision);
-      }
-      else if (!beforeRevision.getPath().equals(afterRevision.getPath())) {
-        TextFilePatch movedPatch = buildMovedFile(beforeRevision, afterRevision);
-        checkPathEndLine(movedPatch, afterRevision);
-        result.add(movedPatch);
-      }
+      FilePatch patch = createPatch(beforeRevision, afterRevision);
+      if (patch != null) result.add(patch);
     }
     return result;
+  }
+
+  @Nullable
+  private FilePatch createPatch(@Nullable AirContentRevision beforeRevision, @Nullable AirContentRevision afterRevision)
+    throws VcsException {
+    if (beforeRevision == null && afterRevision == null) return null;
+    if (beforeRevision != null && beforeRevision.getPath().isDirectory()) return null;
+    if (afterRevision != null && afterRevision.getPath().isDirectory()) return null;
+
+    if (beforeRevision != null && beforeRevision.isBinary() ||
+        afterRevision != null && afterRevision.isBinary()) {
+      return buildBinaryPatch(beforeRevision, afterRevision);
+    }
+
+    if (beforeRevision == null) {
+      return buildAddedFile(afterRevision);
+    }
+    if (afterRevision == null) {
+      return buildDeletedFile(beforeRevision);
+    }
+
+    DiffString beforeContent = getContent(beforeRevision);
+    DiffString afterContent = getContent(afterRevision);
+    DiffString[] beforeLines = tokenize(beforeContent);
+    DiffString[] afterLines = tokenize(afterContent);
+
+    DiffFragment[] woFormattingBlocks;
+    DiffFragment[] step1lineFragments;
+    try {
+      woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
+      step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
+    }
+    catch (FilesTooBigForDiffException e) {
+      throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
+    }
+    ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
+
+    if (fragments.size() > 1 ||
+        (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
+      TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
+
+      int lastLine1 = 0;
+      int lastLine2 = 0;
+
+      while (fragments.size() > 0) {
+        checkCanceled();
+
+        List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
+        if (adjacentFragments.size() > 0) {
+          LineFragment first = adjacentFragments.get(0);
+          LineFragment last = adjacentFragments.get(adjacentFragments.size() - 1);
+
+          int start1 = first.getStartingLine1();
+          int start2 = first.getStartingLine2();
+          int end1 = last.getStartingLine1() + last.getModifiedLines1();
+          int end2 = last.getStartingLine2() + last.getModifiedLines2();
+          int contextStart1 = Math.max(start1 - CONTEXT_LINES, lastLine1);
+          int contextStart2 = Math.max(start2 - CONTEXT_LINES, lastLine2);
+          int contextEnd1 = Math.min(end1 + CONTEXT_LINES, beforeLines.length);
+          int contextEnd2 = Math.min(end2 + CONTEXT_LINES, afterLines.length);
+
+          PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
+          patch.addHunk(hunk);
+
+          for (LineFragment fragment : adjacentFragments) {
+            checkCanceled();
+
+            for (int i = contextStart1; i < fragment.getStartingLine1(); i++) {
+              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
+            }
+            for (int i = fragment.getStartingLine1(); i < fragment.getStartingLine1() + fragment.getModifiedLines1(); i++) {
+              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.REMOVE);
+            }
+            for (int i = fragment.getStartingLine2(); i < fragment.getStartingLine2() + fragment.getModifiedLines2(); i++) {
+              addLineToHunk(hunk, afterLines[i], PatchLine.Type.ADD);
+            }
+            contextStart1 = fragment.getStartingLine1() + fragment.getModifiedLines1();
+          }
+          for (int i = contextStart1; i < contextEnd1; i++) {
+            addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
+          }
+        }
+      }
+
+      checkPathEndLine(patch, afterRevision);
+      return patch;
+    }
+    else if (!beforeRevision.getPath().equals(afterRevision.getPath())) {
+      TextFilePatch movedPatch = buildMovedFile(beforeRevision, afterRevision);
+      checkPathEndLine(movedPatch, afterRevision);
+      return movedPatch;
+    }
+
+    return null;
   }
 
   private static void checkPathEndLine(@NotNull TextFilePatch filePatch, @Nullable AirContentRevision cr) throws VcsException {
