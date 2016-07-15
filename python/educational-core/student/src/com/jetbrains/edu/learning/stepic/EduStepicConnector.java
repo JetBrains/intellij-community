@@ -65,6 +65,10 @@ public class EduStepicConnector {
   public static final String PYCHARM_PREFIX = "pycharm";
   private static BasicCookieStore ourCookieStore;
 
+  static final private Gson GSON =
+    new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter())
+      .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
   private EduStepicConnector() {
   }
 
@@ -236,9 +240,7 @@ public class EduStepicConnector {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
-    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter())
-      .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-    return gson.fromJson(responseString, container);
+    return GSON.fromJson(responseString, container);
   }
 
   @NotNull
@@ -323,43 +325,52 @@ public class EduStepicConnector {
   }
 
   public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
-    final Course course = new Course();
+    Course course = new Course();
     course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
     course.setUpToDate(true);  // TODO: get from stepic
 
-    if (!course.isAdaptive()) {
-      String courseType = info.getType();
-      course.setName(info.getName());
-      course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
-      try {
-        for (Integer section : info.sections) {
-          course.addLessons(getLessons(section));
-        }
-        return course;
-      }
-      catch (IOException e) {
-        LOG.error("IOException " + e.getMessage());
-      }
+    if (course.isAdaptive()) {
+      course = getAdaptiveCourse(project, course, info);
     }
     else {
-      final Lesson lesson = new Lesson();
-      course.setName(info.getName());
-      //TODO: more specific name?
-      lesson.setName("Adaptive");
-      course.addLesson(lesson);
-      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
-      if (recommendation != null) {
-        lesson.addTask(recommendation);
-        return course;
-      }
-      else {
-        return null;
-      }
+      course = getRegularCourse(project, course, info);
     }
-    return null;
+    return course;
+  }
+
+  private static Course getRegularCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info){
+    String courseType = info.getType();
+    course.setName(info.getName());
+    course.setLanguage(courseType.substring(PYCHARM_PREFIX.length() + 1));
+    try {
+      for (Integer section : info.sections) {
+        course.addLessons(getLessons(section));
+      }
+      return course;
+    }
+    catch (IOException e) {
+      LOG.error("IOException " + e.getMessage());
+      return null;
+    }
+  }
+
+  private static Course getAdaptiveCourse(@NotNull final Project project, Course course, @NotNull final CourseInfo info) {
+    final Lesson lesson = new Lesson();
+    course.setName(info.getName());
+    //TODO: more specific name?
+    lesson.setName("Adaptive");
+    course.addLesson(lesson);
+    final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
+    if (recommendation != null) {
+      lesson.addTask(recommendation);
+      return course;
+    }
+    else {
+      return null;
+    }
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
@@ -394,7 +405,8 @@ public class EduStepicConnector {
       if (!step.name.equals("code")) continue;
       final Task task = new Task();
       task.setStepicId(stepicIds.get(i++));
-      task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
+      //      task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
+      task.setName("step" + i);
       task.setText(step.text);
       if (step.options.test != null) {
         LOG.warn("step.o = " + step.toString());
@@ -402,6 +414,7 @@ public class EduStepicConnector {
           task.addTestsTexts(wrapper.name, wrapper.text);
         }
       }
+      task.addTestsTexts("test_name.java", "test text");
 
       task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
       if (step.options.files != null) {
@@ -409,6 +422,11 @@ public class EduStepicConnector {
           task.taskFiles.put(taskFile.name, taskFile);
         }
       }
+
+      TaskFile tf = new TaskFile();
+      tf.name = "name";
+      tf.text = "text";
+      task.taskFiles.put("Main.java", tf);
       lesson.taskList.add(task);
     }
   }

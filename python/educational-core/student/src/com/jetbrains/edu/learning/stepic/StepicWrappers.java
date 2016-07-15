@@ -42,16 +42,6 @@ public class StepicWrappers {
       step.source = StepOptions.fromTask(project, task);
       return step;
     }
-
-    @Override
-    public String toString() {
-      return "Step{" +
-        "options=" + options +
-        ", text='" + text + '\'' +
-        ", name='" + name + '\'' +
-        ", source=" + source +
-        '}';
-    }
   }
 
   public static class StepOptions {
