@@ -110,14 +110,8 @@ public class TextPatchBuilder {
         continue;
       }
 
-      DiffString beforeContent = DiffString.createNullable(beforeRevision.getContentAsString());
-      if (beforeContent == null) {
-        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getPath().getPath());
-      }
-      DiffString afterContent = DiffString.createNullable(afterRevision.getContentAsString());
-      if (afterContent == null) {
-        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath().getPath());
-      }
+      DiffString beforeContent = getContent(beforeRevision);
+      DiffString afterContent = getContent(afterRevision);
       DiffString[] beforeLines = tokenize(beforeContent);
       DiffString[] afterLines = tokenize(afterContent);
 
@@ -249,10 +243,7 @@ public class TextPatchBuilder {
   @NotNull
   private TextFilePatch buildAddedFile(@NotNull String basePath,
                                        @NotNull AirContentRevision afterRevision) throws VcsException {
-    DiffString content = DiffString.createNullable(afterRevision.getContentAsString());
-    if (content == null) {
-      throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath().getPath());
-    }
+    DiffString content = getContent(afterRevision);
     DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
@@ -267,10 +258,7 @@ public class TextPatchBuilder {
   @NotNull
   private TextFilePatch buildDeletedFile(@NotNull String basePath,
                                          @NotNull AirContentRevision beforeRevision) throws VcsException {
-    DiffString content = DiffString.createNullable(beforeRevision.getContentAsString());
-    if (content == null) {
-      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath().getPath());
-    }
+    DiffString content = getContent(beforeRevision);
     DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
@@ -342,5 +330,14 @@ public class TextPatchBuilder {
 
     result.setAfterName(getRelativePath(basePath, afterRevision.getPath().getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
+  }
+
+  @NotNull
+  private static DiffString getContent(@NotNull AirContentRevision revision) throws VcsException {
+    String beforeContent = revision.getContentAsString();
+    if (beforeContent == null) {
+      throw new VcsException("Failed to fetch old content for file " + revision.getPath().getPath());
+    }
+    return DiffString.create(beforeContent);
   }
 }
