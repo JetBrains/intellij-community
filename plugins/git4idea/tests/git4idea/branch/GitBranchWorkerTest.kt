@@ -676,6 +676,20 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `assert successful deleted branch notification`(todelete, false, RESTORE, DELETE_TRACKED_BRANCH)
   }
 
+  fun `test delete branch doesn't propose to delete tracked branch, if it is also tracked by another local branch`() {
+    prepareRemoteRepo(myCommunity)
+    cd(myCommunity)
+
+    val todelete = "todelete"
+    git("branch $todelete")
+    git("push -u origin todelete")
+    git("branch another origin/todelete")
+
+    myCommunity.deleteBranch(todelete)
+
+    `assert successful deleted branch notification`(todelete, false, RESTORE)
+  }
+
   fun test_merge_branch_that_is_up_to_date() {
     for (repository in myRepositories!!) {
       git(repository, "branch master2")
