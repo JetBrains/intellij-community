@@ -160,7 +160,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
     if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
-    
+
     invokeAfterUpdate(new Runnable() {
       @Override
       public void run() {
@@ -168,7 +168,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (actualList == null) {
           return; // removed already  
         }
-        
+
         if (myModalNotificationsBlocked &&
             config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
           myListsToBeDeleted.add(oldList);
@@ -187,7 +187,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ChangeListRemoveConfirmation.processLists(myProject, false, lists, new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION || 
+        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION ||
                showRemoveEmptyChangeListsProposal(myConfig, toAsk);
       }
     });
@@ -1176,11 +1176,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Override
   @Nullable
-  public VcsKey getVcsFor(@NotNull Change change) {
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    VcsKey key;
     synchronized (myDataLock) {
-      return myWorker.getVcsFor(change);
+      key = myWorker.getVcsFor(change);
     }
+    return key != null ? ProjectLevelVcsManager.getInstance(myProject).findVcsByName(key.getName()) : null;
   }
 
   @Override

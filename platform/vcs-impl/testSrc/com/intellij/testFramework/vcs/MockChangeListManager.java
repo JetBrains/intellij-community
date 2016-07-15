@@ -16,6 +16,7 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
@@ -217,6 +218,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
       }
     }
     return changes;
+  }
+
+  @Nullable
+  @Override
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    return null;
   }
 
   @NotNull
