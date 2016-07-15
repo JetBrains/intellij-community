@@ -57,4 +57,46 @@
     <description>&lt;code&gt;else&lt;/code&gt; without braces #loc</description>
   </problem>
 
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>31</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; without braces #loc</description>
+  </problem>
+
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>32</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; without braces #loc</description>
+  </problem>
+
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>33</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; without braces #loc</description>
+  </problem>
+
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>34</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;for&lt;/code&gt; without braces #loc</description>
+  </problem>
+
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>36</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;else&lt;/code&gt; without braces #loc</description>
+  </problem>
+
+  <problem>
+    <file>ControlFlowStatements.java</file>
+    <line>37</line>
+    <problem_class>Control flow statement without braces</problem_class>
+    <description>&lt;code&gt;else&lt;/code&gt; without braces #loc</description>
+  </problem>
+
 </problems>
