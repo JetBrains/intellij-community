@@ -174,11 +174,11 @@ public class TextPatchBuilder {
           }
         }
 
-        checkPathEndLine(patch, c.getAfter());
+        checkPathEndLine(patch, afterRevision);
       }
       else if (!beforeRevision.getPath().equals(afterRevision.getPath())) {
         TextFilePatch movedPatch = buildMovedFile(beforeRevision, afterRevision);
-        checkPathEndLine(movedPatch, c.getAfter());
+        checkPathEndLine(movedPatch, afterRevision);
         result.add(movedPatch);
       }
     }
