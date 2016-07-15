@@ -15,18 +15,16 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.fragments.LineFragment;
-import com.intellij.openapi.diff.impl.processing.DiffCorrection;
-import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
-import com.intellij.openapi.diff.impl.processing.DiffPolicy;
-import com.intellij.openapi.diff.impl.string.DiffString;
-import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
+import com.intellij.diff.comparison.ComparisonManagerEx;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.util.Range;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TextPatchBuilder {
@@ -71,7 +70,7 @@ public class TextPatchBuilder {
   private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
-      checkCanceled();
+      if (myCancelChecker != null) myCancelChecker.run();
 
       AirContentRevision beforeRevision = myIsReversePath ? c.getAfter() : c.getBefore();
       AirContentRevision afterRevision = myIsReversePath ? c.getBefore() : c.getAfter();
@@ -103,94 +102,152 @@ public class TextPatchBuilder {
       return buildDeletedFile(beforeRevision);
     }
 
-    DiffString beforeContent = getContent(beforeRevision);
-    DiffString afterContent = getContent(afterRevision);
-    DiffString[] beforeLines = tokenize(beforeContent);
-    DiffString[] afterLines = tokenize(afterContent);
-
-    DiffFragment[] woFormattingBlocks;
-    DiffFragment[] step1lineFragments;
-    try {
-      woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
-      step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
-    }
-    catch (FilesTooBigForDiffException e) {
-      throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
-    }
-    ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
-
-    if (fragments.size() > 1 ||
-        (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
-      TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
-
-      int lastLine1 = 0;
-      int lastLine2 = 0;
-
-      while (fragments.size() > 0) {
-        checkCanceled();
-
-        List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
-        if (adjacentFragments.size() > 0) {
-          LineFragment first = adjacentFragments.get(0);
-          LineFragment last = adjacentFragments.get(adjacentFragments.size() - 1);
-
-          int start1 = first.getStartingLine1();
-          int start2 = first.getStartingLine2();
-          int end1 = last.getStartingLine1() + last.getModifiedLines1();
-          int end2 = last.getStartingLine2() + last.getModifiedLines2();
-          int contextStart1 = Math.max(start1 - CONTEXT_LINES, lastLine1);
-          int contextStart2 = Math.max(start2 - CONTEXT_LINES, lastLine2);
-          int contextEnd1 = Math.min(end1 + CONTEXT_LINES, beforeLines.length);
-          int contextEnd2 = Math.min(end2 + CONTEXT_LINES, afterLines.length);
-
-          PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
-          patch.addHunk(hunk);
-
-          for (LineFragment fragment : adjacentFragments) {
-            checkCanceled();
-
-            for (int i = contextStart1; i < fragment.getStartingLine1(); i++) {
-              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
-            }
-            for (int i = fragment.getStartingLine1(); i < fragment.getStartingLine1() + fragment.getModifiedLines1(); i++) {
-              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.REMOVE);
-            }
-            for (int i = fragment.getStartingLine2(); i < fragment.getStartingLine2() + fragment.getModifiedLines2(); i++) {
-              addLineToHunk(hunk, afterLines[i], PatchLine.Type.ADD);
-            }
-            contextStart1 = fragment.getStartingLine1() + fragment.getModifiedLines1();
-          }
-          for (int i = contextStart1; i < contextEnd1; i++) {
-            addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
-          }
-        }
-      }
-
-      checkPathEndLine(patch, afterRevision);
-      return patch;
-    }
-    else if (!beforeRevision.getPath().equals(afterRevision.getPath())) {
-      TextFilePatch movedPatch = buildMovedFile(beforeRevision, afterRevision);
-      checkPathEndLine(movedPatch, afterRevision);
-      return movedPatch;
-    }
-
-    return null;
+    return buildModifiedFile(beforeRevision, afterRevision);
   }
 
-  private static void checkPathEndLine(@NotNull TextFilePatch filePatch, @Nullable AirContentRevision cr) throws VcsException {
-    if (cr == null) return;
-    if (filePatch.isDeletedFile() || filePatch.getAfterName() == null) return;
-    List<PatchHunk> hunks = filePatch.getHunks();
-    if (hunks.isEmpty()) return;
-    PatchHunk hunk = hunks.get(hunks.size() - 1);
-    List<PatchLine> lines = hunk.getLines();
-    if (lines.isEmpty()) return;
-    String contentAsString = cr.getContentAsString();
-    if (contentAsString == null) return;
-    if (!contentAsString.endsWith("\n")) {
-      lines.get(lines.size() - 1).setSuppressNewLine(true);
+  @Nullable
+  private TextFilePatch buildModifiedFile(@NotNull AirContentRevision beforeRevision,
+                                          @NotNull AirContentRevision afterRevision) throws VcsException {
+    String beforeContent = getContent(beforeRevision);
+    String afterContent = getContent(afterRevision);
+
+    TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
+
+    if (beforeContent.equals(afterContent)) {
+      if (beforeRevision.getPath().equals(afterRevision.getPath())) return null;
+      // movement
+      patch.addHunk(new PatchHunk(0, 0, 0, 0));
+      return patch;
     }
+
+    if (beforeContent.isEmpty()) {
+      patch.addHunk(createWholeFileHunk(afterContent, true, true));
+      return patch;
+    }
+    if (afterContent.isEmpty()) {
+      patch.addHunk(createWholeFileHunk(beforeContent, false, true));
+      return patch;
+    }
+
+    List<String> beforeLines = tokenize(beforeContent);
+    List<String> afterLines = tokenize(afterContent);
+    boolean beforeNoNewlineAtEOF = !beforeContent.endsWith("\n");
+    boolean afterNoNewlineAtEOF = !afterContent.endsWith("\n");
+
+    List<Range> fragments;
+    try {
+      fragments = compareLines(beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF);
+    }
+    catch (DiffTooBigException e) {
+      throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
+    }
+
+    int hunkStart = 0;
+    while (hunkStart < fragments.size()) {
+      int hunkEnd = hunkStart + 1;
+      while (hunkEnd < fragments.size()) {
+        Range lastFragment = fragments.get(hunkEnd - 1);
+        Range nextFragment = fragments.get(hunkEnd);
+
+        if (lastFragment.end1 + CONTEXT_LINES < nextFragment.start1 - CONTEXT_LINES &&
+            lastFragment.end2 + CONTEXT_LINES < nextFragment.start2 - CONTEXT_LINES) {
+          break;
+        }
+        hunkEnd++;
+      }
+      List<Range> hunkFragments = fragments.subList(hunkStart, hunkEnd);
+      hunkStart = hunkEnd;
+
+      Range first = hunkFragments.get(0);
+      Range last = hunkFragments.get(hunkFragments.size() - 1);
+
+      int contextStart1 = Math.max(first.start1 - CONTEXT_LINES, 0);
+      int contextStart2 = Math.max(first.start2 - CONTEXT_LINES, 0);
+      int contextEnd1 = Math.min(last.end1 + CONTEXT_LINES, beforeLines.size());
+      int contextEnd2 = Math.min(last.end2 + CONTEXT_LINES, afterLines.size());
+
+      PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
+      patch.addHunk(hunk);
+
+      int lastLine1 = contextStart1;
+      int lastLine2 = contextStart2;
+      for (Range fragment : hunkFragments) {
+        int start1 = fragment.start1;
+        int start2 = fragment.start2;
+        int end1 = fragment.end1;
+        int end2 = fragment.end2;
+        assert start1 - lastLine1 == start2 - lastLine2;
+
+        for (int i = lastLine1; i < start1; i++) {
+          addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
+        }
+        for (int i = start1; i < end1; i++) {
+          addLineToHunk(hunk, beforeLines, PatchLine.Type.REMOVE, i, beforeNoNewlineAtEOF);
+        }
+        for (int i = start2; i < end2; i++) {
+          addLineToHunk(hunk, afterLines, PatchLine.Type.ADD, i, afterNoNewlineAtEOF);
+        }
+        lastLine1 = end1;
+        lastLine2 = end2;
+      }
+      assert contextEnd1 - lastLine1 == contextEnd2 - lastLine2;
+      for (int i = lastLine1; i < contextEnd1; i++) {
+        addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
+      }
+    }
+
+    return patch;
+  }
+
+  @NotNull
+  private static List<Range> compareLines(@NotNull List<String> beforeLines,
+                                          @NotNull List<String> afterLines,
+                                          boolean beforeNoNewlineAtEOF,
+                                          boolean afterNoNewlineAtEOF) {
+    // patch treats "X\n" vs "X" as modification of a single line, while we treat it as a deletion of an empty line
+    // so we have to adjust output accordingly
+
+    if (!beforeNoNewlineAtEOF && !afterNoNewlineAtEOF) return doCompareLines(beforeLines, afterLines);
+
+    int beforeLastLine = beforeLines.size() - 1;
+    int afterLastLine = afterLines.size() - 1;
+
+    List<String> beforeComparedLines = beforeNoNewlineAtEOF ? beforeLines.subList(0, beforeLastLine) : beforeLines;
+    List<String> afterComparedLines = afterNoNewlineAtEOF ? afterLines.subList(0, afterLastLine) : afterLines;
+    List<Range> ranges = doCompareLines(beforeComparedLines, afterComparedLines);
+
+    if (beforeNoNewlineAtEOF && afterNoNewlineAtEOF) {
+      if (beforeLines.get(beforeLastLine).equals(afterLines.get(afterLastLine))) return ranges;
+      Range range = new Range(beforeLastLine, beforeLastLine + 1, afterLastLine, afterLastLine + 1);
+      return appendRange(ranges, range);
+    }
+    else if (beforeNoNewlineAtEOF) {
+      Range range = new Range(beforeLastLine, beforeLastLine + 1, afterLastLine + 1, afterLastLine + 1);
+      return appendRange(ranges, range);
+    }
+    else {
+      Range range = new Range(beforeLastLine + 1, beforeLastLine + 1, afterLastLine, afterLastLine + 1);
+      return appendRange(ranges, range);
+    }
+  }
+
+  @NotNull
+  private static List<Range> appendRange(@NotNull List<Range> ranges, @NotNull Range change) {
+    if (ranges.isEmpty()) return Collections.singletonList(change);
+
+    Range lastRange = ranges.get(ranges.size() - 1);
+    if (lastRange.end1 == change.start1 && lastRange.end2 == change.start2) {
+      Range mergedChange = new Range(lastRange.start1, change.end1, lastRange.start2, change.end2);
+      return ContainerUtil.append(ranges.subList(0, ranges.size() - 1), mergedChange);
+    }
+    else {
+      return ContainerUtil.append(ranges, change);
+    }
+  }
+
+  private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
+    return ComparisonManagerEx.getInstanceEx().compareLines(beforeLines, afterLines, ComparisonPolicy.DEFAULT,
+                                                            DumbProgressIndicator.INSTANCE);
   }
 
   @NotNull
@@ -207,75 +264,53 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private TextFilePatch buildMovedFile(@NotNull AirContentRevision beforeRevision,
-                                       @NotNull AirContentRevision afterRevision) throws VcsException {
-    TextFilePatch result = buildPatchHeading(beforeRevision, afterRevision);
-    PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
-    result.addHunk(hunk);
-    return result;
-  }
-
-  @NotNull
   private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
-    DiffString content = getContent(afterRevision);
-    DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
-    PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
-    for (DiffString line : lines) {
-      checkCanceled();
-      addLineToHunk(hunk, line, PatchLine.Type.ADD);
-    }
-    result.addHunk(hunk);
+    String content = getContent(afterRevision);
+    result.addHunk(createWholeFileHunk(content, true, false));
     return result;
   }
 
   @NotNull
   private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
-    DiffString content = getContent(beforeRevision);
-    DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
-    PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
-    for (DiffString line : lines) {
-      checkCanceled();
-      addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
-    }
-    result.addHunk(hunk);
+    String content = getContent(beforeRevision);
+    result.addHunk(createWholeFileHunk(content, false, false));
     return result;
+  }
+
+  private static void addLineToHunk(@NotNull PatchHunk hunk,
+                                    @NotNull List<String> lines,
+                                    @NotNull PatchLine.Type type,
+                                    int index,
+                                    boolean noNewlineAtEOF) {
+    String line = lines.get(index);
+    boolean isLastLine = index == lines.size() - 1;
+    PatchLine patchLine = new PatchLine(type, line);
+    patchLine.setSuppressNewLine(noNewlineAtEOF && isLastLine);
+    hunk.addLine(patchLine);
   }
 
   @NotNull
-  private static List<LineFragment> getAdjacentFragments(@NotNull ArrayList<LineFragment> fragments) {
-    List<LineFragment> result = new ArrayList<LineFragment>();
-    int endLine = -1;
-    while (!fragments.isEmpty()) {
-      LineFragment fragment = fragments.get(0);
-      if (fragment.getType() == null || fragment.getType() == TextDiffTypeEnum.NONE) {
-        fragments.remove(0);
-        continue;
-      }
+  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) throws VcsException {
+    PatchLine.Type type = isInsertion ? PatchLine.Type.ADD : PatchLine.Type.REMOVE;
 
-      if (result.isEmpty() || endLine + CONTEXT_LINES >= fragment.getStartingLine1() - CONTEXT_LINES) {
-        result.add(fragment);
-        fragments.remove(0);
-        endLine = fragment.getStartingLine1() + fragment.getModifiedLines1();
-      }
-      else {
-        break;
-      }
-    }
-    return result;
-  }
+    List<String> lines = tokenize(content);
+    boolean noNewlineAtEOF = !content.endsWith("\n");
 
-  private static void addLineToHunk(@NotNull PatchHunk hunk, @NotNull DiffString line, @NotNull PatchLine.Type type) {
-    PatchLine patchLine;
-    if (!line.endsWith('\n')) {
-      patchLine = new PatchLine(type, line.toString());
-      patchLine.setSuppressNewLine(true);
+    int contentStart = 0;
+    int contentEnd = lines.size();
+    int emptyStart = isWithEmptyFile ? 0 : -1;
+    int emptyEnd = isWithEmptyFile ? 0 : -1;
+
+    PatchHunk hunk = new PatchHunk(isInsertion ? emptyStart : contentStart,
+                                   isInsertion ? emptyEnd : contentEnd,
+                                   isInsertion ? contentStart : emptyStart,
+                                   isInsertion ? contentEnd : emptyEnd);
+    for (int i = 0; i < lines.size(); i++) {
+      addLineToHunk(hunk, lines, type, i, noNewlineAtEOF);
     }
-    else {
-      patchLine = new PatchLine(type, line.substring(0, line.length() - 1).toString());
-    }
-    hunk.addLine(patchLine);
+    return hunk;
   }
 
   @NotNull
@@ -316,20 +351,16 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static DiffString getContent(@NotNull AirContentRevision revision) throws VcsException {
+  private static String getContent(@NotNull AirContentRevision revision) throws VcsException {
     String beforeContent = revision.getContentAsString();
     if (beforeContent == null) {
       throw new VcsException("Failed to fetch old content for file " + revision.getPath().getPath());
     }
-    return DiffString.create(beforeContent);
+    return beforeContent;
   }
 
   @NotNull
-  private static DiffString[] tokenize(@NotNull DiffString text) {
-    return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
-  }
-
-  private void checkCanceled() {
-    if (myCancelChecker != null) myCancelChecker.run();
+  private static List<String> tokenize(@NotNull String text) {
+    return LineTokenizer.tokenizeIntoList(text, false, true);
   }
 }

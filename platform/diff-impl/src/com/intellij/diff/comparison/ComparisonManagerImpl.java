@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ComparisonManagerImpl extends ComparisonManager {
+public class ComparisonManagerImpl extends ComparisonManagerEx {
   public static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
 
   @NotNull
@@ -163,6 +163,16 @@ public class ComparisonManagerImpl extends ComparisonManager {
     }
     LOG.warn(policy.toString() + " is not supported by ByChar comparison");
     return convertIntoDiffFragments(ByChar.compareTwoStep(text1, text2, indicator));
+  }
+
+  @NotNull
+  @Override
+  public List<Range> compareLines(@NotNull List<? extends CharSequence> lines1,
+                                  @NotNull List<? extends CharSequence> lines2,
+                                  @NotNull ComparisonPolicy policy,
+                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    FairDiffIterable iterable = ByLine.compare(lines1, lines2, policy, indicator);
+    return ContainerUtil.newArrayList(iterable.iterateChanges());
   }
 
   @Override
