@@ -2417,9 +2417,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
-          final int dottedAt = SystemInfo.isMac ? y - 1 : y;
-          UIUtil.drawBoldDottedLine((Graphics2D)g, end.x, end.x + charWidth - 1, dottedAt,
-                                    getBackgroundColor(attributes), attributes.getEffectColor(), false);
+          g.setColor(getBackgroundColor(attributes));
+          EffectPainter.BOLD_DOTTED_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
           EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getCharHeight(), null);
@@ -3557,9 +3556,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        final Color bgColor = getBackgroundColor();
-        final int dottedAt = SystemInfo.isMac ? y : y + 1;
-        UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, false);
+        g.setColor(getBackgroundColor());
+        EffectPainter.BOLD_DOTTED_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
       }
     }
 
