@@ -17,7 +17,6 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -95,7 +94,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     void run(PsiFile psiFile, int startOffset, int endOffset);
   }
 
-  private static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<Action, TestFormatAction>(Action.class);
+  private static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<>(Action.class);
   static {
     ACTIONS.put(Action.REFORMAT, new TestFormatAction() {
       @Override
@@ -121,8 +120,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
         TextRange range = new TextRange(startOffset, endOffset);
         List<TextRange> ranges = ContainerUtil.newArrayList(range);
-        DiffInfo info = new DiffInfoImpl(ranges);
-        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, info);
+        CodeStyleManager.getInstance(getProject()).reformatTextWithContext(psiFile, ranges, ranges);
       }
     });
   }

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.DiffInfo;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -75,7 +74,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @Override
   public void reformatTextWithContext(@NotNull PsiFile file, 
                                       @NotNull Collection<TextRange> ranges,
-                                      @Nullable DiffInfo diffInfo) throws IncorrectOperationException {
+                                      @Nullable Collection<TextRange> insertedRanges) throws IncorrectOperationException {
     reformatText(file, ranges);
   }
 

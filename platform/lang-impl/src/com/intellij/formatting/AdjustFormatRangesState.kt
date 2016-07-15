@@ -56,7 +56,7 @@ interface BlockProcessor {
   fun processCompositeBlock(block: Block)
 }
 
-class DiffInfoImpl(private val insertedRanges: List<TextRange>): DiffInfo {
+class DiffInfoImpl(private val insertedRanges: Collection<TextRange>): DiffInfo {
   override fun isOnInsertedLine(offset: Int) = insertedRanges.find { it.contains(offset) } != null
 }
     

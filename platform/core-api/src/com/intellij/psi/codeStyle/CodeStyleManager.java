@@ -154,7 +154,7 @@ public abstract class CodeStyleManager  {
    */
   public abstract void reformatTextWithContext(@NotNull PsiFile file, 
                                                @NotNull Collection<TextRange> ranges, 
-                                               @Nullable DiffInfo diffInfo) throws IncorrectOperationException;
+                                               @Nullable Collection<TextRange> insertedRanges) throws IncorrectOperationException;
 
 
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {

@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -32,7 +31,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.DiffInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -40,8 +38,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -123,11 +123,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
 
         if (processChangedTextOnly) {
-          ChangedRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
-          if (helper != null) {
-            List<TextRange> ranges = helper.allChangedRanges;
-            DiffInfo info = helper.insertedRanges != null ? new DiffInfoImpl(helper.insertedRanges) : null;
-            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges, info);
+          ChangedRangesInfo info = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
+          if (info != null) {
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, info.allChangedRanges, info.insertedRanges);
           }
         }
         else {

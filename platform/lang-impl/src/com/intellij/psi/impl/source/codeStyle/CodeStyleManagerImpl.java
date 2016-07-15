@@ -164,8 +164,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable DiffInfo info) throws IncorrectOperationException {
-    FormatTextRanges formatRanges = new FormatTextRanges(info);
+  public void reformatTextWithContext(@NotNull PsiFile file, 
+                                      @NotNull Collection<TextRange> ranges, 
+                                      @Nullable Collection<TextRange> insertedRanges) throws IncorrectOperationException 
+  {
+    DiffInfo diffInfo = insertedRanges != null ? new DiffInfoImpl(insertedRanges) : null;
+    FormatTextRanges formatRanges = new FormatTextRanges(diffInfo);
     ranges.forEach((range) -> formatRanges.add(range, true));
     reformatText(file, formatRanges, null, true);
   }
