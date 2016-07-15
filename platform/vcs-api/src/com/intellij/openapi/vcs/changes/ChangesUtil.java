@@ -74,7 +74,9 @@ public class ChangesUtil {
 
   @Nullable
   public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
+
+    return result != null ? result : ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
   @NotNull
