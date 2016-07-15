@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.BidiTextDirection;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
@@ -578,6 +580,19 @@ public class EditorRtlTest extends AbstractEditorTest {
     delete();
     checkResult("<caret>RR");
     assertTrue(myEditor.getCaretModel().getPrimaryCaret().isAtBidiRunBoundary());
+  }
+
+  public void testTokenOrderIsAlwaysLtr() throws Exception {
+    BidiTextDirection savedValue = EditorSettingsExternalizable.getInstance().getBidiTextDirection();
+    try {
+      EditorSettingsExternalizable.getInstance().setBidiTextDirection(BidiTextDirection.RTL);
+      prepare("<a>R</a>", TestFileType.XML);
+      right();
+      checkResult("<<caret>a>R</a>");
+    }
+    finally {
+      EditorSettingsExternalizable.getInstance().setBidiTextDirection(savedValue);
+    }
   }
   
   private void prepareText(String text) throws IOException {

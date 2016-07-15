@@ -162,6 +162,10 @@ abstract class LineLayout {
   }
   
   private static void addRuns(List<BidiRun> runs, char[] text, int start, int end, int flags) {
+    if (!Bidi.requiresBidi(text, start, end)) {
+      addOrMergeRun(runs, new BidiRun((byte)0, start, end));
+      return;
+    }
     int afterLastTabPosition = start;
     for (int i = start; i < end; i++) {
       if (text[i] == '\t') {
