@@ -315,7 +315,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
       PsiElement adjustedElement = psiElement;
       int adjustedOffset = offset;
-      if (psiElement instanceof PsiWhiteSpace) {
+      if (psiElement instanceof PsiWhiteSpace && offset == psiElement.getTextRange().getStartOffset()) {
         final PsiElement prev = psiElement.getPrevSibling();
         if (prev != null) {
           adjustedElement = prev;
