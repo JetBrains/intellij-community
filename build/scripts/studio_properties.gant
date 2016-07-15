@@ -345,11 +345,7 @@ def getProperties(String home, String buildNumber) {
       }
 
       def productBuildFile = new File(aswb + "/META-INF/product-build.txt")
-      if (productBuildFile.isFile()) {
-        def text = productBuildFile.text
-        text = text.replaceAll("PRODUCT_BUILD", fullBuildNumber());
-        productBuildFile.text = text;
-      }
+      productBuildFile.write(fullBuildNumber());
 
     }
 
