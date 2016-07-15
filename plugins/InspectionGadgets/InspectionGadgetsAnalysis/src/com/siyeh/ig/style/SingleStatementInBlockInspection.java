@@ -52,18 +52,7 @@ public class SingleStatementInBlockInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
-      switch ((String)infos[0]) {
-        case PsiKeyword.DO:
-          return new RemoveDoBracesFix();
-        case PsiKeyword.ELSE:
-          return new RemoveElseBracesFix();
-        case PsiKeyword.FOR:
-          return new RemoveForBracesFix();
-        case PsiKeyword.IF:
-          return new RemoveIfBracesFix();
-        case PsiKeyword.WHILE:
-          return new RemoveWhileBracesFix();
-      }
+      return new SingleStatementInBlockFix((String)infos[0]);
     }
     return null;
   }
@@ -124,12 +113,18 @@ public class SingleStatementInBlockInspection extends BaseInspection {
     }
   }
 
-  private static abstract class SingleStatementInBlockFix extends InspectionGadgetsFix {
+  private static class SingleStatementInBlockFix extends InspectionGadgetsFix {
+    private final String myKeywordText;
+
+    private SingleStatementInBlockFix(String keywordText) {
+      myKeywordText = keywordText;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", getKeywordText());
+      return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", myKeywordText);
     }
 
     @Nls
@@ -161,13 +156,5 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       assert body instanceof PsiBlockStatement;
       doFixImpl((PsiBlockStatement)body);
     }
-
-    abstract String getKeywordText();
   }
-
-  private static class RemoveDoBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.DO; } }
-  private static class RemoveElseBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.ELSE; } }
-  private static class RemoveForBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.FOR; } }
-  private static class RemoveIfBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.IF; } }
-  private static class RemoveWhileBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.WHILE; } }
 }
