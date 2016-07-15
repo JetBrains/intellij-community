@@ -125,7 +125,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (processChangedTextOnly) {
           ChangedRangesInfo info = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
           if (info != null) {
-            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, info.allChangedRanges, info.insertedRanges);
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, info);
           }
         }
         else {

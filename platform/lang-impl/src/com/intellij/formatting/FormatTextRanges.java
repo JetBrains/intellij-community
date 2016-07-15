@@ -18,27 +18,30 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.DiffInfo;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FormatTextRanges implements FormattingRangesInfo {
+  private final List<TextRange> myInsertedRanges;
   private final List<FormatTextRange> myRanges = new ArrayList<>();
-  private final DiffInfo myDiffInfo;
 
   public FormatTextRanges() {
-    myDiffInfo = null;
+    myInsertedRanges = null;
   }
 
   public FormatTextRanges(TextRange range, boolean processHeadingWhitespace) {
-    myDiffInfo = null;
+    myInsertedRanges = null;
     add(range, processHeadingWhitespace);
   }
   
-  public FormatTextRanges(DiffInfo info) {
-    myDiffInfo = info;
+  public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo) {
+    changedRangesInfo.allChangedRanges.forEach((range) -> add(range, true));
+    myInsertedRanges = changedRangesInfo.insertedRanges;
   }
 
   public void add(TextRange range, boolean processHeadingWhitespace) {
@@ -67,7 +70,13 @@ public class FormatTextRanges implements FormattingRangesInfo {
 
   @Override
   public boolean isOnInsertedLine(int offset) {
-    return myDiffInfo != null && myDiffInfo.isOnInsertedLine(offset);
+    if (myInsertedRanges == null) return false;
+
+    Optional<TextRange> enclosingRange = myInsertedRanges.stream()
+      .filter((range) -> range.contains(offset))
+      .findAny();
+
+    return enclosingRange.isPresent();
   }
   
   public List<FormatTextRange> getRanges() {
@@ -103,4 +112,5 @@ public class FormatTextRanges implements FormattingRangesInfo {
   public List<TextRange> getTextRanges() {
     return myRanges.stream().map(FormatTextRange::getTextRange).collect(Collectors.toList());
   }
+  
 }
