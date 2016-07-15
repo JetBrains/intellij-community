@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -124,8 +125,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (processChangedTextOnly) {
           ChangedRangesInfo helper = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
           if (helper != null) {
-            List<TextRange> ranges = helper.changedRanges;
-            DiffInfo info = helper.diffInfo;
+            List<TextRange> ranges = helper.allChangedRanges;
+            DiffInfo info = helper.insertedRanges != null ? new DiffInfoImpl(helper.insertedRanges) : null;
             CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges, info);
           }
         }
