@@ -97,16 +97,16 @@ public class TextPatchBuilder {
       }
 
       if ((beforeRevision != null) && beforeRevision.isBinary() || (afterRevision != null) && afterRevision.isBinary()) {
-        result.add(buildBinaryPatch(myBasePath, beforeRevision, afterRevision));
+        result.add(buildBinaryPatch(beforeRevision, afterRevision));
         continue;
       }
 
       if (beforeRevision == null) {
-        result.add(buildAddedFile(myBasePath, afterRevision));
+        result.add(buildAddedFile(afterRevision));
         continue;
       }
       if (afterRevision == null) {
-        result.add(buildDeletedFile(myBasePath, beforeRevision));
+        result.add(buildDeletedFile(beforeRevision));
         continue;
       }
 
@@ -128,7 +128,7 @@ public class TextPatchBuilder {
 
       if (fragments.size() > 1 ||
           (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
-        TextFilePatch patch = buildPatchHeading(myBasePath, beforeRevision, afterRevision);
+        TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
         result.add(patch);
 
         int lastLine1 = 0;
@@ -177,7 +177,7 @@ public class TextPatchBuilder {
         checkPathEndLine(patch, c.getAfter());
       }
       else if (!beforeRevision.getPath().equals(afterRevision.getPath())) {
-        TextFilePatch movedPatch = buildMovedFile(myBasePath, beforeRevision, afterRevision);
+        TextFilePatch movedPatch = buildMovedFile(beforeRevision, afterRevision);
         checkPathEndLine(movedPatch, c.getAfter());
         result.add(movedPatch);
       }
@@ -205,8 +205,7 @@ public class TextPatchBuilder {
     return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
   }
 
-  private FilePatch buildBinaryPatch(@NotNull String basePath,
-                                     @Nullable AirContentRevision beforeRevision,
+  private FilePatch buildBinaryPatch(@Nullable AirContentRevision beforeRevision,
                                      @Nullable AirContentRevision afterRevision) throws VcsException {
     assert beforeRevision != null || afterRevision != null;
     AirContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
@@ -214,7 +213,7 @@ public class TextPatchBuilder {
     byte[] beforeContent = beforeRevision != null ? beforeRevision.getContentAsBytes() : null;
     byte[] afterContent = afterRevision != null ? afterRevision.getContentAsBytes() : null;
     BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent);
-    setPatchHeading(patch, basePath, headingBeforeRevision, headingAfterRevision);
+    setPatchHeading(patch, headingBeforeRevision, headingAfterRevision);
     return patch;
   }
 
@@ -231,21 +230,19 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private TextFilePatch buildMovedFile(@NotNull String basePath,
-                                       @NotNull AirContentRevision beforeRevision,
+  private TextFilePatch buildMovedFile(@NotNull AirContentRevision beforeRevision,
                                        @NotNull AirContentRevision afterRevision) throws VcsException {
-    TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
+    TextFilePatch result = buildPatchHeading(beforeRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
     result.addHunk(hunk);
     return result;
   }
 
   @NotNull
-  private TextFilePatch buildAddedFile(@NotNull String basePath,
-                                       @NotNull AirContentRevision afterRevision) throws VcsException {
+  private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
     DiffString content = getContent(afterRevision);
     DiffString[] lines = tokenize(content);
-    TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
+    TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for (DiffString line : lines) {
       checkCanceled();
@@ -256,11 +253,10 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private TextFilePatch buildDeletedFile(@NotNull String basePath,
-                                         @NotNull AirContentRevision beforeRevision) throws VcsException {
+  private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
     DiffString content = getContent(beforeRevision);
     DiffString[] lines = tokenize(content);
-    TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
+    TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for (DiffString line : lines) {
       checkCanceled();
@@ -294,8 +290,8 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private String getRelativePath(@NotNull String basePath, @NotNull String secondPath) {
-    String baseModified = FileUtil.toSystemIndependentName(basePath);
+  private String getRelativePath(@NotNull String secondPath) {
+    String baseModified = FileUtil.toSystemIndependentName(myBasePath);
     String secondModified = FileUtil.toSystemIndependentName(secondPath);
 
     String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', myIsCaseSensitive);
@@ -313,22 +309,20 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private TextFilePatch buildPatchHeading(@NotNull String basePath,
-                                          @NotNull AirContentRevision beforeRevision,
+  private TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
                                           @NotNull AirContentRevision afterRevision) {
     TextFilePatch result = new TextFilePatch(afterRevision.getCharset());
-    setPatchHeading(result, basePath, beforeRevision, afterRevision);
+    setPatchHeading(result, beforeRevision, afterRevision);
     return result;
   }
 
   private void setPatchHeading(@NotNull FilePatch result,
-                               @NotNull String basePath,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(getRelativePath(basePath, beforeRevision.getPath().getPath()));
+    result.setBeforeName(getRelativePath(beforeRevision.getPath().getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(getRelativePath(basePath, afterRevision.getPath().getPath()));
+    result.setAfterName(getRelativePath(afterRevision.getPath().getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
