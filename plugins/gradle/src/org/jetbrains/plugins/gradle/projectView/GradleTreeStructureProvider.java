@@ -30,12 +30,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -204,7 +206,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
     final Module module = fileIndex.getModuleForFile(virtualFile);
     String sourceSetName = getSourceSetName(module);
     if (sourceSetName == null) return null;
-    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName);
+    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName, directoryNode.getFilter());
   }
 
   @Nullable
@@ -228,8 +230,9 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
                                         PsiDirectory psiDirectory,
                                         ViewSettings settings,
                                         Module module,
-                                        String sourceSetName) {
-      super(project, psiDirectory, settings);
+                                        String sourceSetName,
+                                        Condition<PsiFileSystemItem> filter) {
+      super(project, psiDirectory, settings, filter);
       mySourceSetName = sourceSetName;
       myModule = module;
     }

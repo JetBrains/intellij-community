@@ -22,9 +22,11 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,8 +93,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   }
 
   @Override
-  public boolean isEmptyMiddleDirectory(final PsiDirectory directory, final boolean strictlyEmpty) {
-    return JavaDirectoryService.getInstance().getPackage(directory) != null && TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty);
+  public boolean isEmptyMiddleDirectory(final PsiDirectory directory,
+                                        final boolean strictlyEmpty,
+                                        @Nullable Condition<PsiFileSystemItem> filter) {
+    return JavaDirectoryService.getInstance().getPackage(directory) != null &&
+           TreeViewUtil.isEmptyMiddlePackage(directory, strictlyEmpty, filter);
   }
 
   @Override
