@@ -38,7 +38,7 @@ class BuildContextImpl extends BuildContext {
 //todo[nik] construct buildOutputRoot automatically based on product name
   BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                   BuildOptions options, MacHostProperties macHostProperties, SignTool signTool) {
+                   BuildOptions options, MacHostProperties macHostProperties, SignTool signTool, ScrambleTool scrambleTool) {
     this.projectBuilder = projectBuilder
     this.ant = ant
     this.project = project
@@ -50,6 +50,7 @@ class BuildContextImpl extends BuildContext {
     this.options = options
     this.macHostProperties = macHostProperties
     this.signTool = signTool
+    this.scrambleTool = scrambleTool
     underTeamCity = System.getProperty("teamcity.buildType.id") != null
     messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
 
