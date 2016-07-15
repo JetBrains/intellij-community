@@ -16,7 +16,9 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -94,6 +96,14 @@ public class PyPIPackageUtil {
     catch (MalformedURLException e) {
       LOG.warn(e);
     }
+  }
+
+  /**
+   * Value for "User Agent" HTTP header in form: PyCharm/2016.2 EAP
+   */
+  @NotNull
+  private static String getUserAgent() {
+    return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
   }
 
   private static void fillPackages() throws IOException {
@@ -287,7 +297,7 @@ public class PyPIPackageUtil {
 
   @NotNull
   private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl) throws IOException {
-    return HttpRequests.request(archivesUrl).connect(request -> {
+    return HttpRequests.request(archivesUrl).userAgent(getUserAgent()).connect(request -> {
       final List<String> versions = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
@@ -308,7 +318,6 @@ public class PyPIPackageUtil {
             versions.add(splitNameVersion(packageVersion).second);
           }
         }
-
       }, true);
       versions.sort(PackageVersionComparator.VERSION_COMPARATOR.reversed());
       return versions;
@@ -351,7 +360,7 @@ public class PyPIPackageUtil {
 
   @NotNull
   private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) throws IOException {
-    return HttpRequests.request(url).connect(request -> {
+    return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
