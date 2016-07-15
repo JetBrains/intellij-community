@@ -47,6 +47,7 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
     return new PySingleStarParameterImpl(stub);
   }
 
+  @NotNull
   @Override
   public PySingleStarParameterStub createStub(@NotNull PySingleStarParameter psi, StubElement parentStub) {
     return new PySingleStarParameterStubImpl(parentStub);

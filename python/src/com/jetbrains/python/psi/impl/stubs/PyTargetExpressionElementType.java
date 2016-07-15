@@ -67,6 +67,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return new PyTargetExpressionImpl(stub);
   }
 
+  @NotNull
   public PyTargetExpressionStub createStub(@NotNull final PyTargetExpression psi, final StubElement parentStub) {
     final String name = psi.getName();
     final PyExpression assignedValue = psi.findAssignedValue();

@@ -46,6 +46,7 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     return new PyAnnotationImpl(stub);
   }
 
+  @NotNull
   public PyAnnotationStub createStub(@NotNull final PyAnnotation psi, final StubElement parentStub) {
     return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }

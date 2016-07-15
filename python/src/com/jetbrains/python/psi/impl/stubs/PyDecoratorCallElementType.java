@@ -50,6 +50,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     return new PyDecoratorImpl(stub);
   }
 
+  @NotNull
   public PyDecoratorStub createStub(@NotNull PyDecorator psi, StubElement parentStub) {
     return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub);
   }

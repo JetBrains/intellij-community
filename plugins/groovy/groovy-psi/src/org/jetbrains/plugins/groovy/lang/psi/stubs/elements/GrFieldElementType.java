@@ -48,6 +48,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     return new GrFieldImpl(stub);
   }
 
+  @NotNull
   @Override
   public GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);

@@ -53,6 +53,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     return new PyFunctionImpl(stub);
   }
 
+  @NotNull
   public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();

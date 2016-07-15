@@ -54,6 +54,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     return new PyFromImportStatementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
     return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,

@@ -53,6 +53,7 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     return new PyImportStatementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyImportStatementStub createStub(@NotNull PyImportStatement psi, StubElement parentStub) {
     return new PyImportStatementStubImpl(parentStub, getStubElementType());

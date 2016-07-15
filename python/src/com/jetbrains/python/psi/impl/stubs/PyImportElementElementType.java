@@ -56,6 +56,7 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     return new PyImportElementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
     final PyTargetExpression asName = psi.getAsNameElement();

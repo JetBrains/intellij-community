@@ -45,6 +45,7 @@ public class PyStarImportElementElementType extends PyStubElementType<PyStarImpo
     return new PyStarImportElementImpl(stub);
   }
 
+  @NotNull
   public PyStarImportElementStub createStub(@NotNull final PyStarImportElement psi, final StubElement parentStub) {
     return new PyStarImportElementStubImpl(parentStub);
   }

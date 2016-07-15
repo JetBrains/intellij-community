@@ -39,6 +39,7 @@ public class PropertyListStubElementType extends ILightStubElementType<Propertie
     return new PropertiesListImpl(stub);
   }
 
+  @NotNull
   public PropertiesListStub createStub(@NotNull final PropertiesList psi, final StubElement parentStub) {
     return new PropertiesListStubImpl(parentStub);
   }

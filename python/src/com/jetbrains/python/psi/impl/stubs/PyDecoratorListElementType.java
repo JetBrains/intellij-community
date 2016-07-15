@@ -48,6 +48,7 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
     return new PyDecoratorListImpl(stub);
   }
 
+  @NotNull
   public PyDecoratorListStub createStub(@NotNull final PyDecoratorList psi, final StubElement parentStub) {
     return new PyDecoratorListStubImpl(parentStub);
   }

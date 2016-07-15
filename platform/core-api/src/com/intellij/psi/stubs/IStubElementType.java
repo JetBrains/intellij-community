@@ -34,6 +34,7 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
 
   public abstract PsiT createPsi(@NotNull StubT stub);
 
+  @NotNull
   public abstract StubT createStub(@NotNull PsiT psi, final StubElement parentStub);
 
   public boolean shouldCreateStub(ASTNode node) {

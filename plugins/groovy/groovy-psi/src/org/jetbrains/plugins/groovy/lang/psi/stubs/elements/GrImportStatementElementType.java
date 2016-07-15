@@ -41,6 +41,7 @@ public class GrImportStatementElementType extends GrStubElementType<GrImportStat
     return new GrImportStatementImpl(stub, this);
   }
 
+  @NotNull
   @Override
   public GrImportStatementStub createStub(@NotNull GrImportStatement psi, StubElement parentStub) {
     GrCodeReferenceElement ref = psi.getImportReference();

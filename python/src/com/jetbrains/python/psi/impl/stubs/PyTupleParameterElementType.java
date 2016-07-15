@@ -46,6 +46,7 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
     return new PyTupleParameterImpl(stub);
   }
 
+  @NotNull
   public PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
     return new PyTupleParameterStubImpl(psi.hasDefaultValue(), parentStub);
   }

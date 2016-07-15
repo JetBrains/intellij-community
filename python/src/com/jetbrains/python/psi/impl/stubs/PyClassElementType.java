@@ -55,6 +55,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassImpl(stub);
   }
 
+  @NotNull
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
     final Map<QualifiedName, QualifiedName> superClasses = getSuperClassQNames(psi);
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();

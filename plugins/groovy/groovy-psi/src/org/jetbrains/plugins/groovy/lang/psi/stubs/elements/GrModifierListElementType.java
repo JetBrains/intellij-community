@@ -39,6 +39,7 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
     return new GrModifierListImpl(stub);
   }
 
+  @NotNull
   @Override
   public GrModifierListStub createStub(@NotNull GrModifierList psi, StubElement parentStub) {
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStub.buildFlags(psi));

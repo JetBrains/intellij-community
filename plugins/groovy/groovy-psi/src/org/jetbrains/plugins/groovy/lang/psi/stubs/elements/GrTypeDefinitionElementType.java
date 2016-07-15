@@ -42,6 +42,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     super(debugName);
   }
 
+  @NotNull
   @Override
   public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement parentStub) {
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);

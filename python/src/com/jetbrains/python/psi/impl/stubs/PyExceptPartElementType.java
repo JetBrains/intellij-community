@@ -47,6 +47,7 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
     return new PyExceptPartImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyExceptPartStub createStub(@NotNull PyExceptPart psi, StubElement parentStub) {
     return new PyExceptPartStubImpl(parentStub);
