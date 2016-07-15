@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     this("IMPORT_ELEMENT");
   }
 
-  public PyImportElementElementType(String debugName) {
+  public PyImportElementElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 

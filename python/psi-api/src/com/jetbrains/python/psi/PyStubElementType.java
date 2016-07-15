@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public abstract class PyStubElementType<StubT extends StubElement, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
-  public PyStubElementType(@NonNls String debugName) {
+  public PyStubElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
   }
 

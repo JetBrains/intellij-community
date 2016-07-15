@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     this("NAMED_PARAMETER");
   }
 
-  public PyNamedParameterElementType(String debugName) {
+  public PyNamedParameterElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 

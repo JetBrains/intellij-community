@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     this("FROM_IMPORT_STATEMENT");
   }
 
-  public PyFromImportStatementElementType(String debugName) {
+  public PyFromImportStatementElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 

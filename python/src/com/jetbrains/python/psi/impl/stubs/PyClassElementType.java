@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     this("CLASS_DECLARATION");
   }
 
-  public PyClassElementType(String debugName) {
+  public PyClassElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
