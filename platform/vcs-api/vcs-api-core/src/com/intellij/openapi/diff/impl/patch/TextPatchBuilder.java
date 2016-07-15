@@ -56,12 +56,6 @@ public class TextPatchBuilder {
     myCancelChecker = cancelChecker;
   }
 
-  private void checkCanceled() {
-    if (myCancelChecker != null) {
-      myCancelChecker.run();
-    }
-  }
-
   @NotNull
   public static List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                            @NotNull String basePath,
@@ -75,20 +69,12 @@ public class TextPatchBuilder {
 
   @NotNull
   private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
-    List<FilePatch> result = new ArrayList<FilePatch>();
+    List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
       checkCanceled();
 
-      AirContentRevision beforeRevision;
-      AirContentRevision afterRevision;
-      if (myIsReversePath) {
-        beforeRevision = c.getAfter();
-        afterRevision = c.getBefore();
-      }
-      else {
-        beforeRevision = c.getBefore();
-        afterRevision = c.getAfter();
-      }
+      AirContentRevision beforeRevision = myIsReversePath ? c.getAfter() : c.getBefore();
+      AirContentRevision afterRevision = myIsReversePath ? c.getBefore() : c.getAfter();
 
       FilePatch patch = createPatch(beforeRevision, afterRevision);
       if (patch != null) result.add(patch);
@@ -97,9 +83,11 @@ public class TextPatchBuilder {
   }
 
   @Nullable
-  private FilePatch createPatch(@Nullable AirContentRevision beforeRevision, @Nullable AirContentRevision afterRevision)
+  private FilePatch createPatch(@Nullable AirContentRevision beforeRevision,
+                                @Nullable AirContentRevision afterRevision)
     throws VcsException {
     if (beforeRevision == null && afterRevision == null) return null;
+
     if (beforeRevision != null && beforeRevision.getPath().isDirectory()) return null;
     if (afterRevision != null && afterRevision.getPath().isDirectory()) return null;
 
@@ -206,10 +194,6 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static DiffString[] tokenize(@NotNull DiffString text) {
-    return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
-  }
-
   private FilePatch buildBinaryPatch(@Nullable AirContentRevision beforeRevision,
                                      @Nullable AirContentRevision afterRevision) throws VcsException {
     assert beforeRevision != null || afterRevision != null;
@@ -220,18 +204,6 @@ public class TextPatchBuilder {
     BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent);
     setPatchHeading(patch, headingBeforeRevision, headingAfterRevision);
     return patch;
-  }
-
-  private static void addLineToHunk(@NotNull PatchHunk hunk, @NotNull DiffString line, @NotNull PatchLine.Type type) {
-    PatchLine patchLine;
-    if (!line.endsWith('\n')) {
-      patchLine = new PatchLine(type, line.toString());
-      patchLine.setSuppressNewLine(true);
-    }
-    else {
-      patchLine = new PatchLine(type, line.substring(0, line.length() - 1).toString());
-    }
-    hunk.addLine(patchLine);
   }
 
   @NotNull
@@ -294,6 +266,18 @@ public class TextPatchBuilder {
     return result;
   }
 
+  private static void addLineToHunk(@NotNull PatchHunk hunk, @NotNull DiffString line, @NotNull PatchLine.Type type) {
+    PatchLine patchLine;
+    if (!line.endsWith('\n')) {
+      patchLine = new PatchLine(type, line.toString());
+      patchLine.setSuppressNewLine(true);
+    }
+    else {
+      patchLine = new PatchLine(type, line.substring(0, line.length() - 1).toString());
+    }
+    hunk.addLine(patchLine);
+  }
+
   @NotNull
   private String getRelativePath(@NotNull String secondPath) {
     String baseModified = FileUtil.toSystemIndependentName(myBasePath);
@@ -302,15 +286,6 @@ public class TextPatchBuilder {
     String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', myIsCaseSensitive);
     if (relPath == null) return secondModified;
     return relPath;
-  }
-
-  @NotNull
-  private static String getRevisionName(@NotNull AirContentRevision revision) {
-    String revisionName = revision.getRevisionNumber();
-    if (revisionName != null) {
-      return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
-    }
-    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
   }
 
   @NotNull
@@ -332,11 +307,29 @@ public class TextPatchBuilder {
   }
 
   @NotNull
+  private static String getRevisionName(@NotNull AirContentRevision revision) {
+    String revisionName = revision.getRevisionNumber();
+    if (revisionName != null) {
+      return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
+    }
+    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
+  }
+
+  @NotNull
   private static DiffString getContent(@NotNull AirContentRevision revision) throws VcsException {
     String beforeContent = revision.getContentAsString();
     if (beforeContent == null) {
       throw new VcsException("Failed to fetch old content for file " + revision.getPath().getPath());
     }
     return DiffString.create(beforeContent);
+  }
+
+  @NotNull
+  private static DiffString[] tokenize(@NotNull DiffString text) {
+    return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
+  }
+
+  private void checkCanceled() {
+    if (myCancelChecker != null) myCancelChecker.run();
   }
 }
