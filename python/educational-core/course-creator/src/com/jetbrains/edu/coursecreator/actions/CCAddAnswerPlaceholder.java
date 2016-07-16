@@ -58,7 +58,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     answerPlaceholder.setOffset(offset);
     answerPlaceholder.setUseLength(false);
 
-    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : EduNames.PLACEHOLDER);
+    String defaultPlaceholderText = "type here";
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
 
     CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder);
     dlg.show();
@@ -67,7 +68,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
 
     if (!model.hasSelection()) {
-      DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, EduNames.PLACEHOLDER));
+      DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, defaultPlaceholderText));
     }
 
     TaskFile taskFile = state.getTaskFile();
@@ -77,7 +78,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     answerPlaceholder.setTaskFile(taskFile);
     taskFile.sortAnswerPlaceholders();
 
-    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : EduNames.PLACEHOLDER);
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, JBColor.BLUE);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
   }
