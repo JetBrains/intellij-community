@@ -313,17 +313,16 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
-      PsiElement adjustedElement = psiElement;
-      int adjustedOffset = offset;
-      if (psiElement instanceof PsiWhiteSpace) {
-        final PsiElement prev = psiElement.getPrevSibling();
-        if (prev != null) {
-          adjustedElement = prev;
-          final TextRange range = prev.getTextRange();
-          adjustedOffset = range.isEmpty() ? range.getEndOffset() : range.getEndOffset() - 1;
+      PsiElement intentionElement = psiElement;
+      int intentionOffset = offset;
+      if (psiElement instanceof PsiWhiteSpace && offset == psiElement.getTextRange().getStartOffset() && offset > 0) {
+        final PsiElement prev = hostFile.findElementAt(offset - 1);
+        if (prev != null && prev.isValid()) {
+          intentionElement = prev;
+          intentionOffset = offset - 1;
         }
       }
-      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, adjustedElement, adjustedOffset, intentions);
+      collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, intentionElement, intentionOffset, intentions);
     }
 
     final int line = hostDocument.getLineNumber(offset);

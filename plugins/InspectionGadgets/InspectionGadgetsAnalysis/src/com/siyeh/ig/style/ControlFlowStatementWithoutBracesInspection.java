@@ -17,7 +17,9 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowStatementWithoutBracesInspection
   extends BaseInspection {
@@ -47,23 +50,23 @@ public class ControlFlowStatementWithoutBracesInspection
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
-      switch ((String)infos[0]) {
-        case PsiKeyword.DO: return new DoBracesFix();
-        case PsiKeyword.ELSE: return new ElseBracesFix();
-        case PsiKeyword.FOR: return new ForBracesFix();
-        case PsiKeyword.IF: return new IfBracesFix();
-        case PsiKeyword.WHILE: return new WhileBracesFix();
-      }
+      return new ControlFlowStatementFix((String)infos[0]);
     }
     return null;
   }
 
-  private static abstract class ControlFlowStatementFix extends InspectionGadgetsFix {
+  private static class ControlFlowStatementFix extends InspectionGadgetsFix {
+    private final String myKeywordText;
+
+    private ControlFlowStatementFix(String keywordText) {
+      myKeywordText = keywordText;
+    }
+
     @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
-        "control.flow.statement.without.braces.message", getKeywordText());
+        "control.flow.statement.without.braces.message", myKeywordText);
     }
 
     @Override
@@ -72,8 +75,6 @@ public class ControlFlowStatementWithoutBracesInspection
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.add.quickfix");
     }
-
-    abstract String getKeywordText();
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -141,11 +142,18 @@ public class ControlFlowStatementWithoutBracesInspection
     protected boolean isApplicable(PsiStatement body) {
       return body != null && !(body instanceof PsiBlockStatement);
     }
-  }
 
-  private static class DoBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return PsiKeyword.DO; } }
-  private static class ElseBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return PsiKeyword.ELSE; } }
-  private static class ForBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return PsiKeyword.FOR; } }
-  private static class IfBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return PsiKeyword.IF; } }
-  private static class WhileBracesFix extends ControlFlowStatementFix { @Override String getKeywordText() { return PsiKeyword.WHILE; } }
+    @Nullable
+    @Override
+    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+      if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
+        final PsiElement lastChild = body.getLastChild();
+        return Pair.create(PsiTreeUtil.skipSiblingsBackward(body, PsiWhiteSpace.class, PsiComment.class),
+                           lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON
+                           ? lastChild
+                           : null);
+      }
+      return null;
+    }
+  }
 }

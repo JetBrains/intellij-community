@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -60,6 +61,9 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       }
       else if ((sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project)) != null) {
         symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
+      }
+      else if (JrtFileSystem.isModuleRoot(vFile)) {
+        symbolIcon = AllIcons.Nodes.JavaModuleRoot;
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;

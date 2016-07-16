@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ChangedRangesInfo {
-  
-  public final DiffInfo diffInfo;
-  public final List<TextRange> changedRanges;
 
-  public ChangedRangesInfo(@Nullable DiffInfo info, @NotNull List<TextRange> ranges) {
-    diffInfo = info;
-    changedRanges = ranges;
+  public final List<TextRange> insertedRanges;
+  public final List<TextRange> allChangedRanges;
+
+  public ChangedRangesInfo(@NotNull List<TextRange> allChangedRanges, @Nullable List<TextRange> insertedRanges) {
+    this.insertedRanges = insertedRanges;
+    this.allChangedRanges = allChangedRanges;
   }
   
 }

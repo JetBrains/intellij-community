@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -52,18 +53,7 @@ public class SingleStatementInBlockInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
-      switch ((String)infos[0]) {
-        case PsiKeyword.DO:
-          return new RemoveDoBracesFix();
-        case PsiKeyword.ELSE:
-          return new RemoveElseBracesFix();
-        case PsiKeyword.FOR:
-          return new RemoveForBracesFix();
-        case PsiKeyword.IF:
-          return new RemoveIfBracesFix();
-        case PsiKeyword.WHILE:
-          return new RemoveWhileBracesFix();
-      }
+      return new SingleStatementInBlockFix((String)infos[0]);
     }
     return null;
   }
@@ -109,10 +99,9 @@ public class SingleStatementInBlockInspection extends BaseInspection {
     @Override
     protected boolean isApplicable(PsiStatement body) {
       if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement statement = (PsiBlockStatement)body;
-        final PsiStatement[] statements = statement.getCodeBlock().getStatements();
+        final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
         if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement)) {
-          final PsiFile file = statement.getContainingFile();
+          final PsiFile file = body.getContainingFile();
           //this inspection doesn't work in JSP files, as it can't tell about tags
           // inside the braces
           if (!FileTypeUtils.isInServerPageFile(file)) {
@@ -122,21 +111,43 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       }
       return false;
     }
+
+    @Nullable
+    @Override
+    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+      if (body instanceof PsiBlockStatement) {
+        final PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
+        final PsiStatement[] statements = codeBlock.getStatements();
+        if (statements.length == 1) {
+          final PsiStatement statement = statements[0];
+          if (statement instanceof PsiLoopStatement || statement instanceof PsiIfStatement) {
+            return Pair.create(codeBlock.getLBrace(), codeBlock.getRBrace());
+          }
+        }
+      }
+      return null;
+    }
   }
 
-  private static abstract class SingleStatementInBlockFix extends InspectionGadgetsFix {
+  private static class SingleStatementInBlockFix extends InspectionGadgetsFix {
+    private final String myKeywordText;
+
+    private SingleStatementInBlockFix(String keywordText) {
+      myKeywordText = keywordText;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", getKeywordText());
+      return InspectionGadgetsBundle.message("single.statement.in.block.quickfix", myKeywordText);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("single.statement.in.block.name");
+      return InspectionGadgetsBundle.message("single.statement.in.block.family.quickfix");
     }
 
     @Override
@@ -161,13 +172,5 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       assert body instanceof PsiBlockStatement;
       doFixImpl((PsiBlockStatement)body);
     }
-
-    abstract String getKeywordText();
   }
-
-  private static class RemoveDoBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.DO; } }
-  private static class RemoveElseBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.ELSE; } }
-  private static class RemoveForBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.FOR; } }
-  private static class RemoveIfBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.IF; } }
-  private static class RemoveWhileBracesFix extends SingleStatementInBlockFix { @Override String getKeywordText() { return PsiKeyword.WHILE; } }
 }

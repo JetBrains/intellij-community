@@ -40,6 +40,7 @@ abstract class BuildContext {
   MacHostProperties macHostProperties
   BuildOptions options
   SignTool signTool
+  ScrambleTool scrambleTool
   BundledJreManager bundledJreManager
 
   /**
@@ -80,9 +81,10 @@ abstract class BuildContext {
 
   public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
-                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null) {
+                                           BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null,
+                                           ScrambleTool scrambleTool = null) {
     return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                options, macHostProperties, signTool)
+                                options, macHostProperties, signTool, scrambleTool)
   }
 }
 

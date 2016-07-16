@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle;
+package com.intellij.openapi.editor.ex;
 
-public interface DiffInfo {
-  boolean isOnInsertedLine(int offset);
+public enum BidiTextDirection {
+  CONTENT_BASED, LTR, RTL
 }

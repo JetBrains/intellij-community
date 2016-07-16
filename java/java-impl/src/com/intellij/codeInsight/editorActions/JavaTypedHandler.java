@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -192,6 +191,9 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
+
+    HighlighterIterator hi = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    if (hi.atEnd() || hi.getTokenType() != JavaTokenType.SEMICOLON) return false;
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
     return true;

@@ -47,6 +47,14 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
   public void testWhile() { doTest("while"); }
   public void testWhileOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
 
+  public void testLadderInnerElse() { doTest("else"); }
+  public void testLadderInnerFor() { doTest("for"); }
+  public void testLadderInnerIf() { doTest("if"); }
+  public void testLadderOuterElse() { doTest("else"); }
+  public void testLadderOuterFor() { doTest("for"); }
+  public void testLadderOuterIf() { doTest("if"); }
+  public void testLadderOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

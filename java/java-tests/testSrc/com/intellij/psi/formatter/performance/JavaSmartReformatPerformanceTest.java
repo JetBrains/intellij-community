@@ -72,7 +72,7 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     return () -> CommandProcessor.getInstance().executeCommand(
       getProject(),
       () -> ApplicationManager.getApplication().runWriteAction(
-        () -> codeStyleManager.reformatTextWithContext(file, ranges, null)
+        () -> codeStyleManager.reformatTextWithContext(file, ranges)
       ),
       null,
       null);

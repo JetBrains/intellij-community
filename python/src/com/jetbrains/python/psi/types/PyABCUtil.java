@@ -69,6 +69,11 @@ public class PyABCUtil {
     if (PyNames.MAPPING.equals(superClassName)) {
       return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS, inherited, context);
     }
+    if (PyNames.MUTABLE_MAPPING.equals(superClassName)) {
+      final boolean hasSetItem = hasMethod(subClass, PyNames.SETITEM, inherited, context);
+      final boolean hasUpdate = hasMethod(subClass, PyNames.UPDATE, inherited, context);
+      return isSized && hasIter && isContainer && hasGetItem && hasSetItem && hasUpdate;
+    }
     if (PyNames.ABC_SET.equals(superClassName)) {
       return isSized && hasIter && isContainer;
     }

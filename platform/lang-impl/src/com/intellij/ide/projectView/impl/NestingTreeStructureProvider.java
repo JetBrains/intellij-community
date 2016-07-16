@@ -32,7 +32,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <code>NestingTreeStructureProvider</code> moves some files in the Project View to be shown as children of another peer file. Standard use
@@ -61,11 +64,11 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
-  private List<NestingRule> myNestingRules;
+  private Set<NestingRule> myNestingRules;
 
-  private List<NestingRule> getNestingRules() {
+  private Collection<NestingRule> getNestingRules() {
     if (myNestingRules == null) {
-      myNestingRules = new ArrayList<>();
+      myNestingRules = new THashSet<>();
 
       final NestingRulesConsumer consumer = new NestingRulesConsumer() {
         @Override
@@ -98,7 +101,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                              final ViewSettings settings) {
     if (!(parent instanceof PsiDirectoryNode)) return children;
 
-    final List<NestingRule> rules = getNestingRules();
+    final Collection<NestingRule> rules = getNestingRules();
     if (rules.isEmpty()) return children;
 
     final MultiMap<PsiFileNode, PsiFileNode> parentToChildren = calcParentToChildren(children, rules);
@@ -142,7 +145,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
    */
   @NotNull
   private static MultiMap<PsiFileNode, PsiFileNode> calcParentToChildren(@NotNull final Collection<AbstractTreeNode> nodes,
-                                                                         @NotNull final List<NestingRule> rules) {
+                                                                         @NotNull final Collection<NestingRule> rules) {
     // result that will contain number of separated parent-to-many-children sub-graphs
     MultiMap<PsiFileNode, PsiFileNode> parentToChildren = null;
 

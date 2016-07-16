@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 
@@ -72,7 +71,7 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       return new PathCellRenderer() {
         @Override
         protected Icon getItemIcon(Object value) {
-          return isJrtRoot(value) ? PlatformIcons.JAR_ICON : super.getItemIcon(value);
+          return isJrtRoot(value) ? AllIcons.Nodes.JavaModuleRoot : super.getItemIcon(value);
         }
       };
     }

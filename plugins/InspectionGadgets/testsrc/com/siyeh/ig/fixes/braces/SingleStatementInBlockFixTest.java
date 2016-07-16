@@ -50,11 +50,11 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   }
 
   private static String getMessage(String keyword) {
-    return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", keyword);
+    return InspectionGadgetsBundle.message("single.statement.in.block.quickfix", keyword);
   }
 
   private static String getMessagePrefix() {
-    final String message = InspectionGadgetsBundle.message("single.statement.in.block.descriptor", "@");
+    final String message = InspectionGadgetsBundle.message("single.statement.in.block.quickfix", "@");
     final int index = message.indexOf("@");
     if (index >= 0) return message.substring(0, index);
     return message;

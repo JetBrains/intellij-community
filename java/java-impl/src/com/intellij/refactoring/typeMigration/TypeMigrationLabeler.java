@@ -45,8 +45,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -278,14 +280,20 @@ public class TypeMigrationLabeler {
 
   class MigrationProducer {
     private final Map<UsageInfo, Object> myRemainConversions;
+    private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<PsiTypeElement, TypeMigrationUsageInfo>() {
+      @NotNull
+      @Override
+      protected Map<PsiTypeElement, Collection<TypeMigrationUsageInfo>> createMap() {
+        return new THashMap<>();
+      }
+    };
 
     private MigrationProducer(Map<UsageInfo, Object> conversions) {
       myRemainConversions = conversions;
     }
 
     public void change(@NotNull final TypeMigrationUsageInfo usageInfo,
-                       @NotNull Consumer<PsiNewExpression> consumer,
-                       @NotNull TypeMigrationLabeler labeler) {
+                       @NotNull Consumer<PsiNewExpression> consumer) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -321,6 +329,11 @@ public class TypeMigrationLabeler {
           }
         }
       }
+      else if ((element instanceof PsiField || element instanceof PsiLocalVariable) &&
+               isMultiVariableDeclaration((PsiVariable)element)) {
+        final PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
+        myVariableMigration.putValue(typeElement, usageInfo);
+      }
       else {
         TypeMigrationReplacementUtil.migrateMemberOrVariableType(element, project, getTypeEvaluator().getType(usageInfo));
         if (usageInfo instanceof OverridenUsageInfo) {
@@ -332,8 +345,54 @@ public class TypeMigrationLabeler {
       }
     }
 
+    public void flush() {
+      for (Map.Entry<PsiTypeElement, Collection<TypeMigrationUsageInfo>> entry : myVariableMigration.entrySet()) {
+        final PsiTypeElement typeElement = entry.getKey();
+        if (!typeElement.isValid()) continue;
+        final Collection<TypeMigrationUsageInfo> migrations = entry.getValue();
+        if (migrations.size() != 1) {
+          MultiMap<PsiType, PsiVariable> variablesByMigrationType = new MultiMap<>();
+          for (TypeMigrationUsageInfo migration : migrations) {
+            final PsiElement var = migration.getElement();
+            if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) {
+              continue;
+            }
+            final PsiType type = getTypeEvaluator().getType(migration);
+            variablesByMigrationType.putValue(type, (PsiVariable)var);
+          }
+          if (variablesByMigrationType.size() == 1) {
+            final Map.Entry<PsiType, Collection<PsiVariable>> migrationTypeAndVariables =
+              ContainerUtil.getFirstItem(variablesByMigrationType.entrySet());
+            LOG.assertTrue(migrationTypeAndVariables != null);
+            final PsiVariable[] variables = PsiTreeUtil.getChildrenOfType(typeElement.getParent().getParent(), PsiVariable.class);
+            if (variables != null && variables.length == migrationTypeAndVariables.getValue().size()) {
+              typeElement
+                .replace(JavaPsiFacade.getElementFactory(variables[0].getProject()).createTypeElement(migrationTypeAndVariables.getKey()));
+              continue;
+            }
+          }
+        }
+        for (TypeMigrationUsageInfo info : entry.getValue()) migrateMultiDeclarationVariable(info);
+      }
+    }
+
+    private void migrateMultiDeclarationVariable(TypeMigrationUsageInfo varUsageInfo) {
+      final PsiElement var = varUsageInfo.getElement();
+      if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) return;
+      ((PsiVariable) var).normalizeDeclaration();
+      TypeMigrationReplacementUtil.migrateMemberOrVariableType(var, var.getProject(), getTypeEvaluator().getType(varUsageInfo));
+    }
+
     Object getConversion(UsageInfo info) {
       return myRemainConversions.remove(info);
+    }
+
+    private boolean isMultiVariableDeclaration(PsiVariable variable) {
+      final PsiElement parent = variable.getParent();
+      LOG.assertTrue(parent != null);
+      final PsiVariable[] variables = PsiTreeUtil.getChildrenOfType(parent, PsiVariable.class);
+      LOG.assertTrue(variables != null);
+      return variables.length != 1;
     }
   }
 
