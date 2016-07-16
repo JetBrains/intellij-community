@@ -34,6 +34,6 @@ public class PyStudyPluginConfigurator extends StudyBasePluginConfigurator {
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     if (taskManager == null) return false;
     Course course = taskManager.getCourse();
-    return course != null && "Python".equals(course.getLanguage()) && "PyCharm".equals(course.getCourseType());
+    return course != null && "Python".equals(course.getLanguageID()) && "PyCharm".equals(course.getCourseType());
   }
 }
