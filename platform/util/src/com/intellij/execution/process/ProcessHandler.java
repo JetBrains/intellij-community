@@ -54,6 +54,8 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final Semaphore myWaitSemaphore;
   private final ProcessListener myEventMulticaster;
   private final TasksRunner myAfterStartNotifiedRunner;
+  
+  private volatile int myExitCode = -1;
 
   protected ProcessHandler() {
     myEventMulticaster = createEventMulticaster();
@@ -134,6 +136,13 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     return myState.get() == STATE_TERMINATING;
   }
 
+  /**
+   * @return exit code if the process has already finished, -1 otherwise
+   */
+  public int getExitCode() {
+    return myExitCode;
+  }
+
   public void addProcessListener(final ProcessListener listener) {
     myListeners.add(listener);
   }
@@ -169,6 +178,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
         if (myState.compareAndSet(STATE_TERMINATING, STATE_TERMINATED)) {
           try {
+            myExitCode = exitCode;
             myEventMulticaster.processTerminated(new ProcessEvent(ProcessHandler.this, exitCode));
           }
           catch (Throwable e) {
