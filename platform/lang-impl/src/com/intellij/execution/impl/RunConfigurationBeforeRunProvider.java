@@ -175,7 +175,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
                              RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
-      return false;
+      return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
     }
     return doExecuteTask(env, settings);
   }
