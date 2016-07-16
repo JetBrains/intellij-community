@@ -10,6 +10,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,15 +123,33 @@ public class Course {
   }
 
   public Language getLanguageById() {
-    return Language.findLanguageByID(myLanguage);
+    return Language.findLanguageByID(getLanguageID());
   }
 
+  /**
+   * This method should be used by serialized only
+   * Use {@link #getLanguageID()} and {@link #getLanguageVersion()} methods instead
+   */
+  @Deprecated
   public String getLanguage() {
     return myLanguage;
   }
 
   public void setLanguage(@NotNull final String language) {
     myLanguage = language;
+  }
+
+  public String getLanguageID() {
+    return myLanguage.split(" ")[0];
+  }
+
+  @Nullable
+  public String getLanguageVersion() {
+    String[] split = myLanguage.split(" ");
+    if (split.length <= 1) {
+      return null;
+    }
+    return split[1];
   }
 
   public void setAuthors(List<StepicUser> authors) {

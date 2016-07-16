@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -27,6 +28,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.psi.LanguageLevel;
 import icons.CourseCreatorPythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +40,9 @@ import java.io.File;
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
+  public static final String ALL_VERSIONS = "All versions";
+  public static final String PYTHON_3 = "3x";
+  public static final String PYTHON_2 = "2x";
   private CCNewProjectPanel mySettingsPanel;
 
   @Nls
@@ -56,14 +61,11 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    generateProject(project, baseDir, mySettingsPanel.getName(),
-                    mySettingsPanel.getAuthors(), mySettingsPanel.getDescription());
+    generateProject(project, baseDir, mySettingsPanel);
   }
 
-  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                                     @NotNull final String name, @NotNull final String[] authors,
-                                     @NotNull final String description) {
-    final Course course = getCourse(project, name, authors, description);
+  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, CCNewProjectPanel settingsPanel) {
+    final Course course = getCourse(project, settingsPanel);
     EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
@@ -94,12 +96,19 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   }
 
   @NotNull
-  private static Course getCourse(@NotNull Project project, @NotNull String name, @NotNull String[] authors, @NotNull String description) {
+  private static Course getCourse(@NotNull Project project, @NotNull CCNewProjectPanel settingsPanel) {
     final Course course = new Course();
+    String name = settingsPanel.getName();
     course.setName(name);
-    course.setAuthors(authors);
-    course.setDescription(description);
-    course.setLanguage(PythonLanguage.getInstance().getID());
+    course.setAuthors(settingsPanel.getAuthors());
+    course.setDescription(settingsPanel.getDescription());
+
+    String language = PythonLanguage.getInstance().getID();
+    String version = settingsPanel.getLanguageVersion();
+    if (version != null && !ALL_VERSIONS.equals(version)) {
+      language += " " + version;
+    }
+    course.setLanguage(language);
     course.setCourseMode(CCUtils.COURSE_MODE);
 
     File coursesDir = new File(PathManager.getConfigPath(), "courses");
@@ -125,6 +134,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public JPanel extendBasePanel() throws ProcessCanceledException {
     mySettingsPanel = new CCNewProjectPanel();
+    setupLanguageLevels(mySettingsPanel);
     mySettingsPanel.registerValidators(new FacetValidatorsManager() {
       public void registerValidator(FacetEditorValidator validator, JComponent... componentsToWatch) {
         throw new UnsupportedOperationException();
@@ -135,5 +145,19 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
       }
     });
     return mySettingsPanel.getMainPanel();
+  }
+
+  private static void setupLanguageLevels(CCNewProjectPanel panel) {
+    JLabel languageLevelLabel = panel.getLanguageLevelLabel();
+    languageLevelLabel.setText("Python Version:");
+    languageLevelLabel.setVisible(true);
+    ComboBox<String> languageLevelCombobox = panel.getLanguageLevelCombobox();
+    languageLevelCombobox.addItem(ALL_VERSIONS);
+    languageLevelCombobox.addItem(PYTHON_3);
+    languageLevelCombobox.addItem(PYTHON_2);
+    for (LanguageLevel level : LanguageLevel.values()) {
+      languageLevelCombobox.addItem(level.toString());
+    }
+    languageLevelCombobox.setVisible(true);
   }
 }
