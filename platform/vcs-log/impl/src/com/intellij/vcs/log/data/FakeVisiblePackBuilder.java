@@ -29,10 +29,8 @@ import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class FakeVisiblePackBuilder {
   @NotNull private final VcsLogHashMap myHashMap;
@@ -81,16 +79,14 @@ public class FakeVisiblePackBuilder {
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull final Set<Integer> heads,
                                     @NotNull final VisibleGraph<Integer> visibleGraph) {
-    Collection<VcsRef> branchesAndHeads = refsModel.stream().filter(ref -> {
-      int commitIndex = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-      if (ref.getType().isBranch() || heads.contains(commitIndex)) {
-        Integer row = visibleGraph.getVisibleRowIndex(commitIndex);
-        if (row != null && row >= 0) {
-          return true;
-        }
-      }
-      return false;
-    }).collect(Collectors.toList());
+    Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
+    refsModel.getBranches().stream().filter(ref -> {
+      int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+      Integer row = visibleGraph.getVisibleRowIndex(index);
+      return row != null && row >= 0;
+    }).forEach(branchesAndHeads::add);
+    heads.stream().flatMap(head -> refsModel.refsToCommit(head).stream()).forEach(branchesAndHeads::add);
+
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
     Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
     for (VirtualFile root : map.keySet()) {
