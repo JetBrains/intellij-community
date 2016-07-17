@@ -254,7 +254,7 @@
 		<ul>
 		<li>0.12
 				<ol>
-				     <li>Added support for transparent changing of visibility of existing fields and variables</li>
+				     <li>Added support for transparent changing of visibility of existing fields and variables for IntelliJ 2016.2</li>
 				     <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using `@Value`</li>
 				     <li>Fixed #137: Private visibility added by @Value not respected by IDE.</li>
 				     <li>Fixed #143: Support UtilityClass</li>

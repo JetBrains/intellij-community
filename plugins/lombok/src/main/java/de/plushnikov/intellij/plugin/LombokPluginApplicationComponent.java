@@ -72,7 +72,8 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
       settings.setVersion(Version.PLUGIN_VERSION);
     }
 
-    if (settings.isEnableRuntimePatch()) {
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (unitTestMode || settings.isEnableRuntimePatch()) {
       LOG.info("Runtime path support is enabled");
       injectAgent();
     } else {
