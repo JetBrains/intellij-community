@@ -15,12 +15,14 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -47,11 +49,11 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
@@ -143,6 +145,7 @@ public class GoToHashOrRefPopup {
   }
 
   private class VcsRefCompletionProvider extends ValuesCompletionProvider<VcsRef> {
+    private static final int TIMEOUT = 100;
     @NotNull private final VcsLogRefs myRefs;
     @NotNull private final Collection<VirtualFile> myRoots;
 
@@ -156,11 +159,47 @@ public class GoToHashOrRefPopup {
       myRoots = roots;
     }
 
-    @NotNull
     @Override
-    protected Collection<? extends VcsRef> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
-      return myRefs.stream().filter(ref -> myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName()))
-        .collect(Collectors.toList());
+    public void fillCompletionVariants(@NotNull CompletionParameters parameters,
+                                       @NotNull String prefix,
+                                       @NotNull CompletionResultSet result) {
+      addValues(result, filterAndSort(result, myRefs.getBranches().stream()));
+
+      Future<List<VcsRef>> future = ApplicationManager.getApplication()
+        .executeOnPooledThread(() -> filterAndSort(result, myRefs.stream().filter(ref -> !ref.getType().isBranch())));
+      while (true) {
+        try {
+          List<VcsRef> tags = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
+          if (tags != null) {
+            addValues(result, tags);
+            break;
+          }
+        }
+        catch (InterruptedException | CancellationException e) {
+          break;
+        }
+        catch (TimeoutException ignored) {
+        }
+        catch (ExecutionException e) {
+          LOG.error(e);
+          break;
+        }
+        ProgressManager.checkCanceled();
+      }
+      result.stopHere();
+    }
+
+    public void addValues(@NotNull CompletionResultSet result, @NotNull Collection<? extends VcsRef> values) {
+      for (VcsRef completionVariant : values) {
+        result.addElement(installInsertHandler(myDescriptor.createLookupBuilder(completionVariant)));
+      }
+    }
+
+    @NotNull
+    private List<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
+      return ContainerUtil
+        .sorted(stream.filter(ref -> myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName()))
+                  .collect(Collectors.toList()), myDescriptor);
     }
   }
 
