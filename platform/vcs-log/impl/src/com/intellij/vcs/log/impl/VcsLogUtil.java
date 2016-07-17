@@ -186,11 +186,6 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, @NotNull final Set<VirtualFile> visibleRoots) {
-    return ContainerUtil.filter(log.getAllReferences(), ref -> visibleRoots.contains(ref.getRoot()));
-  }
-
-  @NotNull
   public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUiImpl logUi) {
     VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
     Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();

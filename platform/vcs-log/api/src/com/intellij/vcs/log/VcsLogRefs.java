@@ -32,8 +32,5 @@ public interface VcsLogRefs {
   Collection<VcsRef> getBranches();
 
   @NotNull
-  Collection<VcsRef> getAllRefs();
-
-  @NotNull
   Stream<VcsRef> stream();
 }

@@ -39,11 +39,11 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
-    Collection<VcsRef> visibleBranches = VcsLogUtil.getVisibleBranches(log, visibleRoots);
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, text -> log.jumpToReference(text),
+    GoToHashOrRefPopup popup =
+      new GoToHashOrRefPopup(project, logUi.getDataPack().getRefs(), visibleRoots, text -> log.jumpToReference(text),
                                                       vcsRef -> logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot()),
-                                                      logUi.getColorManager(),
-                                                      new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
+                             logUi.getColorManager(),
+                             new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }
 

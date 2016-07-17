@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
@@ -35,6 +34,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
@@ -63,7 +64,7 @@ public class GoToHashOrRefPopup {
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull final Project project,
-                            @NotNull Collection<VcsRef> variants,
+                            @NotNull VcsLogRefs variants,
                             Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
@@ -142,24 +143,24 @@ public class GoToHashOrRefPopup {
   }
 
   private class VcsRefCompletionProvider extends ValuesCompletionProvider<VcsRef> {
+    @NotNull private final VcsLogRefs myRefs;
+    @NotNull private final Collection<VirtualFile> myRoots;
 
     public VcsRefCompletionProvider(@NotNull Project project,
-                                    @NotNull Collection<VcsRef> variants,
+                                    @NotNull VcsLogRefs refs,
                                     @NotNull Collection<VirtualFile> roots,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
-      super(new VcsRefDescriptor(project, colorManager, comparator, roots), variants);
+      super(new VcsRefDescriptor(project, colorManager, comparator, roots), ContainerUtil.emptyList());
+      myRefs = refs;
+      myRoots = roots;
     }
 
     @NotNull
     @Override
     protected Collection<? extends VcsRef> getValues(@NotNull String prefix, @NotNull CompletionResultSet result) {
-      return ContainerUtil.filter(myValues, new Condition<VcsRef>() {
-        @Override
-        public boolean value(VcsRef vcsRef) {
-          return result.getPrefixMatcher().prefixMatches(vcsRef.getName());
-        }
-      });
+      return myRefs.stream().filter(ref -> myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName()))
+        .collect(Collectors.toList());
     }
   }
 

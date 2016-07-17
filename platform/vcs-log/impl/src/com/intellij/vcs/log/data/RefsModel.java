@@ -75,10 +75,4 @@ public class RefsModel implements VcsLogRefs {
     assert !ApplicationManager.getApplication().isDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
-
-  @NotNull
-  @Override
-  public Collection<VcsRef> getAllRefs() {
-    return stream().collect(Collectors.toList());
-  }
 }

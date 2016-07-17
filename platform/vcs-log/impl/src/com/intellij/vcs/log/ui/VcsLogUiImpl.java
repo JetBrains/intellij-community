@@ -193,17 +193,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @NotNull
-  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull final VirtualFile root) {
+  public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
+    jumpToCommit(commitHash, root, future);
     return future;
   }
 
-  @NotNull
-  public Future<Boolean> jumpToCommitByPartOfHash(@NotNull String commitHash) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommitByPartOfHash(hash), future);
-    return future;
+  public void jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, @NotNull SettableFuture<Boolean> future) {
+    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future);
+  }
+
+  public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<Boolean> future) {
+    jumpTo(commitHash, GraphTableModel::getRowOfCommitByPartOfHash, future);
   }
 
   private <T> void jumpTo(@NotNull final T commitId,

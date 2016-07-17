@@ -16,10 +16,11 @@
 package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;
@@ -97,22 +99,22 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public Collection<VcsRef> getAllReferences() {
-    return myUi.getDataPack().getRefs().getAllRefs();
-  }
-
-  @NotNull
-  @Override
   public Future<Boolean> jumpToReference(final String reference) {
-    Collection<VcsRef> references = getAllReferences();
-    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, ref -> ref.getName().startsWith(reference));
-    if (matchingRefs.isEmpty()) {
-      return myUi.jumpToCommitByPartOfHash(reference);
-    }
-    else {
-      VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
-      return myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot());
-    }
+    SettableFuture<Boolean> future = SettableFuture.create();
+    VcsLogRefs refs = myUi.getDataPack().getRefs();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<VcsRef> matchingRefs = refs.stream().filter(ref -> ref.getName().startsWith(reference)).collect(Collectors.toList());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (matchingRefs.isEmpty()) {
+          myUi.jumpToCommitByPartOfHash(reference, future);
+        }
+        else {
+          VcsRef ref = Collections.min(matchingRefs, new VcsGoToRefComparator(myUi.getDataPack().getLogProviders()));
+          myUi.jumpToCommit(ref.getCommitHash(), ref.getRoot(), future);
+        }
+      });
+    });
+    return future;
   }
 
   @NotNull

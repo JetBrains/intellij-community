@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FakeVisiblePackBuilder {
   @NotNull private final VcsLogHashMap myHashMap;
@@ -80,7 +81,7 @@ public class FakeVisiblePackBuilder {
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull final Set<Integer> heads,
                                     @NotNull final VisibleGraph<Integer> visibleGraph) {
-    Collection<VcsRef> branchesAndHeads = ContainerUtil.filter(refsModel.getAllRefs(), ref -> {
+    Collection<VcsRef> branchesAndHeads = refsModel.stream().filter(ref -> {
       int commitIndex = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       if (ref.getType().isBranch() || heads.contains(commitIndex)) {
         Integer row = visibleGraph.getVisibleRowIndex(commitIndex);
@@ -89,7 +90,7 @@ public class FakeVisiblePackBuilder {
         }
       }
       return false;
-    });
+    }).collect(Collectors.toList());
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
     Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
     for (VirtualFile root : map.keySet()) {
