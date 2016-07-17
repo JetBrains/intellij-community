@@ -51,8 +51,8 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
-  private static TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Iterable<VcsRef> refs,
-                                                                              @NotNull VcsLogHashMap hashMap) {
+  static TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Iterable<VcsRef> refs,
+                                                                      @NotNull VcsLogHashMap hashMap) {
     TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
     for (VcsRef ref : refs) {
       int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
@@ -70,6 +70,14 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @NotNull
+  public Collection<VcsRef> refsToHead(int index) {
+    if (myRefsToHashes.containsKey(index)) {
+      return myRefsToHashes.get(index);
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public VirtualFile rootAtHead(int headIndex) {
     return myRootsToHeadIndices.get(headIndex);
   }
@@ -77,12 +85,6 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   public Map<VirtualFile, Set<VcsRef>> getAllRefsByRoot() {
     return myRefs;
-  }
-
-  @NotNull
-  @Override
-  public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
-    return refsToCommit(myHashMap.getCommitIndex(hash, root));
   }
 
   public Collection<VcsRef> refsToCommit(int index) {

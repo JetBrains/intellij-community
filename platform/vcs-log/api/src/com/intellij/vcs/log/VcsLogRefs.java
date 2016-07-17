@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,9 +29,6 @@ public interface VcsLogRefs {
    */
   @NotNull
   Collection<VcsRef> getBranches();
-
-  @NotNull
-  Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root);
 
   @NotNull
   Collection<VcsRef> getAllRefs();

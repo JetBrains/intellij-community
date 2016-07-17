@@ -51,7 +51,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
   @Override
   public int getColorOfBranch(Integer headCommit) {
-    Collection<VcsRef> refs = myRefsModel.refsToCommit(headCommit);
+    Collection<VcsRef> refs = myRefsModel.refsToHead(headCommit);
     if (myHeadsComparator.isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
@@ -112,8 +112,8 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
         return 0;
       }
 
-      Collection<VcsRef> refs1 = myRefsModel.refsToCommit(head1);
-      Collection<VcsRef> refs2 = myRefsModel.refsToCommit(head2);
+      Collection<VcsRef> refs1 = myRefsModel.refsToHead(head1);
+      Collection<VcsRef> refs2 = myRefsModel.refsToHead(head2);
       boolean firstEmpty = isEmptyRefs(refs1, head1);
       boolean secondEmpty = isEmptyRefs(refs2, head2);
       if (firstEmpty && secondEmpty) {
