@@ -100,7 +100,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         if (baseBranch == null) { // GitBranchNotMergedToUpstreamDetector didn't happen
           baseBranch = myCurrentHeads.get(repository);
         }
-        myUnmergedToBranches.put(repository, new UnmergedBranchInfo(myDeletedBranchTips.get(repository), baseBranch));
+        myUnmergedToBranches.put(repository, new UnmergedBranchInfo(myDeletedBranchTips.get(repository),
+                                                                    GitBranchUtil.stripRefsPrefix(baseBranch)));
 
         GitCommandResult forceDeleteResult = myGit.branchDelete(repository, myBranchName, true);
         if (forceDeleteResult.success()) {
