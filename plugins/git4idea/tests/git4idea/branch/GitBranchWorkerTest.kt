@@ -530,8 +530,11 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myCommunity.deleteBranch("todelete")
     val notification = `assert successful deleted branch notification`("todelete", true, RESTORE, VIEW_COMMITS);
     val restoreAction = findAction(notification, RESTORE)
+
+    myVcsNotifier.cleanup()
     Notification.fire(notification, restoreAction)
     assertBranchExists(myCommunity, "todelete")
+    assertNoNotification()
   }
 
   fun `test restore branch deletion should restore tracking`() {

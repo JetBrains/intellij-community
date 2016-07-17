@@ -356,7 +356,6 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private void rollbackBranchDeletion(@NotNull Notification notification) {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
-      myNotifier.notifySuccess("Restored " + formatBranchName(myBranchName));
       notification.expire();
     }
     else {
