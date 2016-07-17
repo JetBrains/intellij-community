@@ -103,24 +103,4 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderSingularWithPrefixes() throws IOException {
     doTest(true);
   }
-
-  //  TODO implement me
-  public void ignore_testBuilder$BuilderWithToBuilder() throws IOException {
-    doTest(true);
-  }
-
-  //  TODO fixme
-  public void ignore_testBuilder$BuilderWithToBuilderOnClass() throws IOException {
-    doTest(true);
-  }
-
-  //  TODO fixme
-  public void ignore_testBuilder$BuilderWithToBuilderOnConstructor() throws IOException {
-    doTest(true);
-  }
-
-  //  TODO fixme
-  public void ignore_testBuilder$BuilderWithToBuilderOnMethod() throws IOException {
-    doTest(true);
-  }
 }
