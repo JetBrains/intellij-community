@@ -38,5 +38,10 @@ public interface VcsLogHashMap {
   @Nullable
   CommitId findCommitId(@NotNull Condition<CommitId> condition);
 
+  int getRefIndex(@NotNull VcsRef ref);
+
+  @Nullable
+  VcsRef getVcsRef(int refIndex);
+
   void flush();
 }

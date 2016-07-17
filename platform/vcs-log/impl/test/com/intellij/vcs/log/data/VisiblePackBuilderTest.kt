@@ -132,14 +132,10 @@ class VisiblePackBuilderTest {
                     val data: HashMap<GraphCommit<Int>, Data>) {
     val root: VirtualFile = MockVirtualFile("root")
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
-    val hashMap = generateHashMap(commits.maxBy { it.id }!!.id, root)
+    val hashMap = generateHashMap(commits.maxBy { it.id }!!.id, refs, root)
 
     fun build(filters: VcsLogFilterCollection): VisiblePack {
-      val refs = refs.mapTo(HashSet<VcsRef>(), {
-        VcsRefImpl(hashMap.getCommitId(it.commit)!!.hash, it.name, BRANCH_TYPE, root)
-      })
-
-      val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
+      val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys), providers, hashMap, true)
       val detailsCache = ContainerUtil.createConcurrentIntObjectMap<VcsCommitMetadata>()
       data.entries.forEach {
         val hash = hashMap.getCommitId(it.key.id)!!.hash
@@ -167,12 +163,15 @@ class VisiblePackBuilderTest {
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, root: VirtualFile): VcsLogHashMap {
-      val map = HashMap<Hash, Int>()
+    fun generateHashMap(num: Int, refs: Set<VisiblePackBuilderTest.Ref>, root: VirtualFile): ConstantVcsLogHashMap {
+      val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
-        map.put(HashImpl.build(i.toString()), i)
+        hashes.put(i, HashImpl.build(i.toString()))
       }
-      return ConstantVcsLogHashMap(map, root)
+      val vcsRefs = refs.mapTo(ArrayList<VcsRef>(), {
+        VcsRefImpl(hashes[it.commit]!!, it.name, BRANCH_TYPE, root)
+      })
+      return ConstantVcsLogHashMap(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
     }
 
   }
@@ -231,12 +230,17 @@ class VisiblePackBuilderTest {
     fun done() = Graph(commits, refs, data)
   }
 
-  class ConstantVcsLogHashMap(val map: Map<Hash, Int>, val root: VirtualFile) : VcsLogHashMap {
-    val reverseMap = map.entries.map { Pair(it.value, it.key) }.toMap()
+  class ConstantVcsLogHashMap(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogHashMap {
+    val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
+    val refsReversed = refs.entries.map { Pair(it.value, it.key) }.toMap()
 
-    override fun getCommitIndex(hash: Hash, root: VirtualFile) = map[hash]!!
+    override fun getCommitIndex(hash: Hash, root: VirtualFile) = hashesReversed[hash]!!
 
-    override fun getCommitId(commitIndex: Int) = CommitId(reverseMap[commitIndex]!!, root)
+    override fun getCommitId(commitIndex: Int) = CommitId(hashes[commitIndex]!!, root)
+
+    override fun getVcsRef(refIndex: Int): VcsRef = refs[refIndex]!!
+
+    override fun getRefIndex(ref: VcsRef): Int = refsReversed[ref]!!
 
     override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
 

@@ -21,12 +21,15 @@ import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InMemoryHashMap implements VcsLogHashMap {
-  private final BiDirectionalEnumerator<CommitId> myEnumerator = new BiDirectionalEnumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
+  private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator =
+    new BiDirectionalEnumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
+  private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator = new BiDirectionalEnumerator<VcsRef>(1, TObjectHashingStrategy.CANONICAL);
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
@@ -34,20 +37,20 @@ public class InMemoryHashMap implements VcsLogHashMap {
   }
 
   private int getOrPut(@NotNull Hash hash, @NotNull VirtualFile root) {
-    return myEnumerator.enumerate(new CommitId(hash, root));
+    return myCommitIdEnumerator.enumerate(new CommitId(hash, root));
   }
 
   @NotNull
   @Override
   public CommitId getCommitId(int commitIndex) {
-    return myEnumerator.getValue(commitIndex);
+    return myCommitIdEnumerator.getValue(commitIndex);
   }
 
   @Nullable
   @Override
   public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
     final CommitId[] result = new CommitId[]{null};
-    myEnumerator.forEachValue(commitId -> {
+    myCommitIdEnumerator.forEachValue(commitId -> {
       if (condition.value(commitId)) {
         result[0] = commitId;
         return false;
@@ -55,6 +58,17 @@ public class InMemoryHashMap implements VcsLogHashMap {
       return true;
     });
     return result[0];
+  }
+
+  @Override
+  public int getRefIndex(@NotNull VcsRef ref) {
+    return myRefsEnumerator.enumerate(ref);
+  }
+
+  @Nullable
+  @Override
+  public VcsRef getVcsRef(int refIndex) {
+    return myRefsEnumerator.getValue(refIndex);
   }
 
   @Override
