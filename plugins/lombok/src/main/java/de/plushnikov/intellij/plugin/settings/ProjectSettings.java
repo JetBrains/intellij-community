@@ -44,7 +44,7 @@ public class ProjectSettings {
   }
 
   public static void setEnabled(PropertiesComponent properties, String propertyName, boolean value) {
-    properties.setValue(propertyName, String.valueOf(value), String.valueOf(true));
+    properties.setValue(propertyName, String.valueOf(value), "");
   }
 
 }

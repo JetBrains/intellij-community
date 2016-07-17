@@ -73,7 +73,7 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
         if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
           Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
               LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
-              NotificationType.WARNING, null);
+              NotificationType.WARNING, new NotificationListener.UrlOpeningListener(false));
 
           Notifications.Bus.notify(notification, project);
         }

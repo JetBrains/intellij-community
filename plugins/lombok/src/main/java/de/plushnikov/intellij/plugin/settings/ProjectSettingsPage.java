@@ -107,9 +107,9 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
         myEnableDelegateSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED) ||
         myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED) ||
         myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
-        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED) ||
-        myEnableRuntimePatches.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED) ||
-        myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED);
+        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, false) ||
+        myEnableRuntimePatches.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, false) ||
+        myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false);
   }
 
   @Override
@@ -127,7 +127,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, myEnableRuntimePatches.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
-    LombokSettings.getInstance().setEnableRuntimePatch(myEnableRuntimePatches.isEnabled());
+    LombokSettings.getInstance().setEnableRuntimePatch(myEnableRuntimePatches.isSelected());
 
     myLombokProcessorProvider.initProcessors();
   }
