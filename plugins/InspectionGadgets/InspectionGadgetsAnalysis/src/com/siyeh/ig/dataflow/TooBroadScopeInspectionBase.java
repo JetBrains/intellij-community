@@ -192,7 +192,8 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       return false;
     }
     final String methodName = method.getName();
-    return !"now".equals(methodName) && !"currentTimeMillis".equals(methodName) && !"nanoTime".equals(methodName);
+    return !"now".equals(methodName) && !"currentTimeMillis".equals(methodName) &&
+           !"nanoTime".equals(methodName) && !"waitFor".equals(methodName);
   }
 
   private static boolean isAllowedType(PsiType type) {
