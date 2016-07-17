@@ -179,7 +179,7 @@ public class ContainingBranchesGetter {
 
           Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
-            branchesRefs.addAll(refs.branchesToCommit(index));
+            refs.refsToCommit(index).stream().filter(ref -> ref.getType().isBranch()).forEach(branchesRefs::add);
           }
           branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
 
