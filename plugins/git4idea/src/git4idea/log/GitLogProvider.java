@@ -268,7 +268,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   private static void addOldStillExistingTags(@NotNull Set<VcsRef> allRefs,
                                               @NotNull Set<String> currentTags,
-                                              @NotNull Set<VcsRef> previousRefs) {
+                                              @NotNull Collection<VcsRef> previousRefs) {
     for (VcsRef ref : previousRefs) {
       if (!allRefs.contains(ref) && currentTags.contains(ref.getName())) {
         allRefs.add(ref);
