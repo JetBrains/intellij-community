@@ -28,6 +28,10 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private JCheckBox myEnableConstructorSupport;
   private JCheckBox myEnableDelegateSupport;
   private JCheckBox myEnableParcelableSupport;
+  private JPanel mySettingsPanel;
+  private JCheckBox myEnableRuntimePatches;
+  private JCheckBox myEnableLombokVersionWarning;
+  private JPanel mySupportPanel;
 
   private PropertiesComponent myPropertiesComponent;
   private LombokProcessorProvider myLombokProcessorProvider;
@@ -89,7 +93,10 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
     myEnableLogSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED));
     myEnableConstructorSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED));
 
-    myEnableParcelableSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED));
+    myEnableParcelableSupport.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, false));
+
+    myEnableRuntimePatches.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, false));
+    myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
   }
 
   @Override
@@ -100,7 +107,9 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
         myEnableDelegateSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED) ||
         myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED) ||
         myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
-        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED);
+        myEnableParcelableSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED) ||
+        myEnableRuntimePatches.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED) ||
+        myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED);
   }
 
   @Override
@@ -115,6 +124,10 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED, myEnableConstructorSupport.isSelected());
 
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_THIRD_PARTY_ENABLED, myEnableParcelableSupport.isSelected());
+
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, myEnableRuntimePatches.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
+    LombokSettings.getInstance().setEnableRuntimePatch(myEnableRuntimePatches.isEnabled());
 
     myLombokProcessorProvider.initProcessors();
   }

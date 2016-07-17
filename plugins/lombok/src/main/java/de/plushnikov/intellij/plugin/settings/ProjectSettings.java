@@ -16,6 +16,9 @@ public class ProjectSettings {
 
   public static final String IS_THIRD_PARTY_ENABLED = PREFIX + "IS_THIRD_PARTY_Enabled";
 
+  public static final String IS_RUNTIME_PATCH_ENABLED = PREFIX + "IS_RUNTIME_PATCH_Enabled";
+  public static final String IS_LOMBOK_VERSION_CHECK_ENABLED = PREFIX + "IS_LOMBOK_VERSION_CHECK_Enabled";
+
   public static boolean isLombokEnabledInProject(@NotNull final Project project) {
     return isEnabled(project, LOMBOK_ENABLED_IN_PROJECT);
   }
@@ -29,7 +32,11 @@ public class ProjectSettings {
   }
 
   public static boolean isEnabled(PropertiesComponent properties, String propertyName) {
-    return properties.getBoolean(propertyName, true);
+    return isEnabled(properties, propertyName, true);
+  }
+
+  public static boolean isEnabled(PropertiesComponent properties, String propertyName, boolean defaultValue) {
+    return properties.getBoolean(propertyName, defaultValue);
   }
 
   public static void setEnabled(@NotNull Project project, final String propertyName, boolean value) {

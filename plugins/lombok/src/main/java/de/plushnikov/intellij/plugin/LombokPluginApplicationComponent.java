@@ -5,16 +5,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import de.plushnikov.intellij.lombok.patcher.inject.ClassRootFinder;
 import de.plushnikov.intellij.lombok.patcher.inject.LiveInjector;
 import de.plushnikov.intellij.plugin.agent.IdeaPatcher;
 import de.plushnikov.intellij.plugin.settings.LombokSettings;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Main application component, that loads Lombok support
@@ -74,8 +72,12 @@ public class LombokPluginApplicationComponent implements ApplicationComponent {
       settings.setVersion(Version.PLUGIN_VERSION);
     }
 
-
-    injectAgent();
+    if (settings.isEnableRuntimePatch()) {
+      LOG.info("Runtime path support is enabled");
+      injectAgent();
+    } else {
+      LOG.info("Runtime path support is disabled");
+    }
   }
 
   private void injectAgent() {

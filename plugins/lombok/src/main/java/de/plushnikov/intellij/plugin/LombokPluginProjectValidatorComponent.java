@@ -17,15 +17,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
-
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.event.HyperlinkEvent;
-
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
@@ -67,11 +65,10 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
       Notifications.Bus.notify(notification, project);
     }
 
-    if (hasLombokLibrary) {
+    if (hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED)) {
       final ModuleManager moduleManager = ModuleManager.getInstance(project);
       for (Module module : moduleManager.getModules()) {
-        final OrderEntry lombokEntry = findLombokEntry(ModuleRootManager.getInstance(module));
-        final String lombokVersion = parseLombokVersion(lombokEntry);
+        String lombokVersion = parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
         if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
           Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
