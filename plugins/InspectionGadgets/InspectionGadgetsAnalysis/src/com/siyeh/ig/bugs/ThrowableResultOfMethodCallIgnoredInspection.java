@@ -18,13 +18,12 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,19 +58,20 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression ||
-        parent instanceof PsiConditionalExpression) {
-        parent = parent.getParent();
-      }
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
-        return;
-      }
-      if (canBeThrown(parent)) {
+      if (!isIgnoredThrowable(expression)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
-      if (method == null || PropertyUtil.isSimpleGetter(method)) {
+      if (method == null) {
+        return;
+      }
+      final PsiType type = method.getReturnType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (aClass instanceof PsiTypeParameter) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
@@ -85,66 +85,71 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       if ("propagate".equals(method.getName()) && "com.google.common.base.Throwables".equals(containingClass.getQualifiedName())) {
         return;
       }
-      final PsiElement var = getVariable(parent, expression);
-      if (var == null) {
-        return;
-      }
-
-      if (var instanceof PsiLocalVariable) {
-        final Query<PsiReference> query = ReferencesSearch.search(var, var.getUseScope());
-        for (PsiReference reference : query) {
-          final PsiElement usage = reference.getElement();
-          PsiElement usageParent = usage.getParent();
-          while (usageParent instanceof PsiParenthesizedExpression) {
-            usageParent = usageParent.getParent();
-          }
-          if (canBeThrown(usageParent)) {
-            return;
-          }
-        }
-      }
       registerMethodCallError(expression);
-    }
-
-    private static boolean canBeThrown(PsiElement parent) {
-      if (parent instanceof PsiReturnStatement ||
-          parent instanceof PsiThrowStatement ||
-          parent instanceof PsiExpressionList ||
-          parent instanceof PsiLambdaExpression) {
-        return true;
-      }
-      final PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (MethodUtils.isChainable(method)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 
-  protected static PsiElement getVariable(PsiElement parent, PsiElement expression) {
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      final PsiExpression rhs = assignmentExpression.getRExpression();
-      if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
-        return null;
-      }
-      final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
-        return null;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiLocalVariable)) {
-        return null;
-      }
-      return target;
+  static boolean isIgnoredThrowable(PsiExpression expression) {
+    if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      return false;
     }
-    else {
-      return parent;
+    return isIgnored(expression, true);
+  }
+
+  private static boolean isIgnored(PsiElement element, boolean checkDeep) {
+    final PsiElement parent =
+      PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiExpressionList.class, PsiVariable.class,
+                                  PsiLambdaExpression.class, PsiPolyadicExpression.class, PsiInstanceOfExpression.class);
+    if (parent instanceof PsiVariable) {
+      if (!(parent instanceof PsiLocalVariable)) {
+        return false;
+      }
+      else {
+        return checkDeep && !isUsedElsewhere((PsiLocalVariable)parent);
+      }
     }
+    if (!(parent instanceof PsiStatement)) {
+      return false;
+    }
+    if (parent instanceof PsiReturnStatement || parent instanceof PsiThrowStatement || parent instanceof PsiForeachStatement) {
+      return false;
+    }
+    if (parent instanceof PsiExpressionStatement) {
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
+      final PsiExpression expression1 = expressionStatement.getExpression();
+      if (expression1 instanceof PsiMethodCallExpression) {
+        // void method (like printStackTrace()) provides no result, thus can't be ignored
+        return !PsiType.VOID.equals(expression1.getType());
+      }
+      else if (expression1 instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression1;
+        final PsiExpression rhs = assignmentExpression.getRExpression();
+        if (!PsiTreeUtil.isAncestor(rhs, element, false)) {
+          return false;
+        }
+        final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+        if (!(lhs instanceof PsiReferenceExpression)) {
+          return false;
+        }
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiLocalVariable)) {
+          return false;
+        }
+        return checkDeep && !isUsedElsewhere((PsiLocalVariable)target);
+      }
+    }
+    return true;
+  }
+
+  private static boolean isUsedElsewhere(PsiLocalVariable variable) {
+    final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+    for (PsiReference reference : query) {
+      final PsiElement usage = reference.getElement();
+      if (!isIgnored(usage, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
