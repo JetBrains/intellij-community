@@ -15,6 +15,10 @@ public class BuilderToBuilderTest extends AbstractLombokParsingTestCase {
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
+  public void testDummy() throws IOException {
+    //just do nothing
+  }
+
   //  TODO implement me
   public void ignore_testBuilder$BuilderWithToBuilder() throws IOException {
     doTest(true);
