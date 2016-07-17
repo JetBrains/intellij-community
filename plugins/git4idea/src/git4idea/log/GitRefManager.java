@@ -20,6 +20,9 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -32,6 +35,8 @@ public class GitRefManager implements VcsLogRefManager {
   public static final VcsRefType REMOTE_BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF, "REMOTE_BRANCH");
   public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "TAG");
   public static final VcsRefType OTHER = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG, "OTHER");
+
+  private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
@@ -128,6 +133,19 @@ public class GitRefManager implements VcsLogRefManager {
       result.add(new RemoteRefGroup(remote, branches));
     }
     return result;
+  }
+
+  @Override
+  public void serialize(@NotNull DataOutput out, @NotNull VcsRefType type) throws IOException {
+    out.writeInt(REF_TYPE_INDEX.indexOf(type));
+  }
+
+  @NotNull
+  @Override
+  public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+    int id = in.readInt();
+    if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
+    return REF_TYPE_INDEX.get(id);
   }
 
   private static Set<String> getLocalBranches(GitRepository repository) {
@@ -289,7 +307,6 @@ public class GitRefManager implements VcsLogRefManager {
     public Color getBgColor() {
       return VcsLogStandardColors.Refs.BRANCH_REF;
     }
-
   }
 
   private static class GitLabelComparator extends GitRefComparator {
