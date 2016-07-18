@@ -210,7 +210,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       new IdeaApplication(args);
     }
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-    writePauses = gatherStatistics ? new PausesStat("Write action") : null;
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
@@ -497,8 +496,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @TestOnly
+  @NotNull
   public String writeActionStatistics() {
-    return writePauses.statistics();
+    return ActionPauses.WRITE.statistics();
   }
 
   @Override
@@ -1071,14 +1071,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private final boolean gatherStatistics;
-  private final PausesStat writePauses;
+  private static class ActionPauses {
+    private static final PausesStat WRITE = new PausesStat("Write action");
+  }
 
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      writePauses.started();
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {
@@ -1117,7 +1119,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       myWriteActionsStack.pop();
       if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
-        writePauses.finished("write action ("+clazz+")");
+        ActionPauses.WRITE.finished("write action ("+clazz+")");
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();
