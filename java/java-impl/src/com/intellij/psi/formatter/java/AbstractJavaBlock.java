@@ -208,23 +208,22 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       block.setStartOffset(startOffset);
       return block;
     }
-    else if (isLikeExtendsList(elementType)) {
+    if (isLikeExtendsList(elementType)) {
       return new ExtendsListBlock(child, wrap, alignmentStrategy, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.CODE_BLOCK) {
+    if (elementType == JavaElementType.CODE_BLOCK) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.LABELED_STATEMENT) {
+    if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaDocElementType.DOC_COMMENT) {
+    if (elementType == JavaDocElementType.DOC_COMMENT) {
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else {
-      final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
-      simpleJavaBlock.setStartOffset(startOffset);
-      return simpleJavaBlock;
-    }
+
+    final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
+    simpleJavaBlock.setStartOffset(startOffset);
+    return simpleJavaBlock;
   }
 
   @NotNull
