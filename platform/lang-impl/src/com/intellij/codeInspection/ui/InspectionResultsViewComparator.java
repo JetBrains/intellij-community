@@ -159,9 +159,13 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-      if (positionComparing != 0) {
-        return positionComparing;
+      final VirtualFile file1 = ((RefElement)entity1).getPointer().getVirtualFile();
+      final VirtualFile file2 = ((RefElement)entity2).getPointer().getVirtualFile();
+      if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
+        final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+        if (positionComparing != 0) {
+          return positionComparing;
+        }
       }
     }
     if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
