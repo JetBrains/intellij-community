@@ -12,15 +12,15 @@ public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private static final Logger LOG = Logger.getInstance(StepicUser.class);
   private int id = -1;
-  private String myFirstName = "";
-  private String myLastName = "";
-  private String myEmail = "";
+  private String firstName = "";
+  private String lastName = "";
+  private String email = "";
 
   public StepicUser() {
   }
   
   public StepicUser(@NotNull final String email, @NotNull final String password) {
-    this.myEmail = email;
+    this.email = email;
     setPassword(password);
   }
 
@@ -34,29 +34,29 @@ public class StepicUser {
 
   @NotNull
   public String getFirstName() {
-    return myFirstName;
+    return firstName;
   }
 
   public void setFirstName(@NotNull final String firstName) {
-    this.myFirstName = firstName;
+    this.firstName = firstName;
   }
 
   @NotNull
   public String getLastName() {
-    return myLastName;
+    return lastName;
   }
 
   public void setLastName(@NotNull final String last_name) {
-    this.myLastName = last_name;
+    this.lastName = last_name;
   }
 
   @NotNull
   public String getEmail() {
-    return myEmail;
+    return email;
   }
 
   public void setEmail(@NotNull final String email) {
-    this.myEmail = email;
+    this.email = email;
   }
 
   @Transient
@@ -90,6 +90,6 @@ public class StepicUser {
 
   @NotNull
   public String getName() {
-    return StringUtil.join(new String[]{myFirstName, myLastName}, " ");
+    return StringUtil.join(new String[]{firstName, lastName}, " ");
   }
 }

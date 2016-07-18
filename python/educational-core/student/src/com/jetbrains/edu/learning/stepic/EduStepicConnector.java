@@ -216,7 +216,7 @@ public class EduStepicConnector {
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         LOG.warn("Failed to login: " + line.getStatusCode() + line.getReasonPhrase());
-        LOG.debug("Failed to login " + responseString);
+        LOG.info("Failed to login " + responseString);
         ourClient = null;
         return false;
       }

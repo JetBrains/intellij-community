@@ -297,8 +297,8 @@ public class StepicWrappers {
     }
   }
 
-  static class AuthorWrapper {
-    List<StepicUser> users;
+  public static class AuthorWrapper {
+    public List<StepicUser> users;
   }
 
   static class SubmissionWrapper {
