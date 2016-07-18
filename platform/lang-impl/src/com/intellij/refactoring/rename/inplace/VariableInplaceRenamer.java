@@ -193,6 +193,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     if (variable != null) {
       final int offset = variable.getTextOffset();
       restoreCaretOffset(offset);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
       JBPopupFactory.getInstance()
         .createConfirmation("Inserted identifier is not valid", "Continue editing", "Cancel",
                             () -> createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions), 0).showInBestPositionFor(myEditor);
