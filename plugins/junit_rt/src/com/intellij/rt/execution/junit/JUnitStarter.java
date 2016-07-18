@@ -72,7 +72,7 @@ public class JUnitStarter {
 
     String agentName = processParameters(argList, listeners, name);
 
-    if (!canWorkWithJUnitVersion(System.err, agentName)) {
+    if (!JUNIT5_RUNNER_NAME.equals(agentName) && !canWorkWithJUnitVersion(System.err, agentName)) {
       System.exit(-3);
     }
     if (!checkVersion(args, System.err)) {
@@ -230,7 +230,7 @@ public class JUnitStarter {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass(agentName);
     //noinspection UnnecessaryFullyQualifiedName
-    new junit.textui.TestRunner().setPrinter(new com.intellij.junit3.JUnit3IdeaTestRunner.MockResultPrinter());
+    new junit.textui.TestRunner().setPrinter(null); //
   }
 
   private static int prepareStreamsAndStart(String[] args,
