@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -163,12 +164,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
                              @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+    for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
-      progress.checkCanceled();
 
       //noinspection ForLoopReplaceableByForEach
-      for (int j = 0, providersSize = providers.size(); j < providersSize; j++) {
+      for (int j = 0; j < providers.size(); j++) {
+        ProgressManager.checkCanceled();
         LineMarkerProvider provider = providers.get(j);
         LineMarkerInfo info;
         try {

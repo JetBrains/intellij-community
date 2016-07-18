@@ -226,6 +226,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
       }
       Integer round = height > 2 ? height : null;
       while (dx <= width) {
+        //noinspection SuspiciousNameCombination
         RectanglePainter.FILL.paint(g, x + dx, y, height, height, round);
         dx += length;
       }

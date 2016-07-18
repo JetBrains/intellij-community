@@ -283,20 +283,20 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   /**
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
-  protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
-    checkResultByFile(null, filePath, false);
+  protected void checkResultByFile(@TestDataFile @NonNls @NotNull String expectedFilePath) {
+    checkResultByFile(null, expectedFilePath, false);
   }
 
   /**
    * Validates that content of the editor as well as caret and selection matches one specified in data file that
    * should be formed with the same format as one used in configureByFile
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
@@ -308,35 +308,27 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    String fullPath = getTestDataPath() + filePath;
+    String fullPath = getTestDataPath() + expectedFilePath;
 
     File ioFile = new File(fullPath);
 
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
-    String fileText = null;
+    String fileText;
     try {
       fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
     }
     catch (IOException e) {
       LOG.error(e);
+      throw new RuntimeException(e);
     }
-    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + filePath);
+    checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + expectedFilePath);
   }
 
   /**
    * Same as checkResultByFile but text is provided directly.
    */
-  protected void checkResultByText(@NonNls @NotNull String fileText) {
-    checkResultByText(null, fileText, false, null);
-  }
-
-  /**
-   * Same as checkResultByFile but text is provided directly.
-   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
-   */
-  protected void checkResultByText(final String message, @NotNull String fileText, final boolean ignoreTrailingSpaces) {
-    checkResultByText(message, fileText, ignoreTrailingSpaces, null);
+  protected void checkResultByText(@NonNls @NotNull String expectedFileText) {
+    checkResultByText(null, expectedFileText, false, null);
   }
 
   /**
@@ -344,11 +336,20 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, @NotNull final String fileText, final boolean ignoreTrailingSpaces, final String filePath) {
+  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces) {
+    checkResultByText(message, expectedFileText, ignoreTrailingSpaces, null);
+  }
+
+  /**
+   * Same as checkResultByFile but text is provided directly.
+   * @param message - this check specific message. Added to text, caret position, selection checking. May be null
+   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   */
+  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces, final String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document document = EditorFactory.getInstance().createDocument(fileText);
+      final Document document = EditorFactory.getInstance().createDocument(expectedFileText);
 
       if (ignoreTrailingSpaces) {
         ((DocumentImpl)document).stripTrailingSpaces(getProject());

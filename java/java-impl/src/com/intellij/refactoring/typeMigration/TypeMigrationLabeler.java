@@ -366,8 +366,15 @@ public class TypeMigrationLabeler {
             LOG.assertTrue(migrationTypeAndVariables != null);
             final PsiVariable[] variables = PsiTreeUtil.getChildrenOfType(typeElement.getParent().getParent(), PsiVariable.class);
             if (variables != null && variables.length == migrationTypeAndVariables.getValue().size()) {
-              typeElement
-                .replace(JavaPsiFacade.getElementFactory(variables[0].getProject()).createTypeElement(migrationTypeAndVariables.getKey()));
+              try {
+                PsiType migrationType = migrationTypeAndVariables.getKey();
+                final Project project = variables[0].getProject();
+                migrationType = TypeMigrationReplacementUtil.revalidateType(migrationType, project);
+                typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(migrationType));
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
               continue;
             }
           }
