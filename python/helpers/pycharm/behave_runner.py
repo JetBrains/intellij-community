@@ -140,10 +140,11 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         if isinstance(element, Step):
             # Process step
             step_name = u"{0} {1}".format(utils.to_unicode(element.keyword), utils.to_unicode(element.name))
+            duration_ms = element.duration * 1000
             if is_started:
                 self._test_started(step_name, element.location)
             elif element.status == 'passed':
-                self._test_passed(step_name, element.duration)
+                self._test_passed(step_name, duration_ms)
             elif element.status == 'failed':
                 # Correct way is to use element.errormessage
                 # but assertions do not have trace there (due to Behave internals)
@@ -160,7 +161,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     # Format exception as last resort
                     error_message = element.exception
 
-                self._test_failed(step_name, utils.to_unicode(error_message), trace, duration=element.duration)
+                self._test_failed(step_name, utils.to_unicode(error_message), trace, duration=duration_ms)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
             else:
