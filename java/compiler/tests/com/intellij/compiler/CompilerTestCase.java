@@ -463,21 +463,18 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
-          try {
-            myRecompiledPaths.clear();
-            myData = null;
-            myClassesDir = null;
-            myDataDir = null;
-            mySourceDir = null;
-            myOriginalSourceDir = null;
-            CompilerTestUtil.disableExternalCompiler(myProject);
-          }
-          finally {
-            CompilerTestCase.super.tearDown();
-          }
+      EdtTestUtil.runInEdtAndWait(() -> {
+        try {
+          myRecompiledPaths.clear();
+          myData = null;
+          myClassesDir = null;
+          myDataDir = null;
+          mySourceDir = null;
+          myOriginalSourceDir = null;
+          CompilerTestUtil.disableExternalCompiler(myProject);
+        }
+        finally {
+          super.tearDown();
         }
       });
     }
