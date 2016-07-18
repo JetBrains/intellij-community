@@ -1569,10 +1569,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByFile(filePath);
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
-    long s = System.currentTimeMillis();
     highlightErrors();
-    long e = System.currentTimeMillis();
-    System.out.println("Hi elapsed: "+(e-s));
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
@@ -1583,6 +1580,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       final int finalI = i;
       final long start = System.currentTimeMillis();
       final AtomicLong typingStart = new AtomicLong();
+      final AtomicReference<RuntimeException> exception = new AtomicReference<>();
       Thread watcher = new Thread("reactivity watcher") {
         @Override
         public void run() {
@@ -1605,7 +1603,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                "; Progress: " + codeAnalyzer.getUpdateProgress() +
                                "\n----------------------------";
               dumpThreadsToConsole();
-              throw new RuntimeException(message);
+              exception.set(new RuntimeException(message));
+              throw exception.get();
             }
           }
         }
@@ -1646,6 +1645,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       finally {
         typingStart.set(-1); // cancel watcher
         watcher.join();
+        if (exception.get() != null) {
+          throw exception.get();
+        }
       }
     }
 
@@ -1655,14 +1657,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private static void dumpThreadsToConsole() {
-    PerformanceWatcher.dumpThreadsToConsole("");
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
+
       boolean canceled = CoreProgressManager.isCanceledThread(thread);
       if (canceled) {
         System.err.println("Thread " + thread + " indicator is canceled");
       }
     }
+    PerformanceWatcher.dumpThreadsToConsole("");
     System.err.println("----///////---");
   }
 
