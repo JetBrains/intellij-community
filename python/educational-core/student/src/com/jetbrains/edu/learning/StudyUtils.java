@@ -114,6 +114,7 @@ public class StudyUtils {
     return fileName.contains(".zip");
   }
 
+  @Nullable
   public static <T> T getFirst(@NotNull final Iterable<T> container) {
     Iterator<T> iterator = container.iterator();
     if (!iterator.hasNext()) {
