@@ -218,12 +218,13 @@ public class DarculaTitlePane extends JComponent {
   }
 
   private void installDefaults() {
-    setFont(JBUI.Fonts.label().asBold());
+    setFont(JBUI.Fonts.label());
   }
 
 
   protected JMenuBar createMenuBar() {
     myMenuBar = new SystemMenuBar();
+    myMenuBar.setOpaque(false);
     myMenuBar.setFocusable(false);
     myMenuBar.setBorderPainted(true);
     myMenuBar.add(createMenu());
@@ -503,10 +504,11 @@ public class DarculaTitlePane extends JComponent {
     //g.drawLine(0, 0, 0, 0);
     //g.drawLine(width - 1, 0, width - 1, 0);
 
-    int xOffset = leftToRight ? 5 : width - 5;
+    int xOffset = leftToRight ? JBUI.scale(5) : width - JBUI.scale(5);
 
-    if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      xOffset += leftToRight ? IMAGE_WIDTH + 5 : -IMAGE_WIDTH - 5;
+    if (getWindowDecorationStyle() == JRootPane.FRAME && myMenuBar != null) {
+      final int menuBarWithOffset = myMenuBar.getWidth() + JBUI.scale(5);
+      xOffset += leftToRight ? menuBarWithOffset : -menuBarWithOffset;
     }
 
     String theTitle = getTitle();
@@ -540,7 +542,7 @@ public class DarculaTitlePane extends JComponent {
       int titleLength = SwingUtilities2.stringWidth(rootPane, fm, theTitle);
       if (myIdeMenu == null) {
         SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
-        xOffset += leftToRight ? titleLength + 5 : -5;
+        xOffset += leftToRight ? titleLength + JBUI.scale(5) : -JBUI.scale(5);
       }
     }
 
@@ -678,10 +680,10 @@ public class DarculaTitlePane extends JComponent {
       //  buttonWidth = IMAGE_WIDTH;
       //}
 
-      spacing = 5;
+      spacing = JBUI.scale(5);
       x = spacing;
       if (myMenuBar != null) {
-        myMenuBar.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
+        myMenuBar.setBounds(x, (h - JBUI.scale(16)) / 2, JBUI.scale(16), JBUI.scale(16));
       }
 
       int systemIconSize = mySystemIcon == null ? JBUI.scale(16) : mySystemIcon.getWidth(null);
