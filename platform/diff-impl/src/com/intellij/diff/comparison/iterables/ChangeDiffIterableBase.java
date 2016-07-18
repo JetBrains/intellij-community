@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-abstract class ChangeDiffIterableBase extends DiffIterableBase {
+abstract class ChangeDiffIterableBase implements DiffIterable {
   private final int myLength1;
   private final int myLength2;
 
@@ -42,7 +42,7 @@ abstract class ChangeDiffIterableBase extends DiffIterableBase {
   @NotNull
   @Override
   public Iterator<Range> changes() {
-    return new MyIterator<Range>() {
+    return new Iterator<Range>() {
       @NotNull private final ChangeIterable myIterable = createChangeIterable();
 
       @Override
@@ -62,7 +62,7 @@ abstract class ChangeDiffIterableBase extends DiffIterableBase {
   @NotNull
   @Override
   public Iterator<Range> unchanged() {
-    return new MyIterator<Range>() {
+    return new Iterator<Range>() {
       @NotNull private final ChangeIterable myIterable = createChangeIterable();
 
       int lastIndex1 = 0;

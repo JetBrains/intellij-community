@@ -58,10 +58,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -144,6 +141,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author cdr
  */
+@SuppressWarnings("StringConcatenationInsideStringBufferAppend")
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
@@ -677,7 +675,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Variable 'e' is already defined in the scope", error.getDescription());
     PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset()).getParent();
 
-    DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.PSI_ELEMENT, element, ((EditorEx)getEditor()).getDataContext());
+    DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, ((EditorEx)getEditor()).getDataContext());
     new InlineRefactoringActionHandler().invoke(getProject(), getEditor(), getFile(), dataContext);
 
     Collection<HighlightInfo> afterTyping = highlightErrors();
@@ -1580,66 +1578,37 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
     System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
-    List<Thread> watchers = new ArrayList<>();
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
       final int finalI = i;
       final long start = System.currentTimeMillis();
-      Runnable interrupt = () -> {
-        long now = System.currentTimeMillis();
-        if (now - start < 100) {
-          // wait to engage all highlighting threads
-          return;
-        }
-        final AtomicLong typingStart = new AtomicLong();
-        final DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
-        Thread watcher = new Thread("reactivity watcher") {
-          @Override
-          public void run() {
-            while (true) {
-              final long start1 = typingStart.get();
-              if (start1 == -1) break;
-              if (start1 == 0) {
-                try {
-                  Thread.sleep(5);
-                }
-                catch (InterruptedException e1) {
-                  throw new RuntimeException(e1);
-                }
-                continue;
+      final AtomicLong typingStart = new AtomicLong();
+      Thread watcher = new Thread("reactivity watcher") {
+        @Override
+        public void run() {
+          while (true) {
+            final long start1 = typingStart.get();
+            if (start1 == -1) break;
+            if (start1 == 0) {
+              try {
+                Thread.sleep(5);
               }
-              long now = System.currentTimeMillis();
-              if (now - start1 > 500) {
-                // too long, see WTF
-                PerformanceWatcher.dumpThreadsToConsole("Too long interrupt: " +
-                                                        (now - start1) +
-                                                        "; Progress canceled=" +
-                                                        progress.isCanceled() +
-                                                        "\n----------------------------");
-                System.err.println("----all threads---");
-                for (Thread thread : Thread.getAllStackTraces().keySet()) {
-                  boolean canceled = CoreProgressManager.isCanceledThread(thread);
-                  if (canceled) {
-                    System.err.println("Thread " + thread + " is canceled");
-                  }
-                }
-                System.err.println("----///////---");
-                break;
+              catch (InterruptedException e1) {
+                throw new RuntimeException(e1);
               }
+              continue;
+            }
+            long elapsed = System.currentTimeMillis() - start1;
+            if (elapsed > 500) {
+              // too long, see WTF
+              String message = "Too long interrupt: " + elapsed +
+                               "; Progress: " + codeAnalyzer.getUpdateProgress() +
+                               "\n----------------------------";
+              dumpThreadsToConsole();
+              throw new RuntimeException(message);
             }
           }
-        };
-        watcher.start();
-        watchers.add(watcher);
-        typingStart.set(System.currentTimeMillis());
-        type(' ');
-        typingStart.set(-1);
-        long end = System.currentTimeMillis();
-        long interruptTime = end - now;
-        interruptTimes[finalI] = interruptTime;
-        assertNull(codeAnalyzer.getUpdateProgress());
-        System.out.println(interruptTime);
-        throw new ProcessCanceledException();
+        }
       };
       try {
         PsiFile file = getFile();
@@ -1648,20 +1617,53 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        watcher.start();
+        Runnable interrupt = () -> {
+          long now = System.currentTimeMillis();
+          if (now - start < 100) {
+            // wait to engage all highlighting threads
+            return;
+          }
+          typingStart.set(System.currentTimeMillis());
+          type(' ');
+          long end = System.currentTimeMillis();
+          long interruptTime = end - now;
+          interruptTimes[finalI] = interruptTime;
+          assertNull(codeAnalyzer.getUpdateProgress());
+          System.out.println(interruptTime);
+          throw new ProcessCanceledException();
+        };
+        long hiStart = System.currentTimeMillis();
         codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, false, interrupt);
+        long hiEnd = System.currentTimeMillis();
         DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
-        throw new RuntimeException("should have been interrupted: "+progress);
+        String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
+        dumpThreadsToConsole();
+        throw new RuntimeException(message);
       }
       catch (ProcessCanceledException ignored) {
+      }
+      finally {
+        typingStart.set(-1); // cancel watcher
+        watcher.join();
       }
     }
 
     long ave = ArrayUtil.averageAmongMedians(interruptTimes, 3);
     System.out.println("Average among the N/3 median times: " + ave + "ms");
     assertTrue(ave < 300);
-    for (Thread watcher : watchers) {
-      watcher.join();
+  }
+
+  private static void dumpThreadsToConsole() {
+    PerformanceWatcher.dumpThreadsToConsole("");
+    System.err.println("----all threads---");
+    for (Thread thread : Thread.getAllStackTraces().keySet()) {
+      boolean canceled = CoreProgressManager.isCanceledThread(thread);
+      if (canceled) {
+        System.err.println("Thread " + thread + " indicator is canceled");
+      }
     }
+    System.err.println("----///////---");
   }
 
   public void testTypingLatencyPerformance() throws Throwable {

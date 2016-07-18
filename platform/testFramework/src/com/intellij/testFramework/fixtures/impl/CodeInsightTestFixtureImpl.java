@@ -1891,6 +1891,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static class SelectionAndCaretMarkupLoader {
     private final String filePath;
+    @NotNull
     private final String newFileText;
     private final EditorTestUtil.CaretAndSelectionState caretState;
 

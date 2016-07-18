@@ -293,7 +293,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void queueUpdateFinished(boolean modal) {
     if (myUpdateFinishedQueued) return;
     myUpdateFinishedQueued = true;
-    TransactionGuard.submitTransaction(myProject, () -> WriteAction.run(() -> updateFinished(modal)));
+    TransactionGuard.submitTransaction(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> updateFinished(modal)));
   }
 
   private void updateFinished(boolean modal) {

@@ -183,19 +183,14 @@ public class HighlightInfo implements Segment {
     TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
     if (element != null &&
         RainbowHighlighter.isRainbowEnabled() &&
-        !isByPass(element) &&
         isLikeVariable(type.getAttributesKey())) {
-      String text = element.getContainingFile().getText();
-      String name = text.substring(startOffset, endOffset);
-      attributes = new RainbowHighlighter(colorsScheme).getAttributes(name, attributes);
+      PsiFile containingFile = element.getContainingFile();
+      if (!RainbowVisitor.existsPassSuitableForFile(containingFile)) {
+        CharSequence text = containingFile.getViewProvider().getContents().subSequence(startOffset, endOffset);
+        attributes = new RainbowHighlighter(colorsScheme).getAttributes(text.toString(), attributes);
+      }
     }
     return attributes;
-  }
-
-  @Contract("null -> false")
-  public static boolean isByPass(@Nullable PsiElement element) {
-    return element != null
-           && RainbowVisitor.existsPassSuitableForFile(element.getContainingFile());
   }
 
   @Contract("null -> false")

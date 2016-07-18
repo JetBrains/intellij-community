@@ -218,11 +218,8 @@ public class TextRange implements Segment, Serializable {
   }
 
   public static void assertProperRange(int startOffset, int endOffset, @NotNull Object message) {
-    if (startOffset > endOffset) {
+    if (startOffset > endOffset || startOffset < 0) {
       LOG.error("Invalid range specified: (" + startOffset + "," + endOffset + "); " + message);
-    }
-    if (startOffset < 0) {
-      LOG.error("Negative start offset: (" + startOffset + "," + endOffset + "); " + message);
     }
   }
 }
