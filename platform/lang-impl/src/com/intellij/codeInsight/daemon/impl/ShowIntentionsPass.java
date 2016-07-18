@@ -42,7 +42,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.IntentionFilterOwner;
@@ -50,7 +49,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,11 +78,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final int offset = ((EditorEx)editor).getExpectedCaretOffset();
     final Project project = file.getProject();
 
-    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, info -> {
-      addAvailableActionsForGroups(info, editor, file, result, passId, offset);
-      return true;
-    });
+    List<HighlightInfo> infos = new ArrayList<>();
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
+                                                       new CommonProcessors.CollectProcessor<>(infos));
+    List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
+    infos.forEach(info -> addAvailableActionsForGroups(info, editor, file, result, passId, offset));
     return result;
   }
 
