@@ -17,17 +17,11 @@ package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -78,7 +72,6 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -97,7 +90,6 @@ import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -341,26 +333,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected void enableInspectionTools(@NotNull Class<? extends InspectionProfileEntry>[] classes) {
-    final InspectionProfileEntry[] tools = new InspectionProfileEntry[classes.length];
-
-    final List<InspectionEP> eps = ContainerUtil.newArrayList();
-    ContainerUtil.addAll(eps, Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION));
-    ContainerUtil.addAll(eps, Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION));
-
-    next:
-    for (int i = 0; i < classes.length; i++) {
-      for (InspectionEP ep : eps) {
-        if (classes[i].getName().equals(ep.implementationClass)) {
-          tools[i] = ep.instantiateTool();
-          continue next;
-        }
-      }
-      throw new IllegalArgumentException("Unable to find extension point for " + classes[i].getName());
-    }
-
-    enableInspectionTools(tools);
-  }
+  //protected void enableInspectionTools(@NotNull Class<? extends InspectionProfileEntry>[] classes) {
+  //  for (InspectionProfileEntry tool : InspectionTestUtil.instantiateTools(Arrays.asList(classes))) {
+  //    enableInspectionTool(tool);
+  //  }
+  //}
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
     for (InspectionProfileEntry tool : tools) {
@@ -368,37 +345,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
-    enableInspectionTool(getProject(), toolWrapper, myTestRootDisposable);
-  }
+  //protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+  //  InspectionsKt.enableInspectionTool(getProject(), toolWrapper, myTestRootDisposable);
+  //}
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    enableInspectionTool(getProject(), InspectionToolRegistrar.wrapTool(tool), myTestRootDisposable);
-  }
-
-  public static void enableInspectionTool(@NotNull Project project, @NotNull InspectionToolWrapper toolWrapper, @NotNull Disposable disposable) {
-    InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final String shortName = toolWrapper.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null) {
-      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
-    }
-
-    InspectionProfileImpl.initAndDo(() -> {
-      InspectionToolWrapper existingWrapper = profile.getInspectionTool(shortName, project);
-      if (existingWrapper == null || existingWrapper.isInitialized() != toolWrapper.isInitialized() || toolWrapper.isInitialized() && toolWrapper.getTool() != existingWrapper.getTool()) {
-        profile.addTool(project, toolWrapper, new THashMap<>());
-      }
-      profile.enableTool(shortName, project);
-
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          profile.disableTool(shortName, project);
-        }
-      });
-      return null;
-    });
+    InspectionsKt.enableInspectionTool(getProject(), tool, myTestRootDisposable);
   }
 
   @NotNull

@@ -49,6 +49,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * @author max
@@ -147,10 +147,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         return toolWrappers;
       }
     }, InspectionProfileManager.getInstance());
-    initAndDo(() -> {
-      profile.initInspectionTools(project);
-      return null;
-    });
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       profile.enableTool(toolWrapper.getShortName(), project);
     }
@@ -261,7 +257,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
     LOG.assertTrue(myInitialized);
-    final Set<HighlightSeverity> result = new HashSet<>();
+    Set<HighlightSeverity> result = new THashSet<>();
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
         result.add(state.getLevel().getSeverity());
@@ -882,11 +878,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
-  public List<ScopeToolState> getAllTools(Project project) {
+  public List<ScopeToolState> getAllTools(@Nullable Project project) {
     initInspectionTools(project);
-    final List<ScopeToolState> result = new ArrayList<>();
+
+    List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {
-      result.addAll(tools.getTools());
+      tools.collectTools(result);
     }
     return result;
   }
@@ -1007,17 +1004,5 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private static class InspectionProfileImplHolder {
     private static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl(DEFAULT_PROFILE_NAME);
-  }
-
-  @SuppressWarnings("TestOnlyProblems")
-  public static <T> T initAndDo(@NotNull Supplier<T> runnable) {
-    boolean old = INIT_INSPECTIONS;
-    try {
-      INIT_INSPECTIONS = true;
-      return runnable.get();
-    }
-    finally {
-      INIT_INSPECTIONS = old;
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,7 +280,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
           final boolean enabled = state.isEnabled();
           if (isPreviousEnabled == null) {
             isPreviousEnabled = enabled;
-          } else if (!isPreviousEnabled.equals(enabled)) {
+          }
+          else if (!isPreviousEnabled.equals(enabled)) {
             return null;
           }
         }
@@ -313,8 +314,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
       LOG.assertTrue(myTreeTable != null);
 
       Boolean state = null;
-      final HashSet<HighlightDisplayKey> tools = new HashSet<HighlightDisplayKey>();
-      final List<InspectionConfigTreeNode> nodes = new ArrayList<InspectionConfigTreeNode>();
+      final HashSet<HighlightDisplayKey> tools = new HashSet<>();
+      final List<InspectionConfigTreeNode> nodes = new ArrayList<>();
 
       for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
@@ -396,7 +397,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
   private static class SeverityAndOccurrences {
     private HighlightSeverity myPrimarySeverity;
-    private final Map<String, HighlightSeverity> myOccurrences = new HashMap<String, HighlightSeverity>();
+    private final Map<String, HighlightSeverity> myOccurrences = new HashMap<>();
 
     public void setSeverityToMixed() {
       myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
@@ -428,7 +429,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private static class MultiColoredHighlightSeverityIconSink {
 
 
-    private final Map<String, SeverityAndOccurrences> myScopeToAverageSeverityMap = new HashMap<String, SeverityAndOccurrences>();
+    private final Map<String, SeverityAndOccurrences> myScopeToAverageSeverityMap = new HashMap<>();
 
     private String myDefaultScopeName;
 
@@ -456,7 +457,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
-      final Map<String, HighlightSeverity> result = new HashMap<String, HighlightSeverity>();
+      final Map<String, HighlightSeverity> result = new HashMap<>();
       final Map.Entry<String, SeverityAndOccurrences> entry = ContainerUtil.getFirstItem(myScopeToAverageSeverityMap.entrySet());
       result.put(entry.getKey(), entry.getValue().getPrimarySeverity());
       if (myScopeToAverageSeverityMap.size() == 1) {

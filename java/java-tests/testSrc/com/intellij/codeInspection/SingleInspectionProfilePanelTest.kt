@@ -23,8 +23,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel
 import com.intellij.testFramework.LightIdeaTestCase
+import com.intellij.testFramework.configureInspections
 import com.intellij.testFramework.createProfile
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
 
 class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
   private val myInspection = JavaDocLocalInspection()
@@ -32,11 +34,10 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
   // see IDEA-85700
   fun testSettingsModification() {
     val project = ProjectManager.getInstance().defaultProject
-    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
-    val profile = profileManager.currentProfile
+    val profile = configureInspections(arrayOf(myInspection), project, myTestRootDisposable)
 
     val model = profile.modifiableModel
-    val panel = SingleInspectionProfilePanel(profileManager, profile.name, model, profile)
+    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstanceImpl(project), profile.name, model, profile)
     panel.isVisible = true
     panel.reset()
 
@@ -45,9 +46,9 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     tool.myAdditionalJavadocTags = "foo"
     model.setModified(true)
     panel.apply()
-    TestCase.assertEquals(1, InspectionProfileTest.countInitializedTools(model))
+    assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
 
-    assertEquals("foo", getInspection(profile).myAdditionalJavadocTags)
+    assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("foo")
     panel.disposeUI()
   }
 
@@ -73,7 +74,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
     model.setModified(true)
     panel.apply()
-    TestCase.assertEquals(1, InspectionProfileTest.countInitializedTools(model))
+    assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
 
     assertEquals("bar", getInspection(profile).myAdditionalJavadocTags)
     panel.disposeUI()
@@ -86,7 +87,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     profile.initInspectionTools(project)
 
     val originalTool = getInspection(profile)
-    TestCase.assertEquals("", originalTool.myAdditionalJavadocTags)
+    assertThat(originalTool.myAdditionalJavadocTags).isEmpty()
 
     val model = profile.modifiableModel
     val copyTool = getInspection(model)

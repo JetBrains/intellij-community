@@ -38,7 +38,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -338,7 +337,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
     assertInitialized();
     for (InspectionProfileEntry inspection : inspections) {
-      LightPlatformTestCase.enableInspectionTool(getProject(), InspectionToolRegistrar.wrapTool(inspection), getTestRootDisposable());
+      InspectionsKt.enableInspectionTool(getProject(), inspection, getTestRootDisposable());
     }
   }
 
@@ -349,10 +348,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections) {
-    List<LocalInspectionTool> tools = new SmartList<>();
-    for (Class<? extends LocalInspectionTool> clazz : inspections) {
-      tools.add(ReflectionUtil.newInstance(clazz));
-    }
+    List<InspectionProfileEntry> tools = InspectionTestUtil.instantiateTools(inspections);
     enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
   }
 
@@ -365,24 +361,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void enableInspections(@NotNull InspectionToolProvider... providers) {
-    List<LocalInspectionTool> tools = new ArrayList<>();
-    for (InspectionToolProvider provider : providers) {
-      for (Class<?> clazz : provider.getInspectionClasses()) {
-        try {
-          Object o = clazz.getConstructor().newInstance();
-          if (o instanceof LocalInspectionTool) {
-            LocalInspectionTool inspection = (LocalInspectionTool)o;
-            tools.add(inspection);
-          }
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Cannot instantiate " + clazz, e);
-        }
-      }
+    public void enableInspections(@NotNull InspectionToolProvider... providers) {
+      List<Class<? extends LocalInspectionTool>> classes = JBIterable.of(providers)
+        .flatten((o) -> Arrays.asList(o.getInspectionClasses()))
+        .transform((Function<Class, Class<? extends LocalInspectionTool>>)o ->
+          LocalInspectionTool.class.isAssignableFrom(o) ? (Class<? extends LocalInspectionTool>) o : null)
+        .filter(Conditions.notNull())
+        .toList();
+      enableInspections(classes);
     }
-    enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
-  }
 
   @Override
   public long testHighlighting(final boolean checkWarnings,

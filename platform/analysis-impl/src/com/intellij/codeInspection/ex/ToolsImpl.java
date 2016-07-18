@@ -90,7 +90,7 @@ public class ToolsImpl implements Tools {
   @NotNull
   private ScopeToolState insertTool(@NotNull final ScopeToolState scopeToolState, final int idx) {
     if (myTools == null) {
-      myTools = new ArrayList<ScopeToolState>();
+      myTools = new ArrayList<>();
       if (scopeToolState.isEnabled()) {
         setEnabled(true);
       }
@@ -132,7 +132,7 @@ public class ToolsImpl implements Tools {
 
   @NotNull
   public List<InspectionToolWrapper> getAllTools() {
-    List<InspectionToolWrapper> result = new ArrayList<InspectionToolWrapper>();
+    List<InspectionToolWrapper> result = new ArrayList<>();
     for (ScopeToolState state : getTools()) {
       result.add(state.getTool());
     }
@@ -179,7 +179,7 @@ public class ToolsImpl implements Tools {
     final InspectionToolWrapper toolWrapper = myDefaultState.getTool();
 
     final List<Element> scopeElements = toolElement.getChildren(ProfileEx.SCOPE);
-    final List<String> scopeNames = new ArrayList<String>();
+    final List<String> scopeNames = new ArrayList<>();
     for (Element scopeElement : scopeElements) {
       final String scopeName = scopeElement.getAttributeValue(ProfileEx.NAME);
       if (scopeName == null) {
@@ -216,7 +216,7 @@ public class ToolsImpl implements Tools {
       String scopeName = scopeNames.get(i);
       List<String> order = dependencies.get(scopeName);
       if (order == null) {
-        order = new ArrayList<String>();
+        order = new ArrayList<>();
         dependencies.put(scopeName, order);
       }
       for (int j = i + 1; j < scopeNames.size(); j++) {
@@ -242,10 +242,21 @@ public class ToolsImpl implements Tools {
   @Override
   @NotNull
   public List<ScopeToolState> getTools() {
-    if (myTools == null) return Collections.singletonList(myDefaultState);
-    List<ScopeToolState> result = new ArrayList<ScopeToolState>(myTools);
+    if (myTools == null) {
+      return Collections.singletonList(myDefaultState);
+    }
+
+    List<ScopeToolState> result = new ArrayList<>(myTools);
     result.add(myDefaultState);
     return result;
+  }
+
+  @Override
+  public void collectTools(@NotNull List<ScopeToolState> result) {
+    if (myTools != null) {
+      result.addAll(myTools);
+    }
+    result.add(myDefaultState);
   }
 
   @Override
@@ -325,8 +336,6 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
-
-
   public HighlightDisplayLevel getLevel() {
     return myDefaultState.getLevel();
   }
@@ -405,7 +414,6 @@ public class ToolsImpl implements Tools {
       }
     }
   }
-
 
   public void disableTool(@NotNull PsiElement element) {
     final Project project = element.getProject();

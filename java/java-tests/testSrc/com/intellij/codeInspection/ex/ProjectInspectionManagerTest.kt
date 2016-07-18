@@ -27,6 +27,7 @@ import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInInitMode
 import com.intellij.util.delete
 import com.intellij.util.readText
 import com.intellij.util.write
@@ -106,7 +107,7 @@ internal class ProjectInspectionManagerTest {
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       // cause to use app profile
-      InspectionProfileImpl.initAndDo {
+      runInInitMode {
         val currentProfile = projectInspectionProfileManager.currentProfile
         assertThat(currentProfile.isProjectLevel).isTrue()
         currentProfile.disableTool("Convert2Diamond", project)
@@ -137,7 +138,7 @@ internal class ProjectInspectionManagerTest {
 
       project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
-      InspectionProfileImpl.initAndDo {
+      runInInitMode {
         assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
       }
     }

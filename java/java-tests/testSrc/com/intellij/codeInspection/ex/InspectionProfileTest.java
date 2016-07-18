@@ -33,12 +33,14 @@ import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable
 import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.profile.ProfileEx.serializeProfile;
@@ -574,21 +576,24 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(test, JDOMUtil.writeElement(serializeProfile(foo)));
   }
 
-  public static int countInitializedTools(Profile foo) {
-    return getInitializedTools(foo).size();
+  public static int countInitializedTools(@NotNull Profile foo) {
+    return getInitializedTools((InspectionProfileImpl)foo).size();
   }
 
   @NotNull
-  public static List<InspectionToolWrapper> getInitializedTools(@NotNull Profile foo) {
-    List<InspectionToolWrapper> initialized = new ArrayList<>();
-    List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools(getProject());
+  public static List<InspectionToolWrapper> getInitializedTools(@NotNull InspectionProfileImpl foo) {
+    List<InspectionToolWrapper> initialized = null;
+    List<ScopeToolState> tools = foo.getAllTools(getProject());
     for (ScopeToolState tool : tools) {
       InspectionToolWrapper toolWrapper = tool.getTool();
       if (toolWrapper.isInitialized()) {
+        if (initialized == null) {
+          initialized = new SmartList<>();
+        }
         initialized.add(toolWrapper);
       }
     }
-    return initialized;
+    return initialized == null ? Collections.emptyList() : initialized;
   }
 
   private static LocalInspectionToolWrapper createTool(String s, boolean enabled) {

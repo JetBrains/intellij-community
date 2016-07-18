@@ -29,7 +29,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -59,7 +58,10 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.HighlightTestInfo;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,7 +133,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    LightPlatformTestCase.enableInspectionTool(getProject(), InspectionToolRegistrar.wrapTool(tool), getTestRootDisposable());
+    InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {

@@ -19,6 +19,7 @@ import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.runInInitMode
 import com.intellij.util.readText
 import com.intellij.util.write
 import org.assertj.core.api.Assertions.assertThat
@@ -56,7 +57,7 @@ internal class InspectionSchemeTest {
     val scheme = profileManager.profiles.first() as InspectionProfileImpl
     assertThat(scheme.name).isEqualTo("Bar")
 
-    InspectionProfileImpl.initAndDo { scheme.initInspectionTools(null) }
+    runInInitMode { scheme.initInspectionTools(null) }
 
     schemeManagerFactory.save()
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiIdentifier;
@@ -32,7 +31,7 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
 
 
   public void testErrorLikeUnusedSymbol() throws Exception {
-    enableInspectionTool(new LocalInspectionToolWrapper(new LocalInspectionTool() {
+    enableInspectionTool(new LocalInspectionTool() {
       @NotNull
       @Override
       public String getShortName() {
@@ -73,7 +72,7 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
       public String getGroupDisplayName() {
         return getDisplayName();
       }
-    }));
+    });
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

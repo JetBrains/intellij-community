@@ -69,16 +69,16 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private AnalysisScope myCurrentScope;
   @NotNull
   private final Project myProject;
-  private final List<JobDescriptor> myJobDescriptors = new ArrayList<JobDescriptor>();
+  private final List<JobDescriptor> myJobDescriptors = new ArrayList<>();
 
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfile myExternalProfile;
 
-  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
+  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
-  protected final Map<String, Tools> myTools = new THashMap<String, Tools>();
+  protected final Map<String, Tools> myTools = new THashMap<>();
 
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
@@ -328,7 +328,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected List<Tools> getUsedTools() {
     InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
-    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<InspectionToolWrapper>();
+    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<>();
     for (Tools tool : tools) {
       profile.collectDependentInspections(tool.getTool(), dependentTools, getProject());
     }
@@ -336,9 +336,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (dependentTools.isEmpty()) {
       return tools;
     }
-    Set<Tools> set = new THashSet<Tools>(tools, TOOLS_HASHING_STRATEGY);
+    Set<Tools> set = new THashSet<>(tools, TOOLS_HASHING_STRATEGY);
     set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
-    return new ArrayList<Tools>(set);
+    return new ArrayList<>(set);
   }
 
   private static void classifyTool(@NotNull List<Tools> outGlobalTools,
@@ -390,7 +390,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {
-    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
+    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
       elements.add(manager.createSmartPsiElementPointer(element));
@@ -403,7 +403,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                      @Nullable final Runnable runnable,
                                      final List<SmartPsiElementPointer<PsiElement>> elements) {
     Runnable cleanupRunnable = () -> {
-      final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+      final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
         PsiElement psiElement = element.getElement();
         if (psiElement != null && psiElement.isPhysical()) {
