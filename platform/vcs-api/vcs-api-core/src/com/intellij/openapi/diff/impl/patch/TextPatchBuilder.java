@@ -129,6 +129,7 @@ public class TextPatchBuilder {
       return patch;
     }
 
+
     List<String> beforeLines = tokenize(beforeContent);
     List<String> afterLines = tokenize(afterContent);
     boolean beforeNoNewlineAtEOF = !beforeContent.endsWith("\n");
@@ -144,59 +145,75 @@ public class TextPatchBuilder {
 
     int hunkStart = 0;
     while (hunkStart < fragments.size()) {
-      int hunkEnd = hunkStart + 1;
-      while (hunkEnd < fragments.size()) {
-        Range lastFragment = fragments.get(hunkEnd - 1);
-        Range nextFragment = fragments.get(hunkEnd);
+      List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart);
 
-        if (lastFragment.end1 + CONTEXT_LINES < nextFragment.start1 - CONTEXT_LINES &&
-            lastFragment.end2 + CONTEXT_LINES < nextFragment.start2 - CONTEXT_LINES) {
-          break;
-        }
-        hunkEnd++;
-      }
-      List<Range> hunkFragments = fragments.subList(hunkStart, hunkEnd);
-      hunkStart = hunkEnd;
+      patch.addHunk(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
 
-      Range first = hunkFragments.get(0);
-      Range last = hunkFragments.get(hunkFragments.size() - 1);
-
-      int contextStart1 = Math.max(first.start1 - CONTEXT_LINES, 0);
-      int contextStart2 = Math.max(first.start2 - CONTEXT_LINES, 0);
-      int contextEnd1 = Math.min(last.end1 + CONTEXT_LINES, beforeLines.size());
-      int contextEnd2 = Math.min(last.end2 + CONTEXT_LINES, afterLines.size());
-
-      PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
-      patch.addHunk(hunk);
-
-      int lastLine1 = contextStart1;
-      int lastLine2 = contextStart2;
-      for (Range fragment : hunkFragments) {
-        int start1 = fragment.start1;
-        int start2 = fragment.start2;
-        int end1 = fragment.end1;
-        int end2 = fragment.end2;
-        assert start1 - lastLine1 == start2 - lastLine2;
-
-        for (int i = lastLine1; i < start1; i++) {
-          addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
-        }
-        for (int i = start1; i < end1; i++) {
-          addLineToHunk(hunk, beforeLines, PatchLine.Type.REMOVE, i, beforeNoNewlineAtEOF);
-        }
-        for (int i = start2; i < end2; i++) {
-          addLineToHunk(hunk, afterLines, PatchLine.Type.ADD, i, afterNoNewlineAtEOF);
-        }
-        lastLine1 = end1;
-        lastLine2 = end2;
-      }
-      assert contextEnd1 - lastLine1 == contextEnd2 - lastLine2;
-      for (int i = lastLine1; i < contextEnd1; i++) {
-        addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
-      }
+      hunkStart += hunkFragments.size();
     }
 
     return patch;
+  }
+
+  @NotNull
+  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart) {
+    int hunkEnd = hunkStart + 1;
+    while (hunkEnd < fragments.size()) {
+      Range lastFragment = fragments.get(hunkEnd - 1);
+      Range nextFragment = fragments.get(hunkEnd);
+
+      if (lastFragment.end1 + CONTEXT_LINES < nextFragment.start1 - CONTEXT_LINES &&
+          lastFragment.end2 + CONTEXT_LINES < nextFragment.start2 - CONTEXT_LINES) {
+        break;
+      }
+      hunkEnd++;
+    }
+    return fragments.subList(hunkStart, hunkEnd);
+  }
+
+  @NotNull
+  private static PatchHunk createHunk(@NotNull List<Range> hunkFragments,
+                                      @NotNull List<String> beforeLines,
+                                      @NotNull List<String> afterLines,
+                                      boolean beforeNoNewlineAtEOF,
+                                      boolean afterNoNewlineAtEOF) {
+    Range first = hunkFragments.get(0);
+    Range last = hunkFragments.get(hunkFragments.size() - 1);
+
+    int contextStart1 = Math.max(first.start1 - CONTEXT_LINES, 0);
+    int contextStart2 = Math.max(first.start2 - CONTEXT_LINES, 0);
+    int contextEnd1 = Math.min(last.end1 + CONTEXT_LINES, beforeLines.size());
+    int contextEnd2 = Math.min(last.end2 + CONTEXT_LINES, afterLines.size());
+
+    PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
+
+    int lastLine1 = contextStart1;
+    int lastLine2 = contextStart2;
+    for (Range fragment : hunkFragments) {
+      int start1 = fragment.start1;
+      int start2 = fragment.start2;
+      int end1 = fragment.end1;
+      int end2 = fragment.end2;
+      assert start1 - lastLine1 == start2 - lastLine2;
+
+      for (int i = lastLine1; i < start1; i++) {
+        addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
+      }
+      for (int i = start1; i < end1; i++) {
+        addLineToHunk(hunk, beforeLines, PatchLine.Type.REMOVE, i, beforeNoNewlineAtEOF);
+      }
+      for (int i = start2; i < end2; i++) {
+        addLineToHunk(hunk, afterLines, PatchLine.Type.ADD, i, afterNoNewlineAtEOF);
+      }
+      lastLine1 = end1;
+      lastLine2 = end2;
+    }
+    assert contextEnd1 - lastLine1 == contextEnd2 - lastLine2;
+    for (int i = lastLine1; i < contextEnd1; i++) {
+      addLineToHunk(hunk, beforeLines, PatchLine.Type.CONTEXT, i, beforeNoNewlineAtEOF);
+    }
+
+    return hunk;
   }
 
   @NotNull
