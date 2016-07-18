@@ -108,10 +108,14 @@ public class TestPackage extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final DumbService dumbService = DumbService.getInstance(getConfiguration().getProject());
+    final Project project = getConfiguration().getProject();
+    final DumbService dumbService = DumbService.getInstance(project);
     try {
       dumbService.setAlternativeResolveEnabled(true);
-      getClassFilter(data);//check if junit found
+      final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
+      if (sourceScope == null || !JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), project)) { //check for junit 5
+        getClassFilter(data);//check if junit 4 found
+      }
     }
     finally {
       dumbService.setAlternativeResolveEnabled(false);
