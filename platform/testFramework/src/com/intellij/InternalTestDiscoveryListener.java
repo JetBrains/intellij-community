@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.testDiscovery;
+package com.intellij;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -39,7 +39,8 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myTracesDirectory;
   private List<String> myCompletedMethodNames = new ArrayList<String>();
   private final Alarm myProcessTracesAlarm;
-  private TestDiscoveryIndex myDiscoveryIndex;
+  private Object myDiscoveryIndex;
+  private Class<?> myDiscoveryIndexClass;
 
   public InternalTestDiscoveryListener() {
     myProcessTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
@@ -47,11 +48,12 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
   }
 
-  private TestDiscoveryIndex getIndex() {
+  private Object getIndex() {
     if (myDiscoveryIndex == null) {
       final Project project = ProjectManager.getInstance().getDefaultProject();
       try {
-        myDiscoveryIndex = (TestDiscoveryIndex)Class.forName(TestDiscoveryIndex.class.getName())
+        myDiscoveryIndexClass = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryIndex");
+        myDiscoveryIndex = myDiscoveryIndexClass
           .getConstructor(Project.class, String.class)
           .newInstance(project, myTracesDirectory);
       }
@@ -91,7 +93,16 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   protected void flushCurrentTraces() {
     final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
     myCompletedMethodNames.clear();
-    myProcessTracesAlarm.addRequest(() -> TestDiscoveryExtension.processAvailableTraces(fullTestNames, myTracesDirectory, myModuleName, "j", getIndex()), 100);
+    myProcessTracesAlarm.addRequest(() -> {
+      try {
+        final Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
+          .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class, String.class, myDiscoveryIndexClass);
+        method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", getIndex());
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }, 100);
   }
 
   private static String getMethodName(Test test) {
