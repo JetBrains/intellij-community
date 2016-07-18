@@ -2412,22 +2412,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (attributes != null && attributes.getEffectColor() != null) {
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
-        g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
-          EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
+          EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
           g.setColor(getBackgroundColor(attributes));
           EffectPainter.BOLD_DOTTED_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
-          EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getCharHeight(), null);
+          EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getCharHeight(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
-          EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
+          EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() != EffectType.BOXED) {
-          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), null);
+          EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
       }
     }
