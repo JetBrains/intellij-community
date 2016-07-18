@@ -167,14 +167,18 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         final StringWriter stringWriter = new StringWriter();
         final PrintWriter writer = new PrintWriter(stringWriter);
         ex.printStackTrace(writer);
-        final ComparisonFailureData failureData;
+        ComparisonFailureData failureData = null;
         if (ex instanceof AssertionFailedError && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
           final ValueWrapper actual = ((AssertionFailedError)ex).getActual();
           final ValueWrapper expected = ((AssertionFailedError)ex).getExpected();
           failureData = new ComparisonFailureData(expected.getStringRepresentation(), actual.getStringRepresentation());
         }
         else {
-          failureData = ExpectedPatterns.createExceptionNotification(ex);
+          //try to detect failure with junit 4 if present in the classpath
+          try {
+            failureData = ExpectedPatterns.createExceptionNotification(ex);
+          }
+          catch (Throwable ignore) {}
         }
         ComparisonFailureData.registerSMAttributes(failureData, stringWriter.toString(), ex.getMessage(), attrs, ex);
       }
