@@ -30,6 +30,28 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
   }
 
+  // Import error should lead to test failure
+  @Test
+  public void testFailInCaseOfError() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/failTest", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(".", 0);
+      }
+
+
+      @Override
+      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        Assert.assertThat("Import error is not marked as error", runner.getFailedTestsCount(), Matchers.equalTo(1));
+      }
+    });
+  }
+
   @Test
   public void testPytestRunner() {
 
