@@ -266,26 +266,34 @@ public enum EffectPainter implements RegionPainter<Paint> {
     BufferedImage create(Graphics2D graphics, Paint paint, int height) {
       int h = getMaxHeight(height);
       int width = 2 * h - 2; // the spatial period of the wave
-      BufferedImage image = UIUtil.createImageForGraphics(graphics, width, height, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage image = UIUtil.createImageForGraphics(graphics, width << 8, height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = image.createGraphics();
       try {
+        double dx = 0;
         double upper = height - h;
         double lower = height - 1;
         Path2D path = new Path2D.Double();
-        path.moveTo(0, lower);
+        path.moveTo(dx, lower);
         if (height < 6) {
           g.setStroke(WAVE_THIN_STROKE);
-          path.lineTo((double)width / 2, upper);
-          path.lineTo((double)width, lower);
+          double size = (double)width / 2;
+          while (dx < image.getWidth()) {
+            path.lineTo(dx += size, upper);
+            path.lineTo(dx += size, lower);
+          }
         }
         else {
-          double size = (double)width / 8;
+          double size = (double)width / 4;
+          double prev = dx - size / 2;
           double center = (upper + lower) / 2;
-          path.quadTo(size, lower, size * 2, center);
-          path.quadTo(size * 3, upper, size * 4, upper);
-          path.quadTo(size * 5, upper, size * 6, center);
-          path.quadTo(size * 7, lower, (double)width, lower);
+          while (dx < image.getWidth()) {
+            path.quadTo(prev += size, lower, dx += size, center);
+            path.quadTo(prev += size, upper, dx += size, upper);
+            path.quadTo(prev += size, upper, dx += size, center);
+            path.quadTo(prev += size, lower, dx += size, lower);
+          }
         }
+        path.lineTo((double)image.getWidth(), lower);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setPaint(paint);
         g.draw(path);
