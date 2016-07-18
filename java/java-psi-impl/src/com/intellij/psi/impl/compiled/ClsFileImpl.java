@@ -673,9 +673,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
-  private static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    public FileContentPair(VirtualFile file, byte[] content) {
+  static class FileContentPair extends Pair<VirtualFile, byte[]> {
+    public FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
       super(file, content);
+    }
+
+    @NotNull
+    public byte[] getContent() {
+      return second;
     }
 
     @Override

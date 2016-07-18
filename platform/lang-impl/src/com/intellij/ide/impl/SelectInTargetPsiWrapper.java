@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 
 public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected final Project myProject;
@@ -99,4 +98,35 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected abstract boolean canWorkWithCustomObjects();
 
   protected abstract void select(PsiElement element, boolean requestFocus);
+
+  @Nullable
+  protected static PsiElement findElementToSelect(PsiElement element, PsiElement candidate) {
+    PsiElement toSelect = candidate;
+
+    if (toSelect == null) {
+      if (element instanceof PsiFile || element instanceof PsiDirectory) {
+        toSelect = element;
+      }
+      else {
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null) {
+          FileViewProvider viewProvider = containingFile.getViewProvider();
+          toSelect = viewProvider.getPsi(viewProvider.getBaseLanguage());
+        }
+      }
+    }
+
+    if (toSelect != null) {
+      PsiElement originalElement = null;
+      try {
+        originalElement = toSelect.getOriginalElement();
+      }
+      catch (IndexNotReadyException ignored) { }
+      if (originalElement != null) {
+        toSelect = originalElement;
+      }
+    }
+
+    return toSelect;
+  }
 }

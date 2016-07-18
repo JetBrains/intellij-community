@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
       }
     };
 
-    invokeTestRunnable(() -> CommandProcessor.getInstance().executeCommand(getProject(), runnable::run, "", null));
+    invokeTestRunnable(() -> CommandProcessor.getInstance().executeCommand(getProject(), runnable, "", null));
 
     if (throwables[0] != null) {
       throw throwables[0];

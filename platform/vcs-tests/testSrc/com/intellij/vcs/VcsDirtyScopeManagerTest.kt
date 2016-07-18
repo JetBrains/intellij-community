@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.continuation.SemaphoreContinuationContext
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -181,9 +182,11 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private fun createFile(parentDir: VirtualFile, name: String, dir: Boolean): FilePath {
     var file: VirtualFile? = null
-    edt { ApplicationManager.getApplication().runWriteAction {
-      file = if (dir) parentDir.createChildDirectory(this, name) else parentDir.createChildData(this, name)
-    }}
+    runInEdtAndWait {
+      ApplicationManager.getApplication().runWriteAction {
+        file = if (dir) parentDir.createChildDirectory(this, name) else parentDir.createChildData(this, name)
+      }
+    }
     return getFilePath(file!!)
   }
 

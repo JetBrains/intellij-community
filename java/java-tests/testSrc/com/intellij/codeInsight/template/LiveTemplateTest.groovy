@@ -40,6 +40,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author spleaner
  */
@@ -811,7 +813,7 @@ class A {{
   }
 
   private void moveCaret(final int offset) {
-    edt {
+    runInEdtAndWait {
       getEditor().getCaretModel().moveToOffset(offset);
     }
   }
