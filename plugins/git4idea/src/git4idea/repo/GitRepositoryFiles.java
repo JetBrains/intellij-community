@@ -318,7 +318,7 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
-  File getBranchFile(String path) {
-    return new File(FileUtil.toSystemDependentName(myMainDir.getCanonicalPath() + File.separatorChar + path));
+  File getBranchFile(@NotNull String fullBranchName) {
+    return file(myMainDir.getPath() + slash(fullBranchName));
   }
 }

@@ -321,11 +321,11 @@ class GitRepositoryReader {
 
   @NotNull
   private HeadInfo readHead() {
-    return readHeadInternal(myHeadFile, new ArrayList<>(2));
+    return readHeadInternal(myHeadFile, new ArrayList<>());
   }
 
   @NotNull
-  private HeadInfo readHeadInternal(File headFile, List<String> alreadyVisited) {
+  private HeadInfo readHeadInternal(@NotNull File headFile, @NotNull List<String> alreadyVisited) {
     String headContent;
     try {
       headContent = DvcsUtil.tryLoadFile(headFile, CharsetToolkit.UTF8);
@@ -340,7 +340,7 @@ class GitRepositoryReader {
       if (alreadyVisited.isEmpty()) {
         return new HeadInfo(false, headContent);
       } else {
-        return new HeadInfo(true, alreadyVisited.get(alreadyVisited.size() - 1));
+        return new HeadInfo(true, ContainerUtil.getLastItem(alreadyVisited));
       }
     }
     String target = getTarget(headContent);
