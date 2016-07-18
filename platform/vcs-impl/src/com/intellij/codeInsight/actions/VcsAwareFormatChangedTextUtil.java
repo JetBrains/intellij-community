@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.actions;
 
-import com.intellij.formatting.DiffInfoImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -49,7 +48,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.changedRanges : ContainerUtil.newArrayList();
+    return helper != null ? helper.allChangedRanges : ContainerUtil.newArrayList();
   }
 
   @Override
@@ -77,7 +76,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     }
     if (change.getType() == Change.Type.NEW) {
       TextRange fileRange = file.getTextRange();
-      return new ChangedRangesInfo(null, ContainerUtil.newArrayList(fileRange));
+      return new ChangedRangesInfo(ContainerUtil.newArrayList(fileRange), null);
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
@@ -161,8 +160,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
 
   @NotNull
   private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<Range> changedRanges) {
-    List<TextRange> ranges = ContainerUtil.newArrayList();
-    List<TextRange> insertedRanges = ContainerUtil.newArrayList();
+    final List<TextRange> ranges = ContainerUtil.newArrayList();
+    final List<TextRange> insertedRanges = ContainerUtil.newArrayList();
     
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {
@@ -179,7 +178,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
         }
       }
     }
-    return new ChangedRangesInfo(new DiffInfoImpl(insertedRanges), ranges);
+    
+    return new ChangedRangesInfo(ranges, insertedRanges);
   }
 
   @Override

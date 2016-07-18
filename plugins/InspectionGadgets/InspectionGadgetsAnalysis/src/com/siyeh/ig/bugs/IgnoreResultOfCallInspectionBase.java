@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -134,6 +135,10 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
       if (PsiUtilCore.hasErrorElementChild(statement)) {
+        return;
+      }
+      if (PropertyUtil.isSimpleGetter(method)) {
+        registerMethodCallError(call, aClass);
         return;
       }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {

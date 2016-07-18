@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     debugProcess.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
   }
 
+  protected void stepOut(SuspendContextImpl context) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    debugProcess.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
+  }
+
   protected void waitBreakpoints() {
     myScriptRunnablesSema.down();
     waitFor(() -> myScriptRunnablesSema.waitFor());
@@ -129,7 +134,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     myScriptRunnables.add(runnable);
   }
 
-  protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
+  protected void onStop(final SuspendContextRunnable runnable, final SuspendContextRunnable then){
     onBreakpoint(new SuspendContextRunnable() {
       @Override
       public void run(SuspendContextImpl suspendContext) throws Exception {
@@ -137,10 +142,14 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           runnable.run(suspendContext);
         }
         finally {
-          resume(suspendContext);
+          then.run(suspendContext);
         }
       }
     });
+  }
+
+  protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
+    onStop(runnable, this::resume);
   }
 
   protected void addDefaultBreakpointListener() {

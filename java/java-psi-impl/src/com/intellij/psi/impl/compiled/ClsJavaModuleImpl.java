@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -54,6 +53,22 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameElement(), SourceTreeToPsiMap.<PsiJavaModule>treeToPsiNotNull(element).getNameElement());
+  }
+
+  @Override
+  public String getName() {
+    return getModuleName();
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return getNameElement();
   }
 
   @Override

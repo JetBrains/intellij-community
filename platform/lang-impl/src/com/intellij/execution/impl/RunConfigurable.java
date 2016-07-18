@@ -319,7 +319,10 @@ class RunConfigurable extends BaseConfigurable {
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-      final Object userObject = node.getUserObject();
+      Object userObject = node.getUserObject();
+      if (userObject instanceof SettingsEditorConfigurable) {
+        userObject = ((SettingsEditorConfigurable)userObject).getSettings();
+      }
       if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
         final RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)userObject;
         final ConfigurationType configurationType = configuration.getType();

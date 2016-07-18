@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ex.Range.InnerRange;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +67,7 @@ public class RangesBuilder {
                                                 int vcsShift) throws FilesTooBigForDiffException {
     FairDiffIterable iterable = ByLine.compare(vcs, current, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
 
-    List<Range> result = new ArrayList<Range>();
+    List<Range> result = new ArrayList<>();
     for (com.intellij.diff.util.Range range : iterable.iterateChanges()) {
       int vcsLine1 = vcsShift + range.start1;
       int vcsLine2 = vcsShift + range.end1;
@@ -105,7 +104,7 @@ public class RangesBuilder {
             rangeBuilder.flushChange();
           }
           else {
-            rangeBuilder.markChangedWhitespaces(vcsIndex, currentIndex);
+            rangeBuilder.markChanged(vcsIndex, currentIndex);
           }
         }
       }
@@ -123,10 +122,12 @@ public class RangesBuilder {
     private final int myCurrentShift;
     private final int myVcsShift;
 
-    @NotNull private final List<Range> myRanges = new ArrayList<>();
+    @NotNull private final List<Range> myResult = new ArrayList<>();
 
-    private com.intellij.diff.util.Range change;
-    private ArrayList<InnerRange> innerRanges;
+    private int vcsLine1 = -1;
+    private int vcsLine2 = -1;
+    private int currentLine1 = -1;
+    private int currentLine2 = -1;
 
     public RangeBuilder(@NotNull List<String> current,
                         @NotNull List<String> vcs,
@@ -139,68 +140,70 @@ public class RangesBuilder {
     }
 
     public void flushChange() {
-      if (change == null) return;
+      if (vcsLine1 == -1) return;
 
-      for (InnerRange range : innerRanges) {
-        range.shift(myCurrentShift);
-      }
-      innerRanges.trimToSize();
+      int forward = TrimUtil.expandForward(myVcs, myCurrent, vcsLine1, currentLine1, vcsLine2, currentLine2);
+      vcsLine1 += forward;
+      currentLine1 += forward;
 
-      change = TrimUtil.expand(myVcs, myCurrent, change.start1, change.start2, change.end1, change.end2);
+      int backward = TrimUtil.expandBackward(myVcs, myCurrent, vcsLine1, currentLine1, vcsLine2, currentLine2);
+      vcsLine2 -= backward;
+      currentLine2 -= backward;
 
-      int currentLine1 = myCurrentShift + change.start2;
-      int currentLine2 = myCurrentShift + change.end2;
-      int vcsLine1 = myVcsShift + change.start1;
-      int vcsLine2 = myVcsShift + change.end1;
-      myRanges.add(new Range(currentLine1, currentLine2, vcsLine1, vcsLine2, innerRanges));
+      List<String> vcs = myVcs.subList(vcsLine1, vcsLine2);
+      List<String> current = myCurrent.subList(currentLine1, currentLine2);
+      List<InnerRange> inner = calcInnerRanges(vcs, current, myCurrentShift + currentLine1);
 
-      change = null;
-      innerRanges = null;
+      myResult.add(new Range(myCurrentShift + currentLine1, myCurrentShift + currentLine2,
+                             myVcsShift + vcsLine1, myVcsShift + vcsLine2,
+                             inner));
+
+
+      currentLine1 = -1;
+      currentLine2 = -1;
+      vcsLine1 = -1;
+      vcsLine2 = -1;
     }
 
-    public void markChangedWhitespaces(int vcsIndex, int currentIndex) {
-      appendChangedLine(vcsIndex, vcsIndex + 1, currentIndex, currentIndex + 1);
-      appendInnerEquals(vcsIndex, vcsIndex + 1, currentIndex, currentIndex + 1);
+    public void markChanged(int vcsIndex, int currentIndex) {
+      markChanged(vcsIndex, vcsIndex + 1, currentIndex, currentIndex + 1);
     }
 
     public void markChanged(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {
-      appendChangedLine(vcsStart, vcsEnd, currentStart, currentEnd);
-      appendInnerChange(vcsStart, vcsEnd, currentStart, currentEnd);
+      if (vcsLine1 == -1) {
+        vcsLine1 = vcsStart;
+        vcsLine2 = vcsEnd;
+        currentLine1 = currentStart;
+        currentLine2 = currentEnd;
+      }
+      else {
+        assert vcsStart == vcsLine2;
+        assert currentStart == currentLine2;
+        vcsLine2 = vcsEnd;
+        currentLine2 = currentEnd;
+      }
     }
 
     @NotNull
     public List<Range> finish() {
       flushChange();
-      return myRanges;
+      return myResult;
     }
+  }
 
-    private void appendChangedLine(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {
-      if (change == null) {
-        change = new com.intellij.diff.util.Range(vcsStart, vcsEnd, currentStart, currentEnd);
-        innerRanges = new ArrayList<>();
-      }
-      else {
-        assert vcsStart == change.end1;
-        assert currentStart == change.end2;
-        change = new com.intellij.diff.util.Range(change.start1, vcsEnd, change.start2, currentEnd);
-      }
-    }
+  @NotNull
+  private static List<InnerRange> calcInnerRanges(@NotNull List<String> vcs, @NotNull List<String> current, int startOffset) {
+    ArrayList<InnerRange> result = new ArrayList<>();
+    FairDiffIterable iwIterable = ByLine.compare(vcs, current, ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
+    for (Pair<com.intellij.diff.util.Range, Boolean> pair : DiffIterableUtil.iterateAll(iwIterable)) {
+      com.intellij.diff.util.Range range = pair.first;
+      Boolean equals = pair.second;
 
-    private void appendInnerChange(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {
-      byte type = getChangeType(vcsStart, vcsEnd, currentStart, currentEnd);
-      innerRanges.add(new InnerRange(currentStart, currentEnd, type));
+      byte type = equals ? Range.EQUAL : getChangeType(range.start1, range.end1, range.start2, range.end2);
+      result.add(new InnerRange(range.start2 + startOffset, range.end2 + startOffset, type));
     }
-
-    private void appendInnerEquals(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {
-      InnerRange last = ContainerUtil.getLastItem(innerRanges);
-      if (last == null || last.getType() != Range.EQUAL) {
-        innerRanges.add(new InnerRange(currentStart, currentEnd, Range.EQUAL));
-      }
-      else {
-        assert currentStart == last.getLine2();
-        innerRanges.set(innerRanges.size() - 1, new InnerRange(last.getLine1(), currentEnd, Range.EQUAL));
-      }
-    }
+    result.trimToSize();
+    return result;
   }
 
   private static byte getChangeType(int vcsStart, int vcsEnd, int currentStart, int currentEnd) {

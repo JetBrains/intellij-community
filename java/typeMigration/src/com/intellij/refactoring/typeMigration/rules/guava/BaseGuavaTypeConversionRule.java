@@ -101,10 +101,18 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)context).getAnonymousClass();
       return anonymousClass == null ? null : findConversionForAnonymous(anonymousClass, labeler.getSettings(GuavaConversionSettings.class));
     }
-    else if (context instanceof PsiReferenceExpression) {
-      final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
-      if (resolvedElement instanceof PsiVariable) {
-        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
+    else if (context instanceof PsiMethodReferenceExpression) {
+      final PsiType methodReferenceType = context.getType();
+      if (methodReferenceType != null && to != null && to.isAssignableFrom(methodReferenceType)) {
+        return new TypeConversionDescriptorBase();
+      }
+    }
+    else {
+      if (context instanceof PsiReferenceExpression) {
+        final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
+        if (resolvedElement instanceof PsiVariable) {
+          return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
+        }
       }
     }
     return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,17 +92,16 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
 
     buildChildren(result, childAlignment, childWrap);
 
     return result;
-
   }
 
-  private void buildChildren(final ArrayList<Block> result, final Alignment childAlignment, final Wrap childWrap) {
+  private void buildChildren(final List<Block> result, final Alignment childAlignment, final Wrap childWrap) {
     ASTNode child = myNode.getFirstChildNode();
 
     int state = BEFORE_FIRST;
@@ -140,11 +139,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   }
 
   @Nullable
-  private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
+  private ASTNode processCaseAndStatementAfter(final List<Block> result,
                                                ASTNode child,
                                                final Alignment childAlignment,
                                                final Wrap childWrap, final Indent indent) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final List<Block> localResult = new ArrayList<Block>();
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
     Indent childIndent = Indent.getNormalIndent();
@@ -179,7 +178,9 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return JavaElementType.BREAK_STATEMENT == elementType || JavaElementType.RETURN_STATEMENT == elementType;
   }
 
-  private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
+  private SyntheticCodeBlock createCaseSectionBlock(final List<Block> localResult,
+                                                    final Alignment childAlignment,
+                                                    final Indent indent,
                                                     final Wrap childWrap) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), myJavaSettings, indent, childWrap) {
       @Override

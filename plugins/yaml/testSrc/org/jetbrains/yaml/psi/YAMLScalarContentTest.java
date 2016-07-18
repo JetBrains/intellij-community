@@ -73,6 +73,10 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   public void testDoubleQuote2() {
     doTest();
   }
+  
+  public void testDoubleQuote4() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".yml");

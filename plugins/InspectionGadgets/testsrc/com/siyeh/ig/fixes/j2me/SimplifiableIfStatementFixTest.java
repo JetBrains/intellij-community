@@ -27,6 +27,7 @@ public class SimplifiableIfStatementFixTest extends IGQuickFixesTestCase {
   public void testComments() { doTest(); }
   public void testParentheses() { doTest(); }
   public void testMoreParentheses() { doTest(); }
+  public void testParenthesesForConditional() { doTest(); }
   public void testPrecedence() { doTest(); }
 
   @Override

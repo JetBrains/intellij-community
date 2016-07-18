@@ -21,8 +21,12 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -125,7 +129,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          elemNode.insertByOrder(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation), true);
+          elemNode
+            .insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(refElement, problem, toolWrapper, presentation)), true);
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }

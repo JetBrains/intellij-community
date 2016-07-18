@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -829,15 +830,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       // 1. Strikeout effect
       if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
-        drawStrikeout(g, offset, offset + fragmentWidth, textBaseline);
+        EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), null);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
-        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), attributes.getWaveColor());
+        if (attributes.getWaveColor() != null) {
+          g.setColor(attributes.getWaveColor());
+        }
+        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), null);
       }
       // 3. Underline
       if (attributes.isUnderline()) {
-        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), g.getColor());
+        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), null);
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {
@@ -881,16 +885,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.drawString(text, x1, baseline);
 
       if (((SimpleTextAttributes)info[5]).isStrikeout()) {
-        drawStrikeout(g, x1, x2, baseline);
+        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), null);
       }
     }
     return offset;
   }
 
-  private static void drawStrikeout(Graphics g, int x1, int x2, int y) {
+  private static int getCharHeight(Graphics g) {
     // magic of determining character height
-    int strikeOutAt = y - g.getFontMetrics().charWidth('a') / 2;
-    UIUtil.drawLine(g, x1, strikeOutAt, x2, strikeOutAt);
+    return g.getFontMetrics().charWidth('a');
   }
 
   private int computeTextAlignShift(@NotNull Font font) {

@@ -278,10 +278,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return false;
   }
 
-  public boolean isSubclass(PyClass parent) {
-    return isSubclass(parent, null);
-  }
-
   @Override
   public boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context) {
     if (context == null) {
@@ -441,16 +437,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       return computed.get();
     }
-    cache.put(type, Ref.<List<PyClassLikeType>>create());
+    cache.put(type, Ref.create());
     List<PyClassLikeType> result = null;
     try {
-      final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
-      final List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
+      final List<PyClassLikeType> bases = removeNotNullDuplicates(type.getSuperClassTypes(context));
+      final List<List<PyClassLikeType>> lines = new ArrayList<>();
       for (PyClassLikeType base : bases) {
         if (base != null) {
           final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
           if (!baseClassMRO.isEmpty()) {
-            lines.add(baseClassMRO);
+            // mroMerge() updates passed MRO lists internally
+            lines.add(new LinkedList<>(baseClassMRO));
           }
         }
       }
@@ -461,9 +458,26 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       if (addThisType) {
         result.add(0, type);
       }
+      result = Collections.unmodifiableList(result);
     }
     finally {
       cache.put(type, Ref.create(result));
+    }
+    return result;
+  }
+
+  @NotNull
+  private static <T> List<T> removeNotNullDuplicates(@NotNull List<T> list) {
+    final Set<T> distinct = new HashSet<>();
+    final List<T> result = new ArrayList<>();
+    for (T elem : list) {
+      if (elem != null) {
+        final boolean isUnique = distinct.add(elem);
+        if (!isUnique) {
+          continue;
+        }
+      }
+      result.add(elem);
     }
     return result;
   }
@@ -1370,11 +1384,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyPsiUtils.assertValid(this);
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
-      final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;
-      final List<PyClassLikeType> ancestorTypes =
-        mroLinearize(thisClassLikeType, false, context, new HashMap<PyClassLikeType, Ref<List<PyClassLikeType>>>());
+      final List<PyClassLikeType> ancestorTypes = mroLinearize((PyClassLikeType)thisType, false, context, new HashMap<>());
       if (isOverriddenMRO(ancestorTypes, context)) {
-        ancestorTypes.add(null);
+        final ArrayList<PyClassLikeType> withNull = new ArrayList<>(ancestorTypes);
+        withNull.add(null);
+        return withNull;
       }
       return ancestorTypes;
     }

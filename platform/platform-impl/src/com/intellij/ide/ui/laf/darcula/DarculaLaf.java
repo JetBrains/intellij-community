@@ -69,11 +69,11 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
-      if (SystemInfo.isWindows || SystemInfo.isLinux) {
-        return new IdeaLaf();
-      } else {
+      if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
+      } else {
+        return new IdeaLaf();
       }
     }
     catch (Exception e) {

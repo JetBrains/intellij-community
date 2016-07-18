@@ -27,10 +27,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -145,20 +147,11 @@ public abstract class CodeStyleManager  {
    */
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
 
-
-  /**
-   * Works as #reformatText, but reformats not only specified ranges, but also some context around to make code look consistent
-   * @param file
-   * @param ranges
-   * @throws IncorrectOperationException
-   */
-  public abstract void reformatTextWithContext(@NotNull PsiFile file, 
-                                               @NotNull Collection<TextRange> ranges, 
-                                               @Nullable DiffInfo diffInfo) throws IncorrectOperationException;
-
-
+  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
+  
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    reformatTextWithContext(file, ranges, null);
+    List<TextRange> rangesList = ContainerUtil.newArrayList(ranges);
+    reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
   }
   
   /**

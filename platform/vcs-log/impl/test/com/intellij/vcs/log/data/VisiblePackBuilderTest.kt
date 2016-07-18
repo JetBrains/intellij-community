@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
@@ -139,14 +140,15 @@ class VisiblePackBuilderTest {
       })
 
       val dataPack = DataPack.build(commits, mapOf(root to refs), providers, hashMap, true)
-      val detailsCache = data.entries.map {
+      val detailsCache = ContainerUtil.createConcurrentIntObjectMap<VcsCommitMetadata>()
+      data.entries.forEach {
         val hash = hashMap.getCommitId(it.key.id)!!.hash
         val metadata = if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
             it.value.user!!, it.value.subject, it.value.user!!, 1L)
-        Pair(it.key.id, metadata)
-      }.toMap()
+        if (metadata != null) detailsCache.put(it.key.id, metadata)
+      }
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
         override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {

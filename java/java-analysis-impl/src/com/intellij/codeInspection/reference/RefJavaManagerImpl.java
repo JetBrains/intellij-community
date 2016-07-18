@@ -373,6 +373,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
         }
 
         @Override
+        public void configureEntryClassPatterns() {}
+
+        @Override
         public JButton createConfigureAnnotationsBtn() {
           return null;
         }

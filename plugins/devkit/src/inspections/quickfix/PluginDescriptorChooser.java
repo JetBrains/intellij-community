@@ -171,7 +171,14 @@ public class PluginDescriptorChooser {
     });
     Collections.sort(elements, (o1, o2) -> {
       if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
-      return o1.getFile().getName().compareTo(o2.getFile().getName());
+      String pluginId1 = o1.getRootElement().getPluginId();
+      String pluginId2 = o2.getRootElement().getPluginId();
+      if (pluginId1 == null && pluginId2 == null) {
+        return o1.getFile().getName().compareTo(o2.getFile().getName());
+      }
+      if (pluginId1 == null) return 1;
+      if (pluginId2 == null) return -1;
+      return Comparing.compare(pluginId1, pluginId2);
     });
 
     return ContainerUtil.map(elements, new Function<DomFileElement<IdeaPlugin>, PluginDescriptorCandidate>() {

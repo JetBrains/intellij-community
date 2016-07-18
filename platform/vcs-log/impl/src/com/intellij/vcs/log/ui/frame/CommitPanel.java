@@ -91,7 +91,7 @@ class CommitPanel extends JBPanel {
     myDataPack = visiblePack;
   }
 
-  public void setCommit(@NotNull VcsFullCommitDetails commitData) {
+  public void setCommit(@NotNull VcsFullCommitDetails commitData, @NotNull Collection<VcsRef> refs) {
     if (!Comparing.equal(myCommit, commitData)) {
       if (commitData instanceof LoadingDetails) {
         myDataPanel.setData(null);
@@ -100,7 +100,7 @@ class CommitPanel extends JBPanel {
       }
       else {
         myDataPanel.setData(commitData);
-        myReferencesPanel.setReferences(sortRefs(commitData.getId(), commitData.getRoot()));
+        myReferencesPanel.setReferences(sortRefs(refs, commitData.getRoot()));
         updateBorder(commitData);
       }
       myCommit = commitData;
@@ -132,8 +132,7 @@ class CommitPanel extends JBPanel {
   }
 
   @NotNull
-  private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    Collection<VcsRef> refs = myDataPack.getRefs().refsToCommit(hash, root);
+  private List<VcsRef> sortRefs(@NotNull Collection<VcsRef> refs, @NotNull VirtualFile root) {
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
   }
 

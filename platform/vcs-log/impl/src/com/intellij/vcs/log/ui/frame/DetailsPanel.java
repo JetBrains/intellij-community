@@ -221,7 +221,8 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
       Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
       for (int i = 0; i < mySelection.size(); i++) {
         CommitPanel commitPanel = getCommitPanel(i);
-        commitPanel.setCommit(detailsList.get(i));
+        Integer commit = myDataPack.getVisibleGraph().getRowInfo(mySelection.get(i)).getCommit();
+        commitPanel.setCommit(detailsList.get(i), myDataPack.getRefs().refsToCommit(commit));
       }
 
       if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {

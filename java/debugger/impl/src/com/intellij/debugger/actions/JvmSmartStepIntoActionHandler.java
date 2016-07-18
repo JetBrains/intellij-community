@@ -17,6 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -51,8 +52,12 @@ public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
         }
       }
     }
+    doStepInto(session, Registry.is("debugger.single.smart.step.force"), null);
+  }
+
+  static void doStepInto(DebuggerSession session, boolean force, MethodFilter filter) {
     session.sessionResumed();
-    session.stepInto(Registry.is("debugger.single.smart.step.force"), null);
+    session.stepInto(force, filter);
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

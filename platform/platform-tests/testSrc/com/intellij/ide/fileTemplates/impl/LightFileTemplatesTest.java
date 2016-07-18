@@ -168,7 +168,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertTrue(template.isReformatCode());
     template.setReformatCode(false);
 
-    ExportableFileTemplateSettings settings = ExportableFileTemplateSettings.getInstance(getProject());
+    FileTemplateSettings settings = FileTemplateSettings.getInstance(getProject());
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);
@@ -180,7 +180,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertFalse(((FileTemplateBase)myTemplateManager.getTemplate(TEST_TEMPLATE_TXT)).isLiveTemplateEnabledByDefault());
     FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
     assertTrue(template.isLiveTemplateEnabledByDefault());
-    ExportableFileTemplateSettings settings = ExportableFileTemplateSettings.getInstance(getProject());
+    FileTemplateSettings settings = FileTemplateSettings.getInstance(getProject());
     assertNull(settings.getState());
     template.setLiveTemplateEnabled(false);
     Element state = settings.getState();

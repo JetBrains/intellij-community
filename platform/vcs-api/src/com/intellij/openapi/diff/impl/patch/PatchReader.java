@@ -53,7 +53,7 @@ public class PatchReader {
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
-  @NonNls private static final Pattern EMPTY_REVISION_INFO_PATTERN = Pattern.compile(TextPatchBuilder.getEmptyRevisionPattern());
+  @NonNls private static final Pattern ourEmptyRevisionInfoPattern = Pattern.compile("\\(\\s*revision\\s*\\)");
 
   public PatchReader(CharSequence patchContent) {
     this(patchContent, true);
@@ -570,7 +570,7 @@ public class PatchReader {
       if (pos >= 0) {
         String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
-        if (versionId.length() > 0 && !EMPTY_REVISION_INFO_PATTERN.matcher(versionId).matches()) {
+        if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {
             patch.setBeforeVersionId(versionId);
           }

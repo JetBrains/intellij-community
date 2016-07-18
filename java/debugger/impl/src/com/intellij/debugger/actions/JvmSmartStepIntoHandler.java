@@ -57,21 +57,22 @@ public abstract class JvmSmartStepIntoHandler {
    * @return false to continue for another handler or for default action (step into)
    */
   public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
-    final List<SmartStepTarget> targets = findSmartStepTargets(position);
+    return handleTargets(position, session, fileEditor, findSmartStepTargets(position));
+  }
+
+  protected final boolean handleTargets(SourcePosition position,
+                                        DebuggerSession session,
+                                        TextEditor fileEditor,
+                                        List<SmartStepTarget> targets) {
     if (!targets.isEmpty()) {
-      final SmartStepTarget firstTarget = targets.get(0);
+      SmartStepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
-        session.sessionResumed();
-        session.stepInto(Registry.is("debugger.single.smart.step.force"), createMethodFilter(firstTarget));
+        doStepInto(session, Registry.is("debugger.single.smart.step.force"), firstTarget);
       }
       else {
-        final Editor editor = fileEditor.getEditor();
-        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(editor, targets, new PsiMethodListPopupStep.OnChooseRunnable() {
-          public void execute(SmartStepTarget chosenTarget) {
-            session.sessionResumed();
-            session.stepInto(true, createMethodFilter(chosenTarget));
-          }
-        });
+        Editor editor = fileEditor.getEditor();
+        PsiMethodListPopupStep popupStep =
+          new PsiMethodListPopupStep(editor, targets, chosenTarget -> doStepInto(session, true, chosenTarget));
         ListPopupImpl popup = new ListPopupImpl(popupStep);
         DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
         popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
@@ -93,6 +94,10 @@ public abstract class JvmSmartStepIntoHandler {
       return true;
     }
     return false;
+  }
+
+  protected void doStepInto(DebuggerSession session, boolean force, SmartStepTarget target) {
+    JvmSmartStepIntoActionHandler.doStepInto(session, force, createMethodFilter(target));
   }
 
   private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -47,7 +48,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final Consumer<Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
@@ -61,7 +62,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
                              @NotNull VcsLogHashMap hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull VcsUserRegistryImpl userRegistry,
-                             @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
+                             @NotNull ConcurrentIntObjectMap<VcsCommitMetadata> topCommitsDetailsCache,
                              @NotNull Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
                              int recentCommitsCount) {

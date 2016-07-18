@@ -382,12 +382,8 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myCachedGutters.contains(action)) {
       return 5;
     }
-    final IntentionAction underlyingAction = action.getAction();
-    if (underlyingAction instanceof EmptyIntentionAction) {
+    if (action.getAction() instanceof EmptyIntentionAction) {
       return -10;
-    }
-    if (underlyingAction instanceof SuppressIntentionActionFromFix && ((SuppressIntentionActionFromFix)underlyingAction).isSuppressAll()) {
-      return -15;
     }
     return 0;
   }

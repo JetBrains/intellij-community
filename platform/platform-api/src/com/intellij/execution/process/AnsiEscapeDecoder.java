@@ -22,9 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -37,7 +35,6 @@ public class AnsiEscapeDecoder {
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
   private static final Pattern INNER_PATTERN = Pattern.compile(Pattern.quote("m" + CSI));
 
-  private final Map<String, Key> myCachedKeys = new HashMap<String, Key>();
   private Key myCurrentTextAttributes;
 
   /**
@@ -68,7 +65,7 @@ public class AnsiEscapeDecoder {
         // this is a simple fix for RUBY-8996:
         // we replace several consecutive escape sequences with one which contains all these sequences
         String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
-        myCurrentTextAttributes = getOutputKey(colorAttribute);
+        myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
       }
       pos = escSeqEndInd;
     }
@@ -78,16 +75,6 @@ public class AnsiEscapeDecoder {
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
-  }
-
-  @NotNull
-  private Key getOutputKey(@NotNull String attribute) {
-    Key key = myCachedKeys.get(attribute);
-    if (key == null) {
-      key = ColoredOutputTypeRegistry.getInstance().getOutputKey(attribute);
-      myCachedKeys.put(attribute, key);
-    }
-    return key;
   }
 
   /*

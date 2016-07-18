@@ -159,30 +159,33 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges)
-    throws IncorrectOperationException {
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
     reformatText(file, ranges, null);
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable DiffInfo info) throws IncorrectOperationException {
-    reformatText(file, ranges, info, null, true);
+  public void reformatTextWithContext(@NotNull PsiFile file, 
+                                      @NotNull ChangedRangesInfo info) throws IncorrectOperationException 
+  {
+    FormatTextRanges formatRanges = new FormatTextRanges(info);
+    reformatText(file, formatRanges, null, true);
   }
 
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
-    reformatText(file, ranges, null, editor, false);
+    FormatTextRanges formatRanges = new FormatTextRanges();
+    ranges.forEach((range) -> formatRanges.add(range, true));
+    reformatText(file, formatRanges, editor, false);
   }
   
   private void reformatText(@NotNull PsiFile file, 
-                            @NotNull Collection<TextRange> ranges,
-                            @Nullable DiffInfo diffInfo,
+                            @NotNull FormatTextRanges ranges,
                             @Nullable Editor editor, 
                             boolean reformatContext) throws IncorrectOperationException 
   {
     if (ranges.isEmpty()) {
       return;
     }
-    boolean isFullReformat = ranges.size() == 1 && file.getTextRange().equals(ranges.iterator().next());
+    boolean isFullReformat = ranges.isFullReformat(file);
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -208,13 +211,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       caretKeeper = new CaretPositionKeeper(editor, getSettings(), file.getLanguage());
     }
 
-    Collection<TextRange> correctedRanges = FormatterUtil.isFormatterCalledExplicitly()
-                                            ? removeEndingWhiteSpaceFromEachRange(file, ranges)
-                                            : ranges;
+    if (FormatterUtil.isFormatterCalledExplicitly()) {
+      removeEndingWhiteSpaceFromEachRange(file, ranges);
+    }
 
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(getProject());
-    List<RangeFormatInfo> infos = new ArrayList<RangeFormatInfo>();
-    for (TextRange range : correctedRanges) {
+    List<RangeFormatInfo> infos = new ArrayList<>();
+    for (TextRange range : ranges.getTextRanges()) {
       final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
       final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
       if (start != null && !start.isValid()) {
@@ -233,11 +236,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       ));
     }
 
-    FormatTextRanges formatRanges = new FormatTextRanges(diffInfo);
-    for (TextRange range : correctedRanges) {
-      formatRanges.add(range, true);
-    }
-    codeFormatter.processText(file, formatRanges, true);
+    codeFormatter.processText(file, ranges, true);
+    
     for (RangeFormatInfo info : infos) {
       final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
       final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
@@ -258,28 +258,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
 
-  @NotNull
-  private Collection<TextRange> removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
-    Collection<TextRange> result = new ArrayList<TextRange>();
+  private static void removeEndingWhiteSpaceFromEachRange(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
+    for (FormatTextRange formatRange : ranges.getRanges()) {
+      TextRange range = formatRange.getTextRange();
+      
+      final int rangeStart = range.getStartOffset();
+      final int rangeEnd = range.getEndOffset();
 
-    for (TextRange range : ranges) {
-      int rangeStart = range.getStartOffset();
-      int rangeEnd = range.getEndOffset();
-
-      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
-      if (lastElementInRange instanceof PsiWhiteSpace
-          && rangeStart < lastElementInRange.getTextRange().getStartOffset())
-      {
+      PsiElement lastElementInRange = findElementInTreeWithFormatterEnabled(file, rangeEnd);
+      if (lastElementInRange instanceof PsiWhiteSpace && rangeStart < lastElementInRange.getTextRange().getStartOffset()) {
         PsiElement prev = lastElementInRange.getPrevSibling();
         if (prev != null) {
-          rangeEnd = prev.getTextRange().getEndOffset();
+          int newEnd = prev.getTextRange().getEndOffset();
+          formatRange.setTextRange(new TextRange(rangeStart, newEnd));
         }
       }
-
-      result.add(new TextRange(rangeStart, rangeEnd));
     }
-
-    return result;
   }
 
   private PsiElement reformatRangeImpl(final PsiElement element,

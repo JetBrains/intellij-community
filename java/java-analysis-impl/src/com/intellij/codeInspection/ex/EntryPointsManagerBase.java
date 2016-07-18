@@ -31,13 +31,14 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
   };
+  private static final String PATTERN_SUFFIX = ".*";
 
   // null means uninitialized
   private volatile List<String> ADDITIONAL_ANNOS;
@@ -72,6 +74,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
+  private final List<ClassPattern> myPatterns = new ArrayList<>();
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
@@ -137,6 +140,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
     catch (Throwable ignored) {
     }
+
+    getPatterns().clear();
+    for (Element pattern : element.getChildren("pattern")) {
+      final ClassPattern classPattern = new ClassPattern();
+      XmlSerializer.deserializeInto(classPattern, pattern);
+      getPatterns().add(classPattern);
+    }
   }
 
   @Override
@@ -144,6 +154,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public Element getState()  {
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
+    if (!getPatterns().isEmpty()) {
+      for (ClassPattern pattern : getPatterns()) {
+        element.addContent(XmlSerializer.serialize(pattern, new SkipDefaultsSerializationFilter()));
+      }
+    }
     return element;
   }
 
@@ -179,6 +194,16 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
             ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
           }
         }
+
+        for (ClassPattern pattern : myPatterns) {
+          final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
+          if (refClass != null) {
+            for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
+              ((RefMethodImpl)constructor).setEntry(true);
+              ((RefMethodImpl)constructor).setPermanentEntry(true);
+            }
+          }
+        }
       });
     }
   }
@@ -194,6 +219,21 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Override
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
+    if (isPersistent) {
+      if (newEntryPoint instanceof RefMethod && ((RefMethod)newEntryPoint).isConstructor() || newEntryPoint instanceof RefClass) {
+        final ClassPattern classPattern = new ClassPattern();
+        classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
+        getPatterns().add(classPattern);
+
+        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+        if (this != entryPointsManager) {
+          entryPointsManager.addEntryPoint(newEntryPoint, true);
+        }
+
+        return;
+      }
+    }
+
     if (newEntryPoint instanceof RefClass) {
       RefClass refClass = (RefClass)newEntryPoint;
 
@@ -250,14 +290,25 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     if (key != null) {
       myPersistentEntryPoints.remove(key);
-      ((RefElementImpl)anEntryPoint).setEntry(false);
     }
+    ((RefElementImpl)anEntryPoint).setEntry(false);
 
     if (anEntryPoint.isPermanentEntry() && anEntryPoint.isValid()) {
       final Project project = anEntryPoint.getElement().getProject();
       final EntryPointsManager entryPointsManager = getInstance(project);
       if (this != entryPointsManager) {
         entryPointsManager.removeEntryPoint(anEntryPoint);
+      }
+    }
+
+    if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+      final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
+      final String qualifiedName = aClass.getQualifiedName();
+      for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
+        if (Comparing.equal(iterator.next().pattern, qualifiedName)) {
+          //todo if inheritance or pattern?
+          iterator.remove();
+        }
       }
     }
   }
@@ -323,6 +374,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   public void addAllPersistentEntries(EntryPointsManagerBase manager) {
     myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
+    myPatterns.addAll(manager.getPatterns());
   }
 
   public static void convert(Element element, final Map<String, SmartRefElementPointer> persistentEntryPoints) {
@@ -382,7 +434,74 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       return true;
     }
 
+    if (element instanceof PsiClass) {
+      final String qualifiedName = ((PsiClass)element).getQualifiedName();
+      if (qualifiedName != null) {
+        for (ClassPattern pattern : getPatterns()) {
+          if (isAcceptedByPattern((PsiClass)element, qualifiedName, pattern, new HashSet<>())) {
+            return true;
+          }
+        }
+      }
+    }
+
     return AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
            AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
+  }
+
+  private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<PsiClass> visited) {
+    if (qualifiedName == null) {
+      return false;
+    }
+
+    if (qualifiedName.equals(pattern.pattern)) {
+      return true;
+    }
+
+    if (pattern.pattern.endsWith(PATTERN_SUFFIX) && qualifiedName.startsWith(StringUtil.trimEnd(pattern.pattern, PATTERN_SUFFIX))) {
+      return true;
+    }
+
+    if (pattern.hierarchically) {
+      for (PsiClass superClass : element.getSupers()) {
+        final String superClassQualifiedName = superClass.getQualifiedName();
+        if (visited.add(superClass) && isAcceptedByPattern(superClass, superClassQualifiedName, pattern, visited)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public List<ClassPattern> getPatterns() {
+    return myPatterns;
+  }
+
+  @Tag("pattern")
+  public static class ClassPattern {
+    @Attribute("value")
+    public String pattern;
+    @Attribute("hierarchically")
+    public boolean hierarchically = false;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ClassPattern otherPattern = (ClassPattern)o;
+
+      if (hierarchically != otherPattern.hierarchically) return false;
+      if (!pattern.equals(otherPattern.pattern)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = pattern.hashCode();
+      result = 31 * result + (hierarchically ? 1 : 0);
+      return result;
+    }
   }
 }

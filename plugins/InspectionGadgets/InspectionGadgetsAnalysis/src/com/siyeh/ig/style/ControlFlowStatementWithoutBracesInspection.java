@@ -15,29 +15,23 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowStatementWithoutBracesInspection
   extends BaseInspection {
-
-  private static final String DO_TEXT = "do";
-  private static final String ELSE_TEXT = "else";
-  private static final String FOR_TEXT = "for";
-  private static final String IF_TEXT = "if";
-  private static final String WHILE_TEXT = "while";
 
   @Override
   @NotNull
@@ -64,7 +58,7 @@ public class ControlFlowStatementWithoutBracesInspection
   private static class ControlFlowStatementFix extends InspectionGadgetsFix {
     private final String myKeywordText;
 
-    public ControlFlowStatementFix(String keywordText) {
+    private ControlFlowStatementFix(String keywordText) {
       myKeywordText = keywordText;
     }
 
@@ -74,6 +68,7 @@ public class ControlFlowStatementWithoutBracesInspection
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.message", myKeywordText);
     }
+
     @Override
     @NotNull
     public String getFamilyName() {
@@ -134,116 +129,31 @@ public class ControlFlowStatementWithoutBracesInspection
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    final String shortName = getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    return new ControlFlowStatementVisitor(key);
+    return new ControlFlowStatementVisitor(this);
   }
 
-  private static class ControlFlowStatementVisitor
-    extends BaseInspectionVisitor {
-    private HighlightDisplayKey myKey;
-
-    public ControlFlowStatementVisitor(HighlightDisplayKey key) {
-      myKey = key;
+  private static class ControlFlowStatementVisitor extends ControlFlowStatementVisitorBase {
+    private ControlFlowStatementVisitor(BaseInspection inspection) {
+      super(inspection);
     }
 
+    @Contract("null->false")
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
-      super.visitDoWhileStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null || body instanceof PsiBlockStatement) {
-        return;
-      }
-      registerKeywordOrStatementError(statement, DO_TEXT);
+    protected boolean isApplicable(PsiStatement body) {
+      return body != null && !(body instanceof PsiBlockStatement);
     }
 
+    @Nullable
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
-      super.visitForeachStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null || body instanceof PsiBlockStatement) {
-        return;
+    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+      if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
+        final PsiElement lastChild = body.getLastChild();
+        return Pair.create(PsiTreeUtil.skipSiblingsBackward(body, PsiWhiteSpace.class, PsiComment.class),
+                           lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON
+                           ? lastChild
+                           : null);
       }
-      registerKeywordOrStatementError(statement, FOR_TEXT);
-    }
-
-    @Override
-    public void visitForStatement(PsiForStatement statement) {
-      super.visitForStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null || body instanceof PsiBlockStatement) {
-        return;
-      }
-      registerKeywordOrStatementError(statement, FOR_TEXT);
-    }
-
-    @Override
-    public void visitIfStatement(PsiIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiStatement thenBranch = statement.getThenBranch();
-      if (thenBranch == null) {
-        return;
-      }
-      boolean highlightOnlyKeyword = isHighlightOnlyKeyword(statement);
-      if (!(thenBranch instanceof PsiBlockStatement)) {
-        if (highlightOnlyKeyword) {
-          registerStatementError(statement, IF_TEXT);
-        }
-        else {
-          final PsiElement startElement = statement.getFirstChild();
-          registerErrorAtRange(startElement != null ? startElement : thenBranch, thenBranch, IF_TEXT);
-        }
-      }
-      final PsiStatement elseBranch = statement.getElseBranch();
-      if (elseBranch == null) {
-        return;
-      }
-      if (!(elseBranch instanceof PsiBlockStatement) &&
-          !(elseBranch instanceof PsiIfStatement)) {
-        final PsiKeyword elseKeyword = statement.getElseElement();
-        if (elseKeyword == null) {
-          return;
-        }
-        if (highlightOnlyKeyword) {
-          registerError(elseKeyword, ELSE_TEXT);
-        }
-        else {
-          registerErrorAtRange(elseKeyword, elseBranch, ELSE_TEXT);
-        }
-      }
-    }
-
-    @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
-      super.visitWhileStatement(statement);
-      final PsiStatement body = statement.getBody();
-      if (body == null || body instanceof PsiBlockStatement) {
-        return;
-      }
-      registerKeywordOrStatementError(statement, WHILE_TEXT);
-    }
-
-    private void registerKeywordOrStatementError(PsiStatement statement, String text) {
-      boolean highlightOnlyKeyword = isHighlightOnlyKeyword(statement);
-      if (highlightOnlyKeyword) {
-        registerStatementError(statement, text);
-      }
-      else {
-        registerError(statement, text);
-      }
-    }
-
-    private boolean isHighlightOnlyKeyword(PsiElement element) {
-      if (!isOnTheFly()) {
-        return true;
-      }
-      if (myKey != null) {
-        final Project project = element.getProject();
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-        HighlightDisplayLevel errorLevel = profile.getErrorLevel(myKey, element);
-        return !HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
-      }
-      return false;
+      return null;
     }
   }
 }

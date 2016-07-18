@@ -28,20 +28,5 @@ def run(working_dir):
 
   fixGetpass()
 
-  try:
-      #import settings to prevent circular dependencies later on import django.db
-      from django.conf import settings
-      apps=settings.INSTALLED_APPS
-
-      # From django.core.management.shell
-
-      # XXX: (Temporary) workaround for ticket #1796: force early loading of all
-      # models from installed apps.
-      from django.db.models.loading import get_models
-      get_models()
-
-  except:
-      pass
-
   run_module(manage_file, None, '__main__', True)
 

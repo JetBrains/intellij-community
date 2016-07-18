@@ -16,10 +16,9 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,6 +48,22 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
 
     return getNameElement().getReferenceText();
+  }
+
+  @Override
+  public String getName() {
+    return getModuleName();
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return getNameElement();
   }
 
   @Override

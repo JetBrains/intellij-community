@@ -918,6 +918,23 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
+  public static boolean methodMatches(@NotNull PsiMethod psiMethod,
+                                      String className,
+                                      String name,
+                                      String signature,
+                                      DebugProcessImpl process) {
+    PsiClass containingClass = psiMethod.getContainingClass();
+    try {
+      return containingClass != null && Objects.equals(containingClass.getQualifiedName(), className) &&
+             JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+             JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
+    }
+    catch (EvaluateException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
   @Nullable
   public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
     return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);

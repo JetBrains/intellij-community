@@ -135,7 +135,7 @@ EOL =                           "\n"
 WHITE_SPACE_CHAR =              [ \t]
 WHITE_SPACE =                   {WHITE_SPACE_CHAR}+
 
-LINE =                          .*
+LINE =                          [^\n]*
 COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
@@ -329,11 +329,11 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 <VALUE, VALUE_BRACE, VALUE_OR_KEY>{
-.                               {   return TEXT; }
+[^]                               {   return TEXT; }
 }
 
 <YYINITIAL, BRACES> {
-. {
+[^] {
   return TEXT;
 }
 }

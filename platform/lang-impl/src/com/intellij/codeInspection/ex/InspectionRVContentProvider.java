@@ -27,6 +27,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -73,7 +74,7 @@ public abstract class InspectionRVContentProvider {
 
     @NotNull
     public RefElementNode createNode(@NotNull InspectionToolPresentation presentation) {
-      return new RefElementNode(myEntity, presentation);
+      return ReadAction.compute(() -> new RefElementNode(myEntity, presentation));
     }
 
     @Nullable
@@ -203,7 +204,7 @@ public abstract class InspectionRVContentProvider {
 
         if (moduleNode == null) {
           if (moduleName != null) {
-            final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+            final Module module = ReadAction.compute(() -> ModuleManager.getInstance(myProject).findModuleByName(moduleName));
             if (module != null) {
               moduleNode = new InspectionModuleNode(module);
               moduleNodes.put(moduleName, moduleNode);
@@ -356,39 +357,41 @@ public abstract class InspectionRVContentProvider {
 
   @SuppressWarnings({"ConstantConditions"}) //class cast suppression
   public static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
-    if (merge) {
-      for (int i = 0; i < parent.getChildCount(); i++) {
-        InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
-        if (child.getClass() != current.getClass()) {
-          continue;
-        }
-        if (current instanceof InspectionPackageNode) {
-          if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0) {
-            processDepth(child, current);
-            return current;
+    return ReadAction.compute(() -> {
+      if (merge) {
+        for (int i = 0; i < parent.getChildCount(); i++) {
+          InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
+          if (child.getClass() != current.getClass()) {
+            continue;
           }
-        }
-        else if (current instanceof RefElementNode) {
-          if (InspectionResultsViewComparator.getInstance().compare(current, child) == 0) {
-            processDepth(child, current);
-            return current;
+          if (current instanceof InspectionPackageNode) {
+            if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0) {
+              processDepth(child, current);
+              return current;
+            }
           }
-        }
-        else if (current instanceof InspectionNode) {
-          if (((InspectionNode)current).getToolWrapper().getShortName().compareTo(((InspectionNode)child).getToolWrapper().getShortName()) == 0) {
-            processDepth(child, current);
-            return current;
+          else if (current instanceof RefElementNode) {
+            if (InspectionResultsViewComparator.getInstance().compare(current, child) == 0) {
+              processDepth(child, current);
+              return current;
+            }
           }
-        }
-        else if (current instanceof InspectionModuleNode) {
-          if (((InspectionModuleNode)current).getName().compareTo(((InspectionModuleNode)child).getName()) == 0) {
-            processDepth(child, current);
-            return current;
+          else if (current instanceof InspectionNode) {
+            if (((InspectionNode)current).getToolWrapper().getShortName().compareTo(((InspectionNode)child).getToolWrapper().getShortName()) == 0) {
+              processDepth(child, current);
+              return current;
+            }
+          }
+          else if (current instanceof InspectionModuleNode) {
+            if (((InspectionModuleNode)current).getName().compareTo(((InspectionModuleNode)child).getName()) == 0) {
+              processDepth(child, current);
+              return current;
+            }
           }
         }
       }
-    }
-    return parent.insertByOrder(child, false);
+      return parent.insertByOrder(child, false);
+    });
   }
 
   private static void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {

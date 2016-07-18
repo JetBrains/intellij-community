@@ -74,6 +74,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
+import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -2411,32 +2412,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (attributes != null && attributes.getEffectColor() != null) {
         int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
-        g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
           EffectPainter.WAVE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
-          final int dottedAt = SystemInfo.isMac ? y - 1 : y;
-          UIUtil.drawBoldDottedLine((Graphics2D)g, end.x, end.x + charWidth - 1, dottedAt,
-                                    getBackgroundColor(attributes), attributes.getEffectColor(), false);
+          g.setColor(getBackgroundColor(attributes));
+          EffectPainter.BOLD_DOTTED_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
-          int y1 = y - getCharHeight() / 2 - 1;
-          UIUtil.drawLine(g, end.x, y1, end.x + charWidth - 1, y1);
+          EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getCharHeight(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
-          drawBoldLineUnderScore(g, end.x, y - 1, charWidth - 1);
+          EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
         else if (attributes.getEffectType() != EffectType.BOXED) {
           EffectPainter.LINE_UNDERSCORE.paint((Graphics2D)g, end.x, y - 1, charWidth - 1, getDescent(), attributes.getEffectColor());
         }
       }
     }
-  }
-
-  private static void drawBoldLineUnderScore(Graphics g, int x, int y, int width) {
-    int height = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
-    g.fillRect(x, y, width, height);
   }
 
   @Override
@@ -3550,14 +3543,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        g.setColor(effectColor);
-        drawBoldLineUnderScore(g, xStart, y, xEnd-xStart);
+        EffectPainter.BOLD_LINE_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.STRIKEOUT) {
-        g.setColor(effectColor);
-        int y1 = y - getCharHeight() / 2;
-        UIUtil.drawLine(g, xStart, y1, xEnd, y1);
+        EffectPainter.STRIKE_THROUGH.paint((Graphics2D)g, xStart, y, xEnd - xStart, getCharHeight(), effectColor);
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
@@ -3565,9 +3555,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        final Color bgColor = getBackgroundColor();
-        final int dottedAt = SystemInfo.isMac ? y : y + 1;
-        UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, false);
+        g.setColor(getBackgroundColor());
+        EffectPainter.BOLD_DOTTED_UNDERSCORE.paint((Graphics2D)g, xStart, y, xEnd - xStart, getDescent(), effectColor);
       }
     }
 
@@ -4400,6 +4389,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     EditorMouseEventArea eventArea = getMouseEventArea(e);
+    if (eventArea == EditorMouseEventArea.ANNOTATIONS_AREA) return;
     if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
         eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && !isInsideGutterWhitespaceArea(e)) {
       // The general idea is that we don't want to change caret position on gutter marker area click (e.g. on setting a breakpoint)
@@ -4576,11 +4566,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void clearDraggedRange() {
+  private void clearDnDContext() {
     if (myDraggedRange != null) {
       myDraggedRange.dispose();
       myDraggedRange = null;
     }
+    myGutterComponent.myDnDInProgress = false;
   }
 
   private void createSelectionTill(@NotNull LogicalPosition targetPosition) {
@@ -5778,7 +5769,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.<CaretState>emptyList();
       myCurrentDragIsSubstantial = false;
-      clearDraggedRange();
+      clearDnDContext();
 
 
       myMousePressedEvent = e;
@@ -6190,7 +6181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class MyMouseMotionListener implements MouseMotionListener {
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
-      if (myDraggedRange != null) return; // on Mac we receive events even if drag-n-drop is in progress
+      if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
       runMouseDraggedCommand(e);
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
@@ -6589,7 +6580,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }), EditorBundle.message("move.selection.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
 
-      editor.clearDraggedRange();
+      editor.clearDnDContext();
     }
   }
 

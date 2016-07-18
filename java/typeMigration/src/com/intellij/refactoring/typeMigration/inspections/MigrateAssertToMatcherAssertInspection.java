@@ -25,11 +25,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nls;
@@ -131,8 +133,20 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       }
       LOG.assertTrue(templatePair != null);
       templatePair = buildFullTemplate(templatePair, method);
-      final PsiExpression replaced =
-        TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
+      final PsiExpression replaced;
+      try {
+        replaced = TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error("Replacer can't can't match expression:\n" +
+                  methodCall.getText() +
+                  "\nwith replacement template:\n(" +
+                  templatePair.getFirst() +
+                  ", " +
+                  templatePair.getSecond() +
+                  ")");
+        throw e;
+      }
 
       if (myStaticallyImportMatchers) {
         for (PsiJavaCodeReferenceElement ref : ContainerUtil.reverse(new ArrayList<PsiJavaCodeReferenceElement>(PsiTreeUtil.findChildrenOfType(replaced, PsiJavaCodeReferenceElement.class)))) {

@@ -34,7 +34,8 @@ import java.io.IOException;
  * User : catherine
  */
 public class PyPackagesUpdater implements StartupActivity {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.PyPIPackagesUpdater");
+  private static final Logger LOG = Logger.getInstance(PyPackagesUpdater.class);
+  private static final long EXPIRATION_TIMEOUT = DateFormatUtil.DAY;
 
   @Override
   public void runActivity(@NotNull final Project project) {
@@ -62,7 +63,8 @@ public class PyPackagesUpdater implements StartupActivity {
   private static boolean checkCondaUpdateNeeded(Project project) {
     if (!hasPython(project)) return false;
     final long timeDelta = System.currentTimeMillis() - PyCondaPackageService.getInstance().LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
+    if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
+    LOG.debug("Updating outdated Conda package cache");
     return true;
   }
 
@@ -76,10 +78,11 @@ public class PyPackagesUpdater implements StartupActivity {
     return false;
   }
 
-  public static boolean checkNeeded(Project project, PyPackageService service) {
+  private static boolean checkNeeded(Project project, PyPackageService service) {
     if (!hasPython(project)) return false;
     final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
+    if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
+    LOG.debug("Updating outdated PyPI package cache");
     return true;
   }
 }
