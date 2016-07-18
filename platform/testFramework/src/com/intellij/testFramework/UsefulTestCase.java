@@ -347,12 +347,11 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(@NotNull Runnable r) {
-    EdtTestUtil.runInEdtAndWait(r);
-  }
-
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    EdtTestUtil.runInEdtAndWait(runnable);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -418,7 +417,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (runInDispatchThread()) {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
     }
     else {
       defaultRunBare();
@@ -568,12 +567,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @NotNull
   public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.map2List(collection, new Function<Object, String>() {
-      @Override
-      public String fun(final Object o) {
-        return String.valueOf(o);
-      }
-    });
+    List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
     boolean flag = false;

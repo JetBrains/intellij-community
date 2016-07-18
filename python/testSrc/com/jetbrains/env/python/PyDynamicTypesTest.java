@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
@@ -31,8 +32,6 @@ import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static com.intellij.testFramework.UsefulTestCase.edt;
 
 /**
  * @author traff
@@ -76,7 +75,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForTerminate();
 
-        edt(() -> {
+        EdtTestUtil.runInEdtAndWait(() -> {
           myFixture.configureByFile("dynamicTypes/" + scriptName);
 
           try {
