@@ -256,7 +256,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
       initApplication();
       ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
@@ -446,7 +446,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ((HintManagerImpl)HintManager.getInstance()).cleanup();
       DocumentCommitThread.getInstance().clearQueue();
 
-      EdtTestUtil.runInEdtAndWait((Runnable)() -> {
+      EdtTestUtil.runInEdtAndWait(() -> {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
         ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
 
@@ -523,7 +523,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       try {
         ourTestThread = Thread.currentThread();
         startRunAndTear();

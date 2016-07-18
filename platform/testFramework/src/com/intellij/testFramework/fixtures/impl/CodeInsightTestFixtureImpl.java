@@ -1194,54 +1194,48 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.setUp();
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        myProjectFixture.setUp();
-        myTempDirFixture.setUp();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myProjectFixture.setUp();
+      myTempDirFixture.setUp();
 
-        VirtualFile tempDir = myTempDirFixture.getFile("");
-        PlatformTestCase.synchronizeTempDirVfs(tempDir);
+      VirtualFile tempDir = myTempDirFixture.getFile("");
+      PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
         myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
         InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), getTestRootDisposable());
 
-        DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-        daemonCodeAnalyzer.prepareForTest();
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+      daemonCodeAnalyzer.prepareForTest();
 
-        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
-        ensureIndexesUpToDate(getProject());
-        ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
-      }
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+      ensureIndexesUpToDate(getProject());
+      ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     });
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        try {
+          DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+          FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          VirtualFile[] openFiles = editorManager.getOpenFiles();
+          for (VirtualFile openFile : openFiles) {
+            editorManager.closeFile(openFile);
+          }
+        }
+        finally {
+          myEditor = null;
+          myFile = null;
+          myPsiManager = null;
+
           try {
-            DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-            FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-            PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-            VirtualFile[] openFiles = editorManager.getOpenFiles();
-            for (VirtualFile openFile : openFiles) {
-              editorManager.closeFile(openFile);
-            }
+            myProjectFixture.tearDown();
           }
           finally {
-            myEditor = null;
-            myFile = null;
-            myPsiManager = null;
-
-            try {
-              myProjectFixture.tearDown();
-            }
-            finally {
-              myTempDirFixture.tearDown();
-            }
+            myTempDirFixture.tearDown();
           }
         }
       });
@@ -1363,40 +1357,37 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile configureInner(@NotNull final VirtualFile copy, @NotNull final SelectionAndCaretMarkupLoader loader) {
     assertInitialized();
 
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() {
-        if (!copy.getFileType().isBinary()) {
-          AccessToken token = WriteAction.start();
-          try {
-            copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-          finally {
-            token.finish();
-          }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      if (!copy.getFileType().isBinary()) {
+        AccessToken token = WriteAction.start();
+        try {
+          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
         }
-        myFile = copy;
-        myEditor = createEditor(copy);
-        if (myEditor == null) {
-          Assert.fail("editor couldn't be created for: " + copy.getPath() + ", use copyFileToProject() instead of configureByFile()");
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
+        finally {
+          token.finish();
+        }
+      }
+      myFile = copy;
+      myEditor = createEditor(copy);
+      if (myEditor == null) {
+        Assert.fail("editor couldn't be created for: " + copy.getPath() + ", use copyFileToProject() instead of configureByFile()");
+      }
 
-        EditorTestUtil.setCaretsAndSelection(myEditor, loader.caretState);
+      EditorTestUtil.setCaretsAndSelection(myEditor, loader.caretState);
 
-        Module module = getModule();
-        if (module != null) {
-          for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
-            module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
-          }
+      Module module = getModule();
+      if (module != null) {
+        for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+          module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
         }
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-        if (myCaresAboutInjection) {
-          setupEditorForInjectedLanguage();
-        }
+      if (myCaresAboutInjection) {
+        setupEditorForInjectedLanguage();
       }
     });
 

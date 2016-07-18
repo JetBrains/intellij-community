@@ -217,9 +217,10 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
         for (TextRange editable : editables) {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
+          GutterIconNavigationHandler<PsiElement> navigationHandler = injectedMarker.getNavigationHandler();
           LineMarkerInfo<PsiElement> converted =
             new LineMarkerInfo<>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
-                                 element -> injectedMarker.getLineMarkerTooltip(), injectedMarker.getNavigationHandler(),
+                                 element -> injectedMarker.getLineMarkerTooltip(), navigationHandler,
                                  GutterIconRenderer.Alignment.RIGHT);
           result.add(converted);
         }

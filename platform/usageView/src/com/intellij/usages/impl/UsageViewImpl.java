@@ -1710,7 +1710,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       close();
 
       CommandProcessor.getInstance().executeCommand(
-        myProject, myProcessRunnable::run,
+        myProject, myProcessRunnable,
         myCommandName,
         null
       );

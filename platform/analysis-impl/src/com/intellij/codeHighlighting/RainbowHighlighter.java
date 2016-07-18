@@ -61,7 +61,7 @@ public class RainbowHighlighter {
     if (!registryColors.isEmpty()) {
       final List<Color> colors = registryColors.stream().map((s -> ColorUtil.fromHex(s.trim()))).collect(Collectors.toList());
       if (!colors.isEmpty()) {
-        return colors.get(hash % colors.size());
+        return colors.get(Math.abs(hash) % colors.size());
       }
     }
 
