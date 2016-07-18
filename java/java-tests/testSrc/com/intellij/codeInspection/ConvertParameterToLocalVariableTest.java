@@ -39,7 +39,7 @@ public class ConvertParameterToLocalVariableTest extends LightQuickFixParameteri
   }
 
   @Override
-  protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+  protected void doAction(@NotNull final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
 
     final LocalQuickFix fix = new ParameterCanBeLocalInspection.ConvertParameterToLocalQuickFix();

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,7 +34,8 @@ public interface QuickFixTestCase {
 
   String getTestDataPath();
 
-  Pair<String, Boolean> parseActionHintImpl(PsiFile file, String contents);
+  @NotNull
+  Pair<String, Boolean> parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents);
 
   void beforeActionStarted(String testName, String contents);
 
@@ -41,7 +43,7 @@ public interface QuickFixTestCase {
 
   void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception;
 
-  void checkResultByFile(String s, String expectedFilePath, boolean b) throws Exception;
+  void checkResultByFile(String s, @NotNull String expectedFilePath, boolean b) throws Exception;
 
   IntentionAction findActionWithText(String text);
 
@@ -49,8 +51,10 @@ public interface QuickFixTestCase {
 
   void invoke(IntentionAction action);
 
+  @NotNull
   List<HighlightInfo> doHighlighting();
 
+  @NotNull
   List<IntentionAction> getAvailableActions();
 
   void bringRealEditorBack();

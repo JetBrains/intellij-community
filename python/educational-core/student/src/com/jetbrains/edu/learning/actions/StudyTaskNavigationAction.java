@@ -15,6 +15,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     }
   }
 
-  private static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
+  public static void updateProjectView(@NotNull Project project, VirtualFile shouldBeActive) {
     JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
     if (shouldBeActive != null) {
       ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
@@ -113,32 +114,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
 
   @Nullable
   protected VirtualFile getFileToActivate(@NotNull Project project, Map<String, TaskFile> nextTaskFiles, VirtualFile taskDir) {
-    VirtualFile shouldBeActive = null;
-    for (Map.Entry<String, TaskFile> entry : nextTaskFiles.entrySet()) {
-      String name = entry.getKey();
-      TaskFile taskFile = entry.getValue();
-      VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
-      VirtualFile vf = srcDir == null ? taskDir.findChild(name) : srcDir.findChild(name);
-      if (vf != null) {
-        if (shouldBeActive != null) {
-          FileEditorManager.getInstance(project).openFile(vf, true);
-        }
-        if (shouldBeActive == null && !taskFile.getAnswerPlaceholders().isEmpty()) {
-          shouldBeActive = vf;
-        }
-      }
-    }
-    return shouldBeActive != null ? shouldBeActive : getFirstTaskFile(taskDir, project);
-  }
-
-  @Nullable
-  private static VirtualFile getFirstTaskFile(@NotNull final VirtualFile taskDir, @NotNull final Project project) {
-    for (VirtualFile virtualFile : taskDir.getChildren()) {
-      if (StudyUtils.getTaskFile(project, virtualFile) != null) {
-        return virtualFile;
-      }
-    }
-    return null;
+    return StudyNavigator.getFileToActivate(project, nextTaskFiles, taskDir);
   }
 
   @Override
