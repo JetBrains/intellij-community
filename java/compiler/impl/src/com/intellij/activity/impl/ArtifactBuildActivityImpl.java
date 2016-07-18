@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity.impl;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.activity.ArtifactBuildActivity;
+import com.intellij.packaging.artifacts.Artifact;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
+ * @since 5/14/2016
  */
-public interface BuildContext {
-  Project getProject();
+public class ArtifactBuildActivityImpl extends AbstractBuildActivity implements ArtifactBuildActivity {
+  private final Artifact myArtifact;
 
-  BuildScope getScope();
+  public ArtifactBuildActivityImpl(Artifact artifact, boolean isIncrementalBuild) {
+    super(isIncrementalBuild);
+    myArtifact = artifact;
+  }
 
-  boolean isIncrementalBuild();
+  @Override
+  public Artifact getArtifact() {
+    return myArtifact;
+  }
 }

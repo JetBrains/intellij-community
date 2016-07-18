@@ -172,11 +172,11 @@
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.build.BuildSystemManager"
-                    serviceImplementation="com.intellij.openapi.build.BuildSystemManagerImpl"/>
+    <projectService serviceInterface="com.intellij.activity.ActivityManager"
+                    serviceImplementation="com.intellij.activity.impl.ActivityManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.execution.runners.BuildSystemExecutionEnvironmentProvider"
-                    serviceImplementation="com.intellij.openapi.build.BuildSystemExecutionEnvironmentProviderImpl"/>
+    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
+                    serviceImplementation="com.intellij.activity.impl.ExecutionEnvironmentProviderImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>

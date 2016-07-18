@@ -20,7 +20,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.build.BuildSystemManager;
+import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -121,10 +121,10 @@ public class BuildArtifactAction extends DumbAwareAction {
   private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
-      BuildSystemManager.getInstance(project).rebuild(artifacts);
+      ActivityManager.getInstance(project).rebuild(artifacts);
     }
     else {
-      BuildSystemManager.getInstance(project).build(artifacts);
+      ActivityManager.getInstance(project).build(artifacts);
     }
   }
 

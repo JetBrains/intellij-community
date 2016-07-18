@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.activity.*;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
@@ -27,10 +28,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.build.BuildScope;
-import com.intellij.openapi.build.BuildStatusNotification;
-import com.intellij.openapi.build.BuildStatusNotificationAdapter;
-import com.intellij.openapi.build.BuildSystemManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -141,7 +138,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
       final Semaphore done = new Semaphore();
       done.down();
-      final BuildStatusNotification callback = new BuildStatusNotificationAdapter() {
+      final ActivityStatusNotification callback = new ActivityStatusNotificationAdapter() {
         public void finished(boolean aborted, int errors, int warnings) {
           if ((errors == 0  || ignoreErrors) && !aborted) {
             result.set(Boolean.TRUE);
@@ -151,11 +148,12 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       };
 
       TransactionGuard.submitTransaction(myProject, () -> {
-        BuildScope scope;
-        final BuildSystemManager buildSystemManager = BuildSystemManager.getInstance(myProject);
+        Activity activity;
+        Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+        final ActivityManager activityManager = ActivityManager.getInstance(myProject);
         if (forceMakeProject) {
           // user explicitly requested whole-project make
-          scope = buildSystemManager.createProjectBuildScope(myProject);
+          activity = activityManager.createProjectBuildActivity(true, myProject);
         }
         else {
           final Module[] modules = runConfiguration.getModules();
@@ -166,18 +164,15 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                           runConfiguration.getClass().getName());
               }
             }
-            scope = buildSystemManager.createModulesBuildScope(modules);
+            activity = activityManager.createModulesBuildActivity(true, modules);
           }
           else {
-            scope = buildSystemManager.createProjectBuildScope(myProject);
+            activity = activityManager.createProjectBuildActivity(true, myProject);
           }
         }
 
         if (!myProject.isDisposed()) {
-          Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
-          scope.setSessionId(sessionId);
-          scope.setRunConfiguration(configuration);
-          buildSystemManager.buildDirty(scope, callback);
+          activityManager.run(new ActivityContext(sessionId, configuration), activity, callback);
         }
         else {
           done.up();

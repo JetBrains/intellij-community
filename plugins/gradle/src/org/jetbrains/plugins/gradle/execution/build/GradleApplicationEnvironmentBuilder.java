@@ -15,14 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
-import com.intellij.execution.ExecutionTarget;
-import com.intellij.execution.Executor;
+import com.intellij.activity.RunActivity;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -52,25 +49,25 @@ import java.util.Collections;
 public class GradleApplicationEnvironmentBuilder {
 
   @Nullable
-  public ExecutionEnvironment build(@NotNull RunProfile runProfile,
-                                    @NotNull Executor executor,
-                                    @NotNull ExecutionTarget executionTarget,
-                                    @NotNull Project project,
-                                    @Nullable RunnerSettings runnerSettings,
-                                    @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                                    @Nullable RunnerAndConfigurationSettings settings) {
-    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)runProfile;
+  public ExecutionEnvironment build(@NotNull Project project, @NotNull RunActivity activity) {
+    if (!(activity.getRunProfile() instanceof ApplicationConfiguration)) return null;
+
+    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)activity.getRunProfile();
     PsiClass mainClass = applicationConfiguration.getMainClass();
     if(mainClass == null) return null;
 
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(mainClass.getContainingFile().getVirtualFile());
+    if (module == null) return null;
+
     String externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    if (projectId == null || !projectId.startsWith(":")) {
-      projectId = ":";
+    String gradleProjectPath = projectId;
+    int lastPathDelimiterIndex = gradleProjectPath == null ? -1 : gradleProjectPath.lastIndexOf(':');
+    if (gradleProjectPath == null || !gradleProjectPath.startsWith(":")) {
+      gradleProjectPath = ":";
     } else {
-      if(!projectId.equals(":")) {
-        projectId = projectId.substring(0, projectId.lastIndexOf(':'));
+      if (!gradleProjectPath.equals(":")) {
+        gradleProjectPath = gradleProjectPath.substring(0, lastPathDelimiterIndex);
       }
     }
 
@@ -95,19 +92,21 @@ public class GradleApplicationEnvironmentBuilder {
     final String runAppTaskName = "run " + mainClass.getName();
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
+    String executorId = activity.getExecutor() == null ? DefaultRunExecutor.EXECUTOR_ID : activity.getExecutor().getId();
     final Pair<ProgramRunner, ExecutionEnvironment> environmentPair =
-      ExternalSystemUtil.createRunner(taskSettings, executor.getId(), project, GradleConstants.SYSTEM_ID);
+      ExternalSystemUtil.createRunner(taskSettings, executorId, project, GradleConstants.SYSTEM_ID);
     if (environmentPair != null) {
       RunnerAndConfigurationSettings runnerAndConfigurationSettings = environmentPair.second.getRunnerAndConfigurationSettings();
       assert runnerAndConfigurationSettings != null;
       ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
+      String sourceSetName = projectId == null || lastPathDelimiterIndex == -1 ? "main" : projectId.substring(lastPathDelimiterIndex + 1);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  rootProject.allprojects {\n" +
-                          "    if(project.path == '" + projectId + "' && project.sourceSets) {\n" +
+                          "    if(project.path == '" + gradleProjectPath + "' && project.sourceSets) {\n" +
                           "      project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
-                          "        classpath = project.sourceSets.main.runtimeClasspath\n" +
+                          "        classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
                           "        main = '" + mainClass.getQualifiedName() + "'\n" +
                           parametersString.toString() +
                           vmParametersString.toString() +

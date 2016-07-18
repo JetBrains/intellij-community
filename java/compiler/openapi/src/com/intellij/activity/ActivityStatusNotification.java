@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity;
 
 /**
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public interface BuildStatusNotification {
+public interface ActivityStatusNotification {
 
   /**
-   * @param aborted  true if the at least one build chunk has been cancelled.
+   * @param aborted  true if the at least one activity chunk has been cancelled.
    * @param errors   error count
    * @param warnings warning count
    */
@@ -30,11 +30,10 @@ public interface BuildStatusNotification {
 
   /**
    *
-   * @param aborted  true if the build chunk has been cancelled.
+   * @param aborted  true if the activity chunk has been cancelled.
    * @param errors   error count
    * @param warnings warning count
-   * @param inProgress not finished build chunks count
-   * @param buildContext context for the build chunk
+   * @param inProgress not finished activity chunks count
    */
-  void chunkFinished(boolean aborted, int errors, int warnings, int inProgress, final BuildContext buildContext);
+  void chunkFinished(boolean aborted, int errors, int warnings, int inProgress);
 }

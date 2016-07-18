@@ -197,7 +197,7 @@
 
     <extensionPoint name="testFramework" interface="com.intellij.testIntegration.TestFramework"/>
 
-    <extensionPoint name="buildSystemDriver" interface="com.intellij.openapi.build.BuildSystemDriver"/>
+    <extensionPoint name="activityRunner" interface="com.intellij.activity.ActivityRunner"/>
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 

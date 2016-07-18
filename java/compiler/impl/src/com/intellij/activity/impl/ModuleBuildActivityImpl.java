@@ -13,18 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity.impl;
+
+import com.intellij.activity.ModuleBuildActivity;
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/12/2016
+ * @since 5/11/2016
  */
-public class BuildStatusNotificationAdapter implements BuildStatusNotification {
-  @Override
-  public void finished(boolean aborted, int errors, int warnings) {
+public class ModuleBuildActivityImpl extends AbstractBuildActivity implements ModuleBuildActivity {
+  @NotNull
+  private final Module myModule;
+
+  public ModuleBuildActivityImpl(@NotNull Module module, boolean isIncrementalBuild) {
+    super(isIncrementalBuild);
+    myModule = module;
   }
 
+  @NotNull
   @Override
-  public void chunkFinished(boolean aborted, int errors, int warnings, int inProgress, BuildContext buildContext) {
+  public Module getModule() {
+    return myModule;
   }
 }

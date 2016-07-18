@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity;
+
+import com.intellij.packaging.artifacts.Artifact;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
+ * @since 7/18/2016
  */
-public interface BuildTarget {
+public interface ArtifactBuildActivity extends BuildActivity {
+  Artifact getArtifact();
 }

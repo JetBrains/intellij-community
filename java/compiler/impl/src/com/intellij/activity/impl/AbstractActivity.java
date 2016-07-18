@@ -13,27 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity.impl;
 
-import com.intellij.execution.configurations.RunConfiguration;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.activity.Activity;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
+ * @since 7/13/2016
  */
-public interface BuildScope {
-  Collection<? extends BuildTarget> getTargets();
+public abstract class AbstractActivity implements Activity {
+  @NotNull
+  private Collection<Activity> myDependencies;
 
-  void setSessionId(@Nullable Object sessionId);
+  public AbstractActivity() {
+    this(Collections.emptyList());
+  }
 
-  @Nullable
-  Object getSessionId();
+  public AbstractActivity(@NotNull Collection<Activity> dependencies) {
+    myDependencies = dependencies;
+  }
 
-  void setRunConfiguration(@Nullable RunConfiguration configuration);
+  @NotNull
+  public Collection<Activity> getDependsOn() {
+    return myDependencies;
+  }
 
-  @Nullable
-  RunConfiguration getRunConfiguration();
+  public void setDependsOn(@NotNull Collection<Activity> dependencies) {
+    myDependencies = dependencies;
+  }
 }

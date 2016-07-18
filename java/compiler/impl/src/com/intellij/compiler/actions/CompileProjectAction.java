@@ -19,14 +19,14 @@ import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.build.BuildStatusNotificationAdapter;
-import com.intellij.openapi.build.BuildSystemManager;
+import com.intellij.activity.ActivityStatusNotificationAdapter;
+import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 
 public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
-    BuildSystemManager.getInstance(project).rebuildProject(new BuildStatusNotificationAdapter() {
+    ActivityManager.getInstance(project).rebuildProject(new ActivityStatusNotificationAdapter() {
       @Override
       public void finished(boolean aborted, int errors, int warnings) {
         if (aborted || project.isDisposed()) {

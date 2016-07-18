@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -24,72 +24,73 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides services to build project, modules, files or artifacts.
+ * Provides services to build project, modules, files or artifacts and execute Run Configuration.
  * <p>
  *
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public abstract class BuildSystemManager {
+public abstract class ActivityManager {
   protected final @NotNull Project myProject;
 
-  public BuildSystemManager(@NotNull Project project) {
+  public ActivityManager(@NotNull Project project) {
     myProject = project;
   }
 
-  public static BuildSystemManager getInstance(Project project) {
-    return ServiceManager.getService(project, BuildSystemManager.class);
+  public static ActivityManager getInstance(Project project) {
+    return ServiceManager.getService(project, ActivityManager.class);
   }
 
-  public abstract void buildProjectDirty(@Nullable BuildStatusNotification callback);
+  public abstract void run(@NotNull Activity activity, @Nullable ActivityStatusNotification callback);
+
+  public abstract void run(@NotNull ActivityContext context, @NotNull Activity activity, @Nullable ActivityStatusNotification callback);
+
+  public abstract void buildProjectDirty(@Nullable ActivityStatusNotification callback);
 
   public void buildProjectDirty() {
     buildProjectDirty(null);
   }
 
-  public abstract void rebuildProject(@Nullable BuildStatusNotification callback);
+  public abstract void rebuildProject(@Nullable ActivityStatusNotification callback);
 
   public void rebuildProject() {
     rebuildProject(null);
   }
 
-  public abstract void buildDirty(@NotNull Module[] modules, @Nullable BuildStatusNotification callback);
+  public abstract void buildDirty(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
 
   public void buildDirty(@NotNull Module... modules) {
     buildDirty(modules, null);
   }
 
-  public abstract void rebuild(@NotNull Module[] modules, @Nullable BuildStatusNotification callback);
+  public abstract void rebuild(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
 
   public void rebuild(@NotNull Module... modules) {
     rebuild(modules, null);
   }
 
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable BuildStatusNotification callback);
+  public abstract void compile(@NotNull VirtualFile[] files, @Nullable ActivityStatusNotification callback);
 
   public void compile(@NotNull VirtualFile... files) {
     compile(files, null);
   }
 
-  public abstract void build(@NotNull Artifact[] artifacts, @Nullable BuildStatusNotification callback);
+  public abstract void build(@NotNull Artifact[] artifacts, @Nullable ActivityStatusNotification callback);
 
   public void build(@NotNull Artifact[] artifacts) {
     build(artifacts, null);
   }
 
-  public abstract void rebuild(@NotNull Artifact[] artifacts, @Nullable BuildStatusNotification callback);
+  public abstract void rebuild(@NotNull Artifact[] artifacts, @Nullable ActivityStatusNotification callback);
 
   public void rebuild(@NotNull Artifact... artifacts) {
     rebuild(artifacts, null);
   }
 
-  public abstract void buildDirty(@NotNull BuildScope scope, @Nullable BuildStatusNotification callback);
+  public abstract Activity createProjectBuildActivity(boolean isIncrementalBuild, Project project);
 
-  public abstract void rebuild(@NotNull BuildScope scope, @Nullable BuildStatusNotification callback);
+  public abstract Activity createModulesBuildActivity(boolean isIncrementalBuild, Module... modules);
 
-  public abstract BuildScope createProjectBuildScope(Project project);
+  public abstract Activity createArtifactsBuildActivity(boolean isIncrementalBuild, Artifact... artifacts);
 
-  public abstract BuildScope createModulesBuildScope(Module... modules);
-
-  public abstract BuildScope createArtifactsBuildScope(Artifact... artifacts);
 }

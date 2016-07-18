@@ -29,14 +29,14 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 6/2/2016
  */
-public interface BuildSystemExecutionEnvironmentProvider {
+public interface ExecutionEnvironmentProvider {
 
   @Nullable
-  ExecutionEnvironment createExecutionEnvironment(@NotNull RunProfile runProfile,
-                                                  @NotNull Executor executor,
-                                                  @NotNull ExecutionTarget target,
-                                                  @NotNull Project project,
-                                                  @Nullable RunnerSettings runnerSettings,
-                                                  @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                                                  @Nullable RunnerAndConfigurationSettings settings);
+  ExecutionEnvironment createActivityExecutionEnvironment(@NotNull Project project,
+                                                          @NotNull RunProfile runProfile,
+                                                          @NotNull Executor executor,
+                                                          @NotNull ExecutionTarget target,
+                                                          @Nullable RunnerSettings runnerSettings,
+                                                          @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                                                          @Nullable RunnerAndConfigurationSettings settings);
 }

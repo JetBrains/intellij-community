@@ -15,10 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
-import com.intellij.openapi.build.BuildContext;
+import com.intellij.activity.ArtifactBuildActivity;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +29,9 @@ public interface GradleArtifactBuildTasksProvider {
   ExtensionPointName<GradleArtifactBuildTasksProvider> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.gradle.artifactBuildTasksProvider");
 
-  boolean isApplicable(@NotNull Artifact artifact);
+  boolean isApplicable(@NotNull ArtifactBuildActivity artifactBuildActivity);
 
-  void addArtifactsTargetsBuildTasks(@NotNull BuildContext buildContext,
+  void addArtifactsTargetsBuildTasks(@NotNull ArtifactBuildActivity artifactBuildActivity,
                                      @NotNull Consumer<ExternalTaskPojo> cleanTasksConsumer,
-                                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer,
-                                     @NotNull Artifact artifact);
+                                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer);
 }

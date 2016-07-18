@@ -78,7 +78,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <buildSystemDriver implementation="org.jetbrains.plugins.gradle.execution.build.GradleBuildSystemDriver"/>
+    <activityRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleActivityRunner"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>

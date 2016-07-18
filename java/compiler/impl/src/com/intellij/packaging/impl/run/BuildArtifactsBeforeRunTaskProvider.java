@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.run;
 
+import com.intellij.activity.*;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
@@ -29,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.build.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -176,11 +176,9 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       }
     }.execute();
 
-    final BuildStatusNotification callback = new BuildStatusNotificationAdapter() {
+    final ActivityStatusNotification callback = new ActivityStatusNotificationAdapter() {
       @Override
-      public void finished(boolean aborted,
-                           int errors,
-                           int warnings) {
+      public void finished(boolean aborted, int errors, int warnings) {
         result.set(!aborted && errors == 0);
         finished.up();
       }
@@ -190,10 +188,12 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       if (myProject.isDisposed()) {
         return;
       }
-      List<ArtifactBuildTarget> artifactBuildTargets = ContainerUtil.map(artifacts, ArtifactBuildTarget::new);
-      Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+      ActivityManager activityManager = ActivityManager.getInstance(myProject);
+      Activity artifactsBuildActivity =
+        activityManager.createArtifactsBuildActivity(true, artifacts.toArray(new Artifact[artifacts.size()]));
       finished.down();
-      BuildSystemManager.getInstance(myProject).buildDirty(new BuildScopeImpl(artifactBuildTargets, sessionId), callback);
+      Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+      activityManager.run(new ActivityContext(sessionId), artifactsBuildActivity, callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();

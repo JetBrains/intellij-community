@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
-
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
+package com.intellij.activity;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/6/2016
+ * @since 7/12/2016
  */
-public class ProjectBuildScope extends BuildScopeImpl {
-  private final Project myProject;
-
-  public ProjectBuildScope(final Project project) {
-    super(ContainerUtil.map(ModuleManager.getInstance(project).getModules(), ModuleBuildTarget::new));
-    myProject = project;
+public class ActivityStatusNotificationAdapter implements ActivityStatusNotification {
+  @Override
+  public void finished(boolean aborted, int errors, int warnings) {
   }
 
-  public Project getProject() {
-    return myProject;
+  @Override
+  public void chunkFinished(boolean aborted, int errors, int warnings, int inProgress) {
   }
 }

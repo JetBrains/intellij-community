@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity;
 
 /**
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public interface BuildChunkStatusNotification {
+public interface ActivityChunkStatusNotification {
 
   /**
    *
    * @param aborted  true if the build chunk has been cancelled.
    * @param errors   error count
    * @param warnings warning count
-   * @param buildContext context for the build chunk
    */
-  void finished(boolean aborted, int errors, int warnings, final BuildContext buildContext);
+  void finished(boolean aborted, int errors, int warnings);
 }

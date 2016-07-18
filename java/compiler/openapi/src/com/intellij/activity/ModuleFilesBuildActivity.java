@@ -13,31 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.build;
+package com.intellij.activity;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-
-import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/14/2016
+ * @since 7/18/2016
  */
-public class ModuleFilesBuildTarget extends ModuleBuildTarget {
-  private final VirtualFile[] myFiles;
-
-  public ModuleFilesBuildTarget(Module module, VirtualFile[] files) {
-    super(module);
-    myFiles = files;
-  }
-
-  public ModuleFilesBuildTarget(Module module, Collection<VirtualFile> files) {
-    this(module, ArrayUtil.toObjectArray(files, VirtualFile.class));
-  }
-
-  public VirtualFile[] getFiles() {
-    return myFiles;
-  }
+public interface ModuleFilesBuildActivity extends ModuleBuildActivity {
+  VirtualFile[] getFiles();
 }
