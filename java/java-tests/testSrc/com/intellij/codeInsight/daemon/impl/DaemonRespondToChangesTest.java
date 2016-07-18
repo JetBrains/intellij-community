@@ -867,13 +867,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       @Nullable
       @Override
       public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-        log.append("getLineMarkerInfo(" + element + ")\n");
+        String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
+        LineMarkerInfo<PsiComment> info = null;
         if (element instanceof PsiComment) {
-          LineMarkerInfo<PsiComment> info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
-          log.append(info + "\n");
-          return info;
+          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          msg += " provider info: "+info + "\n";
         }
-        return null;
+        log.append(msg);
+        return info;
       }
 
       @Override
@@ -885,8 +886,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Disposer.register(myTestRootDisposable, () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
     myDaemonCodeAnalyzer.restart();
     try {
+      TextRange range = FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL);
+      log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
+      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
+      log.append("CollectHighlightsUtil.getElementsInRange" + range + ": " + elements.size() +" elements : "+ elements+"\n");
       List<HighlightInfo> infos = doHighlighting();
-      log.append("File text: '" + getFile().getText() + "'\n");
+      log.append(" File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
       assertEmpty(filter(infos,HighlightSeverity.ERROR));
 
