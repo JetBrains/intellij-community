@@ -476,7 +476,7 @@ public class EduStepicConnector {
 
   private static void postCourse(final Project project, @NotNull Course course, boolean relogin, @NotNull final ProgressIndicator indicator) {
     indicator.setText("Uploading course to " + stepicUrl);
-    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "courses");
+    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
     if (ourClient == null || !relogin) {
       if (!login(project)) return;
     }
