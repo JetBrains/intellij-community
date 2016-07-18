@@ -42,6 +42,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testDiamondInitializer() throws Exception {
+    doTest();
+  }
+
   public void testMultipleInitializers() throws Exception {
     configureByFile("/refactoring/inlineConstantField/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil
