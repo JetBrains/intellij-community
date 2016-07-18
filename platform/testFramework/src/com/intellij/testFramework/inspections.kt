@@ -33,21 +33,21 @@ import java.util.*
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
-  val profile = InspectionProfileImpl.createSimple(UUID.randomUUID().toString(), project, tools.map { InspectionToolRegistrar.wrapTool(it) })
-  val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
-  // we don't restore old project profile because in tests it must be in any case null - app default profile
-  Disposer.register(parentDisposable, Disposable {
-    profileManager.deleteProfile(profile)
-    profileManager.setCurrentProfile(null)
-    clearAllToolsIn(InspectionProfileImpl.getDefaultProfile())
-  })
-
   runInInitMode {
+    val profile = InspectionProfileImpl.createSimple(UUID.randomUUID().toString(), project, tools.map { InspectionToolRegistrar.wrapTool(it) })
+    val profileManager = ProjectInspectionProfileManager.getInstanceImpl(project)
+    // we don't restore old project profile because in tests it must be in any case null - app default profile
+    Disposer.register(parentDisposable, Disposable {
+      profileManager.deleteProfile(profile)
+      profileManager.setCurrentProfile(null)
+      clearAllToolsIn(InspectionProfileImpl.getDefaultProfile())
+    })
+
     profileManager.addProfile(profile)
     profile.initInspectionTools(project)
     profileManager.setCurrentProfile(profile)
+    return profile
   }
-  return profile
 }
 
 @JvmOverloads
