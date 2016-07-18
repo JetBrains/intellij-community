@@ -321,9 +321,9 @@ public abstract class UsefulTestCase extends TestCase {
   protected void runTest() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
-    Runnable runnable = () -> {
+    invokeTestRunnable(() -> {
       try {
-        UsefulTestCase.super.runTest();
+        super.runTest();
       }
       catch (InvocationTargetException e) {
         e.fillInStackTrace();
@@ -336,9 +336,7 @@ public abstract class UsefulTestCase extends TestCase {
       catch (Throwable e) {
         throwables[0] = e;
       }
-    };
-
-    invokeTestRunnable(runnable);
+    });
 
     if (throwables[0] != null) {
       throw throwables[0];
