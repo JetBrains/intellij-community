@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,7 +33,7 @@ import java.util.*;
  * Date: 19-Apr-2008
  */
 public class ClassTypeArgumentMigrationProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + ClassTypeArgumentMigrationProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(ClassTypeArgumentMigrationProcessor.class);
 
   private final TypeMigrationLabeler myLabeler;
 
@@ -88,7 +87,7 @@ public class ClassTypeArgumentMigrationProcessor {
       }
     });
 
-    final PsiClass resolvedClass = (PsiClass)((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();;
+    final PsiClass resolvedClass = (PsiClass)((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();
     LOG.assertTrue(resolvedClass != null);
     final Set<PsiClass> superClasses = new HashSet<PsiClass>();
     superClasses.add(resolvedClass);
