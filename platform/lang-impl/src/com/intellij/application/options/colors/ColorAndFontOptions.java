@@ -20,11 +20,12 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -54,6 +55,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -263,13 +265,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         EditorColorsManagerImpl.schemeChangedOrSwitched();
       }
 
-      if (DarculaLaf.NAME.equals(activeOriginalScheme.getName()) && !UIUtil.isUnderDarcula()) {
+      final boolean dark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
+      final String productName = ApplicationInfoEx.getInstanceEx().getFullApplicationName();
+      final LafManager lafManager = LafManager.getInstance();
+      if (dark && !UIUtil.isUnderDarcula()) {
         if (Messages.showYesNoDialog(
-          "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
-          "Darcula Look and Feel",
+          "Looks like you have set a dark editor theme. Would you like to set dark theme for entire " + productName,
+          "Change " + productName + " theme?",
           Messages.getQuestionIcon()) == Messages.YES) {
-          LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
+          lafManager.setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
           DarculaInstaller.install();
+        }
+      } else if (!dark && UIUtil.isUnderDarcula()) {
+        if (lafManager instanceof LafManagerImpl
+            &&
+            Messages.showYesNoDialog(
+              "Looks like you have set a bright editor theme. Would you like to set bright theme for entire " + productName,
+              "Change " + productName + " theme",
+              Messages.getQuestionIcon()) == Messages.YES) {
+          lafManager.setCurrentLookAndFeel(((LafManagerImpl)lafManager).getDefaultLaf());
+          DarculaInstaller.uninstall();
         }
       }
 
