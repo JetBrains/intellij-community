@@ -223,6 +223,7 @@ public class EduStepicConnector {
   }
 
   static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
+    if (!link.startsWith("/")) link = "/" + link;
     final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
     if (ourClient == null) {
       initializeClient();
@@ -602,7 +603,7 @@ public class EduStepicConnector {
   }
 
   private static int postModule(int courseId, int position, @NotNull final String title) {
-    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "sections");
+    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/sections");
     setHeaders(request, "application/json");
     final StepicWrappers.Section section = new StepicWrappers.Section();
     section.course = courseId;
@@ -671,7 +672,7 @@ public class EduStepicConnector {
   }
 
   public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
-    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS);
+    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/lessons");
     if (ourClient == null) {
       login(project);
     }
@@ -723,7 +724,7 @@ public class EduStepicConnector {
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
-    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.STEP_SOURCES);
+    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     setHeaders(request, "application/json");
     //TODO: register type adapter for task files here?
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
