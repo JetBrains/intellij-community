@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PyPsiLocationWithFixedClass;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -431,6 +432,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public String getTestSpec(@NotNull final Location<?> location, @NotNull final AbstractTestProxy failedTest) {
     PsiElement element = location.getPsiElement();
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+    if (location instanceof PyPsiLocationWithFixedClass) {
+      pyClass = ((PyPsiLocationWithFixedClass)location).getFixedClass();
+    }
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     final VirtualFile virtualFile = location.getVirtualFile();
     if (virtualFile != null) {
