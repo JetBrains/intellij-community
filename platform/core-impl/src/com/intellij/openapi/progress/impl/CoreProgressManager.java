@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
-  static final Set<Thread> threadsUnderCanceledIndicator = ContainerUtil.newConcurrentSet();
+  static final Set<Thread> threadsUnderCanceledIndicator = new THashSet<Thread>(); // guarded by threadsUnderIndicator
   private static volatile boolean shouldCheckCanceled;
 
   /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
@@ -639,7 +640,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @TestOnly
   public static boolean isCanceledThread(@NotNull Thread thread) {
-    return threadsUnderCanceledIndicator.contains(thread);
+    synchronized (threadsUnderIndicator) {
+      return threadsUnderCanceledIndicator.contains(thread);
+    }
   }
 
   @NotNull

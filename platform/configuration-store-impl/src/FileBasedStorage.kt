@@ -273,4 +273,4 @@ fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
   runWriteAction { virtualFile.delete(requestor) }
 }
 
-internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException()
+internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException("File is read-only: "+file)

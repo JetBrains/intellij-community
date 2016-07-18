@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -321,14 +320,9 @@ class GitRepositoryReader {
 
   @NotNull
   private HeadInfo readHead() {
-    return readHeadInternal(myHeadFile, new ArrayList<>());
-  }
-
-  @NotNull
-  private HeadInfo readHeadInternal(@NotNull File headFile, @NotNull List<String> alreadyVisited) {
     String headContent;
     try {
-      headContent = DvcsUtil.tryLoadFile(headFile, CharsetToolkit.UTF8);
+      headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
     }
     catch (RepoStateException e) {
       LOG.error(e);
@@ -337,22 +331,11 @@ class GitRepositoryReader {
 
     Hash hash = parseHash(headContent);
     if (hash != null) {
-      if (alreadyVisited.isEmpty()) {
-        return new HeadInfo(false, headContent);
-      } else {
-        return new HeadInfo(true, ContainerUtil.getLastItem(alreadyVisited));
-      }
+      return new HeadInfo(false, headContent);
     }
     String target = getTarget(headContent);
     if (target != null) {
-      if (alreadyVisited.contains(target)) {
-        alreadyVisited.add(target);
-        LOG.error(new RepoStateException("Cyclic symbolic ref in HEAD: [" + StringUtil.join(alreadyVisited, " -> ") + "]"));
-        return new HeadInfo(false, null);
-      } else {
-        alreadyVisited.add(target);
-        return readHeadInternal(myGitFiles.getBranchFile(target), alreadyVisited);
-      }
+      return new HeadInfo(true, target);
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
     return new HeadInfo(false, null);
