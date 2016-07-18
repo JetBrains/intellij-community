@@ -185,7 +185,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new PartialWhitespaceBlock(child, range, wrap, alignment, actualIndent, settings, javaSettings);
     }
 
-    if (childPsi instanceof PsiClass) {
+    if (childPsi instanceof PsiClass || childPsi instanceof PsiJavaModule) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
     if (child.getElementType() == JavaElementType.METHOD) {
@@ -203,7 +203,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings);
     }
-    if (child instanceof LeafElement) {
+    if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReference) {
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
       return block;

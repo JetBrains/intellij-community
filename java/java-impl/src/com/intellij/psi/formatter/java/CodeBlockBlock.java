@@ -120,7 +120,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         if (child.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
         }
-        else if (myNode.getPsi() instanceof PsiClass && child.getElementType() == JavaTokenType.LBRACE) {
+        else if ((myNode.getPsi() instanceof PsiClass || myNode.getPsi() instanceof PsiJavaModule) &&
+                 child.getElementType() == JavaTokenType.LBRACE) {
           child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent, null);
         }
         else if (myNode.getElementType() == JavaElementType.CODE_BLOCK &&
@@ -252,7 +253,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           || elementType == JavaTokenType.CLASS_KEYWORD
           || elementType == JavaTokenType.INTERFACE_KEYWORD
           || elementType == JavaTokenType.IDENTIFIER
-          || elementType == JavaTokenType.ENUM_KEYWORD) {
+          || elementType == JavaTokenType.ENUM_KEYWORD
+          || elementType == JavaElementType.MODULE_REFERENCE) {
         return Indent.getNoneIndent();
       }
       else {
