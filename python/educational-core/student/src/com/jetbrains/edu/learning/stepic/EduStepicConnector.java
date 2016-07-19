@@ -20,10 +20,7 @@ import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -237,10 +234,12 @@ public class EduStepicConnector {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
-    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+      setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }
-  
+
   @NotNull
   public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
     if (ourClient == null) {
@@ -727,7 +726,8 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     setHeaders(request, "application/json");
     //TODO: register type adapter for task files here?
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
       request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));

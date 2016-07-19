@@ -29,10 +29,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -289,7 +286,9 @@ public class StudyProjectGenerator {
   }
 
   public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+      excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;
