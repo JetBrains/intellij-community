@@ -65,11 +65,12 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
 
   @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString) {
-    if (leftString.length() == 0 || !isSingleQuote() && leftString.charAt(leftString.length() - 1) == '\\') {
+  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+    final TextRange leftRange = contentRanges.get(indexBefore);
+    if (leftRange.isEmpty() || !isSingleQuote() && text.charAt(leftRange.getEndOffset() - 1) == '\\') {
       return "\n";
     }
-    else if (rightString.length() == 0) {
+    else if (contentRanges.get(indexBefore + 1).isEmpty()) {
       return "";
     }
     else {

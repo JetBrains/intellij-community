@@ -30,18 +30,27 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
 
   @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence leftString, @NotNull CharSequence rightString) {
-    if (StringUtil.isEmptyOrSpaces(leftString)) {
+  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+    final TextRange leftRange = contentRanges.get(indexBefore);
+    final TextRange rightRange = contentRanges.get(indexBefore + 1);
+    if (leftRange.isEmpty()) {
       return "\n";
     }
-    if (StringUtil.startsWithChar(leftString, ' ') || StringUtil.startsWithChar(leftString, '\t')
-      || StringUtil.startsWithChar(rightString, ' ') || StringUtil.startsWithChar(rightString, '\t')) {
+    if (startsWithWhitespace(text, leftRange) || startsWithWhitespace(text, rightRange)) {
       return "\n";
     }
-    if (StringUtil.isEmptyOrSpaces(rightString)) {
+    if (rightRange.isEmpty()) {
       return "";
     }
     return " ";
+  }
+  
+  private static boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
+    if (range.isEmpty()) {
+      return false;
+    }
+    final char c = text.charAt(range.getStartOffset());
+    return c == ' ' || c == '\t';
   }
 
   @Override
