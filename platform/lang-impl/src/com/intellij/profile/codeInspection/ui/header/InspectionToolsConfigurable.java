@@ -279,6 +279,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
         LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
         selectedPanel.setIsProjectLevel(false);
+        myProfiles.getProfilesComboBox().resort();
         myProfiles.invalidate();
         myProfiles.repaint();
       }
@@ -306,6 +307,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           public void doSave(@NotNull String text) {
             if (!text.equals(initialName)) {
               getProfilePanel(inspectionProfile).setCurrentProfileName(text);
+              myProfiles.getProfilesComboBox().resort();
             }
             myProfiles.showComboBoxCard();
           }

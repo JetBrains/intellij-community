@@ -175,4 +175,9 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
       }
     }
   }
+
+  public void resort() {
+    myComboModel.setAll(myComboModel.getItems());
+    findFirstGlobalProfile();
+  }
 }
