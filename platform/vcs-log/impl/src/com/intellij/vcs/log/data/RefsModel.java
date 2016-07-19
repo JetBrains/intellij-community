@@ -105,7 +105,7 @@ public class RefsModel implements VcsLogRefs {
       @Override
       public Iterator<VcsRef> iterator() {
         List<Iterator<VcsRef>> iterators = myRefs.values().stream().map(Set::iterator).collect(Collectors.toList());
-        return Iterators.concat(iterators.toArray(new Iterator[iterators.size()]));
+        return Iterators.concat(iterators.iterator());
       }
 
       @Override
