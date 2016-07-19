@@ -116,7 +116,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
                                                  boolean modifyName,
                                                  boolean modifyLevel) {
     LOG.assertTrue(modifyLevel || modifyName);
-    String profileDefaultName = selectedProfile.getName();
+    String profileDefaultName = getProfilePanel(selectedProfile).getCurrentProfileName();
+
+    final boolean isProjectLevel = getProfilePanel(selectedProfile).isProjectLevel() ^ modifyLevel;
     if (modifyName) {
       final Matcher matcher = COPIED_PROFILE_SUFFIX_PATTERN.matcher(profileDefaultName);
       int nextIdx;
@@ -128,25 +130,18 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         profileDefaultName += " copy";
         nextIdx = 1;
       }
-      if (hasName(profileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel())) {
+      if (hasName(profileDefaultName, isProjectLevel)) {
         String currentProfileDefaultName;
         do {
           currentProfileDefaultName = profileDefaultName + " " + String.valueOf(nextIdx);
           nextIdx++;
         }
-        while (hasName(currentProfileDefaultName, modifyLevel != myPanels.get(selectedProfile).isProjectLevel()));
+        while (hasName(currentProfileDefaultName, isProjectLevel));
         profileDefaultName = currentProfileDefaultName;
       }
     }
 
-    ProfileManager profileManager = selectedProfile.getProfileManager();
-    if (modifyLevel) {
-      if (profileManager == myApplicationProfileManager) {
-        profileManager = myProjectProfileManager;
-      } else {
-        profileManager = myApplicationProfileManager;
-      }
-    }
+    ProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myApplicationProfileManager;
     InspectionProfileImpl inspectionProfile =
       new InspectionProfileImpl(profileDefaultName, InspectionToolRegistrar.getInstance(), profileManager);
 
@@ -154,6 +149,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     inspectionProfile.setName(profileDefaultName);
     inspectionProfile.initInspectionTools(project);
     inspectionProfile.setModified(true);
+    inspectionProfile.setProjectLevel(profileManager == myProjectProfileManager);
 
     final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)inspectionProfile.getModifiableModel();
     modifiableModel.setModified(true);
