@@ -26,6 +26,7 @@ public interface PsiJavaModule extends NavigatablePsiElement {
   String MODULE_INFO_CLASS = "module-info";
   String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
 
-  @NotNull PsiJavaModuleReference getNameElement();
+  @NotNull
+  PsiJavaModuleReferenceElement getNameElement();
   @NotNull String getModuleName();
 }

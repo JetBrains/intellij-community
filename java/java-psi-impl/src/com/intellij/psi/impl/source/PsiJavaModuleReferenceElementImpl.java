@@ -20,8 +20,8 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiJavaModuleReferenceImpl extends CompositePsiElement implements PsiJavaModuleReference {
-  public PsiJavaModuleReferenceImpl() {
+public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement implements PsiJavaModuleReferenceElement {
+  public PsiJavaModuleReferenceElementImpl() {
     super(JavaElementType.MODULE_REFERENCE);
   }
 

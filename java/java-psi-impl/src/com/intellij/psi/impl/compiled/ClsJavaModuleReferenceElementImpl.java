@@ -18,16 +18,16 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsJavaModuleReferenceImpl extends ClsElementImpl implements PsiJavaModuleReference {
+public class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJavaModuleReferenceElement {
   private final PsiElement myParent;
   private final String myText;
 
-  public ClsJavaModuleReferenceImpl(PsiElement parent, String text) {
+  public ClsJavaModuleReferenceElementImpl(PsiElement parent, String text) {
     myParent = parent;
     myText = text;
   }

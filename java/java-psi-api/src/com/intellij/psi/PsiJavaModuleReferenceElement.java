@@ -22,6 +22,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @since 2016.3
  */
-public interface PsiJavaModuleReference extends PsiElement {
+public interface PsiJavaModuleReferenceElement extends PsiElement {
   @NotNull String getReferenceText();
 }
