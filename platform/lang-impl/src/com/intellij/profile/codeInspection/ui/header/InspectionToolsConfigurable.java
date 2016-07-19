@@ -346,6 +346,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
         final InspectionProfileImpl selectedProfile = myProfiles.getProfilesComboBox().getSelectedProfile();
         myProfiles.getProfilesComboBox().removeProfile(selectedProfile);
         myDeletedProfiles.add(selectedProfile);
+        myProfiles.getProfilesComboBox().setSelectedIndex(0);
       }
 
       @Override
