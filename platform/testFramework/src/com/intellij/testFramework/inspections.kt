@@ -90,7 +90,13 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
 
 fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
 
-private fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*, *>, disposable: Disposable) {
+fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
+  for (tool in tools) {
+    enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+  }
+}
+
+fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*, *>, disposable: Disposable) {
   val profile = ProjectInspectionProfileManager.getInstanceImpl(project).currentProfile
   val shortName = toolWrapper.shortName
   val key = HighlightDisplayKey.find(shortName)
@@ -104,9 +110,8 @@ private fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWr
       profile.addTool(project, toolWrapper, THashMap<String, List<String>>())
     }
     profile.enableTool(shortName, project)
-
-    Disposer.register(disposable, Disposable { profile.disableTool(shortName, project) })
   }
+  Disposer.register(disposable, Disposable { profile.disableTool(shortName, project) })
 }
 
 inline fun <T> runInInitMode(runnable: () -> T): T {

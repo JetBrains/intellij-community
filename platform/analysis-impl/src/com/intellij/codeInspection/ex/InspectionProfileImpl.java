@@ -116,7 +116,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager,
                                @Nullable InspectionProfileImpl baseProfile,
-                               @Nullable SchemeDataHolder dataHolder) {
+                               @Nullable SchemeDataHolder<InspectionProfileImpl> dataHolder) {
     super(profileName);
 
     myRegistrar = registrar;

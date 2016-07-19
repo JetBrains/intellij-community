@@ -336,9 +336,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
     assertInitialized();
-    for (InspectionProfileEntry inspection : inspections) {
-      InspectionsKt.enableInspectionTool(getProject(), inspection, getTestRootDisposable());
-    }
+    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), inspections);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -340,17 +341,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   //}
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
-    for (InspectionProfileEntry tool : tools) {
-      enableInspectionTool(tool);
-    }
+    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
-  //protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
-  //  InspectionsKt.enableInspectionTool(getProject(), toolWrapper, myTestRootDisposable);
-  //}
+  protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
+    InspectionsKt.enableInspectionTool(getProject(), toolWrapper, getTestRootDisposable());
+  }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    InspectionsKt.enableInspectionTool(getProject(), tool, myTestRootDisposable);
+    InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
   @NotNull
