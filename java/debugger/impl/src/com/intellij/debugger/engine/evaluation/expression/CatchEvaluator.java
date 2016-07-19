@@ -46,9 +46,4 @@ public class CatchEvaluator implements Evaluator {
   public String getExceptionType() {
     return myExceptionType;
   }
-
-  @Override
-  public Modifier getModifier() {
-    return null;
-  }
 }
