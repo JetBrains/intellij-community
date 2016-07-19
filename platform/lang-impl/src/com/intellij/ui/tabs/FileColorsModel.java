@@ -57,7 +57,8 @@ public class FileColorsModel implements Cloneable {
   static {
     predefinedScopeNameToPropertyKey = new THashMap<String, String>();
     predefinedScopeNameToPropertyKey.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
-    if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine()) {
+    // These IDEs have TestScope registered (via PackagesScopesProvider or TestScopeProvider)
+    if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm() || PlatformUtils.isWebStorm()) {
         predefinedScopeNameToPropertyKey.put(TestsScope.NAME, "file.colors.enable.tests");
     }
 
