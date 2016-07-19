@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +53,23 @@ public class MethodBytecodeUtil {
     visit(classType, method, bytecodes, methodVisitor);
   }
 
+  public static byte[] getConstantPool(ReferenceType type) {
+    try {
+      return type.constantPool();
+    }
+    catch (NullPointerException e) { // workaround for JDK bug 6822627
+      ReflectionUtil.resetField(type, "constantPoolInfoGotten");
+      return type.constantPool();
+    }
+  }
+
   private static void visit(ReferenceType type, Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
     try {
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
         dos.writeInt(0xCAFEBABE); // magic
         dos.writeInt(Opcodes.V1_8); // version
         dos.writeShort(type.constantPoolCount()); // constant_pool_count
-        dos.write(type.constantPool()); // constant_pool
+        dos.write(getConstantPool(type)); // constant_pool
         dos.writeShort(0); //             access_flags;
         dos.writeShort(0); //             this_class;
         dos.writeShort(0); //             super_class;
