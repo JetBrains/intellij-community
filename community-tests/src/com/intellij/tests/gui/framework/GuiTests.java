@@ -301,7 +301,7 @@ public final class GuiTests {
         privacyDialogFixture = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
         @Override
         protected boolean isMatching(@NotNull JDialog dialog) {
-          return policyAgreement.contains(dialog.getTitle()) && dialog.isShowing();
+          return dialog.getTitle().contains(policyAgreement) && dialog.isShowing();
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
