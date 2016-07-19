@@ -235,7 +235,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
+           "      LAMBDA_EXPRESSION:FunctionalExpressionStub\n" +
+           "        ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
   }
 
   public void testEnums() {
@@ -435,8 +436,9 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A5]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A6]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "      METHOD_REF_EXPRESSION:FunctionalExpressionStub\n" +
+           "        ANNOTATION:PsiAnnotationStub[@A6]\n" +
+           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A7]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A8]\n" +
