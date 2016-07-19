@@ -157,7 +157,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return JBIterable.empty();
     }
     else if (meta.regard.next == null && meta.forceDisregard.next == null) {
-      return JBIterable.from(tree.fun(node)).filter(not(meta.forceIgnore.OR()));
+      return JBIterable.<T>from(tree.fun(node)).filter(not(meta.forceIgnore.OR()));
     }
     else {
       // traverse subtree to select accepted children
