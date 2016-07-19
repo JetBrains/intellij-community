@@ -19,18 +19,19 @@ package com.intellij.history.integration.patches;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.PatchingTestCase;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assume;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class PatchCreatorTest extends PatchingTestCase {
 
-  // now we are not able to apply empty file creation patch, to not forget temporary ignore this test; todo fix
+  @Bombed(user = "Nadya Zabrodina", day = 1, month = Calendar.OCTOBER,
+    description = "Now we are not able to apply empty file creation patch; git special tag needed or smth like that")
   public void testCreationEmptyPatch() throws Exception {
-    Assume.assumeTrue(false);
     createChildData(myRoot, "f.txt");
 
     createPatchBetweenRevisions(1, 0);
