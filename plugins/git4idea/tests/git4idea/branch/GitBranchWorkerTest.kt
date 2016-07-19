@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Function
 import com.intellij.util.LineSeparator
 import com.intellij.util.ObjectUtils
@@ -532,7 +533,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val restoreAction = findAction(notification, RESTORE)
 
     myVcsNotifier.cleanup()
-    Notification.fire(notification, restoreAction)
+    runInEdtAndWait { Notification.fire(notification, restoreAction) }
     assertBranchExists(myCommunity, "todelete")
     assertNoNotification()
   }
@@ -549,7 +550,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     val notification = `assert successful deleted branch notification`(feature, false, RESTORE, DELETE_TRACKED_BRANCH);
     val restoreAction = findAction(notification, RESTORE)
-    Notification.fire(notification, restoreAction)
+    runInEdtAndWait { Notification.fire(notification, restoreAction) }
     assertBranchExists(myCommunity, feature)
     val trackInfo = getTrackInfoForBranch(myCommunity, myCommunity.branches.findLocalBranch(feature)!!)
     assertNotNull("Track info should be preserved", trackInfo)
@@ -638,7 +639,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val notification = `assert successful deleted branch notification`(feature, true, RESTORE, VIEW_COMMITS, DELETE_TRACKED_BRANCH);
     val viewAction = findAction(notification, VIEW_COMMITS)
     assertFalse("'Branch is not fully merged' dialog shouldn't be shown yet", dialogShown)
-    Notification.fire(notification, viewAction)
+    runInEdtAndWait { Notification.fire(notification, viewAction) }
     assertTrue("'Branch is not fully merged' dialog was not shown", dialogShown)
   }
 
