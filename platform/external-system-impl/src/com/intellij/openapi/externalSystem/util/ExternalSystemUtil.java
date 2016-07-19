@@ -530,11 +530,10 @@ public class ExternalSystemUtil {
                              @Nullable final TaskCallback callback,
                              @NotNull final ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun) {
-    final Pair<ProgramRunner, ExecutionEnvironment> pair = createRunner(taskSettings, executorId, project, externalSystemId);
-    if (pair == null) return;
 
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
+    ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    if (environment == null) return;
+
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;
     runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(activateToolWindowBeforeRun);
@@ -576,7 +575,7 @@ public class ExternalSystemUtil {
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
             try {
-              runner.execute(environment);
+              environment.getRunner().execute(environment);
             }
             catch (ExecutionException e) {
               targetDone.up();
@@ -638,10 +637,10 @@ public class ExternalSystemUtil {
   }
 
   @Nullable
-  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                       @NotNull String executorId,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ProjectSystemId externalSystemId) {
+  public static ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                @NotNull ProjectSystemId externalSystemId,
+                                                                @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                @NotNull String executorId) {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     if (executor == null) return null;
 
@@ -654,7 +653,19 @@ public class ExternalSystemUtil {
     RunnerAndConfigurationSettings settings = createExternalSystemRunnerAndConfigurationSettings(taskSettings, project, externalSystemId);
     if (settings == null) return null;
 
-    return Pair.create(runner, new ExecutionEnvironment(executor, runner, settings, project));
+    return new ExecutionEnvironment(executor, runner, settings, project);
+  }
+
+  /**
+   * @deprecated to be removed in IDEA 2017, use {@link #createExecutionEnvironment}
+   */
+  @Nullable
+  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                       @NotNull String executorId,
+                                                                       @NotNull Project project,
+                                                                       @NotNull ProjectSystemId externalSystemId) {
+    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    return executionEnvironment == null ? null : Pair.create(executionEnvironment.getRunner(), executionEnvironment);
   }
 
   @Nullable

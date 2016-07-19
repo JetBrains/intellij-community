@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * TODO automatically create exploded-war task
@@ -190,8 +190,8 @@ public class GradleActivityRunner extends ActivityRunner {
         int firstColonIndex = projectId.indexOf(':');
 
         gradlePath = projectId.substring(firstColonIndex, lastColonIndex);
-        String sourceSetName = projectId.substring(lastColonIndex + 1);
-        String task = "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
+        String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
+        String task = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
         if (tasks.contains(task)) {
           if (!moduleBuildActivity.isIncrementalBuild()) {
             cleanTasks.add(gradlePath + ":clean" + StringUtil.capitalize(task));

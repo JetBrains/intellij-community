@@ -21,7 +21,6 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -30,11 +29,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -59,18 +58,6 @@ public class GradleApplicationEnvironmentBuilder {
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(mainClass.getContainingFile().getVirtualFile());
     if (module == null) return null;
 
-    String externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-    String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    String gradleProjectPath = projectId;
-    int lastPathDelimiterIndex = gradleProjectPath == null ? -1 : gradleProjectPath.lastIndexOf(':');
-    if (gradleProjectPath == null || !gradleProjectPath.startsWith(":")) {
-      gradleProjectPath = ":";
-    } else {
-      if (!gradleProjectPath.equals(":")) {
-        gradleProjectPath = gradleProjectPath.substring(0, lastPathDelimiterIndex);
-      }
-    }
-
     final JavaParameters params = new JavaParameters();
     JavaParametersUtil.configureConfiguration(params, applicationConfiguration);
     params.getVMParametersList().addParametersString(applicationConfiguration.getVMParameters());
@@ -88,23 +75,32 @@ public class GradleApplicationEnvironmentBuilder {
 
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    taskSettings.setExternalProjectPath(externalProjectPath);
+    taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
     final String runAppTaskName = "run " + mainClass.getName();
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
     String executorId = activity.getExecutor() == null ? DefaultRunExecutor.EXECUTOR_ID : activity.getExecutor().getId();
-    final Pair<ProgramRunner, ExecutionEnvironment> environmentPair =
-      ExternalSystemUtil.createRunner(taskSettings, executorId, project, GradleConstants.SYSTEM_ID);
-    if (environmentPair != null) {
-      RunnerAndConfigurationSettings runnerAndConfigurationSettings = environmentPair.second.getRunnerAndConfigurationSettings();
+    ExecutionEnvironment environment =
+      ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId);
+    if (environment != null) {
+      RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
       assert runnerAndConfigurationSettings != null;
       ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
-      String sourceSetName = projectId == null || lastPathDelimiterIndex == -1 ? "main" : projectId.substring(lastPathDelimiterIndex + 1);
+      String gradlePath = ExternalSystemApiUtil.getExternalProjectId(module);
+      int lastPathDelimiterIndex = gradlePath == null ? -1 : gradlePath.lastIndexOf(':');
+      if (gradlePath == null || !gradlePath.startsWith(":")) {
+        gradlePath = ":";
+      } else {
+        if (!gradlePath.equals(":")) {
+          gradlePath = gradlePath.substring(0, lastPathDelimiterIndex);
+        }
+      }
+      String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  rootProject.allprojects {\n" +
-                          "    if(project.path == '" + gradleProjectPath + "' && project.sourceSets) {\n" +
+                          "    if(project.path == '" + gradlePath + "' && project.sourceSets) {\n" +
                           "      project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
                           "        classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
                           "        main = '" + mainClass.getQualifiedName() + "'\n" +
@@ -116,7 +112,7 @@ public class GradleApplicationEnvironmentBuilder {
                           "}\n";
 
       runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
-      return environmentPair.second;
+      return environment;
     }
     else {
       return null;
