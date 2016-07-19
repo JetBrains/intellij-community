@@ -19,7 +19,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
  * limitations under the License.
  */
 
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/builder/scripts/utils.gant")
 
 target(default: "Unpack JDKs") {
   unpackJdks()
@@ -35,7 +35,7 @@ def unpackJdks() {
     basePath = home
   }
 
-  def jdkDir = new File(basePath, "build/jdk")
+  def jdkDir = new File(basePath, "builder/jdk")
   def osDir = new File(jdkDir, osDirName)
   if (!osDir.isDirectory()) {
     projectBuilder.info("Cannot unpack JDK: $osDir not found")

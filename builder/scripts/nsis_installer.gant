@@ -15,7 +15,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
     outFileName = "${outNamePrefix}${buildNumber}"
   }
 
-  ant.taskdef(name: "nsis", classname: "com.intellij.internalUtilities.ant.NsiFiles", classpath: "${home}/community/build/lib/NsiFiles.jar")
+  ant.taskdef(name: "nsis", classname: "com.intellij.internalUtilities.ant.NsiFiles", classpath: "${home}/community/builder/lib/NsiFiles.jar")
 
   def box = paths.sandbox
   ant.mkdir(dir: "$box/bin")
@@ -30,7 +30,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
   }
 
   ant.copy(todir: "$box/nsiconf") {
-    fileset(dir: "$home/community/build/conf/nsis") {
+    fileset(dir: "$home/community/builder/conf/nsis") {
       include(name: "*")
       exclude(name: "version*")
       exclude(name: "strings*")
@@ -39,11 +39,11 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
   }
 
   if (isEap()) {
-    ant.copy(file: "$home/community/build/conf/nsis/version.eap.nsi",
+    ant.copy(file: "$home/community/builder/conf/nsis/version.eap.nsi",
              tofile: "$box/nsiconf/version.nsi", overwrite: true)
   }
   else {
-    ant.copy(file: "$home/community/build/conf/nsis/version.nsi",
+    ant.copy(file: "$home/community/builder/conf/nsis/version.nsi",
              tofile: "$box/nsiconf/version.nsi", overwrite: true)
   }
   ant.copy(file: pathsFile, toFile: "$box/nsiconf/paths.nsi", overwrite: true)
@@ -77,7 +77,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
     replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: system_selector)
   }
 
-  ant.unzip(src: "$home/build/tools/NSIS.zip", dest: box)
+  ant.unzip(src: "$home/builder/tools/NSIS.zip", dest: box)
   ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                     " /DBASE_DIR=\"$home\"" +
                     " /DCOMMUNITY_DIR=\"$home/community\"" +
@@ -87,7 +87,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
                     " \"${box}/nsiconf/idea.nsi\"")
 
   projectBuilder.stage("Signing binaries")
-  executeExternalAnt(["dirName": "${paths.artifacts}", "fileName": "${outFileName}.exe"], "$home/build/signBuild.xml")
+  executeExternalAnt(["dirName": "${paths.artifacts}", "fileName": "${outFileName}.exe"], "$home/builder/signBuild.xml")
   projectBuilder.stage("Signing done")
 
   return "${paths.artifacts}/${outFileName}.exe"
