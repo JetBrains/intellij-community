@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +56,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final BuildInfo myNewBuild;
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
+
+  private String myLicenseInfo = null;
+  private Color myLicenseInfoColor = null;
 
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
@@ -88,12 +92,20 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       else {
         Date buildDate = build.getReleaseDate();
-        Date expiration = facade.getLicenseExpirationDate();
-        if (buildDate != null && facade.isPerpetualForProduct(buildDate)) {
-          myLicenseInfo = IdeBundle.message("updates.fallback.build");
-        }
-        else if (expiration != null && expiration.after(new Date())) {
-          myLicenseInfo = IdeBundle.message("updates.subscription.active.till", DateFormatUtil.formatAboutDialogDate(expiration));
+        if (buildDate != null) {
+          if (!facade.isApplicableForProduct(buildDate)) {
+            myLicenseInfo = IdeBundle.message("updates.paid.upgrade", channel.getEvalDays());
+            myLicenseInfoColor = JBColor.RED;
+          }
+          else if (facade.isPerpetualForProduct(buildDate)) {
+            myLicenseInfo = IdeBundle.message("updates.fallback.build");
+          }
+          else {
+            Date expiration = facade.getLicenseExpirationDate();
+            myLicenseInfo = expiration != null
+                            ? IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration))
+                            : IdeBundle.message("updates.interim.build.endless");
+          }
         }
       }
     }
@@ -255,7 +267,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
 
       if (myLicenseInfo != null) {
-        configureMessageArea(myLicenseArea, myLicenseInfo, null, null);
+        configureMessageArea(myLicenseArea, myLicenseInfo, myLicenseInfoColor, null);
       }
     }
   }

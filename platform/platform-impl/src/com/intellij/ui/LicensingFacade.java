@@ -38,6 +38,8 @@ public abstract class LicensingFacade {
 
   public abstract boolean isEvaluationLicense();
 
+  public abstract boolean isApplicableForProduct(@NotNull Date productBuildDate);
+
   public abstract boolean isPerpetualForProduct(@NotNull Date productBuildDate);
 
   @Nullable
