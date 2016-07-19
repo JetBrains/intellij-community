@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.google.gson.JsonParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
@@ -38,7 +37,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -61,7 +63,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
       public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
         ref.set(entries);
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
 
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
     context.directory = getSourceRoot();
@@ -89,7 +91,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
         pairs.add(Pair.create(parameters.get("url"), directoryName));
         return true;
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
 
     ProjectSetProcessor.Context context = new ProjectSetProcessor.Context();
     context.directoryName = "newDir";

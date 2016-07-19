@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +71,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     registerExtensionPoint(area, name, (Class<T>)t.getClass());
 
 
-    PlatformTestUtil.registerExtension(area, name, t, myTestRootDisposable);
+    PlatformTestUtil.registerExtension(area, name, t, getTestRootDisposable());
   }
 
   protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, final Class<T> aClass) {

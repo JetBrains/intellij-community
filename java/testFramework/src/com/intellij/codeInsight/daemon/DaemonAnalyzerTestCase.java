@@ -50,7 +50,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -250,7 +249,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, getTestRootDisposable());
 
     try {
       Collection<HighlightInfo> infos = doHighlighting();
@@ -261,7 +260,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       return infos;
     }
     finally {
-      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     }
   }
 

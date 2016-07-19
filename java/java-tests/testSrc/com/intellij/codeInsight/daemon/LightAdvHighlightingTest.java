@@ -199,7 +199,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnused() { doTest(true, false); }
   public void testQualifierBeforeClassName() { doTest(false, false); }
   public void testQualifiedSuper() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
     doTest(false, false);
   }
 

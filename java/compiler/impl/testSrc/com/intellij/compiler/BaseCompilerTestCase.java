@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
@@ -249,7 +249,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

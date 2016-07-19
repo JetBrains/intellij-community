@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -43,7 +40,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myStructure = new TestProjectTreeStructure(myProject, myTestRootDisposable);
+    myStructure = new TestProjectTreeStructure(myProject, getTestRootDisposable());
   }
 
   @Override

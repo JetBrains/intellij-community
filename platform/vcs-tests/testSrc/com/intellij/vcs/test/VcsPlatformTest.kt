@@ -133,7 +133,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   }
 
   private fun enableDebugLogging(): String {
-    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, *ArrayUtil.toStringArray(getDebugLogCategories()))
+    TestLoggerFactory.enableDebugLogging(testRootDisposable, *ArrayUtil.toStringArray(getDebugLogCategories()))
     val testStartedIndicator = createTestStartedIndicator()
     LOG.info(testStartedIndicator)
     return testStartedIndicator

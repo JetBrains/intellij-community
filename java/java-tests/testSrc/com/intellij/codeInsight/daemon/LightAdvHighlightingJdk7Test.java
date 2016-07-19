@@ -46,7 +46,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_7);
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... inspections) {
