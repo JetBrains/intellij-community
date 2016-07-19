@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -189,13 +190,14 @@ public class DeleteHandler {
       }
     }
 
-    CommandProcessor.getInstance().executeCommand(project, () -> {
+    CommandProcessor.getInstance().executeCommand(project, () -> NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
       Collection<PsiElement> directories = ContainerUtil.newSmartList();
       for (PsiElement e : elements) {
         if (e instanceof PsiFileSystemItem && e.getParent() != null) {
           directories.add(e.getParent());
         }
       }
+
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Arrays.asList(elements), directories, false)) {
         return;
       }
@@ -263,7 +265,7 @@ public class DeleteHandler {
           }
         });
       }
-    }, RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(elements)), null);
+    }), RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(elements)), null);
   }
 
   private static boolean clearReadOnlyFlag(final VirtualFile virtualFile, final Project project) {
