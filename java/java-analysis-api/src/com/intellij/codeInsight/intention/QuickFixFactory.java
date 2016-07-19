@@ -273,4 +273,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 
   public abstract IntentionAction createNotIterableForEachLoopFix(PsiExpression expression);
+
+  @NotNull
+  public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(PsiNameValuePair pair);
 }

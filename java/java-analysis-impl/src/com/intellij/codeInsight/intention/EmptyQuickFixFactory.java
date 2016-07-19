@@ -631,4 +631,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(PsiNameValuePair pair) {
+    return Collections.emptyList();
+  }
 }

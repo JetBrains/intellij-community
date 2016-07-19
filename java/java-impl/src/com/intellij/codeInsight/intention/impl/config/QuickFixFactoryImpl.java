@@ -790,6 +790,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return null;
   }
 
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(PsiNameValuePair pair) {
+    return AddAnnotationAttributeNameFix.createFixes(pair);
+  }
+
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
 

@@ -72,7 +72,12 @@ public class AnnotationsHighlightUtil {
       else {
         String description = JavaErrorMessages.message("annotation.missing.method", ref.getCanonicalText());
         PsiElement element = ref.getElement();
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        final HighlightInfo highlightInfo =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, action);
+        }
+        return highlightInfo;
       }
     }
     else {
