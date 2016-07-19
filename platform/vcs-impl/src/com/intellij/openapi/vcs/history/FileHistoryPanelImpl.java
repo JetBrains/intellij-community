@@ -1682,7 +1682,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private class MyCommentsPane extends HtmlPanel implements DataProvider, CopyProvider {
-    private String myOriginalComment = "";
+    @NotNull private String myText = "";
 
     public MyCommentsPane() {
       setPreferredSize(new Dimension(150, 100));
@@ -1691,44 +1691,39 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
       if (selection.isEmpty()) {
         setText("");
-        myOriginalComment = "";
         return;
       }
       boolean addRevisionInfo = selection.size() > 1;
-      StringBuilder original = new StringBuilder();
       StringBuilder html = new StringBuilder();
       for (TreeNodeOnVcsRevision revision : selection) {
         String message = revision.getCommitMessage();
         if (StringUtil.isEmpty(message)) continue;
-        if (original.length() > 0) {
-          original.append("\n\n");
+        if (html.length() > 0) {
           html.append("<br/><br/>");
         }
         if (addRevisionInfo) {
           String revisionInfo = getPresentableText(revision.getRevision(), false);
           html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
             .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
-          original.append(revisionInfo).append("\n");
         }
-        original.append(message);
         html.append(getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)));
       }
-      myOriginalComment = original.toString();
-      if (StringUtil.isEmpty(myOriginalComment)) {
+      myText = html.toString();
+      if (myText.isEmpty()) {
         setText("");
       }
       else {
         setText("<html><head>" +
                 UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
                 "</head><body>" +
-                html.toString() +
+                myText +
                 "</body></html>");
         setCaretPosition(0);
       }
     }
 
     public boolean isEmpty() {
-      return StringUtil.isEmpty(myOriginalComment);
+      return StringUtil.isEmpty(myText);
     }
 
     @Override
@@ -1739,7 +1734,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       String selectedText = getSelectedText();
-      if (selectedText == null || selectedText.isEmpty()) selectedText = myOriginalComment;
+      if (selectedText == null || selectedText.isEmpty()) selectedText = StringUtil.removeHtmlTags(getText());
       CopyPasteManager.getInstance().setContents(new StringSelection(selectedText));
     }
 
