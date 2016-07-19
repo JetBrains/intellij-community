@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class UnusedDeclarationInspectionMerger extends InspectionElementsMerger {
+public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerBase {
   private static final String UNUSED_SYMBOL = "UNUSED_SYMBOL";
   private static final String UNUSED_DECLARATION = "UnusedDeclaration";
 

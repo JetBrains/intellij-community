@@ -28,4 +28,9 @@ class X {
 
   void xx() {}
   void xX() {}
+
+  @SuppressWarnings("MisspelledToString")
+  public String tostring() {
+    return "";
+  }
 }

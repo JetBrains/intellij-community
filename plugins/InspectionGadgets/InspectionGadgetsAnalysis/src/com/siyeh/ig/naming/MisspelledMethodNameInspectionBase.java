@@ -29,15 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class MethodNamesDifferOnlyByCaseInspectionBase extends BaseInspection {
+public class MisspelledMethodNameInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreIfMethodIsOverride = true;
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "MethodNamesDifferingOnlyByCase";
-  }
 
   @Override
   @NotNull

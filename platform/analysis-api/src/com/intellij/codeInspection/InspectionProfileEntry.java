@@ -16,9 +16,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -81,6 +83,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return true;
       }
     }
+
+    final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
+    if (merger != null) {
+      for (String sourceToolId : merger.getSourceToolNames()) {
+        for (InspectionSuppressor suppressor : suppressors) {
+          if (isSuppressed(sourceToolId, suppressor, element)) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 

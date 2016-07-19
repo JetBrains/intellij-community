@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.naming;
 
-import com.siyeh.HardcodedMethodConstants;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
-public class MisspelledToStringInspection extends MisspelledToStringInspectionBase {
+import javax.swing.*;
+
+public class MisspelledMethodNameInspection extends MisspelledMethodNameInspectionBase {
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"),
+                                          this, "ignoreIfMethodIsOverride");
+  }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix(HardcodedMethodConstants.TO_STRING);
+    return new RenameFix((String)infos[0]);
   }
 }
