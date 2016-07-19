@@ -240,7 +240,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
     final StepicUser user = studySettings.getUser();
-    if (user == null) return;
     final String login = user.getEmail();
     final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);

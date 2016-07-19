@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -631,6 +632,41 @@ public class EduStepicConnector {
     return -1;
   }
 
+  public static int updateTask(@NotNull final Project project, @NotNull final Task task) {
+    final Lesson lesson = task.getLesson();
+    final int lessonId = lesson.getId();
+
+    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepicId()));
+    setHeaders(request, "application/json");
+    if (ourClient == null) {
+      if (!login(project)) {
+        LOG.error("Failed to update task");
+        return 0;
+      }
+    }
+
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
+      request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+      try {
+        final CloseableHttpResponse response = ourClient.execute(request);
+        final StatusLine line = response.getStatusLine();
+        if (line.getStatusCode() != HttpStatus.SC_OK) {
+          final HttpEntity responseEntity = response.getEntity();
+          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          LOG.error("Failed to push " + responseString);
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e.getMessage());
+      }
+    });
+    return -1;
+  }
+
   public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
     if (ourClient == null) {
@@ -735,11 +771,15 @@ public class EduStepicConnector {
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
         final StatusLine line = response.getStatusLine();
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-          final HttpEntity responseEntity = response.getEntity();
-          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
           LOG.error("Failed to push " + responseString);
         }
+
+        final JsonObject postedTask = new Gson().fromJson(responseString, JsonObject.class);
+        final JsonObject stepSource = postedTask.getAsJsonArray("step-sources").get(0).getAsJsonObject();
+        task.setStepicId(stepSource.getAsJsonPrimitive("id").getAsInt());
       }
       catch (IOException e) {
         LOG.error(e.getMessage());

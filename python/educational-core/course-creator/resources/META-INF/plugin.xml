@@ -63,6 +63,7 @@
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
       <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive"/>
+      <action id="PushTask" class="com.jetbrains.edu.coursecreator.actions.CCPushTask"/>
       <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson"/>
       <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse"/>
       <reference id="ChangeCourseInfo"/>
