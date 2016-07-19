@@ -95,6 +95,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
         }
 
         warModel.webResources = webResources
+        warModel.archivePath = warTask.archivePath
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {

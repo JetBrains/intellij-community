@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.model.data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.Serializable;
 
 /**
@@ -29,6 +30,9 @@ public class Jar implements Serializable {
 
   @NotNull
   private final String myName;
+  @Nullable
+  private File myArchivePath;
+
   @Nullable
   private String myManifestContent;
 
@@ -48,6 +52,15 @@ public class Jar implements Serializable {
 
   public void setManifestContent(@Nullable String manifestContent) {
     myManifestContent = manifestContent;
+  }
+
+  @Nullable
+  public File getArchivePath() {
+    return myArchivePath;
+  }
+
+  public void setArchivePath(@Nullable File archivePath) {
+    this.myArchivePath = archivePath;
   }
 
   @Override
