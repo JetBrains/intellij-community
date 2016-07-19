@@ -214,9 +214,11 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
     buildWinZip("$paths.artifacts/${archiveName}.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"], winAppRoot)
   }
 
+  /*
+  This is unused by studio, and has issues with the offline sdk repo.
   buildCrossPlatformZip("$paths.artifacts/${archiveName}.zip", "${paths.sandbox}/sandbox-ce", [paths.distAll],
                         paths.distWin, paths.distUnix, paths.distMac)
-
+  */
   buildMacZip(macAppRoot, "$paths.artifacts/${archiveName}-no-jdk.mac.zip", [paths.distAll], paths.distMac, productProperties.extraMacBins)
   requireProperty("jdk.mac", "false")
   if (p("jdk.mac") != "false") {

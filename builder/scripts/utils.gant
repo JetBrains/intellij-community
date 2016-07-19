@@ -964,6 +964,10 @@ binding.setVariable("buildWinZip", { String zipPath, List paths, String zipPrefi
   notifyArtifactBuilt(zipPath)
 })
 
+/*
+This is unused by Studio, and causes problems for the offline SDK repo.
+Leaving it commented out to reduce merge pain.
+
 binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
   projectBuilder.stage("Building cross-platform zip")
 
@@ -1045,6 +1049,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
 
   notifyArtifactBuilt(zipPath)
 })
+*/
 
 binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
   projectBuilder.stage(".mac.zip")
