@@ -79,8 +79,7 @@ public class CombinePropertiesFilesAction extends AnAction {
         resourceBundleManager.dissociateResourceBundle(resourceBundle);
       }
 
-      resourceBundleManager.combineToResourceBundle(propertiesFiles, newBaseName);
-      final ResourceBundle resourceBundle = propertiesFiles.get(0).getResourceBundle();
+      final ResourceBundle resourceBundle = resourceBundleManager.combineToResourceBundleAndGet(propertiesFiles, newBaseName);
       FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(resourceBundle), true);
       ProjectView.getInstance(project).refresh();
     }
