@@ -24,6 +24,9 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -60,6 +63,7 @@ public class EduStepicConnector {
   private static final String stepicUrl = "https://stepic.org/";
   private static String ourCSRFToken = "";
   private static CloseableHttpClient ourClient;
+  private static final String CLIENT_ID = "hUCWcq3hZHCmz0DKrDtwOWITLcYutzot7p4n59vU";
 
   //this prefix indicates that course can be opened by educational plugin
   public static final String PYCHARM_PREFIX = "pycharm";
@@ -75,6 +79,7 @@ public class EduStepicConnector {
   private EduStepicConnector() {
   }
 
+  // TODO : merge. look at comments
   public static StepicUser login(@NotNull final String username, @NotNull final String password) {
     initializeClient();
     if (postCredentials(username, password)) {
@@ -154,17 +159,7 @@ public class EduStepicConnector {
 
       try {
         // Create a trust manager that does not validate certificate for this connection
-        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-          public X509Certificate[] getAcceptedIssuers() {
-            return null;
-          }
-
-          public void checkClientTrusted(X509Certificate[] certs, String authType) {
-          }
-
-          public void checkServerTrusted(X509Certificate[] certs, String authType) {
-          }
-        }};
+        TrustManager[] trustAllCerts = getTrustAllCerts();
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
         ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
@@ -229,6 +224,23 @@ public class EduStepicConnector {
     return true;
   }
 
+  //  TODO merge : postCredentials
+  private static StepicWrappers.TokenInfo postCredentialsOAuth2(String email, String password) {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("grant_type", "password");
+    parameters.put("username", email);
+    parameters.put("password", password);
+    parameters.put("client_id", CLIENT_ID);
+
+    try {
+      return postToStepicMapLinkReset(EduStepicNames.TOKEN_URL, parameters, StepicWrappers.TokenInfo.class);
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+      return null;
+    }
+  }
+
   static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
     final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
     if (ourClient == null) {
@@ -243,6 +255,46 @@ public class EduStepicConnector {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
+    return GSON.fromJson(responseString, container);
+  }
+
+  static <T> T getFromStepicOAuth2(String link, final Class<T> container) throws IOException {
+    HttpResponse<String> response = null;
+    try {
+      //.header("Authorization", "Bearer " + token)
+      response = Unirest
+        .get(EduStepicNames.STEPIC_URL + link)
+        .asString();
+    }
+    catch (UnirestException e) {
+      e.printStackTrace();
+    }
+
+    if (response.getStatus() != HttpStatus.SC_OK) {
+      throw new IOException("Stepic returned non 200 status code " + response.getBody());
+    }
+    final String responseString = response.getBody();
+
+    return GSON.fromJson(responseString, container);
+  }
+
+  private static <T> T postToStepicMapLinkReset(String link, Map<String, Object> parameters, final Class<T> container) throws IOException {
+    HttpResponse<String> response;
+    try {
+      response = Unirest
+        .post(link)
+        .fields(parameters)
+        .asString();
+    }
+    catch (UnirestException e) {
+      throw new IOException(e);
+    }
+    final String responseString = response.getBody();
+
+    if (response.getStatus() != HttpStatus.SC_OK) {
+      throw new IOException("Stepic returned non 200 status code " + responseString);
+    }
+
     return GSON.fromJson(responseString, container);
   }
 
@@ -460,11 +512,11 @@ public class EduStepicConnector {
 
     if (step.options.executionMemoryLimit != null && step.options.executionTimeLimit != null) {
       String builder = "<b>Memory limit</b>: " +
-        step.options.executionMemoryLimit + " Mb" +
-        "<br>" +
-        "<b>Time limit</b>: " +
-        step.options.executionTimeLimit + "s" +
-        "<br><br>";
+                       step.options.executionMemoryLimit + " Mb" +
+                       "<br>" +
+                       "<b>Time limit</b>: " +
+                       step.options.executionTimeLimit + "s" +
+                       "<br><br>";
       task.setText(task.getText() + builder);
     }
 
@@ -854,5 +906,19 @@ public class EduStepicConnector {
       sb.append("ids[]=" + id + "&");
     }
     return sb.toString();
+  }
+
+  public static TrustManager[] getTrustAllCerts() {
+    return new TrustManager[]{new X509TrustManager() {
+      public X509Certificate[] getAcceptedIssuers() {
+        return null;
+      }
+
+      public void checkClientTrusted(X509Certificate[] certs, String authType) {
+      }
+
+      public void checkServerTrusted(X509Certificate[] certs, String authType) {
+      }
+    }};
   }
 }

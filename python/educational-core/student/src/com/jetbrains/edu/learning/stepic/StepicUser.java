@@ -15,6 +15,9 @@ public class StepicUser {
   private String firstName = "";
   private String lastName = "";
   private String email = "";
+  private String accessToken = "";
+  private String refreshToken = "";
+
 
   public StepicUser() {
   }
@@ -22,6 +25,11 @@ public class StepicUser {
   public StepicUser(@NotNull final String email, @NotNull final String password) {
     this.email = email;
     setPassword(password);
+  }
+
+  public StepicUser(StepicWrappers.TokenInfo tokenInfo) {
+    this.accessToken = tokenInfo.accessToken;
+    this.refreshToken = tokenInfo.refreshToken;
   }
 
   public int getId() {
@@ -91,5 +99,21 @@ public class StepicUser {
   @NotNull
   public String getName() {
     return StringUtil.join(new String[]{firstName, lastName}, " ");
+  }
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken) {
+    this.refreshToken = refreshToken;
   }
 }
