@@ -7,10 +7,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CommitIdByStringCondition;
-import com.intellij.vcs.log.data.DataGetter;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VisiblePack;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -186,7 +183,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   private Collection<VcsRef> getRefsAtRow(int row) {
-    return myDataPack.getRefs().refsToCommit(getIdAtRow(row));
+    return ((RefsModel)myDataPack.getRefs()).refsToCommit(getIdAtRow(row));
   }
 
   @NotNull
