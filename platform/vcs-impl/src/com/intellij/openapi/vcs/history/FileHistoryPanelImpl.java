@@ -99,7 +99,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
   @NotNull private final Project myProject;
   private final MyCommentsPane myComments;
-  private final StatusText myCommentsStatus;
   private final DefaultActionGroup myPopupActions;
   private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
@@ -162,21 +161,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
     final DualViewColumnInfo[] columns = createColumnList(myVcs.getProject(), provider, session);
-    myCommentsStatus = new StatusText() {
-      @Override
-      protected boolean isStatusVisible() {
-        return myComments.isEmpty();
-      }
-    };
-    myCommentsStatus.setText("Commit message");
-    myComments = new MyCommentsPane() {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        myCommentsStatus.paint(this, g);
-      }
-    };
-    myCommentsStatus.attachTo(myComments);
+    myComments = new MyCommentsPane();
 
     myRevisionsOrder = new HashMap<>();
     refreshRevisionsOrder();
@@ -1682,10 +1667,26 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private class MyCommentsPane extends HtmlPanel implements DataProvider, CopyProvider {
+    @NotNull private final StatusText myStatusText;
     @NotNull private String myText = "";
 
     public MyCommentsPane() {
+      myStatusText = new StatusText() {
+        @Override
+        protected boolean isStatusVisible() {
+          return StringUtil.isEmpty(myText);
+        }
+      };
+      myStatusText.setText("Commit message");
+      myStatusText.attachTo(this);
+
       setPreferredSize(new Dimension(150, 100));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      myStatusText.paint(this, g);
     }
 
     public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
@@ -1720,10 +1721,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                 "</body></html>");
         setCaretPosition(0);
       }
-    }
-
-    public boolean isEmpty() {
-      return StringUtil.isEmpty(myText);
     }
 
     @Override
