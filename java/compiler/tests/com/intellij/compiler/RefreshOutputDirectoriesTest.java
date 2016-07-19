@@ -63,7 +63,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
   }
 
   private void subscribeToRootChanges() {
-    myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myRootsChangedCount++;
