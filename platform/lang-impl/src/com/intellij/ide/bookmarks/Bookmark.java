@@ -54,7 +54,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private final VirtualFile myFile;
   @NotNull private OpenFileDescriptor myTarget;
   private final Project myProject;
-  private WeakHashMap<Document, Reference<RangeHighlighterEx>> myHighlighterRefs;
+  private Reference<RangeHighlighterEx> myHighlighterRef;
 
   private String myDescription;
   private char myMnemonic = 0;
@@ -135,10 +134,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     else {
       highlighter = null;
     }
-    if (myHighlighterRefs == null) myHighlighterRefs = new WeakHashMap<>();
-    if (highlighter != null) {
-      myHighlighterRefs.put(markup.getDocument(), new WeakReference<RangeHighlighterEx>(highlighter));
-    }
+    myHighlighterRef = highlighter == null ? null : new WeakReference<RangeHighlighterEx>(highlighter);
     return highlighter;
   }
 
@@ -148,7 +144,6 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   public void release() {
-    try {
       int line = getLine();
       if (line < 0) {
         return;
@@ -160,18 +155,15 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       if (markupDocument.getLineCount() <= line) return;
       RangeHighlighterEx highlighter = findMyHighlighter();
       if (highlighter != null) {
+        myHighlighterRef = null;
         highlighter.dispose();
       }
-    } finally {
-      myHighlighterRefs = null;
-    }
   }
 
   private RangeHighlighterEx findMyHighlighter() {
     final Document document = getDocument();
     if (document == null) return null;
-    Reference<RangeHighlighterEx> reference = myHighlighterRefs != null ? myHighlighterRefs.get(document) : null;
-    RangeHighlighterEx result = SoftReference.dereference(reference);
+    RangeHighlighterEx result = SoftReference.dereference(myHighlighterRef);
     if (result != null) {
       return result;
     }
@@ -190,10 +182,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       return true;
     });
     result = found.get();
-    if (result != null) {
-      if (myHighlighterRefs == null) myHighlighterRefs = new WeakHashMap<>();
-      myHighlighterRefs.put(document, new WeakReference<RangeHighlighterEx>(result));
-    }
+    myHighlighterRef = result == null ? null : new WeakReference<RangeHighlighterEx>(result);
     return result;
   }
 
