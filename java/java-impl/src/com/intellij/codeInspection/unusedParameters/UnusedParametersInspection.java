@@ -193,7 +193,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     clearUsedParameters(refMethod, result, checkDeep);
 
     for (RefParameter parameter : result) {
-      if (parameter != null && !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME)) {
+      if (parameter != null && !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
         res.add(parameter);
       }
     }
@@ -315,6 +315,6 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Nullable
   @Override
   public String getAlternativeID() {
-    return "unused";
+    return UnusedSymbolLocalInspectionBase.UNUSED_ID;
   }
 }

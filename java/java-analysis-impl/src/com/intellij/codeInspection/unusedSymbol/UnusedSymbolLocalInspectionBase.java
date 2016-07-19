@@ -32,6 +32,7 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
   @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
+  @NonNls public static final String UNUSED_ID = "unused";
 
   public boolean LOCAL_VARIABLE = true;
   public boolean FIELD = true;
@@ -126,7 +127,7 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   @NotNull
   @NonNls
   public String getID() {
-    return "unused";
+    return UNUSED_ID;
   }
 
   @Override
