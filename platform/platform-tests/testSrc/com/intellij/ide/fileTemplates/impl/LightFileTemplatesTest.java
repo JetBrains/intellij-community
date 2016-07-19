@@ -19,6 +19,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -120,7 +121,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       String newText = "good bye";
       template.setText(newText);
       assertEquals(newText, manager.getTemplate(TEST_TEMPLATE_TXT).getText());
-
+      manager.saveAllTemplates();
       PlatformTestUtil.saveProject(project);
       closeProject(project);
 
@@ -152,7 +153,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       myTemplateManager.removeTemplate(template);
       assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
       myTemplateManager.setCurrentScheme(myTemplateManager.getProjectScheme());
-      assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
+      assertNotNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
       myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
       assertNull(myTemplateManager.getTemplate(TEST_TEMPLATE_TXT));
     }
@@ -168,7 +169,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertTrue(template.isReformatCode());
     template.setReformatCode(false);
 
-    FileTemplateSettings settings = FileTemplateSettings.getInstance(getProject());
+    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);
@@ -180,7 +181,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertFalse(((FileTemplateBase)myTemplateManager.getTemplate(TEST_TEMPLATE_TXT)).isLiveTemplateEnabledByDefault());
     FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
     assertTrue(template.isLiveTemplateEnabledByDefault());
-    FileTemplateSettings settings = FileTemplateSettings.getInstance(getProject());
+    FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
     assertNull(settings.getState());
     template.setLiveTemplateEnabled(false);
     Element state = settings.getState();

@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.ProjectManager;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -30,19 +28,9 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE),
   additionalExportFile = FileTemplatesLoader.TEMPLATES_DIR
 )
-public class ExportableFileTemplateSettings implements PersistentStateComponent<Element> {
-  @Nullable
-  @Override
-  public Element getState() {
-    return getSettingInstance().getState();
-  }
+public class ExportableFileTemplateSettings extends FileTemplateSettings {
 
-  @Override
-  public void loadState(Element state) {
-    getSettingInstance().loadState(state);
-  }
-
-  private static FileTemplateSettings getSettingInstance() {
-    return FileTemplateSettings.getInstance(ProjectManager.getInstance().getDefaultProject());
+  public ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
+    super(typeManager);
   }
 }
