@@ -19,12 +19,14 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,6 +43,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
   private final SelectedTextFormatter mySelectedTextFormatter;
   private SpacesPanelWithoutPreview mySpacesPanel;
+  private WrappingAndBracesPanelWithoutPreview myWrappingPanel;
 
   private Runnable mySomethingChangedCallback;
 
@@ -76,14 +79,30 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   @Override
   protected void initTabs(CodeStyleSettings settings) {
-    mySpacesPanel = new SpacesPanelWithoutPreview(settings);
-    addTab(mySpacesPanel);
-    addTab(new WrappingAndBracesPanelWithoutPreview(settings));
+    SpacesPanelWithoutPreview panel = getSpacesPanel(settings);
+    if (panel != null) {
+      mySpacesPanel = panel;
+      addTab(mySpacesPanel);
+    }
+
+    myWrappingPanel = new WrappingAndBracesPanelWithoutPreview(settings);
+    addTab(myWrappingPanel);
     reset(getSettings());
   }
 
+  @Nullable
+  private SpacesPanelWithoutPreview getSpacesPanel(CodeStyleSettings settings) {
+    SpacesPanelWithoutPreview spacesPanel = new SpacesPanelWithoutPreview(settings);
+    if (spacesPanel.hasSomethingToShow()) {
+      return spacesPanel;
+    }
+    Disposer.dispose(spacesPanel);
+    return null;
+  }
+
   public JComponent getPreferredFocusedComponent() {
-    return mySpacesPanel.getPreferredFocusedComponent();
+    return mySpacesPanel != null ? mySpacesPanel.getPreferredFocusedComponent() 
+                                 : myWrappingPanel.getPreferredFocusedComponent();
   }
 
   public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
@@ -154,6 +173,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       isFirstUpdate = false;
     }
     
+    public boolean hasSomethingToShow() {
+      return !myKeys.isEmpty();
+    }
+    
     @Override
     public JComponent getPanel() {
       return myPanel;
@@ -195,7 +218,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
         @Override
         public Dimension getMinimumSize() {
-          return super.getPreferredSize();
+          return myTreeTable.getPreferredSize();
         }
       };
 
@@ -237,6 +260,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     @Override
     protected String getPreviewText() {
       return null;
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myTreeTable;
     }
   }
 }

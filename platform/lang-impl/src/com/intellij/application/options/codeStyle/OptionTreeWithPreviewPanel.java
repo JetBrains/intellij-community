@@ -49,15 +49,15 @@ import java.util.List;
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   protected JTree myOptionsTree;
-  private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
+  protected final ArrayList<BooleanOptionKey> myKeys = new ArrayList<>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<String>();
-  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
+  private Set<String> myAllowedOptions = new HashSet<>();
+  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
-  private final Map<String, String> myRemappedGroups = new THashMap<String, String>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, String> myRemappedGroups = new THashMap<>();
 
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
