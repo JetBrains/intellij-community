@@ -97,7 +97,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         return true;
       }
     }
-    return false;
+
+    return !provider.getSupportedFields().isEmpty();
   }
 
   private void reformatSelectedTextWithNewSettings() {
@@ -129,6 +130,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     @Override
     protected void init() {
       List<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
+      if (settingNames.isEmpty()) {
+        settingNames = mySettingsToShow.getOtherSetting();
+      }
+      
       String[] names = ContainerUtil.toArray(settingNames, new String[settingNames.size()]);
       showStandardOptions(names);
       initTables();
@@ -174,6 +179,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     @Override
     protected void init() {
       Collection<String> settingNames = mySettingsToShow.getSettings(getSettingsType());
+      if (settingNames.isEmpty()) {
+        settingNames = mySettingsToShow.getOtherSetting();
+      }
+      
       initTables();
 
       Collection<String> fields = populateWithAssociatedFields(settingNames);
