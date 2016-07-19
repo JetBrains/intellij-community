@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -148,7 +150,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
         final PyCallExpression callExpr = (PyCallExpression)callSite;
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments( resolveContext);
+        final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
         if (mapping.getMarkedCallee() != null) {
           final PyType type = getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
           if (type != null) {
@@ -162,7 +164,60 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
+      else if (callSite != null && isListGetItem(function)) {
+        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
+        final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, function);
+        final List<PyParameter> parameters = PyUtil.getParameters(function, context);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, function, callSite, resolveContext);
+        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
+        if (substitutions != null) {
+          return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
+        }
+      }
     }
+    return null;
+  }
+
+  private static boolean isListGetItem(@NotNull PyFunction function) {
+    return PyNames.GETITEM.equals(function.getName()) &&
+           Optional
+             .ofNullable(PyBuiltinCache.getInstance(function).getListType())
+             .map(PyClassType::getPyClass)
+             .map(cls -> cls.equals(function.getContainingClass()))
+             .orElse(false);
+  }
+
+  @Nullable
+  private static PyType analyzeListGetItemCallType(@Nullable PyExpression receiver,
+                                                   @NotNull Map<PyExpression, PyNamedParameter> parameters,
+                                                   @NotNull Map<PyGenericType, PyType> substitutions,
+                                                   @NotNull TypeEvalContext context) {
+    if (parameters.size() != 1 || substitutions.size() != 1) {
+      return null;
+    }
+
+    final PyType firstArgumentType = Optional
+      .ofNullable(parameters.keySet().iterator().next())
+      .map(context::getType)
+      .orElse(null);
+
+    if (firstArgumentType == null) {
+      return null;
+    }
+
+    if (PyABCUtil.isSubtype(firstArgumentType, PyNames.ABC_INTEGRAL, context)) {
+      return substitutions.values().iterator().next();
+    }
+
+    if (PyNames.SLICE.equals(firstArgumentType.getName()) && firstArgumentType.isBuiltin()) {
+      return Optional
+        .ofNullable(receiver)
+        .map(context::getType)
+        .orElseGet(() -> PyTypeChecker.substitute(PyBuiltinCache.getInstance(receiver).getListType(), substitutions, context));
+    }
+
     return null;
   }
 
