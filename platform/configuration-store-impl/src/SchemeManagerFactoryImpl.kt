@@ -91,7 +91,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
         errors.add(e)
       }
     }
-
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 

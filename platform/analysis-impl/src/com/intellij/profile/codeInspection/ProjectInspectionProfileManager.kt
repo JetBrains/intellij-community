@@ -42,6 +42,7 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
 const val PROFILE = "profile"
@@ -67,6 +68,8 @@ class ProjectInspectionProfileManager(val project: Project,
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
+
+  private val initialLoadSchemesFuture: CompletableFuture<*>
 
   private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
     override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
@@ -109,6 +112,14 @@ class ProjectInspectionProfileManager(val project: Project,
       }
     }, isUseOldFileNameSanitize = true)
 
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode) {
+      initialLoadSchemesFuture = CompletableFuture.completedFuture(null)
+    }
+    else {
+      initialLoadSchemesFuture = CompletableFuture.runAsync({ schemeManager.loadSchemes() }, { app.executeOnPooledThread(it) })
+    }
+
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {
       override fun projectClosed(project: Project) {
         val cleanupInspectionProfilesRunnable = {
@@ -117,7 +128,6 @@ class ProjectInspectionProfileManager(val project: Project,
           fireProfilesShutdown()
         }
 
-        val app = ApplicationManager.getApplication()
         if (app.isUnitTestMode || app.isHeadlessEnvironment) {
           cleanupInspectionProfilesRunnable.invoke()
         }
@@ -144,25 +154,18 @@ class ProjectInspectionProfileManager(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstanceImpl(project).apply {
-        val inspectionProfile = currentProfile
-        val app = ApplicationManager.getApplication()
-        val initInspectionProfilesRunnable = {
-          schemeManager.loadSchemes()
-          inspectionProfile.initInspectionTools(project)
+        initialLoadSchemesFuture.thenAccept {
+          currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
-        }
 
-        if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-          initInspectionProfilesRunnable.invoke()
-          if (app.isDispatchThread) {
+          val app = ApplicationManager.getApplication()
+          if (app.isUnitTestMode && app.isDispatchThread) {
             // do not restart daemon in the middle of the test
             //noinspection TestOnlyProblems
             UIUtil.dispatchAllInvocationEvents()
           }
         }
-        else {
-          app.executeOnPooledThread(initInspectionProfilesRunnable)
-        }
+
         scopeListener = NamedScopesHolder.ScopeListener {
           for (profile in schemeManager.allSchemes) {
             profile.scopesChanged()

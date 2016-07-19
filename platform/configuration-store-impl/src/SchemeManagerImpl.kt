@@ -55,6 +55,7 @@ import java.io.OutputStream
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
@@ -66,6 +67,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val presentableName: String? = null,
                                                         private val isUseOldFileNameSanitize: Boolean = false,
                                                         private val messageBus: MessageBus? = null) : SchemeManager<T>(), SafeWriteRequestor {
+  private val isLoadingSchemes = AtomicBoolean()
+
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
 
   private val schemes: ConcurrentList<T>
@@ -272,47 +275,56 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   override fun loadSchemes(): Collection<T> {
-    val oldSchemes = schemes
-    val schemes = oldSchemes.toMutableList()
-    val newSchemesOffset = schemes.size
-    if (provider != null && provider.enabled) {
-      provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
-        catchAndLog(name) {
-          val scheme = loadScheme(name, input, schemes)
-          if (readOnly && scheme != null) {
-            readOnlyExternalizableSchemes.put(scheme.name, scheme)
-          }
-        }
-        true
-      }
-    }
-    else {
-      ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
-        for (file in it) {
-          if (file.isDirectory()) {
-            continue
-          }
-
-          catchAndLog(file.fileName.toString()) { filename ->
-            file.inputStream().use { loadScheme(filename, it, schemes) }
-          }
-        }
-      }
+    if (!isLoadingSchemes.compareAndSet(false, true)) {
+      throw IllegalStateException("loadSchemes is already called")
     }
 
-    replaceSchemeList(oldSchemes, schemes)
+    try {
+      val oldSchemes = schemes
+      val schemes = oldSchemes.toMutableList()
+      val newSchemesOffset = schemes.size
+      if (provider != null && provider.enabled) {
+        provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
+          catchAndLog(name) {
+            val scheme = loadScheme(name, input, schemes)
+            if (readOnly && scheme != null) {
+              readOnlyExternalizableSchemes.put(scheme.name, scheme)
+            }
+          }
+          true
+        }
+      }
+      else {
+        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
+          for (file in it) {
+            if (file.isDirectory()) {
+              continue
+            }
 
-    @Suppress("UNCHECKED_CAST")
-    for (i in newSchemesOffset..schemes.size - 1) {
-      val scheme = schemes.get(i) as MUTABLE_SCHEME
-      processor.initScheme(scheme)
+            catchAndLog(file.fileName.toString()) { filename ->
+              file.inputStream().use { loadScheme(filename, it, schemes) }
+            }
+          }
+        }
+      }
+
+      replaceSchemeList(oldSchemes, schemes)
+
       @Suppress("UNCHECKED_CAST")
-      processPendingCurrentSchemeName(scheme)
+      for (i in newSchemesOffset..schemes.size - 1) {
+        val scheme = schemes.get(i) as MUTABLE_SCHEME
+        processor.initScheme(scheme)
+        @Suppress("UNCHECKED_CAST")
+        processPendingCurrentSchemeName(scheme)
+      }
+
+      messageBus?.let { it.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker()) }
+
+      return schemes.subList(newSchemesOffset, schemes.size)
     }
-
-    messageBus?.let { it.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker()) }
-
-    return schemes.subList(newSchemesOffset, schemes.size)
+    finally {
+      isLoadingSchemes.set(false)
+    }
   }
 
   private fun replaceSchemeList(oldList: ConcurrentList<T>, newList: List<T>) {
@@ -505,6 +517,10 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   fun save(errors: MutableList<Throwable>) {
+    if (isLoadingSchemes.get()) {
+      LOG.warn("Skip save - schemes are loading")
+    }
+
     var hasSchemes = false
     val nameGenerator = UniqueNameGenerator()
     val schemesToSave = SmartList<MUTABLE_SCHEME>()
@@ -885,6 +901,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun setCurrentSchemeName(schemeName: String?, notify: Boolean) {
     currentPendingSchemeName = schemeName
+
     val scheme = if (schemeName == null) null else findSchemeByName(schemeName)
     // don't set current scheme if no scheme by name - pending resolution (see currentSchemeName field comment)
     if (scheme != null || schemeName == null) {
