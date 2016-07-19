@@ -48,10 +48,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlUndefinedElementFixProvider;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
@@ -519,7 +516,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     final PsiFile containingFile = tag.getContainingFile();
     final XmlExtension extension = containingFile instanceof XmlFile ?
                                    XmlExtension.getExtension(containingFile) :
-                                   XmlExtension.DEFAULT_EXTENSION;
+                                   DefaultXmlExtension.DEFAULT_EXTENSION;
     for (XmlAttribute tagAttribute : attributes) {
       ProgressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
