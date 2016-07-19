@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
@@ -161,6 +162,14 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
             }
             catch (ConfigurationException exception) {
               LOG.error("Error adding created virtual env " + exception.getMessage());
+            }
+            if (associateWithProject) {
+              SdkAdditionalData additionalData = createdSdk.getSdkAdditionalData();
+              if (additionalData == null) {
+                additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(createdSdk.getHomePath()));
+                ((ProjectJdkImpl)createdSdk).setSdkAdditionalData(additionalData);
+              }
+            ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
             }
           }
         });
