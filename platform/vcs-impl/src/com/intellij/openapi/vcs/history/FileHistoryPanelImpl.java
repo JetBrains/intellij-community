@@ -82,11 +82,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.event.InputEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -102,7 +98,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
   @NotNull private final Project myProject;
-  private final JEditorPane myComments;
+  private final MyCommentsPane myComments;
   private final StatusText myCommentsStatus;
   private final DefaultActionGroup myPopupActions;
   private final AbstractVcs myVcs;
@@ -125,7 +121,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   };
   private JComponent myAdditionalDetails;
   private Consumer<VcsFileRevision> myListener;
-  private String myOriginalComment = "";
   private VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private volatile boolean myInRefresh;
@@ -170,11 +165,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myCommentsStatus = new StatusText() {
       @Override
       protected boolean isStatusVisible() {
-        return StringUtil.isEmpty(myOriginalComment);
+        return myComments.isEmpty();
       }
     };
     myCommentsStatus.setText("Commit message");
-    myComments = new MyCommentsPane();
+    myComments = new MyCommentsPane() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        myCommentsStatus.paint(this, g);
+      }
+    };
     myCommentsStatus.attachTo(myComments);
 
     myRevisionsOrder = new HashMap<>();
@@ -418,41 +419,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private void updateMessage() {
     List<TreeNodeOnVcsRevision> selection = getSelection();
+    myComments.update(selection);
     if (selection.isEmpty()) {
-      myComments.setText("");
-      myOriginalComment = "";
       return;
-    }
-    boolean addRevisionInfo = selection.size() > 1;
-    StringBuilder original = new StringBuilder();
-    StringBuilder html = new StringBuilder();
-    for (TreeNodeOnVcsRevision revision : selection) {
-      String message = revision.getCommitMessage();
-      if (StringUtil.isEmpty(message)) continue;
-      if (original.length() > 0) {
-        original.append("\n\n");
-        html.append("<br/><br/>");
-      }
-      if (addRevisionInfo) {
-        String revisionInfo = getPresentableText(revision.getRevision(), false);
-        html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
-          .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
-        original.append(revisionInfo).append("\n");
-      }
-      original.append(message);
-      html.append(getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)));
-    }
-    myOriginalComment = original.toString();
-    if (StringUtil.isEmpty(myOriginalComment)) {
-      myComments.setText("");
-    }
-    else {
-      myComments.setText("<html><head>" +
-                         UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
-                         "</head><body>" +
-                         html.toString() +
-                         "</body></html>");
-      myComments.setCaretPosition(0);
     }
     if (myListener != null) {
       myListener.consume(selection.get(0).getRevision());
@@ -876,7 +845,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static class AuthorCellRenderer extends ColoredTableCellRenderer {
     private String myTooltipText;
 
-    /** @noinspection MethodNamesDifferingOnlyByCase*/
+    /**
+     * @noinspection MethodNamesDifferingOnlyByCase
+     */
     public void setTooltipText(final String text) {
       myTooltipText = text;
     }
@@ -1711,14 +1682,53 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private class MyCommentsPane extends HtmlPanel implements DataProvider, CopyProvider {
+    private String myOriginalComment = "";
+
     public MyCommentsPane() {
       setPreferredSize(new Dimension(150, 100));
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      myCommentsStatus.paint(this, g);
+    public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
+      if (selection.isEmpty()) {
+        setText("");
+        myOriginalComment = "";
+        return;
+      }
+      boolean addRevisionInfo = selection.size() > 1;
+      StringBuilder original = new StringBuilder();
+      StringBuilder html = new StringBuilder();
+      for (TreeNodeOnVcsRevision revision : selection) {
+        String message = revision.getCommitMessage();
+        if (StringUtil.isEmpty(message)) continue;
+        if (original.length() > 0) {
+          original.append("\n\n");
+          html.append("<br/><br/>");
+        }
+        if (addRevisionInfo) {
+          String revisionInfo = getPresentableText(revision.getRevision(), false);
+          html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
+            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
+          original.append(revisionInfo).append("\n");
+        }
+        original.append(message);
+        html.append(getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)));
+      }
+      myOriginalComment = original.toString();
+      if (StringUtil.isEmpty(myOriginalComment)) {
+        setText("");
+      }
+      else {
+        setText("<html><head>" +
+                UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
+                "</head><body>" +
+                html.toString() +
+                "</body></html>");
+        setCaretPosition(0);
+      }
+    }
+
+    public boolean isEmpty() {
+      return StringUtil.isEmpty(myOriginalComment);
     }
 
     @Override
