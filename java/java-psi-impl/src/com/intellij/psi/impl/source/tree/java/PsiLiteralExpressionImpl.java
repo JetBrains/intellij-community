@@ -24,6 +24,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 
 public class PsiLiteralExpressionImpl
-  extends StubBasedPsiElementBase<PsiLiteralStub>
+  extends JavaStubPsiElement<PsiLiteralStub>
        implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
   @NonNls private static final String QUOT = "&quot;";
 
