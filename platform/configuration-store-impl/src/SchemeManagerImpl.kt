@@ -71,7 +71,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val schemes: ConcurrentList<T>
     get() = schemesRef.get()
 
-  private val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>(ContainerUtil.identityStrategy())
+  private val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
 
   /**
    * Schemes can be lazy loaded, so, client should be able to set current scheme by name, not only by instance.
@@ -278,7 +278,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
-          val scheme = loadScheme(name, input, true)
+          val scheme = loadScheme(name, input, schemes)
           if (readOnly && scheme != null) {
             readOnlyExternalizableSchemes.put(scheme.name, scheme)
           }
@@ -352,11 +352,6 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private fun findExternalizableSchemeByFileName(fileName: String) = schemes.firstOrNull { fileName == "${it.fileName}$schemeExtension" } as MUTABLE_SCHEME?
 
   private fun isOverwriteOnLoad(existingScheme: T): Boolean {
-    if (!processor.isExternalizable(existingScheme) || readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
-      // so, bundled scheme is shadowed
-      return true
-    }
-
     val info = schemeToInfo.get(existingScheme)
     // scheme from file with old extension, so, we must ignore it
     return info != null && schemeExtension != info.fileExtension
@@ -391,13 +386,18 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       schemes.firstOrNull({ it.name == schemeName})?.let { existingScheme ->
-        if (isOverwriteOnLoad(existingScheme)) {
+        if (readOnlyExternalizableSchemes.get(existingScheme.name) === existingScheme) {
+          // so, bundled scheme is shadowed
+          removeFirstScheme({ it === existingScheme }, schemes, scheduleDelete = false)
+          return true
+        }
+        else if (processor.isExternalizable(existingScheme) && isOverwriteOnLoad(existingScheme)) {
           removeFirstScheme({ it === existingScheme }, schemes)
         }
         else {
           if (schemeExtension != extension && schemeToInfo.get(existingScheme as Scheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
             // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
-            filesToDelete.add(fileName.toString())
+            filesToDelete.add(fileName)
           }
           else {
             // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
@@ -908,7 +908,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     removeFirstScheme({ it == scheme }, schemes)
   }
 
-  private fun removeFirstScheme(condition: (T) -> Boolean, schemes: MutableList<T>): T? {
+  private fun removeFirstScheme(condition: (T) -> Boolean, schemes: MutableList<T>, scheduleDelete: Boolean = true): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {
       if (!condition(scheme)) {
@@ -921,7 +921,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       iterator.remove()
 
-      if (processor.isExternalizable(scheme)) {
+      if (scheduleDelete && processor.isExternalizable(scheme)) {
         schemeToInfo.remove(scheme)?.scheduleDelete()
       }
       return scheme
