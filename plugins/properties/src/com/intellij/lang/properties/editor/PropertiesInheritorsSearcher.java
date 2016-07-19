@@ -41,14 +41,14 @@ public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, 
   @Override
   public void processQuery(@NotNull DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull Processor<PsiElement> consumer) {
     final PsiElement element = queryParameters.getElement();
-    if (!(element instanceof Property) || !(queryParameters.getScope() instanceof GlobalSearchScope)) {
+    Property prop = ReadAction.compute(() -> GotoPropertyParentDeclarationHandler.findProperty(element));
+    if (prop == null || !(queryParameters.getScope() instanceof GlobalSearchScope)) {
       return;
     }
     ReadAction.run(() -> {
-      final Property property = (Property)element;
-      final String key = property.getKey();
-      if (!property.isValid() || key == null) return;
-      final PropertiesFile currentFile = PropertiesImplUtil.getPropertiesFile(property.getContainingFile());
+      final String key = prop.getKey();
+      if (!prop.isValid() || key == null) return;
+      final PropertiesFile currentFile = PropertiesImplUtil.getPropertiesFile(prop.getContainingFile());
       LOG.assertTrue(currentFile != null);
       final GlobalSearchScope scope = (GlobalSearchScope)queryParameters.getScope();
       currentFile.getResourceBundle()

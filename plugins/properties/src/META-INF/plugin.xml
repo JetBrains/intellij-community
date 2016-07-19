@@ -115,6 +115,7 @@
     <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
 
     <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
+    <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
   </extensions>
 
   <project-components>
