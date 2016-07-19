@@ -48,6 +48,7 @@ class UpdateChannel(node: Element) {
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
   val licensing: String = node.getAttributeValue("licensing", LICENSING_PRODUCTION)
   val homePageUrl: String? = node.getAttributeValue("url")
+  val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   val builds: List<BuildInfo> = node.getChildren("build").map { BuildInfo(it) }
 
   override fun toString() = id
