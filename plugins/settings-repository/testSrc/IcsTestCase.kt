@@ -21,10 +21,10 @@ import org.eclipse.jgit.lib.Repository
 import org.jetbrains.jgit.dirCache.AddLoadedFile
 import org.jetbrains.jgit.dirCache.edit
 import org.jetbrains.settingsRepository.IcsManager
+import org.jetbrains.settingsRepository.git.createGitRepository
 import org.junit.Rule
 import java.nio.file.FileSystem
 import java.nio.file.Path
-import org.jetbrains.settingsRepository.git.createRepository as createGitRepository
 
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
