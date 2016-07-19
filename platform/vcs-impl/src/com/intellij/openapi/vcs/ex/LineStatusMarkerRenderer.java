@@ -180,6 +180,8 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
           paintRect(g, getGutterColor(innerRange, editor), null, x, start, endX, end);
         }
 
+        paintRect(g, null, borderColor, x, y, endX, endY);
+
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() != Range.DELETED) continue;
 
@@ -187,8 +189,6 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
 
           paintTriangle(g, getGutterColor(innerRange, editor), borderColor, x, endX, start);
         }
-
-        paintRect(g, null, borderColor, x, y, endX, endY);
       }
     }
   }

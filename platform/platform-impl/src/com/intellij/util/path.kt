@@ -83,7 +83,7 @@ val Path.parentSystemIndependentPath: String
 
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
-fun Path.readText() = readBytes().toString(Charsets.UTF_8)
+fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
 fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
 
@@ -105,17 +105,16 @@ fun Path.write(data: String): Path {
 
 fun Path.size() = Files.size(this)
 
-fun Path.sizeOrNull(): Long {
-  val attributes: BasicFileAttributes
+fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   try {
-    attributes = Files.readAttributes(this, BasicFileAttributes::class.java)
+    return Files.readAttributes(this, BasicFileAttributes::class.java)
   }
-  catch (ignored: IOException) {
-    return -1
+  catch (ignored: NoSuchFileException) {
+    return null
   }
-
-  return attributes.size()
 }
+
+fun Path.sizeOrNull() = basicAttributesIfExists()?.size() ?: -1
 
 fun Path.isHidden() = Files.isHidden(this)
 
@@ -154,7 +153,7 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    return Files.newDirectoryStream(this, { filter.invoke(it) }).use(task)
+    return Files.newDirectoryStream(this, filter).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }

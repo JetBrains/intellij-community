@@ -809,7 +809,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement getOriginalElement() {
-    return this;
+    return getOriginalFile();
   }
 
   @NotNull

@@ -144,8 +144,4 @@ class NewArrayInstanceEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.initialize.array"));
     }
   }
-
-  public Modifier getModifier() {
-    return null;
-  }
 }

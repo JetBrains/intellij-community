@@ -204,7 +204,7 @@ public class JavadocHighlightUtil {
   private static boolean isValidSeeRef(PsiElement e) {
     if (SEE_TAG_REFS.contains(e.getNode().getElementType())) return true;
 
-    String text = e.getText();
+    String text = e.getText().trim();
     if (StringUtil.isQuotedString(text) && text.charAt(0) == '"') return true;
 
     if (text.toLowerCase(Locale.US).startsWith("<a href=")) return true;

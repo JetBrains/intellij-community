@@ -278,11 +278,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
-          input.use {
-            val scheme = loadScheme(name, it, schemes)
-            if (readOnly && scheme != null) {
-              readOnlyExternalizableSchemes.put(scheme.name, scheme)
-            }
+          val scheme = loadScheme(name, input, true)
+          if (readOnly && scheme != null) {
+            readOnlyExternalizableSchemes.put(scheme.name, scheme)
           }
         }
         true

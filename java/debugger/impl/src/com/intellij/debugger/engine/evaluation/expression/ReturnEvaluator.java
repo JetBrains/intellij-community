@@ -37,11 +37,6 @@ public class ReturnEvaluator implements Evaluator {
     throw new ReturnException(returnValue);
   }
 
-  @Override
-  public Modifier getModifier() {
-    return null;
-  }
-
   public static class ReturnException extends EvaluateException {
     private final Object myReturnValue;
 

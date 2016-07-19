@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine.evaluation.expression;
+package com.intellij.openapi.roots;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.sun.jdi.Value;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Eugene Zhuravlev
-*         Date: Feb 9, 2010
-*/
-public class IdentityEvaluator implements Evaluator {
-  private final Value myValue;
-
-  public IdentityEvaluator(Value value) {
-    myValue = value;
-  }
-
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    return myValue;
+public class ProjectRootTestSourcesFilter extends TestSourcesFilter {
+  @Override
+  public boolean isTestSource(@NotNull VirtualFile file, @NotNull Project project) {
+    return ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file);
   }
 }

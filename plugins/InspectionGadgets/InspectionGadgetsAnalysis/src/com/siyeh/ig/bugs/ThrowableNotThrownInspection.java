@@ -27,20 +27,38 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection {
+public class ThrowableNotThrownInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "throwable.result.of.method.call.ignored.display.name");
+    return InspectionGadgetsBundle.message("throwable.not.thrown.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "throwable.result.of.method.call.ignored.problem.descriptor");
+    final PsiExpression expression = (PsiExpression)infos[0];
+    if (expression instanceof PsiMethodCallExpression) {
+      return InspectionGadgetsBundle.message("throwable.result.of.method.call.ignored.problem.descriptor");
+    }
+    final String type =
+      TypeUtils.expressionHasTypeOrSubtype(expression,
+                                           CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION,
+                                           CommonClassNames.JAVA_LANG_EXCEPTION,
+                                           CommonClassNames.JAVA_LANG_ERROR);
+    if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(type)) {
+      return InspectionGadgetsBundle.message("throwable.instance.never.thrown.runtime.exception.problem.descriptor");
+    }
+    else if (CommonClassNames.JAVA_LANG_EXCEPTION.equals(type)) {
+      return InspectionGadgetsBundle.message("throwable.instance.never.thrown.checked.exception.problem.descriptor");
+    }
+    else if (CommonClassNames.JAVA_LANG_ERROR.equals(type)) {
+      return InspectionGadgetsBundle.message("throwable.instance.never.thrown.error.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("throwable.instance.never.thrown.problem.descriptor");
+    }
   }
 
   @Override
@@ -54,6 +72,15 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
   }
 
   private static class ThrowableResultOfMethodCallIgnoredVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!isIgnoredThrowable(expression)) {
+        return;
+      }
+      registerError(expression, expression);
+    }
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -85,7 +112,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       if ("propagate".equals(method.getName()) && "com.google.common.base.Throwables".equals(containingClass.getQualifiedName())) {
         return;
       }
-      registerMethodCallError(expression);
+      registerMethodCallError(expression, expression);
     }
   }
 
@@ -118,7 +145,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
       final PsiExpression expression1 = expressionStatement.getExpression();
       if (expression1 instanceof PsiMethodCallExpression) {
-        // void method (like printStackTrace()) provides no result, thus can't be ignored
+        // void method (like printStackTrace()) provides no result, thus is not ignored
         return !PsiType.VOID.equals(expression1.getType());
       }
       else if (expression1 instanceof PsiAssignmentExpression) {

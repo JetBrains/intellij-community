@@ -70,7 +70,7 @@ class IcsManager(dir: Path) {
     }
   }
 
-  val settingsFile = dir.resolve("config.json")
+  val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
@@ -190,10 +190,10 @@ class IcsManager(dir: Path) {
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, { name, input -> processor(name, input, true) })
+        repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
-      repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
+      repositoryManager.processChildren(fullPath, filter) { name, input -> processor(name, input, false) }
     }
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {

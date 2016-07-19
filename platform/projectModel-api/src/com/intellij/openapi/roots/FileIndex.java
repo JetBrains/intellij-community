@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -78,6 +79,8 @@ public interface FileIndex {
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the test content source
    *
+   * @see TestSourcesFilter#isTestSources(VirtualFile, Project)
+   * 
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to a test source root, false otherwise.
    */

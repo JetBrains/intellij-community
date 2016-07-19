@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -50,11 +52,11 @@ public class UsageScopeGroupingRule implements UsageGroupingRule, DumbAware {
     if (virtualFile == null) {
       return null;
     }
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    Project project = element.getProject();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     boolean isInLib = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
     if (isInLib) return LIBRARY;
-    boolean isInTest = fileIndex.isInTestSourceContent(virtualFile);
-    return isInTest ? TEST : PRODUCTION;
+    return TestSourcesFilter.isTestSources(virtualFile, project) ? TEST : PRODUCTION;
   }
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
