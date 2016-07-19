@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison.iterables;
+package com.intellij.openapi.roots;
 
-import com.intellij.diff.util.Range;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-
-abstract class DiffIterableBase implements DiffIterable {
-  @NotNull
+public class ProjectRootTestSourcesFilter extends TestSourcesFilter {
   @Override
-  public Iterable<Range> iterateUnchanged() {
-    return this::unchanged;
-  }
-
-  @NotNull
-  @Override
-  public Iterable<Range> iterateChanges() {
-    return this::changes;
-  }
-
-  protected static abstract class MyIterator<T> implements Iterator<T> {
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
+  public boolean isTestSource(@NotNull VirtualFile file, @NotNull Project project) {
+    return ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file);
   }
 }

@@ -210,7 +210,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       new IdeaApplication(args);
     }
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-    writePauses = gatherStatistics ? new PausesStat("Write action") : null;
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
@@ -488,7 +487,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (gatherStatistics) {
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
-      LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+      LOG.info(ActionUtil.ActionPauses.STAT.statistics());
       //noinspection TestOnlyProblems
       LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics()
                + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
@@ -497,8 +496,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @TestOnly
+  @NotNull
   public String writeActionStatistics() {
-    return writePauses.statistics();
+    return ActionPauses.WRITE.statistics();
   }
 
   @Override
@@ -1026,18 +1026,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    boolean mustAcquire = !isReadAccessAllowed();
-
-    if (mustAcquire) {
-      assertNoPsiLock();
-      if (!myLock.tryReadLock()) return false;
-    }
-
-    try {
+    if (isReadAccessAllowed()) {
       action.run();
     }
-    finally {
-      if (mustAcquire) {
+    else {
+      assertNoPsiLock();
+      if (!myLock.tryReadLock()) return false;
+      try {
+        action.run();
+      }
+      finally {
         endRead();
       }
     }
@@ -1073,14 +1071,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private final boolean gatherStatistics;
-  private final PausesStat writePauses;
+  private static class ActionPauses {
+    private static final PausesStat WRITE = new PausesStat("Write action");
+  }
 
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      writePauses.started();
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {
@@ -1119,7 +1119,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       myWriteActionsStack.pop();
       if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
-        writePauses.finished("write action ("+clazz+")");
+        ActionPauses.WRITE.finished("write action ("+clazz+")");
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();

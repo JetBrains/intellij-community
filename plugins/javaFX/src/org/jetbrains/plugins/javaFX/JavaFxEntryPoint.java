@@ -47,18 +47,16 @@ public class JavaFxEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (ADD_JAVAFX_TO_ENTRIES) {
-      if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
-        if (method.getParameterList().getParameters().length == 1 &&
-            PsiType.VOID.equals(method.getReturnType()) &&
-            "start".equals(method.getName())) {
-          return InheritanceUtil.isInheritor(method.getContainingClass(), true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
-        }
+    if (psiElement instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)psiElement;
+      if (method.getParameterList().getParameters().length == 1 &&
+          PsiType.VOID.equals(method.getReturnType()) &&
+          "start".equals(method.getName())) {
+        return InheritanceUtil.isInheritor(method.getContainingClass(), true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
       }
-      else if (psiElement instanceof PsiClass) {
-        return InheritanceUtil.isInheritor((PsiClass)psiElement, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
-      }
+    }
+    else if (psiElement instanceof PsiClass) {
+      return InheritanceUtil.isInheritor((PsiClass)psiElement, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
     }
     return false;
   }

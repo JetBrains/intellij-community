@@ -67,9 +67,4 @@ public class TryEvaluator implements Evaluator {
     }
     return result;
   }
-
-  @Override
-  public Modifier getModifier() {
-    return null;
-  }
 }

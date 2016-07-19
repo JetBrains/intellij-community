@@ -17,6 +17,7 @@ package com.intellij.ui.paint;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -24,6 +25,8 @@ import com.intellij.util.ui.WavePainter;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Sergey.Malenkov
@@ -111,8 +114,6 @@ public enum EffectPainter implements RegionPainter<Paint> {
    * @see com.intellij.openapi.editor.markup.EffectType#WAVE_UNDERSCORE
    */
   WAVE_UNDERSCORE {
-    private final BasicStroke STROKE = new BasicStroke(.7f);
-
     /**
      * Draws a horizontal wave under a text.
      *
@@ -130,44 +131,16 @@ public enum EffectPainter implements RegionPainter<Paint> {
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (width > 0 && height > 0) {
+        if (paint == null) paint = g.getPaint();
         g = (Graphics2D)g.create(x, y, width, height);
+        g.setComposite(AlphaComposite.SrcOver);
         g.clipRect(0, 0, width, height);
-        if (paint != null) g.setPaint(paint);
-        int h = getMaxHeight(height);
-        int length = 2 * h - 2; // the spatial period of the wave
-
-        double dx = -((x % length + length) % length); // normalize
-        double upper = height - h;
-        double lower = height - 1;
-        Path2D path = new Path2D.Double();
-        path.moveTo(dx, lower);
-        if (height < 6) {
-          g.setStroke(STROKE);
-          double size = (double)length / 2;
-          while (true) {
-            path.lineTo(dx += size, upper);
-            if (dx > width) break;
-            path.lineTo(dx += size, lower);
-            if (dx > width) break;
-          }
+        BufferedImage image = WAVE_FACTORY.get(g, paint, height);
+        int length = image.getWidth(); // the spatial period of the wave
+        int dx = -((x % length + length) % length); // normalize
+        for (; dx < width; dx += length) {
+          UIUtil.drawImage(g, image, dx, 0, null);
         }
-        else {
-          double size = (double)length / 4;
-          double prev = dx - size / 2;
-          double center = (upper + lower) / 2;
-          while (true) {
-            path.quadTo(prev += size, lower, dx += size, center);
-            if (dx > width) break;
-            path.quadTo(prev += size, upper, dx += size, upper);
-            if (dx > width) break;
-            path.quadTo(prev += size, upper, dx += size, center);
-            if (dx > width) break;
-            path.quadTo(prev += size, lower, dx += size, lower);
-            if (dx > width) break;
-          }
-        }
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.draw(path);
         g.dispose();
       }
     }
@@ -219,20 +192,116 @@ public enum EffectPainter implements RegionPainter<Paint> {
     }
     if (painter == BOLD_DOTTED_UNDERSCORE) {
       int length = 2 * height; // the spatial period
-
       int dx = -((x % length + length) % length); // normalize
       if (-dx >= height) {
         dx += length;
       }
-      Integer round = height > 2 ? height : null;
-      while (dx <= width) {
-        //noinspection SuspiciousNameCombination
-        RectanglePainter.FILL.paint(g, x + dx, y, height, height, round);
-        dx += length;
+      Composite old = g.getComposite();
+      g.setComposite(AlphaComposite.SrcOver);
+      BufferedImage image = BOLD_DOTTED_FACTORY.get(g, g.getPaint(), height);
+      for (; dx < width; dx += length) {
+        if (image != null) {
+          UIUtil.drawImage(g, image, x + dx, y, null);
+        }
+        else {
+          //noinspection SuspiciousNameCombination
+          RectanglePainter.FILL.paint(g, x + dx, y, height, height, null);
+        }
       }
+      g.setComposite(old);
     }
     else {
       g.fillRect(x, y, width, height);
     }
   }
+
+  private static abstract class Factory {
+    private final ConcurrentHashMap<Long, BufferedImage> myCache = new ConcurrentHashMap<>();
+
+    abstract BufferedImage create(Graphics2D g, Paint paint, int height);
+
+    BufferedImage get(Graphics2D g, Paint paint, int height) {
+      if (paint instanceof Color) {
+        Color color = (Color)paint;
+        Long key = color.getRGB() ^ ((long)height << 32);
+        BufferedImage image = myCache.get(key);
+        boolean exists = image != null;
+        if (!exists || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
+          image = create(g, paint, height);
+          if (image != null) {
+            myCache.put(key, image);
+          }
+          else if (exists) {
+            myCache.remove(key);
+          }
+        }
+        return image;
+      }
+      return create(g, paint, height);
+    }
+  }
+
+  private static final Factory BOLD_DOTTED_FACTORY = new Factory() {
+    @Override
+    BufferedImage create(Graphics2D graphics, Paint paint, int height) {
+      if (height <= 2 && !UIUtil.isRetina(graphics)) return null;
+      //noinspection SuspiciousNameCombination
+      BufferedImage image = UIUtil.createImageForGraphics(graphics, height, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = image.createGraphics();
+      try {
+        g.setPaint(paint);
+        //noinspection SuspiciousNameCombination
+        RectanglePainter.FILL.paint(g, 0, 0, height, height, height);
+      }
+      finally {
+        g.dispose();
+      }
+      return image;
+    }
+  };
+
+  private static final BasicStroke WAVE_THIN_STROKE = new BasicStroke(.7f);
+  private static final Factory WAVE_FACTORY = new Factory() {
+    @Override
+    BufferedImage create(Graphics2D graphics, Paint paint, int height) {
+      int h = getMaxHeight(height);
+      int width = 2 * h - 2; // the spatial period of the wave
+      BufferedImage image = UIUtil.createImageForGraphics(graphics, width << 8, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = image.createGraphics();
+      try {
+        double dx = 0;
+        double upper = height - h;
+        double lower = height - 1;
+        Path2D path = new Path2D.Double();
+        path.moveTo(dx, lower);
+        if (height < 6) {
+          g.setStroke(WAVE_THIN_STROKE);
+          double size = (double)width / 2;
+          while (dx < image.getWidth()) {
+            path.lineTo(dx += size, upper);
+            path.lineTo(dx += size, lower);
+          }
+        }
+        else {
+          double size = (double)width / 4;
+          double prev = dx - size / 2;
+          double center = (upper + lower) / 2;
+          while (dx < image.getWidth()) {
+            path.quadTo(prev += size, lower, dx += size, center);
+            path.quadTo(prev += size, upper, dx += size, upper);
+            path.quadTo(prev += size, upper, dx += size, center);
+            path.quadTo(prev += size, lower, dx += size, lower);
+          }
+        }
+        path.lineTo((double)image.getWidth(), lower);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setPaint(paint);
+        g.draw(path);
+      }
+      finally {
+        g.dispose();
+      }
+      return image;
+    }
+  };
 }

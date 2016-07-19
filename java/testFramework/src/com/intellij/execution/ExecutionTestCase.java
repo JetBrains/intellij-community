@@ -69,12 +69,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     }
     myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.setUp();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.setUp());
     if (!myModuleOutputDir.exists()) {
       VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
       assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
@@ -138,12 +133,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (myCompilerTester != null) {
       myCompilerTester.tearDown();
     }
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.tearDown();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception
     //wait a little bit

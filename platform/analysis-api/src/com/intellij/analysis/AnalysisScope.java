@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
@@ -192,7 +194,7 @@ public class AnalysisScope {
     if (myFilter != null && !myFilter.contains(virtualFile)) {
       return true;
     }
-    return !myIncludeTestSource && fileIndex.isInTestSourceContent(virtualFile);
+    return !myIncludeTestSource && TestSourcesFilter.isTestSources(virtualFile, myProject);
   }
 
   @NotNull
@@ -512,7 +514,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.option.module", myModule.getName());
 
       case MODULES:
-        String modules = StringUtil.join(myModules, module -> module.getName(), ", ");
+        String modules = StringUtil.join(myModules, Module::getName, ", ");
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
@@ -588,12 +590,12 @@ public class AnalysisScope {
       if (myElement instanceof PsiDirectory) {
         final VirtualFile directory = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (index.isInSourceContent(directory)) {
-          return isTest ? index.isInTestSourceContent(directory) : !index.isInTestSourceContent(directory);
+          return isTest == TestSourcesFilter.isTestSources(directory, myProject);
         }
       } else if (myElement instanceof PsiFile) {
         final VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (file != null) {
-          return isTest ? index.isInTestSourceContent(file) : !index.isInTestSourceContent(file);
+          return isTest == TestSourcesFilter.isTestSources(file, myProject);
         }
       }
     }
@@ -726,11 +728,10 @@ public class AnalysisScope {
   public boolean isAnalyzeTestsByDefault() {
     switch (myType) {
       case DIRECTORY:
-        return ProjectRootManager.getInstance(myElement.getProject()).getFileIndex()
-          .isInTestSourceContent(((PsiDirectory)myElement).getVirtualFile());
+        return TestSourcesFilter.isTestSources(((PsiDirectory)myElement).getVirtualFile(), myElement.getProject());
       case FILE:
         final PsiFile containingFile = myElement.getContainingFile();
-        return ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex().isInTestSourceContent(containingFile.getVirtualFile());
+        return TestSourcesFilter.isTestSources(containingFile.getVirtualFile(), containingFile.getProject());
       case MODULE:
         return isTestOnly(myModule);
       case MODULES:

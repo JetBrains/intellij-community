@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.intellij.psi.search.scope;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -43,8 +42,7 @@ public class TestsScope extends NamedScope {
 
       @Override
       public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-        return file != null && index.isInTestSourceContent(file);
+        return file != null && TestSourcesFilter.isTestSources(file, project);
       }
     });
   }

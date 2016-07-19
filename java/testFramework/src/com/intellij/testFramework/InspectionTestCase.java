@@ -198,7 +198,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
       @Override
       public boolean isSelected() {
-        return false;
+        return true;
       }
 
       @Override

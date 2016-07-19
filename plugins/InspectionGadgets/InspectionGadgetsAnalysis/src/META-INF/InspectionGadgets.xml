@@ -2,6 +2,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
+
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
@@ -223,10 +225,6 @@
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ThrowableInstanceNeverThrown" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="throwable.instance.never.thrown.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ThrowableInstanceNeverThrownInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ForLoopThatDoesntUseLoopVariable" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="for.loop.not.use.loop.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -399,10 +397,10 @@
                      key="text.label.in.switch.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.TextLabelInSwitchStatementInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ThrowableResultOfMethodCallIgnored" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="throwable.result.of.method.call.ignored.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="ThrowableNotThrown" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="throwable.not.thrown.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ThrowableResultOfMethodCallIgnoredInspection"/>
+                     implementationClass="com.siyeh.ig.bugs.ThrowableNotThrownInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseOfPropertiesAsHashtable" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="properties.object.as.hashtable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"

@@ -214,7 +214,7 @@ public class PythonUnitTestUtil {
             continue;
           }
 
-          locations.add(new PsiLocation<PyFunction>(project, method));
+          locations.add(new PyPsiLocationWithFixedClass(project, method, cls));
         }
       }
     }

@@ -300,7 +300,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return myCurrentLaf;
   }
 
-  private UIManager.LookAndFeelInfo getDefaultLaf() {
+  public UIManager.LookAndFeelInfo getDefaultLaf() {
     String wizardLafName = WelcomeWizardUtil.getWizardLAF();
     if (wizardLafName != null) {
       UIManager.LookAndFeelInfo laf = findLaf(wizardLafName);

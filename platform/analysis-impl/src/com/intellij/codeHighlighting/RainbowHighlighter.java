@@ -36,15 +36,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class RainbowHighlighter {
-  private final float[] myFloats;
   @NotNull private final TextAttributesScheme myColorsScheme;
 
   public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT);
-    Color foregroundColor = attributes.getForegroundColor();
-    float[] components = foregroundColor.getRGBColorComponents(null);
-    myFloats = Color.RGBtoHSB((int)(255 * components[0]), (int)(255 * components[0]), (int)(255 * components[0]), null);
   }
 
   public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
@@ -66,13 +61,13 @@ public class RainbowHighlighter {
     if (!registryColors.isEmpty()) {
       final List<Color> colors = registryColors.stream().map((s -> ColorUtil.fromHex(s.trim()))).collect(Collectors.toList());
       if (!colors.isEmpty()) {
-        return colors.get(hash % colors.size());
+        return colors.get(Math.abs(hash) % colors.size());
       }
     }
 
     final float colors = 36.0f;
     final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
-    return Color.getHSBColor(v, 0.7f, myFloats[2] + .3f);
+    return Color.getHSBColor(v, 0.7f, .3f);
   }
 
   public HighlightInfo getInfo(@Nullable String nameKey, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author peter
  */
@@ -48,7 +51,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
           return xx<caret>
         }
     """)
-    edt { myFixture.doHighlighting() }
+    runInEdtAndWait { myFixture.doHighlighting() }
     type 'x'
     assert lookup.focused
   }
@@ -159,7 +162,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText 'a.groovy', 'class Foo extends <caret>'
     type 'Abcde'
     assert lookup.items.size() == 2
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type ' '
     myFixture.checkResult '''import foo.Abcdefg
 

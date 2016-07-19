@@ -24,6 +24,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -75,6 +76,7 @@ class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMark
                              @NotNull List<LineMarkerInfo> result,
                              @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     for (LineMarkerProvider provider : providers) {
+      ProgressManager.checkCanceled();
       provider.collectSlowLineMarkers(elements, result);
     }
   }

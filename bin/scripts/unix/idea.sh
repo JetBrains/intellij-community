@@ -55,7 +55,7 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"

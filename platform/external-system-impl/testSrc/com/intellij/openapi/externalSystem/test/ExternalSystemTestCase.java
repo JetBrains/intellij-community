@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.TestFileSystemItem;
 import gnu.trove.THashSet;
@@ -83,9 +81,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected File myTestDir;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
-  protected List<VirtualFile> myAllConfigs = new ArrayList<VirtualFile>();
+  protected List<VirtualFile> myAllConfigs = new ArrayList<>();
 
-  private List<String> myAllowedRoots = new ArrayList<String>();
+  private List<String> myAllowedRoots = new ArrayList<>();
 
   @Before
   @Override
@@ -99,7 +97,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     setUpFixtures();
     myProject = myTestFixture.getProject();
 
-    edt(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         setUpInWriteAction();
       }
@@ -114,7 +112,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       }
     }));
 
-    List<String> allowedRoots = new ArrayList<String>();
+    List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots);
     if (!allowedRoots.isEmpty()) {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
@@ -169,12 +167,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
-          CompilerTestUtil.disableExternalCompiler(myProject);
-          tearDownFixtures();
-        }
+      EdtTestUtil.runInEdtAndWait(() -> {
+        CompilerTestUtil.disableExternalCompiler(myProject);
+        tearDownFixtures();
       });
       myProject = null;
       if (!FileUtil.delete(myTestDir) && myTestDir.exists()) {
@@ -242,7 +237,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
         }.executeSilently().throwException();
       }
       else {
-        ExternalSystemTestCase.super.runTest();
+        super.runTest();
       }
     }
     catch (Exception throwable) {
@@ -442,7 +437,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
 
   private CompileScope createModulesCompileScope(final String[] moduleNames) {
-    final List<Module> modules = new ArrayList<Module>();
+    final List<Module> modules = new ArrayList<>();
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }
@@ -450,7 +445,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   private CompileScope createArtifactsScope(String[] artifactNames) {
-    List<Artifact> artifacts = new ArrayList<Artifact>();
+    List<Artifact> artifacts = new ArrayList<>();
     for (String name : artifactNames) {
       artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
     }
@@ -522,11 +517,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
-    assertEquals(new HashSet<T>(expected), new HashSet<T>(actual));
+    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<String>(new THashSet<String>(expected, FileUtil.PATH_HASHING_STRATEGY)),
-                 new SetWithToString<String>(new THashSet<String>(actual, FileUtil.PATH_HASHING_STRATEGY)));
+    assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
+                 new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
@@ -538,10 +533,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<>(actual);
     assertEquals(s, expected.length, actual.size());
 
-    java.util.List<U> actualList = new ArrayList<U>(actual);
+    java.util.List<U> actualList = new ArrayList<>(actual);
     for (int i = 0; i < expected.length; i++) {
       T expectedElement = expected[i];
       U actualElement = actualList.get(i);
@@ -555,7 +550,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected static <T> void assertDoNotContain(java.util.List<T> actual, T... expected) {
-    java.util.List<T> actualCopy = new ArrayList<T>(actual);
+    java.util.List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());
   }

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
@@ -225,7 +226,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Nullable
   public static Icon getProjectIcon(String path, boolean isDark) {
-    File file = isDark ? new File(path + "/.idea/icon_dark.png") : new File(path + "/.idea/icon.png");
+    final MyIcon icon = ourProjectIcons.get(path);
+    if (icon != null) {
+      return icon.getIcon();
+    }
+    return IconDeferrer.getInstance().defer(EmptyIcon.ICON_16,
+                                            Pair.create(path, isDark),
+                                            p -> calculateIcon(p.first, p.second));
+  }
+
+  @Nullable
+  protected static Icon calculateIcon(String path, boolean isDark) {
+    File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
     if (file.exists()) {
       final long timestamp = file.lastModified();
       MyIcon icon = ourProjectIcons.get(path);

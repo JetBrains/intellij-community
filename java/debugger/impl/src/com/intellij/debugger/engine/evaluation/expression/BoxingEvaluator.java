@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,11 +68,6 @@ public class BoxingEvaluator implements Evaluator{
       return convertToWrapper(context, (DoubleValue)result, CommonClassNames.JAVA_LANG_DOUBLE);
     }
     throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
-  }
-
-  @Nullable
-  public Modifier getModifier() {
-    return null;
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws

@@ -76,11 +76,6 @@ public class UnBoxingEvaluator implements Evaluator{
     return value;
   }
                                           
-  @Nullable
-  public Modifier getModifier() {
-    return null;
-  }
-
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     final DebugProcessImpl process = context.getDebugProcess();
