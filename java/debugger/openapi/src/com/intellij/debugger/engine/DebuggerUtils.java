@@ -40,6 +40,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -266,8 +267,12 @@ public abstract class DebuggerUtils {
   }
 
   public static boolean instanceOf(@Nullable Type subType, @NotNull String superType) {
-    if (subType == null || subType instanceof PrimitiveType || subType instanceof VoidType) {
+    if (subType == null || subType instanceof VoidType) {
       return false;
+    }
+
+    if (subType instanceof PrimitiveType) {
+      return superType.equals(subType.name());
     }
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(superType)) {
@@ -389,18 +394,16 @@ public abstract class DebuggerUtils {
   public static PsiType getType(@NotNull String className, @NotNull Project project) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(className, null);
       }
-      if(project.isDefault()) {
+      if (project.isDefault()) {
         return null;
       }
-      final PsiClass aClass =
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+      PsiClass aClass = findClass(className, project, GlobalSearchScope.allScope(project));
       if (aClass != null) {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(aClass);
+        return PsiTypesUtil.getClassType(aClass);
       }
     }
     catch (IncorrectOperationException e) {
