@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lesson implements StudyItem {
-  @Expose private int myId;
+  @Expose @SerializedName("id") private int myId;
   @Transient public List<Integer> steps;
   @Transient public List<String> tags;
   @Transient boolean is_public;
