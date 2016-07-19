@@ -18,6 +18,7 @@ package com.intellij.formatting.contextConfiguration;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +29,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +47,8 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.Cod
 
 public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
-  
+  private static final String ID = "configure.code.style.on.selected.fragment";
+
   @Nls
   @NotNull
   @Override
@@ -78,6 +79,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    UsageTrigger.trigger(ID);
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
