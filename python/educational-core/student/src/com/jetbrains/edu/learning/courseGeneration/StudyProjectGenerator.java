@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,7 +28,10 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -116,20 +118,17 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
-      @Override
-      public Course compute() throws RuntimeException {
-        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-        return execCancelable(() -> {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+      return execCancelable(() -> {
 
-          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-          if (course != null) {
-            flushCourse(project, course);
-            course.initCourse(false);
-          }
-          return course;
-        });
-      }
+        final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+        if (course != null) {
+          flushCourse(project, course);
+          course.initCourse(false);
+        }
+        return course;
+      });
     }, "Creating Course", true, project);
   }
 
@@ -287,7 +286,6 @@ public class StudyProjectGenerator {
 
   public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
     final Gson gson = new GsonBuilder().setPrettyPrinting().
-      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
       excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);

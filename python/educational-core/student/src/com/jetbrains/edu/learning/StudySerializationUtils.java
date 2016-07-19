@@ -423,12 +423,10 @@ public class StudySerializationUtils {
         final int length = src.getLength();
         final int start = src.getOffset();
         final String possibleAnswer = src.getPossibleAnswer();
-        int line = -1;
 
         final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         final JsonObject answerPlaceholder = new JsonObject();
-        answerPlaceholder.addProperty(LINE, line);
-        answerPlaceholder.addProperty(START, start);
+        answerPlaceholder.addProperty(OFFSET, start);
         answerPlaceholder.addProperty(LENGTH, length);
         answerPlaceholder.addProperty(POSSIBLE_ANSWER, possibleAnswer);
 
