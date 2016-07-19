@@ -834,7 +834,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         exclude(name: "src/*.jar")
       }
 
-      jar("adt-common.jar") {
+      jar("android-common.jar") {
         module("android-common")
       }
       jar("adt-ui.jar") {
