@@ -20,7 +20,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -31,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This must be the last test.

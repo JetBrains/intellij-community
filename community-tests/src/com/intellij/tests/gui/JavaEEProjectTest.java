@@ -16,11 +16,16 @@
 package com.intellij.tests.gui;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.tests.gui.fixtures.ProjectViewFixture;
 import com.intellij.tests.gui.fixtures.ToolWindowFixture;
 import com.intellij.tests.gui.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.tests.gui.framework.*;
+import org.fest.swing.timing.Condition;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -30,7 +35,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.intellij.tests.gui.framework.GuiTests.LONG_TIMEOUT;
 import static com.intellij.tests.gui.framework.GuiTests.getSystemJdk;
+import static org.fest.swing.timing.Pause.pause;
 
 
 /**
@@ -73,6 +80,9 @@ public class JavaEEProjectTest extends GuiTestCase {
 
     paneFixture.selectByPath(projectName, "src", "META-INF", "persistence.xml");
     ToolWindowFixture.showToolwindowStripes(myRobot);
+
+    //prevent from ProjectLeak (if the project is closed during the indexing
+    DumbService.getInstance(myProjectFrame.getProject()).waitForSmartMode();
 
     //final JToggleButtonFixture persistence = (new JToggleButtonFinder("Persistence")).withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(myRobot);
     //persistence.click();

@@ -23,6 +23,7 @@ package com.intellij.tests.gui.framework;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -125,7 +126,12 @@ public abstract class GuiTestCase {
   @After
   public void tearDown() throws InvocationTargetException, InterruptedException {
     if (myProjectFrame != null) {
-      myProjectFrame.waitForBackgroundTasksToFinish();
+      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(new Runnable() {
+        @Override
+        public void run() {
+          myProjectFrame.waitForBackgroundTasksToFinish();
+        }
+      });
     }
     if (myRobot != null) {
       myRobot.cleanUpWithoutDisposingWindows();

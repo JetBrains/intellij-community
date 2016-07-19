@@ -27,6 +27,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.FileContentQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -255,7 +257,6 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
 
-
   /**
    * Finds the Run button in the IDE interface.
    *
@@ -482,14 +483,15 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
     pause(new Condition("Background tasks to finish") {
-      @Override
-      public boolean test() {
-        ProgressManager progressManager = ProgressManager.getInstance();
-        return !progressManager.hasModalProgressIndicator() &&
-               !progressManager.hasProgressIndicator() &&
-               !progressManager.hasUnsafeProgressIndicator();
-      }
-    }, LONG_TIMEOUT);
+            @Override
+            public boolean test() {
+              ProgressManager progressManager = ProgressManager.getInstance();
+              return !progressManager.hasModalProgressIndicator() &&
+                     !progressManager.hasProgressIndicator() &&
+                     !progressManager.hasUnsafeProgressIndicator();
+            }
+          }
+      , LONG_TIMEOUT);
     robot().waitForIdle();
     return this;
   }
@@ -670,7 +672,6 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   public MessagesFixture findMessageDialog(@NotNull String title) {
     return MessagesFixture.findByTitle(robot(), target(), title);
   }
-
 
 
   @NotNull

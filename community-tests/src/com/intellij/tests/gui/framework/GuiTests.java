@@ -295,13 +295,13 @@ public final class GuiTests {
   }
 
   private static void acceptAgreement(Robot robot) {
-    final String dialogName = ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement";
+    final String policyAgreement = "Privacy Policy Agreement";
     try {
       final DialogFixture
         privacyDialogFixture = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
         @Override
         protected boolean isMatching(@NotNull JDialog dialog) {
-          return dialogName.equals(dialog.getTitle()) && dialog.isShowing();
+          return policyAgreement.contains(dialog.getTitle()) && dialog.isShowing();
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
@@ -313,7 +313,7 @@ public final class GuiTests {
       }).click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      System.out.println("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
     }
   }
 
