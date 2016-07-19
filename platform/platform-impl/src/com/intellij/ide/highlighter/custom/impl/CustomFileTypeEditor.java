@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -33,6 +34,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Yura Cangea, dsl
@@ -92,19 +95,25 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       mySupportParens.setSelected(table.isHasParens());
       mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      for (String s : table.getKeywords1()) {
+      for (String s : sorted(table.getKeywords1())) {
         myKeywordModels[0].addElement(s);
       }
-      for (String s : table.getKeywords2()) {
+      for (String s : sorted(table.getKeywords2())) {
         myKeywordModels[1].addElement(s);
       }
-      for (String s : table.getKeywords3()) {
+      for (String s : sorted(table.getKeywords3())) {
         myKeywordModels[2].addElement(s);
       }
-      for (String s : table.getKeywords4()) {
+      for (String s : sorted(table.getKeywords4())) {
         myKeywordModels[3].addElement(s);
       }
     }
+  }
+
+  private static String[] sorted(Set<String> keywords) {
+    String[] strings = ArrayUtil.toStringArray(keywords);
+    Arrays.sort(strings);
+    return strings;
   }
 
   @Override
