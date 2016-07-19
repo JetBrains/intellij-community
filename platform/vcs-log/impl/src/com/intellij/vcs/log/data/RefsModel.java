@@ -66,7 +66,7 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   public Collection<VcsRef> branchesToCommit(int index) {
     Collection<VcsRef> refs = refsToCommit(index);
-    return refs.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
+    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
   }
 
   @NotNull
