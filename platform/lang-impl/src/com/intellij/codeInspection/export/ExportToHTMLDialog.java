@@ -71,7 +71,9 @@ public class ExportToHTMLDialog extends DialogWrapper{
     }
     final String text = exportToHTMLSettings.OUTPUT_DIRECTORY;
     myTargetDirectoryField.setText(text);
-    myTargetDirectoryField.setPreferredSize(new Dimension(GraphicsUtil.stringWidth(text, myTargetDirectoryField.getFont()) + 100, myTargetDirectoryField.getPreferredSize().height));
+    if (text != null) {
+      myTargetDirectoryField.setPreferredSize(new Dimension(GraphicsUtil.stringWidth(text, myTargetDirectoryField.getFont()) + 100, myTargetDirectoryField.getPreferredSize().height));
+    }
   }
 
   public void apply() {
