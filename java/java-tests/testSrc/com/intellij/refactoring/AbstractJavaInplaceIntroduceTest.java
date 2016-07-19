@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +83,7 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
   
   protected void doTestInsideInjection(final Pass<AbstractInplaceIntroducer> pass) {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(myTestRootDisposable);
+    testInjector.injectAll(getTestRootDisposable());
     doTest(pass);
   }
 

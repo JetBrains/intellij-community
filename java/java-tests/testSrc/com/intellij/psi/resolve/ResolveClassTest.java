@@ -236,7 +236,7 @@ public class ResolveClassTest extends ResolveTestCase {
   }
 
   public void testQualifiedAnonymousClass() throws Exception {
-    RecursionManager.assertOnRecursionPrevention(myTestRootDisposable);
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
 
     PsiReference ref = configure();
     VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();

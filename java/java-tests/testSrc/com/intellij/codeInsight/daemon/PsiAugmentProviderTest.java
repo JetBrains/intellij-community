@@ -39,7 +39,7 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil.registerExtension(PsiAugmentProvider.EP_NAME, new TestAugmentProvider(), myTestRootDisposable);
+    PlatformTestUtil.registerExtension(PsiAugmentProvider.EP_NAME, new TestAugmentProvider(), getTestRootDisposable());
     myFixture.addClass("package lombok;\npublic @interface val { }");
   }
 

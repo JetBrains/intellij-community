@@ -50,7 +50,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +123,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(myTestRootDisposable, filePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
   }
 
   protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {

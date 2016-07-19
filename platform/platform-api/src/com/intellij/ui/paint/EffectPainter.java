@@ -131,17 +131,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (width > 0 && height > 0) {
-        if (paint == null) paint = g.getPaint();
-        g = (Graphics2D)g.create(x, y, width, height);
-        g.setComposite(AlphaComposite.SrcOver);
-        g.clipRect(0, 0, width, height);
-        BufferedImage image = WAVE_FACTORY.get(g, paint, height);
-        int length = image.getWidth(); // the spatial period of the wave
-        int dx = -((x % length + length) % length); // normalize
-        for (; dx < width; dx += length) {
-          UIUtil.drawImage(g, image, dx, 0, null);
-        }
-        g.dispose();
+        WAVE_FACTORY.paint(g, x, y, width, height, paint);
       }
     }
   },
@@ -191,67 +181,62 @@ public enum EffectPainter implements RegionPainter<Paint> {
       height = thickness;
     }
     if (painter == BOLD_DOTTED_UNDERSCORE) {
-      int length = 2 * height; // the spatial period
-      int dx = -((x % length + length) % length); // normalize
-      if (-dx >= height) {
-        dx += length;
-      }
-      Composite old = g.getComposite();
-      g.setComposite(AlphaComposite.SrcOver);
-      BufferedImage image = BOLD_DOTTED_FACTORY.get(g, g.getPaint(), height);
-      for (; dx < width; dx += length) {
-        if (image != null) {
-          UIUtil.drawImage(g, image, x + dx, y, null);
-        }
-        else {
-          //noinspection SuspiciousNameCombination
-          RectanglePainter.FILL.paint(g, x + dx, y, height, height, null);
-        }
-      }
-      g.setComposite(old);
+      BOLD_DOTTED_FACTORY.paint(g, x, y, width, height, null);
     }
     else {
       g.fillRect(x, y, width, height);
     }
   }
 
-  private static abstract class Factory {
+  private static abstract class Factory implements RegionPainter<Paint> {
     private final ConcurrentHashMap<Long, BufferedImage> myCache = new ConcurrentHashMap<>();
 
     abstract BufferedImage create(Graphics2D g, Paint paint, int height);
 
-    BufferedImage get(Graphics2D g, Paint paint, int height) {
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      if (paint == null) paint = g.getPaint();
+      g = (Graphics2D)g.create(x, y, width, height);
+      g.setComposite(AlphaComposite.SrcOver);
+      BufferedImage image;
       if (paint instanceof Color) {
         Color color = (Color)paint;
         Long key = color.getRGB() ^ ((long)height << 32);
-        BufferedImage image = myCache.get(key);
+        image = myCache.get(key);
         boolean exists = image != null;
         if (!exists || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
           image = create(g, paint, height);
-          if (image != null) {
-            myCache.put(key, image);
-          }
-          else if (exists) {
-            myCache.remove(key);
-          }
+          myCache.put(key, image);
         }
-        return image;
       }
-      return create(g, paint, height);
+      else {
+        image = create(g, paint, height);
+      }
+      int length = image.getWidth();
+      int dx = -((x % length + length) % length); // normalize
+      for (; dx < width; dx += length) {
+        UIUtil.drawImage(g, image, dx, 0, null);
+      }
+      g.dispose();
     }
   }
 
   private static final Factory BOLD_DOTTED_FACTORY = new Factory() {
     @Override
     BufferedImage create(Graphics2D graphics, Paint paint, int height) {
-      if (height <= 2 && !UIUtil.isRetina(graphics)) return null;
+      Integer round = height <= 2 && !UIUtil.isRetina(graphics) ? null : height;
       //noinspection SuspiciousNameCombination
-      BufferedImage image = UIUtil.createImageForGraphics(graphics, height, height, BufferedImage.TYPE_INT_ARGB);
+      int width = height << 8;
+      BufferedImage image = UIUtil.createImageForGraphics(graphics, width, height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = image.createGraphics();
+      g.setPaint(paint);
       try {
-        g.setPaint(paint);
-        //noinspection SuspiciousNameCombination
-        RectanglePainter.FILL.paint(g, 0, 0, height, height, height);
+        int dx = 0;
+        while (dx < width) {
+          //noinspection SuspiciousNameCombination
+          RectanglePainter.FILL.paint(g, dx, 0, height, height, round);
+          dx += height + height;
+        }
       }
       finally {
         g.dispose();

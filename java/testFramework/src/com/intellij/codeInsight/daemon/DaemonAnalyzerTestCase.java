@@ -244,7 +244,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, getTestRootDisposable());
 
     try {
       Collection<HighlightInfo> infos = doHighlighting();
@@ -255,7 +255,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       return infos;
     }
     finally {
-      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     }
   }
 

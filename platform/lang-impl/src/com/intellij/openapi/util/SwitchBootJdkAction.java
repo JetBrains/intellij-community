@@ -90,6 +90,11 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     SwitchBootJdkDialog dialog = new SwitchBootJdkDialog();
     if (dialog.showAndGet()) {
       File selectedJdkBundleFile = dialog.getSelectedFile();
+      if (selectedJdkBundleFile == null) {
+        LOG.error("SwitchBootJdkDialog returns null selection");
+        return;
+      }
+
       FileWriter fooWriter = null;
       try {
         //noinspection IOResourceOpenedButNotSafelyClosed
@@ -199,6 +204,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
                   throw new Exception("Invalid JDK bundle!");
                 }
                 if (selectedBundle.getBitness() != JdkBundle.runtimeBitness) {
+                  //noinspection SpellCheckingInspection
                   throw new Exception("JDK arch mismatch! Your IDE's arch is " + JdkBundle.runtimeBitness);
                 }
               }
@@ -264,8 +270,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       return myComboBox;
     }
 
+    @Nullable
     public File getSelectedFile() {
-      return ((JdkBundle)myComboBox.getSelectedItem()).getLocation();
+      final JdkBundleItem item = (JdkBundleItem)myComboBox.getSelectedItem();
+      if (item == null) return null;
+
+      final JdkBundle bundle = item.getBundle();
+
+      return bundle != null ? bundle.getLocation() : null;
     }
   }
 

@@ -268,7 +268,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
   private void ensureCheckCanceledCalled(@NotNull ProgressIndicator indicator) {
     myFlag = false;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myTestRootDisposable);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     alarm.addRequest(() -> myFlag = true, 100);
     final long start = System.currentTimeMillis();
     try {

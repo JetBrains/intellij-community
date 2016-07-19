@@ -25,16 +25,16 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
-  private PsiJavaModuleReference myReference;
+  private PsiJavaModuleReferenceElement myReference;
 
   public ClsJavaModuleImpl(PsiJavaModuleStub stub) {
     super(stub);
-    myReference = new ClsJavaModuleReferenceImpl(this, stub.getName());
+    myReference = new ClsJavaModuleReferenceElementImpl(this, stub.getName());
   }
 
   @NotNull
   @Override
-  public PsiJavaModuleReference getNameElement() {
+  public PsiJavaModuleReferenceElement getNameElement() {
     return myReference;
   }
 

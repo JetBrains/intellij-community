@@ -92,7 +92,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   @NotNull
-  protected final Disposable myTestRootDisposable = new Disposable() {
+  private final Disposable myTestRootDisposable = new Disposable() {
     @Override
     public void dispose() { }
 
@@ -152,7 +152,7 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(myTestRootDisposable);
+      Disposer.dispose(getTestRootDisposable());
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
@@ -716,7 +716,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
-    Disposer.register(myTestRootDisposable, disposable);
+    Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
 

@@ -57,7 +57,7 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFilter = new FileTreeAccessFilter();
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myFilter, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myFilter, getTestRootDisposable());
   }
 
   @Override
