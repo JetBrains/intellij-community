@@ -40,7 +40,18 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
       return "\n";
     }
     if (rightRange.isEmpty()) {
-      return "";
+      int i = indexBefore + 2;
+      // Unfortunately we need to scan to the nearest non-empty line to understand
+      // whether we should add a line here 
+      while (i < contentRanges.size() && contentRanges.get(i).isEmpty()) {
+        i++;
+      }
+      if (i < contentRanges.size() && startsWithWhitespace(text, contentRanges.get(i))) {
+        return "\n";
+      }
+      else {
+        return "";
+      }
     }
     return " ";
   }
