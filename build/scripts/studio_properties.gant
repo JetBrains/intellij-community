@@ -315,6 +315,15 @@ def getProperties(String home, String buildNumber) {
     }
 
     def customWinLayout(targetDirectory) {
+      layout(targetDirectory) {
+        dir("plugins") {
+          dir("sdk-updates") {
+            dir("offline-repo") {
+              fileset(dir: "${home}/../../prebuilts/tools/windows-x86_64/offline-sdk")
+            }
+          }
+        }
+      }
       if (!aosp) {
         return
       }
@@ -324,11 +333,29 @@ def getProperties(String home, String buildNumber) {
     }
 
     def customLinLayout(targetDirectory) {
+      layout(targetDirectory) {
+        dir("plugins") {
+          dir("sdk-updates") {
+            dir("offline-repo") {
+              fileset(dir: "${home}/../../prebuilts/tools/linux-x86_64/offline-sdk")
+            }
+          }
+        }
+      }
       ant.copy(file: "$home/$androidRoot/android/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
       ant.copy(file: "$home/$androidRoot/android/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
     }
 
     def customMacLayout(targetDirectory) {
+      layout(targetDirectory) {
+        dir("plugins") {
+          dir("sdk-updates") {
+            dir("offline-repo") {
+              fileset(dir: "${home}/../../prebuilts/tools/darwin-x86_64/offline-sdk")
+            }
+          }
+        }
+      }
       ant.copy(file: "$home/$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
     }
 
