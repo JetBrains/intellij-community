@@ -28,10 +28,13 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.WindowWatcher;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.wm.ToolWindowType.WINDOWED;
 
 /**
  * Requests focus for the specified tool window.
@@ -153,6 +156,13 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
           return;
         }
         if (c.isShowing()) {
+          if (WINDOWED == myToolWindow.getType()) {
+            Window window = UIUtil.getWindow(c);
+            if (window instanceof Frame) {
+              Frame frame = (Frame)window;
+              frame.setState(Frame.NORMAL);
+            }
+          }
           final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
           if (owner != null && owner == c) {
             myManager.getFocusManager().requestFocus(new FocusCommand() {
