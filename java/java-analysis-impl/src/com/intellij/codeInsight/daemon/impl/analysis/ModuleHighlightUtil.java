@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MoveFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -75,21 +76,18 @@ public class ModuleHighlightUtil {
 
   @Nullable
   static HighlightInfo checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null) {
       Project project = file.getProject();
-      Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(vFile);
-      if (module != null) {
-        Collection<VirtualFile> others =
-          FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(Collections.singleton(module), project));
-        if (others.size() > 1) {
-          String message = JavaErrorMessages.message("module.file.duplicate");
-          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
-          others.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
-            duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorMessages.message("module.open.duplicate.text")))
-          );
-          return info;
-        }
+      Collection<VirtualFile> others =
+        FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, new ModulesScope(Collections.singleton(module), project));
+      if (others.size() > 1) {
+        String message = JavaErrorMessages.message("module.file.duplicate");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).description(message).create();
+        others.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
+          duplicate -> QuickFixAction.registerQuickFixAction(info, new GoToSymbolFix(duplicate, JavaErrorMessages.message("module.open.duplicate.text")))
+        );
+        return info;
       }
     }
 
