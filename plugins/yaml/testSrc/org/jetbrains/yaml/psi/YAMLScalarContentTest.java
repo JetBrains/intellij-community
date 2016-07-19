@@ -57,6 +57,14 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   public void testFoldedStyle4() {
     doTest();
   }
+  
+  public void testFoldedStyle5() {
+    doTest();
+  }
+
+  public void testFoldedStyle6() {
+    doTest();
+  }
 
   public void testSingleQuote1() {
     doTest();
