@@ -181,7 +181,10 @@ public enum EffectPainter implements RegionPainter<Paint> {
       height = thickness;
     }
     if (painter == BOLD_DOTTED_UNDERSCORE) {
-      Cached.BOLD_DOTTED_UNDERSCORE.paint(g, x, y, width, height, null);
+      int dx = (x % height + height) % height;
+      int w = width + dx;
+      int dw = (w % height + height) % height;
+      Cached.BOLD_DOTTED_UNDERSCORE.paint(g, x - dx, y, dw == 0 ? w : w - dw + height, height, null);
     }
     else {
       g.fillRect(x, y, width, height);
