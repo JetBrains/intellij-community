@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -151,7 +150,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       restart();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(UpdateChecker.class).warn(e);
       if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
                                       IdeBundle.message("updates.error.connection.title"),
@@ -205,7 +204,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
-          message = message.substring(0, idx) + 
+          message = message.substring(0, idx) +
                     "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }
