@@ -634,12 +634,12 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? Conditions.<Component>alwaysTrue() : new Condition<Component>() {
+      visibleOnly ? new Condition<Component>() {
         @Override
         public boolean value(Component c) {
           return c.isVisible();
         }
-      }).traverse() : JBIterable.of(component);
+      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
