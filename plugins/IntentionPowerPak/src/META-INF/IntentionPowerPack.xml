@@ -182,12 +182,6 @@
     -->
 
     <intentionAction>
-      <className>com.siyeh.ipp.braces.AddArrayCreationExpressionIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>

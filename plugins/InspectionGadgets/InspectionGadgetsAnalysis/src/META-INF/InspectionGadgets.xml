@@ -2568,6 +2568,10 @@
                      key="expand.to.normal.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.annotation.ExpandToNormalAnnotationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="AddArrayCreationExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="add.array.creation.expression.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.AddArrayCreationExpressionInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
