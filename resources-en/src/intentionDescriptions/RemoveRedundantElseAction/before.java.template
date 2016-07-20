@@ -1,0 +1,10 @@
+public class X {
+  void f(int i) {
+    if (i==0) {
+      return;
+    }
+    <spot>else</spot> {
+      int j = 0;
+    }
+  }
+}
