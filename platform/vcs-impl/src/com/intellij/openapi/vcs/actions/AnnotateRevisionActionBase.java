@@ -3,9 +3,13 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -21,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AnnotateRevisionActionBase extends AnAction {
   public AnnotateRevisionActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
@@ -92,6 +99,9 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
 
     VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).lock();
 
+    Semaphore semaphore = new Semaphore(0);
+    AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
+
     ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -101,6 +111,9 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
 
           fileAnnotationRef.set(fileAnnotation);
           newLineRef.set(newLine);
+
+          shouldOpenEditorInSync.set(false);
+          semaphore.release();
         }
         catch (VcsException e) {
           exceptionRef.set(e);
@@ -122,6 +135,22 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
         AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get());
       }
     });
+
+    try {
+      semaphore.tryAcquire(ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, TimeUnit.MILLISECONDS);
+
+      // We want to let Backgroundable task open editor if it was fast enough.
+      // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
+      if (shouldOpenEditorInSync.get()) {
+        CharSequence content = LoadTextUtil.loadText(file);
+        int newLine = translateLine(oldContent, content, oldLine);
+
+        OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(vcs.getProject(), file, newLine, 0);
+        FileEditorManager.getInstance(vcs.getProject()).openTextEditor(openFileDescriptor, true);
+      }
+    }
+    catch (InterruptedException ignore) {
+    }
   }
 
   private static int translateLine(@Nullable CharSequence oldContent, @Nullable CharSequence newContent, int line) {
