@@ -57,6 +57,19 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     doTestOneExpression();
   }
 
+  public void testVarargPosition() throws Exception {
+    myFixture.addClass("\n" +
+                       "class A {  \n" +
+                       "  <T> void foo(T... r) {}\n" +
+                       "  void bar(J i){foo(i, i, () -> {});}\n" +
+                       "}");
+    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 1; i++) {
+      myFixture.addClass("class B" + i + " { {Runnable r = () -> {};}}"); //ensure common case is used
+    }
+
+    doTestOneExpression();
+  }
+
   private void doTestOneExpression() {
     myFixture.configureByFile(getTestName(false) + ".java");
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();
