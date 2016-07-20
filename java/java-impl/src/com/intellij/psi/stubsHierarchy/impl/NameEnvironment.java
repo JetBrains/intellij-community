@@ -16,52 +16,59 @@
 package com.intellij.psi.stubsHierarchy.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.util.List;
 
 class NameEnvironment extends UserDataHolderBase {
-  public static final int OBJECT_NAME = IndexTree.hashIdentifier("Object");
-  public static final int NO_NAME = 0;
-  @QNameHash final int java_lang;
-  public final QualifiedName java_lang_Enum;
-  public final QualifiedName java_lang_annotation_Annotation;
+  static final int OBJECT_NAME = hashIdentifier("Object");
+  static final int NO_NAME = 0;
+  @QNameHash final static int java_lang = fromString("java.lang");
+  static final QualifiedName java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
+  static final QualifiedName java_lang_annotation_Annotation =
+    new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
 
-  NameEnvironment() {
-    java_lang = fromString("java.lang");
-    java_lang_Enum = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ENUM));
-    java_lang_annotation_Annotation = new QualifiedName.Interned(fromString(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
-  }
-
-  @QNameHash int fromString(String s) {
+  static @QNameHash int fromString(String s) {
     int id = 0;
-    for (int shortName : IndexTree.hashQualifiedName(s)) {
+    for (int shortName : hashQualifiedName(s)) {
       id = qualifiedName(id, shortName);
     }
     return id;
   }
 
-  /**
-   * @see SerializedUnit#writeQualifiedName(DataOutput, int[])
-   */
-  @QNameHash int readQualifiedName(DataInput in) throws IOException {
-    int id = 0;
-    int len = DataInputOutputUtil.readINT(in);
-    for (int i = 0; i < len; i++) {
-      id = qualifiedName(id, in.readInt());
+  static int hashIdentifier(@Nullable String s) {
+    if (StringUtil.isEmpty(s)) return 0;
+
+    // not using String.hashCode because this way there's less collisions for short package names like 'com'
+    int hash = 0;
+    for (int i = 0; i < s.length(); i++) {
+      hash = hash * 239 + s.charAt(i);
     }
-    return id;
+    return hash == 0 ? 1 : hash;
   }
 
-  int memberQualifiedName(@QNameHash int ownerName, @ShortName int name) {
+  static int[] hashQualifiedName(@NotNull String qName) {
+    qName = PsiNameHelper.getQualifiedClassName(qName, true);
+    if (qName.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
+
+    List<String> components = StringUtil.split(qName, ".");
+    int[] result = new int[components.size()];
+    for (int i = 0; i < components.size(); i++) {
+      result[i] = hashIdentifier(components.get(i));
+    }
+    return result;
+  }
+
+  static int memberQualifiedName(@QNameHash int ownerName, @ShortName int name) {
     return name == NO_NAME || ownerName == 0 ? 0 : qualifiedName(ownerName, name);
   }
 
-  @QNameHash int qualifiedName(@QNameHash int prefix, @ShortName int shortName) {
+  static @QNameHash int qualifiedName(@QNameHash int prefix, @ShortName int shortName) {
     int hash = prefix * 31 + shortName;
     return hash == 0 ? 1 : hash;
   }

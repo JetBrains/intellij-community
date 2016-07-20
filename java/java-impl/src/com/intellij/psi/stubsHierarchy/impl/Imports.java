@@ -49,40 +49,28 @@ class Imports {
   }
 
   private static void writeImport(@NotNull DataOutput out, IndexTree.Import anImport) throws IOException {
-    SerializedUnit.writeQualifiedName(out, anImport.myFullname);
-    boolean hasAlias = anImport.myAlias != 0;
+    out.writeInt(NameEnvironment.fromString(anImport.myQualifier));
+    boolean hasAlias = anImport.myAlias != null;
     int flags = 0;
     flags = BitUtil.set(flags, IS_STATIC, anImport.myStaticImport);
     flags = BitUtil.set(flags, IS_ON_DEMAND, anImport.myOnDemand);
     flags = BitUtil.set(flags, HAS_ALIAS, hasAlias);
     out.writeByte(flags);
+    if (anImport.myImportedName != null) {
+      out.writeInt(NameEnvironment.hashIdentifier(anImport.myImportedName));
+    }
     if (hasAlias) {
-      out.writeInt(anImport.myAlias);
+      out.writeInt(NameEnvironment.hashIdentifier(anImport.myAlias));
     }
   }
 
   private Import readImport(UnitInputStream in) throws IOException {
-    int qualifier = 0;
-    int len = DataInputOutputUtil.readINT(in);
-    for (int i = 0; i < len - 1; i++) {
-      qualifier = in.names.qualifiedName(qualifier, in.readInt());
-    }
-    int lastId = in.readInt();
+    int qualifier = in.readInt();
     int flags = in.readByte();
+    int shortName = BitUtil.isSet(flags, IS_ON_DEMAND) ? 0 : in.readInt();
     int alias = BitUtil.isSet(flags, HAS_ALIAS) ? in.readInt() : 0;
 
-    boolean onDemand = BitUtil.isSet(flags, IS_ON_DEMAND);
-    boolean isStatic = BitUtil.isSet(flags, IS_STATIC);
-
-    int shortName;
-    if (onDemand) {
-      shortName = 0;
-      qualifier = in.names.qualifiedName(qualifier, lastId);
-    } else {
-      shortName = lastId;
-    }
-
-    return obtainImport(qualifier, shortName, alias, isStatic);
+    return obtainImport(qualifier, shortName, alias, BitUtil.isSet(flags, IS_STATIC));
   }
 
   private Import obtainImport(int qualifier, int shortName, int alias, boolean isStatic) {

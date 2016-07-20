@@ -15,8 +15,6 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -43,7 +41,7 @@ import java.lang.annotation.Target;
 @interface QNameHash { }
 
 /**
- * int hash of a qualified name part, produced by {@link IndexTree#hashIdentifier(String)}
+ * int hash of a qualified name part, produced by {@link NameEnvironment#hashIdentifier(String)}
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE_USE)

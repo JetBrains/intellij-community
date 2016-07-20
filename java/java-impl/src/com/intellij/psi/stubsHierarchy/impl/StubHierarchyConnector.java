@@ -21,11 +21,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class StubHierarchyConnector {
-  private final NameEnvironment myNameEnvironment;
   private final StubResolver myResolve;
 
-  protected StubHierarchyConnector(NameEnvironment nameEnvironment, Symbols symbols) {
-    this.myNameEnvironment = nameEnvironment;
+  protected StubHierarchyConnector(Symbols symbols) {
     myResolve = new StubResolver(symbols, this);
   }
 
@@ -67,9 +65,9 @@ public class StubHierarchyConnector {
     c.setSupers(supertypes);
   }
 
-  private boolean isJavaLangObject(Symbol s) {
+  private static boolean isJavaLangObject(Symbol s) {
     return s.myShortName == NameEnvironment.OBJECT_NAME &&
            s.myOwner instanceof Symbol.PackageSymbol &&
-           ((Symbol.PackageSymbol)s.myOwner).myQualifiedName == myNameEnvironment.java_lang;
+           ((Symbol.PackageSymbol)s.myOwner).myQualifiedName == NameEnvironment.java_lang;
   }
 }

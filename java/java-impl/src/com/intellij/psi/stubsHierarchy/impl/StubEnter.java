@@ -29,7 +29,6 @@ import static com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
 import static com.intellij.psi.stubsHierarchy.impl.Symbol.PackageSymbol;
 
 public class StubEnter {
-  final NameEnvironment myNameEnvironment;
   final Imports imports = new Imports();
   private final Symbols mySymbols;
   private final StubHierarchyConnector myStubHierarchyConnector;
@@ -37,9 +36,8 @@ public class StubEnter {
   private ArrayList<ClassSymbol> uncompleted = new ArrayList<ClassSymbol>();
 
   StubEnter(Symbols symbols) {
-    myNameEnvironment = symbols.myNameEnvironment;
     mySymbols = symbols;
-    myStubHierarchyConnector = new StubHierarchyConnector(myNameEnvironment, symbols);
+    myStubHierarchyConnector = new StubHierarchyConnector(symbols);
   }
 
   PackageSymbol readPackageName(DataInput in) throws IOException {
@@ -48,7 +46,7 @@ public class StubEnter {
     int len = DataInputOutputUtil.readINT(in);
     for (int i = 0; i < len; i++) {
       int shortName = in.readInt();
-      qname = myNameEnvironment.qualifiedName(qname, shortName);
+      qname = NameEnvironment.qualifiedName(qname, shortName);
       pkg = mySymbols.enterPackage(qname, shortName, pkg);
     }
     return pkg;
@@ -75,13 +73,13 @@ public class StubEnter {
   @CompactArray(QualifiedName.class)
   Object handleSpecialSupers(int flags, @CompactArray(QualifiedName.class) Object superNames) {
     if (BitUtil.isSet(flags, IndexTree.ANNOTATION)) {
-      return myNameEnvironment.java_lang_annotation_Annotation;
+      return NameEnvironment.java_lang_annotation_Annotation;
     }
 
     if (BitUtil.isSet(flags, IndexTree.ENUM)) {
-      if (superNames == null) return myNameEnvironment.java_lang_Enum;
-      if (superNames instanceof QualifiedName) return new QualifiedName[]{(QualifiedName)superNames, myNameEnvironment.java_lang_Enum};
-      return ArrayUtil.append((QualifiedName[])superNames, myNameEnvironment.java_lang_Enum);
+      if (superNames == null) return NameEnvironment.java_lang_Enum;
+      if (superNames instanceof QualifiedName) return new QualifiedName[]{(QualifiedName)superNames, NameEnvironment.java_lang_Enum};
+      return ArrayUtil.append((QualifiedName[])superNames, NameEnvironment.java_lang_Enum);
     }
 
     return superNames;
