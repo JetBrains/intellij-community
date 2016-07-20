@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
@@ -119,6 +120,7 @@ class A {
 
       class MyInner extends Inner {}
     };
+    Runnable r = () -> { new B() {}; };
 }
 
 class B {
@@ -128,6 +130,7 @@ class B {
 """)
     assert !file.contentsLoaded
     PsiClass bClass = ((PsiJavaFile) file).classes[1]
+    assert DirectClassInheritorsSearch.search(bClass).findAll().size() == 2
     assert !file.contentsLoaded
 
     def fooMethod = bClass.methods[0]
