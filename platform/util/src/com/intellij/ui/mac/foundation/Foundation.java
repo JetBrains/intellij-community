@@ -341,6 +341,22 @@ public class Foundation {
     }
 
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
+
+    @NotNull
+    public static Map<String, String> toStringMap(ID delegate) {
+      NSDictionary dict = new NSDictionary(delegate);
+
+      NSArray keys = dict.keys();
+      Map<String, String> result = new HashMap<String, String>();
+
+      for (int i = 0; i < keys.count(); i++) {
+        String key = toStringViaUTF8(keys.at(i));
+        String val = toStringViaUTF8(dict.get(key));
+        result.put(key, val);
+      }
+
+      return result;
+    }
   }
 
   public static class NSArray {
