@@ -71,8 +71,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String USED_LEVELS = "used_levels";
   public static final String DEFAULT_PROFILE_NAME = "Default";
   @TestOnly
-  public static boolean INIT_INSPECTIONS;
-  private static Map<String, InspectionElementsMerger> ourMergers;
+  public static boolean INIT_INSPECTIONS = false;
   private final InspectionToolRegistrar myRegistrar;
   @NotNull
   private final Map<String, Element> myInspectionsSettings = new TreeMap<>();
@@ -123,17 +122,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = baseProfile;
     myDataHolder = dataHolder;
     myProfileManager = profileManager;
-  }
-
-  @NotNull
-  private static synchronized Map<String, InspectionElementsMerger> getMergers() {
-    if (ourMergers == null) {
-      ourMergers = new LinkedHashMap<>();
-      for (InspectionElementsMerger merger : Extensions.getExtensions(InspectionElementsMerger.EP_NAME)) {
-        ourMergers.put(merger.getMergedToolName(), merger);
-      }
-    }
-    return ourMergers;
   }
 
   @NotNull
@@ -339,10 +327,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private void markSettingsMerged(@NotNull String toolName, @NotNull Element element) {
     //add marker if already merged but result is now default (-> empty node)
-    final String mergedName = InspectionElementsMerger.getMergedMarkerName(toolName);
-    if (!myInspectionsSettings.containsKey(mergedName)) {
-      final InspectionElementsMerger merger = getMergers().get(toolName);
-      if (merger != null && merger.markSettingsMerged(myInspectionsSettings)) {
+    final String mergedName = InspectionElementsMergerBase.getMergedMarkerName(toolName);
+    if (!myUninstalledInspectionsSettings.containsKey(mergedName)) {
+      final InspectionElementsMergerBase merger = getMerger(toolName);
+      if (merger != null && merger.markSettingsMerged(myUninstalledInspectionsSettings)) {
         element.addContent(new Element(INSPECTION_TOOL_TAG).setAttribute(CLASS_TAG, mergedName));
       }
     }
@@ -350,8 +338,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private boolean areSettingsMerged(String toolName, Element inspectionElement) {
     //skip merged settings as they could be restored from already provided data
-    final InspectionElementsMerger merger = getMergers().get(toolName);
-    return merger != null && merger.areSettingsMerged(myInspectionsSettings, inspectionElement);
+    final InspectionElementsMergerBase merger = getMerger(toolName);
+    return merger != null && merger.areSettingsMerged(myUninstalledInspectionsSettings, inspectionElement);
   }
 
   public void collectDependentInspections(@NotNull InspectionToolWrapper toolWrapper,
@@ -634,8 +622,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       if (element != null) {
         toolsList.readExternal(element, this, dependencies);
       }
-      else if (!myInspectionsSettings.containsKey(InspectionElementsMerger.getMergedMarkerName(shortName))) {
-        final InspectionElementsMerger merger = getMergers().get(shortName);
+      else if (!myUninstalledInspectionsSettings.containsKey(InspectionElementsMergerBase.getMergedMarkerName(shortName))) {
+        final InspectionElementsMergerBase merger = getMerger(shortName);
         if (merger != null) {
           final Element merged = merger.merge(myInspectionsSettings);
           if (merged != null) {
@@ -648,6 +636,25 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       LOG.error("Can't read settings for " + toolWrapper, e);
     }
     myTools.put(shortName, toolsList);
+  }
+
+  @Nullable
+  private static InspectionElementsMergerBase getMerger(String shortName) {
+    final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(shortName);
+    if (merger instanceof InspectionElementsMergerBase) {
+      return (InspectionElementsMergerBase)merger;
+    }
+    return merger != null ? new InspectionElementsMergerBase() {
+      @Override
+      public String getMergedToolName() {
+        return merger.getMergedToolName();
+      }
+
+      @Override
+      public String[] getSourceToolNames() {
+        return merger.getSourceToolNames();
+      }
+    } : null;
   }
 
   @Nullable

@@ -103,7 +103,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
     private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
-      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
+      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS,
+      JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
     private boolean result = true;
 
@@ -127,8 +128,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         return true;
       }
 
-      // annotations
-      if (type == JavaTokenType.AT) {
+      // annotations, method refs & lambdas
+      if (type == JavaTokenType.AT || type == JavaTokenType.ARROW || type == JavaTokenType.DOUBLE_COLON) {
         return (result = false);
       }
       // anonymous classes

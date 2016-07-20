@@ -557,23 +557,23 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Nullable
-  private static PsiElement calcBasesResolveContext(PsiClass aClass,
-                                                    String className,
+  private static PsiElement calcBasesResolveContext(PsiElement scope,
+                                                    String baseClassName,
                                                     boolean isInitialClass,
                                                     final PsiElement defaultResolveContext) {
-    final PsiClassStub stub = ((PsiClassImpl)aClass).getStub();
-    if (stub == null || stub.isAnonymousInQualifiedNew()) {
-      return aClass.getParent();
+    final StubElement stub = ((StubBasedPsiElementBase<?>)scope).getStub();
+    if (stub == null || stub instanceof PsiClassStub && ((PsiClassStub)stub).isAnonymousInQualifiedNew()) {
+      return scope.getParent();
     }
 
-    boolean isAnonOrLocal = isAnonymousOrLocal(aClass);
+    if (scope instanceof PsiClass) {
+      if (!isAnonymousOrLocal((PsiClass)scope)) {
+        return isInitialClass ? defaultResolveContext : scope;
+      }
 
-    if (!isAnonOrLocal) {
-      return isInitialClass ? defaultResolveContext : aClass;
-    }
-
-    if (!isInitialClass) {
-      if (aClass.findInnerClassByName(className, true) != null) return aClass;
+      if (!isInitialClass) {
+        if (((PsiClass)scope).findInnerClassByName(baseClassName, true) != null) return scope;
+      }
     }
 
     final StubElement parentStub = stub.getParentStub();
@@ -582,43 +582,38 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       LOG.error(stub + " parent is " + parentStub);
       return null;
     }
-    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)psi;
-    @SuppressWarnings("unchecked")
+
+    if (hasChildClassStub(parentStub, baseClassName, scope)) {
+      return scope.getParent();
+    }
+
+    if (psi instanceof PsiClass || psi instanceof PsiLambdaExpression) {
+      return calcBasesResolveContext(psi, baseClassName, false, defaultResolveContext);
+    }
+    if (psi instanceof PsiMember) {
+      return calcBasesResolveContext(((PsiMember)psi).getContainingClass(), baseClassName, false, defaultResolveContext);
+    }
+    LOG.error(parentStub);
+    return psi;
+  }
+
+  private static boolean hasChildClassStub(StubElement parentStub, String className, PsiElement place) {
     PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
 
-    boolean needPreciseContext = false;
-    if (classesInScope.length > 1) {
-      for (PsiClass scopeClass : classesInScope) {
-        if (scopeClass == aClass) continue;
-        String className1 = scopeClass.getName();
-        if (className.equals(className1)) {
-          needPreciseContext = true;
-          break;
-        }
+    for (PsiClass scopeClass : classesInScope) {
+      if (scopeClass == place) continue;
+      if (className.equals(scopeClass.getName())) {
+        return true;
       }
-    }
-    else {
-      if (classesInScope.length != 1) {
-        LOG.error("Parent stub: " + parentStub.getStubType() + "; children: " + parentStub.getChildrenStubs() + "; \ntext:" + context.getText());
-      }
-      LOG.assertTrue(classesInScope[0] == aClass);
     }
 
-    if (needPreciseContext) {
-      return aClass.getParent();
+    if (place instanceof PsiClass) {
+      if (classesInScope.length == 0) {
+        LOG.error("Parent stub: " + parentStub.getStubType() + "; children: " + parentStub.getChildrenStubs() + "; \ntext:" + parentStub.getPsi().getText());
+      }
+      LOG.assertTrue(Arrays.asList(classesInScope).contains(place));
     }
-    else {
-      if (context instanceof PsiClass) {
-        return calcBasesResolveContext((PsiClass)context, className, false, defaultResolveContext);
-      }
-      else if (context instanceof PsiMember) {
-        return calcBasesResolveContext(((PsiMember)context).getContainingClass(), className, false, defaultResolveContext);
-      }
-      else {
-        LOG.assertTrue(false);
-        return context;
-      }
-    }
+    return false;
   }
 
   @Override

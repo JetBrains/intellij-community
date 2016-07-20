@@ -42,7 +42,7 @@ public class GlobalInspectionContextUtil {
 
 
   public static boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool, Tools tools, ProfileManager profileManager) {
-    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool, tools, profileManager) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool, tools, profileManager) && !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
   public static boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool, Tools tools, ProfileManager profileManager) {

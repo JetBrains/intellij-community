@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,10 +21,7 @@ import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -237,10 +235,12 @@ public class EduStepicConnector {
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
-    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+      setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }
-  
+
   @NotNull
   public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
     if (ourClient == null) {
@@ -632,6 +632,41 @@ public class EduStepicConnector {
     return -1;
   }
 
+  public static int updateTask(@NotNull final Project project, @NotNull final Task task) {
+    final Lesson lesson = task.getLesson();
+    final int lessonId = lesson.getId();
+
+    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepicId()));
+    setHeaders(request, "application/json");
+    if (ourClient == null) {
+      if (!login(project)) {
+        LOG.error("Failed to update task");
+        return 0;
+      }
+    }
+
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
+      request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+      try {
+        final CloseableHttpResponse response = ourClient.execute(request);
+        final StatusLine line = response.getStatusLine();
+        if (line.getStatusCode() != HttpStatus.SC_OK) {
+          final HttpEntity responseEntity = response.getEntity();
+          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          LOG.error("Failed to push " + responseString);
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e.getMessage());
+      }
+    });
+    return -1;
+  }
+
   public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson, ProgressIndicator indicator) {
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
     if (ourClient == null) {
@@ -727,7 +762,8 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     setHeaders(request, "application/json");
     //TODO: register type adapter for task files here?
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
       request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -735,11 +771,15 @@ public class EduStepicConnector {
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
         final StatusLine line = response.getStatusLine();
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         if (line.getStatusCode() != HttpStatus.SC_CREATED) {
-          final HttpEntity responseEntity = response.getEntity();
-          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
           LOG.error("Failed to push " + responseString);
         }
+
+        final JsonObject postedTask = new Gson().fromJson(responseString, JsonObject.class);
+        final JsonObject stepSource = postedTask.getAsJsonArray("step-sources").get(0).getAsJsonObject();
+        task.setStepicId(stepSource.getAsJsonPrimitive("id").getAsInt());
       }
       catch (IOException e) {
         LOG.error(e.getMessage());

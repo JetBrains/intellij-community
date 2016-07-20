@@ -43,6 +43,7 @@ public class GenericPatchApplier {
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
   private final List<PatchHunk> myHunks;
+  private final boolean myBaseFileEndsWithNewLine;
   private boolean myHadAlreadyAppliedMet;
 
   private final ArrayList<SplitHunk> myNotBound;
@@ -61,6 +62,7 @@ public class GenericPatchApplier {
     debug("GenericPatchApplier created, hunks: " + hunks.size());
     myLines = new ArrayList<String>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
+    myBaseFileEndsWithNewLine = StringUtil.endsWithLineBreak(text);
     myHunks = hunks;
     final Comparator<TextRange> textRangeComparator =
       (o1, o2) -> new Integer(o1.getStartOffset()).compareTo(new Integer(o2.getStartOffset()));
@@ -1041,14 +1043,23 @@ public class GenericPatchApplier {
     for (SplitHunk hunk : myNotBound) {
       linesToSb(sb, hunk.getAfterAll());
     }
-    iterateTransformations(range -> linesToSb(sb, myLines.subList(range.getStartOffset(), range.getEndOffset() + 1)), range -> {
+    iterateTransformations(range -> {
+      linesToSb(sb, myLines.subList(range.getStartOffset(), range.getEndOffset() + 1));
+      if (containsLastLine(range) && myBaseFileEndsWithNewLine) {
+        sb.append('\n');
+      }
+    }, range -> {
       final MyAppliedData appliedData = myTransformations.get(range);
       linesToSb(sb, appliedData.getList());
+      if (containsLastLine(range) && !mySuppressNewLineInEnd) {
+        sb.append('\n');
+      }
     });
-    if (! mySuppressNewLineInEnd) {
-      sb.append('\n');
-    }
     return sb.toString();
+  }
+
+  private boolean containsLastLine(@NotNull TextRange range) {
+    return range.getEndOffset() == myLines.size() - 1;
   }
 
   private static void linesToSb(final StringBuilder sb, final List<String> list) {

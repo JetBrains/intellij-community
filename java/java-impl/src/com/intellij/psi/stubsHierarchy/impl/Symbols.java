@@ -12,7 +12,6 @@ import java.util.List;
 
 public class Symbols {
   public final PackageSymbol myRootPackage = new PackageSymbol(null, 0, NameEnvironment.NO_NAME);
-  protected final NameEnvironment myNameEnvironment = new NameEnvironment();
   private final AnchorRepository myClassAnchors = new AnchorRepository();
 
   private List<ClassSymbol> myClassSymbols = new ArrayList<>(0x8000);

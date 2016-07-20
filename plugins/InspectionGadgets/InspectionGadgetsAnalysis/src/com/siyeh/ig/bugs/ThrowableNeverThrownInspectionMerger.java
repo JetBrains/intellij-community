@@ -23,12 +23,12 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 public class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerger {
 
   @Override
-  protected String getMergedToolName() {
+  public String getMergedToolName() {
     return "ThrowableNeverThrown";
   }
 
   @Override
-  protected String[] getSourceToolNames() {
+  public String[] getSourceToolNames() {
     return new String[] {"ThrowableInstanceNeverThrown", "ThrowableResultOfMethodCallIgnored"};
   }
 }

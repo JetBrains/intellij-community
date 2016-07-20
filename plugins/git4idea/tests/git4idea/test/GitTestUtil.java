@@ -186,13 +186,14 @@ public class GitTestUtil {
     return last();
   }
 
-  public static void assertNotification(@NotNull NotificationType type,
-                                        @NotNull String title,
-                                        @NotNull String content,
-                                        @NotNull Notification actual) {
+  public static Notification assertNotification(@NotNull NotificationType type,
+                                                @NotNull String title,
+                                                @NotNull String content,
+                                                @NotNull Notification actual) {
     assertEquals("Incorrect notification type: " + tos(actual), type, actual.getType());
     assertEquals("Incorrect notification title: " + tos(actual), title, actual.getTitle());
     assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.getContent()));
+    return actual;
   }
 
   @NotNull

@@ -56,6 +56,9 @@ public class EduAnswerPlaceholderPainter {
   }
 
   public static void drawAnswerPlaceholderFromPrevStep(@NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
+    if (placeholder.getUseLength()) {
+      return;
+    }
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(EditorColors.TEARLINE_COLOR);
     SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;

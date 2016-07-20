@@ -147,14 +147,15 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitCommit>> history,
-                                                  @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
-                                                  @NotNull final String baseBranch) {
-    final AtomicBoolean forceDelete = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(() -> forceDelete.set(
-      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch)),
+  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                                  @NotNull Map<GitRepository, List<GitCommit>> history,
+                                                  @NotNull Map<GitRepository, String> baseBranches,
+                                                  @NotNull String removedBranch) {
+    AtomicBoolean restore = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> restore.set(
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)),
       ModalityState.defaultModalityState());
-    return forceDelete.get();
+    return restore.get();
   }
 
   @NotNull

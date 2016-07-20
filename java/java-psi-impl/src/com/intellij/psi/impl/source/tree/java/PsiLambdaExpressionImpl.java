@@ -21,13 +21,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements PsiLambdaExpression {
+public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
+  implements PsiLambdaExpression {
 
   private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
     @Nullable
@@ -56,8 +57,12 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
   };
 
-  public PsiLambdaExpressionImpl() {
-    super(JavaElementType.LAMBDA_EXPRESSION);
+  public PsiLambdaExpressionImpl(@NotNull FunctionalExpressionStub<PsiLambdaExpression> stub) {
+    super(stub, JavaStubElementTypes.LAMBDA_EXPRESSION);
+  }
+
+  public PsiLambdaExpressionImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @NotNull
@@ -67,17 +72,8 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
-    final IElementType elType = child.getElementType();
-    if (elType == JavaTokenType.ARROW) {
-      return ChildRole.ARROW;
-    } else if (elType == JavaElementType.PARAMETER_LIST) {
-      return ChildRole.PARAMETER_LIST;
-    } else if (elType == JavaElementType.CODE_BLOCK) {
-      return ChildRole.LBRACE;
-    } else {
-      return ChildRole.EXPRESSION;
-    }
+  public PsiElement getParent() {
+    return getParentByTree();
   }
 
   @Override

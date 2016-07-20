@@ -16,11 +16,11 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.Locale;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-public class FileTemplateSettings implements PersistentStateComponent<Element> {
+public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
   public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   static final String ELEMENT_TEMPLATE = "template";
@@ -43,15 +43,9 @@ public class FileTemplateSettings implements PersistentStateComponent<Element> {
   static final String ATTRIBUTE_REFORMAT = "reformat";
   static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   static final String ATTRIBUTE_ENABLED = "enabled";
-  private final Project myProject;
 
-  public FileTemplateSettings(Project project) {
-    myProject = project;
-  }
-
-
-  static FileTemplateSettings getInstance(Project project) {
-    return ServiceManager.getService(project, FileTemplateSettings.class);
+  public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
+    super(typeManager);
   }
 
   @Nullable
@@ -89,10 +83,6 @@ public class FileTemplateSettings implements PersistentStateComponent<Element> {
       }
     }
     return element;
-  }
-
-  private FTManager[] getAllManagers() {
-    return FileTemplateManagerImpl.getInstanceImpl(myProject).getAllManagers();
   }
 
   @Override

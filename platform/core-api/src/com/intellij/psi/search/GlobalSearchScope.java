@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public GlobalSearchScope union(@NotNull final LocalSearchScope scope) {
-    return new GlobalSearchScope(scope.getScope()[0].getProject()) {
+    PsiElement[] localScopeElements = scope.getScope();
+    if (localScopeElements.length == 0) {
+      return this;
+    }
+    return new GlobalSearchScope(localScopeElements[0].getProject()) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
         return GlobalSearchScope.this.contains(file) || scope.isInScope(file);

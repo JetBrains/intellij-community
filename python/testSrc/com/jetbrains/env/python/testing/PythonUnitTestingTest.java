@@ -89,6 +89,27 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Ensure rerun test works even if test is declared in parent
+   */
+  @Test
+  public void testRerunDerivedClass() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "rerun_derived.py") {
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("Premature error", stderr, isEmptyString());
+        Assert.assertThat("Wrong number of failed tests", runner.getFailedTestsCount(), equalTo(1));
+      }
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(myScriptName, 2);
+      }
+    });
+  }
 
   /**
    * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI

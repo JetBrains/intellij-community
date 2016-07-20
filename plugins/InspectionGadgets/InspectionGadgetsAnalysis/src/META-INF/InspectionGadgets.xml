@@ -3,6 +3,7 @@
   <extensions defaultExtensionNs="com.intellij">
 
     <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -287,18 +288,9 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="mismatched.string.builder.query.update.display.name" runForWholeFile="true"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MismatchedStringBuilderQueryUpdateInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MisspelledCompareTo" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.compareto.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.MisspelledCompareToInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MisspelledHashcode" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.hashcode.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.MisspelledHashcodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MisspelledEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MisspelledEqualsInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MisspelledToString" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.tostring.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.MisspelledToStringInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NewStringBufferWithCharArgument" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="new.string.buffer.with.char.argument.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -1474,12 +1466,6 @@
                      key="junit.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MisspelledSetUp" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.set.up.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.MisspelledSetUpInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MisspelledTearDown" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.tear.down.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.MisspelledTearDownInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MisorderedAssertEqualsArguments" alternativeId="MisorderedAssertEqualsArguments" shortName="MisorderedAssertEqualsParameters"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1774,10 +1760,10 @@
                      key="method.name.same.as.parent.name.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.MethodNameSameAsParentNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MethodNamesDifferingOnlyByCase" shortName="MethodNamesDifferOnlyByCase"
+    <localInspection groupPath="Java" language="JAVA" suppressId="MethodNamesDifferingOnlyByCase" shortName="MisspelledMethodName"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="method.names.differ.only.by.case.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.naming.MethodNamesDifferOnlyByCaseInspection"/>
+                     level="WARNING" implementationClass="com.siyeh.ig.naming.MisspelledMethodNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NativeMethodNamingConvention"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="native.method.naming.convention.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"

@@ -16,7 +16,10 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -24,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
   private static final String HEAD = "HEAD";
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
+  @NotNull private final Map<VirtualFile, Condition<CommitId>> myConditions = ContainerUtil.newHashMap();
   @Nullable private String mySingleFilteredBranch;
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
@@ -41,14 +46,20 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @Override
   public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
     if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
-    VcsLogProvider provider = myLogData.getLogProvider(details.getRoot());
-    String currentBranch = provider.getCurrentBranch(details.getRoot());
-    if (!HEAD.equals(mySingleFilteredBranch) && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
-      Condition<CommitId> condition =
-        myLogData.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
-      if (condition.value(new CommitId(details.getId(), details.getRoot()))) {
-        return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
+    Condition<CommitId> condition = myConditions.get(details.getRoot());
+    if (condition == null) {
+      VcsLogProvider provider = myLogData.getLogProvider(details.getRoot());
+      String currentBranch = provider.getCurrentBranch(details.getRoot());
+      if (!HEAD.equals(mySingleFilteredBranch) && currentBranch != null && !(currentBranch.equals(mySingleFilteredBranch))) {
+        condition = myLogData.getContainingBranchesGetter().getContainedInBranchCondition(currentBranch, details.getRoot());
+        myConditions.put(details.getRoot(), condition);
       }
+      else {
+        condition = Conditions.alwaysFalse();
+      }
+    }
+    if (condition != null && condition.value(new CommitId(details.getId(), details.getRoot()))) {
+      return VcsCommitStyleFactory.background(CURRENT_BRANCH_BG);
     }
     return VcsCommitStyle.DEFAULT;
   }
@@ -57,6 +68,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
     VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
     mySingleFilteredBranch = branchFilter == null ? null : VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs());
+    myConditions.clear();
   }
 
   public static class Factory implements VcsLogHighlighterFactory {

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,14 +25,33 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class StubResolver {
+  private static final Import[] DEFAULT_JAVA_IMPORTS = {importPackage("java.lang")};
+  private static final Import[] DEFAULT_GROOVY_IMPORTS = {
+    importPackage("java.lang"),
+    importPackage("java.util"),
+    importPackage("java.io"),
+    importPackage("java.net"),
+    importPackage("groovy.lang"),
+    importPackage("groovy.util"),
+    new Import(NameEnvironment.fromString("java.math"), NameEnvironment.hashIdentifier("BigInteger"), false),
+    new Import(NameEnvironment.fromString("java.math"), NameEnvironment.hashIdentifier("BigDecimal"), false),
+  };
   private final Symbols mySymbols;
-  private final NameEnvironment myNameEnvironment;
   private final StubHierarchyConnector myConnector;
 
   public StubResolver(Symbols symbols, StubHierarchyConnector connector) {
     this.mySymbols = symbols;
-    this.myNameEnvironment = symbols.myNameEnvironment;
     myConnector = connector;
+  }
+
+  private static Import importPackage(String qname) {
+    return new Import(NameEnvironment.fromString(qname), 0, false);
+  }
+
+  private static Import[] getDefaultImports(byte type) {
+    if (type == IndexTree.JAVA) return DEFAULT_JAVA_IMPORTS;
+    if (type == IndexTree.GROOVY) return DEFAULT_GROOVY_IMPORTS;
+    return Imports.EMPTY_ARRAY;
   }
 
   // resolve class `sym` extends/implements `baseId`
@@ -91,7 +111,7 @@ public class StubResolver {
   }
 
   private void findIdentInPackage(Symbol.PackageSymbol pck, @ShortName int name, boolean processPackages, Set<Symbol> symbols) {
-    @QNameHash int fullname = mySymbols.myNameEnvironment.qualifiedName(pck.myQualifiedName, name);
+    @QNameHash int fullname = NameEnvironment.qualifiedName(pck.myQualifiedName, name);
     if (processPackages) {
       ContainerUtil.addIfNotNull(symbols, mySymbols.getPackage(fullname));
     }
@@ -132,7 +152,7 @@ public class StubResolver {
   }
 
   private void findGlobalType(UnitInfo info, @ShortName int name, Set<Symbol> symbols) throws IncompleteHierarchyException {
-    for (Import anImport : Translator.getDefaultImports(info.type, myNameEnvironment))
+    for (Import anImport : getDefaultImports(info.type))
       handleImport(anImport, name, symbols);
     for (Import anImport : info.imports)
       handleImport(anImport, name, symbols);
@@ -157,14 +177,14 @@ public class StubResolver {
             importNamedStatic(s, anImport.importedName, symbols);
       }
       else {
-        Collections.addAll(symbols, findGlobalType(myNameEnvironment.qualifiedName(anImport.qualifier, anImport.importedName)));
+        Collections.addAll(symbols, findGlobalType(NameEnvironment.qualifiedName(anImport.qualifier, anImport.importedName)));
       }
     }
   }
 
   // handling of `import prefix.*`
   private void importAll(@QNameHash int prefix, @ShortName int suffix, final Set<Symbol> symbols) {
-    Collections.addAll(symbols, findGlobalType(myNameEnvironment.qualifiedName(prefix, suffix)));
+    Collections.addAll(symbols, findGlobalType(NameEnvironment.qualifiedName(prefix, suffix)));
   }
 
   // handling of import static `tsym.name` as

@@ -28,7 +28,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,10 +47,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -216,7 +216,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         return new ValidationInfo("Property name must be not empty");
       }
       return PropertiesUtil.containsProperty(myCurrentResourceBundle, myCurrentPropertyName)
-             ? new ValidationInfo(String.format("Property with name \'%s\' is already exist", myCurrentPropertyName))
+             ? new ValidationInfo(String.format("Property with name \'%s\' already exists", myCurrentPropertyName))
              : null;
     }
 

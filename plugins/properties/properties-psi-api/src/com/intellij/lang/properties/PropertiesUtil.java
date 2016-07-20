@@ -26,7 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +35,6 @@ import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.ui.plaf.beg.BegResources.j;
 
 /**
  * @author cdr
@@ -155,7 +153,7 @@ public class PropertiesUtil {
    * messages_en.properties is a parent of the messages_en_US.properties
    */
   @Nullable
-  public static PropertiesFile getParent(PropertiesFile file, List<PropertiesFile> candidates) {
+  public static PropertiesFile getParent(PropertiesFile file, Collection<PropertiesFile> candidates) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     String name = virtualFile.getNameWithoutExtension();

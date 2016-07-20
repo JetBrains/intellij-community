@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.junit;
+package com.siyeh.ig.naming;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.codeInspection.ex.InspectionElementsMerger;
 
-public class MisspelledTearDownInspection extends MisspelledTearDownInspectionBase {
+public class MisspelledMethodNameInspectionMerger extends InspectionElementsMerger {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix("tearDown");
+  public String getMergedToolName() {
+    return "MisspelledMethodName";
+  }
+
+  @Override
+  public String[] getSourceToolNames() {
+    return new String[]{"MethodNamesDifferOnlyByCase", "MisspelledSetUp", "MisspelledTearDown", "MisspelledHashcode", "MisspelledToString", "MisspelledCompareTo"};
   }
 }

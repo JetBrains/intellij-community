@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
@@ -334,43 +333,14 @@ public class PagedFileStorage implements Forceable {
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     myStorageLockContext.myStorageLock.invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize)); // TODO long page
-
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
-    mySize = -1;
+    resizeFile(newSize);
 
+    // it is not guaranteed that new partition will consist of null
+    // after resize, so we should fill it manually
     long delta = newSize - oldSize;
-
-    if (delta > 0) {
-      // it is not guaranteed that new partition will consist of null
-      // after resize, so we should fill it manually
-      byte[] buff = new byte[MAX_FILLER_SIZE];
-      Arrays.fill(buff, (byte)0);
-      FileOutputStream stream = new FileOutputStream(myFile, true);
-
-      try {
-        while (delta > 0) {
-          final int filled = Math.min((int)delta, MAX_FILLER_SIZE);
-          stream.write(buff, 0, filled);
-          delta -= filled;
-        }
-      } finally {
-        stream.getFD().sync();
-        stream.close();
-      }
-    }
-    else {
-      RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      try {
-        raf.setLength(newSize);
-        raf.getFD().sync();
-      }
-      finally {
-        raf.close();
-      }
-    }
-
-    mySize = newSize;
+    if (delta > 0) fillWithZeros(oldSize, delta);
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
@@ -380,7 +350,31 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
+  private void resizeFile(long newSize) throws IOException {
+    mySize = -1;
+    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
+    try {
+      raf.setLength(newSize);
+    }
+    finally {
+      raf.close();
+    }
+    mySize = newSize;
+  }
+
   private static final int MAX_FILLER_SIZE = 8192;
+
+  private void fillWithZeros(long from, long length) {
+    byte[] buff = new byte[MAX_FILLER_SIZE];
+    Arrays.fill(buff, (byte)0);
+
+    while (length > 0) {
+      final int filled = Math.min((int)length, MAX_FILLER_SIZE);
+      put(from, buff, 0, filled);
+      length -= filled;
+      from += filled;
+    }
+  }
 
   public final long length() {
     long size = mySize;

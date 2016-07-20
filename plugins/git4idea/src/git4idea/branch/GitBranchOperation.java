@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.google.common.collect.Maps;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +30,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
@@ -44,6 +43,7 @@ import java.util.*;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -58,6 +58,7 @@ abstract class GitBranchOperation {
   @NotNull protected final GitBranchUiHandler myUiHandler;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull protected final Map<GitRepository, String> myCurrentHeads;
+  @NotNull protected final Map<GitRepository, String> myInitialRevisions;
   @NotNull private final GitVcsSettings mySettings;
 
   @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
@@ -70,13 +71,8 @@ abstract class GitBranchOperation {
     myGit = git;
     myUiHandler = uiHandler;
     myRepositories = repositories;
-    myCurrentHeads = ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
-      @Override
-      public Pair<GitRepository, String> fun(GitRepository repository) {
-        GitLocalBranch currentBranch = repository.getCurrentBranch();
-        return Pair.create(repository, currentBranch == null ? repository.getCurrentRevision() : currentBranch.getName());
-      }
-    });
+    myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
+    myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<GitRepository>();
     mySkippedRepositories = new ArrayList<GitRepository>();
     myRemainingRepositories = new ArrayList<GitRepository>(myRepositories);
@@ -183,7 +179,7 @@ abstract class GitBranchOperation {
     VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 
-  protected final void notifySuccess() {
+  protected void notifySuccess() {
     notifySuccess(getSuccessMessage());
   }
 
@@ -262,6 +258,14 @@ abstract class GitBranchOperation {
         mySettings.setRecentCommonBranch(recentCommonBranch);
       }
     }
+  }
+
+  /**
+   * Returns the hash of the revision which was current before the start of this GitBranchOperation.
+   */
+  @NotNull
+  protected String getInitialRevision(@NotNull GitRepository repository) {
+    return myInitialRevisions.get(repository);
   }
 
   @Nullable

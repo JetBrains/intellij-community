@@ -3,6 +3,7 @@ package org.jetbrains.yaml.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
@@ -46,10 +47,6 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
         assert thisLineStart != -1;
         result.add(TextRange.create(thisLineStart, child.getTextRange().getEndOffset()).shiftRight(-myStart));
         thisLineStart = -1;
-
-        if (node.findChildByType(getContentType(), child.getTreeNext()) == null) {
-          break;
-        }
       }
       else if (child.getElementType() == YAMLTokenTypes.INDENT) {
         thisLineStart = child.getStartOffset() + Math.min(indent, child.getTextLength());
@@ -62,7 +59,9 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
       }
     }
 
-    return result;
+    final int lastNonEmpty = ContainerUtil.lastIndexOf(result, range -> range.getLength() != 0);
+
+    return lastNonEmpty == -1 ? result : result.subList(0, lastNonEmpty + 1);
   }
 
   protected int locateIndent() {

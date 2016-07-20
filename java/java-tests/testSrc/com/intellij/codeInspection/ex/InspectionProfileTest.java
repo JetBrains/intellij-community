@@ -357,6 +357,22 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
+  public void testMergedMisspelledInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"MethodNamesDifferOnlyByCase\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreIfMethodIsOverride\" value=\"false\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"MethodNamesDifferOnlyByCase\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreIfMethodIsOverride\" value=\"false\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "  <inspection_tool class=\"MisspelledSetUp\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+  }
+
   public void testDisabledUnusedDeclarationWithChanges() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +

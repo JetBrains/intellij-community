@@ -32,7 +32,9 @@ public interface XLocalAttachDebuggerProvider {
    * 
    */
   @NotNull
-  XLocalAttachGroup getAttachGroup();
+  default XLocalAttachGroup getAttachGroup() {
+    return XLocalAttachGroup.DEFAULT;
+  }
 
   /**
    *  Attach to Local Process action invokes {@link #getAvailableDebuggers} method for every running process.

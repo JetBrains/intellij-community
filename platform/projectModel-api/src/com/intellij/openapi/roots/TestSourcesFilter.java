@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * By default, IntelliJ Platform considers files as tests only if they are located under test
  * sources root {@link FileIndex#isInTestSourceContent(VirtualFile)}.
  * <p>
- * However there plenty frameworks and languages which keep test files just nearby production files.
+ * However there are plenty frameworks and languages which keep test files just nearby production files.
  * E.g. *_test.go files are test files in Go language and some js/dart files are test files depending
  * on their content. The extensions allow IDE to highlight such files with a green background,
  * properly check if they are included in built-in search scopes, etc.
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
  * @since 2016.3
  * @author zolotov
  */
-
 public abstract class TestSourcesFilter {
   public static final ExtensionPointName<TestSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.testSourcesFilter");
 

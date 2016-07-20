@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -119,20 +118,17 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
-      @Override
-      public Course compute() throws RuntimeException {
-        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-        return execCancelable(() -> {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+      return execCancelable(() -> {
 
-          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-          if (course != null) {
-            flushCourse(project, course);
-            course.initCourse(false);
-          }
-          return course;
-        });
-      }
+        final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+        if (course != null) {
+          flushCourse(project, course);
+          course.initCourse(false);
+        }
+        return course;
+      });
     }, "Creating Course", true, project);
   }
 
@@ -289,7 +285,8 @@ public class StudyProjectGenerator {
   }
 
   public static void flushCourseJson(@NotNull final Course course, @NotNull final File courseDirectory) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().
+      excludeFieldsWithoutExposeAnnotation().create();
     final String json = gson.toJson(course);
     final File courseJson = new File(courseDirectory, EduNames.COURSE_META_FILE);
     final FileOutputStream fileOutputStream;
