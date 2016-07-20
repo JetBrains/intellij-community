@@ -778,8 +778,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return WrapObjectWithOptionalOfNullableFix.createFix(type, expression);
   }
 
+  @Nullable
   @Override
-  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
+  public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiForeachStatement) {
       final PsiType type = expression.getType();
@@ -792,7 +793,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public List<IntentionAction> createAddAnnotationAttributeNameFixes(PsiNameValuePair pair) {
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
