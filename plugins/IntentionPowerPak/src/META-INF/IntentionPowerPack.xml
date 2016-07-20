@@ -4,12 +4,6 @@
 
     <!-- Annotations -->
     <intentionAction>
-      <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.annotations</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.annotation.AnnotateOverriddenMethodsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>

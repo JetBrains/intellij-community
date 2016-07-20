@@ -93,7 +93,8 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
     return value != null ? name + "=" + value.getText() : name + "=";
   }
 
-  private static boolean isCompatibleReturnType(@Nullable PsiType expectedType, @Nullable PsiType valueType) {
+  public static boolean isCompatibleReturnType(@NotNull PsiMethod psiMethod, @Nullable PsiType valueType) {
+    final PsiType expectedType = psiMethod.getReturnType();
     if (expectedType == null || valueType == null || expectedType.isAssignableFrom(valueType)) {
       return true;
     }
@@ -114,10 +115,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
         final PsiClass annotationClass = getAnnotationClass(parameterList);
 
         if (annotationClass != null) {
-          final Set<String> usedNames = Arrays.stream(parameterList.getAttributes())
-            .map(PsiNameValuePair::getName)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+          final Set<String> usedNames = getUsedAttributeNames(parameterList);
 
           final Collection<PsiMethod> availableMethods = Arrays.stream(annotationClass.getMethods())
             .filter(PsiAnnotationMethod.class::isInstance)
@@ -127,7 +125,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
           if (!availableMethods.isEmpty()) {
             final PsiType valueType = CreateAnnotationMethodFromUsageFix.getAnnotationValueType(value);
             return availableMethods.stream()
-              .filter(psiMethod -> isCompatibleReturnType(psiMethod.getReturnType(), valueType))
+              .filter(psiMethod -> isCompatibleReturnType(psiMethod, valueType))
               .map(PsiMethod::getName)
               .collect(Collectors.toSet());
           }
@@ -135,6 +133,14 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
       }
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public static Set<String> getUsedAttributeNames(@NotNull PsiAnnotationParameterList parameterList) {
+    return Arrays.stream(parameterList.getAttributes())
+              .map(PsiNameValuePair::getName)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toSet());
   }
 
   @Nullable
