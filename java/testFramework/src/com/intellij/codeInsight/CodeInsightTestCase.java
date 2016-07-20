@@ -16,6 +16,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,10 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Mike
@@ -80,6 +80,21 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
 
     return editor;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
+    for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
+      for (FileTemplate template : manager.getInternalTemplates()) {
+        if (tname.equals(template.getName())) {
+          String text = "package $PACKAGE_NAME$;\npublic " + manager.internalTemplateToSubject(tname) + " $NAME$ { }";
+          template.setText(FileTemplateManagerImpl.normalizeText(text));
+          break;
+        }
+      }
+    }
   }
 
   @Override

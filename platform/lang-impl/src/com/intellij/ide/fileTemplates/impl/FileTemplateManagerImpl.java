@@ -276,7 +276,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   }
 
   @NotNull
-  private static String normalizeText(@NotNull String text) {
+  public static String normalizeText(@NotNull String text) {
     text = StringUtil.convertLineSeparators(text);
     text = StringUtil.replace(text, "$NAME$", "${NAME}");
     text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
@@ -284,12 +284,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     text = StringUtil.replace(text, "$TIME$", "${TIME}");
     text = StringUtil.replace(text, "$USER$", "${USER}");
     return text;
-  }
-
-  @NonNls
-  @NotNull
-  private String getTestClassTemplateText(@NotNull @NonNls String templateName) {
-    return "package $PACKAGE_NAME$;\npublic " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
 
   @Override
