@@ -58,9 +58,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 
   internal fun cleanupSchemes(project: Project) {
     for (profile in schemeManager.allSchemes) {
-      if ((profile as InspectionProfileImpl).wasInitialized()) {
-        profile.cleanup(project)
-      }
+      profile.cleanup(project)
     }
   }
 

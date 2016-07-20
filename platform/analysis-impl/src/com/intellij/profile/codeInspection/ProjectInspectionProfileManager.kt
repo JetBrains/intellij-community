@@ -18,6 +18,7 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.concurrency.runAsync
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -117,7 +118,7 @@ class ProjectInspectionProfileManager(val project: Project,
       initialLoadSchemesFuture = CompletableFuture.completedFuture(null)
     }
     else {
-      initialLoadSchemesFuture = CompletableFuture.runAsync({ schemeManager.loadSchemes() }, { app.executeOnPooledThread(it) })
+      initialLoadSchemesFuture = runAsync { schemeManager.loadSchemes() }
     }
 
     project.messageBus.connect().subscribe(ProjectManager.TOPIC, object: ProjectManagerListener {

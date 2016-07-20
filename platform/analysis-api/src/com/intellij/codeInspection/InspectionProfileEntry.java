@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -190,7 +189,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
     return elementLanguageSuppressor != null
            ? Collections.singleton(elementLanguageSuppressor)
-           : Collections.<InspectionSuppressor>emptySet();
+           : Collections.emptySet();
   }
 
   public void cleanup(@NotNull Project project) {

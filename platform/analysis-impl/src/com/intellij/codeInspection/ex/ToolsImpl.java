@@ -130,13 +130,10 @@ public class ToolsImpl implements Tools {
     return myShortName;
   }
 
-  @NotNull
-  public List<InspectionToolWrapper> getAllTools() {
-    List<InspectionToolWrapper> result = new ArrayList<>();
+  public void cleanupTools(@NotNull Project project) {
     for (ScopeToolState state : getTools()) {
-      result.add(state.getTool());
+      state.getTool().cleanup(project);
     }
-    return result;
   }
 
   public void writeExternal(@NotNull Element inspectionElement) throws WriteExternalException {

@@ -723,11 +723,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return;
     }
 
-    for (final ToolsImpl toolList : myTools.values()) {
+    for (ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
-        for (InspectionToolWrapper toolWrapper : toolList.getAllTools()) {
-          toolWrapper.cleanup(project);
-        }
+        toolList.cleanupTools(project);
       }
     }
   }
