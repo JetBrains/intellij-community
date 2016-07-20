@@ -38,9 +38,11 @@ public abstract class LicensingFacade {
 
   public abstract boolean isEvaluationLicense();
 
-  public abstract boolean isApplicableForProduct(@NotNull Date productBuildDate);
+  @Nullable
+  public abstract Boolean isApplicableForProduct(@NotNull Date productBuildDate);
 
-  public abstract boolean isPerpetualForProduct(@NotNull Date productBuildDate);
+  @Nullable
+  public abstract Boolean isPerpetualForProduct(@NotNull Date productBuildDate);
 
   @Nullable
   public abstract Date getLicenseExpirationDate();
