@@ -74,8 +74,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
 
   @Override
   public void analyze() {
-    AnalysisScope scope = myForwardScope;
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), scope, getScopeOfInterest());
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), myForwardScope, getScopeOfInterest());
     builder.setTotalFileCount(myTotalFileCount);
     builder.analyze();
 
