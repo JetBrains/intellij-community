@@ -436,52 +436,16 @@ public class IdeEventQueue extends EventQueue {
 
     KeyEvent ke = (KeyEvent)e;
 
-    // Try to get it from editor
-    Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
-    switch (ke.getID()) {
-      case KeyEvent.KEY_PRESSED:
-        break;
-      case KeyEvent.KEY_RELEASED:
-        break;
-    }
-
-    //if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent)) {
-    //  if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
-    //    ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
-    //                     KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
-    //    ke.setKeyCode(KeyEvent.VK_U);
-    //    ke.setKeyChar('ґ');
-    //    return ke;
-    //  }
-    //}
-
-    // NB: Standard keyboard layout is an English keyboard layout. If such
-    //     layout is active every KeyEvent that is received has
-    //     a @{code KeyEvent.getKeyCode} key code corresponding to
-    //     the @{code KeyEvent.getKeyChar} key char in the event.
-    //     For  example, VK_MINUS key code and '-' character
-    //
-    // We have a key char. On some non standard layouts it does not correspond to
-    // key code in the event.
-
     Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
-
-    // Now we have a correct key code as if we'd gotten  a KeyEvent for
-    // standard English layout
 
     if (keyCodeFromChar == ke.getKeyCode() || keyCodeFromChar == KeyEvent.VK_UNDEFINED) {
       return e;
     }
 
-    // Farther we handle a non standard layout
-
-    if (keyCodeFromChar != null) {
-      if (keyCodeFromChar != ke.getKeyCode()) {
-        // non-english layout
-        ke.setKeyCode(keyCodeFromChar);
-      }
-      }
+    if (keyCodeFromChar != ke.getKeyCode()) {
+      // non-english layout
+      ke.setKeyCode(keyCodeFromChar);
+    }
 
     return ke;
   }
