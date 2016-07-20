@@ -44,6 +44,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -101,9 +102,10 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   private static void installRequirements(@NotNull Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    if (sdk == null) return;
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = manager.getRequirements(module);
-    if (requirements != null && sdk != null) {
+    if (requirements != null) {
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
       ui.install(requirements, Collections.emptyList());
     }
@@ -139,14 +141,8 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   private static void createAndAddVirtualEnv(final ProjectSpecificSettingsStep settingsStep) {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
-    String baseSdk = null;
-    for (PythonSdkFlavor flavor : flavors) {
-      final Collection<String> baseSdks = flavor.suggestHomePaths();
-      if (!baseSdks.isEmpty()) {
-        baseSdk = baseSdks.iterator().next();
-      }
-    }
+    final String baseSdk = getBaseSdk();
+
     if (baseSdk != null) {
       final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
       try {
@@ -169,6 +165,23 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
         LOG.warn("Failed to create virtual env " + e.getMessage());
       }
     }
+  }
+
+  private static String getBaseSdk() {
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);
+    String python3Sdk = null;
+    final Collection<String> baseSdks = flavor.suggestHomePaths();
+    for (String sdk : baseSdks) {
+      final String versionString = flavor.getVersionString(sdk);
+      final String prefix = flavor.getName() + " ";
+      if (versionString != null && versionString.startsWith(prefix)) {
+        final LanguageLevel level = LanguageLevel.fromPythonVersion(versionString.substring(prefix.length()));
+        if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+          python3Sdk = sdk;
+        }
+      }
+    }
+    return python3Sdk != null ? python3Sdk : baseSdks.iterator().next();
   }
 
   @Nullable
