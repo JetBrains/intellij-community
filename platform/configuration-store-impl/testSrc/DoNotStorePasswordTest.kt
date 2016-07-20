@@ -26,9 +26,39 @@ class DoNotStorePasswordTest {
 
   @Test
   fun printPasswordComponents() {
-    checkPassword(ApplicationManager.getApplication() as ApplicationImpl)
+    val processor = PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
+      val stateAnnotation = StoreUtil.getStateSpec(aClass)
+      if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
+        return@PairProcessor true
+      }
+
+      for (i in aClass.genericInterfaces) {
+        if (checkType(i)) {
+          return@PairProcessor true
+        }
+      }
+
+
+      // public static class Project extends WebServersConfigManagerBaseImpl<WebServersConfigManagerBaseImpl.State> {
+      // so, we check not only PersistentStateComponent
+      checkType(aClass.genericSuperclass)
+
+      true
+    }
+
+    val app = ApplicationManager.getApplication() as ApplicationImpl
+    ServiceManagerImpl.processAllImplementationClasses(app, processor)
     // yes, we don't use default project here to be sure
-    checkPassword(projectRule.project as ComponentManagerImpl)
+    ServiceManagerImpl.processAllImplementationClasses(projectRule.project as ComponentManagerImpl, processor)
+
+    @Suppress("DEPRECATION")
+    for (c in app.getComponentInstancesOfType(PersistentStateComponent::class.java)) {
+      processor.process(c.javaClass, null)
+    }
+    @Suppress("DEPRECATION")
+    for (c in (projectRule.project as ComponentManagerImpl).getComponentInstancesOfType(PersistentStateComponent::class.java)) {
+      processor.process(c.javaClass, null)
+    }
   }
 
   fun isSavePasswordField(name: String) = name.contains("remember", ignoreCase = true) || name.contains("keep", ignoreCase = true) || name.contains("save", ignoreCase = true)
@@ -56,29 +86,6 @@ class DoNotStorePasswordTest {
         }
       }
     }
-  }
-
-  private fun checkPassword(componentManager: ComponentManagerImpl) {
-    ServiceManagerImpl.processAllImplementationClasses(componentManager,
-        PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
-          val stateAnnotation = StoreUtil.getStateSpec(aClass)
-          if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
-            return@PairProcessor true
-          }
-
-          for (i in aClass.genericInterfaces) {
-            if (checkType(i)) {
-              return@PairProcessor true
-            }
-          }
-
-
-          // public static class Project extends WebServersConfigManagerBaseImpl<WebServersConfigManagerBaseImpl.State> {
-          // so, we check not only PersistentStateComponent
-          checkType(aClass.genericSuperclass)
-
-          true
-        })
   }
 
   private fun checkType(type: Type): Boolean {
