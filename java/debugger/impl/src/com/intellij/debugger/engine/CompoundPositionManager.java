@@ -36,10 +36,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
@@ -57,9 +54,10 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   public void appendPositionManager(PositionManager manager) {
     myPositionManagers.remove(manager);
     myPositionManagers.add(0, manager);
+    mySourcePositionCache.clear();
   }
 
-  private final Cache<Location, SourcePosition> mySourcePositionCache = new Cache<>();
+  private final Map<Location, SourcePosition> mySourcePositionCache = new WeakHashMap<>();
 
   private interface Processor<T> {
     T process(PositionManager positionManager) throws NoDataException;
@@ -195,22 +193,5 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       }
     }
     return ThreeState.UNSURE;
-  }
-
-  private static class Cache<K,V> {
-    private K myKey;
-    private V myValue;
-
-    public V get(@NotNull K key) {
-      if (key.equals(myKey)) {
-        return myValue;
-      }
-      return null;
-    }
-
-    public void put(@NotNull K key, V value) {
-      myKey = key;
-      myValue = value;
-    }
   }
 }
