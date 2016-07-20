@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Date;
@@ -170,7 +169,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       restart();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(UpdateChecker.class).warn(e);
       if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
                                       IdeBundle.message("updates.error.connection.title"),
