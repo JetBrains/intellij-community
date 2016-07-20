@@ -15,34 +15,33 @@ SET IDE_HOME=%IDE_BIN_DIR%\..
 :: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jre, JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
 SET JDK=
-IF EXIST "%@@product_uc@@_JDK%" (
-  SET JDK=%@@product_uc@@_JDK%
+
+IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
+IF NOT "%JDK%" == "" GOTO check
+
+SET BITS=64
+SET USER_JDK64_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+SET BITS=
+SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
+IF EXIST "%USER_JDK64_FILE%" (
+  SET /P JDK=<%USER_JDK64_FILE%
+) ELSE (
+  IF EXIST "%USER_JDK_FILE%" SET /P JDK=<%USER_JDK_FILE%
 )
-IF "%JDK%" == "" (
-  SET BITS=64
-  SET USER_JDK64_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
-  SET BITS=
-  SET USER_JDK_FILE=%USERPROFILE%\.@@system_selector@@\config\@@vm_options@@.jdk
-  IF EXIST "%USER_JDK64_FILE%" (
-    SET /P JDK=<%USER_JDK64_FILE%
-    IF NOT EXIST "%JDK%" SET JDK=%IDE_HOME%\%JDK%
-  ) ELSE (
-    IF EXIST "%USER_JDK_FILE%" (
-      SET /P JDK=<%USER_JDK_FILE%
-      IF NOT EXIST "%JDK%" SET JDK=%IDE_HOME%\%JDK%
-    )
-  )
-)
-IF "%JDK%" == "" (
-  IF EXIST "%IDE_HOME%\jre" SET JDK=%IDE_HOME%\jre
-)
-IF "%JDK%" == "" (
-  IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
-)
-IF "%JDK%" == "" (
-  IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
+IF NOT "%JDK%" == "" (
+  IF NOT EXIST "%JDK%" SET JDK=%IDE_HOME%\%JDK%
+  GOTO check
 )
 
+IF EXIST "%IDE_HOME%\jre" SET JDK=%IDE_HOME%\jre
+IF NOT "%JDK%" == "" GOTO check
+
+IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
+IF NOT "%JDK%" == "" GOTO check
+
+IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
+
+:check
 SET JAVA_EXE=%JDK%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
