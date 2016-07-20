@@ -51,11 +51,11 @@ public class DataPack extends DataPackBase {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
-      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap);
+      refsModel = new RefsModel(refs, ContainerUtil.<Integer>newHashSet(), hashMap, providers);
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
-      refsModel = new RefsModel(refs, getHeads(commits), hashMap);
+      refsModel = new RefsModel(refs, getHeads(commits), hashMap, providers);
       Function<Integer, Hash> hashGetter = createHashGetter(hashMap);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
@@ -116,7 +116,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY);
+      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY, ContainerUtil.newHashMap());
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 

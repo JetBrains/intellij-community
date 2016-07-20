@@ -1,54 +1,56 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
 import com.intellij.vcs.log.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RefsModel implements VcsLogRefs {
+  private static final Logger LOG = Logger.getInstance(RefsModel.class);
+
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myHeadsMap;
-  @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
+  @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
-                   @NotNull VcsLogHashMap hashMap) {
+                   @NotNull VcsLogHashMap hashMap,
+                   @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     myRefs = refs;
     myHashMap = hashMap;
 
-    myRootsToHeadIndices = new TIntObjectHashMap<>();
-    myHeadsMap = new TIntObjectHashMap<>();
+    myBestRefForHead = new TIntObjectHashMap<>();
     for (int head : heads) {
       CommitId commitId = myHashMap.getCommitId(head);
       if (commitId != null) {
         VirtualFile root = commitId.getRoot();
-        myHeadsMap.put(head, myRefs.get(root).refsToCommit(head));
-        myRootsToHeadIndices.put(head, root);
+        Optional<VcsRef> bestRef =
+          myRefs.get(root).refsToCommit(head).stream().min(providers.get(root).getReferenceManager().getBranchLayoutComparator());
+        if (bestRef.isPresent()) {
+          myBestRefForHead.put(head, bestRef.get());
+        }
+        else {
+          LOG.warn("No references at head " + commitId);
+        }
       }
     }
   }
 
-  @NotNull
-  public Collection<VcsRef> refsToHead(int index) {
-    if (myHeadsMap.containsKey(index)) {
-      return myHeadsMap.get(index);
-    }
-    return Collections.emptyList();
+  @Nullable
+  public VcsRef bestRefToHead(int headIndex) {
+    return myBestRefForHead.get(headIndex);
   }
 
   @NotNull
   public VirtualFile rootAtHead(int headIndex) {
-    return myRootsToHeadIndices.get(headIndex);
+    return myBestRefForHead.get(headIndex).getRoot();
   }
 
   @NotNull
@@ -57,7 +59,6 @@ public class RefsModel implements VcsLogRefs {
   }
 
   public Collection<VcsRef> refsToCommit(int index) {
-    if (myHeadsMap.containsKey(index)) return myHeadsMap.get(index);
     CommitId id = myHashMap.getCommitId(index);
     if (id == null) return Collections.emptyList();
     VirtualFile root = id.getRoot();

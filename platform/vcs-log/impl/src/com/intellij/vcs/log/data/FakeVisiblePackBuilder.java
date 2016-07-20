@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.VisibleGraph;
@@ -59,7 +60,7 @@ public class FakeVisiblePackBuilder {
     Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(),
                                                integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
-    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph);
+    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders());
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
 
     GraphColorManagerImpl colorManager =
@@ -73,12 +74,13 @@ public class FakeVisiblePackBuilder {
 
   @NotNull
   private RefsModel createEmptyRefsModel() {
-    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myHashMap);
+    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myHashMap, ContainerUtil.newHashMap());
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
-                                    @NotNull final Set<Integer> heads,
-                                    @NotNull final VisibleGraph<Integer> visibleGraph) {
+                                    @NotNull Set<Integer> heads,
+                                    @NotNull VisibleGraph<Integer> visibleGraph,
+                                    @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
     refsModel.getBranches().stream().filter(ref -> {
       int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
@@ -92,6 +94,6 @@ public class FakeVisiblePackBuilder {
     for (VirtualFile root : map.keySet()) {
       refs.put(root, new CompressedRefs(map.get(root), myHashMap));
     }
-    return new RefsModel(refs, heads, myHashMap);
+    return new RefsModel(refs, heads, myHashMap, providers);
   }
 }
