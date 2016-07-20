@@ -116,4 +116,9 @@ public class StepicUser {
   public void setRefreshToken(String refreshToken) {
     this.refreshToken = refreshToken;
   }
+
+  public void setupTokenInfo(StepicWrappers.TokenInfo tokenInfo) {
+    accessToken = tokenInfo.getAccessToken();
+    refreshToken = tokenInfo.getRefreshToken();
+  }
 }

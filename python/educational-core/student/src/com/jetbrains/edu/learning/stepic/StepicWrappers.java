@@ -456,6 +456,11 @@ public class StepicWrappers {
     @Expose String scope;
     @Expose int expiresIn;
 
+    public TokenInfo() {
+      accessToken = "";
+      refreshToken = "";
+    }
+
     public String getAccessToken() {
       return accessToken;
     }

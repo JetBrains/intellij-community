@@ -24,6 +24,5 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="library" name="markdownj" level="project" />
-    <orderEntry type="library" name="com.mashape.unirest:unirest-java:1.4.9" level="project" />
   </component>
 </module>

@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -25,15 +24,12 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.cookie.Cookie;
+import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
@@ -63,6 +59,7 @@ public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
   private static final String stepicUrl = "https://stepic.org/";
   private static String ourCSRFToken = "";
+  private static String accessToken = "";
   private static CloseableHttpClient ourClient;
   private static final String CLIENT_ID = "hUCWcq3hZHCmz0DKrDtwOWITLcYutzot7p4n59vU";
 
@@ -82,19 +79,30 @@ public class EduStepicConnector {
 
   // TODO : merge. look at comments
   public static StepicUser login(@NotNull final String username, @NotNull final String password) {
-    //initializeClient();
-    initializeClient2();
+    initializeClient();
     StepicWrappers.TokenInfo tokenInfo = postCredentials(username, password);
-    ourCSRFToken = tokenInfo.accessToken;
-    initializeClient2();
-      final StepicWrappers.AuthorWrapper stepicUserWrapper = getCurrentUser();
-      if (stepicUserWrapper != null && stepicUserWrapper.users.size() == 1) {
-        StepicUser user =  stepicUserWrapper.users.get(0);
-        user.setAccessToken(tokenInfo.getAccessToken());
-        user.setRefreshToken(tokenInfo.getRefreshToken());
-        return user;
-      }
+    if (tokenInfo == null) {
+      return null;
+    }
+    accessToken = tokenInfo.accessToken;
+    initializeClient();
+    final StepicWrappers.AuthorWrapper stepicUserWrapper = getCurrentUser();
+    if (stepicUserWrapper != null && stepicUserWrapper.users.size() == 1) {
+      StepicUser user = stepicUserWrapper.users.get(0);
+      user.setupTokenInfo(tokenInfo);
+      return user;
+    }
     return null;
+  }
+
+  public static StepicUser testLogin(@NotNull final String username, @NotNull final String password) {
+    CloseableHttpClient tmp = ourClient;
+    String tmpToken = accessToken;
+    resetClient();
+    StepicUser user = login(username, password);
+    ourClient = tmp;
+    accessToken = tmpToken;
+    return user;
   }
 
   @NotNull
@@ -131,7 +139,8 @@ public class EduStepicConnector {
   public static boolean createUser(@NotNull final String user, @NotNull final String password) {
     final HttpPost userRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.USERS);
     initializeClient();
-    setHeaders(userRequest, "application/json");
+    //setHeaders(userRequest, "application/json");
+    setHeaders(userRequest);
     String requestBody = new Gson().toJson(new StepicWrappers.UserWrapper(user, password));
     userRequest.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -153,59 +162,8 @@ public class EduStepicConnector {
 
   public static void initializeClient() {
     if (ourClient == null) {
-      final HttpGet request = new HttpGet(EduStepicNames.STEPIC_URL);
-      request.addHeader(new BasicHeader("referer", EduStepicNames.STEPIC_URL));
-      request.addHeader(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
-
-
       HttpClientBuilder builder = HttpClients
         .custom()
-        .setSslcontext(CertificateManager.getInstance().getSslContext())
-        .setMaxConnPerRoute(100000)
-        .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
-      ourCookieStore = new BasicCookieStore();
-
-      HttpConfigurable instance = HttpConfigurable.getInstance();
-      if (instance.USE_HTTP_PROXY) {
-        HttpHost host = new HttpHost(instance.PROXY_HOST, instance.PROXY_PORT);
-        builder.setProxy(host);
-      }
-
-      try {
-        // Create a trust manager that does not validate certificate for this connection
-        TrustManager[] trustAllCerts = getTrustAllCerts();
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAllCerts, new SecureRandom());
-        ourClient = builder.setDefaultCookieStore(ourCookieStore).setSslcontext(sslContext).build();
-
-        ourClient.execute(request);
-        saveCSRFToken();
-      }
-      catch (IOException e) {
-        LOG.error(e.getMessage());
-      }
-      catch (NoSuchAlgorithmException e) {
-        LOG.error(e.getMessage());
-      }
-      catch (KeyManagementException e) {
-        LOG.error(e.getMessage());
-      }
-    }
-  }
-
-  public static void initializeClient2() {
-    if (ourClient == null) {
-      final HttpGet request = new HttpGet(EduStepicNames.STEPIC_URL);
-      String token = ourCSRFToken;
-      if (!token.isEmpty()) {
-        request.addHeader(new BasicHeader("Authorization", "Bearer " + token));
-      }
-      request.addHeader(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
-
-
-      HttpClientBuilder builder = HttpClients
-        .custom()
-        .setSslcontext(CertificateManager.getInstance().getSslContext())
         .setMaxConnPerRoute(100000)
         .setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
 
@@ -221,30 +179,16 @@ public class EduStepicConnector {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
         ourClient = builder.setSslcontext(sslContext).build();
-
-        ourClient.execute(request);
-        //saveCSRFToken();
       }
-      catch (IOException e) {
-        LOG.error(e.getMessage());
-      }
-      catch (NoSuchAlgorithmException e) {
-        LOG.error(e.getMessage());
-      }
-      catch (KeyManagementException e) {
+      catch (NoSuchAlgorithmException | KeyManagementException e) {
         LOG.error(e.getMessage());
       }
     }
   }
 
-  private static void saveCSRFToken() {
-    if (ourCookieStore == null) return;
-    final List<Cookie> cookies = ourCookieStore.getCookies();
-    for (Cookie cookie : cookies) {
-      if (cookie.getName().equals("csrftoken")) {
-        ourCSRFToken = cookie.getValue();
-      }
-    }
+  public static void resetClient() {
+    accessToken = "";
+    ourClient = null;
   }
 
   private static StepicWrappers.TokenInfo postCredentials(String user, String password) {
@@ -253,45 +197,25 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(url);
     List<NameValuePair> nvps = new ArrayList<NameValuePair>();
     nvps.add(new BasicNameValuePair("grant_type", "password"));
-    nvps.add(new BasicNameValuePair("login", user));
-    nvps.add(new BasicNameValuePair("password", password));
     nvps.add(new BasicNameValuePair("client_id", CLIENT_ID));
+    nvps.add(new BasicNameValuePair("username", user));
+    nvps.add(new BasicNameValuePair("password", password));
 
     request.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
 
     try {
       final CloseableHttpResponse response = ourClient.execute(request);
-      saveCSRFToken();
       final StatusLine statusLine = response.getStatusLine();
-      if (statusLine.getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY) {
-        final HttpEntity responseEntity = response.getEntity();
-        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-          LOG.warn("Failed to login: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
-          LOG.info("Failed to login " + responseString);
-          throw new IOException("Stepic returned non 200 status code " + responseString);
-        }
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
         return GSON.fromJson(responseString, StepicWrappers.TokenInfo.class);
-//        ourClient = null;
       }
-    }
-    catch (IOException e) {
-      LOG.warn(e.getMessage());
-      ourClient = null;
-    }
-    return null;
-  }
-
-  //  TODO merge : postCredentials
-  private static StepicWrappers.TokenInfo postCredentialsOAuth2(String email, String password) {
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("grant_type", "password");
-    parameters.put("username", email);
-    parameters.put("password", password);
-    parameters.put("client_id", CLIENT_ID);
-
-    try {
-      return postToStepicMapLinkReset(EduStepicNames.TOKEN_URL, parameters, StepicWrappers.TokenInfo.class);
+      else {
+        LOG.warn("Failed to login: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
+        LOG.info("Failed to login " + responseString);
+        throw new IOException("Stepic returned non 200 status code " + responseString);
+      }
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -304,7 +228,8 @@ public class EduStepicConnector {
     if (ourClient == null) {
       initializeClient();
     }
-    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    //    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setHeaders(request);
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
@@ -316,44 +241,22 @@ public class EduStepicConnector {
     return GSON.fromJson(responseString, container);
   }
 
-  static <T> T getFromStepicOAuth2(String link, final Class<T> container) throws IOException {
-    HttpResponse<String> response = null;
-    try {
-      //.header("Authorization", "Bearer " + token)
-      response = Unirest
-        .get(EduStepicNames.STEPIC_URL + link)
-        .asString();
+  static boolean postToStepic(String link, AbstractHttpEntity entity) throws IOException {
+    final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + link);
+    request.setEntity(entity);
+    if (ourClient == null) {
+      initializeClient();
     }
-    catch (UnirestException e) {
-      e.printStackTrace();
-    }
+    setHeaders(request);
 
-    if (response.getStatus() != HttpStatus.SC_OK) {
-      throw new IOException("Stepic returned non 200 status code " + response.getBody());
-    }
-    final String responseString = response.getBody();
-
-    return GSON.fromJson(responseString, container);
-  }
-
-  private static <T> T postToStepicMapLinkReset(String link, Map<String, Object> parameters, final Class<T> container) throws IOException {
-    HttpResponse<String> response;
-    try {
-      response = Unirest
-        .post(link)
-        .fields(parameters)
-        .asString();
-    }
-    catch (UnirestException e) {
-      throw new IOException(e);
-    }
-    final String responseString = response.getBody();
-
-    if (response.getStatus() != HttpStatus.SC_OK) {
+    final CloseableHttpResponse response = ourClient.execute(request);
+    final StatusLine statusLine = response.getStatusLine();
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
-
-    return GSON.fromJson(responseString, container);
+    return true;
   }
 
   @NotNull
@@ -366,20 +269,13 @@ public class EduStepicConnector {
   }
 
   public static boolean enrollToCourse(final int courseId) {
-    HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ENROLLMENTS);
+
+    final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
     try {
-      final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
-      post.setEntity(new StringEntity(new GsonBuilder().create().toJson(enrollment)));
-      setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
-      if (ourClient == null) {
-        initializeClient();
-      }
-      CloseableHttpResponse response = ourClient.execute(post);
-      StatusLine line = response.getStatusLine();
-      return line.getStatusCode() == HttpStatus.SC_CREATED;
+      return postToStepic(EduStepicNames.ENROLLMENTS, new StringEntity(new GsonBuilder().create().toJson(enrollment)));
     }
     catch (IOException e) {
-      LOG.warn(e.getMessage());
+      LOG.warn("EnrollToCourse error\n"+e.getMessage());
     }
     return false;
   }
@@ -605,6 +501,7 @@ public class EduStepicConnector {
     return logged[0];
   }
 
+  //TODO rewrite with postToStepic
   public static void postAttempt(@NotNull final Task task, boolean passed, @Nullable String login, @Nullable String password) {
     if (task.getStepicId() <= 0) {
       return;
@@ -646,6 +543,7 @@ public class EduStepicConnector {
     }
   }
 
+  //TODO rewrite with postToStepic
   private static void postSubmission(boolean passed,
                                      StepicWrappers.AttemptWrapper.Attempt attempt,
                                      ArrayList<StepicWrappers.SolutionFile> files) throws IOException {
@@ -676,6 +574,7 @@ public class EduStepicConnector {
     });
   }
 
+  //TODO rewrite with postToStepic
   private static void postCourse(final Project project,
                                  @NotNull Course course,
                                  boolean relogin,
@@ -951,10 +850,24 @@ public class EduStepicConnector {
     });
   }
 
+
+  @Deprecated
+  //use setHeaders(HttpRequestBase), it sets accessToken
   static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
     request.addHeader(new BasicHeader("referer", stepicUrl));
     request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
+  }
+
+  public static void setHeaders(@NotNull final HttpRequestBase request) {
+    if (!accessToken.isEmpty()) {
+      LOG.info("setup default headers");
+      request.addHeader(new BasicHeader("Authorization", "Bearer " + accessToken));
+      request.addHeader(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
+    }
+    else {
+      LOG.warn("access_token is empty");
+    }
   }
 
   public static String getIdQuery(List<Integer> list) {
@@ -978,9 +891,5 @@ public class EduStepicConnector {
       public void checkServerTrusted(X509Certificate[] certs, String authType) {
       }
     }};
-  }
-
-  public static String getToken() {
-    return null;
   }
 }
