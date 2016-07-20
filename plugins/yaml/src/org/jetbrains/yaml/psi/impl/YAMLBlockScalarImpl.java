@@ -58,6 +58,9 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl {
         thisLineStart = child.getStartOffset() + 1;
       }
     }
+    if (thisLineStart != -1 && thisLineStart != getTextRange().getEndOffset()) {
+          result.add(TextRange.create(thisLineStart, getTextRange().getEndOffset()).shiftRight(-myStart));
+    }
 
     final int lastNonEmpty = ContainerUtil.lastIndexOf(result, range -> range.getLength() != 0);
 
