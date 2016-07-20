@@ -135,7 +135,7 @@ public class RegistryValue {
       String stringCachedValue = myStringCachedValue;
       if (stringCachedValue == null) {
         stringCachedValue = _get(key, defaultValue, true);
-        if (isBoolean()) {
+        if (isBoolean(stringCachedValue)) {
           stringCachedValue = Boolean.valueOf(stringCachedValue).toString();
         }
         myStringCachedValue = stringCachedValue;
@@ -232,6 +232,9 @@ public class RegistryValue {
   }
 
   public boolean isBoolean() {
-    return "true".equals(asString()) || "false".equals(asString());
+    return isBoolean(asString());
+  }
+  private static boolean isBoolean(String s) {
+    return "true".equals(s) || "false".equals(s);
   }
 }
