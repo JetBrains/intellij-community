@@ -75,6 +75,11 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
       return SchemaType.userSchema;
     }
 
+    @Override
+    public int getOrder() {
+      return 1000;
+    }
+
     @NotNull
     @Override
     public String getName() {
