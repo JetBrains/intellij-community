@@ -1,6 +1,9 @@
 // silly asignment
-import javax.swing.*;
 
+class JPanel {
+  JPanel getSize() { return this; }
+  int height;
+}
 class a {
   int f;
   JPanel fpanel;

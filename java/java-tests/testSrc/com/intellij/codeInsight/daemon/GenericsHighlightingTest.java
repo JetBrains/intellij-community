@@ -22,10 +22,8 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -587,15 +585,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
                                                                     manager);
     assertNotNull(leastUpperBound);
     assertEquals("Number & Comparable<? extends Number & Comparable<?>>", leastUpperBound.getPresentableText());
-  }
-
-  public void testJavaUtilCollections_NoVerify() throws Exception {
-    PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
-    assertNotNull(collectionsClass);
-    collectionsClass = (PsiClass)collectionsClass.getNavigationElement();
-    final String text = collectionsClass.getContainingFile().getText();
-    configureFromFileText("Collections.java", StringUtil.convertLineSeparators(StringUtil.replace(text, "package java.util;", "package java.utilx; import java.util.*;")));
-    doTestConfiguredFile(false, false, null);
   }
 
   public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() throws Exception {

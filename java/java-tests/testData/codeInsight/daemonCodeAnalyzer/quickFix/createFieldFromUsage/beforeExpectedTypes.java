@@ -1,12 +1,11 @@
 // "Create field 'panel'" "true"
-import javax.swing.*;
+import java.io.*;
 
 class Test {
-  void foo(JPanel container) {
+  Object foo(File container) {
     if (p<caret>anel == null) {
-      panel = new JPanel();
-      panel.setOpaque(true);
-      container.add(panel);
+      panel = new File();
+      return new File(container, panel.getName());
     }
   }
 }

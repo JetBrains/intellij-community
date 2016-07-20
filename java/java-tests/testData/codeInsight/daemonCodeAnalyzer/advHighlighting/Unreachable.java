@@ -1,6 +1,6 @@
 // unreachables
 import java.io.*;
-import java.net.*;
+
 public class a  {
 interface ii {}
 
@@ -135,16 +135,21 @@ interface ii {}
      int i = 6;
    }
  }
- void cf4() throws java.net.SocketException {
+ void cf4() throws SocketException {
   try {
     bind();
-  } catch (java.net.SocketException se) {
+  } catch (SocketException se) {
     throw se;
-  } catch(java.io.IOException e) {
-    throw new java.net.SocketException(e.getMessage());
+  } catch(IOException e) {
+    throw new SocketException(e.getMessage());
   }
  }
- void bind() throws java.net.SocketException {}
+ static class SocketException extends IOException {
+   public SocketException(String message) {
+     super(message);
+   }
+ }
+ void bind() throws SocketException {}
 
 
  void cf5() {

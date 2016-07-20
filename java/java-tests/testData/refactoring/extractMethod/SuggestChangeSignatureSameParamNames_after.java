@@ -7,9 +7,9 @@ public class Test {
         newMethod(x, 3, 4);
     }
 
-    private void newMethod(int x, int x2, int x3) {
-        System.out.println(x2);
-        System.out.println(x3);
+    private void newMethod(int x, int i, int i2) {
+        System.out.println(i);
+        System.out.println(i2);
         System.out.println(x);
     }
 }

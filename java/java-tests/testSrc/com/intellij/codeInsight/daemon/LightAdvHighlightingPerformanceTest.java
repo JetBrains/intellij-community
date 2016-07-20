@@ -24,15 +24,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ThrowableRunnable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @SkipSlowTestLocally
@@ -49,6 +49,11 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // has to have awt
   }
 
   @Override
@@ -101,12 +106,9 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     getFile().getText(); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
-      infos.clear();
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
-      List<HighlightInfo> h = doHighlighting();
-      infos.addAll(h);
+      doHighlighting();
     }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
 
     return highlightErrors();

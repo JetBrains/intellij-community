@@ -1,6 +1,6 @@
 /// assignment compatible types
 import java.io.*;
-import java.net.*;
+
 public class a  {
   final int FI = 2;
   final int FIBIG = 200000000;

@@ -1,6 +1,6 @@
 // labels
 import java.io.*;
-import java.net.*;
+
 
 class a {
  void f() {
@@ -66,4 +66,4 @@ class AlreadyInUse {
      }
    };
  }
-}       
+}
