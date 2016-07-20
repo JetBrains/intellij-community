@@ -26,6 +26,7 @@ class IdeaCommunityProperties extends ProductProperties {
     applicationInfoModule = "community-resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
     toolsJarRequired = true
+    buildCrossPlatformDistribution = true
   }
 
   @Override
@@ -38,6 +39,9 @@ class IdeaCommunityProperties extends ProductProperties {
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
+    }
+    buildContext.ant.copy(todir: "$targetDirectory/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
     }
   }
 
