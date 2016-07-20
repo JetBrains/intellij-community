@@ -59,11 +59,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   @NotNull
   private static File getBundledJDKFile() {
-    StringBuilder bundledJDKPath = new StringBuilder("jre");
-    if (SystemInfo.isMac) {
-      bundledJDKPath.append(File.separator).append("jdk");
-    }
-    return new File(bundledJDKPath.toString());
+    return new File(SystemInfo.isMac ? "jdk" : "jre");
   }
 
   @Override
