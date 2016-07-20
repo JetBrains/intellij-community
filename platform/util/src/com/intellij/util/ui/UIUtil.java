@@ -3598,6 +3598,22 @@ public class UIUtil {
     return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
   }
 
+  /**
+   * Places the specified window at the top of the stacking order and shows it in front of any other windows.
+   * If the window is iconified it will be shown anyway.
+   *
+   * @param window the window to activate
+   */
+  public static void toFront(Window window) {
+    if (window instanceof Frame) {
+      Frame frame = (Frame)window;
+      frame.setState(Frame.NORMAL);
+    }
+    if (window != null) {
+      window.toFront();
+    }
+  }
+
   public static Image getDebugImage(Component component) {
     BufferedImage image = createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics = image.createGraphics();
