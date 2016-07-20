@@ -128,7 +128,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   private void map(Document document, Bookmark bookmark) {
-    System.out.println("map " + bookmark);
     if (document == null || bookmark == null) return;
 
     List<Bookmark> list = myDocumentsMap.get(document);
@@ -139,7 +138,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   private void unmap(Document document, Bookmark bookmark) {
-    System.out.println("unmap " + bookmark);
     if (document == null || bookmark == null) return;
     List<Bookmark> list = myDocumentsMap.get(document);
     if (list != null && list.remove(bookmark) && list.isEmpty()) {
