@@ -50,9 +50,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     myFixture.addClass("public class A {" +
                        "  public I r;" +
                        "}");
-    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 1; i++) {
-      myFixture.addClass("class B" + i + " { {Runnable r = () -> {};}}"); //ensure common case is used
-    }
+    addManyLambdas();
 
     doTestOneExpression();
   }
@@ -63,25 +61,29 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
                        "  <T> void foo(T... r) {}\n" +
                        "  void bar(J i){foo(i, i, () -> {});}\n" +
                        "}");
-    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 1; i++) {
-      myFixture.addClass("class B" + i + " { {Runnable r = () -> {};}}"); //ensure common case is used
-    }
+    addManyLambdas();
 
     doTestOneExpression();
   }
 
   private void doTestOneExpression() {
     myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
-    assertNotNull(elementAtCaret);
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(elementAtCaret, PsiClass.class, false);
-    assertTrue(psiClass != null && psiClass.isInterface());
+    final PsiClass psiClass = findClassAtCaret();
     final Collection<PsiFunctionalExpression> expressions = FunctionalExpressionSearch.search(psiClass).findAll();
     int size = expressions.size();
     assertEquals(1, size);
     final PsiFunctionalExpression next = expressions.iterator().next();
     assertNotNull(next);
     assertEquals("() -> {}", next.getText());
+  }
+
+  @NotNull
+  private PsiClass findClassAtCaret() {
+    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    assertNotNull(elementAtCaret);
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(elementAtCaret, PsiClass.class, false);
+    assertTrue(psiClass != null && psiClass.isInterface());
+    return psiClass;
   }
 
   public void testFieldFromAnonymousClassScope() throws Exception {
@@ -108,14 +110,34 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
   public void doTestIndexSearch(String expected) {
     myFixture.configureByFile(getTestName(false) + ".java");
 
-    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 5; i++) {
-      myFixture.addFileToProject("a" + i + ".java", "class Goo {{ Runnable r = () -> {} }}");
-    }
+    addManyLambdas();
 
     PsiClass predicate = JavaPsiFacade.getInstance(getProject()).findClass(Predicate.class.getName(), GlobalSearchScope.allScope(getProject()));
     assert predicate != null;
     final PsiFunctionalExpression next = assertOneElement(FunctionalExpressionSearch.search(predicate).findAll());
     assertEquals(expected, next.getText());
+  }
+
+  public void testConstructorReferences() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    myFixture.addClass("class Bar extends Foo {\n" +
+                       "  public Bar() { super(() -> 1); }\n" +
+                       "\n" +
+                       "  {\n" +
+                       "    new Foo(() -> 2) { };\n" +
+                       "    new Foo(() -> 3);\n" +
+                       "  }\n" +
+                       "}");
+    addManyLambdas();
+
+    assertSize(4, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
+  }
+
+  private void addManyLambdas() {
+    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 5; i++) {
+      myFixture.addFileToProject("a" + i + ".java", "class Goo {{ Runnable r = () -> {} }}");
+    }
   }
 
   @Override
