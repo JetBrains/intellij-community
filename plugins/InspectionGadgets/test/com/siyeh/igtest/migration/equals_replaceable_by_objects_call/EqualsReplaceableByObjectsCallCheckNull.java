@@ -6,6 +6,6 @@ class EqualsReplaceableByObjectsCall {
   }
 
   void ignoreNullityCheck(Object a, Object b) {
-    boolean c = <warning descr="'a.equals(b)' replaceable by 'Objects.equals()' expression">a.equals(b)</warning>;
+    boolean c = a.equals(b);
   }
 }

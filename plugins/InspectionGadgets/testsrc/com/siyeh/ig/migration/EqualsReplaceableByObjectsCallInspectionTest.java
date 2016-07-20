@@ -15,23 +15,43 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectionTestCase {
+  private EqualsReplaceableByObjectsCallInspection myInspection = new EqualsReplaceableByObjectsCallInspection();
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    final InspectionProfileImpl profile = (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    profile.setErrorLevel(HighlightDisplayKey.find("EqualsReplaceableByObjectsCall"), HighlightDisplayLevel.WARNING, getProject());
+  }
 
   public void testEqualsReplaceableByObjectsCall() {
     doTest();
   }
 
+  public void testEqualsReplaceableByObjectsCallCheckNull() {
+    try {
+      myInspection.checkNotNull = true;
+      doTest();
+    } finally {
+      myInspection.checkNotNull = false;
+    }
+  }
+
   @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EqualsReplaceableByObjectsCallInspection();
+  protected LocalInspectionTool getInspection() {
+    return myInspection;
   }
 }
