@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -44,7 +43,6 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
@@ -113,10 +111,6 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         VirtualFile vFile = file.getVirtualFile();
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
         String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);
-        if (StringUtil.isEmpty(vFile.getExtension())) {
-          FileType type = ObjectUtils.notNull(file.getLanguage().getAssociatedFileType(), file.getFileType());
-          fileName = PathUtil.makeFileName(fileName, type.getDefaultExtension());
-        }
         myNewNameField.setText(fileName);
         int dotIdx = fileName.lastIndexOf('.');
         if (dotIdx > 0) {
