@@ -51,6 +51,9 @@ public final class HttpRequests {
 
   public interface Request {
     @NotNull
+    String getURL();
+
+    @NotNull
     URLConnection getConnection() throws IOException;
 
     @NotNull
@@ -95,16 +98,22 @@ public final class HttpRequests {
 
   @NotNull
   public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) throws IOException {
-    URLConnection connection = request.getConnection();
     StringBuilder builder = new StringBuilder();
-    builder.append("Cannot download '").append(connection.getURL().toExternalForm()).append("': ").append(e.getMessage());
-    if (includeHeaders) {
-      builder.append("\n, headers: ").append(connection.getHeaderFields());
+
+    builder.append("Cannot download '").append(request.getURL()).append("': ").append(e.getMessage());
+
+    try {
+      URLConnection connection = request.getConnection();
+      if (includeHeaders) {
+        builder.append("\n, headers: ").append(connection.getHeaderFields());
+      }
+      if (connection instanceof HttpURLConnection) {
+        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+        builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
+      }
     }
-    if (connection instanceof HttpURLConnection) {
-      HttpURLConnection httpConnection = (HttpURLConnection)connection;
-      builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
-    }
+    catch (Throwable ignored) { }
+
     return builder.toString();
   }
 
@@ -138,6 +147,12 @@ public final class HttpRequests {
       private URLConnection myConnection;
       private InputStream myInputStream;
       private BufferedReader myReader;
+
+      @NotNull
+      @Override
+      public String getURL() {
+        return builder.myUrl;
+      }
 
       @NotNull
       @Override
@@ -289,7 +304,7 @@ public final class HttpRequests {
       }
 
       connection.setUseCaches(false);
-      
+
       if (builder.myTuner != null) {
         builder.myTuner.tune(connection);
       }
