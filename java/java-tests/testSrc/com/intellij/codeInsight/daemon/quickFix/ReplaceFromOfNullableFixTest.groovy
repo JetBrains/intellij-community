@@ -15,14 +15,13 @@
  */
 
 package com.intellij.codeInsight.daemon.quickFix
+
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.NotNull
 
 public class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
@@ -82,8 +81,4 @@ public abstract class Optional<T> {
     super.afterActionCompleted(testName, contents)
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
 }

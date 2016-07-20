@@ -44,11 +44,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
-
   public void testReferenceTypeParams() {
     doTest();
   }

@@ -18,7 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -29,7 +28,6 @@ import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -561,10 +559,5 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     configureByFile(baseName + ".java");
     testMe.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(baseName + ".after.java");
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

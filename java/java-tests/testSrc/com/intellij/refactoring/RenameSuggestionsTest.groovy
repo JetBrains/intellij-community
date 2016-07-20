@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 package com.intellij.refactoring
+
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightCodeInsightTestCase
 /**
  * User: anna
@@ -71,10 +70,6 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo")
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18()
-  }
 
   public void "test by Optional_of initializer"() {
     def suggestions = getNameSuggestions("""

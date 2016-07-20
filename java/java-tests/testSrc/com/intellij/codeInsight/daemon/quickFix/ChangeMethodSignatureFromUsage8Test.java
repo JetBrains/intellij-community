@@ -15,12 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameterizedTestCase {
 
@@ -34,10 +29,5 @@ public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameteri
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }
