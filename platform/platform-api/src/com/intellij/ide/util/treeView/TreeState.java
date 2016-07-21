@@ -110,6 +110,10 @@ public class TreeState implements JDOMExternalizable {
     this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
   }
 
+  public boolean isEmpty() {
+    return myExpandedPaths.isEmpty() && mySelectedPaths.isEmpty();
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, PATH);
