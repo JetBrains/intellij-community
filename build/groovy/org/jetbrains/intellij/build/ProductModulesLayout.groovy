@@ -57,7 +57,8 @@ class ProductModulesLayout {
   List<String> platformImplementationModules = []
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product
+   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
+   * includes names of optional modules from these plugins which need to be included into the plugin distribution for this product.
    */
   List<String> bundledPluginModules = []
 
