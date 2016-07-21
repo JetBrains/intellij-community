@@ -106,7 +106,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-      content = new DocumentFragmentContent(project, content, range);
+      content = DiffContentFactory.getInstance().createFragment(project, content, range);
     }
 
     return content;

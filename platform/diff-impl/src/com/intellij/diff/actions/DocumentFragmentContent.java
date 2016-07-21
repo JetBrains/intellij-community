@@ -48,18 +48,27 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   private int myAssignments = 0;
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull TextRange range) {
+    this(project, original, createRangeMarker(original.getDocument(), range));
+  }
+
+  public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull RangeMarker rangeMarker) {
     myOriginal = original;
+    myRangeMarker = rangeMarker;
 
     Document document1 = myOriginal.getDocument();
 
     Document document2 = EditorFactory.getInstance().createDocument("");
     document2.putUserData(UndoManager.ORIGINAL_DOCUMENT, document1);
 
-    myRangeMarker = document1.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-    myRangeMarker.setGreedyToLeft(true);
-    myRangeMarker.setGreedyToRight(true);
-
     mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
+  }
+
+  @NotNull
+  private static RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
+    RangeMarker rangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+    rangeMarker.setGreedyToLeft(true);
+    rangeMarker.setGreedyToRight(true);
+    return rangeMarker;
   }
 
   @NotNull

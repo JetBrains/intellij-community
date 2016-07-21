@@ -16,7 +16,6 @@
 package com.intellij.ide.commander;
 
 import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -42,21 +41,22 @@ public class PsiDiffContentFactory {
 
   @Nullable
   private static DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
+    DiffContentFactory factory = DiffContentFactory.getInstance();
     if (psiElement instanceof PsiFile) {
-      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
+      return factory.create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
     }
     else if (psiElement instanceof PsiDirectory) {
-      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
+      return factory.create(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
     }
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) {
       String text = psiElement.getText();
       if (text == null) return null;
-      return DiffContentFactory.getInstance().create(text, psiElement.getLanguage().getAssociatedFileType(), false);
+      return factory.create(text, psiElement.getLanguage().getAssociatedFileType(), false);
     }
-    DocumentContent wholeFileContent = DiffContentFactory.getInstance().createDocument(psiElement.getProject(), containingFile.getVirtualFile());
+    DocumentContent wholeFileContent = factory.createDocument(psiElement.getProject(), containingFile.getVirtualFile());
     if (wholeFileContent == null) return null;
-    return new DocumentFragmentContent(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
+    return factory.createFragment(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
   }
 
   @Nullable
