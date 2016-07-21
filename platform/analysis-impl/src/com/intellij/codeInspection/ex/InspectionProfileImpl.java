@@ -88,7 +88,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private final Object myLock = new Object();
 
-  private SchemeDataHolder<InspectionProfileImpl> myDataHolder;
+  private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
   InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     this(inspectionProfile.getName(), inspectionProfile.myRegistrar, inspectionProfile.getProfileManager(), inspectionProfile.myBaseProfile, null);
@@ -114,7 +114,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager,
                                @Nullable InspectionProfileImpl baseProfile,
-                               @Nullable SchemeDataHolder<InspectionProfileImpl> dataHolder) {
+                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName);
 
     myRegistrar = registrar;
@@ -534,7 +534,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private void initialize(@Nullable Project project) {
-    SchemeDataHolder<InspectionProfileImpl> dataHolder = myDataHolder;
+    SchemeDataHolder<? super InspectionProfileImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
       Element element = dataHolder.read();

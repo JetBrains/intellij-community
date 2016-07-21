@@ -94,7 +94,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       }
 
       @NotNull
-      public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<InspectionProfileImpl> dataHolder,
+      public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean duringLoad) {
