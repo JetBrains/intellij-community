@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
 /**
  * @author max
@@ -37,7 +36,7 @@ public interface ApplicationEx extends Application {
    */
   void load(@Nullable String configPath);
 
-  void load() throws IOException;
+  void load();
 
   boolean isLoaded();
 

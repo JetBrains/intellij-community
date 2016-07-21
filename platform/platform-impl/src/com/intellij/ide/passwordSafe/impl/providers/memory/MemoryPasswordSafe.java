@@ -19,7 +19,6 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
 
   @NotNull
   @Override
-  protected byte[] key(Project project, @NotNull Class requestor) {
+  protected byte[] key() {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);
@@ -82,11 +81,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
-  }
-
-  @Override
-  public String getDescription() {
-    return "Memory-based password safe provider. The passwords are stored only for the duration of IDEA process.";
   }
 
   @Override

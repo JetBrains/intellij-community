@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import java.util.Arrays;
  * @author gregsh
  */
 public abstract class PasswordComponentBase {
-  protected final MasterKeyPasswordSafe mySafe;
   private final String myTitle;
 
   private JPanel myRootPanel;
@@ -41,27 +39,16 @@ public abstract class PasswordComponentBase {
   protected JPasswordField myPasswordField;
   protected JPasswordField myNewPasswordField;
   protected JPasswordField myConfirmPasswordField;
-  protected JCheckBox myEncryptCheckBox;
   protected JLabel myPasswordLabel;
   protected JLabel myNewPasswordLabel;
 
-
-  public PasswordComponentBase(@NotNull MasterKeyPasswordSafe safe, @NotNull String title) {
-    mySafe = safe;
+  public PasswordComponentBase(@NotNull String title) {
     myTitle = title;
     myIconLabel.setText("");
     myIconLabel.setIcon(AllIcons.General.PasswordLock);
     myIconLabel.setDisabledIcon(AllIcons.General.PasswordLock);
     //myPromptLabel.setUI(new MultiLineLabelUI());
     myPromptLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-
-    if (!safe.isOsProtectedPasswordSupported()) {
-      myEncryptCheckBox.setSelected(false);
-      myEncryptCheckBox.setVisible(false);
-    }
-    else {
-      myEncryptCheckBox.setSelected(safe.isPasswordEncrypted());
-    }
   }
 
   public JComponent getComponent() {
@@ -85,25 +72,10 @@ public abstract class PasswordComponentBase {
     return null;
   }
 
-  public abstract boolean apply();
+  @Nullable
+  public abstract ValidationInfo apply();
 
   public String getHelpId() {
     return null;
-  }
-
-  @Nullable
-  protected ValidationInfo validatePassword() {
-    if (myPasswordField.isEnabled()) {
-      String oldPassword = new String(myPasswordField.getPassword());
-      if (!mySafe.setMasterPassword(oldPassword)) {
-        return new ValidationInfo("Password is incorrect", myPasswordField);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  public static String getRequestorTitle(@NotNull Class<?> requestor) {
-    return TypePresentationService.getDefaultTypeName(requestor);
   }
 }

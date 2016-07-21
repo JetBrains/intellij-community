@@ -26,25 +26,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class NilProvider extends PasswordSafeProvider {
   @Override
-  public String getDescription() {
-    return "The provider that does not remembers password.";
-  }
-
-  @Override
   public String getName() {
     return "Do not Store";
   }
 
-  public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @Nullable Class requester, @NotNull String key) throws PasswordSafeException {
     // nothing is stored
     return null;
   }
 
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
-    // do nothing
-  }
-
-  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, @Nullable Class requester, String key, String value) throws PasswordSafeException {
     // just forget about password
   }
 }

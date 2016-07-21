@@ -381,7 +381,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     load(null);
   }
 
@@ -401,7 +401,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+        ApplicationLoadListener[] applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensions();
+        for (ApplicationLoadListener listener : applicationLoadListeners) {
           try {
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
@@ -412,6 +413,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
+
+        for (ApplicationLoadListener listener : applicationLoadListeners) {
+          try {
+            listener.beforeComponentsCreated();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
       });
       LOG.info(getComponentConfigCount() + " application components initialized in " + (System.currentTimeMillis() - start) + "ms");
     }

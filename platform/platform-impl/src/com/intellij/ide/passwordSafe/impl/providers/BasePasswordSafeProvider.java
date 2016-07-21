@@ -37,19 +37,18 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    *    So make sure not to call it from the read action.
    *    Calling this method from the dispatch thread is allowed.</p>
    *
-   * @param project the project to use
-   * @param requestor
    * @return the secret key to use
    * @throws PasswordSafeException in case of problems with access to the password database.
    * @throws IllegalStateException if the method is called from the read action.
    */
   @NotNull
-  protected abstract byte[] key(@Nullable Project project, @NotNull Class requestor);
+  protected abstract byte[] key();
 
   @Nullable
-  public String getPassword(@Nullable Project project, @NotNull Class requestor, String key) {
-    byte[] ct = getEncryptedPassword(dbKey(project, requestor, key));
-    return ct == null ? null : EncryptionUtil.decryptText(key(project, requestor), ct);
+  public String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key) {
+    byte[] masterKey = key();
+    byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.dbKey(masterKey, requestor, key));
+    return encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
   }
 
   /**
@@ -63,18 +62,17 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
   /**
    * Get database key
    *
-   * @param project
    * @param requestor the requestor class
    * @param key       the key to use
    * @return the key to use for map
    */
   @NotNull
-  private byte[] dbKey(@Nullable Project project, Class requestor, String key) {
-    return EncryptionUtil.dbKey(key(project, requestor), requestor, key);
+  private byte[] dbKey(@Nullable Class requestor, String key) {
+    return EncryptionUtil.dbKey(key(), requestor, key);
   }
 
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
-    byte[] k = dbKey(project, requester, key);
+  public void removePassword(@Nullable Project project, @Nullable Class requestor, String key) throws PasswordSafeException {
+    byte[] k = dbKey(requestor, key);
     removeEncryptedPassword(k);
   }
 
@@ -85,9 +83,9 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  public void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value) throws PasswordSafeException {
-    byte[] k = dbKey(project, requestor, key);
-    byte[] ct = EncryptionUtil.encryptText(key(project, requestor), value);
+  public void storePassword(@Nullable Project project, @Nullable Class requestor, String key, String value) throws PasswordSafeException {
+    byte[] k = dbKey(requestor, key);
+    byte[] ct = EncryptionUtil.encryptText(key(), value);
     storeEncryptedPassword(k, ct);
   }
 

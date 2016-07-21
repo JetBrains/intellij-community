@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.passwordSafe;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,41 +26,34 @@ public interface PasswordStorage {
   /**
    * <p>Get password stored in a password safe.</p>
    *
-   * <p><b>NB: </b>
-   *    This method may be called from the background,
-   *    and it may need to ask user to enter the master password to access the database by calling
-   *    {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()} to show a modal dialog.
-   *    So make sure not to call it from the read action.
-   *    Calling this method from the dispatch thread is allowed.</p>
-   *
-   * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
    * @param key       the key for the password
    * @return the stored password or null if the password record was not found or was removed
-   * @throws PasswordSafeException if password safe cannot be accessed
-   * @throws IllegalStateException if the method is called from the read action.
    */
   @Nullable
-  String getPassword(@Nullable Project project, @NotNull Class requestor, String key);
+  String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key);
+
+  @Nullable
+  default String getPassword(@NotNull String key) {
+    return getPassword(null, null, key);
+  }
 
   /**
    * Remove password stored in a password safe
    *
-   * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
    * @param key       the key for the password
-   * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void removePassword(@Nullable Project project, @NotNull Class requestor, String key);
+  default void removePassword(@Nullable Project project, @Nullable Class requestor, String key) {
+    storePassword(project, requestor, key, null);
+  }
 
   /**
    * Store password in password safe
    *
-   * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requestor the requestor class
    * @param key       the key for the password
    * @param value     the value to store
-   * @throws PasswordSafeException if password safe cannot be accessed
    */
-  void storePassword(@Nullable Project project, @NotNull Class requestor, String key, String value);
+  void storePassword(@Nullable Project project, @Nullable Class requestor, String key, @Nullable String value);
 }

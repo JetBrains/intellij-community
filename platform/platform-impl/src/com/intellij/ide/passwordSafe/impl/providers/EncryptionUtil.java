@@ -17,6 +17,7 @@ package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -81,8 +82,8 @@ public class EncryptionUtil {
    * @param key       the key
    * @return the raw key bytes
    */
-  static byte[] rawKey(Class requester, String key) {
-    return hash(getUTF8Bytes(requester.getName() + "/" + key));
+  static byte[] rawKey(@Nullable Class requester, String key) {
+    return hash(getUTF8Bytes((requester == null ? "" : (requester.getName() + "/")) + key));
   }
 
   /**
@@ -105,7 +106,7 @@ public class EncryptionUtil {
    * @param password the password to use
    * @return the generated key
    */
-  public static byte[] genPasswordKey(String password) {
+  public static byte[] genPasswordKey(@NotNull String password) {
     return genKey(hash(getUTF8Bytes(password)));
   }
 
@@ -138,7 +139,7 @@ public class EncryptionUtil {
    * @return the key to use in the database
    */
   @NotNull
-  public static byte[] dbKey(@NotNull byte[] password, Class requestor, String key) {
+  public static byte[] dbKey(@NotNull byte[] password, @Nullable Class requestor, String key) {
     return encryptKey(password, rawKey(requestor, key));
   }
 
@@ -211,14 +212,6 @@ public class EncryptionUtil {
     }
   }
 
-
-  /**
-   * Encrypt text
-   *
-   * @param password the secret key to use
-   * @param data     the bytes to decrypt
-   * @return encrypted text
-   */
   @NotNull
   public static String decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);

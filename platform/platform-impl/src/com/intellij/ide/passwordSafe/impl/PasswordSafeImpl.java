@@ -18,26 +18,27 @@ package com.intellij.ide.passwordSafe.impl;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
 import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
+import com.intellij.ide.passwordSafe.masterKey.DbV1ConvertorKt;
+import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PasswordSafeImpl extends PasswordSafe {
+public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance(PasswordSafeImpl.class);
 
   private final PasswordSafeSettings mySettings;
-  private final MasterKeyPasswordSafe myMasterKeyProvider;
+  private final FilePasswordSafeProvider myMasterKeyProvider;
   private final NilProvider myNilProvider;
   private final MemoryPasswordSafe myMemoryProvider;
 
-  public PasswordSafeImpl(PasswordSafeSettings settings, PasswordDatabase database) {
+  public PasswordSafeImpl(@NotNull PasswordSafeSettings settings) {
     mySettings = settings;
-    myMasterKeyProvider = new MasterKeyPasswordSafe(database);
+    myMasterKeyProvider = new FilePasswordSafeProvider(DbV1ConvertorKt.convertOldDb());
     myNilProvider = new NilProvider();
     myMemoryProvider = new MemoryPasswordSafe();
   }
@@ -71,7 +72,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   }
 
   @Nullable
-  public String getPassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @Nullable Class requester, @NotNull String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       String password = getMemoryProvider().getPassword(project, requester, key);
       if (password == null) {
@@ -86,28 +87,30 @@ public class PasswordSafeImpl extends PasswordSafe {
     return provider().getPassword(project, requester, key);
   }
 
-  public void removePassword(@Nullable Project project, @NotNull Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, @Nullable Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
     }
     provider().removePassword(project, requester, key);
   }
 
-  public void storePassword(@Nullable Project project, @NotNull Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, @Nullable Class requester, String key, String value) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().storePassword(project, requester, key, value);
     }
     provider().storePassword(project, requester, key, value);
   }
 
-  /**
-   * @return get master key provider instance (used for configuration specific to this provider)
-   */
-  public MasterKeyPasswordSafe getMasterKeyProvider() {
+  public PasswordSafeProvider getMasterKeyProvider() {
     return myMasterKeyProvider;
   }
 
   public MemoryPasswordSafe getMemoryProvider() {
     return myMemoryProvider;
+  }
+
+  @Override
+  public void save() {
+    myMasterKeyProvider.save();
   }
 }

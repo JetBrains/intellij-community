@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package git4idea.commands;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
@@ -178,8 +177,6 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
         if (mySaveOnDisk) {
           passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
         }
-      }
-      catch (MasterPasswordUnavailableException ignored) {
       }
       catch (PasswordSafeException e) {
         LOG.error("Couldn't remember password for " + myPasswordKey, e);
