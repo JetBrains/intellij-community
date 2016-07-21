@@ -40,7 +40,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 /**
  * @author nik
  */
-class CommonProductModules {
+class CommunityRepositoryModules {
   static List<String> PLATFORM_API_MODULES = [
     "analysis-api",
     "built-in-server-api",
