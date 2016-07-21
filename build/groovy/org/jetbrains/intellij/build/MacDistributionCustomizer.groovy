@@ -20,7 +20,8 @@ package org.jetbrains.intellij.build
  */
 abstract class MacDistributionCustomizer {
   /**
-   * Path to icns file containing 32x32 product icon for Mac OS distribution
+   * Path to icns file containing product icon bundle for Mac OS distribution
+   * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
    */
   String icnsPath
 
@@ -28,9 +29,35 @@ abstract class MacDistributionCustomizer {
    * The minimum version of Mac OS where the product is allowed to be installed
    */
   String minOSXVersion = "10.8"
+  /**
+   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format
+   * If there's no help bundled, leave empty
+   */
   String helpId = ""
+  /**
+   * String with declarations of additional file types that should be automatically opened by the application
+   * Example:
+   * <dict>
+   *   <key>CFBundleTypeExtensions</key>
+   *   <array>
+   *     <string>extension</string>
+   *   </array>
+   *   <key>CFBundleTypeIconFile</key>
+   *   <string>path_to_icons.icns</string>
+   *   <key>CFBundleTypeName</key>
+   *   <string>File type description</string>
+   *   <key>CFBundleTypeRole</key>
+   *   <string>Editor</string>
+   * </dict>
+   */
   String additionalDocTypes = ""
+  /**
+   * Specify <scheme> here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
+   */
   List<String> urlSchemes = []
+  /**
+   * CPU architectures app can be launched on, currently only x86_64 is supported
+   */
   List<String> architectures = ["x86_64"]
 
   /**
