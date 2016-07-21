@@ -59,9 +59,9 @@ public class FormatTextRanges implements FormattingRangesInfo {
   }
 
   @Override
-  public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
+  public boolean isReadOnly(TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
-      if (!formatTextRange.isReadOnly(range, rootIsRightBlock)) {
+      if (!formatTextRange.isReadOnly(range)) {
         return false;
       }
     }

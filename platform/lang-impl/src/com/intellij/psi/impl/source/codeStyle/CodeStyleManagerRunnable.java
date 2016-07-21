@@ -145,7 +145,7 @@ abstract class CodeStyleManagerRunnable<T> {
     final ASTNode elementAtOffset =
       SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
-      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
+      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\n\r\t ");
       return new TextRange(Math.max(significantRangeStart, 0), offset);
     }
 
@@ -155,6 +155,27 @@ abstract class CodeStyleManagerRunnable<T> {
       return textRange;
     }
 
-    return elementAtOffset.getTextRange();
+    final TextRange elementRange = elementAtOffset.getTextRange();
+    if (isWhiteSpace(elementAtOffset)) {
+      return extendRangeAtStartOffset(file, elementRange);
+    }
+    
+    return elementRange;
+  }
+
+  private static boolean isWhiteSpace(ASTNode elementAtOffset) {
+    return elementAtOffset instanceof PsiWhiteSpace 
+           || CharArrayUtil.containsOnlyWhiteSpaces(elementAtOffset.getChars());
+  }
+
+  @NotNull
+  private static TextRange extendRangeAtStartOffset(@NotNull final PsiFile file, @NotNull final TextRange range) {
+    int startOffset = range.getStartOffset();
+    if (startOffset > 0) {
+      String text = file.getText();
+      startOffset = CharArrayUtil.shiftBackward(text, startOffset, "\n\r\t ");
+    }
+
+    return new TextRange(startOffset + 1, range.getEndOffset());
   }
 }
