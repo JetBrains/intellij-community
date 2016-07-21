@@ -15,7 +15,11 @@
  */
 package com.intellij.lang;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,4 +50,25 @@ public abstract class LighterAST {
   public abstract List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent);
 
   public abstract void disposeChildren(@NotNull List<LighterASTNode> children);
+
+  @Nullable
+  public LighterASTNode findChildByType(@Nullable LighterASTNode node, @NotNull final IElementType type) {
+    if (node == null) return null;
+    return ContainerUtil.find(getChildren(node), new Condition<LighterASTNode>() {
+      @Override
+      public boolean value(LighterASTNode node) {
+        return node.getTokenType() == type;
+      }
+    });
+  }
+
+  @NotNull
+  public List<LighterASTNode> findChildrenByType(@NotNull LighterASTNode node, @NotNull final TokenSet types) {
+    return ContainerUtil.filter(getChildren(node), new Condition<LighterASTNode>() {
+      @Override
+      public boolean value(LighterASTNode node) {
+        return types.contains(node.getTokenType());
+      }
+    });
+  }
 }
