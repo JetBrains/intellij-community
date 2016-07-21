@@ -161,13 +161,20 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       else if (startParent instanceof PsiLoopStatement) {
         body = ((PsiLoopStatement)startParent).getBody();
       }
-      else {
-        assert startElement instanceof PsiKeyword;
+      else if (startElement instanceof PsiKeyword) {
         assert startParent instanceof PsiIfStatement;
         PsiIfStatement ifStatement = (PsiIfStatement)startParent;
         body = ((PsiKeyword)startElement).getTokenType() == JavaTokenType.IF_KEYWORD
                ? ifStatement.getThenBranch()
                : ifStatement.getElseBranch();
+      }
+      else if (startElement instanceof PsiJavaToken &&
+               ((PsiJavaToken)startElement).getTokenType() == JavaTokenType.RBRACE) { // at the end of the omitted body
+        assert startParent instanceof PsiCodeBlock;
+        body = startParent.getParent();
+      }
+      else {
+        return;
       }
       assert body instanceof PsiBlockStatement;
       doFixImpl((PsiBlockStatement)body);
