@@ -224,7 +224,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title="On Process Tab Close"/>
+        <border type="etched" title-resource-bundle="messages/IdeBundle" title-key="group.settings.process.tab.close"/>
         <children>
           <component id="a998a" class="com.intellij.ui.components.JBRadioButton" binding="myTerminateProcessJBRadioButton" default-binding="true">
             <constraints>
