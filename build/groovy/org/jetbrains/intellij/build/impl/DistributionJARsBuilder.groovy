@@ -31,6 +31,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtilRt
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -125,7 +126,16 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("platform-resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    Set<String> usedJars = collectUsedJars(includedModules, []) - productLayout.additionalJarsToUnpackIntoMainJar
+    Set<String> usedJars = collectUsedJars(includedModules, []) - productLayout.additionalJarsToUnpackIntoMainJar.collect {FileUtil.toSystemIndependentName(it)}
+
+    if (buildContext.scrambleTool != null) {
+      def forbiddenJarNames = buildContext.scrambleTool.namesOfJarsRequiredToBeScrambled
+      def forbiddenJars = usedJars.findAll { forbiddenJarNames.contains(PathUtilRt.getFileName(it)) }
+      if (!forbiddenJars.empty) {
+        buildContext.messages.error("The following JARs cannot be included into the product 'lib' directory, they need to be scrambled with the main jar: ${forbiddenJars}")
+      }
+    }
+
     def communityHome = "$buildContext.paths.communityHome"
     def resourcesIncluded = RESOURCES_INCLUDED
     def resourcesExcluded = RESOURCES_EXCLUDED
@@ -360,12 +370,6 @@ class DistributionJARsBuilder {
       (["$buildContext.paths.communityHome/lib", "$buildContext.paths.projectHome/lib", "$buildContext.paths.communityHome/xml/relaxng/lib"] as List<String>) +
       additionalLibFolders
 
-    def forbiddenJars = [
-//      "/dev/", "/rt/", "/ant/",
-//      "ls-client-api", "/ideaLicenseDecoder", "jcip-annotations",
-//      "/eawtstub.jar", "/y.jar", "/ysvg.jar"
-    ]
-
     modules.each {
       def module = buildContext.findModule(it)
       if (module != null) {
@@ -373,7 +377,7 @@ class DistributionJARsBuilder {
           File file = new File(it)
           if (file.exists()) {
             String path = FileUtil.toSystemIndependentName(file.canonicalPath)
-            if (path.endsWith(".jar") && approvedJars.any { FileUtil.startsWith(path, it) } && !forbiddenJars.any { path.contains(it) }) {
+            if (path.endsWith(".jar") && approvedJars.any { FileUtil.startsWith(path, it) }) {
               if (usedJars.add(path)) {
                 buildContext.messages.info("\tADDED: $path for $module.name")
               }

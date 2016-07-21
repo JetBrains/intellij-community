@@ -31,4 +31,9 @@ interface ScrambleTool {
    * Scramble {@code mainJarName} in {@code "$buildContext.paths.distAll/lib"} directory
    */
   void scramble(String mainJarName, BuildContext buildContext)
+
+  /**
+   * @return list of names of JAR files which cannot be included into the product 'lib' directory in plain form
+   */
+  List<String> getNamesOfJarsRequiredToBeScrambled()
 }
