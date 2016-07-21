@@ -77,7 +77,7 @@ public class JsonSchemaImportedProviderFactory implements JsonSchemaProviderFact
 
     @Override
     public int getOrder() {
-      return 1000;
+      return Orders.USER;
     }
 
     @NotNull

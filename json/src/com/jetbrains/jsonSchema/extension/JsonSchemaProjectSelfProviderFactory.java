@@ -70,7 +70,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public int getOrder() {
-      return -1000;
+      return Orders.CORE;
     }
   }
 }
