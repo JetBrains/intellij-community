@@ -319,6 +319,9 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public static PsiType getPreferredType(PsiType[] types, PsiType defaultType) {
+
+    if (defaultType instanceof PsiPrimitiveType) return defaultType;
+
     Map<String, PsiType> map = new THashMap<String, PsiType>();
     for (final PsiType type : types) {
       map.put(serialize(type), type);
