@@ -153,7 +153,8 @@ open class OutMessage() {
     writer.endArray()
   }
 
-  fun writeStringList(name: String, value: Collection<String>) {
+  fun writeStringList(name: String, value: Collection<String>?) {
+    if (value == null) return
     beginArguments()
     JsonWriters.writeStringList(writer, name, value)
   }
