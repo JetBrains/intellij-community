@@ -19,6 +19,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
@@ -27,6 +28,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -52,7 +54,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     }
   };
   private final TabbedContent myContent;
-  private Reference<JBPopup> myPopupReference = null;
+  @Nullable private Reference<JBPopup> myPopupReference = null;
 
   public TabbedContentTabLabel(TabbedContent content, TabContentLayout layout) {
     super(content, layout);
@@ -82,6 +84,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       @Override
       public JComponent fun(Object dom) {
         label.setText(dom.toString());
+        setTabIconInLabel(dom.toString(), label);
         return label;
       }
     });
@@ -90,6 +93,10 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         int index = list.getSelectedIndex();
         if (index != -1) {
           myContent.selectContent(index);
+          JComponent tabComponent = myContent.getTabs().get(index).getSecond();
+          if (tabComponent instanceof Iconable) {
+            setIcon(((Iconable)tabComponent).getIcon(Iconable.ICON_FLAG_VISIBILITY));
+          }
         }
       }).createPopup();
     myPopupReference = new WeakReference<JBPopup>(popup);
@@ -100,9 +107,23 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   public void update() {
     super.update();
     if (myContent != null) {
-      setText(myContent.getTabName());
+      String tabName = myContent.getTabName();
+      setText(tabName);
+      setTabIconInLabel(tabName, this);
     }
     setHorizontalAlignment(LEFT);
+  }
+
+  private void setTabIconInLabel(String tabName, JLabel jLabel) {
+    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
+      if (nextTabWithName.getFirst().equals(tabName)
+        || nextTabWithName.getFirst().equals(myContent.getTabNameWithoutPrefix(tabName))) {
+        JComponent tab = nextTabWithName.getSecond();
+        if (tab instanceof Iconable) {
+          jLabel.setIcon(((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY));
+        }
+      }
+    }
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -35,5 +36,7 @@ public interface TabbedContent extends Content {
   List<Pair<String, JComponent>> getTabs();
   String getTitlePrefix();
   void setTitlePrefix(String titlePrefix);
+  @Nullable
+  String getTabNameWithoutPrefix(String fullTabName);
   void split();
 }
