@@ -18,10 +18,9 @@ package org.jetbrains.intellij.build.impl
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+
 /**
  * @author nik
  */
@@ -90,7 +89,6 @@ class WindowsDistributionBuilder {
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
-    def jvmArgs = getAdditionalJvmArguments()
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
     }
@@ -105,7 +103,7 @@ class WindowsDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: jvmArgs)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: batName)
       }
@@ -122,14 +120,6 @@ class WindowsDistributionBuilder {
 
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
-  }
-
-  private String getAdditionalJvmArguments() {
-    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
-    if (buildContext.productProperties.toolsJarRequired) {
-      return "$jvmArgs -Didea.jre.check=true".trim()
-    }
-    return jvmArgs
   }
 
   //todo[nik] rename
@@ -149,17 +139,7 @@ class WindowsDistributionBuilder {
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
-      String vmOptions
-      if (buildContext.productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
-        && buildContext.productProperties.platformPrefix != "Idea") {
-        vmOptions = "-Didea.platform.prefix=${buildContext.productProperties.platformPrefix}"
-      }
-      else {
-        vmOptions = ""
-      }
-
-      vmOptions = "$vmOptions -Didea.paths.selector=${buildContext.systemSelector} ${getAdditionalJvmArguments()}".trim()
+      String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.upperCaseProductName //todo[nik] use '.productName' instead
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";

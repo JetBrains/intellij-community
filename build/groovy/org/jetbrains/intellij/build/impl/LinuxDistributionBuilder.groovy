@@ -76,20 +76,8 @@ class LinuxDistributionBuilder {
 
     String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
-    String jvmArgs
-    if (buildContext.productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
-      && buildContext.productProperties.platformPrefix != "Idea") {
-      jvmArgs = "-Didea.platform.prefix=${buildContext.productProperties.platformPrefix}"
-    }
-    else {
-      jvmArgs = ""
-    }
-
-    jvmArgs = "$jvmArgs $buildContext.productProperties.additionalIdeJvmArguments".trim()
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
-      jvmArgs = "$jvmArgs -Didea.jre.check=true".trim()
     }
 
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
@@ -101,7 +89,7 @@ class LinuxDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: jvmArgs)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: name)
       }
