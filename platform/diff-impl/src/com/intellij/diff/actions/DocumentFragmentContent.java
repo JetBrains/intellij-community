@@ -43,7 +43,7 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   @NotNull private final DocumentContent myOriginal;
   @NotNull private final RangeMarker myRangeMarker;
 
-  @NotNull private final MyDocumentsSynchronizer mySynchonizer;
+  @NotNull private final MyDocumentsSynchronizer mySynchronizer;
 
   private int myAssignments = 0;
 
@@ -59,13 +59,13 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     myRangeMarker.setGreedyToLeft(true);
     myRangeMarker.setGreedyToRight(true);
 
-    mySynchonizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
+    mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
   }
 
   @NotNull
   @Override
   public Document getDocument() {
-    return mySynchonizer.getDocument2();
+    return mySynchronizer.getDocument2();
   }
 
   @Nullable
@@ -111,12 +111,12 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   @Override
   public void onAssigned(boolean isAssigned) {
     if (isAssigned) {
-      if (myAssignments == 0) mySynchonizer.startListen();
+      if (myAssignments == 0) mySynchronizer.startListen();
       myAssignments++;
     }
     else {
       myAssignments--;
-      if (myAssignments == 0) mySynchonizer.stopListen();
+      if (myAssignments == 0) mySynchronizer.stopListen();
     }
     assert myAssignments >= 0;
   }
