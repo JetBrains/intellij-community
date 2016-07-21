@@ -111,6 +111,9 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     }
 
     myMarkers = mergeLineMarkers(lineMarkers, myEditor);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+myMarkers);
+    }
   }
 
   @NotNull
