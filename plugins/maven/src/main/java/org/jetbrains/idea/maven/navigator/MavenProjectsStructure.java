@@ -677,7 +677,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
       // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml
-      for (VirtualFile virtualFile : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles()) {
+      for (VirtualFile virtualFile : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles(myProject.getBasePath())) {
         if (virtualFile != null) {
           final MavenDomSettingsModel model = MavenDomUtil.getMavenDomModel(myProject, virtualFile, MavenDomSettingsModel.class);
           if (model != null) {

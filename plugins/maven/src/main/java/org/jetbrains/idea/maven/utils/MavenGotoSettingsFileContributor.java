@@ -58,6 +58,6 @@ public class MavenGotoSettingsFileContributor implements ChooseByNameContributor
   }
 
   private static List<VirtualFile> getSettingsFiles(Project project) {
-    return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles();
+    return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles(project.getBasePath());
   }
 }

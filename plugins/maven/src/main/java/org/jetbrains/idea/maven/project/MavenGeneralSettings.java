@@ -179,8 +179,8 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
-  public File getEffectiveUserSettingsIoFile() {
-    return MavenUtil.resolveUserSettingsFile(getUserSettingsFile());
+  public File getEffectiveUserSettingsIoFile(String projectBaseDir) {
+    return MavenUtil.resolveUserSettingsFile(getUserSettingsFile(), getMavenHome(), projectBaseDir);
   }
 
   @Nullable
@@ -189,14 +189,14 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Nullable
-  public VirtualFile getEffectiveUserSettingsFile() {
-    File file = getEffectiveUserSettingsIoFile();
+  public VirtualFile getEffectiveUserSettingsFile(@Nullable String projectBaseDir) {
+    File file = getEffectiveUserSettingsIoFile(projectBaseDir);
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
-  public List<VirtualFile> getEffectiveSettingsFiles() {
+  public List<VirtualFile> getEffectiveSettingsFiles(String projectBaseDir) {
     List<VirtualFile> result = new ArrayList<VirtualFile>(2);
-    VirtualFile file = getEffectiveUserSettingsFile();
+    VirtualFile file = getEffectiveUserSettingsFile(projectBaseDir);
     if (file != null) result.add(file);
     file = getEffectiveGlobalSettingsFile();
     if (file != null) result.add(file);

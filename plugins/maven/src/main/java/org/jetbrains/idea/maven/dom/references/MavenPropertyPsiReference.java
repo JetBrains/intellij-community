@@ -279,7 +279,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   private PsiElement resolveSettingsModelProperty() {
     if (!schemaHasProperty(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, myText)) return null;
 
-    for (VirtualFile each : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles()) {
+    for (VirtualFile each : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles(null)) {
       MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(myProject, each, MavenDomSettingsModel.class);
       if (settingsDom == null) continue;
       PsiElement result = MavenDomUtil.findTag(settingsDom, myText);

@@ -85,7 +85,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
         @Nullable
         protected File getFile() {
-          return MavenUtil.resolveUserSettingsFile("");
+          return MavenUtil.resolveUserSettingsFile(null, null, null);
         }
       });
 

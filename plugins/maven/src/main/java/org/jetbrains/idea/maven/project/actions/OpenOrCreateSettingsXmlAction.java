@@ -28,7 +28,7 @@ public class OpenOrCreateSettingsXmlAction extends MavenOpenOrCreateFilesAction 
   protected List<File> getFiles(AnActionEvent e) {
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if(projectsManager == null) return Collections.<File>emptyList();
-    File file = projectsManager.getGeneralSettings().getEffectiveUserSettingsIoFile();
+    File file = projectsManager.getGeneralSettings().getEffectiveUserSettingsIoFile(projectsManager.getRootProjects().get(0).getPath());
     return file != null ? Collections.singletonList(file) : Collections.<File>emptyList();
   }
 

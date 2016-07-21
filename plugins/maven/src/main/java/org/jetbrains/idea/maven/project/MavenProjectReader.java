@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -95,7 +94,12 @@ public class MavenProjectReader {
     Collection<MavenProjectProblem> problems = cachedModel.problems;
 
     model = resolveInheritance(generalSettings, model, file, explicitProfiles, recursionGuard, locator, problems);
-    addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems);
+    Iterator<VirtualFile> files = recursionGuard.iterator();
+    if (files.hasNext()) {
+      addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems, getBaseDir(files.next()));
+    } else {
+      addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems, getBaseDir(file));
+    }
 
     ProfileApplicationResult applied = applyProfiles(model, getBaseDir(file), explicitProfiles, alwaysOnProfiles);
     model = applied.getModel();
@@ -246,14 +250,15 @@ public class MavenProjectReader {
   private void addSettingsProfiles(MavenGeneralSettings generalSettings,
                                    MavenModel model,
                                    Set<String> alwaysOnProfiles,
-                                   Collection<MavenProjectProblem> problems) {
+                                   Collection<MavenProjectProblem> problems,
+                                   File rootProjectDir) {
     if (mySettingsProfilesCache == null) {
 
       List<MavenProfile> settingsProfiles = new ArrayList<MavenProfile>();
       Collection<MavenProjectProblem> settingsProblems = MavenProjectProblem.createProblemsList();
       Set<String> settingsAlwaysOnProfiles = new THashSet<String>();
 
-      for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
+      for (VirtualFile each : generalSettings.getEffectiveSettingsFiles(rootProjectDir.getPath())) {
         collectProfilesFromSettingsXmlOrProfilesXml(each,
                                                     "settings",
                                                     false,
