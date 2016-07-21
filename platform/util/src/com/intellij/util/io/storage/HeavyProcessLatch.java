@@ -22,6 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -140,6 +141,10 @@ public class HeavyProcessLatch {
    */
   public void prioritizeUiActivity() {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+
+    if (!Registry.is("ide.prioritize.ui.thread", false)) {
+      return;
+    }
 
     // don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
     // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
