@@ -37,6 +37,7 @@ import com.intellij.tests.gui.fixtures.IdeFrameFixture;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.BasicRobot;
 import org.fest.swing.core.ComponentFinder;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -301,18 +302,31 @@ public final class GuiTests {
         privacyDialogFixture = findDialog(new GenericTypeMatcher<JDialog>(JDialog.class) {
         @Override
         protected boolean isMatching(@NotNull JDialog dialog) {
+          if (dialog.getTitle() == null) return false;
           return dialog.getTitle().contains(policyAgreement) && dialog.isShowing();
         }
+
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
       JButton acceptButton = privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
         @Override
         protected boolean isMatching(@Nonnull JButton button) {
+          if (button.getText() == null) return false;
           return button.getText().equals(buttonText);
         }
       }).target();
       //we clicking this button to avoid NPE org.fest.util.Preconditions.checkNotNull(Preconditions.java:71)
-      acceptButton.doClick();
+      execute(new GuiTask() {
+        @Override
+        protected void executeInEDT() throws Throwable {
+          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              acceptButton.doClick();
+            }
+          });
+        }
+      });;
     }
     catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
