@@ -22,7 +22,6 @@ import com.intellij.openapi.components.Storage;
 
 /**
  * The password safe settings
- * The password database. The internal component for {@link com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe}.
  */
 @State(
   name = "PasswordSafe",

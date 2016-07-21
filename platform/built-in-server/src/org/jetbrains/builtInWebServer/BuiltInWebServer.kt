@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
+import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -52,11 +53,8 @@ import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import java.math.BigInteger
 import java.net.InetAddress
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -127,15 +125,7 @@ private val STANDARD_COOKIE by lazy {
   if (token == null) {
     token = UUID.randomUUID().toString()
     file.write(token!!)
-    val view = Files.getFileAttributeView(file, PosixFileAttributeView::class.java)
-    if (view != null) {
-      try {
-        view.setPermissions(setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
-      }
-      catch (e: IOException) {
-        LOG.warn(e)
-      }
-    }
+    file.setOwnerPermissions()
   }
 
   // explicit setting domain cookie on localhost doesn't work for chrome

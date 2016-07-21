@@ -17,10 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantCast18Test extends InspectionTestCase {
@@ -35,11 +31,4 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testForeachValue() throws Exception { doTest(); }
   public void testConditional() throws Exception { doTest(); }
   public void testInferApplicabilityError() throws Exception { doTest(); }
-
-  @Override
-  protected Sdk getTestProjectSdk() {
-    Sdk sdk = IdeaTestUtil.getMockJdk17();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-    return sdk;
-  }
 }

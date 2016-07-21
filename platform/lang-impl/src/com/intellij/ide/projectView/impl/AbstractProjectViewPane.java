@@ -438,7 +438,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
       TreeState treeState = new TreeState();
       treeState.readExternal(subPane);
-      myReadTreeState.put(subId, treeState);
+      if (!treeState.isEmpty()) myReadTreeState.put(subId, treeState);
     }
   }
 
@@ -458,15 +458,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected void saveExpandedPaths() {
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
-      myReadTreeState.put(getSubId(), treeState);
+      if (!treeState.isEmpty()) myReadTreeState.put(getSubId(), treeState);
     }
   }
 
   public final void restoreExpandedPaths(){
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (treeState != null) {
-      treeState.applyTo(myTree);
-    }
+    if (treeState != null && !treeState.isEmpty()) treeState.applyTo(myTree);
   }
 
   public void installComparator() {

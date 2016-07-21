@@ -19,9 +19,6 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.LinuxDistributionCustomizer
-import org.jetbrains.intellij.build.MacDistributionCustomizer
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -86,9 +83,13 @@ class BuildTasksImpl extends BuildTasks {
     }
   }
 
-//todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   @Override
   void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses) {
+    buildSearchableOptions(new File(buildContext.projectBuilder.moduleOutput(buildContext.findModule(targetModuleName))), modulesToIndex, pathsToLicenses)
+  }
+
+//todo[nik] do we need 'cp' and 'jvmArgs' parameters?
+  void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
     //todo[nik] create searchableOptions.xml in a separate directory instead of modifying it in the module output
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
@@ -98,8 +99,7 @@ class BuildTasksImpl extends BuildTasks {
 
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
 
-      def targetModuleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findModule(targetModuleName))
-      String targetFile = "$targetModuleOutput/search/searchableOptions.xml"
+      String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
       FileUtil.delete(new File(targetFile))
 
       def tempDir = "$buildContext.paths.temp/searchableOptions"
@@ -123,6 +123,9 @@ class BuildTasksImpl extends BuildTasks {
         sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
         sysproperty(key: "idea.system.path", value: systemPath)
         sysproperty(key: "idea.config.path", value: configPath)
+        if (buildContext.productProperties.platformPrefix != null) {
+          sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
+        }
         arg(value: "$classpathFile")
         arg(line: "com.intellij.idea.Main traverseUI")
         arg(value: targetFile)
@@ -245,6 +248,26 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins) {
+    def productLayout = buildContext.productProperties.productLayout
+    cleanOutput()
+    def includedModules = productLayout.getIncludedModules(allPlugins)
+    compileModules(includedModules)
+    buildContext.messages.block("Build platform and plugin JARs") {
+      new DistributionJARsBuilder(buildContext, includedModules, allPlugins).buildJARs()
+    }
+    if (buildContext.productProperties.scrambleMainJar) {
+      if (buildContext.scrambleTool != null) {
+        buildContext.scrambleTool.scramble(buildContext.productProperties.productLayout.mainJarName, buildContext)
+      }
+      else {
+        buildContext.messages.warning("Scrambling skipped: 'srambleTool' isn't defined")
+      }
+    }
+    buildDistributions()
+  }
+
+  @Override
   void cleanOutput() {
     buildContext.messages.block("Clean output") {
       def outputPath = buildContext.paths.buildOutputRoot
@@ -262,6 +285,11 @@ idea.fatal.error.notification=disabled
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {
+    compileModules(null, includingTestsInModules)
+  }
+
+  @Override
+  void compileModules(List<String> moduleNames, List<String> includingTestsInModules = []) {
     if (buildContext.options.useCompiledClassesFromProjectOutput) {
       buildContext.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       return
@@ -272,7 +300,18 @@ idea.fatal.error.notification=disabled
     }
 
     buildContext.projectBuilder.cleanOutput()
-    buildContext.projectBuilder.buildProduction()
+    if (moduleNames == null) {
+      buildContext.projectBuilder.buildProduction()
+    }
+    else {
+      List<String> modulesToBuild = ((moduleNames as Set<String>) + DistributionJARsBuilder.ADDITIONAL_MODULES_TO_COMPILE
+        + buildContext.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
+      if (!invalidModules.empty) {
+        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+      }
+      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+    }
     for (String moduleName : includingTestsInModules) {
       buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
     }

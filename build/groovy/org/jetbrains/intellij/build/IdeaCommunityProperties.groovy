@@ -30,11 +30,6 @@ class IdeaCommunityProperties extends ProductProperties {
   }
 
   @Override
-  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
-    "IntelliJ IDEA Community Edition"
-  }
-
-  @Override
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
@@ -56,6 +51,12 @@ class IdeaCommunityProperties extends ProductProperties {
 
       @Override
       String rootDirectoryName(String buildNumber) { "" }
+
+      @Override
+      String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+
+      @Override
+      String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
 
       @Override
       String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
@@ -82,6 +83,7 @@ class IdeaCommunityProperties extends ProductProperties {
       {
         helpId = "IJ"
         urlSchemes = ["idea"]
+        associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"

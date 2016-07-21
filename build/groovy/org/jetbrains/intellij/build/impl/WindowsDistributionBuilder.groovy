@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+
 /**
  * @author nik
  */
@@ -37,7 +38,11 @@ class WindowsDistributionBuilder {
   //todo[nik] rename
   void layoutWin(File ideaProperties) {
     buildContext.ant.copy(todir: "$winDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/win")
+      fileset(dir: "$buildContext.paths.communityHome/bin/win") {
+        if (!buildContext.includeBreakGenLibraries()) {
+          exclude(name: "breakgen*")
+        }
+      }
       if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
         fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
           include(name: "yjpagent*.dll")
@@ -47,7 +52,9 @@ class WindowsDistributionBuilder {
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
 
-    buildContext.ant.copy(file: customizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+    if (customizer.icoPath != null) {
+      buildContext.ant.copy(file: customizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+    }
     if (customizer.includeBatchLaunchers) {
       winScripts()
     }
@@ -58,7 +65,7 @@ class WindowsDistributionBuilder {
 
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
-    buildWinZip(jreDirectoryPath, ".win")
+    buildWinZip(jreDirectoryPath, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "")
     if (arch != null && customizer.buildZipWithBundledOracleJre) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
@@ -82,7 +89,6 @@ class WindowsDistributionBuilder {
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
-    def jvmArgs = getAdditionalJvmArguments()
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
     }
@@ -93,11 +99,11 @@ class WindowsDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.applicationInfo.upperCaseProductName)
+        filter(token: "product_uc", value: buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: jvmArgs)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: batName)
       }
@@ -114,14 +120,6 @@ class WindowsDistributionBuilder {
 
 
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
-  }
-
-  private String getAdditionalJvmArguments() {
-    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
-    if (buildContext.productProperties.toolsJarRequired) {
-      return "$jvmArgs -Didea.jre.check=true".trim()
-    }
-    return jvmArgs
   }
 
   //todo[nik] rename
@@ -141,37 +139,32 @@ class WindowsDistributionBuilder {
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
-      String vmOptions
-      if (buildContext.productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
-        && buildContext.productProperties.platformPrefix != "Idea") {
-        vmOptions = "-Didea.platform.prefix=${buildContext.productProperties.platformPrefix}"
-      }
-      else {
-        vmOptions = ""
-      }
-
-      vmOptions = "$vmOptions -Didea.paths.selector=${buildContext.systemSelector} ${getAdditionalJvmArguments()}".trim()
+      String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.upperCaseProductName //todo[nik] use '.productName' instead
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
+      def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
-IDS_JDK_ENV_VAR=${upperCaseProductName}_JDK${jdkEnvVarSuffix}
-IDS_APP_TITLE=${productName} Launcher
+IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
+IDS_APP_TITLE=$productName Launcher
 IDS_VM_OPTIONS_PATH=%USERPROFILE%\\\\.$buildContext.systemSelector
 IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
-IDS_PROPS_ENV_VAR=${upperCaseProductName}_PROPERTIES
-IDS_VM_OPTIONS_ENV_VAR=${upperCaseProductName}${arch.fileSuffix}_VM_OPTIONS
-IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
+IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
+IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${arch.fileSuffix}_VM_OPTIONS
+IDS_ERROR_LAUNCHING_APP=Error launching $productName
 IDS_VM_OPTIONS=$vmOptions
 """.trim()
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
       def outputPath = "$winDistPath/bin/$exeFileName"
+      def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")]
+      if (buildContext.productProperties.brandingModule != null) {
+        resourceModules << buildContext.findRequiredModule(buildContext.productProperties.brandingModule)
+      }
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
@@ -186,7 +179,7 @@ IDS_VM_OPTIONS=$vmOptions
             include(name: "jdom.jar")
             include(name: "sanselan*.jar")
           }
-          [buildContext.findApplicationInfoModule(), buildContext.findModule("icons")].collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
+          resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
             pathelement(location: root.file.absolutePath)
           }
         }

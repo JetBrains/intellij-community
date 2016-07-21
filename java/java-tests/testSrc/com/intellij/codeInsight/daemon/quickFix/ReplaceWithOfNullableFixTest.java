@@ -22,8 +22,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTestCase {
@@ -54,10 +52,5 @@ public class ReplaceWithOfNullableFixTest extends LightQuickFixParameterizedTest
   protected void afterActionCompleted(String testName, String contents) {
     ReplaceFromOfNullableFixTest.cleanupGuava();
     super.afterActionCompleted(testName, contents);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

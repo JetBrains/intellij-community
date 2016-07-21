@@ -39,6 +39,6 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
 
   @Override
   public int getOrder() {
-    return 10;
+    return Orders.TEST;
   }
 }

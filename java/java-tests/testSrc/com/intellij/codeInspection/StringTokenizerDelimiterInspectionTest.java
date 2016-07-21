@@ -16,8 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,10 +36,5 @@ public class StringTokenizerDelimiterInspectionTest extends LightQuickFixParamet
   @Override
   protected String getBasePath() {
     return "/inspection/stringTokenizerDelimiter";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

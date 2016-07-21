@@ -64,11 +64,17 @@ abstract class BuildContext {
    */
   List<String> bootClassPathJarNames
 
+  abstract boolean includeBreakGenLibraries()
+
+  abstract String getAdditionalJvmArguments()
+
   abstract void notifyArtifactBuilt(String artifactPath)
 
   abstract File findApplicationInfoInSources()
 
   abstract JpsModule findApplicationInfoModule()
+
+  abstract JpsModule findRequiredModule(String name)
 
   abstract JpsModule findModule(String name)
 

@@ -49,7 +49,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   private static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
-  private boolean myRowBoundsCalled = false;
+  private boolean myRowBoundsCalled;
 
   private final UsageViewPresentation myPresentation;
   private final UsageView myView;

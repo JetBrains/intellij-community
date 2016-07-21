@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
@@ -169,8 +170,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
             TypeInfo type = ((PsiParameterStub)paramStub).getType(false);
-            if (type.arrayCount > 0) continue;
-            String typeName = type.getShortTypeText();
+            String typeName = PsiNameHelper.getShortClassName(type.text);
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
             if (methodTypeParams != null && methodTypeParams.contains(typeName)) {

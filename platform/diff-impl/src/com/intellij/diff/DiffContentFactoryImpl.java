@@ -15,17 +15,20 @@
  */
 package com.intellij.diff;
 
+import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -143,6 +146,19 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return (FileContent)create(project, file);
   }
 
+  @NotNull
+  @Override
+  public DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
+    DocumentContent content = create(project, document);
+    return new DocumentFragmentContent(project, content, range);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range) {
+    return new DocumentFragmentContent(project, content, range);
+  }
+
   @Override
   @NotNull
   public DiffContent createClipboardContent() {
@@ -225,10 +241,10 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   }
 
   @NotNull
-  public static VirtualFile createTemporalFile(@Nullable Project project,
-                                               @NotNull String prefix,
-                                               @NotNull String suffix,
-                                               @NotNull byte[] content) throws IOException {
+  private static VirtualFile createTemporalFile(@Nullable Project project,
+                                                @NotNull String prefix,
+                                                @NotNull String suffix,
+                                                @NotNull byte[] content) throws IOException {
     File tempFile = FileUtil.createTempFile(PathUtil.suggestFileName(prefix + "_", true, false),
                                             PathUtil.suggestFileName("_" + suffix, true, false), true);
     if (content.length != 0) {

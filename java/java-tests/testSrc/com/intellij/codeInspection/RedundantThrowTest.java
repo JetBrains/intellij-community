@@ -17,10 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unneededThrows.RedundantThrows;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class RedundantThrowTest extends InspectionTestCase {
@@ -67,12 +63,5 @@ public class RedundantThrowTest extends InspectionTestCase {
 
   public void testThrownClausesInFunctionalExpressions() throws Exception {
     doTest();
-  }
-
-  @Override
-  protected Sdk getTestProjectSdk() {
-    Sdk sdk = IdeaTestUtil.getMockJdk17();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-    return sdk;
   }
 }

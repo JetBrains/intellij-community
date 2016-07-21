@@ -36,7 +36,11 @@ class LinuxDistributionBuilder {
   //todo[nik] rename
   void layoutUnix(File ideaProperties) {
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin/linux")
+      fileset(dir: "$buildContext.paths.communityHome/bin/linux") {
+        if (!buildContext.includeBreakGenLibraries()) {
+          exclude(name: "libbreakgen*")
+        }
+      }
       if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
         fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
           include(name: "libyjpagent-linux*.so")
@@ -47,7 +51,9 @@ class LinuxDistributionBuilder {
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/idea.properties", eol: "unix")
-    buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+    if (customizer.iconPngPath != null) {
+      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+    }
 
     unixScripts()
     unixVMOptions()
@@ -70,10 +76,8 @@ class LinuxDistributionBuilder {
 
     String classPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
-    def jvmArgs = buildContext.productProperties.additionalIdeJvmArguments
     if (buildContext.productProperties.toolsJarRequired) {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
-      jvmArgs = "$jvmArgs -Didea.jre.check=true".trim()
     }
 
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
@@ -81,11 +85,11 @@ class LinuxDistributionBuilder {
 
       filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.applicationInfo.upperCaseProductName)
+        filter(token: "product_uc", value: buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: jvmArgs)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: name)
       }

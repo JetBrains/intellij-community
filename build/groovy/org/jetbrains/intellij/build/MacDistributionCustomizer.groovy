@@ -29,9 +29,14 @@ abstract class MacDistributionCustomizer {
    */
   String minOSXVersion = "10.8"
   String helpId = ""
-  String docTypes = null
+  String additionalDocTypes = ""
   List<String> urlSchemes = []
   List<String> architectures = ["x86_64"]
+
+  /**
+   * If {@code true} *.ipr files will be associated with the product in Info.plist
+   */
+  boolean associateIpr = false
 
   /**
    * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under Mac OS. This property is
@@ -57,6 +62,8 @@ abstract class MacDistributionCustomizer {
   String dmgImagePathForEAP = null
 
   abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
+
+  Map<String, String> customIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
 
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
   }

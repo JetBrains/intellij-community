@@ -61,6 +61,16 @@ abstract class WindowsDistributionCustomizer {
    */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {}
 
+  /**
+   * The returned name will be shown in Windows Installer and used in Registry keys
+   */
+  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
+
+  /**
+   * The returned name will be used to create links on Desktop
+   */
+  String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { applicationInfo.shortCompanyName + " " + applicationInfo.productName }
+
   String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null
   }

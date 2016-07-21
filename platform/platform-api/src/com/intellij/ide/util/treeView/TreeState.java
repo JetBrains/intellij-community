@@ -110,6 +110,10 @@ public class TreeState implements JDOMExternalizable {
     this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
   }
 
+  public boolean isEmpty() {
+    return myExpandedPaths.isEmpty() && mySelectedPaths.isEmpty();
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, PATH);
@@ -491,6 +495,40 @@ public class TreeState implements JDOMExternalizable {
 
   public void setScrollToSelection(boolean scrollToSelection) {
     myScrollToSelection = scrollToSelection;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("TreeState(").append(myScrollToSelection).append(")");
+    append(sb, " expanded:", myExpandedPaths);
+    append(sb, " selected:", mySelectedPaths);
+    return sb.toString();
+  }
+
+  private static void append(StringBuilder sb, String prefix, Object object) {
+    if (prefix != null) {
+      sb.append(prefix);
+    }
+    if (object instanceof List) {
+      appendList(sb, (List)object);
+    }
+    else {
+      sb.append(object);
+    }
+  }
+
+  private static void appendList(StringBuilder sb, List list) {
+    if (list.isEmpty()) {
+      sb.append("{}");
+    }
+    else {
+      String prefix = "{";
+      for (Object object : list) {
+        append(sb, prefix, object);
+        prefix = ", ";
+      }
+      sb.append("}");
+    }
   }
 }
 

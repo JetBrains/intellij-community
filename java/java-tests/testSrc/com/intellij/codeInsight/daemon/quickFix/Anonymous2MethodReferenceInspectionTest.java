@@ -17,8 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -36,10 +34,5 @@ public class Anonymous2MethodReferenceInspectionTest extends LightQuickFixParame
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/anonymous2methodReference";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

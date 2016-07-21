@@ -17,8 +17,6 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -44,10 +42,5 @@ public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonA
 
   private void doTest(final boolean checkWarnings) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

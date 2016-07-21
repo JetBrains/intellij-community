@@ -163,9 +163,14 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   JpsModule findApplicationInfoModule() {
-    def module = findModule(productProperties.applicationInfoModule)
+    return findRequiredModule(productProperties.applicationInfoModule)
+  }
+
+  @Override
+  JpsModule findRequiredModule(String name) {
+    def module = findModule(name)
     if (module == null) {
-      messages.error("Cannot find module '$productProperties.applicationInfoModule' containing ApplicationInfo.xml file")
+      messages.error("Cannot find required module '$name' in the project")
     }
     return module
   }
@@ -194,6 +199,31 @@ class BuildContextImpl extends BuildContext {
     else {
       messages.block(stepMessage, step)
     }
+  }
+
+  @Override
+  boolean includeBreakGenLibraries() {
+    def productLayout = productProperties.productLayout
+    return productLayout.mainJarName == null || //todo[nik] remove this condition later
+           productLayout.additionalPlatformModules.containsKey("java-runtime")
+  }
+
+  @Override
+  String getAdditionalJvmArguments() {
+    String jvmArgs
+    if (productProperties.platformPrefix != null
+//todo[nik] remove later. This is added to keep the current behavior (platform prefix for CE is set in MainImpl anyway)
+      && productProperties.platformPrefix != "Idea") {
+      jvmArgs = "-Didea.platform.prefix=${productProperties.platformPrefix}"
+    }
+    else {
+      jvmArgs = ""
+    }
+    jvmArgs += " $productProperties.additionalIdeJvmArguments".trim()
+    if (productProperties.toolsJarRequired) {
+      jvmArgs += " -Didea.jre.check=true"
+    }
+    return jvmArgs.trim()
   }
 
   @Override

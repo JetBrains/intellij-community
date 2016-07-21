@@ -35,10 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -63,9 +60,9 @@ import java.util.List;
 )
 public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
+  public static Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
-  private final Map<Document, List<Bookmark>> myDocumentsMap = new WeakHashMap<>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
     new HashMap<Trinity<VirtualFile, Integer, String>, Bookmark>();
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
@@ -127,21 +124,21 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     }, project);
   }
 
-  private void map(Document document, Bookmark bookmark) {
+  private static void map(Document document, Bookmark bookmark) {
     if (document == null || bookmark == null) return;
 
-    List<Bookmark> list = myDocumentsMap.get(document);
+    List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list == null) {
-      myDocumentsMap.put(document, list = new ArrayList<Bookmark>());
+      document.putUserData(BOOKMARKS_KEY, list = Collections.synchronizedList(new ArrayList<Bookmark>()));
     }
     list.add(bookmark);
   }
 
-  private void unmap(Document document, Bookmark bookmark) {
+  private static void unmap(Document document, Bookmark bookmark) {
     if (document == null || bookmark == null) return;
-    List<Bookmark> list = myDocumentsMap.get(document);
+    List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list != null && list.remove(bookmark) && list.isEmpty()) {
-      myDocumentsMap.remove(document);
+      document.putUserData(BOOKMARKS_KEY, null);
     }
   }
 
@@ -232,7 +229,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   @Nullable
   public Bookmark findEditorBookmark(@NotNull Document document, int line) {
-    List<Bookmark> bookmarks = myDocumentsMap.get(document);
+    List<Bookmark> bookmarks = document.getUserData(BOOKMARKS_KEY);
     if (bookmarks != null) {
       for (Bookmark bookmark : bookmarks) {
         if (bookmark.getLine() == line) {
@@ -294,8 +291,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
         for (Bookmark bookmark : myBookmarks) {
           bookmark.release();
           publisher.bookmarkRemoved(bookmark);
+          unmap(bookmark.getDocument(), bookmark);
         }
-        myDocumentsMap.clear();
         myBookmarks.clear();
 
         readExternal(state);
@@ -406,7 +403,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   @Nullable
   public Bookmark findLineBookmark(@NotNull Editor editor, boolean isWrapped, boolean next) {
-    List<Bookmark> bookmarksForDocument = myDocumentsMap.get(editor.getDocument());
+    List<Bookmark> bookmarksForDocument = editor.getDocument().getUserData(BOOKMARKS_KEY);
     if (bookmarksForDocument == null) return null;
     int sign = next ? 1 : -1;
     Collections.sort(bookmarksForDocument, (o1, o2) -> sign * (o1.getLine() - o2.getLine()));

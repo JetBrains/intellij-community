@@ -237,7 +237,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       }
       String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName.startsWith("java.lang.invoke")) continue; // java.lang.invoke.MethodHandle has weird access attributes in recent rt.jar which causes spurious highlighting errors
-      if ("Sink".equals(aClass.getName())) continue;
+      if (qualifiedName.contains(".Sink")) continue; // Sink has weird access in class files
       imports.append("import " + qualifiedName + ";\n");
       usages.append("/**/ "+aClass.getName() + " var" + v + " = null; var" + v + ".toString();\n");
       aClasses.add(aClass);
@@ -248,7 +248,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> getEditor().getDocument().setText(text));
 
     List<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
-    assertEmpty(errors);
+    assertEmpty(text, errors);
     Random random = new Random();
     int unused = 0;
     for (int i = 0; i < 100; i++) {

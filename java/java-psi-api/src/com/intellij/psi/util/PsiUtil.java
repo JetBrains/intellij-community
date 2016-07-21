@@ -1137,20 +1137,9 @@ public final class PsiUtil extends PsiUtilCore {
     return name != null && IGNORED_NAMES.contains(name);
   }
 
-  @Nullable
-  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceListElement resource) {
-    PsiType resourceType = resource.getType();
-    return resourceType instanceof PsiClassType ? getResourceCloserMethodForType((PsiClassType)resourceType) : null;
-  }
-
-  /** @deprecated use {@link #getResourceCloserMethod(PsiResourceListElement)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static PsiMethod getResourceCloserMethod(@NotNull PsiResourceVariable resource) {
-    return getResourceCloserMethod((PsiResourceListElement)resource);
-  }
 
   @Nullable
-  public static PsiMethod getResourceCloserMethodForType(@NotNull final PsiClassType resourceType) {
+  public static PsiMethod[] getResourceCloserMethodsForType(@NotNull final PsiClassType resourceType) {
     final PsiClass resourceClass = resourceType.resolve();
     if (resourceClass == null) return null;
 
@@ -1162,7 +1151,10 @@ public final class PsiUtil extends PsiUtilCore {
     if (JavaClassSupers.getInstance().getSuperClassSubstitutor(autoCloseable, resourceClass, resourceType.getResolveScope(), PsiSubstitutor.EMPTY) == null) return null;
 
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
-    return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
+    if (closes.length == 1) {
+      return resourceClass.findMethodsBySignature(closes[0], true);
+    }
+    return null;
   }
 
   @Nullable

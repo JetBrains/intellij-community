@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="jediterm-pty">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jediterm-pty-2.2.jar!/" />

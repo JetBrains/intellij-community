@@ -29,10 +29,13 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testBetweenIfAndElse() { assertQuickfixNotAvailable(getMessagePrefix());}
   public void testIfElse() { doTest("if"); }
   public void testIfElse2() { doTest("if"); }
+  public void testIfElse3() { doTest("else"); }
   public void testWhile() { doTest("while"); }
   public void testForEach() { doTest("for"); }
   public void testForIndex() { doTest("for"); }
   public void testDoWhile() { doTest("do"); }
+  public void testIfWithLoop() { doTest("if"); }
+  public void testElseWithLoop() { doTest("else"); }
 
   @Override
   protected void setUp() throws Exception {

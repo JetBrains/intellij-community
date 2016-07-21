@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -31,11 +30,6 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTools(new JavacQuirksInspection());
     setLanguageLevel(LanguageLevel.JDK_1_8);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   private void doTest(boolean warnings, boolean weakWarnings) {

@@ -137,7 +137,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override final fun startStepInto(context: XSuspendContext?) {
     val vm = context.vm
     updateLastCallFrame(vm)
-    continueVm(vm, if (vm.captureAsyncStackTraces) StepAction.IN_ASYNC else StepAction.IN)
+    continueVm(vm, StepAction.IN)
   }
 
   override final fun startStepOut(context: XSuspendContext?) {

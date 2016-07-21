@@ -17,12 +17,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,11 +79,6 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   private void doTest() {

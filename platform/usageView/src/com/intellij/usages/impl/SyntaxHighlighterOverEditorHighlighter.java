@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
-  private LayeredHighlighterIterator layeredHighlighterIterator = null;
+  private LayeredHighlighterIterator layeredHighlighterIterator;
   private final SyntaxHighlighter highlighter;
 
   public SyntaxHighlighterOverEditorHighlighter(SyntaxHighlighter _highlighter, VirtualFile file, Project project) {
