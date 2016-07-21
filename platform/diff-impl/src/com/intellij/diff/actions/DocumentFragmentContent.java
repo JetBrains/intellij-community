@@ -41,6 +41,7 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   // TODO: reuse DocumentWindow ?
 
   @NotNull private final DocumentContent myOriginal;
+  @NotNull private final RangeMarker myRangeMarker;
 
   @NotNull private final MyDocumentsSynchronizer mySynchonizer;
 
@@ -54,11 +55,11 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     Document document2 = EditorFactory.getInstance().createDocument("");
     document2.putUserData(UndoManager.ORIGINAL_DOCUMENT, document1);
 
-    RangeMarker rangeMarker = document1.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-    rangeMarker.setGreedyToLeft(true);
-    rangeMarker.setGreedyToRight(true);
+    myRangeMarker = document1.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+    myRangeMarker.setGreedyToLeft(true);
+    myRangeMarker.setGreedyToRight(true);
 
-    mySynchonizer = new MyDocumentsSynchronizer(project, rangeMarker, document1, document2);
+    mySynchonizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
   }
 
   @NotNull
@@ -76,8 +77,9 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   @Nullable
   @Override
   public Navigatable getNavigatable(@NotNull LineCol position) {
+    if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
-    int originalOffset = offset + mySynchonizer.getStartOffset();
+    int originalOffset = offset + myRangeMarker.getStartOffset();
     LineCol originalPosition = LineCol.fromOffset(myOriginal.getDocument(), originalOffset);
     return myOriginal.getNavigatable(originalPosition);
   }
@@ -130,14 +132,6 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
       myRangeMarker = range;
     }
 
-    public int getStartOffset() {
-      return myRangeMarker.getStartOffset();
-    }
-
-    public int getEndOffset() {
-      return myRangeMarker.getEndOffset();
-    }
-
     @Override
     protected void onDocumentChanged1(@NotNull DocumentEvent event) {
       if (!myRangeMarker.isValid()) {
@@ -152,9 +146,7 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
 
     @Override
     protected void onDocumentChanged2(@NotNull DocumentEvent event) {
-      if (!myRangeMarker.isValid()) {
-        return;
-      }
+      if (!myRangeMarker.isValid()) return;
       if (!myDocument1.isWritable()) return;
 
       CharSequence newText = event.getNewFragment();
