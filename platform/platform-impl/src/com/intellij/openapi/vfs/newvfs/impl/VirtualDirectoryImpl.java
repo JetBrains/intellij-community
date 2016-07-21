@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -313,13 +312,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           CharSequence name2 = o2.name;
           int cmp = compareNames(name1, name2, ignoreCase);
           if (cmp == 0 && name1 != name2) {
-            LOG.error(ourPersistence + " returned duplicate file names("+name1+","+name2+")" +
-                      " ignoreCase: "+ignoreCase+
-                      " SystemInfo.isFileSystemCaseSensitive: "+ SystemInfo.isFileSystemCaseSensitive+
-                      " SystemInfo.OS: "+ SystemInfo.OS_NAME+" "+SystemInfo.OS_VERSION+
-                      " wasChildrenLoaded: "+wasChildrenLoaded+
-                      " in the dir: "+VirtualDirectoryImpl.this+";" +
-                      " children: "+Arrays.toString(childrenIds));
+            LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
+                      " ignoreCase: " + ignoreCase +
+                      " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                      " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                      " wasChildrenLoaded: " + wasChildrenLoaded +
+                      " in the dir: " + this + ";" +
+                      " children: " + Arrays.toString(childrenIds));
           }
           return cmp;
         });
@@ -503,7 +502,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public List<VirtualFile> getCachedChildren() {
-    return Arrays.<VirtualFile>asList(getArraySafely());
+    return Arrays.asList(getArraySafely());
   }
 
   @Override
