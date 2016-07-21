@@ -110,7 +110,7 @@ public abstract class Node extends DefaultMutableTreeNode {
 
       myCachedText = text;
       updateNotify();
-      edtQueue.consume(() -> myTreeModel.nodeChanged(Node.this));
+      edtQueue.consume(() -> myTreeModel.nodeChanged(this));
     }
     setFlag(UPDATED_MASK, true);
   }

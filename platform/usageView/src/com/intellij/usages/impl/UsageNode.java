@@ -98,7 +98,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     }
   }
 
-  public void setUsageExcluded(boolean usageExcluded) {
+  void setUsageExcluded(boolean usageExcluded) {
     myUsageExcluded = usageExcluded;
   }
 }

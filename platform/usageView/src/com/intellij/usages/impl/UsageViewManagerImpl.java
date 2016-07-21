@@ -122,7 +122,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
+    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<>();
 
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
@@ -243,7 +243,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (file != null) {
       return isFileInScope(file, searchScope);
     }
-    else if(element != null) {
+    if (element != null) {
       return searchScope instanceof EverythingGlobalScope ||
              searchScope instanceof ProjectScopeImpl ||
              searchScope instanceof ProjectAndLibrariesScope;
@@ -258,9 +258,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (searchScope instanceof LocalSearchScope) {
       return ((LocalSearchScope)searchScope).isInScope(file);
     }
-    else {
-      return ((GlobalSearchScope)searchScope).contains(file);
-    }
+    return ((GlobalSearchScope)searchScope).contains(file);
   }
 
   @NotNull
