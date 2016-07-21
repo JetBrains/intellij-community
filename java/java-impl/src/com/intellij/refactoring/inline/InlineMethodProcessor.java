@@ -1357,6 +1357,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             inlineEnumConstantParameter(refsVector, ref);
             continue;
           }
+          if (myAddedClassInitializers.containsKey(field)) {
+            continue;
+          }
           field.normalizeDeclaration();
           final PsiExpression initializer = field.getInitializer();
           LOG.assertTrue(initializer != null);
