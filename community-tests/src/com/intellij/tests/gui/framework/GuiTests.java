@@ -305,12 +305,14 @@ public final class GuiTests {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
       String buttonText = "Accept";
-      privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
+      JButton acceptButton = privacyDialogFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
         @Override
         protected boolean isMatching(@Nonnull JButton button) {
           return button.getText().equals(buttonText);
         }
-      }).click();
+      }).target();
+      //we clicking this button to avoid NPE org.fest.util.Preconditions.checkNotNull(Preconditions.java:71)
+      acceptButton.doClick();
     }
     catch (WaitTimedOutError we) {
       System.out.println("Timed out waiting for \"" + policyAgreement + "\" JDialog. Continue...");
