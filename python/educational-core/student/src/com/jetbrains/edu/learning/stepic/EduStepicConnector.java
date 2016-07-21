@@ -417,7 +417,7 @@ public class EduStepicConnector {
 
         switch (step.name) {
           case (CODE_PREFIX):
-            createCodeTask(task, step, i);
+            createCodeTask(task, step);
             break;
           case (PYCHARM_PREFIX):
             createPyCharmTask(task, step);
@@ -447,8 +447,8 @@ public class EduStepicConnector {
     }
   }
 
-  private static void createCodeTask(Task task, StepicWrappers.Step step, int i) {
-    task.setName("step" + i);
+  private static void createCodeTask(Task task, StepicWrappers.Step step) {
+    task.setName("step" + task.getStepicId());
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
       for (List<String> sample : step.options.samples) {
@@ -475,11 +475,11 @@ public class EduStepicConnector {
     }
 
     final TaskFile taskFile = new TaskFile();
-    taskFile.name = "code";
+    taskFile.name = "Main.java";
     //final String templateForTask = getCodeTemplateForTask();
     final String templateForTask = step.options.codeTemplates.getTemplateForLanguage("java");
     taskFile.text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-    task.taskFiles.put("code.java", taskFile);
+    task.taskFiles.put(taskFile.name, taskFile);
   }
 
   public static StepicWrappers.Step getStep(Integer step) throws IOException {
@@ -623,7 +623,7 @@ public class EduStepicConnector {
     }
   }
 
-  private static boolean login(@NotNull final Project project) {
+  public static boolean login(@NotNull final Project project) {
     final StepicUser user = StudyTaskManager.getInstance(project).getUser();
     final String login = user.getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) {
@@ -861,7 +861,7 @@ public class EduStepicConnector {
 
   public static void setHeaders(@NotNull final HttpRequestBase request) {
     if (!accessToken.isEmpty()) {
-      LOG.info("setup default headers");
+//      LOG.info("setup default headers");
       request.addHeader(new BasicHeader("Authorization", "Bearer " + accessToken));
       request.addHeader(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
     }
