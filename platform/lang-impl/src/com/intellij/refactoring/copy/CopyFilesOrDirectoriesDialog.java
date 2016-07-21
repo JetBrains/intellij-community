@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.copy;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -106,7 +107,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         VirtualFile vFile = file.getVirtualFile();
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
         String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);
-        if (StringUtil.isEmpty(vFile.getExtension())) {
+        if (StringUtil.isEmpty(vFile.getExtension()) && ScratchUtil.isScratch(vFile)) {
           FileType type = ObjectUtils.notNull(file.getLanguage().getAssociatedFileType(), file.getFileType());
           fileName = PathUtil.makeFileName(fileName, type.getDefaultExtension());
         }
