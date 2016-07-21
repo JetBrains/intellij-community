@@ -43,6 +43,7 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
@@ -137,6 +138,12 @@ class ProjectInspectionProfileManager(val project: Project,
         }
       }
     })
+  }
+
+  @TestOnly
+  fun forceLoadSchemes() {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode)
+    schemeManager.loadSchemes()
   }
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
