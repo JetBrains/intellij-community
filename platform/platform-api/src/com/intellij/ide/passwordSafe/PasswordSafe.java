@@ -16,21 +16,10 @@
 package com.intellij.ide.passwordSafe;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * The password safe component. It allows storing, removing, and retrieving the passwords.
- * Note that on the first access to the password safe functions, the dialog asking for the
- * master password might have to be shown. So the access should be either done from UI thread,
- * or it should be possible to invoke {@link java.awt.EventQueue#invokeAndWait(Runnable)}
- * method when password access methods are invoked.
- *
- * @see com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog
- */
 public abstract class PasswordSafe implements PasswordStorage {
-
-  /**
-   * @return the instance of password safe service
-   */
+  @NotNull
   public static PasswordSafe getInstance() {
     return ServiceManager.getService(PasswordSafe.class);
   }
