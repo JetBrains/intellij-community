@@ -84,4 +84,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
     <description>Variable named &lt;code&gt;str&lt;/code&gt; doesn't have type 'java.lang.String' #loc</description>
   </problem>
+
+  <problem>
+    <file>StandardVariableNames.java</file>
+    <line>32</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Standard variable names</problem_class>
+    <description>Variable named &lt;code&gt;b&lt;/code&gt; doesn't have type 'byte' or 'java.lang.Byte' #loc</description>
+  </problem>
 </problems>

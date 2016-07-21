@@ -234,8 +234,8 @@ public abstract class InspectionTestCase extends PsiTestCase {
   }
 
   protected Sdk getTestProjectSdk() {
-    Sdk sdk = IdeaTestUtil.getMockJdk17();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
     return sdk;
   }
 
