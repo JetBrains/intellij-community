@@ -163,9 +163,14 @@ class BuildContextImpl extends BuildContext {
 
   @Override
   JpsModule findApplicationInfoModule() {
-    def module = findModule(productProperties.applicationInfoModule)
+    return findRequiredModule(productProperties.applicationInfoModule)
+  }
+
+  @Override
+  JpsModule findRequiredModule(String name) {
+    def module = findModule(name)
     if (module == null) {
-      messages.error("Cannot find module '$productProperties.applicationInfoModule' containing ApplicationInfo.xml file")
+      messages.error("Cannot find required module '$name' in the project")
     }
     return module
   }
@@ -194,6 +199,13 @@ class BuildContextImpl extends BuildContext {
     else {
       messages.block(stepMessage, step)
     }
+  }
+
+  @Override
+  boolean includeBreakGenLibraries() {
+    def productLayout = productProperties.productLayout
+    return productLayout.mainJarName == null || //todo[nik] remove this condition later
+           productLayout.additionalPlatformModules.containsKey("java-runtime")
   }
 
   @Override

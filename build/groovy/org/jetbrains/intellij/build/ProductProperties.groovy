@@ -39,6 +39,8 @@ public abstract class ProductProperties {
    */
   String applicationInfoModule
 
+  String brandingModule
+
   /**
    * Name of the sh/bat script (without extension) which will contain the commands to run IDE in 'offline inspections' mode
    */
@@ -55,15 +57,37 @@ public abstract class ProductProperties {
   String additionalIdeJvmArguments = ""
 
   /**
-   * @return name of the product which will be shown in Windows Installer
-   */
-  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
-
-  /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
   abstract String systemSelector(ApplicationInfoProperties applicationInfo)
+
+  /**
+   * If {@code true} Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
+   * (instead of Alt+Shift+Button1) in the default keymap
+   */
+  boolean reassignAltClickToMultipleCarets = false
+
+  /**
+   * If {@code true} a txt file containing information (in Atlassian Confluence format) about third-party libraries used in the product
+   * will be generated.
+   */
+  boolean generateLibrariesLicensesTable = true
+
+  /**
+   * List of licenses information about all libraries which can be used in the product modules
+   */
+  List<LibraryLicense> allLibraryLicenses = CommunityLibraryLicenses.LICENSES_LIST
+
+  /**
+   * If {@code true} the main product JAR file will be scrambled using {@link BuildContext#scrambleTool}
+   */
+  boolean scrambleMainJar = false
+
+  /**
+   * Described which modules should be included into the product's platform and which plugins should be bundled with the product
+   */
+  ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
@@ -114,6 +138,12 @@ public abstract class ProductProperties {
   boolean enableYourkitAgentInEAP = false
 
   List<String> excludedPlugins = []
+
+  /**
+   * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
+   * (&lt;PRODUCT&gt;_JDK variable), *.vmoptions file (&lt;PRODUCT&gt;_VM_OPTIONS variable), idea.properties file (&lt;PRODUCT&gt;_PROPERTIES variable)
+   */
+  String environmentVariableBaseName(ApplicationInfoProperties applicationInfo) { applicationInfo.upperCaseProductName }
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.text.StringUtil
+
 import java.text.MessageFormat
 
 /**
@@ -30,6 +32,7 @@ class ApplicationInfoProperties {
   final String minorVersionMainPart
   final String productName
   final String companyName
+  final String shortCompanyName
   final boolean isEAP
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -45,6 +48,7 @@ class ApplicationInfoProperties {
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
+    shortCompanyName = StringUtil.trimEnd(companyName, "s.r.o.").trim()
   }
 
   public String getUpperCaseProductName() { shortProductName.toUpperCase() }

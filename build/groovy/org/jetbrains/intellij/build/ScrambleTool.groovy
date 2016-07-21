@@ -23,6 +23,11 @@ package org.jetbrains.intellij.build
  */
 interface ScrambleTool {
   /**
+   * @return list of modules used by the tool which need to be compiled before {@link #scramble} method is invoked
+   */
+  List<String> getAdditionalModulesToCompile()
+
+  /**
    * Scramble {@code mainJarName} in {@code "$buildContext.paths.distAll/lib"} directory
    */
   void scramble(String mainJarName, BuildContext buildContext)

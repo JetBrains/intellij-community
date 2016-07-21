@@ -122,13 +122,12 @@ class WinExeInstallerBuilder {
 !define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
-    String fullProductName = productProperties.fullNameIncludingEdition(buildContext.applicationInfo)
     def extensionsList = customizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     new File(box, "nsiconf/strings.nsi").text = """
-!define MANUFACTURER "JetBrains"
-!define MUI_PRODUCT  "$fullProductName"
-!define PRODUCT_FULL_NAME "$fullProductName"
+!define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
+!define MUI_PRODUCT  "${customizer.fullNameIncludingEdition(buildContext.applicationInfo)}"
+!define PRODUCT_FULL_NAME "${customizer.fullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
 !define PRODUCT_EXE_FILE "${productProperties.baseFileName}.exe"
 !define PRODUCT_EXE_FILE_64 "${productProperties.baseFileName}64.exe"
 !define PRODUCT_ICON_FILE "install.ico"
@@ -138,7 +137,7 @@ class WinExeInstallerBuilder {
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.uninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
 
-; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDEA build has been installed
+; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
 

@@ -15,12 +15,14 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.PathUtilRt
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 
 import java.time.LocalDate
+
 /**
  * @author nik
  */
@@ -36,21 +38,25 @@ class MacDistributionBuilder {
   }
 
   public layoutMac(File ideaPropertiesFile) {
-    def docTypes = customizer.docTypes ?: """
+    def docTypes = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${buildContext.productProperties.baseFileName}.icns</string>
+        <string>${PathUtilRt.getFileName(customizer.icnsPath ?: "idea.icns")}</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>
-"""
-    Map<String, String> customIdeaProperties = ["idea.jre.check": "$buildContext.productProperties.toolsJarRequired"];
+""" : "") + customizer.additionalDocTypes
+    Map<String, String> customIdeaProperties = [:]
+    if (buildContext.productProperties.toolsJarRequired) {
+      customIdeaProperties["idea.jre.check"] = "true"
+    }
+    customIdeaProperties.putAll(customizer.customIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaPropertiesFile, customIdeaProperties, docTypes)
     customizer.copyAdditionalFiles(buildContext, macDistPath)
     def macZipPath = buildMacZip()
