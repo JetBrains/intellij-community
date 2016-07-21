@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -45,6 +46,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * @author pti
  */
@@ -55,9 +58,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final BuildInfo myNewBuild;
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
-
-  private String myLicenseInfo = null;
-  private Color myLicenseInfoColor = null;
+  private final Pair<String, Color> myLicenseInfo;
 
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
@@ -74,7 +75,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myPatch = patch;
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-    initLicensingInfo(myUpdatedChannel, myNewBuild);
+    myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -83,33 +84,32 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
   }
 
-  private void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+  private static Pair<String, Color> initLicensingInfo(UpdateChannel channel, BuildInfo build) {
     LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
-      }
-      else {
-        Date buildDate = build.getReleaseDate();
-        if (buildDate != null) {
-          Boolean applicable = facade.isApplicableForProduct(buildDate);
-          if (applicable != null) {
-            if (applicable == Boolean.FALSE) {
-              myLicenseInfo = IdeBundle.message("updates.paid.upgrade", channel.getEvalDays());
-              myLicenseInfoColor = JBColor.RED;
-            }
-            else if (facade.isPerpetualForProduct(buildDate) == Boolean.TRUE) {
-              myLicenseInfo = IdeBundle.message("updates.fallback.build");
-            }
-            else {
-              Date expiration = facade.getLicenseExpirationDate();
-              if (expiration != null) {
-                myLicenseInfo = IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration));
-              }
-            }
-          }
-        }
-      }
+    if (facade == null) return null;
+
+    if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+      return pair(IdeBundle.message("updates.channel.bundled.key"), null);
+    }
+
+    Date releaseDate = build.getReleaseDate();
+    Boolean applicable = releaseDate == null ? null : facade.isApplicableForProduct(releaseDate);
+    if (applicable == null) {
+      return null;
+    }
+    if (applicable == Boolean.FALSE) {
+      return pair(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), JBColor.RED);
+    }
+    if (facade.isPerpetualForProduct(releaseDate) == Boolean.TRUE) {
+      return pair(IdeBundle.message("updates.fallback.build"), null);
+    }
+
+    Date expiration = facade.getLicenseExpirationDate();
+    if (expiration != null) {
+      return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), null);
+    }
+    else {
+      return null;
     }
   }
 
@@ -269,7 +269,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
 
       if (myLicenseInfo != null) {
-        configureMessageArea(myLicenseArea, myLicenseInfo, myLicenseInfoColor, null);
+        configureMessageArea(myLicenseArea, myLicenseInfo.first, myLicenseInfo.second, null);
       }
     }
   }
