@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -31,7 +32,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex {
+public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   private static final int VERSION = 0;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
@@ -39,7 +40,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex {
   public VcsLogUserIndex(@NotNull String logId,
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, "users", VERSION, new UserIndexer(userRegistry), disposableParent);
+    super(logId, "users", VERSION, new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER, disposableParent);
     myUserRegistry = userRegistry;
   }
 

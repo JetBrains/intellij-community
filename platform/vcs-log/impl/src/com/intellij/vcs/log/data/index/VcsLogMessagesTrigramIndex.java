@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -34,7 +35,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex {
+public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
   private static final int VERSION = 0;
   private static final String TRIGRAMS = "trigrams";
@@ -43,7 +44,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex {
   @NotNull private final PersistentHashMap<Integer, Integer> myNoTrigramsCommits;
 
   public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
-    super(logId, TRIGRAMS, VERSION, new TrigramMessageIndexer(), disposableParent);
+    super(logId, TRIGRAMS, VERSION, new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER, disposableParent);
 
     myNoTrigramsCommits =
       PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId, VERSION);
