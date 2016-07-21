@@ -337,14 +337,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               myHolder.add(result);
             }
             else {
-              final String incompatibleReturnTypesMessage = LambdaUtil
+              final Map<PsiElement, String> returnErrors = LambdaUtil
                 .checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
-              if (incompatibleReturnTypesMessage != null) {
-                final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
-                final PsiElement returnStatementToHighlight = returnExpressions.size() == 1 ? returnExpressions.get(0) : expression.getBody();
-                HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(returnStatementToHighlight != null ? returnStatementToHighlight : expression)
-                  .descriptionAndTooltip(incompatibleReturnTypesMessage).create();
-                myHolder.add(result);
+              if (returnErrors != null) {
+                for (Map.Entry<PsiElement, String> entry : returnErrors.entrySet()) {
+                  myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                                 .range(entry.getKey())
+                                 .descriptionAndTooltip(entry.getValue()).create());
+                }
               }
               else {
                 final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
