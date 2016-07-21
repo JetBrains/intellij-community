@@ -79,8 +79,25 @@ public class Foundation {
     return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
+  public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
+    ID cls = getObjcClass(stringCls);
+    Pointer selector = createSelector(stringSelector);
+    if (invoke(cls, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
+    }
+    return invoke(cls, selector, args);
+  }
+
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
+  }
+
+  public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
+    Pointer selector = createSelector(stringSelector);
+    if (!id.equals(ID.NIL) && invoke(id, "respondsToSelector:", selector).intValue() == 0) {
+      throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
+    }
+    return invoke(id, selector, args);
   }
 
   public static ID allocateObjcClassPair(ID superCls, String name) {
