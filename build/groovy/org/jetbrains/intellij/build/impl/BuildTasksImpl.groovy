@@ -231,14 +231,16 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {
-      buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-        def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-        crossPlatformBuilder.buildCrossPlatformZip(windowsBuilder.winDistPath, linuxBuilder.unixDistPath, macBuilder.macDistPath)
+    if (buildContext.productProperties.buildCrossPlatformDistribution) {
+      if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {
+        buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+          def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
+          crossPlatformBuilder.buildCrossPlatformZip(windowsBuilder.winDistPath, linuxBuilder.unixDistPath, macBuilder.macDistPath)
+        }
       }
-    }
-    else {
-      buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions was skipeed")
+      else {
+        buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
+      }
     }
   }
 

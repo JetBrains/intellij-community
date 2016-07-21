@@ -17,7 +17,6 @@ package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.cloudConfiguration.CloudConfigurationManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -28,8 +27,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,7 +89,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     myColumnMode = myThemes.size() > 2;
     JPanel buttonsPanel = new JPanel(new GridLayout(myColumnMode ? myThemes.size() : 1, myColumnMode ? 1 : myThemes.size(), 5, 5));
     ButtonGroup group = new ButtonGroup();
-    final ThemeInfo myDefaultTheme = getDefaultTheme();
+    final ThemeInfo myDefaultTheme = myThemes.iterator().next();
 
     for (final ThemeInfo theme : myThemes) {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
@@ -126,33 +123,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     }
     SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, CustomizeUIThemeStepPanel.this));
     myInitial = false;
-  }
-
-  @NotNull
-  private ThemeInfo getDefaultTheme() {
-    String sharedLaf = CloudConfigurationManager.getCustomizeProvider().getSharedLaf();
-    if (sharedLaf != null) {
-      ThemeInfo theme = findTheme(sharedLaf);
-      if (theme == null && AQUA.name.equals(sharedLaf)) {
-        theme = findTheme(INTELLIJ.name);
-      }
-      if (theme != null) {
-        return theme;
-      }
-    }
-
-    return myThemes.iterator().next();
-  }
-
-  @Nullable
-  private ThemeInfo findTheme(@NotNull String name) {
-    for (ThemeInfo theme : myThemes) {
-      if (name.equals(theme.name)) {
-        mySkipFirstShowing = true;
-        return theme;
-      }
-    }
-    return null;
   }
 
   protected void initThemes(Collection<ThemeInfo> result) {

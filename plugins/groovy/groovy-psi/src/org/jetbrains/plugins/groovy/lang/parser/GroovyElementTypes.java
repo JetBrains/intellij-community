@@ -285,6 +285,7 @@ public interface GroovyElementTypes {
       return new GrTypeParameterImpl(stub);
     }
 
+    @NotNull
     @Override
     public GrTypeParameterStub createStub(@NotNull GrTypeParameter psi, StubElement parentStub) {
       return new GrTypeParameterStub(parentStub, StringRef.fromString(psi.getName()));
@@ -341,6 +342,7 @@ public interface GroovyElementTypes {
       return new GrParameterImpl(stub);
     }
 
+    @NotNull
     @Override
     public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
       return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
   @Nullable private final Project myProject;
 
   protected GlobalSearchScope(@Nullable Project project) {
@@ -462,7 +460,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
           return scope.getProject();
         }
       }), null));
-      assert scopes.length > 1 : Arrays.asList(scopes);
+      if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
       myScopes = scopes;
       final int[] nested = {0};
       ContainerUtil.process(scopes, new Processor<GlobalSearchScope>() {
@@ -515,7 +513,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
             result[0] = res1;
             return true;
           }
-          if ((result[0] > 0) != (res1 > 0)) {
+          if (result[0] > 0 != res1 > 0) {
             result[0] = 0;
             return false;
           }
@@ -592,7 +590,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
     }
-    LOG.assertTrue(fileTypes.length > 0);
+    if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
     return new FileTypeRestrictionScope(scope, fileTypes);
   }
 

@@ -217,4 +217,8 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testMultipleDocsWithMappings() {
     doTest(true);
   }
+  
+  public void testScalarsWithNewlines() {
+    doTest(true);
+  }
 }

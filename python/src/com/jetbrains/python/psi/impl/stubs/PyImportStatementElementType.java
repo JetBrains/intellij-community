@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,10 +39,11 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     this("IMPORT_STATEMENT");
   }
 
-  public PyImportStatementElementType(String debugName) {
+  public PyImportStatementElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportStatementImpl(node);
@@ -52,6 +54,7 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     return new PyImportStatementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyImportStatementStub createStub(@NotNull PyImportStatement psi, StubElement parentStub) {
     return new PyImportStatementStubImpl(parentStub, getStubElementType());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Something that describes a property, with all related accessors.
@@ -72,46 +72,26 @@ public abstract class PropertyBunch<MType> {
   public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
     if (source instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)source;
-      PyExpression callee = call.getCallee();
+      final PyExpression callee = call.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        PyReferenceExpression ref = (PyReferenceExpression)callee;
-        if (ref.isQualified()) return null;
-        if (PyNames.PROPERTY.equals(callee.getName())) {
-          PsiFile file = source.getContainingFile();
-          if (isBuiltinFile(file) || !resolvesLocally(ref)) {
-            // we assume that a non-local name 'property' is a built-in name.
-            // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
-            // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.
-            return call;
-          }
+        final PyReferenceExpression ref = (PyReferenceExpression)callee;
+
+        if (!ref.isQualified() &&
+            PyNames.PROPERTY.equals(callee.getName()) &&
+            (isBuiltinFile(source.getContainingFile()) || PyResolveUtil.resolveLocally(ref).stream().allMatch(Objects::isNull))) {
+          // we assume that a non-local name 'property' is a built-in name.
+          // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
+          // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.
+          return call;
         }
       }
     }
     return null;
   }
 
-  private static boolean isBuiltinFile(PsiFile file) {
+  private static boolean isBuiltinFile(@NotNull PsiFile file) {
     final String name = file.getName();
     return PyBuiltinCache.BUILTIN_FILE.equals(name) || PyBuiltinCache.BUILTIN_FILE_3K.equals(name);
-  }
-
-  /**
-   * Resolve in containing file only.
-   * @param ref what to resolve
-   * @return true iff ref obviously resolves to a local name (maybe partially, e.g. via import).
-   */
-  protected static boolean resolvesLocally(@NotNull PyReferenceExpression ref) {
-    final String name = ref.getName();
-    if (name != null) {
-      final PyResolveProcessor processor = new PyResolveProcessor(name, true);
-      PyResolveUtil.scopeCrawlUp(processor, ref, name, null);
-      for (PsiElement element : processor.getElements()) {
-        if (element != null) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   /**

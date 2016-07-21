@@ -207,6 +207,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class, true));
   }
 
+  public void testPullUpFromAnonymousToInterface() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }

@@ -833,6 +833,10 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
@@ -880,10 +884,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <category>Java/Control Flow</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertEqualsMethodToStaticIntention</className>
       <category>Java/Control Flow</category>
     </intentionAction>
 
@@ -1583,6 +1583,7 @@
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
 
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
 

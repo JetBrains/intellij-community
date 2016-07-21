@@ -32,12 +32,6 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int SMALL_GAP = 10;
   protected static final int GAP = 20;
 
-  protected boolean mySkipFirstShowing;
-
-  public boolean skipFirstShowing() {
-    return mySkipFirstShowing;
-  }
-
   protected abstract String getTitle();
 
   protected abstract String getHTMLHeader();

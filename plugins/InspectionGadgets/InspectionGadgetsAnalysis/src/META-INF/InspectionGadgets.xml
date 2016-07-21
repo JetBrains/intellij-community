@@ -1312,7 +1312,7 @@
                      implementationClass="com.siyeh.ig.migration.BigDecimalLegacyMethodInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsReplaceableByObjectsCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equals.replaceable.by.objects.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumerationCanBeIteration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enumeration.can.be.iteration.display.name" groupBundle="messages.InspectionsBundle"
@@ -2564,6 +2564,14 @@
                      key="split.multi.catch.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.exceptions.SplitMultiCatchInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ExpandToNormalAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="expand.to.normal.annotation.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.annotation.ExpandToNormalAnnotationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="AddArrayCreationExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="add.array.creation.expression.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.AddArrayCreationExpressionInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"

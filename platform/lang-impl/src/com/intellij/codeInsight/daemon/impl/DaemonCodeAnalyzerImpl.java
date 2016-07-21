@@ -897,6 +897,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
       }
     };
+    progress.setModalityProgress(null);
     progress.start();
     myUpdateProgress = progress;
     return progress;

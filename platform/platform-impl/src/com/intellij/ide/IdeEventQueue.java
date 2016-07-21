@@ -458,7 +458,7 @@ public class IdeEventQueue extends EventQueue {
     else if (ke.getID() == KeyEvent.KEY_RELEASED) {
       switch (ke.getKeyCode()) {
         case KeyEvent.VK_CONTROL:
-          ctrlIsPressedCount--;
+          ctrlIsPressedCount = 0;
           break;
         case KeyEvent.VK_ALT:
           if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
@@ -495,7 +495,7 @@ public class IdeEventQueue extends EventQueue {
             // On German keyboard layout on Windows  we are getting on key press
             // ctrl + alt instead of AltGr
 
-            int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
+            int modifiers = ke.getModifiers() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
 
             if (ctrlIsPressedCount > 1) {
               modifiers |= InputEvent.CTRL_DOWN_MASK;

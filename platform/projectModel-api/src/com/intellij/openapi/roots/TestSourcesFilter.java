@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implementations of this extension point can tell IDE whether some particular file is a test file despite project roots configuration.
+ * Implementations of this extension point can tell IDE whether some particular file is a test file.
  * <p>
  * By default, IntelliJ Platform considers files as tests only if they are located under test
  * sources root {@link FileIndex#isInTestSourceContent(VirtualFile)}.

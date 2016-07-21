@@ -634,12 +634,12 @@ public class UIUtil {
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? Conditions.<Component>alwaysTrue() : new Condition<Component>() {
+      visibleOnly ? new Condition<Component>() {
         @Override
         public boolean value(Component c) {
           return c.isVisible();
         }
-      }).traverse() : JBIterable.of(component);
+      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -3596,6 +3596,22 @@ public class UIUtil {
    */
   public static Window getWindow(Component component) {
     return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  }
+
+  /**
+   * Places the specified window at the top of the stacking order and shows it in front of any other windows.
+   * If the window is iconified it will be shown anyway.
+   *
+   * @param window the window to activate
+   */
+  public static void toFront(Window window) {
+    if (window instanceof Frame) {
+      Frame frame = (Frame)window;
+      frame.setState(Frame.NORMAL);
+    }
+    if (window != null) {
+      window.toFront();
+    }
   }
 
   public static Image getDebugImage(Component component) {

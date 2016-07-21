@@ -40,7 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Date;
@@ -93,18 +92,21 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       else {
         Date buildDate = build.getReleaseDate();
         if (buildDate != null) {
-          if (!facade.isApplicableForProduct(buildDate)) {
-            myLicenseInfo = IdeBundle.message("updates.paid.upgrade", channel.getEvalDays());
-            myLicenseInfoColor = JBColor.RED;
-          }
-          else if (facade.isPerpetualForProduct(buildDate)) {
-            myLicenseInfo = IdeBundle.message("updates.fallback.build");
-          }
-          else {
-            Date expiration = facade.getLicenseExpirationDate();
-            myLicenseInfo = expiration != null
-                            ? IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration))
-                            : IdeBundle.message("updates.interim.build.endless");
+          Boolean applicable = facade.isApplicableForProduct(buildDate);
+          if (applicable != null) {
+            if (applicable == Boolean.FALSE) {
+              myLicenseInfo = IdeBundle.message("updates.paid.upgrade", channel.getEvalDays());
+              myLicenseInfoColor = JBColor.RED;
+            }
+            else if (facade.isPerpetualForProduct(buildDate) == Boolean.TRUE) {
+              myLicenseInfo = IdeBundle.message("updates.fallback.build");
+            }
+            else {
+              Date expiration = facade.getLicenseExpirationDate();
+              if (expiration != null) {
+                myLicenseInfo = IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration));
+              }
+            }
           }
         }
       }
@@ -182,7 +184,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       restart();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Logger.getInstance(UpdateChecker.class).warn(e);
       if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
                                       IdeBundle.message("updates.error.connection.title"),

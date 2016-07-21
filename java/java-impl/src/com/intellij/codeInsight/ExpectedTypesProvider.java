@@ -78,9 +78,14 @@ public class ExpectedTypesProvider {
     @Override
     @NotNull
     public PsiMethod[] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
-      final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(manager.getProject());
-      GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
-      return cache.getMethodsByNameIfNotMoreThan(name, scope, MAX_COUNT);
+      Project project = manager.getProject();
+      final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      GlobalSearchScope sources = GlobalSearchScope.projectScope(project);
+      GlobalSearchScope libraries = GlobalSearchScope.notScope(sources);
+      PsiMethod[] sourceMethods = cache.getMethodsByNameIfNotMoreThan(name, sources, MAX_COUNT);
+      if (sourceMethods.length == MAX_COUNT) return sourceMethods;
+      PsiMethod[] libraryMethods = cache.getMethodsByNameIfNotMoreThan(name, libraries, MAX_COUNT-sourceMethods.length);
+      return ArrayUtil.mergeArrays(sourceMethods, libraryMethods);
     }
   };
   private static final PsiType[] PRIMITIVE_TYPES = {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE};
@@ -1274,9 +1279,11 @@ public class ExpectedTypesProvider {
    * By default searches in the global scope (see ourGlobalScopeClassProvider), but caller can provide its own algorithm e.g. to narrow search scope
    */
   public interface ExpectedClassProvider {
-    PsiField[] findDeclaredFields(final PsiManager manager, String name);
+    @NotNull
+    PsiField[] findDeclaredFields(@NotNull PsiManager manager, @NotNull String name);
 
-    PsiMethod[] findDeclaredMethods(final PsiManager manager, String name);
+    @NotNull
+    PsiMethod[] findDeclaredMethods(@NotNull PsiManager manager, @NotNull String name);
   }
 
   @NotNull

@@ -14,4 +14,6 @@ public interface JsonSchemaFileProvider {
   VirtualFile getSchemaFile();
 
   SchemaType getSchemaType();
+
+  int getOrder();
 }

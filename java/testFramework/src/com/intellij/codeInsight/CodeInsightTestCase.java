@@ -84,6 +84,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    fixTemplates();
+  }
+
+  public static void fixTemplates() {
     FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
       for (FileTemplate template : manager.getInternalTemplates()) {

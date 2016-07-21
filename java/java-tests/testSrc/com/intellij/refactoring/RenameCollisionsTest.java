@@ -119,7 +119,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   }
 
   public void testRenameVarLocalToAlien() throws Exception {
-    doTest("BOTTOM");
+    doTest("separatorChar");
   }
 
   public void testRenameVarLocalToConst() throws Exception {
@@ -151,7 +151,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   }
 
   public void testRenameVarParamToAlien() throws Exception {
-    doTest("BOTTOM");
+    doTest("separatorChar");
   }
 
   public void testRenameVarParamToField() throws Exception {

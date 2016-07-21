@@ -635,7 +635,7 @@ public class ExpressionUtils {
     return null;
   }
 
-  public static PsiVariable getVariable(PsiExpression expression) {
+  public static PsiVariable getVariable(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiReferenceExpression)) {
       return null;

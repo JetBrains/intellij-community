@@ -122,8 +122,6 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
     otherKeymap.cleanShortcutsCache();
 
-    List<String> changedActionIds = getChangedActionIds(otherKeymap);
-
     otherKeymap.myActionId2ListOfShortcuts.clear();
     otherKeymap.myActionId2ListOfShortcuts.ensureCapacity(myActionId2ListOfShortcuts.size());
     myActionId2ListOfShortcuts.forEachEntry(new TObjectObjectProcedure<String, OrderedSet<Shortcut>>() {
@@ -133,36 +131,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
         return true;
       }
     });
-
-    if (!ContainerUtil.isEmpty(changedActionIds)) {
-      otherKeymap.fireShortcutChanged(changedActionIds);
-    }
-
     return otherKeymap;
-  }
-
-  @Nullable
-  private List<String> getChangedActionIds(@NotNull KeymapImpl otherKeymap) {
-    if (!otherKeymap.isInternalKeymapListener()) {
-      return null;
-    }
-    List<String> changedActionIds = new ArrayList<>();
-    Set<String> oldKeys = otherKeymap.myActionId2ListOfShortcuts.keySet();
-    Set<String> newKeys = new HashSet<>(myActionId2ListOfShortcuts.keySet());
-
-    for (String key : oldKeys) {
-      if (newKeys.remove(key)) {
-        if (!Comparing.equal(otherKeymap.myActionId2ListOfShortcuts.get(key), myActionId2ListOfShortcuts.get(key))) {
-          changedActionIds.add(key);
-        }
-      }
-      else {
-        changedActionIds.add(key);
-      }
-    }
-    changedActionIds.addAll(newKeys);
-
-    return changedActionIds;
   }
 
   public boolean equals(Object object) {
@@ -570,10 +539,6 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return myKeymapManager;
   }
 
-  public void setKeymapManager(@NotNull KeymapManagerEx keymapManager) {
-    myKeymapManager = keymapManager;
-  }
-
   /**
    * @param keymapElement element which corresponds to "keymap" tag.
    */
@@ -776,7 +741,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    * @return string representation of passed mouse shortcut. This method should
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
-  public static String getMouseShortcutString(MouseShortcut shortcut) {
+  private static String getMouseShortcutString(MouseShortcut shortcut) {
 
     if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
       return "Force touch";
@@ -916,23 +881,6 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   @Override
   public void removeShortcutChangeListener(Listener listener) {
     myListeners.remove(listener);
-  }
-
-  private boolean isInternalKeymapListener() {
-    for (Listener listener : myListeners) {
-      if (listener instanceof KeymapChangeListener) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void fireShortcutChanged(@NotNull List<String> actionIds) {
-    for (Listener listener : myListeners) {
-      if (listener instanceof KeymapChangeListener) {
-        ((KeymapChangeListener)listener).onShortcutChanged(actionIds);
-      }
-    }
   }
 
   private void fireShortcutChanged(String actionId) {

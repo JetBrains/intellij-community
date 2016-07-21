@@ -2,7 +2,6 @@
 import java.io.*;
 import java.lang.Override;
 import java.lang.String;
-import java.net.*;
 
 class A {
  A(int i) {}

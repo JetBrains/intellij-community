@@ -357,6 +357,18 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
+  public void testMergedThrowableNotThrownInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"ThrowableInstanceNeverThrown\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"ThrowableResultOfMethodCallIgnored\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"ThrowableNotThrown\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "</profile>");
+  }
+
   public void testMergedMisspelledInspections() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +

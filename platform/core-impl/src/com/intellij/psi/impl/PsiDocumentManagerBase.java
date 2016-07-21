@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -617,6 +618,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           Runnable action = entry.getValue();
           try {
             action.run();
+          }
+          catch (ProcessCanceledException e) {
+            // some actions are that crazy to use PCE for their own control flow.
+            // swallow and ignore to not disrupt completely unrelated control flow.
           }
           catch (Throwable e) {
             LOG.error("During running " + action, e);

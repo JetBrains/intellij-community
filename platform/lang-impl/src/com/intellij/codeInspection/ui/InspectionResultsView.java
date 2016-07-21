@@ -605,7 +605,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setLineNumbersShown(false);
-        settings.setLineMarkerAreaShown(false);
+        settings.setFoldingOutlineShown(true);
+        settings.setLineMarkerAreaShown(true);
+        settings.setGutterIconsShown(false);
         settings.setAdditionalColumnsCount(0);
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
@@ -615,7 +617,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (problemCount == 0) {
         myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
-      myPreviewEditor.getSettings().setFoldingOutlineShown(problemCount > 1);
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }

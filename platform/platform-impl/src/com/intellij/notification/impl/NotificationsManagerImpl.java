@@ -68,9 +68,8 @@ import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.*;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -791,6 +790,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(text);
     hoverAdapter.addSource(pane);
 
+    if (buttons == null && actions) {
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
+    }
+
     if (expandAction != null) {
       hoverAdapter.addComponent(expandAction, component -> {
         Rectangle bounds;
@@ -807,10 +810,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
         return bounds;
       });
-    }
-
-    if (buttons == null && actions) {
-      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
     }
 
     hoverAdapter.initListeners();
@@ -981,6 +980,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     private void handleEvent(MouseEvent e, boolean pressed, boolean moved) {
+      if (e.getSource() instanceof JEditorPane) {
+        JEditorPane pane = (JEditorPane)e.getSource();
+        int pos = pane.viewToModel(e.getPoint());
+        if (pos >= 0) {
+          HTMLDocument document = (HTMLDocument)pane.getDocument();
+          AttributeSet attributes = document.getCharacterElement(pos).getAttributes();
+          if (attributes.getAttribute(HTML.Tag.A) != null) {
+            return;
+          }
+        }
+      }
+
       for (Pair<Component, ?> p : myComponents) {
         Component component = p.first;
         Rectangle bounds;
@@ -989,6 +1000,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           JBInsets.addTo(bounds, (Insets)p.second);
         }
         else {
+          //noinspection unchecked
           bounds = ((Function<Component, Rectangle>)p.second).fun(component);
         }
         if (bounds.contains(SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), component.getParent()))) {

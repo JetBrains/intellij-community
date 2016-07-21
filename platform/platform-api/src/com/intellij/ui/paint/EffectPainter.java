@@ -131,7 +131,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (width > 0 && height > 0) {
-        WAVE_FACTORY.paint(g, x, y, width, height, paint);
+        Cached.WAVE_UNDERSCORE.paint(g, x, y, width, height, paint);
       }
     }
   },
@@ -181,112 +181,117 @@ public enum EffectPainter implements RegionPainter<Paint> {
       height = thickness;
     }
     if (painter == BOLD_DOTTED_UNDERSCORE) {
-      BOLD_DOTTED_FACTORY.paint(g, x, y, width, height, null);
+      int dx = (x % height + height) % height;
+      int w = width + dx;
+      int dw = (w % height + height) % height;
+      Cached.BOLD_DOTTED_UNDERSCORE.paint(g, x - dx, y, dw == 0 ? w : w - dw + height, height, null);
     }
     else {
       g.fillRect(x, y, width, height);
     }
   }
 
-  private static abstract class Factory implements RegionPainter<Paint> {
-    private final ConcurrentHashMap<Long, BufferedImage> myCache = new ConcurrentHashMap<>();
+  private enum Cached implements RegionPainter<Paint> {
+    BOLD_DOTTED_UNDERSCORE {
+      @Override
+      int getPeriod(int height) {
+        return height;
+      }
 
-    abstract BufferedImage create(Graphics2D g, Paint paint, int height);
-
-    @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
-      if (paint == null) paint = g.getPaint();
-      g = (Graphics2D)g.create(x, y, width, height);
-      g.setComposite(AlphaComposite.SrcOver);
-      BufferedImage image;
-      if (paint instanceof Color) {
-        Color color = (Color)paint;
-        Long key = color.getRGB() ^ ((long)height << 32);
-        image = myCache.get(key);
-        boolean exists = image != null;
-        if (!exists || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
-          image = create(g, paint, height);
-          myCache.put(key, image);
+      @Override
+      void paintImage(Graphics2D g, int width, int height, int period) {
+        Integer round = period <= 2 && !UIUtil.isRetina(g) ? null : period;
+        for (int dx = 0; dx < width; dx += period + period) {
+          RectanglePainter.FILL.paint(g, dx, 0, period, period, round);
         }
       }
-      else {
-        image = create(g, paint, height);
-      }
-      int length = image.getWidth();
-      int dx = -((x % length + length) % length); // normalize
-      for (; dx < width; dx += length) {
-        UIUtil.drawImage(g, image, dx, 0, null);
-      }
-      g.dispose();
-    }
-  }
+    },
+    WAVE_UNDERSCORE {
+      private final BasicStroke THIN_STROKE = new BasicStroke(.7f);
 
-  private static final Factory BOLD_DOTTED_FACTORY = new Factory() {
-    @Override
-    BufferedImage create(Graphics2D graphics, Paint paint, int height) {
-      Integer round = height <= 2 && !UIUtil.isRetina(graphics) ? null : height;
-      //noinspection SuspiciousNameCombination
-      int width = height << 8;
-      BufferedImage image = UIUtil.createImageForGraphics(graphics, width, height, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g = image.createGraphics();
-      g.setPaint(paint);
-      try {
-        int dx = 0;
-        while (dx < width) {
-          //noinspection SuspiciousNameCombination
-          RectanglePainter.FILL.paint(g, dx, 0, height, height, round);
-          dx += height + height;
-        }
+      @Override
+      int getPeriod(int height) {
+        return getMaxHeight(height) - 1;
       }
-      finally {
-        g.dispose();
-      }
-      return image;
-    }
-  };
 
-  private static final BasicStroke WAVE_THIN_STROKE = new BasicStroke(.7f);
-  private static final Factory WAVE_FACTORY = new Factory() {
-    @Override
-    BufferedImage create(Graphics2D graphics, Paint paint, int height) {
-      int h = getMaxHeight(height);
-      int width = 2 * h - 2; // the spatial period of the wave
-      BufferedImage image = UIUtil.createImageForGraphics(graphics, width << 8, height, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g = image.createGraphics();
-      try {
+      @Override
+      void paintImage(Graphics2D g, int width, int height, int period) {
         double dx = 0;
-        double upper = height - h;
         double lower = height - 1;
+        double upper = lower - period;
         Path2D path = new Path2D.Double();
         path.moveTo(dx, lower);
         if (height < 6) {
-          g.setStroke(WAVE_THIN_STROKE);
-          double size = (double)width / 2;
-          while (dx < image.getWidth()) {
-            path.lineTo(dx += size, upper);
-            path.lineTo(dx += size, lower);
+          g.setStroke(THIN_STROKE);
+          while (dx < width) {
+            path.lineTo(dx += period, upper);
+            path.lineTo(dx += period, lower);
           }
         }
         else {
-          double size = (double)width / 4;
+          double size = (double)period / 2;
           double prev = dx - size / 2;
           double center = (upper + lower) / 2;
-          while (dx < image.getWidth()) {
+          while (dx < width) {
             path.quadTo(prev += size, lower, dx += size, center);
             path.quadTo(prev += size, upper, dx += size, upper);
             path.quadTo(prev += size, upper, dx += size, center);
             path.quadTo(prev += size, lower, dx += size, lower);
           }
         }
-        path.lineTo((double)image.getWidth(), lower);
+        path.lineTo((double)width, lower);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setPaint(paint);
         g.draw(path);
+      }
+    };
+
+    private final ConcurrentHashMap<Long, BufferedImage> myCache = new ConcurrentHashMap<>();
+
+    abstract int getPeriod(int height);
+
+    abstract void paintImage(Graphics2D g, int width, int height, int period);
+
+    void paintImage(Graphics2D g, Paint paint, int width, int height, int period) {
+      try {
+        g.setPaint(paint);
+        paintImage(g, width, height, period);
       }
       finally {
         g.dispose();
       }
+    }
+
+    BufferedImage getImage(Graphics2D g, Color color, int height) {
+      Long key = color.getRGB() ^ ((long)height << 32);
+      BufferedImage image = myCache.get(key);
+      if (image == null || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
+        int period = getPeriod(height);
+        image = UIUtil.createImageForGraphics(g, period << 8, height, BufferedImage.TYPE_INT_ARGB);
+        paintImage(image.createGraphics(), color, image.getWidth(), image.getHeight(), period);
+        myCache.put(key, image);
+      }
       return image;
     }
-  };
+
+    BufferedImage createImage(Graphics2D g, Paint paint, int height) {
+      int period = getPeriod(height);
+      BufferedImage image = UIUtil.createImageForGraphics(g, period << 1, height, BufferedImage.TYPE_INT_ARGB);
+      paintImage(image.createGraphics(), paint, image.getWidth(), image.getHeight(), period);
+      return image;
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+      if (paint == null) paint = g.getPaint();
+      g = (Graphics2D)g.create(x, y, width, height);
+      g.setComposite(AlphaComposite.SrcOver);
+      BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
+      int period = image.getWidth(null);
+      int offset = (x % period + period) % period; // normalize
+      for (int dx = -offset; dx < width; dx += period) {
+        UIUtil.drawImage(g, image, dx, 0, null);
+      }
+      g.dispose();
+    }
+  }
 }

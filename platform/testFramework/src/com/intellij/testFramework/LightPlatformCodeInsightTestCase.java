@@ -150,18 +150,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return new WriteCommandAction<Document>(null) {
       @Override
       protected void run(@NotNull Result<Document> result) throws Throwable {
-        if (myVFile != null) {
-          // avoid messing with invalid files, in case someone calls configureXXX() several times
-          PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-          FileEditorManager.getInstance(ourProject).closeFile(myVFile);
-          try {
-            myVFile.delete(this);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-          myVFile = null;
-        }
         final Document fakeDocument = new DocumentImpl(fileText);
 
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
@@ -216,22 +204,37 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
     deleteVFile();
-    myVFile = getSourceRoot().createChildData(null, fileName);
-    VfsUtil.saveText(myVFile, fileText);
-    final FileDocumentManager manager = FileDocumentManager.getInstance();
-    final Document document = manager.getDocument(myVFile);
-    assertNotNull("Can't create document for '" + fileName + "'", document);
-    manager.reloadFromDisk(document);
-    document.insertString(0, " ");
-    document.deleteString(0, 1);
-    myFile = getPsiManager().findFile(myVFile);
-    assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
-    assertTrue(myFile.isPhysical());
-    myEditor = createEditor(myVFile);
-    myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    return document;
+    myEditor = createSaveAndOpenFile(fileName, fileText);
+    myVFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    myFile = getPsiManager().findFile(myVFile);
+
+    return myEditor.getDocument();
+  }
+
+  @NotNull
+  protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
+    return WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Editor, IOException>() {
+      @Override
+      public Editor compute() throws IOException {
+        VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
+        VfsUtil.saveText(myVFile, fileText);
+        final FileDocumentManager manager = FileDocumentManager.getInstance();
+        final Document document = manager.getDocument(myVFile);
+        assertNotNull("Can't create document for '" + relativePath + "'", document);
+        manager.reloadFromDisk(document);
+        document.insertString(0, " ");
+        document.deleteString(0, 1);
+        PsiFile myFile = getPsiManager().findFile(myVFile);
+        assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
+        assertTrue(myFile.isPhysical());
+        Editor myEditor = createEditor(myVFile);
+        myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        return myEditor;
+      }
+    });
   }
 
   private static void setupEditorForInjectedLanguage() {
@@ -255,6 +258,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
         @Override
         public Void compute() throws IOException {
+          // avoid messing with invalid files, in case someone calls configureXXX() several times
+          PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
+          FileEditorManager.getInstance(ourProject).closeFile(myVFile);
+
           myVFile.delete(this);
           return null;
         }

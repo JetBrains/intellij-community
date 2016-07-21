@@ -19,13 +19,11 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -92,11 +90,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
       }
     }
     mySchemeManager.loadSchemes();
-
-    ParameterizedRunnable<KeymapManager> runnable = WelcomeWizardUtil.getWizardCreateKeymapRunnable();
-    if (runnable != null) {
-      runnable.run(this);
-    }
 
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourKeymapManagerInitialized = true;

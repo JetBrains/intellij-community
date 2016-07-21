@@ -1,6 +1,6 @@
 // fields double initialization
 import java.io.*;
-import java.net.*;
+
 class Foo {
     final int k;
     final int ff = 5;

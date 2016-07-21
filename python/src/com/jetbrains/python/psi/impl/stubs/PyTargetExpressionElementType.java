@@ -33,6 +33,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     super("TARGET_EXPRESSION");
   }
 
-  public PyTargetExpressionElementType(String debugName) {
+  public PyTargetExpressionElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
@@ -58,6 +59,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return myCustomStubTypes;
   }
 
+  @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyTargetExpressionImpl(node);
   }
@@ -66,6 +68,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return new PyTargetExpressionImpl(stub);
   }
 
+  @NotNull
   public PyTargetExpressionStub createStub(@NotNull final PyTargetExpression psi, final StubElement parentStub) {
     final String name = psi.getName();
     final PyExpression assignedValue = psi.findAssignedValue();

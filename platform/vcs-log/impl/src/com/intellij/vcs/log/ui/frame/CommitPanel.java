@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.util.ui.HtmlPanel;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,13 +45,8 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
-import javax.swing.text.Document;
-import javax.swing.text.Position;
 import java.awt.*;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -169,7 +164,7 @@ class CommitPanel extends JBPanel {
     return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
   }
 
-  private static class DataPanel extends JEditorPane {
+  private static class DataPanel extends HtmlPanel {
     private static final int PER_ROW = 3;
     private static final String LINK_HREF = "show-hide-branches";
 
@@ -181,27 +176,24 @@ class CommitPanel extends JBPanel {
     private boolean myExpanded = false;
 
     DataPanel(@NotNull Project project, boolean multiRoot) {
-      super(UIUtil.HTML_MIME, "");
       myProject = project;
       myMultiRoot = multiRoot;
-      setEditable(false);
-      setOpaque(false);
-      putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
 
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
       setBorder(JBUI.Borders.empty(BOTTOM_BORDER, ReferencesPanel.H_GAP, 0, 0));
+    }
 
-      addHyperlinkListener(e -> {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
-          myExpanded = !myExpanded;
-          update();
-        }
-        else {
-          BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
-        }
-      });
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
+        myExpanded = !myExpanded;
+        update();
+      }
+      else {
+        super.hyperlinkUpdate(e);
+      }
     }
 
     @Override
@@ -390,26 +382,6 @@ class CommitPanel extends JBPanel {
         authorText += " (committed " + formatDateTime(commitTime) + ")";
       }
       return authorText;
-    }
-
-    @Override
-    public String getSelectedText() {
-      Document doc = getDocument();
-      int start = getSelectionStart();
-      int end = getSelectionEnd();
-
-      try {
-        Position p0 = doc.createPosition(start);
-        Position p1 = doc.createPosition(end);
-        StringWriter sw = new StringWriter(p1.getOffset() - p0.getOffset());
-        getEditorKit().write(sw, doc, p0.getOffset(), p1.getOffset() - p0.getOffset());
-
-        return StringUtil.removeHtmlTags(sw.toString());
-      }
-      catch (BadLocationException | IOException e) {
-        LOG.warn(e);
-      }
-      return super.getSelectedText();
     }
 
     @Override

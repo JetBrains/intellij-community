@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -29,7 +28,6 @@ public class WelcomeWizardUtil {
   private static volatile String ourWizardEditorScheme;
   private static volatile Boolean ourAutoScrollToSource;
   private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<String>();
-  private static ParameterizedRunnable ourWizardCreateKeymapRunnable;
 
   public static void setDefaultLAF(String laf) {
     ourDefaultLAF = laf;
@@ -49,22 +47,11 @@ public class WelcomeWizardUtil {
 
   public static void setWizardKeymap(@Nullable String keymap) {
     ourWizardMacKeymap = keymap;
-    ourWizardCreateKeymapRunnable = null;
-  }
-
-  public static void setWizardKeymap(@Nullable ParameterizedRunnable runnable) {
-    ourWizardMacKeymap = null;
-    ourWizardCreateKeymapRunnable = runnable;
   }
 
   @Nullable
   public static String getWizardMacKeymap() {
     return ourWizardMacKeymap;
-  }
-
-  @Nullable
-  public static ParameterizedRunnable getWizardCreateKeymapRunnable() {
-    return ourWizardCreateKeymapRunnable;
   }
 
   public static void setWizardEditorScheme(@Nullable String wizardEditorScheme) {

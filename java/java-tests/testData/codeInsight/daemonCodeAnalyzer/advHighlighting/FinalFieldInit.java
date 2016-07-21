@@ -1,7 +1,5 @@
 // final Fields initialization
 import java.io.*;
-import java.net.*;
-import java.awt.event.*;
 
 class a  {
   /**
@@ -87,8 +85,8 @@ class Test {
     }
     private final String text;
     public Test() {
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+      new Runnable() {
+        public void run() {
           doSomething(text);////
         }
       };

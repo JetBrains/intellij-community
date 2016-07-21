@@ -185,7 +185,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return containingFile == null || virtualFile.isDirectory() || result.contains(virtualFile)
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }
-    boolean isTest = projectFileIndex.isInTestSourceContent(vDirectory);
+    boolean isTest = TestSourcesFilter.isTestSources(vDirectory, myProject);
     GlobalSearchScope scope = isTest
                               ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
                               : GlobalSearchScope.moduleWithDependentsScope(module);

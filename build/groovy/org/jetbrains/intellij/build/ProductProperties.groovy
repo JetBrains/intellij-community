@@ -66,6 +66,11 @@ public abstract class ProductProperties {
   abstract String systemSelector(ApplicationInfoProperties applicationInfo)
 
   /**
+   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
+   */
+  boolean buildCrossPlatformDistribution = false
+
+  /**
    * Paths to properties files the content of which should be appended to idea.properties file
    */
   List<String> additionalIDEPropertiesFilePaths = []

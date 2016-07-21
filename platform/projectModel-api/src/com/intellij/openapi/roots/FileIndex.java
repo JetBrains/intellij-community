@@ -78,11 +78,16 @@ public interface FileIndex {
 
   /**
    * Returns true if <code>fileOrDir</code> is a file or directory from the test content source
+   * <p>
+   * Use this method when you really need to check whether the file is under test roots according to project configuration.
+   * <p>
+   * If you want to determine whether file should be considered as test (e.g. for implementing SearchScope)
+   * you'd better use {@link TestSourcesFilter#isTestSources(VirtualFile, Project)} instead
+   * which includes {@link ProjectFileIndex#isInTestSourceContent(VirtualFile)} invocation.
    *
-   * @see TestSourcesFilter#isTestSources(VirtualFile, Project)
-   * 
    * @param fileOrDir the file or directory to check.
    * @return true if the file or directory belongs to a test source root, false otherwise.
+   * @see TestSourcesFilter#isTestSources(VirtualFile, Project)
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.registry;
 
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +28,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
@@ -35,7 +37,7 @@ public class Registry  {
   public static final String REGISTRY_BUNDLE = "misc.registry";
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<String, String>();
-  private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
+  private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<String, RegistryValue>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -45,8 +47,7 @@ public class Registry  {
 
     RegistryValue value = registry.myValues.get(key);
     if (value == null) {
-      value = new RegistryValue(registry, key);
-      registry.myValues.put(key, value);
+      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key));
     }
     return value;
   }
@@ -101,6 +102,7 @@ public class Registry  {
   }
 
 
+  @NotNull
   public static Registry getInstance() {
     return ourInstance;
   }
@@ -153,7 +155,7 @@ public class Registry  {
     return result;
   }
 
-  public void restoreDefaults() {
+  void restoreDefaults() {
     Map<String, String> old = new HashMap<String, String>();
     old.putAll(myUserProperties);
     for (String each : old.keySet()) {
@@ -167,11 +169,11 @@ public class Registry  {
     }
   }
 
-  public boolean isInDefaultState() {
+  boolean isInDefaultState() {
     return myUserProperties.isEmpty();
   }
 
-  public boolean isRestartNeeded() {
+  boolean isRestartNeeded() {
     return isRestartNeeded(myUserProperties);
   }
 
