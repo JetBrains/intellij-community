@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.openapi.options.LazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;

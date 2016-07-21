@@ -18,9 +18,9 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.options.LazySchemeProcessor
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project

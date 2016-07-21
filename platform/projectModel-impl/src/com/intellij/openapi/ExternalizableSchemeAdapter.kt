@@ -15,29 +15,14 @@
  */
 package com.intellij.openapi.options
 
-import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SchemeExtensionProvider
-import com.intellij.configurationStore.SerializableScheme
 import org.jdom.Element
-import java.util.function.Function
 import kotlin.properties.Delegates
 
 abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   override var name: String by Delegates.notNull()
 
   override fun toString() = name
-}
-
-abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  open fun getName(attributeProvider: Function<String, String?>): String {
-    return attributeProvider.apply("name") ?: throw IllegalStateException("name is missed in the scheme data")
-  }
-
-  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
-
-  override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
-
-  open fun isSchemeFile(name: CharSequence) = true
 }
 
 abstract class BaseSchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>(), SchemeExtensionProvider {

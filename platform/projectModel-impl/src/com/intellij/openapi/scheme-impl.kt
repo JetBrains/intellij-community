@@ -16,9 +16,11 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeProcessor
 import org.jdom.Element
+import java.util.function.Function
 
-interface SchemeDataHolder<MUTABLE_SCHEME : Scheme> {
+interface SchemeDataHolder<in MUTABLE_SCHEME : Scheme> {
   /**
    * You should call updateDigest() after read on init.
    */
@@ -45,4 +47,16 @@ interface SchemeExtensionProvider {
    * @return True if the upgrade from the old default .xml extension is needed.
    */
   val isUpgradeNeeded: Boolean
+}
+
+abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+  open fun getName(attributeProvider: Function<String, String?>): String {
+    return attributeProvider.apply("name") ?: throw IllegalStateException("name is missed in the scheme data")
+  }
+
+  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
+
+  override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
+
+  open fun isSchemeFile(name: CharSequence) = true
 }
