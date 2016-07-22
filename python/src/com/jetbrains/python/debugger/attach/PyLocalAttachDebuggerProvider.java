@@ -93,11 +93,10 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
       return myName;
     }
 
-    @NotNull
     @Override
-    public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
       PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdkHome);
-      return runner.launch();
+      runner.launch();
     }
   }
 }
