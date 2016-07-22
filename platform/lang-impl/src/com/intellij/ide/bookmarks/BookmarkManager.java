@@ -60,7 +60,7 @@ import java.util.List;
 )
 public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
-  public static Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
+  private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
