@@ -19,6 +19,7 @@ package com.intellij.ide.bookmarks;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -126,16 +127,17 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
 
   private static void map(Document document, Bookmark bookmark) {
     if (document == null || bookmark == null) return;
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list == null) {
-      document.putUserData(BOOKMARKS_KEY, list = Collections.synchronizedList(new ArrayList<Bookmark>()));
+      document.putUserData(BOOKMARKS_KEY, list = new ArrayList<Bookmark>());
     }
     list.add(bookmark);
   }
 
   private static void unmap(Document document, Bookmark bookmark) {
     if (document == null || bookmark == null) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Bookmark> list = document.getUserData(BOOKMARKS_KEY);
     if (list != null && list.remove(bookmark) && list.isEmpty()) {
       document.putUserData(BOOKMARKS_KEY, null);
