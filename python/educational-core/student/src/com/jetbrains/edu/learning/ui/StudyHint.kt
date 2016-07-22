@@ -4,9 +4,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.edu.learning.StudyTaskManager
@@ -20,6 +23,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
   private val myHints = LinkedList<String>()
   private var myShownHintNumber = 0
   private var isEditingMode = false
+  private val newHintDefaultText = "Edit this hint"
 
   init {
     if (myPlaceholder == null) {
@@ -91,7 +95,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
-
+      e.presentation.text = if (state) "Save Hint" else "Edit Hint"
       doOnSelection(state, project)
     }
 
@@ -107,6 +111,18 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
           val editorComponent = createdEditor.component
           studyToolWindow.setTopComponent(editorComponent)
           studyToolWindow.repaint()
+
+          createdEditor.addFocusListener(object: FocusChangeListener {
+            override fun focusGained(editor: Editor?) {
+              if (createdEditor.document.text == newHintDefaultText) {
+                ApplicationManager.getApplication().runWriteAction { createdEditor.document.setText("") }
+              }
+            }
+
+            override fun focusLost(editor: Editor?) {
+            }
+
+          })
         }
       }
       else {
@@ -127,20 +143,10 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
   private inner class AddHint : AnAction(AllIcons.General.Add) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      val project = e.project ?: return
-      val newHint = "New hint"
-      myHints.add(newHint)
-      myPlaceholder!!.hints.add(newHint)
+      myHints.add(newHintDefaultText)
+      myPlaceholder!!.hints.add(newHintDefaultText)
       myShownHintNumber++
-      studyToolWindow.setText(newHint)
-      val actions = studyToolWindow.getActions(true)
-      for (action in actions) {
-        if (action is EditHint) {
-          action.doOnSelection(true, project)
-          action.isSelected(e)
-          return
-        }
-      }
+      studyToolWindow.setText(newHintDefaultText)
     }
 
     override fun update(e: AnActionEvent?) {
