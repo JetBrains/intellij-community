@@ -16,20 +16,15 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
-import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class LambdaExpressionElementType extends JavaStubElementType<FunctionalExpressionStub<PsiLambdaExpression>,PsiLambdaExpression> {
+public class LambdaExpressionElementType extends FunctionalExpressionElementType<PsiLambdaExpression> {
   public LambdaExpressionElementType() {
     super("LAMBDA_EXPRESSION");
   }
@@ -40,27 +35,8 @@ public class LambdaExpressionElementType extends JavaStubElementType<FunctionalE
   }
 
   @Override
-  public FunctionalExpressionStub<PsiLambdaExpression> createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
-    return new FunctionalExpressionStub<PsiLambdaExpression>(parentStub, this);
-  }
-
-  @Override
   public PsiLambdaExpression createPsi(@NotNull FunctionalExpressionStub<PsiLambdaExpression> stub) {
     return new PsiLambdaExpressionImpl(stub);
-  }
-
-  @Override
-  public void serialize(@NotNull FunctionalExpressionStub<PsiLambdaExpression> stub, @NotNull StubOutputStream dataStream) throws IOException {
-  }
-
-  @NotNull
-  @Override
-  public FunctionalExpressionStub<PsiLambdaExpression> deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new FunctionalExpressionStub<PsiLambdaExpression>(parentStub, this);
-  }
-
-  @Override
-  public void indexStub(@NotNull FunctionalExpressionStub<PsiLambdaExpression> stub, @NotNull IndexSink sink) {
   }
 
   @NotNull

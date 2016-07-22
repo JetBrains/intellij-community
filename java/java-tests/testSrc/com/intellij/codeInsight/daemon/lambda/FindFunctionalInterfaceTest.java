@@ -16,9 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -27,7 +25,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.function.Predicate;
 
@@ -40,7 +37,6 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     doTestOneExpression();
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 1, user = "ann peter")
   public void testFieldDeclaredInFileWithoutFunctionalInterfaces() throws Exception {
     myFixture.addClass("class B {" +
                        "  void f(A a) {" +
@@ -50,7 +46,6 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     myFixture.addClass("public class A {" +
                        "  public I r;" +
                        "}");
-    addManyLambdas();
 
     doTestOneExpression();
   }
@@ -61,7 +56,6 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
                        "  <T> void foo(T... r) {}\n" +
                        "  void bar(J i){foo(i, i, () -> {});}\n" +
                        "}");
-    addManyLambdas();
 
     doTestOneExpression();
   }
@@ -99,6 +93,13 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertEquals(1, references.size());
   }
 
+  public void testMethodWithClassTypeParameter() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    PsiClass runnable = JavaPsiFacade.getInstance(getProject()).findClass("I", GlobalSearchScope.allScope(getProject()));
+    assertSize(1, FunctionalExpressionSearch.search(runnable).findAll());
+  }
+
   public void testClassFromJdk() {
     doTestIndexSearch("(e) -> true");
   }
@@ -109,8 +110,6 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
 
   public void doTestIndexSearch(String expected) {
     myFixture.configureByFile(getTestName(false) + ".java");
-
-    addManyLambdas();
 
     PsiClass predicate = JavaPsiFacade.getInstance(getProject()).findClass(Predicate.class.getName(), GlobalSearchScope.allScope(getProject()));
     assert predicate != null;
@@ -129,15 +128,8 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
                        "    new Foo(() -> 3);\n" +
                        "  }\n" +
                        "}");
-    addManyLambdas();
 
-    assertSize(4, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
-  }
-
-  private void addManyLambdas() {
-    for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 5; i++) {
-      myFixture.addFileToProject("a" + i + ".java", "class Goo {{ Runnable r = () -> {} }}");
-    }
+    assertSize(5, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
   }
 
   @Override

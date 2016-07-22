@@ -15,37 +15,43 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
 import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#" + JavaFunctionalExpressionSearcher.class.getName());
@@ -86,46 +92,136 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     //collect all files with '::' and '->' in useScope
     Set<VirtualFile> candidateFiles = getFilesWithFunctionalExpressionsScope(project, new JavaSourceFilterScope(useScope));
-    if (candidateFiles.size() < SMART_SEARCH_THRESHOLD) {
-      searchInFiles(aClass, consumer, candidateFiles, expectedFunExprParamsCount, isVoid);
+    if (candidateFiles.isEmpty()) {
       return;
     }
 
-    final GlobalSearchScope candidateScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries =
+      collectQueryKeys(useScope, aClass, project, expectedFunExprParamsCount, isVoid, candidateFiles);
 
-    //collect all methods with parameter of functional interface or free type parameter type
-    final Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope, candidateFiles, candidateScope);
-
-    final Set<VirtualFile> filesToProcess = new LinkedHashSet<>();
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-
-    //find all usages of method candidates in files with functional expressions
-    for (final PsiMethod psiMethod : methodCandidates) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        if (!psiMethod.isValid()) return;
-        final int parametersCount = psiMethod.getParameterList().getParametersCount();
-        final boolean varArgs = psiMethod.isVarArgs();
-        final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-        final GlobalSearchScope methodUseScope = convertToGlobalScope(project, psiMethod.getUseScope());
-        final LinkedHashMap<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders = new LinkedHashMap<>();
-        //functional expressions checker: number and type of parameters at call site should correspond to candidate method currently check
-        final SuitableFilesProcessor processor = new SuitableFilesProcessor(holders, expectedFunExprParamsCount, parametersCount, varArgs, parameters);
-        fileBasedIndex.processValues(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID, psiMethod.getName(), null, processor, useScope.intersectWith(methodUseScope));
-        for (Map.Entry<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> entry : holders.entrySet()) {
-          for (JavaFunctionalExpressionIndex.IndexHolder holder : entry.getValue()) {
-            if (processor.canBeFunctional(holder)) {
-              filesToProcess.add(entry.getKey());
-              break;
-            }
+    for (PsiFunctionalExpression expression : getCandidates(useScope, project, queries)) {
+      if (!ReadAction.compute(() -> {
+        if (expression.isValid() &&
+            InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType()), aClass, true)) {
+          if (!consumer.process(expression)) {
+            return false;
           }
         }
+
+        return true;
+      })) {
+        return;
+      }
+    }
+  }
+
+  @NotNull
+  private static Collection<? extends PsiFunctionalExpression> getCandidates(GlobalSearchScope useScope,
+                                                                             Project project,
+                                                                             MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries) {
+    MultiMap<PsiFile, PsiFunctionalExpression> exprs = MultiMap.createLinked();
+    for (Map.Entry<FunctionalExpressionKey, Collection<GlobalSearchScope>> entry : queries.entrySet()) {
+      ReadAction.run(() -> {
+        ProgressManager.checkCanceled();
+        GlobalSearchScope combinedScope = useScope.intersectWith(
+          GlobalSearchScope.union(entry.getValue().toArray(new GlobalSearchScope[0])));
+        StubIndex.getInstance().processElements(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS,
+                                                entry.getKey(),
+                                                project, combinedScope, null,
+                                                PsiFunctionalExpression.class,
+                                                expression -> {
+                                                  exprs.putValue(expression.getContainingFile(), expression);
+                                                  return true;
+                                                });
       });
     }
 
-    //search for functional expressions in non-call contexts
-    collectFilesWithTypeOccurrencesAndFieldAssignments(aClass, candidateScope, filesToProcess);
+    Collection<? extends PsiFunctionalExpression> result = exprs.values();
+    LOG.info("checking " + result.size() + " fun-expressions in " + exprs.size() + " files");
+    return result;
+  }
 
-    searchInFiles(aClass, consumer, filesToProcess, expectedFunExprParamsCount, isVoid);
+  @NotNull
+  private static MultiMap<FunctionalExpressionKey, GlobalSearchScope> collectQueryKeys(GlobalSearchScope useScope,
+                                                                                       PsiClass aClass,
+                                                                                       Project project,
+                                                                                       int samParamCount,
+                                                                                       boolean samVoid,
+                                                                                       Set<VirtualFile> candidateFiles) {
+    //collect all methods with parameter of functional interface or free type parameter type
+    Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, project, useScope, candidateFiles, samParamCount, samVoid);
+
+    MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries = MultiMap.createSet();
+    for (FunctionalExpressionKey key : generateKeys(samParamCount, samVoid, "", -1, -1)) {
+      queries.putValue(key, useScope); // check all fun-exprs that aren't inside calls
+    }
+
+    //find all usages of method candidates in files with functional expressions
+    for (final PsiMethod psiMethod : methodCandidates) {
+      ReadAction.run(() -> {
+        if (!psiMethod.isValid()) return;
+
+        final GlobalSearchScope methodUseScope = convertToGlobalScope(project, psiMethod.getUseScope());
+        for (FunctionalExpressionKey key : getQueryKeys(aClass, samParamCount, samVoid, psiMethod)) {
+          queries.putValue(key, methodUseScope);
+        }
+      });
+    }
+    return queries;
+  }
+
+  @NotNull
+  private static Set<FunctionalExpressionKey> getQueryKeys(PsiClass samClass,
+                                                           int samParamCount,
+                                                           boolean samVoid,
+                                                           PsiMethod calledMethod) {
+    Set<FunctionalExpressionKey> keys = new HashSet<>();
+
+    String methodName = calledMethod.getName();
+    PsiParameter[] parameters = calledMethod.getParameterList().getParameters();
+    for (int paramIndex = 0; paramIndex < parameters.length; paramIndex++) {
+      PsiParameter parameter = parameters[paramIndex];
+      if (canPassFunctionalExpression(samClass, parameter)) {
+        for (int argCount : getPossibleArgCounts(parameters, paramIndex)) {
+          for (int argIndex : getPossibleArgIndices(parameter, paramIndex, argCount)) {
+            keys.addAll(generateKeys(samParamCount, samVoid, methodName, argCount, argIndex));
+          }
+        }
+      }
+    }
+
+    return keys;
+  }
+
+  private static List<FunctionalExpressionKey> generateKeys(int samMethodParamsCount,
+                                                            boolean samMethodVoid,
+                                                            String methodName, int argCount, int argIndex) {
+    List<FunctionalExpressionKey> result = new ArrayList<>();
+    for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samMethodParamsCount}) {
+      result.add(new FunctionalExpressionKey(methodName, lambdaParamCount, argCount, argIndex, ThreeState.UNSURE));
+      result.add(new FunctionalExpressionKey(methodName, lambdaParamCount, argCount, argIndex, ThreeState.fromBoolean(samMethodVoid)));
+    }
+    return result;
+  }
+
+  private static int[] getPossibleArgCounts(PsiParameter[] parameters, int paramIndex) {
+    if (parameters[parameters.length - 1].isVarArgs()) {
+      return IntStream
+        .rangeClosed(parameters.length - 1, FunctionalExpressionKey.MAX_ARG_COUNT)
+        .filter(i -> i > paramIndex)
+        .toArray();
+    }
+    return new int[]{Math.min(parameters.length, FunctionalExpressionKey.MAX_ARG_COUNT)};
+  }
+
+  private static int[] getPossibleArgIndices(PsiParameter parameter, int paramIndex, int argCount) {
+    if (parameter.isVarArgs()) {
+      return IntStream
+        .rangeClosed(paramIndex + 1, FunctionalExpressionKey.MAX_ARG_COUNT)
+        .filter(i -> i < argCount)
+        .toArray();
+    }
+    return new int[]{Math.min(paramIndex, FunctionalExpressionKey.MAX_ARG_COUNT)};
   }
 
   @NotNull
@@ -145,51 +241,44 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return highLevelModules;
   }
 
-  private static void searchInFiles(final PsiClass aClass,
-                                    final Processor<PsiFunctionalExpression> consumer,
-                                    Set<VirtualFile> filesToProcess, final int expectedFunExprParamsCount, boolean isVoid) {
-    LOG.info("#usage files: " + filesToProcess.size());
-    ContainerUtil.process(filesToProcess, new ReadActionProcessor<VirtualFile>() {
-      @Override
-      public boolean processInReadAction(VirtualFile file) {
-        //resolve functional expressions to ensure that functional expression type is appropriate
-        return !file.isValid() || processFileWithFunctionalInterfaces(aClass, expectedFunExprParamsCount, isVoid, consumer, file);
-      }
-    });
-  }
-
   private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(final PsiClass aClass,
                                                                              final Project project,
                                                                              final GlobalSearchScope useScope,
                                                                              final Set<VirtualFile> candidateFiles,
-                                                                             final GlobalSearchScope candidateScope) {
+                                                                             int expectedFunExprParamsCount,
+                                                                             boolean isVoid) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
-        @Override
-        public Collection<PsiMethod> compute() {
-          if (!aClass.isValid()) return Collections.emptyList();
+      @Override
+      public Collection<PsiMethod> compute() {
+        if (!aClass.isValid()) return Collections.emptyList();
 
-          GlobalSearchScope visibleFromCandidates = combineResolveScopes(project, candidateFiles);
+        GlobalSearchScope visibleFromCandidates = combineResolveScopes(project, candidateFiles);
 
-          Set<String> usedMethodNames = new HashSet<>();
-          FileBasedIndex.getInstance().processAllKeys(JavaFunctionalExpressionIndex.JAVA_FUNCTIONAL_EXPRESSION_INDEX_ID,
-                                                      Processors.cancelableCollectProcessor(usedMethodNames), candidateScope, null);
+        Set<String> usedMethodNames = new HashSet<>();
+        StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key -> {
+          ProgressManager.checkCanceled();
+          if (key.canRepresent(expectedFunExprParamsCount, isVoid)) {
+            usedMethodNames.add(key.methodName);
+          }
+          return true;
+        }, useScope, null);
 
-          Set<PsiMethod> methods = ContainerUtil.newLinkedHashSet();
-          Processor<PsiMethod> methodProcessor = method -> {
-            if (usedMethodNames.contains(method.getName())) {
-              methods.add(method);
-            }
-            return true;
-          };
+        Set<PsiMethod> methods = ContainerUtil.newLinkedHashSet();
+        Processor<PsiMethod> methodProcessor = method -> {
+          if (usedMethodNames.contains(method.getName())) {
+            methods.add(method);
+          }
+          return true;
+        };
 
-          StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
-          StubIndex index = StubIndex.getInstance();
-          index.processElements(key, aClass.getName(), project, useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
-          index.processElements(key, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates, PsiMethod.class, methodProcessor);
-          LOG.info("#methods: " + methods.size());
-          return methods;
-        }
-      });
+        StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
+        StubIndex index = StubIndex.getInstance();
+        index.processElements(key, aClass.getName(), project, useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
+        index.processElements(key, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates, PsiMethod.class, methodProcessor);
+        LOG.info("#methods: " + methods.size());
+        return methods;
+      }
+    });
   }
 
   @NotNull
@@ -228,168 +317,17 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
     return scope;
   }
-  
-  /**
-   * Collect files where:
-   *  aClass is used, e.g. in type declaration or method return type;
-   *  fields with type aClass are used on the left side of assignments. Should find Bar of the following example
-    <pre/>
-    class Foo {
-        Runnable myRunnable;
+
+  private static boolean canPassFunctionalExpression(PsiClass sam, PsiParameter parameter) {
+    PsiType paramType = parameter.getType();
+    if (paramType instanceof PsiEllipsisType) {
+      paramType = ((PsiEllipsisType)paramType).getComponentType();
     }
-    
-    class Bar {
-      void foo(Foo foo){
-        foo.myRunnable = () -> {};
-      }
-    }
-    </pre>
-   */
-  private static void collectFilesWithTypeOccurrencesAndFieldAssignments(@NotNull PsiClass aClass,
-                                                                         @NotNull GlobalSearchScope filesScope,
-                                                                         @NotNull Set<VirtualFile> usageFiles) {
-    final Set<PsiField> fields = new LinkedHashSet<>();
-    for (final PsiReference reference : ReferencesSearch.search(aClass, filesScope)) {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        final PsiElement element = reference.getElement();
-        if (element != null) {
-          ContainerUtil.addIfNotNull(usageFiles, PsiUtilCore.getVirtualFile(element));
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiTypeElement) {
-            final PsiElement gParent = parent.getParent();
-            if (gParent instanceof PsiField &&
-                !((PsiField)gParent).hasModifierProperty(PsiModifier.PRIVATE) &&
-                !((PsiField)gParent).hasModifierProperty(PsiModifier.FINAL)) {
-              fields.add((PsiField)gParent);
-            }
-          }
-        }
-      });
+    PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
+    if (functionalCandidate instanceof PsiTypeParameter) {
+      return InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(paramType)), true);
     }
 
-    for (PsiField field : fields) {
-      ReferencesSearch.search(field, filesScope).forEach(new ReadActionProcessor<PsiReference>() {
-        @Override
-        public boolean processInReadAction(PsiReference fieldRef) {
-          final PsiElement fieldElement = fieldRef.getElement();
-          final PsiAssignmentExpression varElementParent = PsiTreeUtil.getParentOfType(fieldElement, PsiAssignmentExpression.class);
-          if (varElementParent != null && PsiTreeUtil.isAncestor(varElementParent.getLExpression(), fieldElement, false)) {
-            ContainerUtil.addIfNotNull(usageFiles, PsiUtilCore.getVirtualFile(fieldElement));
-          }
-          return true;
-        }
-      });
-    }
-  }
-
-  private static boolean processFileWithFunctionalInterfaces(final PsiClass aClass,
-                                                             final int expectedParamCount,
-                                                             boolean isVoid,
-                                                             final Processor<PsiFunctionalExpression> consumer,
-                                                             VirtualFile file) {
-    final PsiFile psiFile = aClass.getManager().findFile(file);
-    if (psiFile != null) {
-      final Ref<Boolean> ref = new Ref<>(true);
-      psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (!ref.get()) {
-            return;
-          }
-          super.visitElement(element);
-        }
-
-        private void visitFunctionalExpression(PsiFunctionalExpression expression) {
-          PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
-          if (InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(functionalInterfaceType), aClass, true)) {
-            if (!consumer.process(expression)) {
-              ref.set(false);
-            }
-          }
-        }
-
-        @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {
-          super.visitLambdaExpression(expression);
-          if (expression.getParameterList().getParametersCount() == expectedParamCount) {
-            if (isVoid) {
-              final PsiElement body = expression.getBody();
-              if (body instanceof PsiCodeBlock) {
-                final PsiReturnStatement[] statements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
-                for (PsiReturnStatement statement : statements) {
-                  if (statement.getReturnValue() != null) return;
-                }
-              }
-            }
-            visitFunctionalExpression(expression);
-          }
-        }
-
-        @Override
-        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-          super.visitMethodReferenceExpression(expression);
-          visitFunctionalExpression(expression);
-        }
-      });
-      if (!ref.get()) return false;
-    }
-    return true;
-  }
-
-  private static class SuitableFilesProcessor implements FileBasedIndex.ValueProcessor<Collection<JavaFunctionalExpressionIndex.IndexHolder>> {
-    private final Map<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> myHolders;
-    private final int myExpectedFunExprParamsCount;
-    private final int myParametersCount;
-    private final boolean myVarArgs;
-    private final PsiParameter[] myParameters;
-
-    SuitableFilesProcessor(Map<VirtualFile, Set<JavaFunctionalExpressionIndex.IndexHolder>> holders,
-                           int expectedFunExprParamsCount,
-                           int parametersCount,
-                           boolean varArgs,
-                           PsiParameter[] parameters) {
-      myHolders = holders;
-      myExpectedFunExprParamsCount = expectedFunExprParamsCount;
-      myParametersCount = parametersCount;
-      myVarArgs = varArgs;
-      myParameters = parameters;
-    }
-
-    @Override
-    public boolean process(VirtualFile file, Collection<JavaFunctionalExpressionIndex.IndexHolder> holders) {
-      Set<JavaFunctionalExpressionIndex.IndexHolder> savedHolders = myHolders.get(file);
-      for (JavaFunctionalExpressionIndex.IndexHolder holder : holders) {
-        final int lambdaParamsNumber = holder.getLambdaParamsNumber();
-        if (lambdaParamsNumber == myExpectedFunExprParamsCount || lambdaParamsNumber == -1) {
-          final boolean suitableParamNumbers;
-          if (myVarArgs) {
-            suitableParamNumbers = holder.getMethodArgsLength() >= myParametersCount - 1;
-          }
-          else {
-            suitableParamNumbers = holder.getMethodArgsLength() == myParametersCount;
-          }
-          if (suitableParamNumbers) {
-            if (savedHolders == null) {
-              savedHolders = new LinkedHashSet<>();
-              myHolders.put(file, savedHolders);
-            }
-            savedHolders.add(holder);
-            break;
-          }
-        }
-      }
-      return true;
-    }
-
-    private boolean canBeFunctional(JavaFunctionalExpressionIndex.IndexHolder holder) {
-      final int paramIdx = holder.getFunctionExpressionIndex();
-      PsiType paramType = myParameters[paramIdx >= myParametersCount ? myParametersCount - 1 : paramIdx].getType();
-      if (paramType instanceof PsiEllipsisType) {
-        paramType = ((PsiEllipsisType)paramType).getComponentType();
-      }
-      final PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
-      return functionalCandidate instanceof PsiTypeParameter ||
-             LambdaUtil.isFunctionalClass(functionalCandidate);
-    }
+    return InheritanceUtil.isInheritorOrSelf(functionalCandidate, sam, true);
   }
 }

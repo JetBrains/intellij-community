@@ -369,7 +369,6 @@
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
-    <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionIndex"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -1542,6 +1541,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFunctionalExpressionIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
