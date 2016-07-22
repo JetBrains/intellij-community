@@ -31,12 +31,10 @@ import java.util.List;
 
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public class LightTreeUtil {
-  private LightTreeUtil() { }
 
   @Nullable
-  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
-    List<LighterASTNode> children = tree.getChildren(node);
-    return firstChildOfType(children, type);
+  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull IElementType type) {
+    return node == null ? null : firstChildOfType(tree.getChildren(node), type);
   }
 
   @Nullable
