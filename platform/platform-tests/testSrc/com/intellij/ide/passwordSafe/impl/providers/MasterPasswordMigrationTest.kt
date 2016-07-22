@@ -27,7 +27,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Test
 
-class MasterPasswordMigrationTest {
+internal class MasterPasswordMigrationTest {
   companion object {
     @JvmField
     @ClassRule

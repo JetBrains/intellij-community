@@ -21,28 +21,29 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.setOwnerPermissions
-import com.intellij.util.*
+import com.intellij.util.EncryptionSupport
+import com.intellij.util.generateAesKey
+import com.intellij.util.readBytes
+import com.intellij.util.write
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.security.Key
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.Base64
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
 
-class FilePasswordSafeProvider(keyToValue: Map<String, String>? = null) : PasswordSafeProvider()  {
+class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath())) : PasswordSafeProvider()  {
   private val db = ConcurrentHashMap<String, String>()
 
-  private val dbFile = Paths.get(PathManager.getConfigPath(), "pdb")
-  private val masterKeyStorage = MasterKeyFileStorage()
+  private val dbFile = baseDirectory.resolve("pdb")
+  private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
 
   private var encryptionSupport: EncryptionSupport? = null
 
@@ -90,14 +91,16 @@ class FilePasswordSafeProvider(keyToValue: Map<String, String>? = null) : Passwo
       masterKeyStorage.set(masterKey)
     }
 
-    val tempFile = Paths.get(PathManager.getConfigPath(), "pdb.pwd.tmp")
-    DataOutputStream(tempFile.outputStream()).use { out ->
+    val byteOut = BufferExposingByteArrayOutputStream()
+    DataOutputStream(byteOut).use { out ->
       for ((key, value) in db) {
         out.writeUTF(key)
         out.writeUTF(value)
       }
     }
 
+    val tempFile = Paths.get(PathManager.getConfigPath(), "pdb.pwd.tmp")
+    tempFile.write(encryptionSupport!!.encrypt(byteOut.internalBuffer, byteOut.size()))
     Files.move(tempFile, dbFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
     dbFile.setOwnerPermissions()
   }
@@ -109,15 +112,15 @@ class FilePasswordSafeProvider(keyToValue: Map<String, String>? = null) : Passwo
     return value
   }
 
-  override fun storePassword(project: Project?, requestor: Class<*>?, key: String?, value: String?) {
+  override fun storePassword(project: Project?, requestor: Class<*>?, key: String, value: String?) {
     val rawKey = getRawKey(key, requestor)
     if (value == null) {
       if (db.remove(rawKey) != null) {
         isNeedToSave = true
       }
     }
-    else {
-      db.put(rawKey, value)
+    else if (db.put(rawKey, value) != value) {
+      isNeedToSave = true
     }
   }
 
@@ -139,14 +142,14 @@ interface MasterKeyStorage {
 }
 
 class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
-  override fun encrypt(data: ByteArray) = WindowsCryptUtils.protect(super.encrypt(data))
+  override fun encrypt(data: ByteArray, size: Int) = WindowsCryptUtils.protect(super.encrypt(data, size))
 
   override fun decrypt(data: ByteArray) = WindowsCryptUtils.unprotect(super.decrypt(data))
 }
 
-class MasterKeyFileStorage : MasterKeyStorage {
+class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {
   private val encryptionSupport: EncryptionSupport
-  private val passwordFile = Paths.get(PathManager.getConfigPath(), "pdb.pwd")
+  private val passwordFile = baseDirectory.resolve("pdb.pwd")
 
   init {
     val key = SecretKeySpec(byteArrayOf(

@@ -19,24 +19,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * The interface defines basic password management operations
- */
 public interface PasswordStorage {
-  /**
-   * <p>Get password stored in a password safe.</p>
-   *
-   * @param requestor the requestor class
-   * @param key       the key for the password
-   * @return the stored password or null if the password record was not found or was removed
-   */
-  @Nullable
-  String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key);
-
   @Nullable
   default String getPassword(@NotNull String key) {
     return getPassword(null, null, key);
   }
+
+  @Nullable
+  String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key);
 
   /**
    * Remove password stored in a password safe
@@ -48,12 +38,9 @@ public interface PasswordStorage {
     storePassword(project, requestor, key, null);
   }
 
-  /**
-   * Store password in password safe
-   *
-   * @param requestor the requestor class
-   * @param key       the key for the password
-   * @param value     the value to store
-   */
-  void storePassword(@Nullable Project project, @Nullable Class requestor, String key, @Nullable String value);
+  default void setPassword(@NotNull String key, @Nullable String value) {
+    storePassword(null, null, key, value);
+  }
+
+  void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, @Nullable String value);
 }

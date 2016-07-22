@@ -22,7 +22,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 open class EncryptionSupport(private val key: Key = SecretKeySpec(generateAesKey(), "AES")) {
-  open fun encrypt(data: ByteArray) = encrypt(data, key)
+  open fun encrypt(data: ByteArray, size: Int = data.size) = encrypt(data, size, key)
 
   open fun decrypt(data: ByteArray) = decrypt(data, key)
 }
@@ -34,10 +34,10 @@ fun generateAesKey(): ByteArray {
   return bytes
 }
 
-private fun encrypt(msgBytes: ByteArray, key: Key): ByteArray {
+private fun encrypt(message: ByteArray, size: Int, key: Key): ByteArray {
   val ciph = Cipher.getInstance("AES/CBC/PKCS5Padding")
   ciph.init(Cipher.ENCRYPT_MODE, key)
-  val body = ciph.doFinal(msgBytes)
+  val body = ciph.doFinal(message, 0, size)
   val iv = ciph.iv
 
   val data = ByteArray(4 + iv.size + body.size)

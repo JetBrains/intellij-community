@@ -34,7 +34,7 @@ public final class NilProvider extends PasswordSafeProvider {
     return null;
   }
 
-  public void storePassword(@Nullable Project project, @Nullable Class requester, String key, String value) {
+  public void storePassword(@Nullable Project project, @Nullable Class requester, @NotNull String key, String value) {
     // just forget about password
   }
 }

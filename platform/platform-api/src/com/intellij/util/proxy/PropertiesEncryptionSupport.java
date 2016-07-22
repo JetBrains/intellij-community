@@ -57,7 +57,7 @@ public class PropertiesEncryptionSupport {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     props.store(out, comments);
     out.close();
-    FileUtil.writeToFile(file, myEncryptionSupport.encrypt(out.toByteArray()));
+    FileUtil.writeToFile(file, myEncryptionSupport.encrypt(out.toByteArray(), out.size()));
   }
 
   public byte[] encrypt(byte[] bytes) throws Exception {

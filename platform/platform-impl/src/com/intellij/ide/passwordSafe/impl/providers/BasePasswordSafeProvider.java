@@ -79,7 +79,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  public void storePassword(@Nullable Project project, @Nullable Class requestor, String key, String value) {
+  public void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, String value) {
     byte[] k = dbKey(requestor, key);
     byte[] ct = EncryptionUtil.encryptText(key(), value);
     storeEncryptedPassword(k, ct);
