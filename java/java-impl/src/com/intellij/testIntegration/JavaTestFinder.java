@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.HashSet;
@@ -137,7 +138,7 @@ public class JavaTestFinder implements TestFinder {
   @Nullable
   private static Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-    VirtualFile file = element.getContainingFile().getVirtualFile();
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
     return file == null ? null : index.getModuleForFile(file);
   }
 
