@@ -52,7 +52,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   private void createUIComponents() {
     TableModelEditor.DialogItemEditor<PySteppingFilter> itemEditor = new DialogEditor();
-    myPySteppingFilterEditor = new TableModelEditor<PySteppingFilter>(COLUMNS, itemEditor, "No script filters configured");
+    myPySteppingFilterEditor = new TableModelEditor<>(COLUMNS, itemEditor, "No script filters configured");
     mySteppingPanel = new JPanel(new BorderLayout());
     mySteppingPanel.add(myPySteppingFilterEditor.createComponent());
   }

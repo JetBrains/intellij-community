@@ -59,7 +59,7 @@ public class CvsChangeList implements CommittedChangeList {
   private final VirtualFile myRootFile;
   private String myRootPath;
 
-  private final List<RevisionWrapper> myRevisions = new ArrayList<RevisionWrapper>();
+  private final List<RevisionWrapper> myRevisions = new ArrayList<>();
 
   private String myUser;
   public static final int SUITABLE_DIFF = 2 * 60 * 1000;
@@ -140,7 +140,7 @@ public class CvsChangeList implements CommittedChangeList {
 
   public Collection<Change> getChanges() {
     if (myChanges == null) {
-      myChanges = new ArrayList<Change>();
+      myChanges = new ArrayList<>();
       for(RevisionWrapper wrapper: myRevisions) {
         final Revision revision = wrapper.getRevision();
         final String state = revision.getState();

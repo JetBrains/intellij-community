@@ -237,7 +237,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     if (line.startsWith(DESCRIPTION)) {
-      logMessageBuffer = new ArrayList<String>();
+      logMessageBuffer = new ArrayList<>();
       logMessageBuffer.add(line.substring(DESCRIPTION.length()));
       addingDescription = true;
     }
@@ -352,7 +352,7 @@ final public class LogMessageParser extends AbstractMessageParser {
     }
 
     processingRevision = true;
-    logMessageBuffer = new ArrayList<String>();
+    logMessageBuffer = new ArrayList<>();
   }
 
   private File createFile(String fileName) {

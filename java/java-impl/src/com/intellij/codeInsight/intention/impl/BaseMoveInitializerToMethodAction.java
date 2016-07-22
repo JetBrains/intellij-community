@@ -99,7 +99,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @NotNull
   private static List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<PsiMethod> methods) {
-    final List<PsiExpressionStatement> assignments = new ArrayList<PsiExpressionStatement>();
+    final List<PsiExpressionStatement> assignments = new ArrayList<>();
     for (PsiMethod method : methods) {
       assignments.add(addAssignment(getOrCreateMethodBody(method), field));
     }
@@ -159,7 +159,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   private static boolean containsReference(final @NotNull PsiElement element,
                                            final @NotNull PsiField field) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

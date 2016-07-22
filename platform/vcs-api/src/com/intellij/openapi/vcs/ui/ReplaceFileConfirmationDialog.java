@@ -95,7 +95,7 @@ public class ReplaceFileConfirmationDialog {
 
   public Collection<VirtualFile> collectModifiedFiles(VirtualFile[] files) {
 
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
 
     if (files == null) return result;
 

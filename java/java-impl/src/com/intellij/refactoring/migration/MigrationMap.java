@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class MigrationMap {
   private String myName;
   private String myDescription;
-  private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<MigrationMapEntry>();
+  private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<>();
 
   public MigrationMap() {
 

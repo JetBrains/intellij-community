@@ -77,7 +77,7 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = new ArrayList<SelectInTarget>();
+      myVisibleTargets = new ArrayList<>();
       for (SelectInTarget target : targetVector) {
         myVisibleTargets.add(target);
       }
@@ -104,7 +104,7 @@ public class SelectInAction extends AnAction implements DumbAware {
         return FINAL_CHOICE;
       }
       if (target instanceof CompositeSelectInTarget) {
-        final ArrayList<SelectInTarget> subTargets = new ArrayList<SelectInTarget>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
+        final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
         if (subTargets.size() > 0) {
           Collections.sort(subTargets, new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);

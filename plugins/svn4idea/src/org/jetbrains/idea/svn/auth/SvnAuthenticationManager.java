@@ -77,7 +77,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private ISVNAuthenticationProvider myRuntimeCacheProvider;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
-  private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<Boolean>();
+  private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<>();
   private SvnAuthenticationInteraction myInteraction;
   private EventDispatcher<SvnAuthenticationListener> myListener;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
@@ -86,14 +86,14 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private boolean myArtificialSaving;
   private ISVNAuthenticationProvider myProvider;
   public static final Topic<ISVNAuthenticationProviderListener> AUTHENTICATION_PROVIDER_LISTENER =
-    new Topic<ISVNAuthenticationProviderListener>("AUTHENTICATION_PROVIDER_LISTENER", ISVNAuthenticationProviderListener.class);
-  private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<ISVNAuthenticationProvider>();
+    new Topic<>("AUTHENTICATION_PROVIDER_LISTENER", ISVNAuthenticationProviderListener.class);
+  private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<>();
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
     myProject = project;
     myConfigDirectory = configDirectory;
-    myKeyAlgorithm = new HashMap<Thread, String>();
+    myKeyAlgorithm = new HashMap<>();
     ensureListenerCreated();
     mySavePermissions = new ThreadLocalSavePermissions();
     myConfig = SvnConfiguration.getInstance(myProject);

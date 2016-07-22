@@ -23,13 +23,13 @@ import java.util.*;
 class SwitchStatementBranch {
 
   private final Set<PsiLocalVariable> m_pendingVariableDeclarations =
-    new HashSet<PsiLocalVariable>(5);
+    new HashSet<>(5);
   private final List<String> m_caseValues =
-    new ArrayList<String>(2);
+    new ArrayList<>(2);
   private final List<PsiElement> m_bodyElements =
-    new ArrayList<PsiElement>(5);
+    new ArrayList<>(5);
   private final List<PsiElement> m_pendingWhiteSpace =
-    new ArrayList<PsiElement>(2);
+    new ArrayList<>(2);
   private boolean m_default;
   private boolean m_hasStatements;
 

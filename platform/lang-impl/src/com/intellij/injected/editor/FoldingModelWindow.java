@@ -93,7 +93,7 @@ class FoldingModelWindow implements FoldingModelEx{
   @NotNull
   public FoldRegion[] getAllFoldRegions() {
     FoldRegion[] all = myDelegate.getAllFoldRegions();
-    List<FoldRegion> result = new ArrayList<FoldRegion>();
+    List<FoldRegion> result = new ArrayList<>();
     for (FoldRegion region : all) {
       FoldingRegionWindow window = getWindowRegion(region);
       if (window != null) {
@@ -186,7 +186,7 @@ class FoldingModelWindow implements FoldingModelEx{
   @Override
   public List<FoldRegion> getGroupedRegions(FoldingGroup group) {
     List<FoldRegion> hostRegions = myDelegate.getGroupedRegions(group);
-    List<FoldRegion> result = new ArrayList<FoldRegion>();
+    List<FoldRegion> result = new ArrayList<>();
     for (FoldRegion hostRegion : hostRegions) {
       FoldingRegionWindow window = getWindowRegion(hostRegion);
       if (window != null) result.add(window);

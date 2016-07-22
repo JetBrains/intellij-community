@@ -669,7 +669,7 @@ public class ConsoleHistoryController {
   }
 
   private static Collection<KeyStroke> getKeystrokesUpDown(boolean isUp) {
-    Collection<KeyStroke> result = new ArrayList<KeyStroke>();
+    Collection<KeyStroke> result = new ArrayList<>();
 
     final ShortcutSet shortcutSet = getShortcutUpDown(isUp);
     for (Shortcut shortcut : shortcutSet.getShortcuts()) {

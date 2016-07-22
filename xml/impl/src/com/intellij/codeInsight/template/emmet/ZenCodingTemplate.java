@@ -151,7 +151,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
-    List<ZenCodingFilter> result = new ArrayList<ZenCodingFilter>();
+    List<ZenCodingFilter> result = new ArrayList<>();
 
     while (node instanceof FilterNode) {
       FilterNode filterNode = (FilterNode)node;

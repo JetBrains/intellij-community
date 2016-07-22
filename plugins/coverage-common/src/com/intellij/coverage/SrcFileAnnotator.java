@@ -143,7 +143,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   @NotNull private static String[] getUpToDateLines(final Document document) {
-    final Ref<String[]> linesRef = new Ref<String[]>();
+    final Ref<String[]> linesRef = new Ref<>();
     final Runnable runnable = () -> {
       final int lineCount = document.getLineCount();
       final String[] lines = new String[lineCount];
@@ -216,7 +216,7 @@ public class SrcFileAnnotator implements Disposable {
         if (byteContent == null && virtualFile.getTimeStamp() > date) {
           byteContent = loadFromVersionControl(date, virtualFile);
         } 
-        myOldContent = new SoftReference<byte[]>(byteContent);
+        myOldContent = new SoftReference<>(byteContent);
       }
       oldContent = myOldContent.get();
     }
@@ -238,7 +238,7 @@ public class SrcFileAnnotator implements Disposable {
       LOG.info(e);
       return null;
     }
-    return new SoftReference<TIntIntHashMap>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
+    return new SoftReference<>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
   }
 
   @Nullable
@@ -285,7 +285,7 @@ public class SrcFileAnnotator implements Disposable {
     final VirtualFile file = getVirtualFile(psiFile);
     final MyEditorBean editorBean = new MyEditorBean(editor, file, document);
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> highlighters = new ArrayList<>();
     final ProjectData data = suite.getCoverageData();
     if (data == null) {
       coverageDataNotFound(suite);
@@ -352,9 +352,9 @@ public class SrcFileAnnotator implements Disposable {
 
     final boolean subCoverageActive = CoverageDataManager.getInstance(myProject).isSubCoverageActive();
     final boolean coverageByTestApplicable = suite.isCoverageByTestApplicable() && !(subCoverageActive && suite.isCoverageByTestEnabled());
-    final TreeMap<Integer, LineData> executableLines = new TreeMap<Integer, LineData>();
-    final TreeMap<Integer, Object[]> classLines = new TreeMap<Integer, Object[]>();
-    final TreeMap<Integer, String> classNames = new TreeMap<Integer, String>();
+    final TreeMap<Integer, LineData> executableLines = new TreeMap<>();
+    final TreeMap<Integer, Object[]> classLines = new TreeMap<>();
+    final TreeMap<Integer, String> classNames = new TreeMap<>();
     class HighlightersCollector {
       private void collect(File outputFile, final String qualifiedName) {
         final ClassData fileData = data.getClassData(qualifiedName);
@@ -429,7 +429,7 @@ public class SrcFileAnnotator implements Disposable {
         myNewToOldLines = null;
         myOldToNewLines = null;
         List<RangeHighlighter> rangeHighlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
-        if (rangeHighlighters == null) rangeHighlighters = new ArrayList<RangeHighlighter>();
+        if (rangeHighlighters == null) rangeHighlighters = new ArrayList<>();
         int offset = e.getOffset();
         final int lineNumber = document.getLineNumber(offset);
         final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
@@ -535,7 +535,7 @@ public class SrcFileAnnotator implements Disposable {
       assert vFile != null;
       Map<FileEditor, EditorNotificationPanel> map = file.getCopyableUserData(NOTIFICATION_PANELS);
       if (map == null) {
-        map = new HashMap<FileEditor, EditorNotificationPanel>();
+        map = new HashMap<>();
         file.putCopyableUserData(NOTIFICATION_PANELS, map);
       }
 

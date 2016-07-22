@@ -34,7 +34,7 @@ public class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetP
   @Override
   public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {
     if (file instanceof PyFile) {
-      final ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> array = new ArrayList<>();
       addNavigationElements(array, file);
       return MethodUpDownUtil.offsetsFromElements(array);
     }

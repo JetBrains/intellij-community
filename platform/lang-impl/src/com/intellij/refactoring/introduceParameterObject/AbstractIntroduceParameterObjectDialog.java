@@ -61,7 +61,8 @@ public abstract class AbstractIntroduceParameterObjectDialog<M extends PsiNamedE
   protected void doAction() {
     final IntroduceParameterObjectDelegate<M, P, C> delegate = IntroduceParameterObjectDelegate.findDelegate(mySourceMethod);
     final List<P> allMethodParameters = delegate.getAllMethodParameters(mySourceMethod);
-    invokeRefactoring(new IntroduceParameterObjectProcessor<M, P, C>(mySourceMethod, createClassDescriptor(), allMethodParameters, keepMethodAsDelegate()));
+    invokeRefactoring(
+      new IntroduceParameterObjectProcessor<>(mySourceMethod, createClassDescriptor(), allMethodParameters, keepMethodAsDelegate()));
   }
 
   @Override

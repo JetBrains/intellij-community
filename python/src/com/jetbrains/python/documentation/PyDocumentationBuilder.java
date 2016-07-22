@@ -71,14 +71,14 @@ public class PyDocumentationBuilder {
   public PyDocumentationBuilder(PsiElement element, PsiElement originalElement) {
     myElement = element;
     myOriginalElement = originalElement;
-    myResult = new ChainIterable<String>();
-    myProlog = new ChainIterable<String>();
-    myBody = new ChainIterable<String>();
-    myEpilog = new ChainIterable<String>();
+    myResult = new ChainIterable<>();
+    myProlog = new ChainIterable<>();
+    myBody = new ChainIterable<>();
+    myEpilog = new ChainIterable<>();
 
     myResult.add(myProlog).addWith(TagCode, myBody).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
     myResult = wrapInTag("html", wrapInTag("body", myResult));
-    myReassignmentChain = new ChainIterable<String>();
+    myReassignmentChain = new ChainIterable<>();
   }
 
   @Nullable
@@ -348,7 +348,7 @@ public class PyDocumentationBuilder {
     Iterable<PyClass> classes = pyClass.getAncestorClasses(null);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc
-      classes = new ChainIterable<PyClass>(pyClass).add(classes);
+      classes = new ChainIterable<>(pyClass).add(classes);
     }
     for (PyClass ancestor : classes) {
       PyStringLiteralExpression docstringElement = null;
@@ -379,8 +379,8 @@ public class PyDocumentationBuilder {
             myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestorLink, methodName));
           }
           myEpilog.addItem(BR).addItem(BR);
-          final ChainIterable<String> formatted = new ChainIterable<String>();
-          final ChainIterable<String> unformatted = new ChainIterable<String>();
+          final ChainIterable<String> formatted = new ChainIterable<>();
+          final ChainIterable<String> unformatted = new ChainIterable<>();
           addFormattedDocString(pyFunction, inheritedDoc, formatted, unformatted);
           myEpilog.addWith(TagCode, formatted).add(unformatted);
           notFound = false;
@@ -428,7 +428,7 @@ public class PyDocumentationBuilder {
     }
 
     boolean isFirstLine;
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     final String[] lines = removeCommonIndentation(docstring);
 
     // reconstruct back, dropping first empty fragment as needed
@@ -545,7 +545,7 @@ public class PyDocumentationBuilder {
         }
       }
     }
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (String line : lines) {
       if (line.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) break;
       result.add(line);

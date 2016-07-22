@@ -82,7 +82,7 @@ public abstract class SearchSupport<T extends Task> {
     }));
     
     myList.setVisibleRowCount(10);
-    myListModel = new SortedListModel<T>(null);
+    myListModel = new SortedListModel<>(null);
     myList.setModel(myListModel);
   }
 

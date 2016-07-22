@@ -58,7 +58,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
       }
       editor = ((TextEditor)fileEditor).getEditor();
     }
-    List<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>(taskFile.getAnswerPlaceholders());
+    List<AnswerPlaceholder> placeholders = new ArrayList<>(taskFile.getAnswerPlaceholders());
     final ClearPlaceholders action = new ClearPlaceholders(taskFile, placeholders, editor);
     new WriteCommandAction(project, ACTION_NAME) {
       protected void run(@NotNull final Result result) throws Throwable {

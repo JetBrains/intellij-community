@@ -34,7 +34,7 @@ import java.beans.PropertyChangeListener;
 public interface IndexPatternProvider {
   ExtensionPointName<IndexPatternProvider> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternProvider");
 
-  Topic<PropertyChangeListener> INDEX_PATTERNS_CHANGED = new Topic<PropertyChangeListener>("index patterns changed", PropertyChangeListener.class);
+  Topic<PropertyChangeListener> INDEX_PATTERNS_CHANGED = new Topic<>("index patterns changed", PropertyChangeListener.class);
 
   /**
    * The property the change of which should be reported to the property change listener

@@ -358,7 +358,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
 
     private static XmlTag getLastSubTag(IdeaPlugin root, DomElement... children) {
-      Set<XmlTag> childrenTags = new HashSet<XmlTag>();
+      Set<XmlTag> childrenTags = new HashSet<>();
       for (DomElement child : children) {
         if (child != null) {
           childrenTags.add(child.getXmlTag());

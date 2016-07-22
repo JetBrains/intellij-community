@@ -33,8 +33,8 @@ public class AlienDirtyScope extends VcsDirtyScope {
   private final Set<FilePath> myDirs;
 
   public AlienDirtyScope() {
-    myFiles = new HashSet<FilePath>();
-    myDirs = new HashSet<FilePath>();
+    myFiles = new HashSet<>();
+    myDirs = new HashSet<>();
   }
 
   public Collection<VirtualFile> getAffectedContentRoots() {

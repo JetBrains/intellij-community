@@ -75,7 +75,7 @@ class GitLogRecord {
 
   @NotNull
   public List<FilePath> getFilePaths(@NotNull VirtualFile root) throws VcsException {
-    List<FilePath> res = new ArrayList<FilePath>();
+    List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
       final String subPath = GitUtil.unescapePath(strPath);

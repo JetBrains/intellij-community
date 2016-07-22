@@ -73,7 +73,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
   private final Project myProject;
-  private final CollectionListModel<String> myModel = new CollectionListModel<String>();
+  private final CollectionListModel<String> myModel = new CollectionListModel<>();
 
   public MavenRepositoriesConfigurable(Project project) {
     myProject = project;
@@ -199,7 +199,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   }
 
   private List<MavenIndex> getSelectedIndices() {
-    List<MavenIndex> result = new ArrayList<MavenIndex>();
+    List<MavenIndex> result = new ArrayList<>();
     for (int i : myIndicesTable.getSelectedRows()) {
       result.add(getIndexAt(i));
     }

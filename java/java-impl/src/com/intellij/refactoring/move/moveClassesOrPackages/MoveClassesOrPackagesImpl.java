@@ -78,7 +78,7 @@ public class MoveClassesOrPackagesImpl {
   @Nullable
   public static PsiElement[] adjustForMove(final Project project, final PsiElement[] elements, final PsiElement targetElement) {
     final PsiElement[] psiElements = new PsiElement[elements.length];
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof PsiDirectory) {
@@ -318,7 +318,7 @@ public class MoveClassesOrPackagesImpl {
     }
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Runnable analyzeConflicts = () -> ApplicationManager.getApplication().runReadAction(() -> RefactoringConflictsUtil
       .analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts));
     if (!ProgressManager.getInstance()
@@ -358,7 +358,7 @@ public class MoveClassesOrPackagesImpl {
 
   private static List<PsiDirectory> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
     final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
-    List<PsiDirectory> sourceRootDirectories = new ArrayList<PsiDirectory>();
+    List<PsiDirectory> sourceRootDirectories = new ArrayList<>();
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);

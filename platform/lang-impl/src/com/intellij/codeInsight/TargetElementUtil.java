@@ -412,7 +412,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
-      List<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
+      List<PsiElement> navigatableResults = new ArrayList<>(results.length);
 
       for(ResolveResult r:results) {
         PsiElement element = r.getElement();
@@ -460,7 +460,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return result != null ? result : PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
   }
 
-  protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator = new LanguageExtension<TargetElementEvaluator>("com.intellij.targetElementEvaluator");
+  protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+    new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
     TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);

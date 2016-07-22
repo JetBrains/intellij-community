@@ -30,20 +30,20 @@ import java.util.*;
 public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
-    return new ShortestPathFinder<Node>(graph).findPath(start, finish);
+    return new ShortestPathFinder<>(graph).findPath(start, finish);
   }
 
   @NotNull
   @Override
   public <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
                                                     @NotNull ProgressIndicator progressIndicator) {
-    return new KShortestPathsFinder<Node>(graph, start, finish, progressIndicator).findShortestPaths(k);
+    return new KShortestPathsFinder<>(graph, start, finish, progressIndicator).findShortestPaths(k);
   }
 
   @NotNull
   @Override
   public <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node) {
-    return new CycleFinder<Node>(graph).getNodeCycles(node);
+    return new CycleFinder<>(graph).getNodeCycles(node);
   }
 
   @NotNull
@@ -68,16 +68,16 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @NotNull
   @Override
   public <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull final Graph<Node> graph) {
-    final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
+    final DFSTBuilder<Node> builder = new DFSTBuilder<>(graph);
     final TIntArrayList sccs = builder.getSCCs();
 
-    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
-    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<Node, Chunk<Node>>();
+    final List<Chunk<Node>> chunks = new ArrayList<>(sccs.size());
+    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<>();
     sccs.forEach(new TIntProcedure() {
       int myTNumber = 0;
       public boolean execute(int size) {
-        final Set<Node> chunkNodes = new LinkedHashSet<Node>();
-        final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
+        final Set<Node> chunkNodes = new LinkedHashSet<>();
+        final Chunk<Node> chunk = new Chunk<>(chunkNodes);
         chunks.add(chunk);
         for (int j = 0; j < size; j++) {
           final Node node = builder.getNodeByTNumber(myTNumber + j);
@@ -97,7 +97,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
 
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
-        final Set<Chunk<Node>> ins = new LinkedHashSet<Chunk<Node>>();
+        final Set<Chunk<Node>> ins = new LinkedHashSet<>();
         for (final Node node : chunkNodes) {
           for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext(); ) {
             final Node in = nodeIns.next();
@@ -132,7 +132,7 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @NotNull
   @Override
   public <Node> List<List<Node>> removePathsWithCycles(@NotNull List<List<Node>> paths) {
-    final List<List<Node>> result = new ArrayList<List<Node>>();
+    final List<List<Node>> result = new ArrayList<>();
     for (List<Node> path : paths) {
       if (!containsCycle(path)) {
         result.add(path);

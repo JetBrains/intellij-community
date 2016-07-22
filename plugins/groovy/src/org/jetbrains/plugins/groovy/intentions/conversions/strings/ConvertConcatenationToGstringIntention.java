@@ -71,7 +71,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static List<GrExpression> collectExpressions(final PsiFile file, final int offset) {
-    final List<GrExpression> expressions = new ArrayList<GrExpression>();
+    final List<GrExpression> expressions = new ArrayList<>();
 
     _collect(file, offset, expressions);
     if (expressions.isEmpty()) _collect(file, offset, expressions);

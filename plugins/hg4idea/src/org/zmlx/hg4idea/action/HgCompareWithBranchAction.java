@@ -101,7 +101,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
   @NotNull
   @Override
   protected List<String> getBranchNamesExceptCurrent(@NotNull HgRepository repository) {
-    final List<String> namesToCompare = new ArrayList<String>(repository.getBranches().keySet());
+    final List<String> namesToCompare = new ArrayList<>(repository.getBranches().keySet());
     final String currentBranchName = repository.getCurrentBranchName();
     assert currentBranchName != null;
     final Hash currentHash = getCurrentHash(repository);

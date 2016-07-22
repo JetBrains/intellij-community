@@ -88,7 +88,7 @@ public class EncodingReference implements PsiReference {
   @NotNull
   public Object[] getVariants() {
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-    List<LookupElement> suggestions = new ArrayList<LookupElement>(charsets.length);
+    List<LookupElement> suggestions = new ArrayList<>(charsets.length);
     for (Charset charset : charsets) {
       suggestions.add(LookupElementBuilder.create(charset.name()).withCaseSensitivity(false));
     }

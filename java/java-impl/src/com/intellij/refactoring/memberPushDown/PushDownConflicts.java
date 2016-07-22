@@ -41,8 +41,8 @@ public class PushDownConflicts {
   public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, String> conflicts) {
     myClass = aClass;
 
-    myMovedMembers = new HashSet<PsiMember>();
-    myAbstractMembers = new HashSet<PsiMethod>();
+    myMovedMembers = new HashSet<>();
+    myAbstractMembers = new HashSet<>();
     for (MemberInfo memberInfo : memberInfos) {
       final PsiMember member = memberInfo.getMember();
       if (memberInfo.isChecked() && (!(memberInfo.getMember() instanceof PsiClass) || memberInfo.getOverrides() == null)) {

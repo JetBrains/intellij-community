@@ -44,7 +44,7 @@ import java.util.*;
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private final AnnotationHolderImpl myAnnotationHolder;
 
-  private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
+  private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<>();
 
   private final ExternalToolPassFactory myExternalToolPassFactory;
   private final boolean myMainHighlightingPass;
@@ -178,7 +178,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @NotNull
   private List<HighlightInfo> getHighlights() {
-    List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    List<HighlightInfo> infos = new ArrayList<>();
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));
     }

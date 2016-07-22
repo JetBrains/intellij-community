@@ -210,7 +210,7 @@ public class InspectionApplication {
         }
       }
 
-      final List<File> inspectionsResults = new ArrayList<File>();
+      final List<File> inspectionsResults = new ArrayList<>();
       ProgressManager.getInstance().runProcess(() -> {
         if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
           gracefulExit();
@@ -452,12 +452,12 @@ public class InspectionApplication {
 
   private static void describeInspections(@NonNls String myOutputPath, final String name, final InspectionProfile profile) throws IOException {
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
-    final Map<String, Set<InspectionToolWrapper>> map = new HashMap<String, Set<InspectionToolWrapper>>();
+    final Map<String, Set<InspectionToolWrapper>> map = new HashMap<>();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       final String groupName = toolWrapper.getGroupDisplayName();
       Set<InspectionToolWrapper> groupInspections = map.get(groupName);
       if (groupInspections == null) {
-        groupInspections = new HashSet<InspectionToolWrapper>();
+        groupInspections = new HashSet<>();
         map.put(groupName, groupInspections);
       }
       groupInspections.add(toolWrapper);

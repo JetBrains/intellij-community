@@ -130,7 +130,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       chunks = ChunkExtractor.extractChunks(psiFile, this);
     }
 
-    myTextChunks = new SoftReference<TextChunk[]>(chunks);
+    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -519,7 +519,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
           Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
           if (document != null) {
             ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
-            SmartList<TextChunk> chunks = new SmartList<TextChunk>();
+            SmartList<TextChunk> chunks = new SmartList<>();
             extractor.createTextChunks(
               this,
               document.getCharsSequence(),

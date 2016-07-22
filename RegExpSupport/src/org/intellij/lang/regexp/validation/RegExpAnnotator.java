@@ -140,7 +140,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
     if (!(regExpClass.getParent() instanceof RegExpClass)) {
-      checkForDuplicates(regExpClass, new HashSet<Character>());
+      checkForDuplicates(regExpClass, new HashSet<>());
     }
   }
 

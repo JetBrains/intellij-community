@@ -48,7 +48,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
         if (name == null || name.equals(tagName)) {
           if (result == null) {
-            result = new ArrayList<XmlTag>(3);
+            result = new ArrayList<>(3);
           }
 
           result.add(subTag);
@@ -58,7 +58,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
                (name == null || name.equals(subTag.getLocalName()))
         ) {
         if (result == null) {
-          result = new ArrayList<XmlTag>(3);
+          result = new ArrayList<>(3);
         }
 
         result.add(subTag);

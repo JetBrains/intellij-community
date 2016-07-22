@@ -47,7 +47,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
       }
     };
 
-    myChildren = new ArrayList<Configurable>();
+    myChildren = new ArrayList<>();
     myChildren.add(new MavenImportingConfigurable(myProject));
     myChildren.add(new MavenIgnoredFilesConfigurable(myProject));
 

@@ -56,7 +56,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
    */
   public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
-  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionToolWrapper>();
+  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
 
   @NotNull
@@ -129,7 +129,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   private static class MyInspectionProfileStrategy implements NotNullFunction<InspectionProfileWrapper, InspectionProfileWrapper> {
 
     private final Map<InspectionProfileWrapper, MyInspectionProfileWrapper> myWrappers
-      = new WeakHashMap<InspectionProfileWrapper, MyInspectionProfileWrapper>();
+      = new WeakHashMap<>();
     private boolean myUseSpellCheck;
 
     @NotNull

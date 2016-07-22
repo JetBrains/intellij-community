@@ -40,7 +40,7 @@ public class CustomResourceBundle extends ResourceBundle {
 
   private CustomResourceBundle(final List<PropertiesFile> files, final @NotNull String baseName) {
     LOG.assertTrue(!files.isEmpty());
-    myFiles = new ArrayList<PropertiesFile>(files);
+    myFiles = new ArrayList<>(files);
     Collections.sort(myFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
     myBaseName = baseName;
   }

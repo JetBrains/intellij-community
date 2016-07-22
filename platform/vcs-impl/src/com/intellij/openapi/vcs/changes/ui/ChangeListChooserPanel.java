@@ -140,7 +140,7 @@ public class ChangeListChooserPanel extends JPanel {
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
     List<String> changelistNames = ContainerUtil.map(changeLists, ChangeList::getName);
     Collections.sort(changelistNames);
-    myExistingListsCombo.setModel(new CollectionComboBoxModel<String>(changelistNames));
+    myExistingListsCombo.setModel(new CollectionComboBoxModel<>(changelistNames));
   }
 
   public void setDefaultName(String name) {

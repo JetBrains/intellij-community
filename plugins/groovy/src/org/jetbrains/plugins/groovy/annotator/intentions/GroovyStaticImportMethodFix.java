@@ -110,11 +110,11 @@ public class GroovyStaticImportMethodFix extends Intention {
     GrArgumentList argumentList = element.getArgumentList();
     String name = reference.getReferenceName();
 
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    ArrayList<PsiMethod> list = new ArrayList<>();
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
-    List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
+    List<PsiMethod> applicableList = new ArrayList<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       if (JavaCompletionUtil.isInExcludedPackage(method, false)) continue;

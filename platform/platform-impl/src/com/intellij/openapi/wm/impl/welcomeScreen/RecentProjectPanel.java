@@ -100,7 +100,7 @@ public class RecentProjectPanel extends JPanel {
 
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
-    myPathShortener = new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
+    myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {
         final ReopenProjectAction item = (ReopenProjectAction)action;

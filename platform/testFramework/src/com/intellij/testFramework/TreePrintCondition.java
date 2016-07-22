@@ -25,7 +25,7 @@ public abstract class TreePrintCondition implements Condition<String> {
 
   public abstract static class SetBased extends TreePrintCondition {
 
-    protected Set<String> mySet = new HashSet<String>();
+    protected Set<String> mySet = new HashSet<>();
 
     public SetBased(String... elements) {
       ContainerUtil.addAll(mySet, elements);

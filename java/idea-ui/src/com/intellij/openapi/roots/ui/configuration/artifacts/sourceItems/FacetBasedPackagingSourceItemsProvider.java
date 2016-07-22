@@ -48,7 +48,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
                                                                   @Nullable PackagingSourceItem parent) {
     if (parent instanceof ModuleSourceItemGroup) {
       final Module module = ((ModuleSourceItemGroup)parent).getModule();
-      final Set<F> facets = new HashSet<F>(editorContext.getFacetsProvider().getFacetsByType(module, myFacetTypeId));
+      final Set<F> facets = new HashSet<>(editorContext.getFacetsProvider().getFacetsByType(module, myFacetTypeId));
       ArtifactUtil.processPackagingElements(artifact, myElementType, e -> {
         F facet = getFacet(e);
         if (facet != null) {
@@ -58,7 +58,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
       }, editorContext, true);
 
       if (!facets.isEmpty()) {
-        return Collections.singletonList(new FacetBasedSourceItem<F>(this, facets.iterator().next()));
+        return Collections.singletonList(new FacetBasedSourceItem<>(this, facets.iterator().next()));
       }
     }
     return Collections.emptyList();

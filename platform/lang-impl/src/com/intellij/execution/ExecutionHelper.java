@@ -270,7 +270,7 @@ public class ExecutionHelper {
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
                                                                         @NotNull NotNullFunction<String, Boolean> titleMatcher) {
-    List<RunContentDescriptor> result = new SmartList<RunContentDescriptor>();
+    List<RunContentDescriptor> result = new SmartList<>();
     for (RunContentDescriptor runContentDescriptor : ExecutionManager.getInstance(project).getContentManager().getAllDescriptors()) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
         result.add(runContentDescriptor);

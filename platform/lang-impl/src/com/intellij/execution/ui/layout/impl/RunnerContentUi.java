@@ -111,13 +111,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private final DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
-  private final Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<GridImpl, Wrapper>();
-  private final Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<GridImpl, Wrapper>();
-  private final Map<GridImpl, AnAction[]> myContextActions = new HashMap<GridImpl, AnAction[]>();
+  private final Map<GridImpl, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<>();
+  private final Map<GridImpl, Wrapper> myCommonActionsPlaceholder = new HashMap<>();
+  private final Map<GridImpl, AnAction[]> myContextActions = new HashMap<>();
 
   private boolean myUiLastStateWasRestored;
 
-  private final Set<Object> myRestoreStateRequestors = new HashSet<Object>();
+  private final Set<Object> myRestoreStateRequestors = new HashSet<>();
   private String myActionsPlace = ActionPlaces.UNKNOWN;
   private final IdeFocusManager myFocusManager;
 
@@ -125,8 +125,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private boolean myMoveToGridActionEnabled = true;
   private final RunnerLayoutUi myRunnerUi;
 
-  private final Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
-  private final Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<String, LayoutAttractionPolicy>();
+  private final Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<>();
+  private final Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<>();
 
   private ActionGroup myTabPopupActions;
   private ActionGroup myAdditionalFocusActions;
@@ -143,8 +143,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private MyDropAreaPainter myCurrentPainter;
 
   private RunnerContentUi myOriginal;
-  private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
-  private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>((o1, o2) -> o1.myWindow - o2.myWindow);
+  private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<>();
+  private final Set<RunnerContentUi> myChildren = new TreeSet<>((o1, o2) -> o1.myWindow - o2.myWindow);
   private int myWindow;
   private boolean myDisposing;
 
@@ -840,7 +840,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Wrapper eachPlaceholder = entry.getValue();
       List<Content> contentList = entry.getKey().getContents();
 
-      Set<Content> contents = new HashSet<Content>();
+      Set<Content> contents = new HashSet<>();
       contents.addAll(contentList);
 
       DefaultActionGroup groupToBuild;
@@ -899,7 +899,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private void updateTabsUI(final boolean validateNow) {
     boolean hasToolbarContent = rebuildToolbar();
 
-    Set<String> usedNames = new HashSet<String>();
+    Set<String> usedNames = new HashSet<>();
     List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each, usedNames);
@@ -965,7 +965,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       setStateIsBeingRestored(true, this);
 
-      List<TabInfo> tabs = new ArrayList<TabInfo>();
+      List<TabInfo> tabs = new ArrayList<>();
       tabs.addAll(myTabs.getTabs());
 
       final ActionCallback result = new ActionCallback(tabs.size());
@@ -1062,7 +1062,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private ArrayList<GridImpl> getGrids() {
-    ArrayList<GridImpl> result = new ArrayList<GridImpl>();
+    ArrayList<GridImpl> result = new ArrayList<>();
     for (TabInfo each : myTabs.getTabs()) {
       result.add(getGridFor(each));
     }
@@ -1158,7 +1158,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public void restoreLayout() {
     final RunnerContentUi[] children = myChildren.toArray(new RunnerContentUi[myChildren.size()]);
-    final List<Content> contents = new ArrayList<Content>();
+    final List<Content> contents = new ArrayList<>();
     Collections.addAll(contents, myManager.getContents());
     for (RunnerContentUi child : children) {
       Collections.addAll(contents, child.myManager.getContents());
@@ -1530,7 +1530,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public void minimize(final Content content, final CellTransform.Restore restore) {
-    final Ref<AnAction> restoreAction = new Ref<AnAction>();
+    final Ref<AnAction> restoreAction = new Ref<>();
     myManager.removeContent(content, false);
     restoreAction.set(new RestoreViewAction(content, new CellTransform.Restore() {
       @Override
@@ -1721,7 +1721,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    ArrayList<AnAction> result = new ArrayList<>();
     if (myLeftToolbarActions != null) {
       AnAction[] kids = myLeftToolbarActions.getChildren(null);
       ContainerUtil.addAll(result, kids);
@@ -1748,7 +1748,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    List<SwitchTarget> result = new ArrayList<>();
 
     result.addAll(myTabs.getTargets(true, false));
     GridImpl grid = getSelectedGrid();

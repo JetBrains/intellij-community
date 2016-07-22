@@ -56,7 +56,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                             boolean ignoreFieldsUsedInMultipleMethods) {
     if (aClass.isInterface()) return;
     final PsiField[] fields = aClass.getFields();
-    final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
+    final Set<PsiField> candidates = new LinkedHashSet<>();
     for (PsiField field : fields) {
       if (AnnotationUtil.isAnnotated(field, excludeAnnos)) {
         continue;
@@ -70,7 +70,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
     removeFieldsReferencedFromInitializers(aClass, candidates);
     if (candidates.isEmpty()) return;
 
-    final Set<PsiField> usedFields = new THashSet<PsiField>();
+    final Set<PsiField> usedFields = new THashSet<>();
     removeReadFields(aClass, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
 
     if (candidates.isEmpty()) return;
@@ -89,7 +89,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
           continue;
         }
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+        final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, qualifiedName -> {
           final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
@@ -172,7 +172,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                        final Set<PsiField> candidates,
                                        final Set<PsiField> usedFields,
                                        final boolean ignoreFieldsUsedInMultipleMethods) {
-    final Set<PsiField> ignored = new HashSet<PsiField>();
+    final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -212,7 +212,7 @@ public class FieldCanBeLocalInspectionBase extends BaseJavaBatchLocalInspectionT
                                      boolean ignoreFieldsUsedInMultipleMethods, 
                                      Set<PsiField> ignored) {
     try {
-      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
+      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<>();
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject())
           .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), false, false);
       final List<PsiVariable> usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());

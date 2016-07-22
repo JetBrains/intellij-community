@@ -90,7 +90,7 @@ public class ToolsImpl implements Tools {
   @NotNull
   private ScopeToolState insertTool(@NotNull final ScopeToolState scopeToolState, final int idx) {
     if (myTools == null) {
-      myTools = new ArrayList<ScopeToolState>();
+      myTools = new ArrayList<>();
       if (scopeToolState.isEnabled()) {
         setEnabled(true);
       }
@@ -132,7 +132,7 @@ public class ToolsImpl implements Tools {
 
   @NotNull
   public List<InspectionToolWrapper> getAllTools() {
-    List<InspectionToolWrapper> result = new ArrayList<InspectionToolWrapper>();
+    List<InspectionToolWrapper> result = new ArrayList<>();
     for (ScopeToolState state : getTools()) {
       InspectionToolWrapper toolWrapper = state.getTool();
       result.add(toolWrapper);
@@ -180,7 +180,7 @@ public class ToolsImpl implements Tools {
     final InspectionToolWrapper toolWrapper = myDefaultState.getTool();
 
     final List scopeElements = toolElement.getChildren(ProfileEx.SCOPE);
-    final List<String> scopeNames = new ArrayList<String>();
+    final List<String> scopeNames = new ArrayList<>();
     for (Object sO : scopeElements) {
       final Element scopeElement = (Element)sO;
       final String scopeName = scopeElement.getAttributeValue(ProfileEx.NAME);
@@ -218,7 +218,7 @@ public class ToolsImpl implements Tools {
       String scopeName = scopeNames.get(i);
       List<String> order = dependencies.get(scopeName);
       if (order == null) {
-        order = new ArrayList<String>();
+        order = new ArrayList<>();
         dependencies.put(scopeName, order);
       }
       for (int j = i + 1; j < scopeNames.size(); j++) {
@@ -245,7 +245,7 @@ public class ToolsImpl implements Tools {
   @NotNull
   public List<ScopeToolState> getTools() {
     if (myTools == null) return Collections.singletonList(myDefaultState);
-    List<ScopeToolState> result = new ArrayList<ScopeToolState>(myTools);
+    List<ScopeToolState> result = new ArrayList<>(myTools);
     result.add(myDefaultState);
     return result;
   }

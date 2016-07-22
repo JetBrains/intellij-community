@@ -55,7 +55,7 @@ import java.util.List;
  */
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final ModuleManager myModuleManager;
-  private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
+  private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
   @NonNls private static final String NO_FRAMEWORKS_NODE = "No facets are configured";
   private boolean myTreeWasInitialized;
@@ -139,8 +139,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       addFacetTypeNode(InvalidFacetType.getInstance());
     }
     if (!hasFacetTypeNodes) {
-      addNode(new MyNode(new TextConfigurable<String>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet",
-                                                      null)), myRoot);
+      addNode(new MyNode(new TextConfigurable<>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet",
+                                                null)), myRoot);
     }
     addNode(new MyNode(new FrameworkDetectionConfigurable(myProject)), myRoot);
   }
@@ -175,7 +175,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    List<ProjectStructureElement> elements = new ArrayList<>();
     for (Module module : myModuleManager.getModules()) {
       Facet[] facets = FacetManager.getInstance(module).getAllFacets();
       for (Facet facet : facets) {
@@ -260,7 +260,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new AbstractAddGroup("Add") {
       @NotNull
       @Override
@@ -286,7 +286,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   public boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables, final DetailsComponent detailsComponent) {
     FacetType selectedFacetType = null;
-    List<FacetEditor> facetEditors = new ArrayList<FacetEditor>();
+    List<FacetEditor> facetEditors = new ArrayList<>();
     for (NamedConfigurable selectedConfigurable : selectedConfigurables) {
       if (selectedConfigurable instanceof FacetConfigurable) {
         FacetConfigurable facetConfigurable = (FacetConfigurable)selectedConfigurable;

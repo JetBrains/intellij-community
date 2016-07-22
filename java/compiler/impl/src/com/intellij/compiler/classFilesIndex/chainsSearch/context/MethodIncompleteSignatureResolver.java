@@ -57,7 +57,7 @@ final class MethodIncompleteSignatureResolver {
       return PsiMethod.EMPTY_ARRAY;
     }
     final PsiMethod[] methods = aClass.findMethodsByName(signature.getName(), true);
-    final List<PsiMethod> filtered = new ArrayList<PsiMethod>(methods.length);
+    final List<PsiMethod> filtered = new ArrayList<>(methods.length);
     for (final PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) == signature.isStatic()) {
         final PsiType returnType = method.getReturnType();

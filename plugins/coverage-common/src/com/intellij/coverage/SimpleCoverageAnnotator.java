@@ -44,9 +44,9 @@ import java.util.Set;
  */
 public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
-  private final Map<String, FileCoverageInfo> myFileCoverageInfos = new HashMap<String, FileCoverageInfo>();
-  private final Map<String, DirCoverageInfo> myTestDirCoverageInfos = new HashMap<String, DirCoverageInfo>();
-  private final Map<String, DirCoverageInfo> myDirCoverageInfos = new HashMap<String, DirCoverageInfo>();
+  private final Map<String, FileCoverageInfo> myFileCoverageInfos = new HashMap<>();
+  private final Map<String, DirCoverageInfo> myTestDirCoverageInfos = new HashMap<>();
+  private final Map<String, DirCoverageInfo> myDirCoverageInfos = new HashMap<>();
 
   public SimpleCoverageAnnotator(Project project) {
     super(project);

@@ -76,7 +76,7 @@ public class SheetMessage {
   {
     final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
-    WeakReference<Component> beforeShowFocusOwner = new WeakReference<Component>(recentFocusOwner);
+    WeakReference<Component> beforeShowFocusOwner = new WeakReference<>(recentFocusOwner);
 
     maximizeIfNeeded(owner);
 

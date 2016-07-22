@@ -76,7 +76,7 @@ public abstract class GitHandler {
   protected final Project myProject;
   protected final GitCommand myCommand;
 
-  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>(); // Error codes that are ignored for the handler
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>(); // Error codes that are ignored for the handler
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
@@ -132,7 +132,7 @@ public abstract class GitHandler {
     myCommand = command;
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
-    myEnv = new HashMap<String, String>(EnvironmentUtil.getEnvironmentMap());
+    myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();

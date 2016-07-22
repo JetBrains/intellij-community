@@ -43,7 +43,7 @@ public class ExtractMethodUtil {
                                                         final SearchScope processConflictsScope,
                                                         final String overloadName,
                                                         final PsiElement extractedFragment) {
-    final Map<PsiMethodCallExpression, PsiMethod> ret = new HashMap<PsiMethodCallExpression, PsiMethod>();
+    final Map<PsiMethodCallExpression, PsiMethod> ret = new HashMap<>();
     encodeInClass(targetClass, overloadName, extractedFragment, ret);
 
     ClassInheritorsSearch.search(targetClass, processConflictsScope, true).forEach(inheritor -> {

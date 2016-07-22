@@ -59,7 +59,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
 
   @Override
   protected Collection<String> generateSuggestedNames(@NotNull final PyExpression expression) {
-    Collection<String> names = new HashSet<String>();
+    Collection<String> names = new HashSet<>();
     for (String name : super.generateSuggestedNames(expression)) {
       names.add(StringUtil.toUpperCase(name));
     }

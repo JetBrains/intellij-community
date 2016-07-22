@@ -119,7 +119,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private static void expacndChecked(Tree tree) {
     TreeNode root = (TreeNode)tree.getModel().getRoot();
     Enumeration factories = root.children();
-    ArrayList<TreeNode[]> toExpand = new ArrayList<TreeNode[]>();
+    ArrayList<TreeNode[]> toExpand = new ArrayList<>();
     while (factories.hasMoreElements()) {
       DefaultMutableTreeNode factoryNode = (DefaultMutableTreeNode)factories.nextElement();
       Enumeration configurations = factoryNode.children();

@@ -39,7 +39,7 @@ public class SeparatePiecesRunner extends GeneralRunner {
 
   public SeparatePiecesRunner(Project project, boolean cancellable) {
     super(project, cancellable);
-    myCurrentWrapper = new AtomicReference<TaskWrapper>();
+    myCurrentWrapper = new AtomicReference<>();
   }
 
   @CalledInAwt

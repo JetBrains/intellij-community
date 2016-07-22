@@ -149,7 +149,7 @@ public class Xsd2InstanceUtils {
     if (metaData instanceof XmlNSDescriptorImpl) {
       XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
 
-      List<String> elementDescriptors = new ArrayList<String>();
+      List<String> elementDescriptors = new ArrayList<>();
       XmlElementDescriptor[] rootElementsDescriptors = nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(rootTag, XmlDocument.class));
       for(XmlElementDescriptor e:rootElementsDescriptors) {
         elementDescriptors.add(e.getName());

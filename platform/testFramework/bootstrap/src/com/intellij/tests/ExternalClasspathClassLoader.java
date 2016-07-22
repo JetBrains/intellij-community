@@ -34,7 +34,7 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
   }
 
   private static String[] parseUrls(String classpathFilePath) {
-    Collection<String> roots = new LinkedHashSet<String>();
+    Collection<String> roots = new LinkedHashSet<>();
     File file = new File(classpathFilePath);
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));

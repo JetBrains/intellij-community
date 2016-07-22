@@ -126,7 +126,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     if (!mySettings.generateDelegate()) {
       detectAccessibilityConflicts(usagesIn, conflicts);
@@ -172,7 +172,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {
       Collection<PsiReference> refs;
@@ -244,7 +244,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     LOG.assertTrue(writeInstr != null);
 
-    Collection<PsiReference> result = new ArrayList<PsiReference>();
+    Collection<PsiReference> result = new ArrayList<>();
     for (Instruction instruction : flow) {
       if (!(instruction instanceof ReadWriteVariableInstruction)) continue;
       if (((ReadWriteVariableInstruction)instruction).isWrite()) continue;

@@ -46,7 +46,7 @@ import java.util.*;
  * @author mike
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
-  private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");
+  private static final Key<CompletionState> KEY_STATE = new Key<>("HIPPIE_COMPLETION_STATE");
   private final boolean myForward;
 
   public HippieWordCompletionHandler(boolean forward) {
@@ -271,8 +271,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
                                                          PsiFile file,
                                                          boolean includeWordsFromOtherFiles) {
 
-    final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
-    final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
+    final ArrayList<CompletionVariant> words = new ArrayList<>();
+    final List<CompletionVariant> afterWords = new ArrayList<>();
 
     if (includeWordsFromOtherFiles) {
       for(FileEditor fileEditor: FileEditorManager.getInstance(file.getProject()).getAllEditors()) {
@@ -287,8 +287,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       addWordsForEditor((EditorEx)editor, matcher, words, afterWords, true);
     }
 
-    Set<String> allWords = new HashSet<String>();
-    List<CompletionVariant> result = new ArrayList<CompletionVariant>();
+    Set<String> allWords = new HashSet<>();
+    List<CompletionVariant> result = new ArrayList<>();
 
     Collections.reverse(words);
 

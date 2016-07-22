@@ -184,7 +184,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public void addInReference(RefElement refElement) {
     if (!getInReferences().contains(refElement)) {
       if (myInReferences == null){
-        myInReferences = new ArrayList<RefElement>(1);
+        myInReferences = new ArrayList<>(1);
       }
       myInReferences.add(refElement);
     }
@@ -193,7 +193,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public void addOutReference(RefElement refElement) {
     if (!getOutReferences().contains(refElement)) {
       if (myOutReferences == null){
-        myOutReferences = new ArrayList<RefElement>(1);
+        myOutReferences = new ArrayList<>(1);
       }
       myOutReferences.add(refElement);
     }

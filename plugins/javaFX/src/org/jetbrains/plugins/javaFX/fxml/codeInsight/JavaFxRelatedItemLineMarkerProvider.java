@@ -67,14 +67,14 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
             }
           }
           if (!defaultConstructor) return;
-          final ArrayList<GotoRelatedItem> targets = new ArrayList<GotoRelatedItem>();
+          final ArrayList<GotoRelatedItem> targets = new ArrayList<>();
           collectTargets(field, targets, element1 -> new GotoRelatedItem(element1), true);
           if (targets.isEmpty()) return;
 
-          result.add(new RelatedItemLineMarkerInfo<PsiField>(field, field.getNameIdentifier().getTextRange(),
-                                                             AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDDEN_MARKERS, null,
-                                                             new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
-                                                             targets));
+          result.add(new RelatedItemLineMarkerInfo<>(field, field.getNameIdentifier().getTextRange(),
+                                                     AllIcons.FileTypes.Xml, Pass.UPDATE_OVERRIDDEN_MARKERS, null,
+                                                     new JavaFXIdIconNavigationHandler(), GutterIconRenderer.Alignment.LEFT,
+                                                     targets));
         }
       }
     }
@@ -107,7 +107,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
   private static class JavaFXIdIconNavigationHandler implements GutterIconNavigationHandler<PsiField> {
     @Override
     public void navigate(MouseEvent e, PsiField field) {
-      final ArrayList<PsiElement> relatedItems = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> relatedItems = new ArrayList<>();
       collectTargets(field, relatedItems, Function.ID, false);
       if (relatedItems.size() == 1) {
         NavigationUtil.activateFileWithPsiElement(relatedItems.get(0));

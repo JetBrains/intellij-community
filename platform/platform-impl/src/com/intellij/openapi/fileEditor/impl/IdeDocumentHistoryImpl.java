@@ -61,14 +61,14 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final CommandProcessor myCmdProcessor;
   private final ToolWindowManager myToolWindowManager;
 
-  private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
-  private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private boolean myBackInProgress = false;
   private boolean myForwardInProgress = false;
   private Object myLastGroupId = null;
 
   // change's navigation
-  private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<PlaceInfo>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private int myStartIndex = 0;
   private int myCurrentIndex = 0;
   private PlaceInfo myCurrentChangePlace = null;
@@ -76,7 +76,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private PlaceInfo myCommandStartPlace = null;
   private boolean myCurrentCommandIsNavigation = false;
   private boolean myCurrentCommandHasChanges = false;
-  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<VirtualFile>();
+  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves = false;
 
   private final CommandListener myCommandListener = new CommandAdapter() {
@@ -147,7 +147,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
-    public List<String> CHANGED_PATHS = new ArrayList<String>();
+    public List<String> CHANGED_PATHS = new ArrayList<>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -291,7 +291,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   @Override
   public VirtualFile[] getChangedFiles() {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<VirtualFile> files = new ArrayList<>();
 
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final List<String> paths = myRecentlyChangedFiles.CHANGED_PATHS;
@@ -517,7 +517,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
-      myWindow = new WeakReference<EditorWindow>(window);
+      myWindow = new WeakReference<>(window);
     }
 
     public EditorWindow getWindow() {

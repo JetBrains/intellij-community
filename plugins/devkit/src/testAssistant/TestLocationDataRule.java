@@ -61,7 +61,7 @@ public class TestLocationDataRule implements GetDataRule {
   protected static List<Location> collectRelativeLocations(Project project, VirtualFile file) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
-    final List<Location> locations = new ArrayList<Location>();
+    final List<Location> locations = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInContent(file) && !fileIndex.isInSource(file) && !fileIndex.isInLibraryClasses(file)) {
       final VirtualFile parent = file.getParent();
@@ -80,8 +80,8 @@ public class TestLocationDataRule implements GetDataRule {
             if (word.length() < 5) {
               continue;
             }
-            final Set<PsiFile> files = new THashSet<PsiFile>();
-            searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<PsiFile>(files));
+            final Set<PsiFile> files = new THashSet<>();
+            searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<>(files));
             if (resultFiles == null) {
               resultFiles = files;
             }

@@ -131,7 +131,7 @@ public class StubBasedPsiElementBaseGetParentInspection extends DevKitInspection
       final PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, methodToOverride, substitutor);
       final List<PsiGenerationInfo<PsiMethod>> generationInfos =
         GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor,
-                                                      Collections.singletonList(new PsiGenerationInfo<PsiMethod>(getParentMethod)));
+                                                      Collections.singletonList(new PsiGenerationInfo<>(getParentMethod)));
 
       if (myOnTheFly) {
         final PsiGenerationInfo<PsiMethod> item = ContainerUtil.getFirstItem(generationInfos);

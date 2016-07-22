@@ -43,7 +43,7 @@ public final class PyTypeUtil {
                                                                 boolean inherited,
                                                                 @NotNull final TypeEvalContext context) {
 
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     type.visitMembers(t -> {
       if (expectedMemberType.isInstance(t)) {
         @SuppressWarnings("unchecked") // Already checked

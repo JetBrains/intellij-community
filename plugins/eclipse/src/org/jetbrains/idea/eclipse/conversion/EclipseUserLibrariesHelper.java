@@ -78,7 +78,7 @@ public class EclipseUserLibrariesHelper {
       if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
-    final List<Library> libraries = new ArrayList<Library>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
+    final List<Library> libraries = new ArrayList<>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
     for (Library library : libraries) {
       Element libElement = new Element("library");

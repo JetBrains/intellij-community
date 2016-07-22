@@ -65,9 +65,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     if (matchingPattern == null) return true;
 
-    List<MatchResult> namesList = new ArrayList<MatchResult>();
+    List<MatchResult> namesList = new ArrayList<>();
 
-    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
+    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<>(namesList);
     long started;
 
     if (model instanceof ChooseByNameModelEx) {
@@ -105,7 +105,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
     indicator.checkCanceled();
 
-    List<Object> sameNameElements = new SmartList<Object>();
+    List<Object> sameNameElements = new SmartList<>();
     final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
@@ -120,7 +120,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       }
     };
 
-    List<Object> qualifierMiddleMatched = new ArrayList<Object>();
+    List<Object> qualifierMiddleMatched = new ArrayList<>();
 
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
@@ -227,7 +227,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
-    List<String> answer = new ArrayList<String>();
+    List<String> answer = new ArrayList<>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
       if (!token.isEmpty()) {
         answer.add(token);
@@ -294,7 +294,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     pattern = convertToMatchingPattern(base, pattern);
     if (pattern == null) return Collections.emptyList();
 
-    final List<String> filtered = new ArrayList<String>();
+    final List<String> filtered = new ArrayList<>();
     processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
       synchronized (filtered) {
         filtered.add(result.elementName);

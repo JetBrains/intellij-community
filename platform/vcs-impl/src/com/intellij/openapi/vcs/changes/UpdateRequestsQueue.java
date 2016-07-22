@@ -60,7 +60,7 @@ public class UpdateRequestsQueue {
   private boolean myRequestSubmitted;
   private boolean myRequestRunning;
   private final List<Runnable> myWaitingUpdateCompletionQueue;
-  private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<Semaphore>();
+  private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
@@ -77,7 +77,7 @@ public class UpdateRequestsQueue {
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myStartupManager = StartupManager.getInstance(myProject);
     myLock = new Object();
-    myWaitingUpdateCompletionQueue = new ArrayList<Runnable>();
+    myWaitingUpdateCompletionQueue = new ArrayList<>();
     // not initialized
     myStarted = false;
     myStopped = false;
@@ -141,7 +141,7 @@ public class UpdateRequestsQueue {
 
   public void stop() {
     LOG.debug("Calling stop for project: " + myProject.getName());
-    final List<Runnable> waiters = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
+    final List<Runnable> waiters = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
     synchronized (myLock) {
       myStopped = true;
       waiters.addAll(myWaitingUpdateCompletionQueue);
@@ -239,7 +239,7 @@ public class UpdateRequestsQueue {
 
   private class MyRunnable implements Runnable {
     public void run() {
-      final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
+      final List<Runnable> copy = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
       try {
         synchronized (myLock) {
           if (!myRequestSubmitted) return;

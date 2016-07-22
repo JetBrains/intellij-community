@@ -58,7 +58,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     if (context != null) {
       final PsiClass psiClass = getPsiClass();
       if (psiClass != null) {
-        final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
+        final List<XmlElementDescriptor> children = new ArrayList<>();
         collectWritableProperties(children,
                                   (member) -> new JavaFxPropertyTagDescriptor(psiClass, PropertyUtil.getPropertyName(member), false));
 
@@ -119,7 +119,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
           final List<PsiMethod> setters = CachedValuesManager.getCachedValue(element, () -> {
-            final List<PsiMethod> meths = new ArrayList<PsiMethod>();
+            final List<PsiMethod> meths = new ArrayList<>();
             for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
               if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
                 final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -203,7 +203,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
       if (Comparing.equal(name, getName())) {
         final PsiClass psiClass = getPsiClass();
         if (psiClass != null) {
-          final List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
+          final List<XmlAttributeDescriptor> descriptors = new ArrayList<>();
           collectInstanceProperties(descriptors);
           collectStaticAttributesDescriptors(context, descriptors);
           for (String builtInAttributeName : FxmlConstants.FX_BUILT_IN_ATTRIBUTES) {

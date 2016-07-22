@@ -245,7 +245,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     private final List<PsiMethod> myAffectedMethods;
 
     private MethodSignatureChangeVisitor() {
-      myAffectedMethods = new ArrayList<PsiMethod>();
+      myAffectedMethods = new ArrayList<>();
     }
 
     public void addBase(final PsiMethod baseMethod) {

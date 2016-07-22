@@ -36,7 +36,7 @@ public class ActionGroupUtil {
   }
 
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    return isGroupEmpty(actionGroup, e, new HashMap<AnAction, Presentation>());
+    return isGroupEmpty(actionGroup, e, new HashMap<>());
   }
 
   private static boolean isGroupEmpty(@NotNull ActionGroup actionGroup,
@@ -62,7 +62,7 @@ public class ActionGroupUtil {
 
   @Nullable
   public static AnAction getSingleActiveAction(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e) {
-    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<AnAction, Presentation>());
+    List<AnAction> children = getEnabledChildren(actionGroup, e, new HashMap<>());
     if (children.size() == 1) {
       return children.get(0);
     }
@@ -72,7 +72,7 @@ public class ActionGroupUtil {
   private static List<AnAction> getEnabledChildren(@NotNull ActionGroup actionGroup,
                                                    @NotNull AnActionEvent e,
                                                    @NotNull Map<AnAction, Presentation> action2presentation) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof ActionGroup) {

@@ -144,7 +144,7 @@ public final class ExecutionHandler {
       LOG.error(e);
       return null;
     }
-    final FutureResult<ProcessHandler> future = new FutureResult<ProcessHandler>();
+    final FutureResult<ProcessHandler> future = new FutureResult<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {

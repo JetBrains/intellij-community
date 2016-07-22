@@ -111,7 +111,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   // custom progress
   private String myCurrentCustomProgressCategory;
-  private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
+  private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
   private Alarm myUpdateQueue;

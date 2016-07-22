@@ -250,7 +250,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     if (dataChanged) {
       final int selectedRow = myTable.getSelectedRow();
-      myTableModel.setItems(new ArrayList<T>(data));
+      myTableModel.setItems(new ArrayList<>(data));
       if (selectedRow >= 0 && selectedRow < myTableModel.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
       }

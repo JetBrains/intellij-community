@@ -38,7 +38,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
     VcsContext dataContext = VcsContextWrapper.createInstanceOn(e);
     if (myChildren == null) {
       DefaultActionGroup vcsGroupsGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("VcsGroup");
-      ArrayList<AnAction> validChildren = new ArrayList<AnAction>();
+      ArrayList<AnAction> validChildren = new ArrayList<>();
       AnAction[] children = vcsGroupsGroup.getChildren(new AnActionEvent(null, e.getDataContext(), e.getPlace(), myPresentationFactory.getPresentation(
         vcsGroupsGroup),
                                                                          ActionManager.getInstance(),
@@ -64,13 +64,13 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
       return;
     }
 
-    Collection<String> currentVcses = new HashSet<String>();
+    Collection<String> currentVcses = new HashSet<>();
 
     VirtualFile[] selectedFiles = dataContext.getSelectedFiles();
 
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    Map<String, AnAction> vcsToActionMap = new HashMap<String, AnAction>();
+    Map<String, AnAction> vcsToActionMap = new HashMap<>();
 
     for (AnAction aMyChildren : myChildren) {
       StandardVcsGroup child = (StandardVcsGroup)aMyChildren;

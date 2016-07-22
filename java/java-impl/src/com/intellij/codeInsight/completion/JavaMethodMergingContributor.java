@@ -40,7 +40,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
     final LookupElement[] items = context.getItems();
     if (items.length > 1) {
       String commonName = null;
-      final ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+      final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
         if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {

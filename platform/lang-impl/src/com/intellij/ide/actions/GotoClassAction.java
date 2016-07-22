@@ -186,7 +186,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
       final String[] classes = path.split("\\$");
-      List<Integer> indexes = new ArrayList<Integer>();
+      List<Integer> indexes = new ArrayList<>();
       for (String cls : classes) {
         if (cls.isEmpty()) continue;
         try {

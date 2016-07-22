@@ -128,7 +128,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                              addAll ? new ReplaceWithAddAllFix() : new ReplaceWithCollectFix());
                     }
                     else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
-                      final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+                      final List<LocalQuickFix> fixes = new ArrayList<>();
                       fixes.add(new ReplaceWithForeachFix());
                       if (extractIfStatement(body) != null) {
                         //for .stream() 
@@ -576,7 +576,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   private static String createFiltersChainText(PsiStatement body, PsiParameter parameter, PsiIfStatement ifStatement) {
-    final List<String> filters = new ArrayList<String>();
+    final List<String> filters = new ArrayList<>();
     while (ifStatement != null && PsiTreeUtil.isAncestor(body, ifStatement, false)) {
       final PsiExpression condition = ifStatement.getCondition();
       if (condition != null) {

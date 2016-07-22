@@ -116,7 +116,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   private final List<ItemsChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
+  private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<>();
 
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
@@ -218,7 +218,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private void updateSelectionFromTree() {
     TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      List<NamedConfigurable> selectedConfigurables = new ArrayList<NamedConfigurable>();
+      List<NamedConfigurable> selectedConfigurables = new ArrayList<>();
       for (TreePath path : treePaths) {
         Object lastPathComponent = path.getLastPathComponent();
         if (lastPathComponent instanceof MyNode) {
@@ -712,7 +712,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                                String title,
                                                Class<? extends NamedConfigurable> configurableClass,
                                                boolean recursively) throws ConfigurationException {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (int i = 0; i < rootNode.getChildCount(); i++) {
       final MyNode node = (MyNode)rootNode.getChildAt(i);
       final NamedConfigurable scopeConfigurable = node.getConfigurable();
@@ -744,7 +744,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void removePaths(final TreePath... paths) {
-    List<MyNode> nodes = new ArrayList<MyNode>();
+    List<MyNode> nodes = new ArrayList<>();
     for (TreePath path : paths) {
       nodes.add((MyNode)path.getLastPathComponent());
     }

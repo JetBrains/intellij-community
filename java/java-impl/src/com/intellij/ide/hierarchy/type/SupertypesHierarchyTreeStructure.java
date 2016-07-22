@@ -38,7 +38,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
     if (element instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)element;
       final PsiClass[] supers = psiClass.getSupers();
-      final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>();
+      final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>();
       final PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
       for (PsiClass aSuper : supers) {
         if (!psiClass.isInterface() || !aSuper.equals(objectClass)) {

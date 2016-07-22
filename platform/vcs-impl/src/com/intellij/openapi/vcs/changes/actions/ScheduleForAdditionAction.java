@@ -121,7 +121,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-    unversionedFiles = new ArrayList<VirtualFile>();
+    unversionedFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (isFileUnversioned(file, vcsManager, fileStatusManager)) {
         unversionedFiles.add(file);

@@ -79,10 +79,10 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private final List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<VirtualFilePointer>();
-  private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<LocalFileSystem.WatchRequest>();
+  private final List<VirtualFilePointer> mySettingsFilesPointers = new ArrayList<>();
+  private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<>();
 
-  private final Set<Document> myChangedDocuments = new THashSet<Document>();
+  private final Set<Document> myChangedDocuments = new THashSet<>();
   private final MavenMergingUpdateQueue myChangedDocumentsQueue;
 
   public MavenProjectsManagerWatcher(Project project,
@@ -205,7 +205,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private void addFilePointer(File... settingsFiles) {
-    Collection<String> pathsToWatch = new ArrayList<String>(settingsFiles.length);
+    Collection<String> pathsToWatch = new ArrayList<>(settingsFiles.length);
 
     for (File settingsFile : settingsFiles) {
       if (settingsFile == null) continue;
@@ -273,7 +273,7 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
     return promise;
@@ -283,7 +283,7 @@ public class MavenProjectsManagerWatcher {
                                       List<VirtualFile> filesToDelete,
                                       boolean force,
                                       final boolean forceImportAndResolve) {
-    final AsyncPromise<Void> promise = new AsyncPromise<Void>();
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
@@ -326,8 +326,8 @@ public class MavenProjectsManagerWatcher {
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
       List<VirtualFile> existingFiles = myProjectsTree.getProjectsFiles();
-      List<VirtualFile> newFiles = new ArrayList<VirtualFile>();
-      List<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
+      List<VirtualFile> newFiles = new ArrayList<>();
+      List<VirtualFile> deletedFiles = new ArrayList<>();
 
       for (VirtualFile f : myProjectsTree.getExistingManagedFiles()) {
         if (!existingFiles.contains(f)) {
@@ -484,8 +484,8 @@ public class MavenProjectsManagerWatcher {
       // but on project initialization to avoid this situation.
       if (areFileSetsInitialised()) return;
 
-      filesToUpdate = new ArrayList<VirtualFile>();
-      filesToRemove = new ArrayList<VirtualFile>();
+      filesToUpdate = new ArrayList<>();
+      filesToRemove = new ArrayList<>();
       settingsHaveChanged = false;
       forceImportAndResolve = false;
     }

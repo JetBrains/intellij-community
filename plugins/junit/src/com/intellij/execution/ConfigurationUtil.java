@@ -88,7 +88,7 @@ public class ConfigurationUtil {
                                                          final Set<PsiClass> found,
                                                          final Set<PsiClass> processed,
                                                          final String annotation) {
-    final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> isJUnit4 = new Ref<>(Boolean.FALSE);
     // annotated with @Test
     final PsiClass testAnnotation = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiClass>() {

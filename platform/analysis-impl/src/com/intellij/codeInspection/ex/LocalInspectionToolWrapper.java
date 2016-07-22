@@ -85,7 +85,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     @NotNull
     @Override
     protected Map<String, LocalInspectionEP> compute() {
-      HashMap<String, LocalInspectionEP> map = new HashMap<String, LocalInspectionEP>();
+      HashMap<String, LocalInspectionEP> map = new HashMap<>();
       for (LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
         map.put(ep.getShortName(), ep);
       }

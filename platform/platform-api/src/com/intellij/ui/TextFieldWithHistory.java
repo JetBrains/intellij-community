@@ -66,7 +66,7 @@ public class TextFieldWithHistory extends ComboBox {
 
   public List<String> getHistory() {
     final int itemsCount = myModel.getSize();
-    List<String> history = new ArrayList<String>(itemsCount);
+    List<String> history = new ArrayList<>(itemsCount);
     for (int i = 0; i < itemsCount; i++) {
       history.add((String)myModel.getElementAt(i));
     }
@@ -117,7 +117,7 @@ public class TextFieldWithHistory extends ComboBox {
   }
 
   public class MyModel extends AbstractListModel implements ComboBoxModel{
-    private List<String> myFullList = new ArrayList<String>();
+    private List<String> myFullList = new ArrayList<>();
 
     private Object mySelectedItem;
 
@@ -167,7 +167,7 @@ public class TextFieldWithHistory extends ComboBox {
     }
 
     public void setItems(List<String> aList) {
-      myFullList = new ArrayList<String>(aList);
+      myFullList = new ArrayList<>(aList);
       fireContentsChanged();
     }
   }

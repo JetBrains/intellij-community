@@ -83,8 +83,8 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   public void doPrepare(final List<Module> pluginModules, final Project project) {
-    final List<String> errorMessages = new ArrayList<String>();
-    final List<String> successMessages = new ArrayList<String>();
+    final List<String> errorMessages = new ArrayList<>();
+    final List<String> successMessages = new ArrayList<>();
 
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     compilerManager.make(compilerManager.createModulesCompileScope(pluginModules.toArray(new Module[pluginModules.size()]), true),
@@ -126,10 +126,10 @@ public class PrepareToDeployAction extends AnAction {
   public static boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
     final String pluginName = module.getName();
     final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + pluginName;
-    final HashSet<Module> modules = new HashSet<Module>();
+    final HashSet<Module> modules = new HashSet<>();
     PluginBuildUtil.getDependencies(module, modules);
     modules.add(module);
-    final Set<Library> libs = new HashSet<Library>();
+    final Set<Library> libs = new HashSet<>();
     for (Module dep : modules) {
       PluginBuildUtil.getLibraries(dep, libs);
     }
@@ -182,7 +182,7 @@ public class PrepareToDeployAction extends AnAction {
     DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(module.getProject()).getFileElement(pluginXml, IdeaPlugin.class);
     if (fileElement == null) return Collections.emptyMap();
 
-    Map<Module, String> jpsPluginToOutputPath = new HashMap<Module, String>();
+    Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
     IdeaPlugin plugin = fileElement.getRootElement();
     List<Extensions> extensions = plugin.getExtensions();
     for (Extensions extensionGroup : extensions) {
@@ -240,15 +240,15 @@ public class PrepareToDeployAction extends AnAction {
         addStructure(pluginName, zos);
         addStructure(pluginName + "/" + MIDDLE_LIB_DIR, zos);
         final String entryName = pluginName + JAR_EXTENSION;
-        ZipUtil.addFileToZip(zos, jarFile, getZipPath(pluginName, entryName), new HashSet<String>(),
+        ZipUtil.addFileToZip(zos, jarFile, getZipPath(pluginName, entryName), new HashSet<>(),
                              createFilter(progressIndicator, FileTypeManager.getInstance()));
         for (Map.Entry<Module, String> entry : jpsModules.entrySet()) {
           File jpsPluginJar = jarModulesOutput(Collections.singleton(entry.getKey()), null, null);
           ZipUtil.addFileToZip(zos, jpsPluginJar, getZipPath(pluginName, entry.getValue()), null, null);
         }
-        Set<String> usedJarNames = new HashSet<String>();
+        Set<String> usedJarNames = new HashSet<>();
         usedJarNames.add(entryName);
-        Set<VirtualFile> jarredVirtualFiles = new HashSet<VirtualFile>();
+        Set<VirtualFile> jarredVirtualFiles = new HashSet<>();
         for (Library library : libs) {
           final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
           for (VirtualFile virtualFile : files) {
@@ -355,7 +355,7 @@ public class PrepareToDeployAction extends AnAction {
       BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
       jarPlugin = manifest != null ? new JarOutputStream(out, manifest) : new JarOutputStream(out);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      final Set<String> writtenItemRelativePaths = new HashSet<String>();
+      final Set<String> writtenItemRelativePaths = new HashSet<>();
       for (Module module : modules) {
         final VirtualFile compilerOutputPath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
         if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date

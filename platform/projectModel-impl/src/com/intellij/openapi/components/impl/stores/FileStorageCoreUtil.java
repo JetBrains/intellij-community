@@ -44,7 +44,7 @@ public class FileStorageCoreUtil {
 
     StringInterner interner = intern ? new StringInterner() : null;
     List<Element> children = rootElement.getChildren(COMPONENT);
-    TreeMap<String, Element> map = new TreeMap<String, Element>();
+    TreeMap<String, Element> map = new TreeMap<>();
     for (Element element : children) {
       String name = getComponentNameIfValid(element);
       if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {

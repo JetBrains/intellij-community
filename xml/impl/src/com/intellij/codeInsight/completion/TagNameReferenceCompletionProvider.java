@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class TagNameReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
-    List<LookupElement> elements = new ArrayList<LookupElement>();
+    List<LookupElement> elements = new ArrayList<>();
     for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
       tagNameProvider.addTagNameVariants(elements, tag, prefix);
     }

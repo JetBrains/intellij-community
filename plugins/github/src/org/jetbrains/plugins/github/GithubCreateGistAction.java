@@ -113,7 +113,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final Ref<String> url = new Ref<String>();
+    final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -177,7 +177,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
     }
     if (files != null) {
-      List<FileContent> contents = new ArrayList<FileContent>();
+      List<FileContent> contents = new ArrayList<>();
       for (VirtualFile vf : files) {
         contents.addAll(getContentFromFile(vf, project, null));
       }
@@ -271,7 +271,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @NotNull
   private static List<FileContent> getContentFromDirectory(@NotNull VirtualFile dir, @NotNull Project project, @Nullable String prefix) {
-    List<FileContent> contents = new ArrayList<FileContent>();
+    List<FileContent> contents = new ArrayList<>();
     for (VirtualFile file : dir.getChildren()) {
       if (!isFileIgnored(file, project)) {
         String pref = addPrefix(dir.getName(), prefix, true);

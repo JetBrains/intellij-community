@@ -106,7 +106,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     @NotNull
     @Override
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      List<VirtualFile> result = new ArrayList<>();
       collectJavadocRoots(rootCandidate, result, progressIndicator);
       return result;
     }

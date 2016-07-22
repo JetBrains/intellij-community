@@ -33,8 +33,8 @@ import java.util.*;
  * @since Jan 20, 2003
  */
 public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
-  private final Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
-  private final Set<String> myDirectoryUrls = new HashSet<String>();
+  private final Set<VirtualFile> myRootFiles = new HashSet<>();
+  private final Set<String> myDirectoryUrls = new HashSet<>();
   private Set<String> myUrls = null; // urls caching
   private final Module[] myAffectedModules;
 
@@ -61,7 +61,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
 
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
       VirtualFile file = it.next();
       if (!file.isValid()) {
@@ -95,7 +95,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
 
   private Set<String> getUrls() {
     if (myUrls == null) {
-      myUrls = new HashSet<String>();
+      myUrls = new HashSet<>();
       for (VirtualFile file : myRootFiles) {
         String url = file.getUrl();
         myUrls.add(url);

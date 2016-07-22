@@ -97,7 +97,7 @@ public class NodeSpecificHasherBase extends NodeSpecificHasher {
 
   @Override
   public List<PsiElement> getNodeChildren(PsiElement node) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
 
     final FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(node.getFirstChild()), myNodeFilter);
     while (it.hasNext()) {

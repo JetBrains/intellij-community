@@ -49,7 +49,7 @@ public class GantUtils {
   }
 
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
-    ArrayList<GrArgumentLabel> labels = new ArrayList<GrArgumentLabel>();
+    ArrayList<GrArgumentLabel> labels = new ArrayList<>();
     for (PsiElement child : file.getChildren()) {
       if (child instanceof GrMethodCallExpression) {
         GrMethodCallExpression call = (GrMethodCallExpression)child;

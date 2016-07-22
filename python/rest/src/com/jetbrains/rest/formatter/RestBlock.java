@@ -62,10 +62,10 @@ public class RestBlock implements ASTBlock {
     if (mySubBlocks == null) {
       mySubBlocks = buildSubBlocks();
     }
-    return new ArrayList<Block>(mySubBlocks);
+    return new ArrayList<>(mySubBlocks);
   }
   private List<RestBlock> buildSubBlocks() {
-    List<RestBlock> blocks = new ArrayList<RestBlock>();
+    List<RestBlock> blocks = new ArrayList<>();
     for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
 
       IElementType childType = child.getElementType();

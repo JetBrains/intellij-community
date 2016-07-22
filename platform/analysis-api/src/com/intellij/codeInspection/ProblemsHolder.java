@@ -45,7 +45,7 @@ public class ProblemsHolder {
   private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
-  private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+  private final List<ProblemDescriptor> myProblems = new ArrayList<>();
 
   public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file, boolean onTheFly) {
     myManager = manager;

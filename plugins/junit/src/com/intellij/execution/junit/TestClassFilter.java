@@ -101,7 +101,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
     final PsiClass testCase = getTestCase(sourceScope, module);
     final String[] patterns = pattern.split("\\|\\|");
-    final List<Pattern> compilePatterns = new ArrayList<Pattern>();
+    final List<Pattern> compilePatterns = new ArrayList<>();
     for (String p : patterns) {
       final Pattern compilePattern = getCompilePattern(p);
       if (compilePattern != null) {

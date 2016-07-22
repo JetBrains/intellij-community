@@ -90,7 +90,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
-    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<String, IdeaPlugin>();
+    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<>();
     for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
       byId.putValue(each.getPluginId(), each);
     }
@@ -326,7 +326,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
 
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 

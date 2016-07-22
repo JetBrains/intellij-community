@@ -41,7 +41,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   public MavenImportingConfigurable(Project project) {
     myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
 
-    myAdditionalConfigurables = new ArrayList<UnnamedConfigurable>();
+    myAdditionalConfigurables = new ArrayList<>();
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }

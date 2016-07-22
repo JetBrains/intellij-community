@@ -195,7 +195,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         }
       }
       if (toAdd != null) {
-        UI.add(new WeakReference<MacScrollBarUI>(toAdd));
+        UI.add(new WeakReference<>(toAdd));
       }
     }
   }

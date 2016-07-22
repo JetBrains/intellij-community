@@ -33,7 +33,7 @@ public class CompositeGenerator extends Generator {
   /**
    * child generators
    */
-  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<Pair<Generator, Integer>>();
+  private final List<Pair<Generator, Integer>> myGenerators = new ArrayList<>();
   /**
    * New line property
    */

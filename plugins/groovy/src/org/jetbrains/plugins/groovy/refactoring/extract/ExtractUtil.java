@@ -179,7 +179,7 @@ public class ExtractUtil {
   private static List<GrStatement> generateVarDeclarations(List<VariableInfo> varInfos,
                                                            Project project,
                                                            @Nullable GrExpression initializer) {
-    List<GrStatement> result = new ArrayList<GrStatement>();
+    List<GrStatement> result = new ArrayList<>();
     if (varInfos.isEmpty()) return result;
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
@@ -202,7 +202,7 @@ public class ExtractUtil {
 
   private static boolean haveDifferentTypes(List<VariableInfo> varInfos) {
     if (varInfos.size() < 2) return true;
-    Set<String> diffTypes = new HashSet<String>();
+    Set<String> diffTypes = new HashSet<>();
     for (VariableInfo info : varInfos) {
       final PsiType t = info.getType();
       diffTypes.add(t == null ? null : TypesUtil.unboxPrimitiveTypeWrapper(t).getCanonicalText());
@@ -234,11 +234,11 @@ public class ExtractUtil {
   To declare or not a variable to which method call result will be assigned.
    */
   private static List<VariableInfo> mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull VariableInfo[] vars) {
-    Map<String, VariableInfo> names = new HashMap<String, VariableInfo>();
+    Map<String, VariableInfo> names = new HashMap<>();
     for (VariableInfo var : vars) {
       names.put(var.getName(), var);
     }
-    List<VariableInfo> result = new ArrayList<VariableInfo>();
+    List<VariableInfo> result = new ArrayList<>();
 
     for (GrStatement statement : statements) {
       if (statement instanceof GrVariableDeclaration) {
@@ -274,7 +274,7 @@ public class ExtractUtil {
   }
 
   private static Collection<GrVariable> collectUsedLocalVarsOrParamsDeclaredOutside(ExtractInfoHelper helper) {
-    final Collection<GrVariable> result = new HashSet<GrVariable>();
+    final Collection<GrVariable> result = new HashSet<>();
 
     final TextRange range = getRangeOfRefactoring(helper);
     final int start = range.getStartOffset();
@@ -347,7 +347,7 @@ public class ExtractUtil {
 
     ParameterInfo[] infos = helper.getParameterInfos();
 
-    Set<String> declaredVars = new HashSet<String>();
+    Set<String> declaredVars = new HashSet<>();
     for (ParameterInfo info : infos) {
       declaredVars.add(info.getName());
     }
@@ -356,7 +356,7 @@ public class ExtractUtil {
       declaredVars.add(info.getName());
     }
 
-    List<VariableInfo> genDecl = new ArrayList<VariableInfo>();
+    List<VariableInfo> genDecl = new ArrayList<>();
     final Collection<GrVariable> outside = collectUsedLocalVarsOrParamsDeclaredOutside(helper);
 
     for (final GrVariable variable : outside) {
@@ -422,7 +422,7 @@ public class ExtractUtil {
     for (ParameterInfo info : infos) {
       if (info.passAsParameter) number++;
     }
-    ArrayList<String> params = new ArrayList<String>();
+    ArrayList<String> params = new ArrayList<>();
     for (ParameterInfo info : infos) {
       if (info.passAsParameter) {
         PsiType paramType = info.type;

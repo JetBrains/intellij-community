@@ -155,7 +155,7 @@ public class PsiElement2UsageTargetAdapter
                                     ? ReferencesSearch.search(target, searchScope, false).findAll()
                                     : handler.findReferencesToHighlight(target, searchScope);
 
-    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target,
+    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<>(refs), project, target,
                                                    editor, context, clearHighlights).run();
   }
 

@@ -53,7 +53,7 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
     for (PsiElement element : elements) {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {
-        result.add(new LineMarkerInfo<PsiElement>(
+        result.add(new LineMarkerInfo<>(
           element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDDEN_MARKERS,
           e -> "Has user skeleton",
           new GutterIconNavigationHandler<PsiElement>() {

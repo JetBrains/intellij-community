@@ -298,7 +298,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   public Collection<MemberInfoType> getSelectedMemberInfos() {
-    ArrayList<MemberInfoType> result = new ArrayList<MemberInfoType>(myMemberInfos.size());
+    ArrayList<MemberInfoType> result = new ArrayList<>(myMemberInfos.size());
     for (MemberInfoType info : myMemberInfos) {
       if (info.isChecked()) {
         result.add(info);

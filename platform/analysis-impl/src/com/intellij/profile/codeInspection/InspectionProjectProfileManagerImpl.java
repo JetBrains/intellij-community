@@ -51,8 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
   storages = @Storage(value = "inspectionProfiles", stateSplitter = DefaultProjectProfileManager.ProfileStateSplitter.class)
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager {
-  private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
-  private final Map<String, InspectionProfileWrapper>  myAppName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
+  private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<>();
+  private final Map<String, InspectionProfileWrapper>  myAppName2Profile = new ConcurrentHashMap<>();
   private final SeverityRegistrar mySeverityRegistrar;
   private final NamedScopeManager myLocalScopesHolder;
   private NamedScopesHolder.ScopeListener myScopeListener;
@@ -123,7 +123,7 @@ public class InspectionProjectProfileManagerImpl extends InspectionProjectProfil
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
-        final Set<Profile> profiles = new HashSet<Profile>();
+        final Set<Profile> profiles = new HashSet<>();
         profiles.add(getProjectProfileImpl());
         profiles.addAll(getProfiles());
         profiles.addAll(InspectionProfileManager.getInstance().getProfiles());

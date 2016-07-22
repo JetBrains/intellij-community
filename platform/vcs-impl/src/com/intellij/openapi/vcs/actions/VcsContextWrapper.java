@@ -104,7 +104,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   private static VirtualFile[] filterLocalFiles(VirtualFile[] fileArray) {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     for (VirtualFile virtualFile : fileArray) {
       if (isLocal(virtualFile)) {
         result.add(virtualFile);
@@ -155,7 +155,7 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull
   @Override
   public FilePath[] getSelectedFilePaths() {
-    Set<FilePath> result = new THashSet<FilePath>();
+    Set<FilePath> result = new THashSet<>();
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
     if (path != null) {
       result.add(path);

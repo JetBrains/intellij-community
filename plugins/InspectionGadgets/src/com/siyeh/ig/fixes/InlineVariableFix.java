@@ -50,7 +50,7 @@ public class InlineVariableFix extends InspectionGadgetsFix {
       return;
     }
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
-    final Collection<PsiElement> replacedElements = new ArrayList<PsiElement>();
+    final Collection<PsiElement> replacedElements = new ArrayList<>();
     for (PsiReference reference : references) {
       final PsiExpression expression = InlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
       replacedElements.add(expression);

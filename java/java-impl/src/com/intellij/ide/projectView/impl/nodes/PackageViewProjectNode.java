@@ -42,7 +42,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (getSettings().isShowModules()) {
-      final List<Module> allModules = new ArrayList<Module>(Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
+      final List<Module> allModules = new ArrayList<>(Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
       for (Iterator<Module> it = allModules.iterator(); it.hasNext();) {
         final Module module = it.next();
         final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
@@ -56,8 +56,8 @@ public class PackageViewProjectNode extends AbstractProjectNode {
     else {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-      final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
+      final List<AbstractTreeNode> children = new ArrayList<>();
+      final Set<PsiPackage> topLevelPackages = new HashSet<>();
 
       for (final VirtualFile root : projectRootManager.getContentSourceRoots()) {
         final PsiDirectory directory = psiManager.findDirectory(root);

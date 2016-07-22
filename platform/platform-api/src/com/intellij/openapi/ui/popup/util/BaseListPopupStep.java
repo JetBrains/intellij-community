@@ -38,7 +38,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   }
 
   public BaseListPopupStep(@Nullable String title, List<? extends T> values) {
-    this(title, values, new ArrayList<Icon>());
+    this(title, values, new ArrayList<>());
   }
 
   public BaseListPopupStep(@Nullable String title, T[] values, Icon[] icons) {
@@ -46,7 +46,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   }
 
   public BaseListPopupStep(@Nullable String aTitle, @NotNull List<? extends T> aValues, Icon aSameIcon) {
-    List<Icon> icons = new ArrayList<Icon>();
+    List<Icon> icons = new ArrayList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < aValues.size(); i++) {
       icons.add(aSameIcon);
@@ -62,7 +62,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   protected final void init(@Nullable String title, @NotNull List<? extends T> values, @Nullable List<Icon> icons) {
     myTitle = title;
-    myValues = new ArrayList<T>(values);
+    myValues = new ArrayList<>(values);
     myIcons = icons;
   }
 

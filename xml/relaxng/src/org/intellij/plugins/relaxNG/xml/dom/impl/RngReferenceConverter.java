@@ -79,7 +79,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                         return EMPTY_ARRAY;
                       }
                       
-                      final Ref<Object[]> ref = new Ref<Object[]>(ArrayUtil.EMPTY_STRING_ARRAY);
+                      final Ref<Object[]> ref = new Ref<>(ArrayUtil.EMPTY_STRING_ARRAY);
                       fileElement.acceptChildren(new RngDomVisitor(){
                         @Override
                         public void visit(RngGrammar grammar) {

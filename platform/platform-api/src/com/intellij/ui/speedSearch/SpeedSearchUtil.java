@@ -133,7 +133,7 @@ public final class SpeedSearchUtil {
                                             final String text,
                                             Iterable<TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
-    final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
+    final List<Pair<String, Integer>> searchTerms = new ArrayList<>();
     for (TextRange fragment : colored) {
       searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
     }

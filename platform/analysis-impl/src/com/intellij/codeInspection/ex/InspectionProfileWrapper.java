@@ -62,7 +62,7 @@ public class InspectionProfileWrapper {
   public static void checkInspectionsDuplicates(@NotNull InspectionToolWrapper[] toolWrappers) {
     if (alreadyChecked) return;
     alreadyChecked = true;
-    Set<InspectionProfileEntry> uniqTools = new THashSet<InspectionProfileEntry>(toolWrappers.length);
+    Set<InspectionProfileEntry> uniqTools = new THashSet<>(toolWrappers.length);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
       if (!uniqTools.add(toolWrapper.getTool())) {

@@ -39,7 +39,7 @@ public class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
   private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap
-    = new THashMap<FoldRegion, SmartPsiElementPointer<?>>();
+    = new THashMap<>();
 
   @NotNull
   public static EditorFoldingInfo get(@NotNull Editor editor) {

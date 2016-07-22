@@ -40,7 +40,7 @@ public class ScopeHighlighter {
   public static final NotNullFunction<PsiElement,TextRange> NATURAL_RANGER = dom -> dom.getTextRange();
 
   @NotNull private final Editor myEditor;
-  @NotNull private final List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
+  @NotNull private final List<RangeHighlighter> myActiveHighliters = new ArrayList<>();
   @NotNull private final NotNullFunction<PsiElement, TextRange> myRanger;
 
   public ScopeHighlighter(@NotNull Editor editor) {
@@ -76,7 +76,7 @@ public class ScopeHighlighter {
 
   private Pair<TextRange, List<TextRange>> collectTextRanges(PsiElement wholeElement, List<PsiElement> elementsToExtract) {
     TextRange affectedRange = getRange(wholeElement);
-    List<TextRange> rangesToExtract = new ArrayList<TextRange>();
+    List<TextRange> rangesToExtract = new ArrayList<>();
 
     for (PsiElement e : elementsToExtract) {
       rangesToExtract.add(getRange(e));

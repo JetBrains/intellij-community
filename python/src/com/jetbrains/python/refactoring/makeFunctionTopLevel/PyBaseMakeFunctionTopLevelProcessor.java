@@ -210,11 +210,11 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   protected static class AnalysisResult {
-    final List<PsiElement> readsFromEnclosingScope = new ArrayList<PsiElement>();
-    final List<PyTargetExpression> nonlocalWritesToEnclosingScope = new ArrayList<PyTargetExpression>();
-    final List<PsiElement> readsOfSelfParametersFromEnclosingScope = new ArrayList<PsiElement>();
-    final List<PsiElement> readsOfSelfParameter = new ArrayList<PsiElement>();
+    final List<PsiElement> readsFromEnclosingScope = new ArrayList<>();
+    final List<PyTargetExpression> nonlocalWritesToEnclosingScope = new ArrayList<>();
+    final List<PsiElement> readsOfSelfParametersFromEnclosingScope = new ArrayList<>();
+    final List<PsiElement> readsOfSelfParameter = new ArrayList<>();
     // No one writes to "self", but handle this case too just to be sure
-    final List<PyTargetExpression> writesToSelfParameter = new ArrayList<PyTargetExpression>();
+    final List<PyTargetExpression> writesToSelfParameter = new ArrayList<>();
   }
 }

@@ -66,7 +66,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
-  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
+  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private final boolean myDoLogCachesUpdate;
 
   public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
@@ -220,8 +220,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private Pair<Set<String>, Set<String>> getAllRoots(boolean includeSourceRoots) {
     if (myProject.isDefault()) return null;
 
-    final Set<String> recursive = new HashSet<String>();
-    final Set<String> flat = new HashSet<String>();
+    final Set<String> recursive = new HashSet<>();
+    final Set<String> flat = new HashSet<>();
 
     final String projectFilePath = myProject.getProjectFilePath();
     final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();

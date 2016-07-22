@@ -52,13 +52,14 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
   VcsUserRegistryImpl(@NotNull Project project) {
     final File mapFile = new File(USER_CACHE_APP_DIR, project.getLocationHash() + "." + STORAGE_VERSION);
     myPersistentEnumerator = initEnumerator(mapFile);
-    myInterner = new Interner<VcsUser>();
+    myInterner = new Interner<>();
   }
 
   @Nullable
   private PersistentEnumeratorBase<VcsUser> initEnumerator(@NotNull final File mapFile) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<VcsUser>(mapFile, new MyDescriptor(), Page.PAGE_SIZE, null, STORAGE_VERSION), mapFile);
+      return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(mapFile, new MyDescriptor(), Page.PAGE_SIZE, null,
+                                                                                 STORAGE_VERSION), mapFile);
     }
     catch (IOException e) {
       LOG.warn(e);

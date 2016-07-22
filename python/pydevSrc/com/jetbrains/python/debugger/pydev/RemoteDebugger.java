@@ -55,8 +55,8 @@ public class RemoteDebugger implements ProcessDebugger {
   private volatile boolean myConnected = false;
   private int mySequence = -1;
   private final Object mySequenceObject = new Object(); // for synchronization on mySequence
-  private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
-  private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
+  private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<>();
+  private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
   private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
@@ -283,7 +283,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public Collection<PyThreadInfo> getThreads() {
-    return Collections.unmodifiableCollection(new ArrayList<PyThreadInfo>(myThreads.values()));
+    return Collections.unmodifiableCollection(new ArrayList<>(myThreads.values()));
   }
 
   int getNextSequence() {
@@ -704,7 +704,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
 
   private static class TempVarsHolder {
-    private final Map<String, Map<String, Set<String>>> myData = new HashMap<String, Map<String, Set<String>>>();
+    private final Map<String, Map<String, Set<String>>> myData = new HashMap<>();
 
     public boolean contains(final String threadId, final String frameId, final String name) {
       final Map<String, Set<String>> threadVars = myData.get(threadId);
@@ -718,10 +718,10 @@ public class RemoteDebugger implements ProcessDebugger {
 
     private void put(final String threadId, final String frameId, final String name) {
       Map<String, Set<String>> threadVars = myData.get(threadId);
-      if (threadVars == null) myData.put(threadId, (threadVars = new HashMap<String, Set<String>>()));
+      if (threadVars == null) myData.put(threadId, (threadVars = new HashMap<>()));
 
       Set<String> frameVars = threadVars.get(frameId);
-      if (frameVars == null) threadVars.put(frameId, (frameVars = new HashSet<String>()));
+      if (frameVars == null) threadVars.put(frameId, (frameVars = new HashSet<>()));
 
       frameVars.add(name);
     }

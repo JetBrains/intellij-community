@@ -116,7 +116,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(myField)) return;
     PsiClass aClass = myField.getContainingClass();
-    final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> methods = new ArrayList<>();
     if (myCreateGetter) {
       Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, true));
     }

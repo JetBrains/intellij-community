@@ -70,10 +70,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = ContainerUtil.newConcurrentMap(TObjectHashingStrategy.IDENTITY);
   private final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
-  private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(new THashSet<RefModule>(TObjectHashingStrategy.IDENTITY));
-  private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(new THashMap<CommonProblemDescriptor, RefEntity>(TObjectHashingStrategy.IDENTITY));
+  private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(new THashSet<>(TObjectHashingStrategy.IDENTITY));
+  private final Map<CommonProblemDescriptor, RefEntity> myProblemToElements = Collections.synchronizedMap(
+    new THashMap<>(TObjectHashingStrategy.IDENTITY));
   private DescriptorComposer myComposer;
-  private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(new THashMap<RefEntity, Set<QuickFix>>(TObjectHashingStrategy.IDENTITY));
+  private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(
+    new THashMap<>(TObjectHashingStrategy.IDENTITY));
   private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>(TObjectHashingStrategy.IDENTITY) {
 
 
@@ -224,13 +226,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
                      view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
                                   uiOptions.GROUP_BY_SEVERITY, view.isSingleInspectionRun()) : myToolNode;
 
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
           problems.put(refElement, descriptors);
-          final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+          final Map<String, Set<RefEntity>> contents = new HashMap<>();
           final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
           Set<RefEntity> content = contents.get(groupName);
           if (content == null) {
-            content = new HashSet<RefEntity>();
+            content = new HashSet<>();
             contents.put(groupName, content);
           }
           content.add(refElement);
@@ -335,7 +337,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (fixes != null && fixes.length != 0) {
       Set<QuickFix> localQuickFixes = getQuickFixActions().get(refEntity);
       if (localQuickFixes == null) {
-        localQuickFixes = new HashSet<QuickFix>();
+        localQuickFixes = new HashSet<>();
         getQuickFixActions().put(refEntity, localQuickFixes);
       }
       ContainerUtil.addAll(localQuickFixes, fixes);
@@ -384,7 +386,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       synchronized (lock) {
         CommonProblemDescriptor[] descriptors = problemElements.get(refEntity);
         if (descriptors != null) {
-          ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<CommonProblemDescriptor>(Arrays.asList(descriptors));
+          ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<>(Arrays.asList(descriptors));
           newDescriptors.remove(problem);
           CommonProblemDescriptor[] newDescriptorsAsArray = newDescriptors.toArray(new CommonProblemDescriptor[newDescriptors.size()]);
           getQuickFixActions().put(refEntity, null);
@@ -586,7 +588,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
         Set<RefEntity> content = myContents.get(groupName);
         if (content == null) {
-          content = new HashSet<RefEntity>();
+          content = new HashSet<>();
           myContents.put(groupName, content);
         }
         content.add(element);

@@ -69,7 +69,7 @@ public class InvokeQuickFixAction extends AnAction {
       @Override
       @NotNull
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        List<QuickFixAction> children = new ArrayList<QuickFixAction>();
+        List<QuickFixAction> children = new ArrayList<>();
         for (QuickFixAction fix : quickFixes) {
           if (fix != null) {
             children.add(fix);

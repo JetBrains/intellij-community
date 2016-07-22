@@ -38,13 +38,13 @@ public class DirectoryEntry extends Entry {
 
   public DirectoryEntry(int nameId) {
     super(nameId);
-    myChildren = new ArrayList<Entry>(3);
+    myChildren = new ArrayList<>(3);
   }
 
   public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general constructor*/) throws IOException {
     super(in);
     int count = DataInputOutputUtil.readINT(in);
-    myChildren = new ArrayList<Entry>(count);
+    myChildren = new ArrayList<>(count);
     while (count-- > 0) {
       unsafeAddChild(StreamUtil.readEntry(in));
     }

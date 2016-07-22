@@ -44,14 +44,14 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull final FileContent inputData) {
-        final Set<String> namespaces = new THashSet<String>();
+        final Set<String> namespaces = new THashSet<>();
         final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);
         ContainerUtil.addIfNotNull(header.getSystemId(), namespaces);
         ContainerUtil.addIfNotNull(header.getRootTagNamespace(), namespaces);
         final String tagName = header.getRootTagLocalName();
         if (StringUtil.isNotEmpty(tagName)) {
-          final THashMap<String, Void> result = new THashMap<String, Void>();
+          final THashMap<String, Void> result = new THashMap<>();
           final DomApplicationComponent component = DomApplicationComponent.getInstance();
           for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();

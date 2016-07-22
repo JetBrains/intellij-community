@@ -155,10 +155,10 @@ public class PatchReader {
 
   public TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(final Set<String> filterByPaths) {
     final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>
-      value = new TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException>();
+      value = new TransparentlyFailedValue<>();
 
     final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
-    final Map<String, Map<String, CharSequence>>newMap = new HashMap<String, Map<String, CharSequence>>();
+    final Map<String, Map<String, CharSequence>>newMap = new HashMap<>();
 
     for (Map.Entry<String, Map<String, CharSequence>> entry : map.entrySet()) {
       final Map<String, CharSequence> innerMap = entry.getValue();
@@ -183,8 +183,8 @@ public class PatchReader {
 
     private AdditionalInfoParser(boolean ignore) {
       myIgnoreMode = ignore;
-      myAddMap = new HashMap<String, CharSequence>();
-      myResultMap = new HashMap<String, Map<String, CharSequence>>();
+      myAddMap = new HashMap<>();
+      myResultMap = new HashMap<>();
     }
 
     public PatchSyntaxException getSyntaxException() {
@@ -198,7 +198,7 @@ public class PatchReader {
     public void copyToResult(final String filePath) {
       if (myAddMap != null && ! myAddMap.isEmpty()) {
         myResultMap.put(filePath, myAddMap);
-        myAddMap = new HashMap<String, CharSequence>();
+        myAddMap = new HashMap<>();
       }
     }
 
@@ -267,7 +267,7 @@ public class PatchReader {
 
     private PatchContentParser(boolean saveHunks) {
       mySaveHunks = saveHunks;
-      myPatches = new SmartList<TextFilePatch>();
+      myPatches = new SmartList<>();
     }
 
     @Override
@@ -548,7 +548,7 @@ public class PatchReader {
     }
 
     private List<String> readContextDiffLines(ListIterator<String> iterator) {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       while (iterator.hasNext()) {
         final String line = iterator.next();
         if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ") &&

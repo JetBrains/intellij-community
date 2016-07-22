@@ -67,7 +67,7 @@ public class CommitToIcsDialog extends DialogWrapper {
     assert macroSubstitutor != null;
     IcsManager icsManager = IcsManagerKt.getIcsManager();
 
-    SmartList<String> addToIcs = new SmartList<String>();
+    SmartList<String> addToIcs = new SmartList<>();
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
       assert file != null;

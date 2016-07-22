@@ -45,7 +45,7 @@ public abstract class PyConcurrencyEvent {
     myType = EventType.CREATE;
     myFileName = "";
     myLine = 0;
-    myFrames = new ArrayList<PyStackFrameInfo>();
+    myFrames = new ArrayList<>();
   }
 
   public void setType(@NotNull EventType type) {

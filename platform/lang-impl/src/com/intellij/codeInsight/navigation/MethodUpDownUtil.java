@@ -43,7 +43,7 @@ public class MethodUpDownUtil {
       }
     }
 
-    Collection<PsiElement> array = new THashSet<PsiElement>();
+    Collection<PsiElement> array = new THashSet<>();
     addNavigationElements(array, file);
     return offsetsFromElements(array);
   }

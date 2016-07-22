@@ -50,7 +50,7 @@ public class StatisticsInfo {
       return EMPTY;
     }
 
-    ArrayList<StatisticsInfo> flattened = new ArrayList<StatisticsInfo>(conjuncts.size());
+    ArrayList<StatisticsInfo> flattened = new ArrayList<>(conjuncts.size());
     for (StatisticsInfo conjunct : conjuncts) {
       flattened.addAll(conjunct.getConjuncts());
     }

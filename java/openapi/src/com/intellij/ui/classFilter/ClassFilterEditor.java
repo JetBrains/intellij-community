@@ -173,7 +173,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   }
 
   protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable {
-    private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<com.intellij.ui.classFilter.ClassFilter>();
+    private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
 

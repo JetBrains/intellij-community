@@ -83,7 +83,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private static class TreeNode {
     private WatchRequestImpl watchRequest;
-    private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
+    private final Map<String, TreeNode> nodes = new THashMap<>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {

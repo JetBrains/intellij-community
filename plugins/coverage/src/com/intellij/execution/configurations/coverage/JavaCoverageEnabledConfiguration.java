@@ -114,7 +114,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   @Nullable
   public String [] getPatterns() {
     if (myCoveragePatterns != null) {
-      List<String> patterns = new ArrayList<String>();
+      List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
         if (coveragePattern.isEnabled()) patterns.add(coveragePattern.getPattern());
       }

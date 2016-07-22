@@ -307,7 +307,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     for (XmlAttributeDescriptor attribute : attributeDescriptors) {
       if (attribute != null && attribute.isRequired()) {
         if (requiredAttributes == null) {
-          requiredAttributes = new HashSet<String>();
+          requiredAttributes = new HashSet<>();
         }
         requiredAttributes.add(attribute.getName(tag));
       }

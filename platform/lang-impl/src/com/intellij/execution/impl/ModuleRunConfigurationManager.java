@@ -138,13 +138,13 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   public void readExternal(@NotNull final Element element) throws InvalidDataException {
     LOG.debug("readExternal(" + myModule + ")");
     myUnloadedElements = null;
-    final Set<String> existing = new HashSet<String>();
+    final Set<String> existing = new HashSet<>();
 
     final List children = element.getChildren();
     for (final Object child : children) {
       final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration((Element)child, true);
       if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
-        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
+        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<>(2);
         myUnloadedElements.add(element);
       }
 

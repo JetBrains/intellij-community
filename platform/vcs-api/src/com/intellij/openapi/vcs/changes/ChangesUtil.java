@@ -102,8 +102,8 @@ public class ChangesUtil {
    */
   @Deprecated
   public static class CaseSensitiveFilePathList {
-    @NotNull private final List<FilePath> myResult = new ArrayList<FilePath>();
-    @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<String>();
+    @NotNull private final List<FilePath> myResult = new ArrayList<>();
+    @NotNull private final Set<String> myDuplicatesControlSet = new HashSet<>();
 
     public void add(@NotNull FilePath file) {
       final String path = file.getPath();
@@ -153,7 +153,7 @@ public class ChangesUtil {
 
   public static List<File> getIoFilesFromChanges(final Collection<Change> changes) {
     // further should contain paths
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     for (Change change : changes) {
       if (change.getAfterRevision() != null) {
         final File ioFile = change.getAfterRevision().getFile().getIOFile();
@@ -199,7 +199,7 @@ public class ChangesUtil {
   }
 
   public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
-    List<Navigatable> result = new ArrayList<Navigatable>();
+    List<Navigatable> result = new ArrayList<>();
     for (VirtualFile selectedFile : selectedFiles) {
       if (!selectedFile.isDirectory()) {
         result.add(new OpenFileDescriptor(project, selectedFile));
@@ -213,7 +213,7 @@ public class ChangesUtil {
     if (clManager.getChangeListNameIfOnlyOne(changes) != null) return true;
     final List<LocalChangeList> list = clManager.getChangeListsCopy();
 
-    final HashSet<Change> checkSet = new HashSet<Change>();
+    final HashSet<Change> checkSet = new HashSet<>();
     ContainerUtil.addAll(checkSet, changes);
     for (LocalChangeList localChangeList : list) {
       final Collection<Change> listChanges = localChangeList.getChanges();
@@ -377,7 +377,7 @@ public class ChangesUtil {
   }
 
   public static <T> void processItemsByVcs(final Collection<T> items, final VcsSeparator<T> separator, PerVcsProcessor<T> processor) {
-    final Map<AbstractVcs, List<T>> changesByVcs = new HashMap<AbstractVcs, List<T>>();
+    final Map<AbstractVcs, List<T>> changesByVcs = new HashMap<>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
@@ -387,7 +387,7 @@ public class ChangesUtil {
           if (vcs != null) {
             List<T> vcsChanges = changesByVcs.get(vcs);
             if (vcsChanges == null) {
-              vcsChanges = new ArrayList<T>();
+              vcsChanges = new ArrayList<>();
               changesByVcs.put(vcs, vcsChanges);
             }
             vcsChanges.add(item);
@@ -429,7 +429,7 @@ public class ChangesUtil {
   }
 
   public static List<File> filePathsToFiles(Collection<FilePath> filePaths) {
-    List<File> ioFiles = new ArrayList<File>();
+    List<File> ioFiles = new ArrayList<>();
     for(FilePath filePath: filePaths) {
       ioFiles.add(filePath.getIOFile());
     }

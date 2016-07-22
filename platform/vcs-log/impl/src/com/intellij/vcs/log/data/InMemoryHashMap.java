@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InMemoryHashMap implements VcsLogHashMap {
-  private final BiDirectionalEnumerator<CommitId> myEnumerator = new BiDirectionalEnumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
+  private final BiDirectionalEnumerator<CommitId> myEnumerator = new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {

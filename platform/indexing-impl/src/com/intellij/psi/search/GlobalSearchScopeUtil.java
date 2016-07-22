@@ -47,7 +47,7 @@ public class GlobalSearchScopeUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
       @Override
       public Set<VirtualFile> compute() {
-        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
+        Set<VirtualFile> files = new LinkedHashSet<>();
         for (PsiElement element : scope.getScope()) {
           PsiFile file = element.getContainingFile();
           if (file != null) {

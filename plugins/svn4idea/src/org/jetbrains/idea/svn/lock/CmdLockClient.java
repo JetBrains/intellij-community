@@ -44,7 +44,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
   }
 
   private static List<String> prepareParameters(@NotNull File file, boolean force) {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, file);
     CommandUtil.put(parameters, force, "--force");

@@ -235,7 +235,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     myWizardContext = wizardContext;
     return new ModuleWizardStep[]{
       new GradleModuleWizardStep(this, wizardContext),
-      new ExternalModuleSettingsStep<GradleProjectSettings>(
+      new ExternalModuleSettingsStep<>(
         wizardContext, this, new GradleProjectSettingsControl(getExternalProjectSettings()))
     };
   }

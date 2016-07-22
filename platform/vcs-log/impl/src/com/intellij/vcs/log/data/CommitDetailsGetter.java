@@ -20,7 +20,7 @@ public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails
   CommitDetailsGetter(@NotNull VcsLogHashMap hashMap,
                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                       @NotNull Disposable parentDisposable) {
-    super(hashMap, logProviders, new VcsCommitCache<Integer, VcsFullCommitDetails>(), parentDisposable);
+    super(hashMap, logProviders, new VcsCommitCache<>(), parentDisposable);
   }
 
   @Nullable

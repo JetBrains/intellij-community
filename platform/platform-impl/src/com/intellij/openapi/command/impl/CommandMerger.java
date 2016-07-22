@@ -37,9 +37,9 @@ public class CommandMerger {
   private boolean myTransparent;
   private String myCommandName;
   private boolean myValid = true;
-  private List<UndoableAction> myCurrentActions = new ArrayList<UndoableAction>();
-  private Set<DocumentReference> myAllAffectedDocuments = new THashSet<DocumentReference>();
-  private Set<DocumentReference> myAdditionalAffectedDocuments = new THashSet<DocumentReference>();
+  private List<UndoableAction> myCurrentActions = new ArrayList<>();
+  private Set<DocumentReference> myAllAffectedDocuments = new THashSet<>();
+  private Set<DocumentReference> myAdditionalAffectedDocuments = new THashSet<>();
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -155,9 +155,9 @@ public class CommandMerger {
   }
 
   private void reset() {
-    myCurrentActions = new ArrayList<UndoableAction>();
-    myAllAffectedDocuments = new THashSet<DocumentReference>();
-    myAdditionalAffectedDocuments = new THashSet<DocumentReference>();
+    myCurrentActions = new ArrayList<>();
+    myAllAffectedDocuments = new THashSet<>();
+    myAdditionalAffectedDocuments = new THashSet<>();
     myLastGroupId = null;
     myForcedGlobal = false;
     myTransparent = false;
@@ -185,7 +185,7 @@ public class CommandMerger {
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    Set<VirtualFile> affectedFiles = new HashSet<VirtualFile>();
+    Set<VirtualFile> affectedFiles = new HashSet<>();
     for (DocumentReference each : myAllAffectedDocuments) {
       VirtualFile file = each.getFile();
       if (isVirtualDocumentChange(file)) continue;

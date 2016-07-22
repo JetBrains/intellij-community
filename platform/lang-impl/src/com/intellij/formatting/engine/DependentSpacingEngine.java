@@ -52,7 +52,7 @@ public class DependentSpacingEngine {
   private final BlockRangesMap myBlockRangesMap;
   
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
-    new TreeMap<TextRange, DependantSpacingImpl>((o1, o2) -> {
+    new TreeMap<>((o1, o2) -> {
       int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 
       if (offsetsDelta == 0) {

@@ -33,7 +33,7 @@ import java.util.List;
  */
 public interface ClasspathStorageProvider {
   @NonNls ExtensionPointName<ClasspathStorageProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<ClasspathStorageProvider>("com.intellij.classpathStorageProvider");
+    new ExtensionPointName<>("com.intellij.classpathStorageProvider");
 
   @NonNls
   String getID();

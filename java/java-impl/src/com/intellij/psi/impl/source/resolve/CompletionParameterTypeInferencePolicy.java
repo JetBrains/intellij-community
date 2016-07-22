@@ -41,7 +41,7 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   @Override
   public Pair<PsiType, ConstraintType> getInferredTypeWithNoConstraint(PsiManager psiManager, PsiType superType) {
     if (!(superType instanceof PsiWildcardType)) {
-      return new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(psiManager, superType), ConstraintType.EQUALS);
+      return new Pair<>(PsiWildcardType.createExtends(psiManager, superType), ConstraintType.EQUALS);
     }
     else {
       return Pair.create(superType, ConstraintType.SUBTYPE);

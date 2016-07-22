@@ -84,8 +84,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myProject = project;
     myProvider = provider;
     myLocation = location;
-    myShouldBeCalledOnDispose = new ArrayList<Runnable>();
-    myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
+    myShouldBeCalledOnDispose = new ArrayList<>();
+    myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<>());
     Disposer.register(this, myBrowser);
     add(myBrowser, BorderLayout.CENTER);
 
@@ -176,7 +176,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
               }.callMe();
             }
           };
-          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(30, appender,-1);
+          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
             public void finished() {
@@ -403,7 +403,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       } else {
         filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
       }
-      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> result = new ArrayList<>();
       for (CommittedChangeList list : changeLists) {
         if (filterHelper.filter(list)) {
           result.add(list);
@@ -420,7 +420,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
                                         final Project project, final VirtualFile root) {
-    final LinkedList<CommittedChangeList> resultList = new LinkedList<CommittedChangeList>();
+    final LinkedList<CommittedChangeList> resultList = new LinkedList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
       public void onBeforeStartReport() {
       }

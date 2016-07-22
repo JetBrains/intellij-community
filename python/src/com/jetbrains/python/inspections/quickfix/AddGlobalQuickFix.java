@@ -49,7 +49,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
       final String name = expression.getReferencedName();
       final ScopeOwner owner = PsiTreeUtil.getParentOfType(problemElt, ScopeOwner.class);
       assert owner instanceof PyClass || owner instanceof PyFunction : "Add global quickfix is available only inside class or function, but applied for " + owner;
-      final Ref<Boolean> added = new Ref<Boolean>(false);
+      final Ref<Boolean> added = new Ref<>(false);
       owner.accept(new PyRecursiveElementVisitor(){
         @Override
         public void visitElement(PsiElement element) {

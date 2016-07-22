@@ -149,7 +149,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull final InspectionManager iManager,
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    inspect(new ArrayList<LocalInspectionToolWrapper>(toolWrappers), iManager, false, false, progress);
+    inspect(new ArrayList<>(toolWrappers), iManager, false, false, progress);
     addDescriptorsFromInjectedResults(iManager, context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
@@ -215,9 +215,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
     if (toolWrappers.isEmpty()) return;
 
-    List<PsiElement> inside = new ArrayList<PsiElement>();
-    List<PsiElement> outside = new ArrayList<PsiElement>();
-    Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, inside, new ArrayList<ProperTextRange>(), outside, new ArrayList<ProperTextRange>(),
+    List<PsiElement> inside = new ArrayList<>();
+    List<PsiElement> outside = new ArrayList<>();
+    Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, inside,
+                                   new ArrayList<>(), outside,
+                                   new ArrayList<>(),
                                    true, FILE_FILTER);
 
     Set<String> elementDialectIds = InspectionEngine.calcElementDialectIds(inside, outside);
@@ -232,7 +234,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     progress.checkCanceled();
 
-    myInfos = new ArrayList<HighlightInfo>();
+    myInfos = new ArrayList<>();
     addHighlightsFromResults(myInfos, progress);
   }
 
@@ -245,8 +247,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                @NotNull final LocalInspectionToolSession session,
                                                                @NotNull List<LocalInspectionToolWrapper> wrappers,
                                                                @NotNull final Set<String> elementDialectIds) {
-    final List<InspectionContext> init = new ArrayList<InspectionContext>();
-    List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Set<String>>>(toolToSpecifiedLanguageIds.entrySet());
+    final List<InspectionContext> init = new ArrayList<>();
+    List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedLanguageIds.entrySet());
 
     Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor =
       pair -> {
@@ -331,7 +333,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                           @NotNull final InspectionManager iManager,
                           final boolean inVisibleRange,
                           @NotNull final List<LocalInspectionToolWrapper> wrappers) {
-    final Set<PsiFile> injected = new THashSet<PsiFile>();
+    final Set<PsiFile> injected = new THashSet<>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, getFile(), false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
@@ -345,7 +347,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange, wrappers);
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), indicator, myFailFastOnAcquireReadAction, processor)) {
       throw new ProcessCanceledException();
     }
   }
@@ -375,40 +377,48 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return b.create();
   }
 
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>();
   private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>> myTransferToEDTQueue
-    = new TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>>() {
-    private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-    private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    private final List<HighlightInfo> infos = new ArrayList<HighlightInfo>(2);
-    private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    @Override
-    public boolean process(Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator> trinity) {
-      ProgressIndicator indicator = trinity.getThird();
-      if (indicator.isCanceled()) {
-        return false;
-      }
+    = new TransferToEDTQueue<>("Apply inspection results",
+                               new Processor<Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator>>() {
+                                 private final InspectionProfile inspectionProfile =
+                                   InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+                                 private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
+                                 private final List<HighlightInfo> infos = new ArrayList<>(2);
+                                 private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
-      ProblemDescriptor descriptor = trinity.first;
-      LocalInspectionToolWrapper tool = trinity.second;
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement == null) return true;
-      PsiFile file = psiElement.getContainingFile();
-      Document thisDocument = documentManager.getDocument(file);
+                                 @Override
+                                 public boolean process(Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator> trinity) {
+                                   ProgressIndicator indicator = trinity.getThird();
+                                   if (indicator.isCanceled()) {
+                                     return false;
+                                   }
 
-      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+                                   ProblemDescriptor descriptor = trinity.first;
+                                   LocalInspectionToolWrapper tool = trinity.second;
+                                   PsiElement psiElement = descriptor.getPsiElement();
+                                   if (psiElement == null) return true;
+                                   PsiFile file = psiElement.getContainingFile();
+                                   Document thisDocument = documentManager.getDocument(file);
 
-      infos.clear();
-      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
-      for (HighlightInfo info : infos) {
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(),
-                                                                   info, colorsScheme, getId(), ranges2markersCache);
-      }
+                                   HighlightSeverity severity =
+                                     inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
-      return true;
-    }
-  }, myProject.getDisposed(), 200);
+                                   infos.clear();
+                                   createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool,
+                                                                 severity, descriptor, psiElement);
+                                   for (HighlightInfo info : infos) {
+                                     final EditorColorsScheme colorsScheme = getColorsScheme();
+                                     UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
+                                                                                                myRestrictRange.getStartOffset(),
+                                                                                                myRestrictRange.getEndOffset(),
+                                                                                                info, colorsScheme, getId(),
+                                                                                                ranges2markersCache);
+                                   }
+
+                                   return true;
+                                 }
+                               }, myProject.getDisposed(), 200);
 
   private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<Pair<TextRange, String>>());
 
@@ -435,7 +445,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void appendResult(@NotNull PsiFile file, @NotNull InspectionResult result) {
     List<InspectionResult> resultList = this.result.get(file);
     if (resultList == null) {
-      resultList = ConcurrencyUtil.cacheOrGet(this.result, file, new ArrayList<InspectionResult>());
+      resultList = ConcurrencyUtil.cacheOrGet(this.result, file, new ArrayList<>());
     }
     synchronized (resultList) {
       resultList.add(result);
@@ -451,7 +461,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<Pair<TextRange, String>>();
+    Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       indicator.checkCanceled();
@@ -600,7 +610,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull
   private static List<PsiElement> getElementsFrom(@NotNull PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    final Set<PsiElement> result = new LinkedHashSet<>();
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         ProgressManager.checkCanceled();
@@ -627,13 +637,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       psiRoot.accept(visitor);
       result.add(psiRoot);
     }
-    return new ArrayList<PsiElement>(result);
+    return new ArrayList<>(result);
   }
 
 
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
-    List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
+    List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(getFile());
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
@@ -716,7 +726,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     private InspectionResult(@NotNull LocalInspectionToolWrapper tool, @NotNull List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
-      this.foundProblems = new ArrayList<ProblemDescriptor>(foundProblems);
+      this.foundProblems = new ArrayList<>(foundProblems);
     }
   }
 

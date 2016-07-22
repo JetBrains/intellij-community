@@ -46,7 +46,7 @@ public class LibraryNameAndLevelPanel {
     myLevelComboBox = new JComboBox();
     if (level != null && !availableLevels.isEmpty()) {
       formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
-      final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<LibrariesContainer.LibraryLevel, String>();
+      final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<>();
       levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
       levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
       levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));

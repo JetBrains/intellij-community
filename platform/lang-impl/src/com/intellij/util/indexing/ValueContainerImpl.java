@@ -79,7 +79,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<ID>();
+  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<>();
 
   @Override
   public void removeAssociatedValue(int inputId) {
@@ -91,8 +91,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
       if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
         if (fileSetObjects == null) {
-          fileSetObjects = new SmartList<Object>();
-          valueObjects = new SmartList<Value>();
+          fileSetObjects = new SmartList<>();
+          valueObjects = new SmartList<>();
         }
         else if (DebugAssertions.DEBUG) {
           LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
@@ -263,9 +263,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     if (myInputIdMapping == null) {
       return Collections.emptyList();
     } else if (myInputIdMapping instanceof THashMap) {
-      return new ArrayList<Value>(((THashMap<Value, Object>)myInputIdMapping).keySet());
+      return new ArrayList<>(((THashMap<Value, Object>)myInputIdMapping).keySet());
     } else {
-      return new SmartList<Value>((Value)myInputIdMapping);
+      return new SmartList<>((Value)myInputIdMapping);
     }
   }
 
@@ -366,11 +366,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   @NotNull
   public ValueContainerImpl<Value> copy() {
-    ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
+    ValueContainerImpl<Value> container = new ValueContainerImpl<>();
 
     if (myInputIdMapping instanceof THashMap) {
       final THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
-      final THashMap<Value, Object> newMapping = new THashMap<Value, Object>(mapping.size());
+      final THashMap<Value, Object> newMapping = new THashMap<>(mapping.size());
       container.myInputIdMapping = newMapping;
 
       mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
@@ -485,7 +485,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         final int inputId = -valueCount;
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
-          mapping = new FileId2ValueMapping<Value>(this);
+          mapping = new FileId2ValueMapping<>(this);
         }
 
         boolean doCompact;

@@ -61,7 +61,7 @@ public abstract class StaticMemberProcessor {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
     for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
-      Set<PsiClass> classes = new THashSet<PsiClass>();
+      Set<PsiClass> classes = new THashSet<>();
       for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
         if (isStaticallyImportable(member)) {
           final PsiClass containingClass = member.getContainingClass();

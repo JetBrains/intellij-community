@@ -39,7 +39,7 @@ public class PyFileNode extends PsiFileNode {
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PyFile value = (PyFile) getValue();
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> children = new ArrayList<>();
     for (PyClass child : value.getTopLevelClasses()) {
       children.add(new PyElementNode(myProject, child, getSettings()));
     }

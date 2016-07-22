@@ -56,7 +56,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private final Project myProject;
 
-  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<VirtualFile,Editor>();
+  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
@@ -79,7 +79,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
+    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(file, focusEditor)), "", null);
     return result.get();
 

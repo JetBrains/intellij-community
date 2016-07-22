@@ -71,7 +71,7 @@ public class VcsRootProblemNotifier {
     myChangeListManager = ChangeListManager.getInstance(project);
     myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myReportedUnregisteredRoots = new HashSet<String>(mySettings.IGNORED_UNREGISTERED_ROOTS);
+    myReportedUnregisteredRoots = new HashSet<>(mySettings.IGNORED_UNREGISTERED_ROOTS);
   }
 
   public void rescanAndNotifyIfNeeded() {

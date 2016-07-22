@@ -43,7 +43,7 @@ import java.util.Set;
 public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
   private static final Comparator<PsiElement> BY_OFFSET = (o1, o2) -> o1.getTextOffset() - o2.getTextOffset();
 
-  private static final Set<String> OUR_ACTIONS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> OUR_ACTIONS = new HashSet<>(Arrays.asList(
     IdeActions.MOVE_ELEMENT_LEFT,
     IdeActions.MOVE_ELEMENT_RIGHT
   ));
@@ -176,7 +176,7 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     }
     return startIndex > endIndex || (myIsLeft ? startIndex == 0 : endIndex == elements.length - 1) 
            ? null 
-           : new Range<Integer>(startIndex, endIndex);
+           : new Range<>(startIndex, endIndex);
   }
 
   private static int trim(int offset, int rangeStart, int rangeEnd) {

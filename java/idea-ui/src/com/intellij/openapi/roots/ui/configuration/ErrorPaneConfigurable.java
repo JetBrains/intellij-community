@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class ErrorPaneConfigurable extends JPanel implements Configurable, Disposable, ConfigurationErrors {
   private final Alarm myAlarm;
-  private final List<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
+  private final List<ConfigurationError> myErrors = new ArrayList<>();
   private int myComputedErrorsStamp;
   private int myShownErrorsStamp;
   private final Object myLock = new Object();

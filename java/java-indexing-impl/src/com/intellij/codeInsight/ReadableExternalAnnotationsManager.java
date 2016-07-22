@@ -41,7 +41,7 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   private synchronized Set<VirtualFile> initRoots() {
     if (myAnnotationsRoots == null) {
-      myAnnotationsRoots = new HashSet<VirtualFile>();
+      myAnnotationsRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -59,13 +59,13 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
-    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    Set<VirtualFile> result = new LinkedHashSet<>();
     for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
       if (!(entry instanceof ModuleOrderEntry)) {
         Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
-    return new ArrayList<VirtualFile>(result);
+    return new ArrayList<>(result);
   }
 
   @Override

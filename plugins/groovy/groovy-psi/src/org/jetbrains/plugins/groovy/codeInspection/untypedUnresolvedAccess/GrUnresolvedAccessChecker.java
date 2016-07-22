@@ -304,7 +304,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -580,7 +580,7 @@ public class GrUnresolvedAccessChecker {
 
     if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return false;
 
-    CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+    CollectConsumer<PomTarget> consumer = new CollectConsumer<>();
     for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
       searcher.findDeclarationsAt(referenceExpression, 0, consumer);
       if (!consumer.getResult().isEmpty()) return false;

@@ -64,12 +64,12 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private JComponent myAnchor;
 
   public JavaScratchConfigurable(final Project project) {
-    myMainClass = new LabeledComponent<JTextField>();
+    myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
     myMainClass.setText("Main &class:");
     myMainClass.setComponent(new JTextField());
 
-    myScratchPathField = new LabeledComponent<TextFieldWithBrowseButton>();
+    myScratchPathField = new LabeledComponent<>();
     myScratchPathField.setLabelLocation(BorderLayout.WEST);
     myScratchPathField.setText("&Path to scratch file:");
     myScratchPathField.setComponent(new TextFieldWithBrowseButton(new ActionListener() {
@@ -88,7 +88,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
       }
     }, this));
 
-    myModule = new LabeledComponent<ModulesComboBox>();
+    myModule = new LabeledComponent<>();
     myModule.setLabelLocation(BorderLayout.WEST);
     myModule.setComponent(new ModulesComboBox());
     myModule.setText("Use classpath of &module:");

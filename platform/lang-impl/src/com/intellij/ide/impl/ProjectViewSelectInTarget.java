@@ -96,7 +96,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   @Override
   @NotNull
   public Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
-    List<SelectInTarget> result = new ArrayList<SelectInTarget>();
+    List<SelectInTarget> result = new ArrayList<>();
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     int index = 0;
     for (String subId : pane.getSubIds()) {

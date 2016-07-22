@@ -315,7 +315,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   }
 
   protected void doSanityTestForDirectory(File directory, final boolean formatWithPsi) throws IOException, IncorrectOperationException {
-    final List<File> failedFiles = new ArrayList<File>();
+    final List<File> failedFiles = new ArrayList<>();
     doSanityTestForDirectory(directory, failedFiles, formatWithPsi);
     if (!failedFiles.isEmpty()) {
       fail("Failed for files: " + composeMessage(failedFiles));
@@ -336,7 +336,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected void doSanityTest(final boolean formatWithPsi) throws IOException, IncorrectOperationException {
     final File sanityDirectory = new File(getTestDataPath() + File.separatorChar + getBasePath(), "sanity");
     final File[] subFiles = sanityDirectory.listFiles();
-    final List<File> failedFiles = new ArrayList<File>();
+    final List<File> failedFiles = new ArrayList<>();
 
     if (subFiles != null) {
       for (final File subFile : subFiles) {

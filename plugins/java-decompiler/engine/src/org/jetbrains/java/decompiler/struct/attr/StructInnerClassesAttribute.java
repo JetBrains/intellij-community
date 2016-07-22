@@ -52,7 +52,7 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
 
     int len = data.readUnsignedShort();
     if (len > 0) {
-      entries = new ArrayList<Entry>(len);
+      entries = new ArrayList<>(len);
 
       for (int i = 0; i < len; i++) {
         int innerNameIdx = data.readUnsignedShort();

@@ -127,7 +127,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
   public static class QualificationRemover extends JavaRecursiveElementWalkingVisitor {
     private final String fullyQualifiedText;
-    private final List<PsiElement> shortenedElements = new ArrayList<PsiElement>();
+    private final List<PsiElement> shortenedElements = new ArrayList<>();
 
     public QualificationRemover(String fullyQualifiedText) {
       this.fullyQualifiedText = fullyQualifiedText;
@@ -229,7 +229,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      final List<PsiJavaCodeReferenceElement> references = new ArrayList<PsiJavaCodeReferenceElement>(2);
+      final List<PsiJavaCodeReferenceElement> references = new ArrayList<>(2);
       references.add(reference);
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);

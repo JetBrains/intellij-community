@@ -483,7 +483,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    final List<Usage> usages = new ArrayList<Usage>(usagesSet);
+    final List<Usage> usages = new ArrayList<>(usagesSet);
     Collections.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
@@ -505,7 +505,7 @@ public class ReplaceInProjectManager {
       final VirtualFile file = ((UsageInFile)usage).getFile();
 
       if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
+        if (readOnlyFiles == null) readOnlyFiles = new HashSet<>();
         readOnlyFiles.add(file);
       }
     }
@@ -565,7 +565,7 @@ public class ReplaceInProjectManager {
             myIsFindInProgress = true;
 
             FindInProjectUtil.findUsages(myFindModelCopy, myProject,
-                                         new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                         new AdapterProcessor<>(processor, UsageInfo2UsageAdapter.CONVERTER),
                                          myProcessPresentation);
           }
           finally {

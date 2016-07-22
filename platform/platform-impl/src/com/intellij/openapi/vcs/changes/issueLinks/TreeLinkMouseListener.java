@@ -58,7 +58,7 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
       if (myLastHitNode == null || myLastHitNode.get() != treeNode) {
         if (doCacheLastNode()) {
-          myLastHitNode = new WeakReference<TreeNode>(treeNode);
+          myLastHitNode = new WeakReference<>(treeNode);
         }
         myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), tree.getRowForPath(path), false);
       }

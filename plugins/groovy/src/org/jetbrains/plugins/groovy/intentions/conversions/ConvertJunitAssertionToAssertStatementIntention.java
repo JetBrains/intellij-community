@@ -45,7 +45,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
 
   private static final Pattern PATTERN = Pattern.compile("arg(\\d+)");
   
-  private static final Map<String, String[]> ourStatementMap = new HashMap<String, String[]>();
+  private static final Map<String, String[]> ourStatementMap = new HashMap<>();
   static {
     ourStatementMap.put("assertNotNull", new String[]{null, "assert arg0 != null", "assert arg1 != null : arg0"});
     ourStatementMap.put("assertNull", new String[]{null, "assert arg0 == null", "assert arg1 == null : arg0"});
@@ -92,7 +92,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     
     GrAssertStatement statement = (GrAssertStatement)factory.createStatementFromText(replacementStatement);
     
-    final Map<GrExpression, GrExpression> replaceMap = new HashMap<GrExpression, GrExpression>();
+    final Map<GrExpression, GrExpression> replaceMap = new HashMap<>();
     
     statement.acceptChildren(new GroovyRecursiveElementVisitor() {
       @Override

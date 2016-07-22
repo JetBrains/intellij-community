@@ -80,7 +80,7 @@ public class HectorComponent extends JPanel {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
     myFile = file;
-    mySliders = new HashMap<Language, JSlider>();
+    mySliders = new HashMap<>();
 
     final Project project = myFile.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -89,11 +89,11 @@ public class HectorComponent extends JPanel {
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    List<Language> languages = new ArrayList<Language>(viewProvider.getLanguages());
+    List<Language> languages = new ArrayList<>(viewProvider.getLanguages());
     Collections.sort(languages, PsiUtilBase.LANGUAGE_COMPARATOR);
     for (Language language : languages) {
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<Integer, JComponent>();
+      final Hashtable<Integer, JComponent> sliderLabels = new Hashtable<>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label"), AllIcons.Ide.HectorOff, SwingConstants.LEFT));
       sliderLabels.put(2, new JLabel(EditorBundle.message("hector.syntax.slider.label"), AllIcons.Ide.HectorSyntax, SwingConstants.LEFT));
       if (notInLibrary) {
@@ -175,7 +175,7 @@ public class HectorComponent extends JPanel {
     gc.weightx = 1.0;
     gc.insets.right = 0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    myAdditionalPanels = new ArrayList<HectorComponentPanel>();
+    myAdditionalPanels = new ArrayList<>();
     for (HectorComponentPanelsProvider provider : Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project)) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);
       if (componentPanel != null) {
@@ -245,7 +245,7 @@ public class HectorComponent extends JPanel {
     if (oldHector != null){
       oldHector.cancel();
     } else {
-      myHectorRef = new WeakReference<JBPopup>(hector);
+      myHectorRef = new WeakReference<>(hector);
       hector.show(point);
     }
   }

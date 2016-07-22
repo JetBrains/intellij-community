@@ -309,7 +309,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     private Module[] getModulesFor(PsiDirectory dir) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       final VirtualFile vFile = dir.getVirtualFile();
-      final Set<Module> modules = new HashSet<Module>();
+      final Set<Module> modules = new HashSet<>();
       final Module module = fileIndex.getModuleForFile(vFile);
       if (module != null) {
         modules.add(module);
@@ -339,7 +339,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
-      List<PsiElement> validElements = new ArrayList<PsiElement>();
+      List<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }

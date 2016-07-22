@@ -40,7 +40,7 @@ import java.util.Map;
  */
 public class AddGradleDslPluginAction extends CodeInsightAction {
   public static final String ID = "AddGradleDslPluginAction";
-  static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
+  static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
   private final KeyValue[] myPlugins;
 
   public AddGradleDslPluginAction() {
@@ -48,7 +48,7 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     getTemplatePresentation().setText(GradleBundle.message("gradle.codeInsight.action.apply_plugin.text"));
     getTemplatePresentation().setIcon(GradleIcons.GradlePlugin);
 
-    Collection<KeyValue> pluginDescriptions = new ArrayList<KeyValue>();
+    Collection<KeyValue> pluginDescriptions = new ArrayList<>();
     for (GradlePluginDescriptionsExtension extension : GradlePluginDescriptionsExtension.EP_NAME.getExtensions()) {
       for (Map.Entry<String, String> pluginDescription : extension.getPluginDescriptions().entrySet()) {
         pluginDescriptions.add(KeyValue.create(pluginDescription.getKey(), pluginDescription.getValue()));

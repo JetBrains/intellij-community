@@ -39,7 +39,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final ByteArrayOutputStream myStdout = new ByteArrayOutputStream();
   @NotNull private final ByteArrayOutputStream myStderr = new ByteArrayOutputStream();
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
-  @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<VcsException>();
+  @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
   public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
     super(project, vcsRoot, command);

@@ -60,7 +60,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
 
   @Override
   public List<PsiLiteralExpression> getTargets() {
-    final List<PsiLiteralExpression> result = new ArrayList<PsiLiteralExpression>();
+    final List<PsiLiteralExpression> result = new ArrayList<>();
     if (mySuppressedExpression != null) {
       result.add(mySuppressedExpression);
       return result;
@@ -123,7 +123,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
         continue;
       }
 
-      final List<LocalInspectionToolWrapper> toolsCopy = new ArrayList<LocalInspectionToolWrapper>(tools.size());
+      final List<LocalInspectionToolWrapper> toolsCopy = new ArrayList<>(tools.size());
       for (InspectionToolWrapper tool : tools) {
         if (tool instanceof LocalInspectionToolWrapper) {
           toolsCopy.add((LocalInspectionToolWrapper)tool.createCopy());

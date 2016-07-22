@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class RunLineMarkerContributor {
-  static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<RunLineMarkerContributor>("com.intellij.runLineMarkerContributor");
+  static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
   public static class Info {
     public final Icon icon;

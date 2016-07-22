@@ -137,7 +137,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       public Set<PsiFile> search(@Nullable Module module, @NotNull Project project) {
         List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources = XmlNamespaceIndex.getAllResources(module, project, null);
 
-        HashSet<PsiFile> files = new HashSet<PsiFile>();
+        HashSet<PsiFile> files = new HashSet<>();
         PsiManager psiManager = PsiManager.getInstance(project);
         for (IndexedRelevantResource<String, XsdNamespaceBuilder> resource : resources) {
           VirtualFile file = resource.getFile();

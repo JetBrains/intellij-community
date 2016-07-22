@@ -46,7 +46,7 @@ public class ToolDescriptors {
                                                    final Project project) {
     final InspectionToolWrapper toolWrapper = state.getTool();
     final List<ScopeToolState> nonDefaultTools = profile.getNonDefaultTools(toolWrapper.getShortName(), project);
-    final ArrayList<Descriptor> descriptors = new ArrayList<Descriptor>(nonDefaultTools.size());
+    final ArrayList<Descriptor> descriptors = new ArrayList<>(nonDefaultTools.size());
     for (final ScopeToolState nonDefaultToolState : nonDefaultTools) {
       descriptors.add(new Descriptor(nonDefaultToolState, profile, project));
     }

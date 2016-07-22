@@ -74,7 +74,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
 
   @Nullable
   public JComponent createOptionsPanel() {
-    final LabeledComponent<JTextField> definedGroups = new LabeledComponent<JTextField>();
+    final LabeledComponent<JTextField> definedGroups = new LabeledComponent<>();
     definedGroups.setText("&Defined Groups");
     final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -99,7 +99,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
     if (annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
 
-    List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (PsiAnnotation annotation : annotations) {
 
       PsiNameValuePair dep = null;

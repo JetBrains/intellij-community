@@ -57,7 +57,7 @@ public abstract class UsagesCollector {
   @NotNull
   public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
     synchronized (LOCK) {
-      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
+      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
       for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
         GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
         if (!disabledGroups.contains(groupDescriptor.getId())) {

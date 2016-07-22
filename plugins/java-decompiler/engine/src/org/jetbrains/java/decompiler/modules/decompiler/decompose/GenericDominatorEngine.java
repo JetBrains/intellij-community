@@ -24,7 +24,7 @@ public class GenericDominatorEngine {
 
   private final IGraph graph;
 
-  private final VBStyleCollection<IGraphNode, IGraphNode> colOrderedIDoms = new VBStyleCollection<IGraphNode, IGraphNode>();
+  private final VBStyleCollection<IGraphNode, IGraphNode> colOrderedIDoms = new VBStyleCollection<>();
 
   private Set<? extends IGraphNode> setRoots;
 

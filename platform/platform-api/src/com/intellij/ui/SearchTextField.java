@@ -274,7 +274,7 @@ public class SearchTextField extends JPanel {
 
   public List<String> getHistory() {
     final int itemsCount = myModel.getSize();
-    final List<String> history = new ArrayList<String>(itemsCount);
+    final List<String> history = new ArrayList<>(itemsCount);
     for (int i = 0; i < itemsCount; i++) {
       history.add(myModel.getElementAt(i));
     }
@@ -333,7 +333,7 @@ public class SearchTextField extends JPanel {
   }
 
   public class MyModel extends AbstractListModel {
-    private List<String> myFullList = new ArrayList<String>();
+    private List<String> myFullList = new ArrayList<>();
 
     private String mySelectedItem;
 
@@ -393,7 +393,7 @@ public class SearchTextField extends JPanel {
     }
 
     public void setItems(List<String> aList) {
-      myFullList = new ArrayList<String>(aList);
+      myFullList = new ArrayList<>(aList);
       fireContentsChanged();
     }
   }

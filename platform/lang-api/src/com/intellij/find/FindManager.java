@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
-  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes", FindModelListener.class);
+  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<>("FindManager's model changes", FindModelListener.class);
 
   public abstract FindModel createReplaceInFileModel();
 

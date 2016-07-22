@@ -41,7 +41,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   private final int myDiscardCost;
 
   public DuplocatorHashCallback(int bound, int discardCost) {
-    myDuplicates = new TIntObjectHashMap<List<List<PsiFragment>>>();
+    myDuplicates = new TIntObjectHashMap<>();
     myBound = bound;
     myDiscardCost = discardCost;
   }
@@ -69,7 +69,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
   private void forceAdd(int hash, int cost, PsiFragment frag) {
     if (frag == null) { //fake fragment
-      myDuplicates.put(hash, new ArrayList<List<PsiFragment>>());
+      myDuplicates.put(hash, new ArrayList<>());
       return;
     }
 
@@ -79,8 +79,8 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
     if (fragments == null) {
       if (!myReadOnly) { //do not add new hashcodes
-        List<List<PsiFragment>> list = new ArrayList<List<PsiFragment>>();
-        List<PsiFragment> listf = new ArrayList<PsiFragment>();
+        List<List<PsiFragment>> list = new ArrayList<>();
+        List<PsiFragment> listf = new ArrayList<>();
 
         listf.add(frag);
         list.add(listf);
@@ -132,7 +132,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     }
 
     if (!found) {
-      List<PsiFragment> newFrags = new ArrayList<PsiFragment>();
+      List<PsiFragment> newFrags = new ArrayList<>();
       newFrags.add(frag);
 
       fragments.add(newFrags);
@@ -160,7 +160,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   public DupInfo getInfo() {
-    final TObjectIntHashMap<PsiFragment[]> duplicateList = new TObjectIntHashMap<PsiFragment[]>();
+    final TObjectIntHashMap<PsiFragment[]> duplicateList = new TObjectIntHashMap<>();
 
     myDuplicates.forEachEntry(new TIntObjectProcedure<List<List<PsiFragment>>>() {
       public boolean execute(final int hash, final List<List<PsiFragment>> listList) {
@@ -205,7 +205,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     Arrays.sort(duplicates, (x, y) -> ((PsiFragment[])y)[0].getCost() - ((PsiFragment[])x)[0].getCost());
 
     return new DupInfo() {
-      private final TIntObjectHashMap<GroupNodeDescription> myPattern2Description = new TIntObjectHashMap<GroupNodeDescription>();
+      private final TIntObjectHashMap<GroupNodeDescription> myPattern2Description = new TIntObjectHashMap<>();
 
       public int getPatterns() {
         return duplicates.length;
@@ -242,7 +242,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       }
 
       private GroupNodeDescription cacheGroupNodeDescription(final int pattern) {
-        final Set<PsiFile> files = new HashSet<PsiFile>();
+        final Set<PsiFile> files = new HashSet<>();
         final PsiFragment[] occurencies = getFragmentOccurences(pattern);
         for (PsiFragment occurency : occurencies) {
           final PsiFile file = occurency.getFile();

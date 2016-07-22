@@ -99,7 +99,7 @@ public class GithubLoginPanel {
       }
     });
 
-    List<Component> order = new ArrayList<Component>();
+    List<Component> order = new ArrayList<>();
     order.add(myHostTextField);
     order.add(myAuthTypeComboBox);
     order.add(mySavePasswordCheckBox);

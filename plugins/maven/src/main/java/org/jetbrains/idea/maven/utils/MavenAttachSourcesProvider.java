@@ -74,7 +74,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
         if (artifacts.isEmpty()) return ActionCallback.REJECTED;
 
-        final AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
+        final AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<>();
         manager.scheduleArtifactsDownloading(mavenProjects, artifacts, true, false, result);
 
         final ActionCallback resultWrapper = new ActionCallback();
@@ -119,7 +119,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
   }
 
   private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {
-    Collection<MavenArtifact> artifacts = new THashSet<MavenArtifact>();
+    Collection<MavenArtifact> artifacts = new THashSet<>();
     for (MavenProject each : mavenProjects) {
       for (LibraryOrderEntry entry : orderEntries) {
         final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary());
@@ -133,7 +133,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
   private static Collection<MavenProject> getMavenProjects(PsiFile psiFile) {
     Project project = psiFile.getProject();
-    Collection<MavenProject> result = new ArrayList<MavenProject>();
+    Collection<MavenProject> result = new ArrayList<>();
     for (OrderEntry each : ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {
       MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(each.getOwnerModule());
       if (mavenProject != null) result.add(mavenProject);

@@ -56,8 +56,8 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
   private static final Logger LOG = Logger.getInstance("#" + CopyrightManager.class.getName());
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
-  private final LinkedHashMap<String, String> myModuleToCopyrights = new LinkedHashMap<String, String>();
-  private final Map<String, CopyrightProfile> myCopyrights = new TreeMap<String, CopyrightProfile>();
+  private final LinkedHashMap<String, String> myModuleToCopyrights = new LinkedHashMap<>();
+  private final Map<String, CopyrightProfile> myCopyrights = new TreeMap<>();
   private final Options myOptions = new Options();
 
   public CopyrightManager(@NotNull Project project,

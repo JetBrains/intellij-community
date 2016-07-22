@@ -93,7 +93,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     ensureProjectsRefreshed();
     MantisConnectPortType soap = createSoap();
 
-    List<Task> tasks = new ArrayList<Task>(limit);
+    List<Task> tasks = new ArrayList<>(limit);
 
     int pageNumber = offset / PAGE_SIZE + 1;
     // what the heck does it suppose to mean?
@@ -111,7 +111,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   }
 
   private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int pageNumber, int pageSize) throws Exception {
-    List<IssueHeaderData> collectedHeaders = new ArrayList<IssueHeaderData>();
+    List<IssueHeaderData> collectedHeaders = new ArrayList<>();
     boolean isWorkaround = myCurrentProject.isUnspecified() && !myAllProjectsAvailable;
     // Projects to iterate over, actually needed only when "All Projects" pseudo-project is selected
     // and is unsupported on server side.
@@ -181,11 +181,11 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = checkAllProjectsAvailable(soap);
 
     List<MantisProject> projects =
-      new ArrayList<MantisProject>(ContainerUtil.map(fetchUserProjects(soap), data -> new MantisProject(data)));
-    List<MantisFilter> commonFilters = new LinkedList<MantisFilter>();
+      new ArrayList<>(ContainerUtil.map(fetchUserProjects(soap), data -> new MantisProject(data)));
+    List<MantisFilter> commonFilters = new LinkedList<>();
     for (MantisProject project : projects) {
       FilterData[] rawFilters = fetchProjectFilters(soap, project);
-      List<MantisFilter> projectFilters = new LinkedList<MantisFilter>();
+      List<MantisFilter> projectFilters = new LinkedList<>();
       for (FilterData data : rawFilters) {
         MantisFilter filter = new MantisFilter(data);
         if (data.getProject_id().intValue() == 0) {

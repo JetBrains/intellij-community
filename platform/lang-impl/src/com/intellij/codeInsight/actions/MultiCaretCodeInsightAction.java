@@ -89,7 +89,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
       return;
     }
 
-    final Ref<Boolean> enabled  = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> enabled  = new Ref<>(Boolean.FALSE);
     iterateOverCarets(project, hostEditor, new MultiCaretCodeInsightActionHandler() {
       @Override
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {

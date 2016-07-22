@@ -60,7 +60,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   private final ApplicationProfileManager myApplicationProfileManager;
 
-  private final Map<String, Profile> myProfiles = new THashMap<String, Profile>();
+  private final Map<String, Profile> myProfiles = new THashMap<>();
   protected final DependencyValidationManager myHolder;
   private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
@@ -127,7 +127,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   @Override
   public synchronized void loadState(Element state) {
-    final Set<String> profileKeys = new HashSet<String>();
+    final Set<String> profileKeys = new HashSet<>();
     profileKeys.addAll(myProfiles.keySet());
     myProfiles.clear();
     XmlSerializer.deserializeInto(this, state);

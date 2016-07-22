@@ -86,7 +86,7 @@ public class PyConvertMethodToPropertyIntention extends BaseIntentionAction {
     final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
 
     final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
-    List<String> decoTexts = new ArrayList<String>();
+    List<String> decoTexts = new ArrayList<>();
     decoTexts.add("@property");
     if (problemDecoratorList != null) {
       final PyDecorator[] decorators = problemDecoratorList.getDecorators();

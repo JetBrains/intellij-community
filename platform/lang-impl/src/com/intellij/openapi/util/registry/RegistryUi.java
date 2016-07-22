@@ -280,7 +280,7 @@ public class RegistryUi implements Disposable {
 
   private static List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
-    return StringUtil.isEmpty(value) ? new ArrayList<String>(0) : StringUtil.split(value, "=");
+    return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
@@ -450,7 +450,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private static final Map<Color, Icon> icons_cache = new HashMap<Color, Icon>();
+  private static final Map<Color, Icon> icons_cache = new HashMap<>();
   private static Icon createColoredIcon(Color color) {
     Icon icon = icons_cache.get(color);
     if (icon != null) return icon;

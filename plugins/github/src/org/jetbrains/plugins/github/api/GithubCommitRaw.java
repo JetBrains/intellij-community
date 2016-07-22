@@ -90,7 +90,7 @@ class GithubCommitRaw implements DataConstructor {
     GithubUser author = this.author == null ? null : this.author.createUser();
     GithubUser committer = this.committer == null ? null : this.committer.createUser();
 
-    List<GithubCommitSha> parents = new ArrayList<GithubCommitSha>();
+    List<GithubCommitSha> parents = new ArrayList<>();
     for (GithubCommitRaw raw : this.parents) {
       parents.add(raw.createCommitSha());
     }
@@ -101,7 +101,7 @@ class GithubCommitRaw implements DataConstructor {
   @NotNull
   public GithubCommitDetailed createCommitDetailed() {
     GithubCommit commit = createCommit();
-    List<GithubFile> files = new ArrayList<GithubFile>();
+    List<GithubFile> files = new ArrayList<>();
     for (GithubFileRaw raw : this.files) {
       files.add(raw.createFile());
     }

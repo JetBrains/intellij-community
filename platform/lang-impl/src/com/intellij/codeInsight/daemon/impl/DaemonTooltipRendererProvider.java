@@ -57,8 +57,8 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
     LineTooltipRenderer bigRenderer = null;
-    List<HighlightInfo> infos = new SmartList<HighlightInfo>();
-    Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
+    List<HighlightInfo> infos = new SmartList<>();
+    Collection<String> tooltips = new THashSet<>(); //do not show same tooltip twice
     for (RangeHighlighter marker : highlighters) {
       final Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;

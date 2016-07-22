@@ -69,7 +69,7 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
       for (int j = begin; j < end; ++j) {
         List<TryCatchBlockNode> insnHandlers = handlers[j];
         if (insnHandlers == null) {
-          insnHandlers = new ArrayList<TryCatchBlockNode>();
+          insnHandlers = new ArrayList<>();
           handlers[j] = insnHandlers;
         }
         insnHandlers.add(tcb);
@@ -77,8 +77,8 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
     }
 
     // initializes the data structures for the control flow analysis
-    Frame<V> current = new Frame<V>(m.maxLocals, m.maxStack);
-    Frame<V> handler = new Frame<V>(m.maxLocals, m.maxStack);
+    Frame<V> current = new Frame<>(m.maxLocals, m.maxStack);
+    Frame<V> handler = new Frame<>(m.maxLocals, m.maxStack);
     current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
     Type[] args = Type.getArgumentTypes(m.desc);
     int local = 0;
@@ -174,7 +174,7 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
     boolean changes;
 
     if (oldFrame == null) {
-      frames[insn] = new Frame<V>(frame);
+      frames[insn] = new Frame<>(frame);
       changes = true;
     } else {
       changes = oldFrame.merge(frame, interpreter);

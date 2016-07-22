@@ -171,7 +171,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       }
       final PsiAnnotation[] superAnnotations = superModifierList.getAnnotations();
       final PsiAnnotation[] annotations = modifierList.getAnnotations();
-      final Set<PsiAnnotation> annotationsSet = new HashSet<PsiAnnotation>(Arrays.asList(superAnnotations));
+      final Set<PsiAnnotation> annotationsSet = new HashSet<>(Arrays.asList(superAnnotations));
       for (PsiAnnotation annotation : annotations) {
         final String qualifiedName = annotation.getQualifiedName();
         if (CommonClassNames.JAVA_LANG_OVERRIDE.equals(qualifiedName)) {
@@ -207,7 +207,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       if (exceptions1.length != exceptions2.length) {
         return false;
       }
-      final Set<PsiClassType> set1 = new HashSet<PsiClassType>(Arrays.asList(exceptions1));
+      final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
       for (PsiClassType anException : exceptions2) {
         if (!set1.contains(anException)) {
           return false;

@@ -63,7 +63,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-    myConfigurables = new ArrayList<Configurable>(compilers.size());
+    myConfigurables = new ArrayList<>(compilers.size());
 
     myCardLayout = new CardLayout();
     myContentPanel.setLayout(myCardLayout);

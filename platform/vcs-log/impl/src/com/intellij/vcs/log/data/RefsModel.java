@@ -40,7 +40,7 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   private static TIntObjectHashMap<VirtualFile> prepareRootsMap(@NotNull Set<Integer> heads, @NotNull VcsLogHashMap hashMap) {
-    TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<VirtualFile>();
+    TIntObjectHashMap<VirtualFile> map = new TIntObjectHashMap<>();
     for (Integer head : heads) {
       CommitId commitId = hashMap.getCommitId(head);
       if (commitId != null) {
@@ -53,11 +53,11 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   private static TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Iterable<VcsRef> refs,
                                                                               @NotNull VcsLogHashMap hashMap) {
-    TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
+    TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<>();
     for (VcsRef ref : refs) {
       int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       SmartList<VcsRef> list = map.get(index);
-      if (list == null) map.put(index, list = new SmartList<VcsRef>());
+      if (list == null) map.put(index, list = new SmartList<>());
       list.add(ref);
     }
     return map;

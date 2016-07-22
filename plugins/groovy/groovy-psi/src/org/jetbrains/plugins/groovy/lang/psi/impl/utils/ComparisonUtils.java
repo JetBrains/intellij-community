@@ -24,9 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ComparisonUtils {
-  private static final Map<IElementType, String> s_comparisonStrings = new HashMap<IElementType, String>(6);
-  private static final Map<IElementType, String> s_swappedComparisons = new HashMap<IElementType, String>(6);
-  private static final Map<IElementType, String> s_invertedComparisons = new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> s_comparisonStrings = new HashMap<>(6);
+  private static final Map<IElementType, String> s_swappedComparisons = new HashMap<>(6);
+  private static final Map<IElementType, String> s_invertedComparisons = new HashMap<>(6);
 
   private ComparisonUtils() {
   }

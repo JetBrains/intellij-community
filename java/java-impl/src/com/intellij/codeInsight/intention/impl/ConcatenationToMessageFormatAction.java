@@ -58,7 +58,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
     StringBuilder formatString = new StringBuilder();
-    List<PsiExpression> args = new ArrayList<PsiExpression>();
+    List<PsiExpression> args = new ArrayList<>();
     PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

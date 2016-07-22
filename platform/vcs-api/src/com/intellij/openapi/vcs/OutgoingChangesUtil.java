@@ -34,7 +34,7 @@ public class OutgoingChangesUtil {
 
     final VirtualFile[] files = ChangesUtil.getFilesFromChanges(changes);
 
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new HashSet<>();
     for (VirtualFile file : files) {
       final VirtualFile root = vcsManager.getVcsRootFor(file);
       if (root != null) {
@@ -42,7 +42,7 @@ public class OutgoingChangesUtil {
       }
     }
 
-    final Collection<Pair<VcsRevisionNumber, List<T>>> result = new ArrayList<Pair<VcsRevisionNumber, List<T>>>(roots.size());
+    final Collection<Pair<VcsRevisionNumber, List<T>>> result = new ArrayList<>(roots.size());
     for (VirtualFile root : roots) {
       final Pair<VcsRevisionNumber, List<T>> pair = provider.getOutgoingChanges(root, true);
       result.add(pair);

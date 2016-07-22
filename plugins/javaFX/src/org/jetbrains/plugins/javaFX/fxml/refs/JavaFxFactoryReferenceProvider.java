@@ -69,7 +69,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     public Object[] getVariants() {
       final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
-        final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+        final List<PsiMethod> methods = new ArrayList<>();
         for (PsiMethod method : psiClass.getMethods()) {
           if (isFactoryMethod(method)) {
             methods.add(method);

@@ -118,7 +118,7 @@ public class FoldingUpdate {
                                                                                 applyDefaultState ? EXCEPT_CARET_REGION : NO, 
                                                                                 !applyDefaultState, false);
     Runnable runnable = () -> editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
-    Set<Object> dependencies = new HashSet<Object>();
+    Set<Object> dependencies = new HashSet<>();
     dependencies.add(document);
     dependencies.add(editor.getFoldingModel());
     for (FoldingDescriptor descriptor : elementsToFoldMap.values()) {
@@ -144,9 +144,9 @@ public class FoldingUpdate {
 
     List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
     if (injectedDocuments.isEmpty()) return null;
-    final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
-    final List<PsiFile> injectedFiles = new ArrayList<PsiFile>();
-    final List<FoldingMap> maps = new ArrayList<FoldingMap>();
+    final List<EditorWindow> injectedEditors = new ArrayList<>();
+    final List<PsiFile> injectedFiles = new ArrayList<>();
+    final List<FoldingMap> maps = new ArrayList<>();
     for (final DocumentWindow injectedDocument : injectedDocuments) {
       if (!injectedDocument.isValid()) {
         continue;
@@ -168,7 +168,7 @@ public class FoldingUpdate {
     }
 
     return () -> {
-      final ArrayList<Runnable> updateOperations = new ArrayList<Runnable>(injectedEditors.size());
+      final ArrayList<Runnable> updateOperations = new ArrayList<>(injectedEditors.size());
       for (int i = 0; i < injectedEditors.size(); i++) {
         EditorWindow injectedEditor = injectedEditors.get(i);
         PsiFile injectedFile = injectedFiles.get(i);
@@ -282,13 +282,13 @@ public class FoldingUpdate {
     @NotNull
     @Override
     protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
-      return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET_REVERSED);
+      return new TreeMap<>(COMPARE_BY_OFFSET_REVERSED);
     }
 
     @NotNull
     @Override
     protected Collection<FoldingDescriptor> createCollection() {
-      return new ArrayList<FoldingDescriptor>(1);
+      return new ArrayList<>(1);
     }
   }
 }

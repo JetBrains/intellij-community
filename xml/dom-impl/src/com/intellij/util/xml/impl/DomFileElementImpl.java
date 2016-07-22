@@ -144,7 +144,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final Class<T> myRootElementClass;
   private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
-  private final Map<Key,Object> myUserData = new HashMap<Key, Object>();
+  private final Map<Key,Object> myUserData = new HashMap<>();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,

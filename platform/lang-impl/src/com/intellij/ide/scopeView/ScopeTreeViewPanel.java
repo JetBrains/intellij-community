@@ -300,7 +300,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private PsiElement[] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<PsiElement> result = new HashSet<PsiElement>();
+      Set<PsiElement> result = new HashSet<>();
       for (TreePath path : treePaths) {
         final Object component = path.getLastPathComponent();
         if (component instanceof PackageDependenciesNode) {
@@ -343,7 +343,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
     myActionCallback = new ActionCallback();
-    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
+    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, true, () -> {
       myTree.setPaintBusy(false);
       myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -384,7 +384,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        Set<PsiElement> psiElements = new HashSet<PsiElement>();
+        Set<PsiElement> psiElements = new HashSet<>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
           if (node.isValid()) {
@@ -431,7 +431,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private Module[] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<Module> result = new HashSet<Module>();
+      Set<Module> result = new HashSet<>();
       for (TreePath path : treePaths) {
         PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (node instanceof ModuleNode) {
@@ -864,7 +864,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
-      ArrayList<PsiElement> validElements = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
@@ -964,7 +964,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
       final String name = fromList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         removeNode(file, name);
@@ -974,7 +974,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void changesAdded(Collection<Change> changes, ChangeList toList) {
       final String name = toList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         addNode(file, name);

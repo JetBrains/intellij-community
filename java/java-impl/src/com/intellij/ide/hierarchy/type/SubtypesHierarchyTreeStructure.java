@@ -54,8 +54,8 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final SearchScope searchScope = psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass));
-    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, searchScope, false).findAll());
-    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(classes.size());
+    final List<PsiClass> classes = new ArrayList<>(ClassInheritorsSearch.search(psiClass, searchScope, false).findAll());
+    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
       descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aClass, false));
     }

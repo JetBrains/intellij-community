@@ -17,7 +17,7 @@ public class SetUtil {
     if (set1.equals(set2)){
       return set1;
     }
-    final HashSet<T> result = new HashSet<T>();
+    final HashSet<T> result = new HashSet<>();
     Set<T> minSet;
     Set<T> otherSet;
     if (set1.size() < set2.size()){

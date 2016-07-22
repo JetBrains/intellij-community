@@ -87,7 +87,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<>();
   static {
     ourTags.put("field", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);

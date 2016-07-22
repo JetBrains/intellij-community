@@ -126,11 +126,11 @@ import java.util.Set;
 public abstract class CompletionContributor {
 
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
-      new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
+    new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
                            @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
-    myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
+    myMap.putValue(type, new Pair<>(place, provider));
   }
 
   /**
@@ -255,7 +255,7 @@ public abstract class CompletionContributor {
     @NotNull
     @Override
     protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      Set<String> allowed = new THashSet<String>();
+      Set<String> allowed = new THashSet<>();
       while (key != null) {
         allowed.add(keyToString(key));
         key = key.getBaseLanguage();

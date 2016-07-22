@@ -129,7 +129,7 @@ public class LibraryScopeCache {
 
   @NotNull
   private GlobalSearchScope calcLibraryScope(@NotNull List<OrderEntry> orderEntries) {
-    List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
+    List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
     LibraryOrderEntry lib = null;
     for (OrderEntry entry : orderEntries) {

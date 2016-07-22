@@ -35,7 +35,7 @@ public final class AntIntrospector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntIntrospector");
   private final Object myHelper;
   //private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(300);
-  private static final HashMap<Class, Object> ourCache = new HashMap<Class, Object>();
+  private static final HashMap<Class, Object> ourCache = new HashMap<>();
   private static final Object ourNullObject = new Object();
   private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private static final int CACHE_CLEAN_TIMEOUT = 10000; // 10 seconds
@@ -92,7 +92,7 @@ public final class AntIntrospector {
     if (methods == null || methods.size() == 0) {
       return Collections.emptySet();
     }
-    final Set<String> types = new HashSet<String>();
+    final Set<String> types = new HashSet<>();
     for (Method method : methods) {
       final Class<?>[] paramTypes = method.getParameterTypes();
       for (Class<?> paramType : paramTypes) {

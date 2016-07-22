@@ -44,7 +44,7 @@ class GrowlNotifications implements SystemNotificationsImpl.Notifier {
 
   private GrowlNotifications() {
     myGrowl = new Growl(ApplicationNamesInfo.getInstance().getFullProductName());
-    myNotifications = new TreeSet<String>();
+    myNotifications = new TreeSet<>();
     register();
   }
 

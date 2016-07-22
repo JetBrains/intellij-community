@@ -292,7 +292,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   private Pair<String, Boolean> parseResult(Object object) {
     if (object instanceof Boolean) {
-      return new Pair<String, Boolean>(null, (Boolean)object);
+      return new Pair<>(null, (Boolean)object);
     }
     else {
       return parseExecResponseString(object.toString());

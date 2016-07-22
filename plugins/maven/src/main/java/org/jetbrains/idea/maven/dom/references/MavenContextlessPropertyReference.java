@@ -67,7 +67,7 @@ public class MavenContextlessPropertyReference extends PsiReferenceBase<PsiEleme
       skippedPropertyName = xmlTag.getName();
     }
 
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
     for (XmlTag subTag : myProperties.getSubTags()) {
       String name = subTag.getName();

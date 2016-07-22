@@ -46,7 +46,7 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
     if (compiler == null || !filter.acceptCompiler(compiler)) {
       return Collections.emptyList();
     }
-    final List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    final List<TargetTypeBuildScope> scopes = new ArrayList<>();
     new ReadAction() {
       protected void run(@NotNull final Result result) {
         final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);

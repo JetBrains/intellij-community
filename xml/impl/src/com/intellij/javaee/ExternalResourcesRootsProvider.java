@@ -37,8 +37,8 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
     @Override
     protected Set<String> compute() {
       ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
-      Set<ExternalResourceManagerExImpl.Resource> dirs = new THashSet<ExternalResourceManagerExImpl.Resource>();
-      Set<String> set = new THashSet<String>();
+      Set<ExternalResourceManagerExImpl.Resource> dirs = new THashSet<>();
+      Set<String> set = new THashSet<>();
       for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources()) {
         for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
           ExternalResourceManagerExImpl.Resource dir = new ExternalResourceManagerExImpl.Resource(
@@ -59,7 +59,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
   @NotNull
   @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
-    Set<VirtualFile> roots = new THashSet<VirtualFile>();
+    Set<VirtualFile> roots = new THashSet<>();
     for (String url : myStandardResources.getValue()) {
       VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
       if (file != null) {

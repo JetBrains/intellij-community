@@ -35,10 +35,10 @@ public class Task implements StudyItem {
 
   @Expose
   @SerializedName("task_files")
-  public Map<String, TaskFile> taskFiles = new HashMap<String, TaskFile>();
+  public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
-  private Map<String, String> testsText = new HashMap<String, String>();
+  private Map<String, String> testsText = new HashMap<>();
 
   @Transient private Lesson myLesson;
 

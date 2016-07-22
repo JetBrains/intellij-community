@@ -30,7 +30,7 @@ import java.util.Stack;
  * @author traff
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
-  private Stack<Assertion> myStack = new Stack<Assertion>();
+  private Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
   public PyTypeAssertionEvaluator() {
@@ -68,7 +68,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         pushAssertion(target, new InstructionTypeCallback() {
           @Override
           public PyType getType(TypeEvalContext context, PsiElement anchor) {
-            final List<PyType> types = new ArrayList<PyType>();
+            final List<PyType> types = new ArrayList<>();
             types.add(context.getType(typeElement));
             return createAssertionType(context.getType(target), types, positive, context);
           }
@@ -83,7 +83,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         pushAssertion(target, new InstructionTypeCallback() {
           @Override
           public PyType getType(TypeEvalContext context, PsiElement anchor) {
-            final List<PyType> types = new ArrayList<PyType>();
+            final List<PyType> types = new ArrayList<>();
             types.add(PyTypeParser.getTypeByName(target, "collections." + PyNames.CALLABLE));
             return createAssertionType(context.getType(target), types, positive, context);
           }
@@ -99,7 +99,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       pushAssertion(node, new InstructionTypeCallback() {
         @Override
         public PyType getType(TypeEvalContext context, PsiElement anchor) {
-          final List<PyType> types = new ArrayList<PyType>();
+          final List<PyType> types = new ArrayList<>();
           types.add(PyNoneType.INSTANCE);
           return createAssertionType(context.getType(node), types, !positive, context);
         }
@@ -121,7 +121,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           pushAssertion(target, new InstructionTypeCallback() {
             @Override
             public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-              final List<PyType> types = new ArrayList<PyType>();
+              final List<PyType> types = new ArrayList<>();
               types.add(PyNoneType.INSTANCE);
               return createAssertionType(context.getType(target), types, !positive, context);
             }
@@ -135,7 +135,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Nullable
   private static PyType createAssertionType(PyType initial, List<PyType> types, boolean positive, TypeEvalContext context) {
-    final List<PyType> members = new ArrayList<PyType>();
+    final List<PyType> members = new ArrayList<>();
     for (PyType t : types) {
       members.add(transformTypeFromAssertion(t));
     }
@@ -155,7 +155,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Nullable
   private static PyType transformTypeFromAssertion(@Nullable PyType type) {
     if (type instanceof PyTupleType) {
-      final List<PyType> members = new ArrayList<PyType>();
+      final List<PyType> members = new ArrayList<>();
       final PyTupleType tupleType = (PyTupleType)type;
       final int count = tupleType.getElementCount();
       for (int i = 0; i < count; i++) {

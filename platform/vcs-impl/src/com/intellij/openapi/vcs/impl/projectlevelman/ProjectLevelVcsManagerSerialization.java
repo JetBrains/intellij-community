@@ -38,7 +38,7 @@ public class ProjectLevelVcsManagerSerialization {
   private final Map<String, VcsShowConfirmationOption.Value> myReadValue;
 
   public ProjectLevelVcsManagerSerialization() {
-    myReadValue = new HashMap<String, VcsShowConfirmationOption.Value>();
+    myReadValue = new HashMap<>();
   }
 
   private static VcsShowOptionsSettingImpl getOrCreateOption(Map<String, VcsShowOptionsSettingImpl> options, String actionName) {

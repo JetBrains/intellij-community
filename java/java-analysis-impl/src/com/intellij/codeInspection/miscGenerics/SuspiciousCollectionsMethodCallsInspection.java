@@ -50,7 +50,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> patternMethods = new ArrayList<>();
     final IntArrayList indices = new IntArrayList();
     return new JavaElementVisitor() {
       @Override

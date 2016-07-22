@@ -370,7 +370,7 @@ public class EduAdaptiveStepicConnector {
       }
     }
 
-    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+    task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (step.options.files != null) {
       for (TaskFile taskFile : step.options.files) {
         task.taskFiles.put(taskFile.name, taskFile);

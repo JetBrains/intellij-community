@@ -131,7 +131,7 @@ public class IterateOverIterableIntention implements IntentionAction {
       TextRange textRange = iterableExpression.getTextRange();
       selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     }
-    new InvokeTemplateAction(template, editor, project, new HashSet<Character>()).perform();
+    new InvokeTemplateAction(template, editor, project, new HashSet<>()).perform();
   }
 
   @Override

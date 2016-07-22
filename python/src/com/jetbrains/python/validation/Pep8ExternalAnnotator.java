@@ -114,7 +114,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   }
 
   public static class Results {
-    public final List<Problem> problems = new ArrayList<Problem>();
+    public final List<Problem> problems = new ArrayList<>();
     private final HighlightDisplayLevel level;
 
     public Results(HighlightDisplayLevel level) {

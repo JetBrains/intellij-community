@@ -97,7 +97,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  private Map<Buttons, MyActionButton> myButtons = new HashMap<Buttons, MyActionButton>();
+  private Map<Buttons, MyActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,

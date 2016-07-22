@@ -85,7 +85,7 @@ public class ConvertClosureToMethodIntention extends Intention {
       field = (GrField)resolved;
     }
 
-    final HashSet<PsiReference> usages = new HashSet<PsiReference>();
+    final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
     for (GrAccessorMethod getter : getters) {
@@ -98,8 +98,8 @@ public class ConvertClosureToMethodIntention extends Intention {
 
     final String fieldName = field.getName();
     LOG.assertTrue(fieldName != null);
-    final Collection<PsiElement> fieldUsages = new HashSet<PsiElement>();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final Collection<PsiElement> fieldUsages = new HashSet<>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiReference usage : usages) {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;

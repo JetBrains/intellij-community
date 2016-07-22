@@ -36,8 +36,8 @@ public class MvcCommand {
   private @Nullable String myCommand;
   private @Nullable String myVmOptions;
 
-  private final ArrayList<String> myArgs = new ArrayList<String>();
-  private final ArrayList<String> myProperties = new ArrayList<String>();
+  private final ArrayList<String> myArgs = new ArrayList<>();
+  private final ArrayList<String> myProperties = new ArrayList<>();
 
   public MvcCommand() {
   }

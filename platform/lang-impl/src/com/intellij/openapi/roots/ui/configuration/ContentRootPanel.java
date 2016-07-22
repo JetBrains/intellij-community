@@ -72,7 +72,7 @@ public abstract class ContentRootPanel extends JPanel {
   private final List<ModuleSourceRootEditHandler<?>> myModuleSourceRootEditHandlers;
   private JComponent myHeader;
   private JComponent myBottom;
-  private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
+  private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<>();
 
   public interface ActionCallback {
     void deleteContentEntry();
@@ -106,7 +106,7 @@ public abstract class ContentRootPanel extends JPanel {
 
   protected void addFolderGroupComponents() {
     final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
-    MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<JpsModuleSourceRootType<?>, SourceFolder>();
+    MultiMap<JpsModuleSourceRootType<?>, SourceFolder> folderByType = new MultiMap<>();
     for (SourceFolder folder : sourceFolders) {
       if (folder.isSynthetic()) {
         continue;

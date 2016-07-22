@@ -59,7 +59,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int TYPO_DISTANCE = 2;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "header")
-  public final Set<String> CUSTOM_HEADERS = new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+  public final Set<String> CUSTOM_HEADERS = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
 
   private final HeaderParserRepository myRepository;
 
@@ -77,7 +77,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
           Header header = (Header)element;
           String headerName = header.getName();
 
-          SortedSet<Suggestion> matches = new TreeSet<Suggestion>();
+          SortedSet<Suggestion> matches = new TreeSet<>();
           addMatches(headerName, CUSTOM_HEADERS, matches);
           addMatches(headerName, myRepository.getAllHeaderNames(), matches);
 
@@ -86,7 +86,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
             return;
           }
 
-          List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+          List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
             fixes.add(new HeaderRenameQuickFix(header, match.getWord()));
             if (fixes.size() == MAX_SUGGESTIONS) break;
@@ -126,7 +126,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
       final JTextArea area = new JTextArea("");
       add(area, BorderLayout.CENTER);
       if (!headers.isEmpty()) {
-        area.setText(StringUtil.join(new TreeSet<String>(headers), "\n"));
+        area.setText(StringUtil.join(new TreeSet<>(headers), "\n"));
       }
 
       area.getDocument().addDocumentListener(new DocumentAdapter() {

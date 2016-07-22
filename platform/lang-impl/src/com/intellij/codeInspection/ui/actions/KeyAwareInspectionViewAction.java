@@ -97,7 +97,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
           view.updateCurrentProfile();
         } else {
           final RefEntity[] selectedElements = view.getTree().getSelectedElements();
-          final Set<PsiElement> files = new HashSet<PsiElement>();
+          final Set<PsiElement> files = new HashSet<>();
           final Project project = view.getProject();
           final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
           for (RefEntity selectedElement : selectedElements) {

@@ -85,7 +85,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
 
   @Override
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<String>(values));
+    myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<>(values));
   }
 
   @NotNull

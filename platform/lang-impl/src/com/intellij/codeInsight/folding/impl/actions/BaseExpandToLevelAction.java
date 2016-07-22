@@ -60,7 +60,7 @@ public abstract class BaseExpandToLevelAction extends EditorAction {
 
         editor.getFoldingModel().runBatchFoldingOperation(() -> {
           Iterator<FoldRegion> regionTreeIterator = FoldingUtil.createFoldTreeIterator(editor);
-          Deque<FoldRegion> currentStack = new LinkedList<FoldRegion>();
+          Deque<FoldRegion> currentStack = new LinkedList<>();
           while (regionTreeIterator.hasNext()) {
             FoldRegion region = regionTreeIterator.next();
             while (!currentStack.isEmpty() && !isChild(currentStack.peek(), region)) {

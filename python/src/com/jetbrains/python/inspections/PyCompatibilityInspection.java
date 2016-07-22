@@ -88,7 +88,7 @@ public class PyCompatibilityInspection extends PyInspection {
   }
 
   private List<LanguageLevel> updateVersionsToProcess() {
-    List<LanguageLevel> result = new ArrayList<LanguageLevel>();
+    List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
       LanguageLevel level = LanguageLevel.fromPythonVersion(version);
@@ -106,7 +106,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ElementsChooser<String> chooser = new ElementsChooser<String>(true);
+    final ElementsChooser<String> chooser = new ElementsChooser<>(true);
     chooser.setElements(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS, false);
     chooser.markElements(ourVersions);
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
@@ -274,7 +274,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
-      final List<PyElement> problemElements = new ArrayList<PyElement>();
+      final List<PyElement> problemElements = new ArrayList<>();
       if (node.getParent() instanceof PyClass) {
         for (final PyExpression expression : node.getArguments()) {
           if (expression instanceof PyKeywordArgument)

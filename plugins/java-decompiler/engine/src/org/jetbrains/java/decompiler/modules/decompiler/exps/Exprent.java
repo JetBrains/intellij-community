@@ -76,7 +76,7 @@ public class Exprent implements IMatchable {
   }
 
   public boolean containsExprent(Exprent exprent) {
-    List<Exprent> listTemp = new ArrayList<Exprent>(getAllExprents(true));
+    List<Exprent> listTemp = new ArrayList<>(getAllExprents(true));
     listTemp.add(this);
 
     for (Exprent lstExpr : listTemp) {
@@ -102,7 +102,7 @@ public class Exprent implements IMatchable {
     List<Exprent> lstAllExprents = getAllExprents(true);
     lstAllExprents.add(this);
 
-    Set<VarVersionPair> set = new HashSet<VarVersionPair>();
+    Set<VarVersionPair> set = new HashSet<>();
     for (Exprent expr : lstAllExprents) {
       if (expr.type == EXPRENT_VAR) {
         set.add(new VarVersionPair((VarExprent)expr));
@@ -128,7 +128,7 @@ public class Exprent implements IMatchable {
   public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
     if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
       if (bytecode == null) {
-        bytecode = new HashSet<Integer>(bytecodeOffsets);
+        bytecode = new HashSet<>(bytecodeOffsets);
       }
       else {
         bytecode.addAll(bytecodeOffsets);

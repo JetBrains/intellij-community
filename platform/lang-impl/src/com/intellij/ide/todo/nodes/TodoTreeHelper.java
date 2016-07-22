@@ -54,8 +54,8 @@ public class TodoTreeHelper {
                                            Module module,
                                            TodoTreeBuilder builder) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-    final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
+    final List<VirtualFile> roots = new ArrayList<>();
+    final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
       ContainerUtil.addAll(roots, projectRootManager.getContentRoots());
@@ -81,7 +81,7 @@ public class TodoTreeHelper {
   }
 
  public Collection<AbstractTreeNode> getDirectoryChildren(PsiDirectory psiDirectory, TodoTreeBuilder builder, boolean isFlatten) {
-    ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> children = new ArrayList<>();
     if (!isFlatten || !skipDirectory(psiDirectory)) {
       final Iterator<PsiFile> iterator = builder.getFiles(psiDirectory);
       while (iterator.hasNext()) {

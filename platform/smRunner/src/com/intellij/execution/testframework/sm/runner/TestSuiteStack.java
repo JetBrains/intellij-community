@@ -34,7 +34,7 @@ public class TestSuiteStack {
 
   @NonNls private static final String EMPTY = "empty";
 
-  private final Stack<SMTestProxy> myStack = new Stack<SMTestProxy>();
+  private final Stack<SMTestProxy> myStack = new Stack<>();
   private final String myTestFrameworkName;
 
   /**

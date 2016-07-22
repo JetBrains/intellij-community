@@ -55,7 +55,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   public UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiElement element = myChangeInfo.getMethod();
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
@@ -73,7 +73,7 @@ class JavaChangeSignatureUsageSearcher {
     PsiMethod[] overridingMethods = findSimpleUsagesWithoutParameters(method, result, true, true, true);
     findUsagesInCallers(result);
 
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(overridingMethods));
+    final ArrayList<PsiMethod> methods = new ArrayList<>(Arrays.asList(overridingMethods));
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
@@ -96,7 +96,7 @@ class JavaChangeSignatureUsageSearcher {
       for (PsiMethod caller : changeInfo.propagateExceptionsMethods) {
         usages.add(new CallerUsageInfo(caller, changeInfo.propagateParametersMethods.contains(caller), true));
       }
-      Set<PsiMethod> merged = new HashSet<PsiMethod>();
+      Set<PsiMethod> merged = new HashSet<>();
       merged.addAll(changeInfo.propagateParametersMethods);
       merged.addAll(changeInfo.propagateExceptionsMethods);
       for (final PsiMethod method : merged) {
@@ -110,7 +110,7 @@ class JavaChangeSignatureUsageSearcher {
     if (!JavaLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
+    final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<>();
     if (isOriginal) {
       ContainerUtil.addAll(deletedOrRenamedParameters, parameters);
       for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {

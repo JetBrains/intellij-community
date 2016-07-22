@@ -51,7 +51,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final ProjectFileIndex myProjectFileIndex;
 
   private volatile Set<Module> myModules;
-  private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<VirtualFile>();
+  private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
 
   public ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());

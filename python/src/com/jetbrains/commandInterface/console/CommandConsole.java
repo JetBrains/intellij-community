@@ -102,7 +102,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Listener that will be notified when console state (mode?) changed.
    */
   @NotNull
-  private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  private final Collection<Runnable> myStateChangeListeners = new ArrayList<>();
   /**
    * Process handler currently running on console (if any)
    *

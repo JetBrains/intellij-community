@@ -47,7 +47,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
   @Override
   public void configureAnnotations() {
-    final List<String> list = new ArrayList<String>(ADDITIONAL_ANNOTATIONS);
+    final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
     final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Do not check if annotated by", true);
     new DialogWrapper(myProject) {
       {

@@ -30,7 +30,7 @@ import static com.intellij.ui.GuiUtils.getTextWithoutMnemonicEscaping;
  * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
  */
 public interface CheckoutProvider {
-  @NonNls ExtensionPointName<CheckoutProvider> EXTENSION_POINT_NAME = new ExtensionPointName<CheckoutProvider>("com.intellij.checkoutProvider");
+  @NonNls ExtensionPointName<CheckoutProvider> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.checkoutProvider");
 
   /**
    * @param project current project or default project if no project is open.

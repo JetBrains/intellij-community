@@ -45,7 +45,7 @@ public class PasswordDatabase implements PersistentStateComponent<PasswordDataba
   /**
    * The password database
    */
-  private transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<ByteArrayWrapper, byte[]>();
+  private transient final Map<ByteArrayWrapper, byte[]> myDatabase = new HashMap<>();
   /**
    * OS-specific information about master password
    */
@@ -136,7 +136,7 @@ public class PasswordDatabase implements PersistentStateComponent<PasswordDataba
     String pi;
     synchronized (myDatabase) {
       pi = toHex(myMasterPasswordInfo);
-      sorted = new TreeMap<ByteArrayWrapper, byte[]>(myDatabase);
+      sorted = new TreeMap<>(myDatabase);
     }
     String[][] db = new String[2][sorted.size()];
     int i = 0;

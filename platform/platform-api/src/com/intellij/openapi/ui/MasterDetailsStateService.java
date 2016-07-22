@@ -37,7 +37,7 @@ import java.util.*;
 @State(name = "masterDetails", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final SkipDefaultValuesSerializationFilters mySerializationFilter = new SkipDefaultValuesSerializationFilters();
-  private final Map<String, ComponentState> myStates = new HashMap<String, ComponentState>();
+  private final Map<String, ComponentState> myStates = new HashMap<>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, MasterDetailsStateService.class);
@@ -94,7 +94,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   }
 
   public static class States {
-    private List<ComponentState> myStates = new ArrayList<ComponentState>();
+    private List<ComponentState> myStates = new ArrayList<>();
 
     @Tag("states")
     @AbstractCollection(surroundWithTag = false)

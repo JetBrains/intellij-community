@@ -196,18 +196,18 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   @TestOnly
   public Map<Class, List> getListeners() {
-    Map<Class, List> myCopy = new LinkedHashMap<Class, List>();
-    myCopy.put(DocumentListener.class, new ArrayList<DocumentListener>(myDocumentMulticaster.getListeners()));
-    myCopy.put(EditReadOnlyListener.class, new ArrayList<EditReadOnlyListener>(myEditReadOnlyMulticaster.getListeners()));
+    Map<Class, List> myCopy = new LinkedHashMap<>();
+    myCopy.put(DocumentListener.class, new ArrayList<>(myDocumentMulticaster.getListeners()));
+    myCopy.put(EditReadOnlyListener.class, new ArrayList<>(myEditReadOnlyMulticaster.getListeners()));
 
-    myCopy.put(EditorMouseListener.class, new ArrayList<EditorMouseListener>(myEditorMouseMulticaster.getListeners()));
-    myCopy.put(EditorMouseMotionListener.class, new ArrayList<EditorMouseMotionListener>(myEditorMouseMotionMulticaster.getListeners()));
-    myCopy.put(ErrorStripeListener.class, new ArrayList<ErrorStripeListener>(myErrorStripeMulticaster.getListeners()));
-    myCopy.put(CaretListener.class, new ArrayList<CaretListener>(myCaretMulticaster.getListeners()));
-    myCopy.put(SelectionListener.class, new ArrayList<SelectionListener>(mySelectionMulticaster.getListeners()));
-    myCopy.put(VisibleAreaListener.class, new ArrayList<VisibleAreaListener>(myVisibleAreaMulticaster.getListeners()));
-    myCopy.put(PropertyChangeListener.class, new ArrayList<PropertyChangeListener>(myPropertyChangeMulticaster.getListeners()));
-    myCopy.put(FocusChangeListener.class, new ArrayList<FocusChangeListener>(myFocusChangeListenerMulticaster.getListeners()));
+    myCopy.put(EditorMouseListener.class, new ArrayList<>(myEditorMouseMulticaster.getListeners()));
+    myCopy.put(EditorMouseMotionListener.class, new ArrayList<>(myEditorMouseMotionMulticaster.getListeners()));
+    myCopy.put(ErrorStripeListener.class, new ArrayList<>(myErrorStripeMulticaster.getListeners()));
+    myCopy.put(CaretListener.class, new ArrayList<>(myCaretMulticaster.getListeners()));
+    myCopy.put(SelectionListener.class, new ArrayList<>(mySelectionMulticaster.getListeners()));
+    myCopy.put(VisibleAreaListener.class, new ArrayList<>(myVisibleAreaMulticaster.getListeners()));
+    myCopy.put(PropertyChangeListener.class, new ArrayList<>(myPropertyChangeMulticaster.getListeners()));
+    myCopy.put(FocusChangeListener.class, new ArrayList<>(myFocusChangeListenerMulticaster.getListeners()));
     return myCopy;
   }
 }

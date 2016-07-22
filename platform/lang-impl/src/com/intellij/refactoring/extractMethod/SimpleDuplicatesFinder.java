@@ -34,11 +34,11 @@ public class SimpleDuplicatesFinder {
                                 Collection<String> variables,
                                 AbstractVariableData[] variableData) {
     myOutputVariables = variables;
-    myParameters = new HashSet<String>();
+    myParameters = new HashSet<>();
     for (AbstractVariableData data : variableData) {
       myParameters.add(data.getOriginalName());
     }
-    myPattern = new ArrayList<PsiElement>();
+    myPattern = new ArrayList<>();
     PsiElement sibling = statement1;
 
     do {
@@ -50,7 +50,7 @@ public class SimpleDuplicatesFinder {
 
   public List<SimpleMatch> findDuplicates(@Nullable final List<PsiElement> scope,
                                           @NotNull final PsiElement generatedMethod) {
-    final List<SimpleMatch> result = new ArrayList<SimpleMatch>();
+    final List<SimpleMatch> result = new ArrayList<>();
     annotatePattern();
     if (scope != null) {
       for (PsiElement element : scope) {
@@ -109,7 +109,7 @@ public class SimpleDuplicatesFinder {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
     }
     PsiElement sibling = candidate;
-    final ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> candidates = new ArrayList<>();
     for (int i = 0; i != myPattern.size(); ++i) {
       if (sibling == null) return null;
 

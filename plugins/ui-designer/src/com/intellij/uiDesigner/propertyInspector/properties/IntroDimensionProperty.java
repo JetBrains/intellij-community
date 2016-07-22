@@ -48,7 +48,7 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
       new IntFieldProperty(this, "height", -1, JBUI.emptySize()),
     };
     myRenderer = new DimensionRenderer();
-    myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });
+    myEditor = new IntRegexEditor<>(Dimension.class, myRenderer, new int[]{-1, -1});
   }
 
   @Override

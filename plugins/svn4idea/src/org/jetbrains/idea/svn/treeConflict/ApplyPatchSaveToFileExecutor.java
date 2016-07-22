@@ -104,7 +104,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
 
   public static List<FilePatch> patchGroupsToOneGroup(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, VirtualFile baseDir)
     throws IOException {
-    final List<FilePatch> textPatches = new ArrayList<FilePatch>();
+    final List<FilePatch> textPatches = new ArrayList<>();
     final String baseDirPath = baseDir.getPath();
 
     for (Map.Entry<VirtualFile, Collection<TextFilePatchInProgress>> entry : patchGroups.entrySet()) {

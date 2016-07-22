@@ -78,7 +78,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   private boolean myInitial = true;
   private boolean myColumnMode;
   private JLabel myPreviewLabel;
-  private Set<ThemeInfo> myThemes = new LinkedHashSet<ThemeInfo>();
+  private Set<ThemeInfo> myThemes = new LinkedHashSet<>();
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());

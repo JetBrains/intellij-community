@@ -51,7 +51,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<AbstractTreeNode>>() {
       @Override
       public Collection<AbstractTreeNode> compute() {
-        Map<ResourceBundle,Collection<PropertiesFile>> childBundles = new THashMap<ResourceBundle, Collection<PropertiesFile>>();
+        Map<ResourceBundle,Collection<PropertiesFile>> childBundles = new THashMap<>();
         for (AbstractTreeNode child : children) {
           Object f = child.getValue();
           if (f instanceof PsiFile) {
@@ -70,7 +70,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
               final ResourceBundle bundle = resourceBundleWithCachedFiles.getBundle();
               Collection<PropertiesFile> files = childBundles.get(bundle);
               if (files == null) {
-                files = new LinkedHashSet<PropertiesFile>();
+                files = new LinkedHashSet<>();
                 childBundles.put(bundle, files);
               }
               files.add(propertiesFile);
@@ -79,7 +79,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
           }
         }
 
-        List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        List<AbstractTreeNode> result = new ArrayList<>();
         for (Map.Entry<ResourceBundle, Collection<PropertiesFile>> entry : childBundles.entrySet()) {
           ResourceBundle resourceBundle = entry.getKey();
           Collection<PropertiesFile> files = entry.getValue();
@@ -129,7 +129,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
         }
       }
     } else if (ResourceBundle.ARRAY_DATA_KEY.is(dataName)) {
-      final List<ResourceBundle> selectedElements = new ArrayList<ResourceBundle>();
+      final List<ResourceBundle> selectedElements = new ArrayList<>();
       for (AbstractTreeNode node : selected) {
         final Object value = node.getValue();
         if (value instanceof ResourceBundle) {

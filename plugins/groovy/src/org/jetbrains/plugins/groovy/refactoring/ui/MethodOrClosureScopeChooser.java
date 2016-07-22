@@ -115,7 +115,7 @@ public class MethodOrClosureScopeChooser {
     });
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
-    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> highlighters = new ArrayList<>();
     final TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     list.addListSelectionListener(new ListSelectionListener() {

@@ -159,7 +159,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   // ! containing self
   public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode) {
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     AbstractTreeNode current = treeNode;
     while (current != null && (!(current instanceof FavoritesRootNode))) {
       result.add(current);

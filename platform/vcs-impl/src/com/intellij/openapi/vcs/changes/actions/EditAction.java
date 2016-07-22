@@ -44,7 +44,7 @@ public class EditAction extends AnAction {
   }
 
   public static void editFilesAndShowErrors(Project project, List<VirtualFile> files) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsException> exceptions = new ArrayList<>();
     editFiles(project, files, exceptions);
     if (!exceptions.isEmpty()) {
       AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("edit.errors"));

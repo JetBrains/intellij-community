@@ -52,7 +52,8 @@ public class DomElementsToggleAction extends ToggleAction {
 
     myText = TypePresentationService.getService().getTypePresentableName(myClass);
 
-    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(AbstractDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
+    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(AbstractDomElementNode.TREE_NODES_HIDERS_KEY,
+                                                                                     new HashMap<>());
 
     if(getHiders().get(myClass) == null) getHiders().put(myClass, true);
   }

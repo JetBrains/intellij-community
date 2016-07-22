@@ -333,7 +333,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public static List<String> getAddedPaths(Sdk pythonSdk) {
-    List<String> pathList = new ArrayList<String>();
+    List<String> pathList = new ArrayList<>();
     final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
       final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPathFiles();
@@ -398,7 +398,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                      boolean addSourceRoots) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
     if (module != null) {
-      Set<Module> dependencies = new HashSet<Module>();
+      Set<Module> dependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(module, dependencies);
 
       if (addContentRoots) {

@@ -131,7 +131,7 @@ public class StubGenerator implements ClassItemGenerator {
     /************* parameters **********/
     GenerationUtil.writeParameterList(text, constructor.getParameterList().getParameters(), classNameProvider, null);
 
-    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
+    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<>());
     if (!throwsTypes.isEmpty()) {
       text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(' ');
     }
@@ -314,7 +314,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    List<PsiMethod> methods = new ArrayList<>();
     for (PsiMethod method : typeDefinition.getMethods()) {
       if (method instanceof DelegatedMethod) {
         PsiMethod prototype = ((DelegatedMethod)method).getPrototype();
@@ -434,7 +434,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
-    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
 
     if (implementsTypes.isEmpty()) return;

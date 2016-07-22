@@ -156,7 +156,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         }
 
         final StringBuilder sb = new StringBuilder("\n");
-        final Set<String> vars = new LinkedHashSet<String>();
+        final Set<String> vars = new LinkedHashSet<>();
 
         final int startOffset = start.getTextRange().getStartOffset();
         final int endOffset = end.getTextRange().getEndOffset();

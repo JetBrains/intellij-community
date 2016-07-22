@@ -44,7 +44,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   static final String KEYMAPS_DIR_PATH = "keymaps";
 
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
+  private final Map<String, String> myBoundShortcuts = new HashMap<>();
 
   @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
@@ -106,7 +106,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
   @NotNull
   public List<Keymap> getKeymaps(@NotNull Condition<Keymap> additionalFilter) {
-    List<Keymap> result = new ArrayList<Keymap>();
+    List<Keymap> result = new ArrayList<>();
     for (Keymap keymap : mySchemesManager.getAllSchemes()) {
       if (!keymap.getPresentableName().startsWith("$") && additionalFilter.value(keymap)) {
         result.add(keymap);

@@ -39,7 +39,7 @@ import java.util.Map;
 
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
   private final Project myProject;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<AdditionalTabComponent, Content>();
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<>();
   private final GlobalSearchScope mySearchScope;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {

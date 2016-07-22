@@ -37,7 +37,7 @@ public class MavenPluginParamInfo {
     Map<String, Map> res = myMap;
 
     if (res == null) {
-      res = new HashMap<String, Map>();
+      res = new HashMap<>();
 
       for (MavenPluginDescriptor pluginDescriptor : MavenPluginDescriptor.EP_NAME.getExtensions()) {
         if (pluginDescriptor.params == null) continue;
@@ -154,7 +154,7 @@ public class MavenPluginParamInfo {
         ParamInfo info = goalsMap.get(goal.getStringValue());
         if (info != null) {
           if (infos == null) {
-            infos = new SmartList<ParamInfo>();
+            infos = new SmartList<>();
           }
 
           infos.add(info);

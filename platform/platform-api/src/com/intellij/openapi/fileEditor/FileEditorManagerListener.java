@@ -23,7 +23,7 @@ import java.util.EventListener;
 
 public interface FileEditorManagerListener extends EventListener{
   Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER =
-    new Topic<FileEditorManagerListener>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+    new Topic<>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
@@ -33,7 +33,7 @@ public interface FileEditorManagerListener extends EventListener{
 
   interface Before extends EventListener {
     Topic<Before> FILE_EDITOR_MANAGER =
-      new Topic<Before>("file editor before events", Before.class, Topic.BroadcastDirection.TO_PARENT);
+      new Topic<>("file editor before events", Before.class, Topic.BroadcastDirection.TO_PARENT);
 
     void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
     void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);

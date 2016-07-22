@@ -53,7 +53,7 @@ import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.A
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
 
-  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
+  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<>();
 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");

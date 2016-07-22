@@ -25,7 +25,7 @@ public class TreeBasedPathsSet {
   private final TreeBasedMap<Object> myMap;
 
   public TreeBasedPathsSet(StringInterner interner, char separator) {
-    myMap = new TreeBasedMap<Object>(interner, separator);
+    myMap = new TreeBasedMap<>(interner, separator);
   }
 
   public void add(String path) {

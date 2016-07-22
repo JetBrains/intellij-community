@@ -53,8 +53,8 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   @Nullable private final String myCategory;
 
   private List<WizardInputField> myInputFields = Collections.emptyList();
-  private List<String> myFrameworks = new ArrayList<String>();
-  private List<Artifact> myArtifacts = new ArrayList<Artifact>();
+  private List<String> myFrameworks = new ArrayList<>();
+  private List<Artifact> myArtifacts = new ArrayList<>();
 
   public ArchivedProjectTemplate(@NotNull String displayName, @Nullable String category) {
     myDisplayName = displayName;

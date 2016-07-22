@@ -40,7 +40,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
   public MergeAllWithBranchCopyPointTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     super(mergeContext, interaction, "merge all", Where.AWT);
 
-    myData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
+    myData = new AtomicReference<>();
   }
 
   @Override

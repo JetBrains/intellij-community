@@ -127,7 +127,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     }
 
     final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
 
       final Semaphore done = new Semaphore();

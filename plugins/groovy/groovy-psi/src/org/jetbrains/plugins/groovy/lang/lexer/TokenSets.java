@@ -244,7 +244,7 @@ public abstract class TokenSets {
 
   public static final TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 
-  public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<IElementType, IElementType>();
+  public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<>();
   static {
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMINUS);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mPLUS);

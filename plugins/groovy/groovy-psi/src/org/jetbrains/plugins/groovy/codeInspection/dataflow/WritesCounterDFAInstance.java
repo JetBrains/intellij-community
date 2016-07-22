@@ -67,7 +67,7 @@ public class WritesCounterDFAInstance implements DfaInstance<TObjectIntHashMap<G
   @NotNull
   @Override
   public TObjectIntHashMap<GrVariable> initial() {
-    return new TObjectIntHashMap<GrVariable>();
+    return new TObjectIntHashMap<>();
   }
 
   @Override

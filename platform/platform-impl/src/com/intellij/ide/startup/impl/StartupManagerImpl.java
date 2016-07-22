@@ -281,7 +281,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
       if (!manualWatchRoots.isEmpty()) {
-        List<String> nonWatched = new SmartList<String>();
+        List<String> nonWatched = new SmartList<>();
         for (VirtualFile root : roots) {
           if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
           String rootPath = root.getPath();

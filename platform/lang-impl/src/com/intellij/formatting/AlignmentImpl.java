@@ -50,7 +50,7 @@ public class AlignmentImpl extends Alignment {
   AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
     myAnchor = anchor;
-    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper>(myOffsetRespBlocks);
+    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<>(myOffsetRespBlocks);
   }
 
   public boolean isAllowBackwardShift() {
@@ -140,7 +140,7 @@ public class AlignmentImpl extends Alignment {
       return;
     }
     if (myOffsetRespBlocks == EMPTY) {
-      myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>(1);
+      myOffsetRespBlocks = new ArrayList<>(1);
       myOffsetRespBlocksCalculator.setBlocksList(myOffsetRespBlocks);
     }
     myOffsetRespBlocks.add(block);

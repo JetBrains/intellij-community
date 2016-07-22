@@ -58,7 +58,7 @@ public class RemoveArgumentEqualDefaultQuickFix implements LocalQuickFix {
     StringBuilder newArgumentList = new StringBuilder("foo(");
 
     PyExpression[] arguments = argumentList.getArguments();
-    List<String> newArgs = new ArrayList<String>();
+    List<String> newArgs = new ArrayList<>();
     for (int i = 0; i != arguments.length; ++i) {
       if (!myProblemElements.contains(arguments[i])) {
         newArgs.add(arguments[i].getText());

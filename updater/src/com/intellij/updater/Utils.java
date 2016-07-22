@@ -195,7 +195,7 @@ public class Utils {
   }
 
   public static LinkedHashSet<String> collectRelativePaths(File dir, boolean includeDirectories) {
-    LinkedHashSet<String> result = new LinkedHashSet<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<>();
     collectRelativePaths(dir, result, null, includeDirectories);
     return result;
   }

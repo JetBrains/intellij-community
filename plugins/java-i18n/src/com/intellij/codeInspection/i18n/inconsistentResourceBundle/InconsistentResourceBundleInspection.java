@@ -57,7 +57,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       };
     }
   };
-  private final Map<String, Boolean> mySettings = new LinkedHashMap<String, Boolean>();
+  private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
   @Override
   @NotNull
@@ -132,7 +132,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   public void inspectionStarted(@NotNull InspectionManager manager,
                                 @NotNull GlobalInspectionContext globalContext,
                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.putUserData(VISITED_BUNDLES_KEY, new THashSet<ResourceBundle>());
+    globalContext.putUserData(VISITED_BUNDLES_KEY, new THashSet<>());
   }
 
   @Override
@@ -149,7 +149,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
     if (!visitedBundles.add(resourceBundle)) return;
     List<PropertiesFile> files = resourceBundle.getPropertiesFiles();
     if (files.size() < 2) return;
-    BidirectionalMap<PropertiesFile, PropertiesFile> parents = new BidirectionalMap<PropertiesFile, PropertiesFile>();
+    BidirectionalMap<PropertiesFile, PropertiesFile> parents = new BidirectionalMap<>();
     for (PropertiesFile f : files) {
       PropertiesFile parent = PropertiesUtil.getParent(f, files);
       if (parent != null) {
@@ -163,9 +163,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
         return key.getNamesMap();
       }
     };
-    Map<PropertiesFile, Set<String>> keysUpToParent = new THashMap<PropertiesFile, Set<String>>();
+    Map<PropertiesFile, Set<String>> keysUpToParent = new THashMap<>();
     for (PropertiesFile f : files) {
-      Set<String> keys = new THashSet<String>(propertiesFilesNamesMaps.get(f).keySet());
+      Set<String> keys = new THashSet<>(propertiesFilesNamesMaps.get(f).keySet());
       PropertiesFile parent = parents.get(f);
       while (parent != null) {
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());

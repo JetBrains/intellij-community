@@ -330,7 +330,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
 
   private static List<TextRange> getMatchingRanges(Matcher matcher, final int length) {
-    final List<TextRange> list = new SmartList<TextRange>();
+    final List<TextRange> list = new SmartList<>();
     int start = 0;
     while (start < length && matcher.find(start)) {
       final int groupCount = matcher.groupCount();

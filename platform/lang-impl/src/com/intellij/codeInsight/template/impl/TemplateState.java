@@ -84,7 +84,7 @@ public class TemplateState implements Disposable {
   private Map<String, String> myPredefinedVariableValues;
 
   private RangeMarker myTemplateRange = null;
-  private final List<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
+  private final List<RangeHighlighter> myTabStopHighlighters = new ArrayList<>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
   private boolean ourLookupShown = false;
@@ -1181,7 +1181,7 @@ public class TemplateState implements Disposable {
   }
 
   private void initTabStopHighlighters() {
-    final Set<String> vars = new HashSet<String>();
+    final Set<String> vars = new HashSet<>();
     for (int i = 0; i < myTemplate.getVariableCount(); i++) {
       String variableName = myTemplate.getVariableNameAt(i);
       if (!vars.add(variableName)) continue;

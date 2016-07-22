@@ -86,7 +86,7 @@ public class ConversionServiceImpl extends ConversionService {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = getConversionRunners(context);
 
-      Set<File> affectedFiles = new HashSet<File>();
+      Set<File> affectedFiles = new HashSet<>();
       for (ConversionRunner runner : runners) {
         affectedFiles.addAll(runner.getAffectedFiles());
       }
@@ -97,7 +97,7 @@ public class ConversionServiceImpl extends ConversionService {
         return ConversionResultImpl.ERROR_OCCURRED;
       }
       final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
-      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
+      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : runners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
@@ -150,7 +150,7 @@ public class ConversionServiceImpl extends ConversionService {
     final List<ConversionRunner> converters = getSortedConverters(context);
     final Iterator<ConversionRunner> iterator = converters.iterator();
 
-    Set<String> convertersToRunIds = new HashSet<String>();
+    Set<String> convertersToRunIds = new HashSet<>();
     while (iterator.hasNext()) {
       ConversionRunner runner = iterator.next();
       boolean conversionNeeded = runner.isConversionNeeded();
@@ -225,7 +225,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   private static Map<String, Long> getProjectFilesMap(ConversionContextImpl context) {
-    final Map<String, Long> map = new HashMap<String, Long>();
+    final Map<String, Long> map = new HashMap<>();
     for (File file : context.getAllProjectFiles()) {
       if (file.exists()) {
         map.put(file.getAbsolutePath(), file.lastModified());
@@ -235,7 +235,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   private static List<ConversionRunner> createConversionRunners(ConversionContextImpl context, final Set<String> performedConversionIds) {
-    List<ConversionRunner> runners = new ArrayList<ConversionRunner>();
+    List<ConversionRunner> runners = new ArrayList<>();
     final ConverterProvider[] providers = ConverterProvider.EP_NAME.getExtensions();
     for (ConverterProvider provider : providers) {
       if (!performedConversionIds.contains(provider.getId())) {
@@ -243,7 +243,7 @@ public class ConversionServiceImpl extends ConversionService {
       }
     }
     final CachingSemiGraph<ConverterProvider> graph = CachingSemiGraph.create(new ConverterProvidersGraph(providers));
-    final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<ConverterProvider>(GraphGenerator.create(graph));
+    final DFSTBuilder<ConverterProvider> builder = new DFSTBuilder<>(GraphGenerator.create(graph));
     if (!builder.isAcyclic()) {
       final Pair<ConverterProvider,ConverterProvider> pair = builder.getCircularDependency();
       LOG.error("cyclic dependencies between converters: " + pair.getFirst().getId() + " and " + pair.getSecond().getId());
@@ -332,7 +332,7 @@ public class ConversionServiceImpl extends ConversionService {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = createConversionRunners(context, Collections.<String>emptySet());
       final File backupFile = ProjectConversionUtil.backupFile(moduleFile);
-      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
+      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : runners) {
         if (runner.isModuleConversionNeeded(moduleFile)) {
           runner.convertModule(moduleFile);
@@ -376,12 +376,12 @@ public class ConversionServiceImpl extends ConversionService {
   public static class CachedConversionResult {
     @Tag("applied-converters")
     @AbstractCollection(surroundWithTag = false, elementTag = "converter", elementValueAttribute = "id")
-    public Set<String> myAppliedConverters = new HashSet<String>();
+    public Set<String> myAppliedConverters = new HashSet<>();
 
     @Tag("project-files")
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "file",
                    keyAttributeName = "path", valueAttributeName = "timestamp")
-    public Map<String, Long> myProjectFilesTimestamps = new HashMap<String, Long>();
+    public Map<String, Long> myProjectFilesTimestamps = new HashMap<>();
   }
 
   private static class ConverterProvidersGraph implements GraphGenerator.SemiGraph<ConverterProvider> {
@@ -398,7 +398,7 @@ public class ConversionServiceImpl extends ConversionService {
 
     @Override
     public Iterator<ConverterProvider> getIn(ConverterProvider n) {
-      List<ConverterProvider> preceding = new ArrayList<ConverterProvider>();
+      List<ConverterProvider> preceding = new ArrayList<>();
       for (String id : n.getPrecedingConverterIds()) {
         for (ConverterProvider provider : myProviders) {
           if (provider.getId().equals(id)) {

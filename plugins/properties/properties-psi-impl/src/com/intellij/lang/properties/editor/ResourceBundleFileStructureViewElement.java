@@ -67,7 +67,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   @NotNull
   public StructureViewTreeElement[] getChildren() {
     final MultiMap<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
-    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
+    List<StructureViewTreeElement> result = new ArrayList<>(propertyNames.size());
     for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
       final Collection<IProperty> properties = entry.getValue();
       final PropertiesAnchorizer.PropertyAnchor anchor = myAnchorizer.createOrUpdate(properties);
@@ -96,7 +96,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
-    TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<String>();
+    TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<>();
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
       for (IProperty property : file.getProperties()) {

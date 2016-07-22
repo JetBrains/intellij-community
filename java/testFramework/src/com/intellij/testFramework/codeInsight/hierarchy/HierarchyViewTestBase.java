@@ -133,7 +133,7 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
 
     final Object[] children = treeStructure.getChildElements(descriptor);
     //noinspection unchecked
-    final List<Element> expectedChildren = new ArrayList<Element>(element.getChildren(NODE_ELEMENT_NAME));
+    final List<Element> expectedChildren = new ArrayList<>(element.getChildren(NODE_ELEMENT_NAME));
 
     final StringBuilder messageBuilder = new StringBuilder("Actual children of [" + descriptor.getHighlightedText().getText() + "]:\n");
     for (Object child : children) {

@@ -118,7 +118,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   }
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-    List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+    List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
@@ -268,8 +268,8 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   private static class MyColorSchemeDelegate implements EditorColorsScheme {
 
     private final FontPreferences myFontPreferences = new FontPreferences();
-    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
-    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
+    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<>();
     private Map<EditorFontType, Font> myFontsMap = null;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
@@ -299,7 +299,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
       myFontPreferences.clear();
       myFontPreferences.register(consoleFontName, consoleFontSize);
 
-      myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
+      myFontsMap = new EnumMap<>(EditorFontType.class);
 
       Font plainFont = new Font(consoleFontName, Font.PLAIN, consoleFontSize);
       Font boldFont = new Font(consoleFontName, Font.BOLD, consoleFontSize);

@@ -31,7 +31,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   @NotNull
   protected FilePath[] getRoots(@NotNull final VcsContext context) {
     Project project = context.getProject();
-    ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
+    ArrayList<FilePath> virtualFiles = new ArrayList<>();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     for(AbstractVcs vcs: vcsManager.getAllActiveVcss()) {
       if (vcs.getCheckinEnvironment() != null) {

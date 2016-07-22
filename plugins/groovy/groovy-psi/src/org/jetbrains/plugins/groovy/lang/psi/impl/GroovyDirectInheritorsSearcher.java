@@ -48,7 +48,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
   private static List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope, boolean includeAnonymous) {
     final String name = clazz.getName();
     if (name == null) return Collections.emptyList();
-    final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> inheritors = new ArrayList<>();
     for (GrReferenceList list : StubIndex.getElements(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
                                                       GrReferenceList.class)) {
       final PsiElement parent = list.getParent();

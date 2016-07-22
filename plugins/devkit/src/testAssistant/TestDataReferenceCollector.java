@@ -33,7 +33,7 @@ public class TestDataReferenceCollector {
   private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
   private final String myTestDataPath;
   private final String myTestName;
-  private final List<String> myLogMessages = new ArrayList<String>();
+  private final List<String> myLogMessages = new ArrayList<>();
   private PsiClass myContainingClass;
   private boolean myFoundTestDataParameters = false;
 
@@ -48,7 +48,7 @@ public class TestDataReferenceCollector {
   @Nullable
   List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
     myContainingClass = method.getContainingClass();
-    List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>(), new HashSet<PsiMethod>());
+    List<String> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
@@ -63,7 +63,7 @@ public class TestDataReferenceCollector {
   private List<String> collectTestDataReferences(final PsiMethod method,
                                                  final Map<String, Computable<String>> argumentMap,
                                                  final HashSet<PsiMethod> proceed) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     if (myTestDataPath == null) {
       return result;
     }
@@ -114,7 +114,7 @@ public class TestDataReferenceCollector {
   }
 
   private Map<String, Computable<String>> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
-    Map<String, Computable<String>> result = new HashMap<String, Computable<String>>();
+    Map<String, Computable<String>> result = new HashMap<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length && i < parameters.length; i++) {

@@ -242,10 +242,10 @@ public class GitHistoryUtils {
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
-    final AtomicReference<String> firstCommit = new AtomicReference<String>(startingRevision.asString());
-    final AtomicReference<String> firstCommitParent = new AtomicReference<String>(firstCommit.get());
-    final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(filePath);
-    final AtomicReference<GitLineHandler> logHandler = new AtomicReference<GitLineHandler>();
+    final AtomicReference<String> firstCommit = new AtomicReference<>(startingRevision.asString());
+    final AtomicReference<String> firstCommitParent = new AtomicReference<>(firstCommit.get());
+    final AtomicReference<FilePath> currentPath = new AtomicReference<>(filePath);
+    final AtomicReference<GitLineHandler> logHandler = new AtomicReference<>();
     final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
 
     final Consumer<GitLogRecord> resultAdapter = new Consumer<GitLogRecord>() {
@@ -446,7 +446,7 @@ public class GitHistoryUtils {
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(hashes));
+    h.addParameters(new ArrayList<>(hashes));
     h.endOptions();
 
     String output = h.run();
@@ -455,7 +455,7 @@ public class GitHistoryUtils {
     return ContainerUtil.map(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
       @Override
       public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<Hash>();
+        List<Hash> parents = new SmartList<>();
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
@@ -525,7 +525,7 @@ public class GitHistoryUtils {
 
     final StringBuilder record = new StringBuilder();
     final AtomicInteger records = new AtomicInteger();
-    final Ref<VcsException> ex = new Ref<VcsException>();
+    final Ref<VcsException> ex = new Ref<>();
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
@@ -720,8 +720,8 @@ public class GitHistoryUtils {
                                               @Nullable VirtualFile root,
                                               @NotNull VcsRevisionNumber startingFrom,
                                               String... parameters) throws VcsException {
-    final List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<VcsFileRevision> rc = new ArrayList<>();
+    final List<VcsException> exceptions = new ArrayList<>();
 
     history(project, path, root, startingFrom, new Consumer<GitFileRevision>() {
       @Override public void consume(GitFileRevision gitFileRevision) {
@@ -766,7 +766,7 @@ public class GitHistoryUtils {
     h.addRelativePaths(path);
     String output = h.run();
 
-    final List<Pair<SHAHash, Date>> rc = new ArrayList<Pair<SHAHash, Date>>();
+    final List<Pair<SHAHash, Date>> rc = new ArrayList<>();
     for (GitLogRecord record : parser.parse(output)) {
       record.setUsedHandler(h);
       rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
@@ -783,7 +783,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return LogDataImpl.empty();
     }
-    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.DONT_CONSIDER_SHA);
+    final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
       loadDetails(project, root, withRefs, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
         @Nullable
@@ -890,19 +890,19 @@ public class GitHistoryUtils {
   private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
                                         @NotNull GitLogRecord record) throws VcsException {
     final Collection<String> currentRefs = record.getRefs();
-    List<String> locals = new ArrayList<String>();
-    List<String> remotes = new ArrayList<String>();
-    List<String> tags = new ArrayList<String>();
+    List<String> locals = new ArrayList<>();
+    List<String> remotes = new ArrayList<>();
+    List<String> tags = new ArrayList<>();
     final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
 
     GitHeavyCommit
       gitCommit = new GitHeavyCommit(root, AbstractHash.create(record.getHash()), new SHAHash(record.getHash()), record.getAuthorName(),
-                                      record.getCommitterName(),
-                                      record.getDate(), record.getSubject(), record.getFullMessage(),
-                                      new HashSet<String>(Arrays.asList(record.getParentsHashes())), record.getFilePaths(root),
-                                      record.getAuthorEmail(),
-                                      record.getCommitterEmail(), tags, locals, remotes,
-                                      record.parseChanges(project, root), record.getAuthorTimeStamp());
+                                     record.getCommitterName(),
+                                     record.getDate(), record.getSubject(), record.getFullMessage(),
+                                     new HashSet<>(Arrays.asList(record.getParentsHashes())), record.getFilePaths(root),
+                                     record.getAuthorEmail(),
+                                     record.getCommitterEmail(), tags, locals, remotes,
+                                     record.parseChanges(project, root), record.getAuthorTimeStamp());
     gitCommit.setCurrentBranch(s);
     return gitCommit;
   }
@@ -941,10 +941,10 @@ public class GitHistoryUtils {
                                            COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<String>(commitsIds));
+    h.addParameters(new ArrayList<>(commitsIds));
 
     String output = h.run();
-    final List<GitHeavyCommit> rc = new ArrayList<GitHeavyCommit>();
+    final List<GitHeavyCommit> rc = new ArrayList<>();
     for (GitLogRecord record : parser.parse(output)) {
       final GitHeavyCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);

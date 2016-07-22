@@ -35,7 +35,7 @@ import java.util.List;
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
   private int myModifiers;
-  private final List<GrAnnotation> myAnnotations = new ArrayList<GrAnnotation>();
+  private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
   private final PsiElement myParent;
 

@@ -901,7 +901,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private class OutputFlusher {
-    private final ArrayList<AntMessage> myDelayedMessages = new ArrayList<AntMessage>();
+    private final ArrayList<AntMessage> myDelayedMessages = new ArrayList<>();
 
     public void doFlush() {
       int currentProcessedCount = myCommandsProcessedCount;

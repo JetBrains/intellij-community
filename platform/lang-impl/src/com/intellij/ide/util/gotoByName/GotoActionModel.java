@@ -78,7 +78,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
   protected final SearchableOptionsRegistrar myIndex;
   protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
-  protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<String, ApplyIntentionAction>();
+  protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {

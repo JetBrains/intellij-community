@@ -761,7 +761,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private static final int WIDTH = 10 * 30 + 13;
     private static final int HEIGHT = 62 + 3;
 
-    private List<Color> myRecentColors = new ArrayList<Color>();
+    private List<Color> myRecentColors = new ArrayList<>();
 
     private RecentColorsComponent(final ColorListener listener, boolean restoreColors) {
       addMouseListener(new MouseAdapter() {
@@ -831,7 +831,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     public void saveColors() {
-      final List<String> values = new ArrayList<String>();
+      final List<String> values = new ArrayList<>();
       for (Color recentColor : myRecentColors) {
         if (recentColor == null) break;
         values
@@ -847,7 +847,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
 
       if (myRecentColors.size() > 20) {
-        myRecentColors = new ArrayList<Color>(myRecentColors.subList(myRecentColors.size() - 20, myRecentColors.size()));
+        myRecentColors = new ArrayList<>(myRecentColors.subList(myRecentColors.size() - 20, myRecentColors.size()));
       }
     }
 

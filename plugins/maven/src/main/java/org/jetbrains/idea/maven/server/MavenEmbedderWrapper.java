@@ -136,7 +136,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
       @Override
       public String execute() throws RemoteException, MavenServerProcessCanceledException {
         return getOrCreateWrappee()
-          .evaluateEffectivePom(new File(file.getPath()), new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles));
+          .evaluateEffectivePom(new File(file.getPath()), new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles));
       }
     });
   }

@@ -175,7 +175,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
       }
       final PsiElement referee = reference.getReference().resolve();
       if (referee != null && imported_name != null) {
-        final Collection<PsiReference> references = new ArrayList<PsiReference>();
+        final Collection<PsiReference> references = new ArrayList<>();
         final ScopeOwner scope = PsiTreeUtil.getParentOfType(state.myImportElement, ScopeOwner.class);
         PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
           public boolean execute(@NotNull PsiElement element) {

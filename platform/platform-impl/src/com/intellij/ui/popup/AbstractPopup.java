@@ -302,7 +302,7 @@ public class AbstractPopup implements JBPopup {
     myCallBack = callback;
     myCancelOnClickOutside = cancelOnClickOutside;
     myCancelOnMouseOutCallback = cancelOnMouseOutCallback;
-    myListeners = listeners == null ? new HashSet<JBPopupListener>() : listeners;
+    myListeners = listeners == null ? new HashSet<>() : listeners;
     myUseDimServiceForXYLocation = useDimServiceForXYLocation;
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;

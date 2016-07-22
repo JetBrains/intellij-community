@@ -52,7 +52,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   private static final String SUFFIXES_TAG_NAME = "suffixes";
   private static final String TOOL_KEY = "IncompleteProperty";
 
-  SortedSet<String> mySuffixes = new TreeSet<String>();
+  SortedSet<String> mySuffixes = new TreeSet<>();
 
   @Nullable
   @Override
@@ -136,8 +136,8 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
       }
 
 
-      final TreeSet<String> suffixesToIgnore = new TreeSet<String>(ContainerUtil.map(allFilesWithoutTranslation,
-                                                                                     file -> PropertiesUtil.getSuffix(file)));
+      final TreeSet<String> suffixesToIgnore = new TreeSet<>(ContainerUtil.map(allFilesWithoutTranslation,
+                                                                               file -> PropertiesUtil.getSuffix(file)));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
         DisableInspectionToolAction.modifyAndCommitProjectProfile(
           modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);

@@ -26,7 +26,7 @@ import com.intellij.util.xmlb.annotations.Property;
  */
 public class GroovyClassDescriptor extends AbstractExtensionPointBean {
 
-  public static final ExtensionPointName<GroovyClassDescriptor> EP_NAME = new ExtensionPointName<GroovyClassDescriptor>("org.intellij.groovy.classDescriptor");
+  public static final ExtensionPointName<GroovyClassDescriptor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.classDescriptor");
 
   @Attribute("class")
   //@Required

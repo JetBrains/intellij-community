@@ -31,7 +31,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class PathReference {
-  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableConstantFunction<PathReference, Icon>((Icon)null);
+  public static final NullableFunction<PathReference, Icon> NULL_ICON = new NullableConstantFunction<>((Icon)null);
 
   private final String myPath;
   private final NullableLazyValue<Icon> myIcon;

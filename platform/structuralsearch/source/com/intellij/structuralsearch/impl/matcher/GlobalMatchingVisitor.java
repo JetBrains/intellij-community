@@ -41,7 +41,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   // context of matching
   private MatchContext matchContext;
 
-  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
+  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<>(1);
 
   public PsiElement getElement() {
     return myElement;

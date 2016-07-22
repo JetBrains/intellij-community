@@ -108,7 +108,7 @@ public class NavigationGutterIconBuilder<T> {
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
                                                           @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
                                                           final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
-    return new NavigationGutterIconBuilder<T>(icon, converter, gotoRelatedItemProvider);
+    return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
   public NavigationGutterIconBuilder<T> setTarget(@Nullable T target) {
@@ -163,7 +163,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
-    myCellRenderer = new Computable.PredefinedValueComputable<PsiElementListCellRenderer>(cellRenderer);
+    myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
     return this;
   }
 
@@ -191,10 +191,10 @@ public class NavigationGutterIconBuilder<T> {
     final String tooltip = renderer.getTooltipText();
     NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider,
                                                                                                  evaluateAndForget(myTargets));
-    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDDEN_MARKERS,
-                                                     tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
-                                                     renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
-                                                     gotoTargets);
+    return new RelatedItemLineMarkerInfo<>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDDEN_MARKERS,
+                                           tooltip == null ? null : new ConstantFunction<>(tooltip),
+                                           renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
+                                           gotoTargets);
   }
 
   private static <T> NotNullLazyValue<Collection<? extends GotoRelatedItem>> createGotoTargetsThunk(boolean lazy,
@@ -246,7 +246,7 @@ public class NavigationGutterIconBuilder<T> {
     final boolean empty = isEmpty();
 
     if (myTooltipText == null && !myLazy) {
-      final SortedSet<String> names = new TreeSet<String>();
+      final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
         final String text = myNamer.fun(t);
         if (text != null) {
@@ -289,8 +289,8 @@ public class NavigationGutterIconBuilder<T> {
   private static <T> List<SmartPsiElementPointer> calcPsiTargets(Project project, Collection<? extends T> targets,
                                                                  NotNullFunction<T, Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    Set<PsiElement> elements = new THashSet<PsiElement>();
-    final List<SmartPsiElementPointer> list = new ArrayList<SmartPsiElementPointer>(targets.size());
+    Set<PsiElement> elements = new THashSet<>();
+    final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
         if (elements.add(psiElement) && psiElement.isValid()) {
@@ -306,7 +306,7 @@ public class NavigationGutterIconBuilder<T> {
       return false;
     }
 
-    Set<PsiElement> elements = new THashSet<PsiElement>();
+    Set<PsiElement> elements = new THashSet<>();
     Collection<? extends T> targets = myTargets.getValue();
     for (final T target : targets) {
       for (final PsiElement psiElement : myConverter.fun(target)) {

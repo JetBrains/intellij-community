@@ -114,7 +114,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<PsiParameter>(Arrays.asList(prototype.getParameterList().getParameters())));
+      RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<>(Arrays.asList(prototype.getParameterList().getParameters())));
       TemplateBuilderImpl builder = new TemplateBuilderImpl(prototype);
 
       PsiCodeBlock body = prototype.getBody();
@@ -185,7 +185,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       return idx >= 0 ? new PsiParameter[] {selectedParam} : null;
     }
     final MemberChooser<ParameterClassMember> chooser =
-      new MemberChooser<ParameterClassMember>(members, false, true, element.getProject());
+      new MemberChooser<>(members, false, true, element.getProject());
     if (idx >= 0) {
       chooser.selectElements(new ClassMember[] {members[idx]});
     }

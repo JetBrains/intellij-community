@@ -172,7 +172,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
 
     final PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
-    final Set<LookupElement> variants = new LinkedHashSet<LookupElement>();
+    final Set<LookupElement> variants = new LinkedHashSet<>();
     GrMainCompletionProvider.completeReference(parameters, qualifier, session, qMatcher, element -> {
       if (qMatcher.prefixMatches(element)) {
         variants.add(element);

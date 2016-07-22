@@ -54,7 +54,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   @Override
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
-    List<Key> keys = new ArrayList<Key>();
+    List<Key> keys = new ArrayList<>();
 
     String parentPrefix;
     int parentPrefixLength;
@@ -96,7 +96,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       }
       return 0;
     });
-    List<Group> groups = new ArrayList<Group>();
+    List<Group> groups = new ArrayList<>();
     int groupStart = 0;
     for (int i = 0; i <= keys.size(); i++) {
       if (!isEndOfGroup(i, keys, parentPrefixLength)) {

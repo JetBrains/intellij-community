@@ -132,7 +132,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
                    keyAttributeName = "url",
                    valueAttributeName = "separator",
                    entryTagName = "file")
-    public Map<String, String> mySeparators = new HashMap<String, String>();
+    public Map<String, String> mySeparators = new HashMap<>();
 
     public Map<String, String> getSeparators() {
       return mySeparators;

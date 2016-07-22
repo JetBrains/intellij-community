@@ -222,9 +222,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         createTempFiles(javaParameters);
       }
 
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<Module, List<String>>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<>(
+        (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
 
-      final List<String> testNames = new ArrayList<String>();
+      final List<String> testNames = new ArrayList<>();
 
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
@@ -238,7 +239,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
           if (module != null) {
             List<String> list = perModule.get(module);
             if (list == null) {
-              list = new ArrayList<String>();
+              list = new ArrayList<>();
               perModule.put(module, list);
             }
             list.add(name);

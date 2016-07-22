@@ -66,8 +66,8 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
     final SchemaPrefix prefix = prefixRef.resolve();
     final String ns = prefixRef.getNamespacePrefix();
-    final ArrayList<XmlTag> tags = new ArrayList<XmlTag>();
-    final ArrayList<XmlAttribute> attrs = new ArrayList<XmlAttribute>();
+    final ArrayList<XmlTag> tags = new ArrayList<>();
+    final ArrayList<XmlAttribute> attrs = new ArrayList<>();
     xmlns.getParent().accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {

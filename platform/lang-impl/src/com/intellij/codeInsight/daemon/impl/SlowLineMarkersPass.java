@@ -57,7 +57,7 @@ class SlowLineMarkersPass extends TextEditorHighlightingPass implements LineMark
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
-    List<LineMarkerInfo> markers = new SmartList<LineMarkerInfo>();
+    List<LineMarkerInfo> markers = new SmartList<>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (psiRoot == null || !HighlightingLevelManager.getInstance(myProject).shouldHighlight(psiRoot)) continue;

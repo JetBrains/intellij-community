@@ -41,7 +41,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
   @Override
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
+    final List<UsageFilteringRule> rules = new ArrayList<>();
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
       ContainerUtil.addAll(rules, Extensions.getExtensions(ImportFilteringRule.EP_NAME));
     }

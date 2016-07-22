@@ -49,7 +49,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
       final InputStreamReader stream =
         new InputStreamReader(new Endpoint.Repositories(url).getRepositoryDetailsListJson(null).getInputStream());
       final ArtifactoryModel.RepositoryType[] repos = gson.fromJson(stream, ArtifactoryModel.RepositoryType[].class);
-      final List<MavenRepositoryInfo> result = new ArrayList<MavenRepositoryInfo>(repos.length);
+      final List<MavenRepositoryInfo> result = new ArrayList<>(repos.length);
       for (ArtifactoryModel.RepositoryType repo : repos) {
         result.add(convert(repo));
       }
@@ -72,7 +72,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
   public List<MavenArtifactInfo> findArtifacts(@NotNull String url, @NotNull MavenArtifactInfo template) throws IOException {
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
-      final ArrayList<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>();
+      final ArrayList<MavenArtifactInfo> artifacts = new ArrayList<>();
       final Gson gson = new Gson();
       final String className = template.getClassNames();
       if (className == null || className.length() == 0) {

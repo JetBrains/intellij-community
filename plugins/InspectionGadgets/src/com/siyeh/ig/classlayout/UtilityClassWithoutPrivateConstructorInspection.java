@@ -54,7 +54,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
     if (constructor == null) {

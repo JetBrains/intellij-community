@@ -52,7 +52,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(context);
     //on bundles nodes
     if (resourceBundles != null) {
-      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (ResourceBundle bundle : resourceBundles) {
         result.add(new ResourceBundleNode(project, bundle, viewSettings));
       }

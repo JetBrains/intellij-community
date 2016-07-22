@@ -163,7 +163,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
-    private final Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
+    private final Collection<VirtualFile> myFilesToRefresh = new THashSet<>();
 
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {
@@ -183,7 +183,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
             if (!myProject.isOpen()) return;
             Set<VirtualFile> filesToRefresh;
             synchronized (myFilesToRefresh) {
-              filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
+              filesToRefresh = new THashSet<>(myFilesToRefresh);
             }
             final DefaultMutableTreeNode rootNode = getRootNode();
             if (rootNode != null) {
@@ -208,7 +208,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         return;
       }
       if (node.contains(virtualFile)) {
-        if (containingFiles == null) containingFiles = new SmartList<VirtualFile>();
+        if (containingFiles == null) containingFiles = new SmartList<>();
         containingFiles.add(virtualFile);
       }
     }

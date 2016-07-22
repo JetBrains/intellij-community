@@ -67,7 +67,7 @@ public class GithubGist {
 
   @NotNull
   public List<FileContent> getContent() {
-    List<FileContent> ret = new ArrayList<FileContent>();
+    List<FileContent> ret = new ArrayList<>();
     for (GistFile file : getFiles()) {
       ret.add(new FileContent(file.getFilename(), file.getContent()));
     }

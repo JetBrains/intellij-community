@@ -74,7 +74,7 @@ public final class SocketLock {
 
   private final String myConfigPath;
   private final String mySystemPath;
-  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<Consumer<List<String>>>();
+  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<>();
   private String myToken;
   private BuiltInServer myServer;
 

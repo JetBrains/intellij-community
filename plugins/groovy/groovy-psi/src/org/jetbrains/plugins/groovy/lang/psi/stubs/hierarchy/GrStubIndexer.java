@@ -67,8 +67,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     new StubTree(grFileStub, false);
 
     String pid = "";
-    ArrayList<ClassDecl> classList = new ArrayList<ClassDecl>();
-    Set<String> usedNames = new HashSet<String>();
+    ArrayList<ClassDecl> classList = new ArrayList<>();
+    Set<String> usedNames = new HashSet<>();
     for (StubElement<?> el : grFileStub.getChildrenStubs()) {
       if (el instanceof GrPackageDefinitionStub) {
         GrPackageDefinitionStub packageStub = (GrPackageDefinitionStub)el;
@@ -85,7 +85,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
         }
       }
     }
-    ArrayList<Import> importList = new ArrayList<Import>();
+    ArrayList<Import> importList = new ArrayList<>();
     for (StubElement<?> el : grFileStub.getChildrenStubs()) {
       if (el instanceof GrImportStatementStub) {
         processImport((GrImportStatementStub) el, importList, usedNames);
@@ -110,7 +110,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     if (el instanceof GrTypeDefinitionStub) {
       return processClassDecl((GrTypeDefinitionStub)el, namesCache, true);
     }
-    ArrayList<Decl> innerList = new ArrayList<Decl>();
+    ArrayList<Decl> innerList = new ArrayList<>();
     for (StubElement childElement : el.getChildrenStubs()) {
       Decl innerDef = processMember(childElement, namesCache);
       if (innerDef != null) {
@@ -122,8 +122,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
 
   @Nullable
   private static ClassDecl processClassDecl(GrTypeDefinitionStub classStub, Set<String> namesCache, boolean inner) {
-    ArrayList<String> superList = new ArrayList<String>();
-    ArrayList<Decl> innerList = new ArrayList<Decl>();
+    ArrayList<String> superList = new ArrayList<>();
+    ArrayList<Decl> innerList = new ArrayList<>();
     if (classStub.isAnonymous()) {
       String name = classStub.getBaseClassName();
       if (name != null) {

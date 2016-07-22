@@ -41,9 +41,9 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
-  private final Map<Pair<String, String>, String> myManagedDependenciesMap = new HashMap<Pair<String, String>, String>();
+  private final Map<Pair<String, String>, String> myManagedDependenciesMap = new HashMap<>();
 
-  private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<MavenArtifactSearchPanel, Boolean>();
+  private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<>();
 
   @NotNull
   public static List<MavenId> searchForClass(Project project, String className) {

@@ -120,7 +120,7 @@ public class PathManagerEx {
    * Hence, the order of relative paths for the single test group matters.
    */
   private static final Map<TestDataLookupStrategy, List<String>> TEST_DATA_RELATIVE_PATHS
-    = new EnumMap<TestDataLookupStrategy, List<String>>(TestDataLookupStrategy.class);
+    = new EnumMap<>(TestDataLookupStrategy.class);
 
   static {
     TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
@@ -399,7 +399,7 @@ public class PathManagerEx {
       return ourCommunityModules;
     }
 
-    ourCommunityModules = new THashSet<String>();
+    ourCommunityModules = new THashSet<>();
     File modulesXml = findFileUnderCommunityHome(Project.DIRECTORY_STORE_FOLDER + "/modules.xml");
     if (!modulesXml.exists()) {
       throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");

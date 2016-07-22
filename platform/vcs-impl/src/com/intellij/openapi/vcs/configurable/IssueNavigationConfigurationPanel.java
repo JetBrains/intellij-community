@@ -155,12 +155,12 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
 
   public void reset() {
     IssueNavigationConfiguration configuration = IssueNavigationConfiguration.getInstance(myProject);
-    myLinks = new ArrayList<IssueNavigationLink>();
+    myLinks = new ArrayList<>();
     for(IssueNavigationLink link: configuration.getLinks()) {
       myLinks.add(new IssueNavigationLink(link.getIssueRegexp(), link.getLinkRegexp()));
     }
-    myModel = new ListTableModel<IssueNavigationLink>(
-      new ColumnInfo[] { ISSUE_COLUMN, LINK_COLUMN },
+    myModel = new ListTableModel<>(
+      new ColumnInfo[]{ISSUE_COLUMN, LINK_COLUMN},
       myLinks,
       0);
     myLinkTable.setModel(myModel);

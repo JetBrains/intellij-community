@@ -28,7 +28,7 @@ public class RepositoryTreeRootNode implements TreeNode, Disposable {
   private final RepositoryTreeModel myModel;
 
   public RepositoryTreeRootNode(RepositoryTreeModel model, SVNURL[] urls) {
-    myChildren = new ArrayList<TreeNode>();
+    myChildren = new ArrayList<>();
     myModel = model;
 
     for (SVNURL url : urls) {

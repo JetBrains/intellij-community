@@ -74,7 +74,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeypass;
   private boolean myConvertCss2Bin;
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
-  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
   private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
   @Override

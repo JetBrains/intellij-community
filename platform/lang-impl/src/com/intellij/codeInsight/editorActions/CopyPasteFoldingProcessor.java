@@ -42,7 +42,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
-    final ArrayList<FoldingData> list = new ArrayList<FoldingData>();
+    final ArrayList<FoldingData> list = new ArrayList<>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;

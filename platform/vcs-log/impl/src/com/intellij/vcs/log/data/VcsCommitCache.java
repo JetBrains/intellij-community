@@ -31,7 +31,7 @@ import java.awt.*;
  */
 class VcsCommitCache<CommitId, T extends VcsShortCommitDetails> {
 
-  private final SLRUMap<CommitId, T> myCache = new SLRUMap<CommitId, T>(5000, 5000);
+  private final SLRUMap<CommitId, T> myCache = new SLRUMap<>(5000, 5000);
 
   public void put(@NotNull CommitId hash, @NotNull T commit) {
     assert EventQueue.isDispatchThread();

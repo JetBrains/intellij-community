@@ -53,7 +53,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new ArrayList<InspectionGadgetsFix>();
+    final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {

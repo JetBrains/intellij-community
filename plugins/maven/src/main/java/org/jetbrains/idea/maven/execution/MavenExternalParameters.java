@@ -156,7 +156,7 @@ public class MavenExternalParameters {
       params.getClassPath().add(path);
     }
 
-    params.setEnv(new HashMap<String, String>(runnerSettings.getEnvironmentProperties()));
+    params.setEnv(new HashMap<>(runnerSettings.getEnvironmentProperties()));
     params.setPassParentEnvs(runnerSettings.isPassParentEnv());
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
@@ -489,7 +489,7 @@ public class MavenExternalParameters {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
 
-    List<String> classpathEntries = new ArrayList<String>();
+    List<String> classpathEntries = new ArrayList<>();
 
     File[] files = mavenHomeBootAsFile.listFiles();
     if (files != null) {

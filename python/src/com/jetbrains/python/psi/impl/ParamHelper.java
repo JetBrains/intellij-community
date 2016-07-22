@@ -98,7 +98,7 @@ public class ParamHelper {
   }
 
   public static List<PyNamedParameter> collectNamedParameters(PyParameterList plist) {
-    final List<PyNamedParameter> result = new ArrayList<PyNamedParameter>(10); // a random 'enough'
+    final List<PyNamedParameter> result = new ArrayList<>(10); // a random 'enough'
     walkDownParamArray(
       plist.getParameters(),
       new ParamVisitor() {

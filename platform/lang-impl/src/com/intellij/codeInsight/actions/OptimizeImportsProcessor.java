@@ -77,7 +77,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    final List<Runnable> runnables = new ArrayList<Runnable>();
+    final List<Runnable> runnables = new ArrayList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
     for (ImportOptimizer optimizer : optimizers) {
       for (PsiFile psiFile : files) {
@@ -100,7 +100,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
       }
     } : EmptyRunnable.getInstance();
-    return new FutureTask<Boolean>(runnable, true);
+    return new FutureTask<>(runnable, true);
   }
 
   private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {

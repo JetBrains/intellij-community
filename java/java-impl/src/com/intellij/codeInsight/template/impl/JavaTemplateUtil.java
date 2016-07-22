@@ -49,7 +49,7 @@ public class JavaTemplateUtil {
                                         final int segmentEnd,
                                         boolean noImport) {
     final Project project = file.getProject();
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    List<PsiClass> classes = new ArrayList<>();
     if (item instanceof PsiClass) {
       classes.add((PsiClass)item);
     }

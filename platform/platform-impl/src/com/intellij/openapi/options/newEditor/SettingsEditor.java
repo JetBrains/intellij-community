@@ -155,7 +155,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         if (myFilter.myContext.getModified().isEmpty()) {
           return true;
         }
-        Map<Configurable, ConfigurationException> map = new LinkedHashMap<Configurable, ConfigurationException>();
+        Map<Configurable, ConfigurationException> map = new LinkedHashMap<>();
         for (Configurable configurable : myFilter.myContext.getModified()) {
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
           if (exception != null) {

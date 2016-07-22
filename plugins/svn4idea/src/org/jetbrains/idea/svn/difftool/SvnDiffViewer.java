@@ -189,7 +189,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     List<PropertyData> properties = ((SvnPropertiesDiffRequest.PropertyContent)content).getProperties();
 
-    Map<String, PropertyValue> map = new HashMap<String, PropertyValue>();
+    Map<String, PropertyValue> map = new HashMap<>();
 
     for (PropertyData data : properties) {
       if (map.containsKey(data.getName())) LOG.warn("Duplicated property: " + data.getName());
@@ -223,7 +223,7 @@ public class SvnDiffViewer implements DiffViewer {
 
   @NotNull
   private List<AnAction> createToolbar(@Nullable List<AnAction> propertiesActions) {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
 
     if (propertiesActions != null) result.addAll(propertiesActions);
 

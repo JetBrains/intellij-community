@@ -53,8 +53,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
-    private List<String> myProfiles = new ArrayList<String>();
-    private List<String> myActivatedProfiles = new ArrayList<String>();
+    private List<String> myProfiles = new ArrayList<>();
+    private List<String> myActivatedProfiles = new ArrayList<>();
     private MavenExplicitProfiles mySelectedProfiles = MavenExplicitProfiles.NONE;
 
     private MavenProjectsTree myMavenProjectTree;
@@ -166,7 +166,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
         getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
                                                           getImportingSettings().isLookForNested(),
                                                           indicator,
-                                                          new ArrayList<VirtualFile>());
+                                                          new ArrayList<>());
 
         collectProfiles(indicator);
         if (getParameters().myProfiles.isEmpty()) {
@@ -182,8 +182,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void collectProfiles(MavenProgressIndicator process) {
     process.setText(ProjectBundle.message("maven.searching.profiles"));
 
-    Set<String> availableProfiles = new LinkedHashSet<String>();
-    Set<String> activatedProfiles = new LinkedHashSet<String>();
+    Set<String> availableProfiles = new LinkedHashSet<>();
+    Set<String> activatedProfiles = new LinkedHashSet<>();
     MavenProjectReader reader = new MavenProjectReader();
     MavenGeneralSettings generalSettings = getGeneralSettings();
     MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
@@ -198,8 +198,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       availableProfiles.addAll(project.getProfilesIds());
       activatedProfiles.addAll(project.getActivatedProfilesIds().getEnabledProfiles());
     }
-    getParameters().myProfiles = new ArrayList<String>(availableProfiles);
-    getParameters().myActivatedProfiles = new ArrayList<String>(activatedProfiles);
+    getParameters().myProfiles = new ArrayList<>(availableProfiles);
+    getParameters().myActivatedProfiles = new ArrayList<>(activatedProfiles);
   }
 
   public List<String> getProfiles() {

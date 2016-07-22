@@ -137,7 +137,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                     @NotNull InspectionManagerEx managerEx,
                                                     @Nullable PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
-    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<InspectionToolWrapper>();
+    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
     InspectionToolWrapper[] toolWrappers = allWrappers.toArray(new InspectionToolWrapper[allWrappers.size()]);

@@ -122,7 +122,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @NotNull
   @Override
   protected Action[] createActions() {
-    ArrayList<Action> actions = new ArrayList<Action>();
+    ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
     Action apply = myEditor.getApplyAction();

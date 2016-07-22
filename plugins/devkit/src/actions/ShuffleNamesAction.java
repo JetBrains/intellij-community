@@ -65,10 +65,10 @@ public class ShuffleNamesAction extends AnAction {
   }
 
   private static boolean shuffleIds(PsiFile file, Editor editor) {
-    final Map<String, String> map = new THashMap<String, String>();
+    final Map<String, String> map = new THashMap<>();
     final StringBuilder sb = new StringBuilder();
     final StringBuilder quote = new StringBuilder();
-    final ArrayList<String> split = new ArrayList<String>(100);
+    final ArrayList<String> split = new ArrayList<>(100);
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {

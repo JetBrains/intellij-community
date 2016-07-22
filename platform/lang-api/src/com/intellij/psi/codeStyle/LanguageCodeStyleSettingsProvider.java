@@ -111,7 +111,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
-    final ArrayList<Language> languages = new ArrayList<Language>();
+    final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       languages.add(provider.getLanguage());
     }
@@ -210,7 +210,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
-    private final Set<String> myCollectedFields = new HashSet<String>();
+    private final Set<String> myCollectedFields = new HashSet<>();
     private SettingsType myCurrSettingsType;
 
     public void collectFields() {

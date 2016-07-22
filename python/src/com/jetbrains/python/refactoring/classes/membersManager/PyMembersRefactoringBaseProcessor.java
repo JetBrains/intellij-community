@@ -59,7 +59,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     @NotNull final PyClass... to) {
     super(project);
     myFrom = from;
-    myMembersToMove = new ArrayList<PyMemberInfo<PyElement>>(membersToMove);
+    myMembersToMove = new ArrayList<>(membersToMove);
     myTo = to.clone();
   }
 
@@ -81,7 +81,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   @NotNull
   @Override
   protected final PyUsageInfo[] findUsages() {
-    final List<PyUsageInfo> result = new ArrayList<PyUsageInfo>(myTo.length);
+    final List<PyUsageInfo> result = new ArrayList<>(myTo.length);
     for (final PyClass pyDestinationClass : myTo) {
       result.add(new PyUsageInfo(pyDestinationClass));
     }
@@ -90,7 +90,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
 
   @Override
   protected final void performRefactoring(@NotNull final UsageInfo[] usages) {
-    final Collection<PyClass> destinations = new ArrayList<PyClass>(usages.length);
+    final Collection<PyClass> destinations = new ArrayList<>(usages.length);
     for (final UsageInfo usage : usages) {
       if (!(usage instanceof PyUsageInfo)) {
         throw new IllegalArgumentException("Only PyUsageInfo is accepted here");

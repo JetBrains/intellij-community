@@ -533,7 +533,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     fetchDocInfo(getDefaultCollector(element, originalElement), component);
 
-    myDocInfoHintRef = new WeakReference<JBPopup>(hint);
+    myDocInfoHintRef = new WeakReference<>(hint);
 
     if (fromQuickSearch() && myPreviouslyFocused != null) {
       ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
@@ -795,7 +795,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     PsiFile containingFile =
       originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
-    Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
+    Set<DocumentationProvider> result = new LinkedHashSet<>();
 
     final Language containingFileLanguage = containingFile != null ? containingFile.getLanguage() : null;
     DocumentationProvider originalProvider =
@@ -815,7 +815,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (element instanceof PsiDirectory) {
-      final Set<Language> langs = new HashSet<Language>();
+      final Set<Language> langs = new HashSet<>();
 
       for (PsiFile file : ((PsiDirectory)element).getFiles()) {
         final Language baseLanguage = file.getViewProvider().getBaseLanguage();
@@ -1136,7 +1136,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
-      final Ref<String> result = new Ref<String>();
+      final Ref<String> result = new Ref<>();
       QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
         String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);

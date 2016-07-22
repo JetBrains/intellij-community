@@ -40,7 +40,7 @@ import java.util.Map;
  * Time:   22:01:27
  */
 public class PyFlipComparisonIntention extends BaseIntentionAction {
-  private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<PyElementType, String>(7);
+  private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<>(7);
 
   static {
     FLIPPED_OPERATORS.put(PyTokenTypes.EQEQ, "==");

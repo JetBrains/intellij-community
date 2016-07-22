@@ -152,7 +152,7 @@ public class RefactoringConflictsUtil {
                                        PsiClass accessClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
-    final Set<PsiMember> moving = new HashSet<PsiMember>(membersToMove);
+    final Set<PsiMember> moving = new HashSet<>(membersToMove);
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
@@ -252,7 +252,7 @@ public class RefactoringConflictsUtil {
     final Module targetModule = ModuleUtilCore.findModuleForFile(vFile, project);
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
-    final HashSet<PsiElement> reported = new HashSet<PsiElement>();
+    final HashSet<PsiElement> reported = new HashSet<>();
     for (final PsiElement scope : scopes) {
       scope.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

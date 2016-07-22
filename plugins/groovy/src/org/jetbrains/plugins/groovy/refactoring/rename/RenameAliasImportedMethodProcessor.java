@@ -77,8 +77,8 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     boolean isGetter = GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)psiElement);
     boolean isSetter = GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)psiElement);
 
-    List<UsageInfo> methodAccess = new ArrayList<UsageInfo>(usages.length);
-    List<UsageInfo> propertyAccess = new ArrayList<UsageInfo>(usages.length);
+    List<UsageInfo> methodAccess = new ArrayList<>(usages.length);
+    List<UsageInfo> propertyAccess = new ArrayList<>(usages.length);
 
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();

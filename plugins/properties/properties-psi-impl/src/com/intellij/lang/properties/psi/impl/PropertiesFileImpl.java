@@ -85,7 +85,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     if (myPropertiesMap != null) return;
     final StubTree stubTree = getStubTree();
     List<IProperty> properties;
-    MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
+    MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<>();
     if (stubTree != null) {
       final PsiFileStub root = stubTree.getRoot();
       final StubElement propertiesList = root.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
@@ -99,7 +99,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       }
     } else {
       final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-      properties = new ArrayList<IProperty>(props.length);
+      properties = new ArrayList<>(props.length);
       for (final ASTNode prop : props) {
         final Property property = (Property)prop.getPsi();
         String key = property.getUnescapedKey();
@@ -226,7 +226,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<String, String>();
+    Map<String, String> result = new THashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }

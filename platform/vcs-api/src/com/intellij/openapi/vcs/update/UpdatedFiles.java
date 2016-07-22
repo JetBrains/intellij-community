@@ -34,7 +34,7 @@ import java.util.List;
  * @see com.intellij.openapi.vcs.update.UpdateEnvironment#updateDirectories
  */
 public class UpdatedFiles implements JDOMExternalizable {
-  private final List<FileGroup> myGroups = new ArrayList<FileGroup>();
+  private final List<FileGroup> myGroups = new ArrayList<>();
 
   private UpdatedFiles() {
   }

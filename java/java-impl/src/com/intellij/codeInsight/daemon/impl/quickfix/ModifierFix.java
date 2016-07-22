@@ -141,7 +141,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
     if (!FileModificationService.getInstance().preparePsiElementForWrite(myModifierList)) return;
     if (variable != null && !FileModificationService.getInstance().preparePsiElementForWrite(variable)) return;
-    final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
+    final List<PsiModifierList> modifierLists = new ArrayList<>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
     if (variable != null && variable.isValid()) {
@@ -165,7 +165,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       changeModifierList(copy);
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
-      OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
+      OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(
+        new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiMethod>() {
           @Override
           public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();

@@ -81,7 +81,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       final ChunkCustomCompilerExtension[] customeCompilers = chunk.getCustomCompilers();
       if (customeCompilers.length > 1) {
         if (conflicts == EMPTY) {
-          conflicts = new LinkedList<String>();
+          conflicts = new LinkedList<>();
         }
         conflicts.add(chunk.getName());
       }
@@ -109,9 +109,9 @@ public class GenerateAntBuildAction extends CompileActionBase {
 
   private void generate(final Project project, final GenerationOptions genOptions) {
     ApplicationManager.getApplication().saveAll();
-    final List<File> filesToRefresh = new ArrayList<File>();
+    final List<File> filesToRefresh = new ArrayList<>();
     final IOException[] _ex = new IOException[]{null};
-    final List<File> _generated = new ArrayList<File>();
+    final List<File> _generated = new ArrayList<>();
 
     try {
       if (genOptions.generateSingleFile) {
@@ -122,7 +122,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
         ensureFilesWritable(project, new File[]{destFile, propertiesFile});
       }
       else {
-        final List<File> allFiles = new ArrayList<File>();
+        final List<File> allFiles = new ArrayList<>();
 
         final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
         allFiles.add(new File(projectBuildFileDestDir, genOptions.getBuildFileName()));
@@ -269,7 +269,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {
-    final List<VirtualFile> toCheck = new ArrayList<VirtualFile>(files.length);
+    final List<VirtualFile> toCheck = new ArrayList<>(files.length);
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (File file : files) {
       final VirtualFile vFile = lfs.findFileByIoFile(file);
@@ -287,7 +287,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
-    final List<File> generated = new ArrayList<File>();
+    final List<File> generated = new ArrayList<>();
     final File projectBuildFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
     final File propertiesFile = new File(projectBuildFileDestDir, genOptions.getPropertiesFileName());
     final ModuleChunk[] chunks = genOptions.getModuleChunks();

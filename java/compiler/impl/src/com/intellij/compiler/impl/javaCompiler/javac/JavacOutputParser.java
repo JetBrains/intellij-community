@@ -114,7 +114,7 @@ public class JavacOutputParser extends OutputParser {
             category = CompilerMessageCategory.WARNING;
           }
 
-          List<String> messages = new ArrayList<String>();
+          List<String> messages = new ArrayList<>();
           messages.add(message);
           int colNum;
           String prevLine = null;

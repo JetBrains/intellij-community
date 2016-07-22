@@ -45,7 +45,7 @@ class GithubGistRequest {
     this.description = description;
     this.isPublic = isPublic;
 
-    this.files = new HashMap<String, GistFile>();
+    this.files = new HashMap<>();
     for (GithubGist.FileContent file : files) {
       this.files.put(file.getFileName(), new GistFile(file.getContent()));
     }

@@ -116,7 +116,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @Tag("recentFileMasks")
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "mask", elementValueAttribute = "")
-  public List<String> recentFileMasks = new ArrayList<String>();
+  public List<String> recentFileMasks = new ArrayList<>();
 
   @Override
   public void loadState(FindSettingsImpl state) {
@@ -338,7 +338,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @NotNull
   @Override
   public List<String> getRecentDirectories(){
-    return new ArrayList<String>(FindRecents.getInstance().dirStrings);
+    return new ArrayList<>(FindRecents.getInstance().dirStrings);
   }
 
   @Override
@@ -437,17 +437,17 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     @Tag("findStrings")
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "find", elementValueAttribute = "")
-    public List<String> findStrings = new ArrayList<String>();
+    public List<String> findStrings = new ArrayList<>();
 
     @Tag("replaceStrings")
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "replace", elementValueAttribute = "")
-    public List<String> replaceStrings = new ArrayList<String>();
+    public List<String> replaceStrings = new ArrayList<>();
 
     @Tag("dirStrings")
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "dir", elementValueAttribute = "")
-    public List<String> dirStrings = new ArrayList<String>();
+    public List<String> dirStrings = new ArrayList<>();
 
     @Override
     public void loadState(FindRecents state) {

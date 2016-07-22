@@ -37,7 +37,7 @@ import java.util.List;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
-  private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
+  private final SmartList<Annotation> myAnnotations = new SmartList<>();
   private final boolean myOnTheFly;
 
   public DomElementAnnotationHolderImpl(boolean onTheFly) {
@@ -126,7 +126,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     if (!myOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
 
-    final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
+    final List<LocalQuickFix> result = new SmartList<>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;

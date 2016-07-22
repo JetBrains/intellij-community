@@ -134,7 +134,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
       result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
       return result;
@@ -163,7 +163,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
         return Collections.emptyList();
       }
 
-      final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+      final List<AbstractTreeNode> children = new ArrayList<>();
       for (Deployment deployment : connection.getDeployments()) {
         if (deployment.getParentRuntime() == null) {
           children.add(createDeploymentNode(connection, this, deployment));
@@ -203,7 +203,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
-      final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(ContainerUtil.filter(
+      final List<RunnerAndConfigurationSettings> list = new ArrayList<>(ContainerUtil.filter(
         configurationManager.getDeploymentConfigurations(serverType),
         settings -> {
           DeployToServerRunConfiguration configuration =
@@ -388,7 +388,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> result = new ArrayList<>();
       collectDeploymentChildren(result);
       collectLogChildren(result);
       return result;

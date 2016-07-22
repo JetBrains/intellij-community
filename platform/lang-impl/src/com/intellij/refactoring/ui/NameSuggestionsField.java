@@ -88,7 +88,7 @@ public class NameSuggestionsField extends JPanel {
     // later here because EditorTextField creates Editor during addNotify()
     final Runnable selectionRunnable = () -> {
       final int offset = editor.getCaretModel().getOffset();
-      List<TextRange> ranges = new ArrayList<TextRange>();
+      List<TextRange> ranges = new ArrayList<>();
       SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
       Editor myEditor = getEditor();
       if (myEditor == null) return;

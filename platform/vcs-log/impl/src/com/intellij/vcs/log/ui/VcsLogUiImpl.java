@@ -322,7 +322,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   private void fireFilterChangeEvent(@NotNull VisiblePack visiblePack, boolean refresh) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Collection<VcsLogListener> logListeners = new ArrayList<VcsLogListener>(myLogListeners);
+    Collection<VcsLogListener> logListeners = new ArrayList<>(myLogListeners);
 
     for (VcsLogListener listener : logListeners) {
       listener.onChange(visiblePack, refresh);

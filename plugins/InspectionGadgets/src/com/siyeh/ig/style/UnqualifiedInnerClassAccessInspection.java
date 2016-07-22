@@ -126,7 +126,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       }
       final Collection<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-      final List<SmartPsiElementPointer> pointers = new ArrayList<SmartPsiElementPointer>();
+      final List<SmartPsiElementPointer> pointers = new ArrayList<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final SmartPsiElementPointer<PsiJavaCodeReferenceElement> pointer = pointerManager.createSmartPsiElementPointer(reference);
         pointers.add(pointer);
@@ -146,7 +146,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       document.replaceString(0, document.getTextLength(), text);
       documentManager.commitDocument(document);
       if (pointers.size() > 1) {
-        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        final List<PsiElement> elements = new ArrayList<>();
         for (SmartPsiElementPointer pointer : pointers) {
           elements.add(pointer.getElement());
         }
@@ -207,7 +207,7 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
 
     private final String name;
     private final boolean onDemand;
-    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
+    private final Set<PsiJavaCodeReferenceElement> references = new HashSet<>();
 
     ReferenceCollector(String name, boolean onDemand) {
       this.name = name;

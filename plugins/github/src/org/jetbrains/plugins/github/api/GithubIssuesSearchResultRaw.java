@@ -30,7 +30,7 @@ class GithubIssuesSearchResultRaw implements DataConstructor {
 
   @NotNull
   GithubIssuesSearchResult createIssueSearchResult() {
-    List<GithubIssue> issues = new ArrayList<GithubIssue>();
+    List<GithubIssue> issues = new ArrayList<>();
     for (GithubIssueRaw raw : items) {
       issues.add(raw.createIssue());
     }

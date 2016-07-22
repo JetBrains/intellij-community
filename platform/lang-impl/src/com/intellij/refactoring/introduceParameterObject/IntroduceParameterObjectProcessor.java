@@ -120,7 +120,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usageInfos = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     myDelegate.collectConflicts(conflicts, usageInfos, myMethod, myClassDescriptor);
 
     List<UsageInfo> changeSignatureUsages = new ArrayList<>();

@@ -67,7 +67,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       @NotNull
       @Override
       protected Set<String> compute() {
-        final Set<String> knownTopLevelPackages = new HashSet<String>();
+        final Set<String> knownTopLevelPackages = new HashSet<>();
         final List<PsiElement> defaultPackages = getDefaultPackages(position.getProject());
         for (final PsiElement pack : defaultPackages) {
           if (pack instanceof PsiPackage) {
@@ -77,7 +77,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
         return knownTopLevelPackages;
       }
     };
-    final List<PsiReference> results = new ArrayList<PsiReference>();
+    final List<PsiReference> results = new ArrayList<>();
 
     for(int dot = str.indexOf('.'); dot > 0; dot = str.indexOf('.', dot + 1)) {
       int start = dot;

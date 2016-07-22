@@ -65,7 +65,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
 
   @NotNull
   public static Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
-    Map<String, String> vars = new HashMap<String, String>();
+    Map<String, String> vars = new HashMap<>();
 
     addNamespacePrefix(domElement, vars);
 

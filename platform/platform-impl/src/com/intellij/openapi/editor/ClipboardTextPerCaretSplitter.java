@@ -31,7 +31,7 @@ public class ClipboardTextPerCaretSplitter {
     if (caretCount == 1) {
       return Collections.singletonList(input);
     }
-    List<String> result = new ArrayList<String>(caretCount);
+    List<String> result = new ArrayList<>(caretCount);
     int sourceCaretCount = caretData == null ? -1 : caretData.startOffsets.length;
     String[] lines = sourceCaretCount == 1 || sourceCaretCount == caretCount ? null : input.split("\n", -1);
     for (int i = 0; i < caretCount; i++) {

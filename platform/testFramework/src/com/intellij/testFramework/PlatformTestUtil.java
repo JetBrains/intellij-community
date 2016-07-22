@@ -184,7 +184,7 @@ public class PlatformTestUtil {
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<String>();
+    Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
@@ -376,7 +376,7 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
@@ -700,7 +700,7 @@ public class PlatformTestUtil {
   }
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+    HashMap<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -749,12 +749,12 @@ public class PlatformTestUtil {
   }
 
   private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<String>();
+    List<String> vfsPaths = new ArrayList<>();
     for (VirtualFile file : vfs) {
       vfsPaths.add(file.getPath());
     }
 
-    List<String> ioPaths = new ArrayList<String>();
+    List<String> ioPaths = new ArrayList<>();
     if (io != null) {
       for (File file : io) {
         ioPaths.add(file.getPath().replace(File.separatorChar, '/'));

@@ -295,7 +295,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   private Set<Object> doFilter(Set<Object> elements) {
-    Set<Object> result = new LinkedHashSet<Object>();
+    Set<Object> result = new LinkedHashSet<>();
     for (Object o : elements) {
       if (myElementClass.isInstance(o) && getFilter().isAccepted((T)o)) {
         result.add(o);
@@ -306,12 +306,12 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   protected ChooseByNameModel createChooseByNameModel() {
     if (myBaseClass == null) {
-      return new MyGotoClassModel<T>(myProject, this);
+      return new MyGotoClassModel<>(myProject, this);
     }
     else {
       BaseClassInheritorsProvider<T> inheritorsProvider = getInheritorsProvider(myBaseClass);
       if (inheritorsProvider != null) {
-        return new SubclassGotoClassModel<T>(myProject, this, inheritorsProvider);
+        return new SubclassGotoClassModel<>(myProject, this, inheritorsProvider);
       }
       else {
         throw new IllegalStateException("inheritors provider is null");
@@ -498,7 +498,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         return isAccepted(classes.get(0)) ? ArrayUtil.toObjectArray(classes) : ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
       Set<String> qNames = ContainerUtil.newHashSet();
-      List<T> list = new ArrayList<T>(classes.size());
+      List<T> list = new ArrayList<>(classes.size());
       for (T aClass : classes) {
         if (qNames.add(getFullName(aClass)) && isAccepted(aClass)) {
           list.add(aClass);

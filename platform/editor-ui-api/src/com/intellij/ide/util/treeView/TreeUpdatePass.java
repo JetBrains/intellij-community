@@ -34,7 +34,7 @@ public class TreeUpdatePass {
 
   private boolean myUpdateChildren = true;
   private boolean myUpdateStructure = true;
-  private final Set<NodeDescriptor> myUpdatedDescriptors = new HashSet<NodeDescriptor>();
+  private final Set<NodeDescriptor> myUpdatedDescriptors = new HashSet<>();
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node) {
     myNode = node;

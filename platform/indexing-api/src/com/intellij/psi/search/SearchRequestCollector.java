@@ -146,7 +146,7 @@ public class SearchRequestCollector {
   @NotNull
   private <T> List<T> takeRequests(@NotNull List<T> list) {
     synchronized (lock) {
-      final List<T> requests = new ArrayList<T>(list);
+      final List<T> requests = new ArrayList<>(list);
       list.clear();
       return requests;
     }

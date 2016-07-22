@@ -42,7 +42,7 @@ class ImplementationClassCache {
   };
 
 
-  private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<String, DomImplementationClassEP>();
+  private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<>();
   private final SofterCache<Class, Class> myCache = SofterCache.create(new NotNullFunction<Class, Class>() {
     @NotNull
     @Override
@@ -58,7 +58,7 @@ class ImplementationClassCache {
   }
 
   private Class calcImplementationClass(Class concreteInterface) {
-    final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
+    final TreeSet<Class> set = new TreeSet<>(CLASS_COMPARATOR);
     findImplementationClassDFS(concreteInterface, set);
     if (!set.isEmpty()) {
       return set.first();

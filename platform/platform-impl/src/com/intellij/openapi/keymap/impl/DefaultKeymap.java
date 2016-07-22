@@ -42,7 +42,7 @@ public class DefaultKeymap {
   @NonNls
   private static final String NAME_ATTRIBUTE = "name";
 
-  private final List<Keymap> myKeymaps = new ArrayList<Keymap>();
+  private final List<Keymap> myKeymaps = new ArrayList<>();
 
   public static DefaultKeymap getInstance() {
     return ServiceManager.getService(DefaultKeymap.class);

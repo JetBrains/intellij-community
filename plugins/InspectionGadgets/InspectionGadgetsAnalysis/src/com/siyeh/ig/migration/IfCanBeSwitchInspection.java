@@ -196,7 +196,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     if (switchExpression == null) {
       return;
     }
-    final List<IfStatementBranch> branches = new ArrayList<IfStatementBranch>(20);
+    final List<IfStatementBranch> branches = new ArrayList<>(20);
     while (true) {
       final PsiExpression condition = ifStatement.getCondition();
       final PsiStatement thenBranch = ifStatement.getThenBranch();

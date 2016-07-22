@@ -49,7 +49,7 @@ import java.util.*;
  */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final ExternalDependenciesManager myDependenciesManager;
-  private CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<ProjectExternalDependency>();
+  private CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
   private Map<String, String> myPluginNameById;
 
   public ExternalDependenciesConfigurable(Project project) {
@@ -64,7 +64,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   @Override
   public boolean isModified() {
-    return !new HashSet<ProjectExternalDependency>(myDependenciesManager.getAllDependencies()).equals(new HashSet<ProjectExternalDependency>(myListModel.getItems()));
+    return !new HashSet<>(myDependenciesManager.getAllDependencies()).equals(new HashSet<>(myListModel.getItems()));
   }
 
   @Override
@@ -152,7 +152,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
   private void replaceDependency(DependencyOnPlugin original, JBList dependenciesList) {
     DependencyOnPlugin dependency = editPluginDependency(dependenciesList, original);
     if (dependency != null) {
-      for (ProjectExternalDependency dependency1 : new ArrayList<ProjectExternalDependency>(myListModel.getItems())) {
+      for (ProjectExternalDependency dependency1 : new ArrayList<>(myListModel.getItems())) {
         if (dependency1 instanceof DependencyOnPlugin && ((DependencyOnPlugin)dependency1).getPluginId().equals(dependency.getPluginId())) {
           myListModel.remove(dependency1);
         }
@@ -168,7 +168,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   private Map<String, String> getPluginNameByIdMap() {
     if (myPluginNameById == null) {
-      myPluginNameById = new HashMap<String, String>();
+      myPluginNameById = new HashMap<>();
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
         myPluginNameById.put(descriptor.getPluginId().getIdString(), descriptor.getName());
       }
@@ -184,7 +184,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   @Nullable
   private DependencyOnPlugin editPluginDependency(@NotNull JComponent parent, @NotNull final DependencyOnPlugin original) {
-    List<String> pluginIds = new ArrayList<String>(getPluginNameByIdMap().keySet());
+    List<String> pluginIds = new ArrayList<>(getPluginNameByIdMap().keySet());
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
     }

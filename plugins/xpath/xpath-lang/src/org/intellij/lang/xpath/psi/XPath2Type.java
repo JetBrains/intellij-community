@@ -35,7 +35,7 @@ import java.util.Map;
 public class XPath2Type extends XPathType {
   public static final String XMLSCHEMA_NS = "http://www.w3.org/2001/XMLSchema";
 
-  private static Map<QName, XPath2Type> ourMap = new HashMap<QName, XPath2Type>();
+  private static Map<QName, XPath2Type> ourMap = new HashMap<>();
 
   public static final XPath2Type ITEM = createItemType("item()", ANY);
   public static final XPath2Type NODE = createItemType("node()", ITEM);

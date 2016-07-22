@@ -85,7 +85,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
         final ModuleManager moduleManager = ModuleManager.getInstance(project);
         final Module[] currentModules = moduleManager.getModules();
         final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
-        final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<Module, ModifiableRootModel>();
+        final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
         for (final Module module : modules) {
           final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
           for (final Module otherModule : currentModules) {

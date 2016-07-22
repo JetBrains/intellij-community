@@ -26,8 +26,8 @@ import com.intellij.util.containers.Stack;
 public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.
-  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
-  private final Stack<PsiBinaryExpression> myBinaryExpressions = new Stack<PsiBinaryExpression>();
+  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<>();
+  private final Stack<PsiBinaryExpression> myBinaryExpressions = new Stack<>();
 
   @Override
   public void visitElement(PsiElement element) {

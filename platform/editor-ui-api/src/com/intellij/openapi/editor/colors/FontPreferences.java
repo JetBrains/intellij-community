@@ -41,7 +41,7 @@ public class FontPreferences {
   @NonNls @NotNull public static final String DEFAULT_FONT_NAME = getDefaultFontName();
   public static final                  int    DEFAULT_FONT_SIZE = FontSize.SMALL.getSize();
 
-  @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<String>();
+  @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
   @NotNull private final List<String> myRealFontFamilies = ContainerUtilRt.newArrayList();
   

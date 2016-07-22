@@ -73,13 +73,13 @@ public class NewMappings {
     myVcsManager = vcsManager;
     myFileStatusManager = fileStatusManager;
     myLock = new Object();
-    myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
+    myVcsToPaths = new HashMap<>();
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
 
     if (!myProject.isDefault()) {
-      final ArrayList<VcsDirectoryMapping> listStr = new ArrayList<VcsDirectoryMapping>();
+      final ArrayList<VcsDirectoryMapping> listStr = new ArrayList<>();
       final VcsDirectoryMapping mapping = new VcsDirectoryMapping("", "");
       listStr.add(mapping);
       myVcsToPaths.put("", listStr);
@@ -142,7 +142,7 @@ public class NewMappings {
       }
     }
 
-    final Ref<Boolean> switched = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> switched = new Ref<>(Boolean.FALSE);
     keepActiveVcs(new Runnable() {
       public void run() {
         // sorted -> map. sorted mappings are NOT changed;
@@ -165,7 +165,7 @@ public class NewMappings {
         runnable.run();
         return;
       }
-      final HashSet<String> old = new HashSet<String>();
+      final HashSet<String> old = new HashSet<>();
       for (AbstractVcs activeVcs : myActiveVcses) {
         old.add(activeVcs.getName());
       }
@@ -179,7 +179,7 @@ public class NewMappings {
   private void restoreActiveVcses() {
     synchronized (myLock) {
       final Set<String> set = myVcsToPaths.keySet();
-      final List<AbstractVcs> list = new ArrayList<AbstractVcs>(set.size());
+      final List<AbstractVcs> list = new ArrayList<>(set.size());
       for (String s : set) {
         if (s.trim().length() == 0) continue;
         final AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(s);
@@ -279,14 +279,14 @@ public class NewMappings {
 
   @NotNull
   public List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     final String vcsName = vcs.getName();
 
     final List<VcsDirectoryMapping> mappings;
     synchronized (myLock) {
       final List<VcsDirectoryMapping> vcsMappings = myVcsToPaths.get(vcsName);
       if (vcsMappings == null) return result;
-      mappings = new ArrayList<VcsDirectoryMapping>(vcsMappings);
+      mappings = new ArrayList<>(vcsMappings);
     }
 
     for (VcsDirectoryMapping mapping : mappings) {
@@ -341,7 +341,7 @@ public class NewMappings {
   public List<VcsDirectoryMapping> getDirectoryMappings(String vcsName) {
     synchronized (myLock) {
       final List<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
-      return mappings == null ? new ArrayList<VcsDirectoryMapping>() : new ArrayList<VcsDirectoryMapping>(mappings);
+      return mappings == null ? new ArrayList<>() : new ArrayList<>(mappings);
     }
   }
 
@@ -459,7 +459,7 @@ public class NewMappings {
   }
 
   private void sortedMappingsByMap() {
-    final List<VcsDirectoryMapping> list = new ArrayList<VcsDirectoryMapping>();
+    final List<VcsDirectoryMapping> list = new ArrayList<>();
     for (List<VcsDirectoryMapping> mappingList : myVcsToPaths.values()) {
       list.addAll(mappingList);
     }
@@ -491,7 +491,7 @@ public class NewMappings {
   private List<VcsDirectoryMapping> listForVcsFromMap(String activeVcsName) {
     List<VcsDirectoryMapping> newList = myVcsToPaths.get(activeVcsName);
     if (newList == null) {
-      newList = new ArrayList<VcsDirectoryMapping>();
+      newList = new ArrayList<>();
       myVcsToPaths.put(activeVcsName, newList);
     }
     return newList;
@@ -550,7 +550,7 @@ public class NewMappings {
 
         if (!bottom.contains(topItem)) {
           if (notInBottom == null) {
-            notInBottom = new HashSet<String>();
+            notInBottom = new HashSet<>();
           }
           notInBottom.add(topItem);
         }
@@ -608,7 +608,7 @@ public class NewMappings {
     synchronized (myLock) {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
-      final List<VirtualFile> list = new ArrayList<VirtualFile>();
+      final List<VirtualFile> list = new ArrayList<>();
       myDefaultVcsRootPolicy.addDefaultVcsRoots(this, defaultVcs, list);
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
         return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);

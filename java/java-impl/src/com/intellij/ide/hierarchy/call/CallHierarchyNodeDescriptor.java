@@ -45,7 +45,7 @@ import java.util.List;
 
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
-  private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private final List<PsiReference> myReferences = new ArrayList<>();
   private final boolean myNavigateToReference;
 
   public CallHierarchyNodeDescriptor(@NotNull Project project,
@@ -208,7 +208,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+      ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
       for (PsiReference psiReference : myReferences) {
         final PsiElement eachElement = psiReference.getElement();
         if (eachElement != null) {

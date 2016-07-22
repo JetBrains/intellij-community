@@ -94,7 +94,7 @@ public abstract class ColorProvider {
   private static class ColorSchemeBasedHolder extends ColorProvider {
 
     private final EditorColorsScheme myScheme;
-    private final List<ColorKey> myKeys = new ArrayList<ColorKey>();
+    private final List<ColorKey> myKeys = new ArrayList<>();
 
     ColorSchemeBasedHolder(EditorColorsScheme scheme, ColorKey ... keys) {
       myScheme = scheme;

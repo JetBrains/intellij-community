@@ -50,7 +50,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   private static final Object DEFAULT_MANAGER_LOCK = new Object();
   private static ClientPropertiesManager ourDefaultManager;
 
-  private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<String, List<ClientProperty>>();
+  private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<>();
 
   public ClientPropertiesManager() {
     super(null);
@@ -150,7 +150,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     for(Object o: element.getChildren(ELEMENT_PROPERTIES)) {
       Element propertiesElement = (Element) o;
       String aClass = propertiesElement.getAttributeValue(ATTRIBUTE_CLASS);
-      List<ClientProperty> classProps = new ArrayList<ClientProperty>();
+      List<ClientProperty> classProps = new ArrayList<>();
       for(Object p: propertiesElement.getChildren(ELEMENT_PROPERTY)) {
         Element propertyElement = (Element) p;
         String propName = propertyElement.getAttributeValue(ATTRIBUTE_NAME);
@@ -181,7 +181,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   public void addConfiguredProperty(final Class selectedClass, final ClientProperty enteredProperty) {
     List<ClientProperty> list = myPropertyMap.get(selectedClass.getName());
     if (list == null) {
-      list = new ArrayList<ClientProperty>();
+      list = new ArrayList<>();
       myPropertyMap.put(selectedClass.getName(), list);
     }
     list.add(enteredProperty);
@@ -200,7 +200,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   }
 
   public List<Class> getConfiguredClasses() {
-    List<Class> result = new ArrayList<Class>();
+    List<Class> result = new ArrayList<>();
     for(String className: myPropertyMap.keySet()) {
       try {
         result.add(Class.forName(className));
@@ -214,7 +214,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
 
   public void addClientPropertyClass(final String className) {
     if (!myPropertyMap.containsKey(className)) {
-      myPropertyMap.put(className, new ArrayList<ClientProperty>());
+      myPropertyMap.put(className, new ArrayList<>());
     }
   }
 
@@ -229,7 +229,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   }
 
   public ClientProperty[] getClientProperties(Class componentClass) {
-    ArrayList<ClientProperty> result = new ArrayList<ClientProperty>();
+    ArrayList<ClientProperty> result = new ArrayList<>();
     while(!componentClass.getName().equals(Object.class.getName())) {
       List<ClientProperty> props = myPropertyMap.get(componentClass.getName());
       if (props != null) {

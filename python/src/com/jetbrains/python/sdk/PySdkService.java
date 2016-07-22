@@ -33,8 +33,8 @@ public class PySdkService implements PersistentStateComponent<PySdkService> {
     return ServiceManager.getService(PySdkService.class);
   }
 
-  public Set<String> REMOVED_SDKS = new HashSet<String>();
-  public Set<String> ADDED_SDKS = new HashSet<String>();
+  public Set<String> REMOVED_SDKS = new HashSet<>();
+  public Set<String> ADDED_SDKS = new HashSet<>();
 
   public void removeSdk(@NotNull final Sdk sdk) {
     final String homePath = sdk.getHomePath();

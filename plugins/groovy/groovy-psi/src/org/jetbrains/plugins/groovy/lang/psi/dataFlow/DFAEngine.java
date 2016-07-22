@@ -47,9 +47,9 @@ public class DFAEngine<E> {
     ArrayList<Deque<CallInstruction>> myEnv;
 
     private MyCallEnvironment(int instructionNum) {
-      myEnv = new ArrayList<Deque<CallInstruction>>(instructionNum);
+      myEnv = new ArrayList<>(instructionNum);
       for (int i = 0; i < instructionNum; i++) {
-        myEnv.add(new ArrayDeque<CallInstruction>());
+        myEnv.add(new ArrayDeque<>());
       }
     }
 
@@ -80,7 +80,7 @@ public class DFAEngine<E> {
   private ArrayList<E> performDFA(boolean timeout) {
     WorkingTimeMeasurer measurer = null;
 
-    ArrayList<E> info = new ArrayList<E>(Collections.nCopies(myFlow.length, myDfa.initial()));
+    ArrayList<E> info = new ArrayList<>(Collections.nCopies(myFlow.length, myDfa.initial()));
     CallEnvironment env = new MyCallEnvironment(myFlow.length);
     
     boolean[] visited = new boolean[myFlow.length];
@@ -92,7 +92,7 @@ public class DFAEngine<E> {
       Instruction instr = myFlow[order[i]];
 
       if (!visited[instr.num()]) {
-        Queue<Instruction> workList = new LinkedList<Instruction>();
+        Queue<Instruction> workList = new LinkedList<>();
 
         workList.add(instr);
         visited[instr.num()] = true;
@@ -136,7 +136,7 @@ public class DFAEngine<E> {
 
   private E join(Instruction instruction, ArrayList<E> info, CallEnvironment env) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
-    ArrayList<E> prevInfos = new ArrayList<E>();
+    ArrayList<E> prevInfos = new ArrayList<>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num()));
     }

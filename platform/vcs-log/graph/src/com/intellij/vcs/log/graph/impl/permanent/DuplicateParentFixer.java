@@ -78,11 +78,11 @@ public class DuplicateParentFixer {
         return commit;
       }
       else {
-        return new DelegateGraphCommit<CommitId>(commit, Collections.singletonList(commitId0));
+        return new DelegateGraphCommit<>(commit, Collections.singletonList(commitId0));
       }
     }
 
-    Set<CommitId> allParents = new HashSet<CommitId>(parents);
+    Set<CommitId> allParents = new HashSet<>(parents);
     if (parents.size() == allParents.size()) return commit;
 
     List<CommitId> correctParents = ContainerUtil.newArrayList();
@@ -92,6 +92,6 @@ public class DuplicateParentFixer {
       }
     }
 
-    return new DelegateGraphCommit<CommitId>(commit, correctParents);
+    return new DelegateGraphCommit<>(commit, correctParents);
   }
 }

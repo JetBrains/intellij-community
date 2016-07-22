@@ -108,7 +108,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     if (r == null || DumbService.isDumb(project) && !DumbService.isDumbAware(r)) {
       return;
     }
-    List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
     for (AnAction action : ar(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(), r.getPopupMenuActions())) {
       if (action != null) {
         addActions(action, list, r, 0, event);

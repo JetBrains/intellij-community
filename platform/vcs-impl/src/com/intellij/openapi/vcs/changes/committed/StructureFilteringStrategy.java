@@ -54,7 +54,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private MyUI myUI;
   private final Project myProject;
-  private final List<FilePath> mySelection = new ArrayList<FilePath>();
+  private final List<FilePath> mySelection = new ArrayList<>();
 
   public StructureFilteringStrategy(final Project project) {
     myProject = project;
@@ -107,7 +107,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     if (mySelection.size() == 0) {
       return changeLists;
     }
-    final ArrayList<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    final ArrayList<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList list : changeLists) {
       if (listMatchesSelection(list)) {
         result.add(list);
@@ -141,7 +141,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myStructureTree.setShowsRootHandles(true);
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(final TreeSelectionEvent e) {
-          final List<FilePath> filePaths = new ArrayList<FilePath>(mySelection);
+          final List<FilePath> filePaths = new ArrayList<>(mySelection);
 
           mySelection.clear();
           final TreePath[] selectionPaths = myStructureTree.getSelectionPaths();
@@ -200,7 +200,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
                                    ? myState
                                    : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
 
-      final Set<FilePath> filePaths = new HashSet<FilePath>();
+      final Set<FilePath> filePaths = new HashSet<>();
       for (CommittedChangeList changeList : changeLists) {
         for (Change change : changeList.getChanges()) {
           final FilePath path = ChangesUtil.getFilePath(change);

@@ -195,7 +195,7 @@ public class QualifiedNameFinder {
    */
   private static class PathChoosingVisitor implements RootVisitor {
     @Nullable private final VirtualFile myVFile;
-    @NotNull private final List<QualifiedName> myResults = new ArrayList<QualifiedName>();
+    @NotNull private final List<QualifiedName> myResults = new ArrayList<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {

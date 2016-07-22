@@ -84,7 +84,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     public String root;
     public List<String> workspace;
     public boolean linkConverted;
-    public List<String> projectsToConvert = new ArrayList<String>();
+    public List<String> projectsToConvert = new ArrayList<>();
     public boolean openModuleSettings;
     public Options converterOptions = new Options();
     public Set<String> existingModuleNames;
@@ -110,7 +110,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public boolean setRootDirectory(final String path) {
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        final ArrayList<String> roots = new ArrayList<String>();
+        final ArrayList<String> roots = new ArrayList<>();
         EclipseProjectFinder.findModuleRoots(roots, path, path12 -> {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           if (progressIndicator != null) {
@@ -167,9 +167,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public boolean validate(final Project currentProject, final Project dstProject) {
-    final Ref<Exception> refEx = new Ref<Exception>();
-    final Set<String> variables = new THashSet<String>();
-    final Map<String, String> naturesNames = new THashMap<String, String>();
+    final Ref<Exception> refEx = new Ref<>();
+    final Set<String> variables = new THashSet<>();
+    final Map<String, String> naturesNames = new THashMap<>();
     final List<String> projectsToConvert = getParameters().projectsToConvert;
     final boolean oneProjectToConvert = projectsToConvert.size() == 1;
     final String separator = oneProjectToConvert ? "<br>" : ", ";
@@ -220,17 +220,17 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public List<Module> commit(final Project project, ModifiableModuleModel model, ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
 
-    final Collection<String> unknownLibraries = new TreeSet<String>();
-    final Collection<String> unknownJdks = new TreeSet<String>();
-    final Set<String> refsToModules = new HashSet<String>();
-    final List<Module> result = new ArrayList<Module>();
-    final Map<Module, Set<String>> module2NatureNames = new HashMap<Module, Set<String>>();
+    final Collection<String> unknownLibraries = new TreeSet<>();
+    final Collection<String> unknownJdks = new TreeSet<>();
+    final Set<String> refsToModules = new HashSet<>();
+    final List<Module> result = new ArrayList<>();
+    final Map<Module, Set<String>> module2NatureNames = new HashMap<>();
 
     try {
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
       final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
-      final Set<File> files = new HashSet<File>();
-      final Set<String> moduleNames = new THashSet<String>(getParameters().projectsToConvert.size());
+      final Set<File> files = new HashSet<>();
+      final Set<String> moduleNames = new THashSet<>(getParameters().projectsToConvert.size());
       for (String path : getParameters().projectsToConvert) {
         String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
         if (modulesDirectory == null) {
@@ -391,7 +391,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> DumbService.getInstance(project).smartInvokeLater(() -> {
       for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
         final String importerNatureName = importer.getNatureName();
-        final List<Module> modulesToImport = new ArrayList<Module>();
+        final List<Module> modulesToImport = new ArrayList<>();
 
         for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
           final Module module = entry.getKey();
@@ -448,7 +448,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public Parameters getParameters() {
     if (parameters == null) {
       parameters = new Parameters();
-      parameters.existingModuleNames = new THashSet<String>();
+      parameters.existingModuleNames = new THashSet<>();
       if (isUpdate()) {
         Project project = getCurrentProject();
         if (project != null) {
@@ -476,7 +476,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   @NotNull
   public static Set<String> collectNatures(@NotNull String path) {
-    Set<String> naturesNames = new THashSet<String>();
+    Set<String> naturesNames = new THashSet<>();
     try {
       Element natures = JDOMUtil.load(new File(path, EclipseXml.DOT_PROJECT_EXT)).getChild("natures");
       if (natures != null) {

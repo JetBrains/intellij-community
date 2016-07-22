@@ -72,7 +72,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   }
 
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
-    private final Set<String> myPredefinedSeparators = new LinkedHashSet<String>();
+    private final Set<String> myPredefinedSeparators = new LinkedHashSet<>();
 
     public ChangeGroupSeparatorAction() {
       super("Group by: ", true);

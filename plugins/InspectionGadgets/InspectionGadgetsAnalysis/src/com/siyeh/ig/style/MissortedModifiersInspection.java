@@ -89,8 +89,8 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiModifierList modifierList =
         (PsiModifierList)descriptor.getPsiElement();
-      final List<String> modifiers = new ArrayList<String>();
-      final List<String> typeAnnotations = new ArrayList<String>();
+      final List<String> modifiers = new ArrayList<>();
+      final List<String> typeAnnotations = new ArrayList<>();
       final PsiElement[] children = modifierList.getChildren();
       for (final PsiElement child : children) {
         if (child instanceof PsiComment) {
@@ -228,7 +228,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
      * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, Integer> s_modifierOrder =
-      new HashMap<String, Integer>(11);
+      new HashMap<>(11);
 
     static {
       s_modifierOrder.put(PsiModifier.PUBLIC, Integer.valueOf(0));

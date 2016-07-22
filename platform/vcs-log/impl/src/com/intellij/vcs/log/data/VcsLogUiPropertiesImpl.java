@@ -33,8 +33,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
-    public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
-    public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
+    public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
+    public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
   }
 
@@ -147,7 +147,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   public static class UserGroup {
-    public List<String> users = new ArrayList<String>();
+    public List<String> users = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

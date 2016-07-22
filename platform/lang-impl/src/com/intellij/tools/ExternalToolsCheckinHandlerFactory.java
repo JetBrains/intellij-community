@@ -157,7 +157,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
   }
 
   private static List<Object> getComboBoxElements() {
-    List<Object> result = new SmartList<Object>();
+    List<Object> result = new SmartList<>();
     ToolManager manager = ToolManager.getInstance();
     result.add(NONE_TOOL);//for empty selection
     for (ToolsGroup group : manager.getGroups()) {

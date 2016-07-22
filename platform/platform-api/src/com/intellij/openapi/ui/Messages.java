@@ -1061,7 +1061,7 @@ public class Messages {
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<String, Boolean>(ourTestInputImplementation.show(message, validator), checked);
+      return new Pair<>(ourTestInputImplementation.show(message, validator), checked);
     }
     else {
       InputDialogWithCheckbox dialog = new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);

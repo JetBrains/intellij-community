@@ -118,7 +118,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final ConcurrentMap<LookupElement, CompletionSorterImpl> myItemSorters =
     ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
-  private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
+  private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
 

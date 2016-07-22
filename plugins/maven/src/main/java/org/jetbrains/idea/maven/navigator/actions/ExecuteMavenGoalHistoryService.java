@@ -36,7 +36,7 @@ public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<
 
   private static final int MAX_HISTORY_LENGTH = 20;
 
-  private final LinkedList<String> myHistory = new LinkedList<String>();
+  private final LinkedList<String> myHistory = new LinkedList<>();
 
   private String myWorkDirectory = "";
 
@@ -71,7 +71,7 @@ public class ExecuteMavenGoalHistoryService implements PersistentStateComponent<
   }
 
   public List<String> getHistory() {
-    return new ArrayList<String>(myHistory);
+    return new ArrayList<>(myHistory);
   }
 
   @NotNull

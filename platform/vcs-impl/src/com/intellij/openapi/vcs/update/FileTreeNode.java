@@ -36,7 +36,7 @@ import java.util.Collections;
  * author: lesya
  */
 public class FileTreeNode extends FileOrDirectoryTreeNode {
-  private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<VirtualFile>();
+  private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<>();
 
 
   public FileTreeNode(@NotNull String path,

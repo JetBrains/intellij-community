@@ -135,7 +135,7 @@ public class PathEnvironmentVariableUtil {
     if (pathEnvVarValue == null) {
       return Collections.emptyList();
     }
-    List<File> result = new SmartList<File>();
+    List<File> result = new SmartList<>();
     List<String> paths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
     for (String path : paths) {
       File dir = new File(path);

@@ -62,11 +62,11 @@ import java.util.Map;
  */
 @SuppressWarnings({"StaticFieldReferencedViaSubclass"})
 public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
   private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = count -> new GrAnnotation[count];
 
-  private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<String>(16);
+  private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
 
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.PUBLIC, GrModifierFlags.PUBLIC_MASK);
@@ -144,7 +144,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Override
   @NotNull
   public PsiElement[] getModifiers() {
-    final ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+    final ArrayList<PsiElement> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrAnnotation || TokenSets.MODIFIERS.contains(cur.getNode().getElementType())) {
         result.add(cur);

@@ -130,7 +130,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
     private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
 
-    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<TabChangeListener>();
+    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
     public JBTerminalTabs(@NotNull Project project, @NotNull Disposable parent) {
       final ActionManager actionManager = ActionManager.getInstance();

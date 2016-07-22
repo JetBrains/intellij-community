@@ -118,8 +118,8 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
   private static class FieldUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final THashSet<PsiField> myUnusedFields = new THashSet<PsiField>();
-    private final THashSet<PsiMethod> myUnusedMethods = new THashSet<PsiMethod>();
+    private final THashSet<PsiField> myUnusedFields = new THashSet<>();
+    private final THashSet<PsiMethod> myUnusedMethods = new THashSet<>();
 
     FieldUsedVisitor(PsiField[] fields, PsiMethod[] methods) {
       Collections.addAll(myUnusedFields, fields);

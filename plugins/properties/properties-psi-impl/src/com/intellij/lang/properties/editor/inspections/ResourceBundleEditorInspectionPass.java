@@ -65,8 +65,8 @@ public class ResourceBundleEditorInspectionPass {
     final InspectionToolWrapper[] propertiesTools = profileToUse.getInspectionTools(containingFile);
 
     List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
-      new SmartList<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>>();
-    SortedSet<HighlightInfoType> highlightTypes = new TreeSet<HighlightInfoType>((o1, o2) -> {
+      new SmartList<>();
+    SortedSet<HighlightInfoType> highlightTypes = new TreeSet<>((o1, o2) -> {
       final HighlightSeverity s1 = o1.getSeverity(null);
       final HighlightSeverity s2 = o2.getSeverity(null);
       return Comparing.compare(s1, s2);

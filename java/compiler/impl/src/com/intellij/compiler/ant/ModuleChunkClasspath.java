@@ -56,13 +56,13 @@ public class ModuleChunkClasspath extends Path {
     super(generateClasspathName(chunk, generateRuntimeClasspath, generateTestClasspath));
 
     final OrderedSet<ClasspathItem> pathItems =
-      new OrderedSet<ClasspathItem>();
+      new OrderedSet<>();
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
     // processed chunks (used only in runtime classpath), every chunk is referenced exactly once
-    final Set<ModuleChunk> processedChunks = new HashSet<ModuleChunk>();
+    final Set<ModuleChunk> processedChunks = new HashSet<>();
     // pocessed modules
-    final Set<Module> processedModules = new HashSet<Module>();
+    final Set<Module> processedModules = new HashSet<>();
     for (final Module module : modules) {
       new Object() {
         /**
@@ -229,7 +229,7 @@ public class ModuleChunkClasspath extends Path {
     }
     final Set<String> jdkUrls = options.getAllJdkUrls();
 
-    final OrderedSet<String> urls = new OrderedSet<String>();
+    final OrderedSet<String> urls = new OrderedSet<>();
     ContainerUtil.addAll(urls, extension.getOutputRootUrls(forTest));
     urls.removeAll(jdkUrls);
     return ArrayUtil.toStringArray(urls);

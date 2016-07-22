@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface InlineHandler {
 
-  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<InlineHandler>("com.intellij.refactoring.inlineHandler");
+  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<>("com.intellij.refactoring.inlineHandler");
 
   interface Settings {
     /**

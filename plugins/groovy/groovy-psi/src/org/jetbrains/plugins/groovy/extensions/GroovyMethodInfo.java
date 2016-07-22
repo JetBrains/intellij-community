@@ -41,7 +41,7 @@ public class GroovyMethodInfo {
   private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;
   private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;
 
-  private static final Set<String> myAllSupportedNamedArguments = new HashSet<String>();
+  private static final Set<String> myAllSupportedNamedArguments = new HashSet<>();
 
   private final List<String> myParams;
   private final ClassLoader myClassLoader;
@@ -62,8 +62,8 @@ public class GroovyMethodInfo {
     if (METHOD_INFOS != null) return;
 
     synchronized (GroovyMethodInfo.class) {
-      Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
-      Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+      Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<>();
+      Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<>();
 
       for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
         ClassLoader classLoader = classDescriptor.getLoaderForClass();
@@ -207,7 +207,7 @@ public class GroovyMethodInfo {
   private static Map<String, NamedArgumentReference> getNamedArgumentsReferenceProviders(GroovyMethodDescriptor methodDescriptor) {
     if (methodDescriptor.myArguments == null) return Collections.emptyMap();
 
-    Map<String, NamedArgumentReference> res = new HashMap<String, NamedArgumentReference>();
+    Map<String, NamedArgumentReference> res = new HashMap<>();
 
     for (GroovyMethodDescriptor.NamedArgument argument : methodDescriptor.myArguments) {
       NamedArgumentReference r;
@@ -217,7 +217,7 @@ public class GroovyMethodInfo {
         r = new NamedArgumentReference(argument.referenceProvider);
       }
       else if (argument.values != null) {
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (StringTokenizer st = new StringTokenizer(argument.values, " ,;"); st.hasMoreTokens(); ) {
           values.add(st.nextToken());
         }
@@ -260,13 +260,13 @@ public class GroovyMethodInfo {
                                           @NotNull String key) {
     Map<String, List<GroovyMethodInfo>> methodMap = res.get(key);
     if (methodMap == null) {
-      methodMap = new HashMap<String, List<GroovyMethodInfo>>();
+      methodMap = new HashMap<>();
       res.put(key, methodMap);
     }
 
     List<GroovyMethodInfo> methodsList = methodMap.get(methodName);
     if (methodsList == null) {
-      methodsList = new ArrayList<GroovyMethodInfo>();
+      methodsList = new ArrayList<>();
       methodMap.put(methodName, methodsList);
     }
 

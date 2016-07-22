@@ -32,7 +32,7 @@ public interface PsiReferenceProcessor{
     }
 
     public CollectElements() {
-      this(new ArrayList<PsiReference>());
+      this(new ArrayList<>());
     }
 
     public PsiReference[] toArray(){

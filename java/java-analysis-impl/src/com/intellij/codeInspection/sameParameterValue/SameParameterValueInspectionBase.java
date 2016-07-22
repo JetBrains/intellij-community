@@ -50,7 +50,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         String value = refParameter.getActualValueIfSame();
         if (value != null) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
-          if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+          if (problems == null) problems = new ArrayList<>(1);
           final String paramName = refParameter.getName();
           problems.add(manager.createProblemDescriptor(refParameter.getElement(), InspectionsBundle.message(
             "inspection.same.parameter.problem.descriptor", "<code>" + paramName + "</code>", "<code>" + value + "</code>"),

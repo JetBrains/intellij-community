@@ -48,7 +48,7 @@ import java.util.List;
  * data: 7/31/14.
  */
 public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
-  private List<CourseInfo> myAvailableCourses = new ArrayList<CourseInfo>();
+  private List<CourseInfo> myAvailableCourses = new ArrayList<>();
   private JButton myBrowseButton;
   private ComboBox<CourseInfo> myCoursesComboBox;
   private JButton myRefreshButton;
@@ -73,7 +73,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   }
 
   private void layoutPanel() {
-    myCoursesComboBox = new ComboBox<CourseInfo>();
+    myCoursesComboBox = new ComboBox<>();
 
     final JPanel coursesPanel = new JPanel(new BorderLayout());
     final LabeledComponent<ComboBox> coursesCombo = LabeledComponent.create(myCoursesComboBox, "Courses:", BorderLayout.WEST);

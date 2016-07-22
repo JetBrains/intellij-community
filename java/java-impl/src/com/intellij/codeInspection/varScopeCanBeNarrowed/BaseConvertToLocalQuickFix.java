@@ -109,7 +109,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
     final PsiAssignmentExpression anchorAssignmentExpression = searchAssignmentExpression(anchor);
     if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
-      final Set<PsiReference> refsSet = new HashSet<PsiReference>(references);
+      final Set<PsiReference> refsSet = new HashSet<>(references);
       refsSet.remove(anchorAssignmentExpression.getLExpression());
       return applyChanges(
         project,

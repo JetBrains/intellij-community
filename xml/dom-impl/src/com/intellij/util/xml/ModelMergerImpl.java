@@ -39,15 +39,15 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
-  private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
-  private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
+  private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<>();
+  private final List<MergingStrategy> myMergingStrategies = new ArrayList<>();
+  private final List<Class> myMergingStrategyClasses = new ArrayList<>();
   private static final Class<MergedObject> MERGED_OBJECT_CLASS = MergedObject.class;
 
   private final ConcurrentFactoryMap<Method,List<Pair<InvocationStrategy,Class>>> myAcceptsCache = new ConcurrentFactoryMap<Method,List<Pair<InvocationStrategy,Class>>>() {
     @Override
     protected List<Pair<InvocationStrategy,Class>> create(final Method method) {
-      List<Pair<InvocationStrategy,Class>> result = new ArrayList<Pair<InvocationStrategy,Class>>();
+      List<Pair<InvocationStrategy,Class>> result = new ArrayList<>();
       for (int i = myInvocationStrategies.size() - 1; i >= 0; i--) {
         final Pair<InvocationStrategy, Class> pair = myInvocationStrategies.get(i);
         if (pair.first.accepts(method)) {
@@ -222,7 +222,7 @@ public class ModelMergerImpl implements ModelMerger {
   @Override
   public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
     if (implementations.length == 1) return implementations[0];
-    final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(aClass, Arrays.asList(implementations));
+    final MergingInvocationHandler<T> handler = new MergingInvocationHandler<>(aClass, Arrays.asList(implementations));
     return _mergeModels(aClass, handler, implementations);
   }
 
@@ -233,7 +233,7 @@ public class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class> commonClasses = getCommonClasses(new THashSet<Class>(), implementations);
+    final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
@@ -244,7 +244,7 @@ public class ModelMergerImpl implements ModelMerger {
     if (implementations.length > 0) {
       DomUtil.getAllInterfaces(implementations[0].getClass(), result);
       for (int i = 1; i < implementations.length; i++) {
-        final ArrayList<Class> list1 = new ArrayList<Class>();
+        final ArrayList<Class> list1 = new ArrayList<>();
         DomUtil.getAllInterfaces(implementations[i].getClass(), list1);
         result.retainAll(list1);
       }
@@ -253,7 +253,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
 
-  private static final Map<Class<?>, Method> ourPrimaryKeyMethods = new HashMap<Class<?>, Method>();
+  private static final Map<Class<?>, Method> ourPrimaryKeyMethods = new HashMap<>();
 
   public class MergingInvocationHandler<T> implements InvocationHandler {
     private final Class<? super T> myClass;
@@ -349,16 +349,16 @@ public class ModelMergerImpl implements ModelMerger {
                                                 final List<Object> implementations,
                                                 final boolean intersect) throws IllegalAccessException, InvocationTargetException {
 
-    final List<Object> results = new ArrayList<Object>();
+    final List<Object> results = new ArrayList<>();
 
     if (returnType.isInterface()) {
-      final List<Object> orderedPrimaryKeys = new SmartList<Object>();
+      final List<Object> orderedPrimaryKeys = new SmartList<>();
       final FactoryMap<Object, List<Set<Object>>> map = new FactoryMap<Object, List<Set<Object>>>() {
         @Override
         @NotNull
         protected List<Set<Object>> create(final Object key) {
           orderedPrimaryKeys.add(key);
-          return new SmartList<Set<Object>>();
+          return new SmartList<>();
         }
       };
       final FactoryMap<Object, int[]> counts = new FactoryMap<Object, int[]>() {
@@ -384,12 +384,12 @@ public class ModelMergerImpl implements ModelMerger {
 
       for (final Object primaryKey : orderedPrimaryKeys) {
         for (final Set<Object> objects : map.get(primaryKey)) {
-          results.add(mergeImplementations(returnType, new ArrayList<Object>(objects)));
+          results.add(mergeImplementations(returnType, new ArrayList<>(objects)));
         }
       }
     }
     else {
-      HashSet<Object> map = new HashSet<Object>();
+      HashSet<Object> map = new HashSet<>();
       for (final Object t : implementations) {
         final Object o = method.invoke(t, args);
         if (o instanceof Collection) {
@@ -433,7 +433,7 @@ public class ModelMergerImpl implements ModelMerger {
       final int[] indices = counts.get(primaryKey);
       int objIndex = intersect? indices[index] : indices[index]++;
       if (list.size() <= objIndex) {
-        list.add(new LinkedHashSet<Object>());
+        list.add(new LinkedHashSet<>());
       }
       list.get(objIndex).add(o);
       return false;

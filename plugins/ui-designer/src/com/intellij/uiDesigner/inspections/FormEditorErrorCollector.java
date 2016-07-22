@@ -59,9 +59,9 @@ public class FormEditorErrorCollector extends FormErrorCollector {
                        @NotNull String errorMessage,
                        EditorQuickFixProvider... editorQuickFixProviders) {
     if (myResults == null) {
-      myResults = new ArrayList<ErrorInfo>();
+      myResults = new ArrayList<>();
     }
-    List<QuickFix> quickFixes = new ArrayList<QuickFix>();
+    List<QuickFix> quickFixes = new ArrayList<>();
     for (EditorQuickFixProvider provider : editorQuickFixProviders) {
       if (provider != null) {
         quickFixes.add(provider.createQuickFix(myEditor, myComponent));

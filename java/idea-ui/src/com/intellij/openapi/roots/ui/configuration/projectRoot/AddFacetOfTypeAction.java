@@ -67,7 +67,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   private void addSubFacet(FacetType type, FacetTypeId<?> underlyingType) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
-    List<Facet> suitableParents = new ArrayList<Facet>();
+    List<Facet> suitableParents = new ArrayList<>();
     for (Module module : myContext.getModules()) {
       if (type.isSuitableModuleType(ModuleType.get(module))) {
         suitableParents.addAll(facetsConfigurator.getFacetsByType(module, underlyingType));
@@ -101,7 +101,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   private void addFacetToModule(@NotNull FacetType type) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
-    List<Module> suitableModules = new ArrayList<Module>(Arrays.asList(myContext.getModules()));
+    List<Module> suitableModules = new ArrayList<>(Arrays.asList(myContext.getModules()));
     final Iterator<Module> iterator = suitableModules.iterator();
     while (iterator.hasNext()) {
       Module module = iterator.next();
@@ -128,7 +128,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
   }
 
   public static AnAction[] createAddFacetActions(FacetStructureConfigurable configurable) {
-    final List<AnAction> result = new ArrayList<AnAction>();
+    final List<AnAction> result = new ArrayList<>();
     final StructureConfigurableContext context = configurable.myContext;
     for (FacetType type : FacetTypeRegistry.getInstance().getSortedFacetTypes()) {
       if (hasSuitableModules(context, type)) {

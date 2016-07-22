@@ -40,7 +40,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   private static class ReturnTypeDescriptor {
-    private final Map<String, ReturnTypeCallback> myStringToReturnTypeMap = new HashMap<String, ReturnTypeCallback>();
+    private final Map<String, ReturnTypeCallback> myStringToReturnTypeMap = new HashMap<>();
 
     void put(String className, ReturnTypeCallback callback) {
       myStringToReturnTypeMap.put(className, callback);

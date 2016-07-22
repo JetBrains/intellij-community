@@ -73,7 +73,7 @@ public class SnapShotClient {
     if (myDisconnected) {
       return new SnapShotRemoteComponent[0];
     }
-    List<SnapShotRemoteComponent> result = new ArrayList<SnapShotRemoteComponent>();
+    List<SnapShotRemoteComponent> result = new ArrayList<>();
     myWriter.write("L" + Integer.toString(id) + "\n");
     myWriter.flush();
     while(true) {

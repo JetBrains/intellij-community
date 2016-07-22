@@ -87,8 +87,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     //noinspection unchecked
-    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<DocStringFormat>(Arrays.asList(DocStringFormat.values()),
-                                                                                    myDocumentationSettings.getFormat()));
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
+                                                                     myDocumentationSettings.getFormat()));
     myDocstringFormatComboBox.setRenderer(new ListCellRendererWrapper<DocStringFormat>() {
       @Override
       public void customize(JList list, DocStringFormat value, int index, boolean selected, boolean hasFocus) {

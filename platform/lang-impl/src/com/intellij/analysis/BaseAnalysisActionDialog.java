@@ -288,7 +288,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           files = changeListManager.getAffectedFiles();
         }
         else {
-          files = new ArrayList<VirtualFile>();
+          files = new ArrayList<>();
           for (ChangeList list : changeListManager.getChangeListsCopy()) {
             if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
             final Collection<Change> changes = list.getChanges();
@@ -303,7 +303,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
             }
           }
         }
-        scope = new AnalysisScope(project, new HashSet<VirtualFile>(files));
+        scope = new AnalysisScope(project, new HashSet<>(files));
         uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
       }
       else {

@@ -78,7 +78,7 @@ public class GebUtil {
     GrExpression initializer = ((GrField)contentField).getInitializerGroovy();
     if (!(initializer instanceof GrClosableBlock)) return Collections.emptyMap();
 
-    Map<String, PsiField> res = new HashMap<String, PsiField>();
+    Map<String, PsiField> res = new HashMap<>();
     PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {

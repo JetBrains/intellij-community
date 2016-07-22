@@ -32,7 +32,7 @@ public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
   @NotNull
   @Override
   public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
-    ArrayList<BooleanOptionDescription> options = new ArrayList<BooleanOptionDescription>();
+    ArrayList<BooleanOptionDescription> options = new ArrayList<>();
     for (IdeaPluginDescriptor pluginDescriptor : PluginManagerCore.getPlugins()) {
       if (pluginDescriptor.getPluginId().toString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
         continue;

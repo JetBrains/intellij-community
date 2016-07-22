@@ -97,14 +97,14 @@ public class HtmlUtil {
   private HtmlUtil() {
   }
 
-  private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
+  private static final Set<String> EMPTY_TAGS_MAP = new THashSet<>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
     "head",
     //"body",
     "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed"
   };
-  private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<String>();
+  private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<>();
 
   @NonNls private static final String[] BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
     "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
@@ -121,26 +121,26 @@ public class HtmlUtil {
       "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
       "strong", "sub", "sup", "textarea", "tt", "u", "var"};
 
-  private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
+  private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
   
-  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
+  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
 
   @NonNls private static final String[] HTML5_TAGS = {
     "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header",
     "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
     "main"
   };
-  private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
-  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<String, Set<String>>();
+  private static final Set<String> HTML5_TAGS_SET = new THashSet<>();
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<>();
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
       final String tagName = control.name.toLowerCase(Locale.US);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<String>(control.autoClosedBy));
+      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<>(control.autoClosedBy));
     }
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
@@ -505,10 +505,10 @@ public class HtmlUtil {
       charPrefix = StringUtil.indexOf(content,CHARSET, charsetPrefixEnd);
     } while(true);
 
-    final Ref<String> charsetNameRef = new Ref<String>();
+    final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls final Set<String> inTag = new THashSet<String>();
+        @NonNls final Set<String> inTag = new THashSet<>();
         boolean metHttpEquiv = false;
         boolean metHttml5Charset = false;
 

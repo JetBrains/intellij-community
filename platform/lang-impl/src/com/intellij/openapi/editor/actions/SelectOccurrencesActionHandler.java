@@ -40,7 +40,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
 
-  private static final Set<String> SELECT_ACTIONS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> SELECT_ACTIONS = new HashSet<>(Arrays.asList(
     IdeActions.ACTION_SELECT_NEXT_OCCURENCE,
     IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE,
     IdeActions.ACTION_FIND_NEXT,

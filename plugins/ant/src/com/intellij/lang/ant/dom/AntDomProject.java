@@ -233,7 +233,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   private Map<String, String> loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
-    final Map<String, String> destination = new HashMap<String, String>();
+    final Map<String, String> destination = new HashMap<>();
     if (properties != null) {
       final Enumeration props = properties.keys();
       while (props.hasMoreElements()) {

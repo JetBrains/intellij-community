@@ -47,8 +47,8 @@ public class OfflineViewParseUtil {
   }
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(final String problems) {
-    final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<String>();
-    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<String, Set<OfflineProblemDescriptor>>();
+    final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
+    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<>();
     final XppReader reader = new XppReader(new StringReader(problems));
     try {
       while(reader.hasMoreChildren()) {
@@ -83,7 +83,7 @@ public class OfflineViewParseUtil {
               reader.moveDown();
               List<String> hints = descriptor.getHints();
               if (hints == null) {
-                hints = new ArrayList<String>();
+                hints = new ArrayList<>();
                 descriptor.setHints(hints);
               }
               hints.add(reader.getAttribute("value"));
@@ -119,7 +119,7 @@ public class OfflineViewParseUtil {
                                        final OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
-      descriptors = new THashSet<OfflineProblemDescriptor>();
+      descriptors = new THashSet<>();
       package2Result.put(packageName, descriptors);
     }
     descriptors.add(descriptor);

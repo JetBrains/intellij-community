@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn;
 
 public class SvnWorkingCopyFormatHolder {
-  private static final ThreadLocal<WorkingCopyFormat> myPresetFormat = new ThreadLocal<WorkingCopyFormat>();
+  private static final ThreadLocal<WorkingCopyFormat> myPresetFormat = new ThreadLocal<>();
 
   private SvnWorkingCopyFormatHolder() {
   }

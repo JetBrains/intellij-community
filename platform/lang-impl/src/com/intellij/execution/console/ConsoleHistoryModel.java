@@ -35,7 +35,7 @@ class ConsoleHistoryModel extends SimpleModificationTracker {
   private int myIndex;
 
   ConsoleHistoryModel(@Nullable ConsoleHistoryModel masterModel) {
-    myEntries = masterModel == null ? new LinkedList<String>() : masterModel.myEntries;
+    myEntries = masterModel == null ? new LinkedList<>() : masterModel.myEntries;
     myLock = masterModel == null ? this : masterModel.myLock;  // hard ref to master model
     resetIndex();
   }

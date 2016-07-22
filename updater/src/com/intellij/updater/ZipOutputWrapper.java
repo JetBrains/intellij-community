@@ -11,7 +11,7 @@ import java.util.zip.ZipOutputStream;
 
 public class ZipOutputWrapper {
   private final ZipOutputStream myOut;
-  private final Set<String> myDirs = new HashSet<String>();
+  private final Set<String> myDirs = new HashSet<>();
   private boolean isCompressed = true;
 
   public ZipOutputWrapper(OutputStream stream) {
@@ -111,7 +111,7 @@ public class ZipOutputWrapper {
   }
 
   private void addDirs(String relPath, boolean isDir) {
-    List<String> temp = new ArrayList<String>();
+    List<String> temp = new ArrayList<>();
     if (isDir && !relPath.endsWith("/")) relPath += "/";
     int index = 0;
     while ((index = relPath.indexOf('/', index + 1)) != -1) {

@@ -234,7 +234,7 @@ public class DfaPsiUtil {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
         }
 
-        final MultiMap<PsiField, PsiExpression> result = new MultiMap<PsiField, PsiExpression>();
+        final MultiMap<PsiField, PsiExpression> result = new MultiMap<>();
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
@@ -329,7 +329,7 @@ public class DfaPsiUtil {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) return true;
     if (expression instanceof PsiPolyadicExpression) {
-      Stack<PsiExpression> stack = new Stack<PsiExpression>();
+      Stack<PsiExpression> stack = new Stack<>();
       stack.add(expression);
       while (!stack.isEmpty()) {
         PsiExpression psiExpression = stack.pop();

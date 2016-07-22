@@ -92,7 +92,7 @@ public class GrSetStrongTypeIntention extends Intention {
       return;
     }
 
-    ArrayList<TypeConstraint> types = new ArrayList<TypeConstraint>();
+    ArrayList<TypeConstraint> types = new ArrayList<>();
 
     if (parent.getParent() instanceof GrForInClause) {
       types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));

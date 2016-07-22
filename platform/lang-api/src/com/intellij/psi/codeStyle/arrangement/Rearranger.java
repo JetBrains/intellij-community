@@ -39,7 +39,7 @@ import java.util.List;
  */
 public interface Rearranger<E extends ArrangementEntry> {
 
-  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.lang.rearranger");
+  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<>("com.intellij.lang.rearranger");
 
   /**
    * Tries to wrap given element into arrangement entry at the target context.

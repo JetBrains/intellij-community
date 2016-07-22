@@ -82,7 +82,7 @@ public class SelectBranchPopup {
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title,
                                        final Component component) {
     final SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-    final List<String> items = new ArrayList<String>();
+    final List<String> items = new ArrayList<>();
     if (! StringUtil.isEmptyOrSpaces(configuration.getTrunkUrl())) {
       items.add(getTrunkString(configuration));
     }

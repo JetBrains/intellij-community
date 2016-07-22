@@ -52,7 +52,7 @@ public class LibrarySourceRootDetectorUtil {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
                                                                      new LibraryRootsDetectorImpl(Arrays.asList(Extensions.getExtensions(JAVA_SOURCE_ROOT_DETECTOR))),
                                                                      new OrderRootType[] {OrderRootType.SOURCES});
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final List<VirtualFile> result = new ArrayList<>();
     for (OrderRoot root : orderRoots) {
       result.add(root.getFile());
     }

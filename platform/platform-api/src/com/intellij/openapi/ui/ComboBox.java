@@ -67,7 +67,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
    * @param width preferred width of the combobox. Value <code>-1</code> means undefined.
    */
   public ComboBox(final int width) {
-    this(new DefaultComboBoxModel<E>(), width);
+    this(new DefaultComboBoxModel<>(), width);
   }
 
 

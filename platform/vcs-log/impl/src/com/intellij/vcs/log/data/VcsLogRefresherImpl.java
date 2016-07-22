@@ -176,7 +176,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private GraphCommitImpl<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull final VirtualFile root) {
     List<Integer> parents = ContainerUtil.map(commit.getParents(),
                                               (NotNullFunction<Hash, Integer>)hash -> myHashMap.getCommitIndex(hash, root));
-    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId(), root), parents, commit.getTimestamp());
+    return new GraphCommitImpl<>(myHashMap.getCommitIndex(commit.getId(), root), parents, commit.getTimestamp());
   }
 
   private void storeUsersAndDetails(@NotNull Collection<? extends VcsCommitMetadata> metadatas) {

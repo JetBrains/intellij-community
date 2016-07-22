@@ -33,14 +33,14 @@ import java.util.*;
 public class UpdaterTreeState {
 
   private final AbstractTreeUi myUi;
-  protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<Object, Object>();
-  protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<Object, Condition>();
-  protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<Object, Object>();
+  protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<>();
+  protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<>();
+  protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<>();
   private int myProcessingCount;
 
   private boolean myCanRunRestore = true;
 
-  private final WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<Object, Object>();
+  private final WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<>();
 
   public UpdaterTreeState(AbstractTreeUi ui) {
     this(ui, false);
@@ -67,7 +67,7 @@ public class UpdaterTreeState {
   }
 
   private Set<Object> addPaths(Object[] elements) {
-    Set<Object> set = new HashSet<Object>();
+    Set<Object> set = new HashSet<>();
     if (elements != null) {
       ContainerUtil.addAll(set, elements);
     }
@@ -76,7 +76,7 @@ public class UpdaterTreeState {
   }
 
   private Set<Object> addPaths(Enumeration elements) {
-    ArrayList<Object> elementArray = new ArrayList<Object>();
+    ArrayList<Object> elementArray = new ArrayList<>();
     if (elements != null) {
       while (elements.hasMoreElements()) {
         Object each = elements.nextElement();
@@ -88,7 +88,7 @@ public class UpdaterTreeState {
   }
 
   private Set<Object> addPaths(Collection elements) {
-    Set<Object> target = new HashSet<Object>();
+    Set<Object> target = new HashSet<>();
 
     if (elements != null) {
       for (Object each : elements) {
@@ -164,7 +164,7 @@ public class UpdaterTreeState {
     final Object[] toExpand = getToExpand();
 
 
-    final Map<Object, Condition> adjusted = new WeakHashMap<Object, Condition>();
+    final Map<Object, Condition> adjusted = new WeakHashMap<>();
     adjusted.putAll(myAdjustedSelection);
 
     clearSelection();
@@ -230,7 +230,7 @@ public class UpdaterTreeState {
 
     boolean wasFullyRejected = false;
     if (toSelect.length > 0 && !selected.isEmpty() && !originallySelected.containsAll(selected)) {
-      final Set<Object> successfulSelections = new HashSet<Object>();
+      final Set<Object> successfulSelections = new HashSet<>();
       ContainerUtil.addAll(successfulSelections, toSelect);
 
       successfulSelections.retainAll(selected);
@@ -253,7 +253,7 @@ public class UpdaterTreeState {
 
     final Set<Object> allSelected = myUi.getSelectedElements();
 
-    Set<Object> toSelect = new HashSet<Object>();
+    Set<Object> toSelect = new HashSet<>();
     for (Map.Entry<Object, Condition> entry : adjusted.entrySet()) {
       if (entry.getValue().value(entry.getKey())) continue;
 
@@ -272,7 +272,7 @@ public class UpdaterTreeState {
       myUi._select(newSelection, new TreeRunnable("UpdaterTreeState.processAjusted") {
         @Override
         public void perform() {
-          final Set<Object> hangByParent = new HashSet<Object> ();
+          final Set<Object> hangByParent = new HashSet<>();
           processUnsuccessfulSelections(newSelection, o -> {
             if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
               hangByParent.add(o);
@@ -347,7 +347,7 @@ public class UpdaterTreeState {
 
   public void clearSelection() {
     myToSelect.clear();
-    myAdjustedSelection = new WeakHashMap<Object, Condition>();
+    myAdjustedSelection = new WeakHashMap<>();
   }
 
   public void addSelection(final Object element) {

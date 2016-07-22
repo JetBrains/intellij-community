@@ -69,7 +69,7 @@ public class PackageFileAction extends AnAction {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return Collections.emptyList();
 
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     for (VirtualFile file : files) {

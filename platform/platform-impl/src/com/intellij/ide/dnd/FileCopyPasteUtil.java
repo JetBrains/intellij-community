@@ -135,7 +135,7 @@ public class FileCopyPasteUtil {
       result = Collections.emptyList();
     }
     else {
-      result = new ArrayList<VirtualFile>(fileList.size());
+      result = new ArrayList<>(fileList.size());
       for (File file : fileList) {
         VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
         if (virtualFile == null) continue;

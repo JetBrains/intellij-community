@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class SingletonNotificationManager {
-  private final AtomicReference<Notification> notification = new AtomicReference<Notification>();
+  private final AtomicReference<Notification> notification = new AtomicReference<>();
 
   private final NotificationGroup group;
   private final NotificationType type;

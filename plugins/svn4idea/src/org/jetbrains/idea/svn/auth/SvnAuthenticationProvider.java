@@ -38,7 +38,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
   private final SvnAuthenticationManager myAuthenticationManager;
-  private static final Set<Thread> ourForceInteractive = new HashSet<Thread>();
+  private static final Set<Thread> ourForceInteractive = new HashSet<>();
 
   public SvnAuthenticationProvider(final SvnVcs svnVcs, final ISVNAuthenticationProvider provider,
                                    final SvnAuthenticationManager authenticationManager) {

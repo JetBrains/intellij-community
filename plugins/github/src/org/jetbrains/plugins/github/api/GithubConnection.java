@@ -197,7 +197,7 @@ public class GithubConnection {
 
   @NotNull
   private static Collection<? extends Header> createHeaders(@NotNull GithubAuthData auth) {
-    List<Header> headers = new ArrayList<Header>();
+    List<Header> headers = new ArrayList<>();
     GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
     if (tokenAuth != null) {
       headers.add(new BasicHeader("Authorization", "token " + tokenAuth.getToken()));
@@ -447,7 +447,7 @@ public class GithubConnection {
 
       myNextPage = response.getNextPage();
 
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<>();
       for (DataConstructor raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
         result.add(createDataFromRaw(raw, myResult));
       }
@@ -460,7 +460,7 @@ public class GithubConnection {
 
     @NotNull
     public List<T> getAll(@NotNull GithubConnection connection) throws IOException {
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<>();
       while (hasNext()) {
         result.addAll(next(connection));
       }

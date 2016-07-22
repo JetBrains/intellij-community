@@ -51,7 +51,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
    */
   private long myCurrentTaskIndex = 0;
 
-  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
+  @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
 
   AbstractDataGetter(@NotNull VcsLogHashMap hashMap,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -62,7 +62,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myCache = cache;
     Disposer.register(parentDisposable, this);
     myLoader =
-      new SequentialLimitedLifoExecutor<TaskDescriptor>(this, MAX_LOADING_TASKS, task -> {
+      new SequentialLimitedLifoExecutor<>(this, MAX_LOADING_TASKS, task -> {
         preLoadCommitData(task.myCommits);
         notifyLoaded();
       });

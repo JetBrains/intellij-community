@@ -50,7 +50,7 @@ public class FindUsagesProcessPresentation {
   }
 
   public void addNotFoundAction(@NotNull Action action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
+    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
     myNotFoundActions.add(action);
   }
 

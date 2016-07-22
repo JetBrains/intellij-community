@@ -38,10 +38,10 @@ public class CollectionsMultiplier<T> {
       return;
     }
     final List<List<T>> copy = myInner;
-    myInner = new ArrayList<List<T>>();
+    myInner = new ArrayList<>();
     for (T t : list) {
       for (List<T> existing : copy) {
-        final ArrayList<T> newList = new ArrayList<T>(existing);
+        final ArrayList<T> newList = new ArrayList<>(existing);
         newList.add(t);
         myInner.add(newList);
       }

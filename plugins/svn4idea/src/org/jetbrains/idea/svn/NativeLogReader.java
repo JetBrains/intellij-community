@@ -34,7 +34,7 @@ public class NativeLogReader {
     @NotNull
     @Override
     protected Collection<CallInfo> createCollection() {
-      return new ArrayList<CallInfo>(2);
+      return new ArrayList<>(2);
     }
   };
   private final static Set<Thread> ourTrackedThreads = Collections.synchronizedSet(new HashSet<Thread>());

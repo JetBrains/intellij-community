@@ -103,7 +103,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final CollectConsumer<Object> collector = new CollectConsumer<Object>();
+    final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
@@ -145,7 +145,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       }
     }
     if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
-      Set<String> currentHits = new HashSet<String>();
+      Set<String> currentHits = new HashSet<>();
       for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
         OptionDescription description = iterator.next();
         final String hit = description.getHit();

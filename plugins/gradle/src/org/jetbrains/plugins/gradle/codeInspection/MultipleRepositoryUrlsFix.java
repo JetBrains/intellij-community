@@ -49,7 +49,7 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
     if (statements.size() <= 1) return;
     statements.remove(0);
 
-    List<PsiElement> elements = new ArrayList<PsiElement>(statements);
+    List<PsiElement> elements = new ArrayList<>(statements);
     for (GrCallExpression statement : statements) {
       PsiElement newLineCandidate = statement.getNextSibling();
       if (PsiUtil.isNewLine(newLineCandidate)) {

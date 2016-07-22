@@ -82,7 +82,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private volatile boolean mySkipChanges;
   private ChangeListener<Number> myListener;
   private ChangeListener<Number> mySelectionListener;
-  private final Map<String, int[][]> mySelectionState = new FixedHashMap<String, int[][]>(16);
+  private final Map<String, int[][]> mySelectionState = new FixedHashMap<>(16);
 
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback) {
     myFileURL = url;
@@ -158,7 +158,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
       final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
-      final Set<PsiClass> result = new THashSet<PsiClass>();
+      final Set<PsiClass> result = new THashSet<>();
       query.forEach(psiClass -> {
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
@@ -377,7 +377,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   private void restoreSelection(int[][] state) {
-    Collection<FXOMObject> newSelection = new ArrayList<FXOMObject>();
+    Collection<FXOMObject> newSelection = new ArrayList<>();
     FXOMObject rootComponent = myEditorController.getFxomDocument().getFxomRoot();
 
     for (int[] path : state) {

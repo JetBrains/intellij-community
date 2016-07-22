@@ -101,8 +101,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   private final Substring mySummary;
-  private final List<Section> mySections = new ArrayList<Section>();
-  private final List<Substring> myOtherContent = new ArrayList<Substring>();
+  private final List<Section> mySections = new ArrayList<>();
+  private final List<Substring> myOtherContent = new ArrayList<>();
 
   protected SectionBasedDocString(@NotNull Substring text) {
     super(text);
@@ -132,7 +132,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   private Pair<List<Substring>, Integer> parseSummary(int lineNum) {
-    final List<Substring> result = new ArrayList<Substring>();
+    final List<Substring> result = new ArrayList<>();
     while (!(isEmptyOrDoesNotExist(lineNum) || isBlockEnd(lineNum))) {
       result.add(getLine(lineNum));
       lineNum++;
@@ -159,7 +159,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     if (normalized == null) {
       return Pair.create(null, sectionStartLine);
     }
-    final List<SectionField> fields = new ArrayList<SectionField>();
+    final List<SectionField> fields = new ArrayList<>();
     final int sectionIndent = getLineIndentSize(sectionStartLine);
     int lineNum = consumeEmptyLines(parsedHeader.getSecond());
     while (!isSectionBreak(lineNum, sectionIndent)) {
@@ -313,7 +313,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<Substring> getParameterSubstrings() {
-    final List<Substring> result = new ArrayList<Substring>();
+    final List<Substring> result = new ArrayList<>();
     for (SectionField field : getParameterFields()) {
       ContainerUtil.addAllNotNull(result, field.getNamesAsSubstrings());
     }
@@ -358,7 +358,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<SectionField> getParameterFields() {
-    final List<SectionField> result = new ArrayList<SectionField>();
+    final List<SectionField> result = new ArrayList<>();
     for (Section section : getParameterSections()) {
       result.addAll(section.getFields());
     }
@@ -373,7 +373,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<String> getKeywordArguments() {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
     for (SectionField field : getKeywordArgumentFields()) {
       result.addAll(field.getNames());
     }
@@ -383,7 +383,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NotNull
   @Override
   public List<Substring> getKeywordArgumentSubstrings() {
-    final List<Substring> result = new ArrayList<Substring>();
+    final List<Substring> result = new ArrayList<>();
     for (SectionField field : getKeywordArgumentFields()) {
       ContainerUtil.addAllNotNull(field.getNamesAsSubstrings());
     }
@@ -404,7 +404,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<SectionField> getKeywordArgumentFields() {
-    final List<SectionField> result = new ArrayList<SectionField>();
+    final List<SectionField> result = new ArrayList<>();
     for (Section section : getSectionsWithNormalizedTitle(KEYWORD_ARGUMENTS_SECTION)) {
       result.addAll(section.getFields());
     }
@@ -440,7 +440,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<SectionField> getReturnFields() {
-    final List<SectionField> result = new ArrayList<SectionField>();
+    final List<SectionField> result = new ArrayList<>();
     for (Section section : getSectionsWithNormalizedTitle(RETURNS_SECTION)) {
       result.addAll(section.getFields());
     }
@@ -472,7 +472,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<SectionField> getExceptionFields() {
-    final List<SectionField> result = new ArrayList<SectionField>();
+    final List<SectionField> result = new ArrayList<>();
     for (Section section : getSectionsWithNormalizedTitle(RAISES_SECTION)) {
       result.addAll(section.getFields());
     }
@@ -486,7 +486,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   public List<SectionField> getAttributeFields() {
-    final List<SectionField> result = new ArrayList<SectionField>();
+    final List<SectionField> result = new ArrayList<>();
     for (Section section : getSectionsWithNormalizedTitle(ATTRIBUTES_SECTION)) {
       result.addAll(section.getFields());
     }
@@ -525,7 +525,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
     public Section(@NotNull Substring title, @NotNull List<SectionField> fields) {
       myTitle = title;
-      myFields = new ArrayList<SectionField>(fields);
+      myFields = new ArrayList<>(fields);
     }
 
     @NotNull

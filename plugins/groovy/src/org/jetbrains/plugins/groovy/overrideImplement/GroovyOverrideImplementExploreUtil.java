@@ -76,7 +76,7 @@ public class GroovyOverrideImplementExploreUtil {
       }
     }
 
-    final Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new OverrideImplementExploreUtil.MethodSignatureComparator());
+    final Map<MethodSignature, CandidateInfo> result = new TreeMap<>(new OverrideImplementExploreUtil.MethodSignatureComparator());
     if (toImplement || aClass.isInterface()) {
       collectMethodsToImplement(aClass, abstracts, finals, concretes, result);
     }

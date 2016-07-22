@@ -138,7 +138,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      Collection<MemberInfo> methods,
                                      boolean generateBefore,
                                      boolean generateAfter) throws IncorrectOperationException {
-    final HashSet<String> existingNames = new HashSet<String>();
+    final HashSet<String> existingNames = new HashSet<>();
     if (generateBefore) {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null, existingNames);
     }

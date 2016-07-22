@@ -155,7 +155,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(memberToRename.getProject());
-    final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
+    final List<PsiReference> potentialConflicts = new ArrayList<>();
     for (UsageInfo info : result) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiReferenceExpression) {
@@ -177,7 +177,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
           }
           final PsiClass targetClass = staticImport.resolveTargetClass();
           if (targetClass != null) {
-            final Set<PsiMember> importedMembers = new HashSet<PsiMember>();
+            final Set<PsiMember> importedMembers = new HashSet<>();
             if (memberToRename instanceof PsiMethod) {
               for (PsiMethod method : targetClass.findMethodsByName(newName, true)) {
                 if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {

@@ -129,7 +129,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private static List<HgRevisionNumber> determingRemainingOriginalBranchHeads(List<HgRevisionNumber> branchHeadsBeforePull,
                                                                               List<HgRevisionNumber> branchHeadsAfterPull) {
-    List<HgRevisionNumber> originalBranchHeadsRemaining = new ArrayList<HgRevisionNumber>();
+    List<HgRevisionNumber> originalBranchHeadsRemaining = new ArrayList<>();
     for (HgRevisionNumber headAfterPull : branchHeadsAfterPull) {
       if (branchHeadsBeforePull.contains(headAfterPull)) {
         originalBranchHeadsRemaining.add(headAfterPull);
@@ -140,7 +140,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private static List<HgRevisionNumber> determinePulledBranchHeads(List<HgRevisionNumber> branchHeadsBeforePull,
                                                                    List<HgRevisionNumber> branchHeadsAfterPull) {
-    List<HgRevisionNumber> pulledBranchHeads = new ArrayList<HgRevisionNumber>(branchHeadsAfterPull);
+    List<HgRevisionNumber> pulledBranchHeads = new ArrayList<>(branchHeadsAfterPull);
     pulledBranchHeads.removeAll(branchHeadsBeforePull);
     return pulledBranchHeads;
   }

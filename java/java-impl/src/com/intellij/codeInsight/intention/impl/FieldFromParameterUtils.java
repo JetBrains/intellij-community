@@ -76,7 +76,7 @@ public final class FieldFromParameterUtils {
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return type;
 
-    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<>();
     RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
     for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
       PsiTypeParameter usedTypeParameter = iterator.next();
@@ -211,7 +211,7 @@ public final class FieldFromParameterUtils {
     if (methodBody == null) return;
     PsiStatement[] statements = methodBody.getStatements();
 
-    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<Pair<PsiField, Boolean>>();
+    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<>();
     int i = findFieldAssignmentAnchor(statements, anchorRef, targetClass, parameter);
     Pair<PsiField, Boolean> fieldAnchor = anchorRef.get();
 

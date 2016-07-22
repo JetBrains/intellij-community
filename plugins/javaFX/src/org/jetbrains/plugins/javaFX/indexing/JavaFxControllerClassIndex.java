@@ -176,7 +176,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
           return Collections.emptyList();
         }
         if (files.isEmpty()) return Collections.emptyList();
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
         for (VirtualFile file : files) {
           if (!file.isValid()) continue;
           final T fFile = f.fun(file);

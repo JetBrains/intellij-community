@@ -38,9 +38,9 @@ public class NsiFiles extends MatchingTask {
   private File myInstFile;
   private File myUnInstFile;
   private File myBaseDir;
-  private final List<FileSet> myFileSets = new ArrayList<FileSet>();
-  private final Map<String, List<String>> myDirToFiles = new LinkedHashMap<String, List<String>>();
-  private final Map<String, String> myAbsoluteToRelative = new HashMap<String, String>();
+  private final List<FileSet> myFileSets = new ArrayList<>();
+  private final Map<String, List<String>> myDirToFiles = new LinkedHashMap<>();
+  private final Map<String, String> myAbsoluteToRelative = new HashMap<>();
 
   /**
    * The file to create; required
@@ -109,7 +109,7 @@ public class NsiFiles extends MatchingTask {
   private void generateUninstFile() throws IOException {
     BufferedWriter uninstWriter = new BufferedWriter(new FileWriter(myUnInstFile));
     try {
-      List<String> allFiles = new ArrayList<String>();
+      List<String> allFiles = new ArrayList<>();
       final Collection<List<String>> lists = myDirToFiles.values();
       for (final List<String> list : lists) {
         allFiles.addAll(list);
@@ -127,7 +127,7 @@ public class NsiFiles extends MatchingTask {
       }
 
       uninstWriter.newLine();
-      List<String> dirs = new ArrayList<String>(myDirToFiles.keySet());
+      List<String> dirs = new ArrayList<>(myDirToFiles.keySet());
       Collections.sort(dirs);
       for (int i = dirs.size() - 1; i >= 0; i--) {
         final String dir = dirs.get(i);
@@ -202,7 +202,7 @@ public class NsiFiles extends MatchingTask {
   private List<String> getDirFileList(final String dir) {
     List<String> fileList = myDirToFiles.get(dir);
     if (fileList == null) {
-      fileList = new ArrayList<String>();
+      fileList = new ArrayList<>();
       myDirToFiles.put(dir, fileList);
     }
     return fileList;

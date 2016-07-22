@@ -97,7 +97,7 @@ public class Runner {
   }
 
   private static Map<String, String> buildWarningMap(List<String> warnings) {
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
     for (String warning : warnings) {
       int ix = warning.indexOf(":");
       if (ix != -1) {
@@ -169,7 +169,7 @@ public class Runner {
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String param : args) {
       if (param.startsWith(paramName + "=")) {
         param = param.substring((paramName + "=").length());

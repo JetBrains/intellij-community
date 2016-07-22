@@ -46,7 +46,7 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
   @Override
   public void updateDataModel() {
     super.updateDataModel();
-    List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>();
+    List<ModuleDescriptor> modules = new ArrayList<>();
     for (DetectedProjectRoot root : myBuilder.getProjectRoots(myDetector)) {
       final ModuleDescriptor descriptor = new ModuleDescriptor(root.getDirectory(), StdModuleTypes.JAVA, Collections.<DetectedSourceRoot>emptyList());
       descriptor.addConfigurationUpdater(createModuleConfigurationUpdater());

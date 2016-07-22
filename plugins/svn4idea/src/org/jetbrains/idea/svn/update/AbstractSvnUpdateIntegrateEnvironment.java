@@ -71,14 +71,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       context.set(new SvnUpdateContext(myVcs, contentRoots));
     }
 
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    final ArrayList<VcsException> exceptions = new ArrayList<>();
     UpdateEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator, (SvnUpdateContext) context.get());
     eventHandler.setUpdatedFiles(updatedFiles);
 
     boolean totalUpdate = true;
     AbstractUpdateIntegrateCrawler crawler = createCrawler(eventHandler, totalUpdate, exceptions, updatedFiles);
 
-    Collection<VirtualFile> updatedRoots = new HashSet<VirtualFile>();
+    Collection<VirtualFile> updatedRoots = new HashSet<>();
     Arrays.sort(contentRoots, new Comparator<FilePath>() {
       public int compare(FilePath o1, FilePath o2) {
         return SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\").compareTo(o2.getPath().replace("/", "\\")) :
@@ -133,7 +133,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // update switched/ignored status of directories
     private void dirtyRoots() {
-      final Collection<VirtualFile> vfColl = new ArrayList<VirtualFile>(myContentRoots.length);
+      final Collection<VirtualFile> vfColl = new ArrayList<>(myContentRoots.length);
       for (FilePath contentRoot: myContentRoots) {
         final VirtualFile vf = contentRoot.getVirtualFile();
         if (vf != null) {
@@ -158,8 +158,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         final FileGroup replacedGroup = myUpdatedFiles.getGroupById(REPLACED_ID);
         final FileGroup deletedGroup = myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID);
         if ((deletedGroup != null) && (replacedGroup != null) && (! deletedGroup.isEmpty()) && (! replacedGroup.isEmpty())) {
-          final Set<String> replacedFiles = new HashSet<String>(replacedGroup.getFiles());
-          final Collection<String> deletedFiles = new HashSet<String>(deletedGroup.getFiles());
+          final Set<String> replacedFiles = new HashSet<>(replacedGroup.getFiles());
+          final Collection<String> deletedFiles = new HashSet<>(deletedGroup.getFiles());
           
           for (String deletedFile : deletedFiles) {
             if (replacedFiles.contains(deletedFile)) {
@@ -176,7 +176,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
         final Collection<String> conflictedFiles = conflictedGroup.getFiles();
-        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+        final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {
@@ -228,14 +228,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       protected MyConflictWorker(final String groupId) {
         this.groupId = groupId;
-        myFiles = new ArrayList<VirtualFile>();
+        myFiles = new ArrayList<>();
         myLfs = LocalFileSystem.getInstance();
         myPlVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
       }
 
       // for reuse
       protected List<VirtualFile> prepareWritable(final Collection<VirtualFile> files) {
-        final List<VirtualFile> writable = new ArrayList<VirtualFile>();
+        final List<VirtualFile> writable = new ArrayList<>();
         for (VirtualFile vf : files) {
           if (myVcs.equals(myPlVcsManager.getVcsFor(vf))) {
             writable.add(vf);
@@ -278,7 +278,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       protected void fillAndRefreshFiles() {
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
         final Collection<String> conflictedFiles = conflictedGroup.getFiles();
-        final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
+        final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
           for (final String conflictedFile : conflictedFiles) {

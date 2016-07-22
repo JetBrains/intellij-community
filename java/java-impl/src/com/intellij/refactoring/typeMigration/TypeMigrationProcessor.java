@@ -91,7 +91,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         super.performRefactoring(usages);
         if (editor != null) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            final List<PsiElement> result = new ArrayList<PsiElement>();
+            final List<PsiElement> result = new ArrayList<>();
             for (UsageInfo usage : usages) {
               final PsiElement element = usage.getElement();
               if (element == null || !containingFiles.contains(element.getContainingFile())) continue;
@@ -110,7 +110,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         }
         if (optimizeImports) {
           final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-          final Set<PsiFile> affectedFiles = new THashSet<PsiFile>();
+          final Set<PsiFile> affectedFiles = new THashSet<>();
           for (UsageInfo usage : usages) {
             final PsiFile usageFile = usage.getFile();
             if (usageFile != null) {

@@ -38,7 +38,7 @@ import java.util.List;
 
 
 public class ClassFinder {
-  private final List<String> classNameList = new ArrayList<String>();
+  private final List<String> classNameList = new ArrayList<>();
   private final int startPackageName;
   private final boolean includeUnconventionallyNamedTests;
 

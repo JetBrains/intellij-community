@@ -59,7 +59,7 @@ public class TreeModelBuilder {
     this.showFlatten = showFlatten;
     root = ChangesBrowserNode.create(myProject, ROOT_NODE_VALUE);
     model = new DefaultTreeModel(root);
-    myFoldersCache = new HashMap<String, ChangesBrowserNode>();
+    myFoldersCache = new HashMap<>();
   }
 
   @NotNull
@@ -202,7 +202,7 @@ public class TreeModelBuilder {
   }
 
   private void resetGrouping() {
-    myFoldersCache = new HashMap<String, ChangesBrowserNode>();
+    myFoldersCache = new HashMap<>();
     myPolicyInitialized = false;
   }
 
@@ -210,7 +210,7 @@ public class TreeModelBuilder {
   public DefaultTreeModel buildModel(@NotNull List<? extends ChangeList> changeLists) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
-      final List<Change> changes = new ArrayList<Change>(list.getChanges());
+      final List<Change> changes = new ArrayList<>(list.getChanges());
       final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
       ChangesBrowserNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
       model.insertNodeInto(listNode, root, 0);
@@ -325,7 +325,7 @@ public class TreeModelBuilder {
     rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
     model.insertNodeInto(rootsHeadNode, root, root.getChildCount());
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>(switchedRoots.keySet());
+    final List<VirtualFile> files = new ArrayList<>(switchedRoots.keySet());
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
     
     for (VirtualFile vf : files) {
@@ -358,7 +358,7 @@ public class TreeModelBuilder {
     ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
     model.insertNodeInto(baseNode, root, root.getChildCount());
     for(String branchName: switchedFiles.keySet()) {
-      final List<VirtualFile> switchedFileList = new ArrayList<VirtualFile>(switchedFiles.get(branchName));
+      final List<VirtualFile> switchedFileList = new ArrayList<>(switchedFiles.get(branchName));
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
         model.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());
@@ -376,7 +376,7 @@ public class TreeModelBuilder {
     final ChangesBrowserNode baseNode = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
     final ChangesGroupingPolicy policy = createGroupingPolicy();
-    final List<VirtualFile> keys = new ArrayList<VirtualFile>(logicallyLockedFiles.keySet());
+    final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
     Collections.sort(keys, VirtualFileHierarchicalComparator.getInstance());
 
     for (final VirtualFile file : keys) {

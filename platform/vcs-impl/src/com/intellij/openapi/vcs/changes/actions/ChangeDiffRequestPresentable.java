@@ -68,7 +68,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   public MyResult step(DiffChainContext context) {
     final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-    final List<String> errSb = new ArrayList<String>();
+    final List<String> errSb = new ArrayList<>();
     if (! canShowChange(context, errSb)) {
       return new MyResult(request, DiffPresentationReturnValue.removeFromList, StringUtil.join(errSb, "\n"));
     }
@@ -83,7 +83,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @Override
   public void haveStuff() throws VcsException {
-    final List<String> errSb = new ArrayList<String>();
+    final List<String> errSb = new ArrayList<>();
     final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision(), errSb);
     if (! canShow) {
       throw new VcsException(StringUtil.join(errSb, "\n"));

@@ -30,7 +30,7 @@ public class SvnCommittedChangesTableModel extends CommittedChangesTableModel im
 
   public SvnCommittedChangesTableModel(final SvnRepositoryLocation location, final Project project, final VirtualFile vcsRoot,
                                        final ChangeListColumn[] columns) throws VcsException {
-    super(new ArrayList<CommittedChangeList>(), columns, false);
+    super(new ArrayList<>(), columns, false);
     myMediator = new SvnRevisionsNavigationMediator(location, project, vcsRoot);
     setItems(myMediator.getCurrent());
   }

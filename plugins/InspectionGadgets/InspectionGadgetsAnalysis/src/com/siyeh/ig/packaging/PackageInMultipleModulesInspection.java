@@ -54,7 +54,7 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
     if (children == null) {
       return null;
     }
-    final Set<RefModule> modules = new HashSet<RefModule>();
+    final Set<RefModule> modules = new HashSet<>();
     for (RefEntity child : children) {
       if (!(child instanceof RefClass)) {
         continue;

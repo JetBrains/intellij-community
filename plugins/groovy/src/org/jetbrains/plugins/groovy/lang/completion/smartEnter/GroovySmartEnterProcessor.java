@@ -196,7 +196,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     PsiElement psiChild = element.getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     while (psiChild != null) {
       result.add(psiChild);
 

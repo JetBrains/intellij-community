@@ -107,7 +107,7 @@ public final class HgVersion implements Comparable<HgVersion> {
     // but hgrc configuration file may be related to one of repository then extension may be failed to import too
     //before fixed use command exit value instead if errors.isEmpty
     //todo store all unsupported extensions for all repository and notify once
-    Set<String> extensions = new HashSet<String>();
+    Set<String> extensions = new HashSet<>();
     if (errorLines.isEmpty()) {
       return extensions;
     }

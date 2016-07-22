@@ -41,7 +41,7 @@ public class SuperTypesGrouper implements Grouper{
   @NotNull
   public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
-    Map<Group, SuperTypeGroup> groups = new THashMap<Group, SuperTypeGroup>();
+    Map<Group, SuperTypeGroup> groups = new THashMap<>();
 
     for (TreeElement child : children) {
       if (child instanceof PsiMethodTreeElement) {
@@ -68,7 +68,7 @@ public class SuperTypesGrouper implements Grouper{
             }
             
             PsiMethod superMethod = superMethods[0];
-            method.putUserData(SUPER_METHOD_KEY, new WeakReference<PsiMethod>(superMethod));
+            method.putUserData(SUPER_METHOD_KEY, new WeakReference<>(superMethod));
             PsiClass groupClass = superMethod.getContainingClass();
             boolean overrides = methodOverridesSuper(method, superMethod);
             final SuperTypeGroup.OwnershipType ownershipType =

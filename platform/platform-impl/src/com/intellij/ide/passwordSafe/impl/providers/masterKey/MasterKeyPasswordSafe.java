@@ -128,9 +128,9 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     byte[] oldKey = (byte[])myKey.get().get(); // set right in the previous call
     byte[] newKey = EncryptionUtil.genPasswordKey(newPassword);
     ByteArrayWrapper testKey = new ByteArrayWrapper(EncryptionUtil.dbKey(oldKey, MasterKeyPasswordSafe.class, testKey(oldPassword)));
-    HashMap<ByteArrayWrapper, byte[]> oldDb = new HashMap<ByteArrayWrapper, byte[]>();
+    HashMap<ByteArrayWrapper, byte[]> oldDb = new HashMap<>();
     myDatabase.copyTo(oldDb);
-    HashMap<ByteArrayWrapper, byte[]> newDb = new HashMap<ByteArrayWrapper, byte[]>();
+    HashMap<ByteArrayWrapper, byte[]> newDb = new HashMap<>();
     for (Map.Entry<ByteArrayWrapper, byte[]> e : oldDb.entrySet()) {
       if (testKey.equals(e.getKey())) {
         continue;

@@ -319,9 +319,9 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
-    List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
-    List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
-    final Set<String> names = new HashSet<String>();
+    List<PsiElement> candidates = new ArrayList<>(elements.length);
+    List<FileDescriptor> files = new ArrayList<>(elements.length);
+    final Set<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiNamedElement) {
         names.add(((PsiNamedElement)element).getName());
@@ -599,7 +599,7 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private PsiElement[] collectNonBinaryElements() {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     for (PsiElement element : myElements) {
       if (!(element instanceof PsiBinaryFile)) {
         result.add(element);

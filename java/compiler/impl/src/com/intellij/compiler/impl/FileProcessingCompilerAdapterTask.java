@@ -59,8 +59,8 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
         return true;
       }
 
-      final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
-      final Ref<IOException> ex = new Ref<IOException>(null);
+      final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<>();
+      final Ref<IOException> ex = new Ref<>(null);
       final FileProcessingCompilerStateCache cache = getCache(context);
       final boolean isMake = context.isMake();
       DumbService.getInstance(project).runReadActionInSmartMode(() -> {
@@ -99,8 +99,8 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
       }
 
       CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), () -> {
-        final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
-        final List<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>> toUpdate = new ArrayList<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>>(processed.length);
+        final List<VirtualFile> vFiles = new ArrayList<>(processed.length);
+        final List<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>> toUpdate = new ArrayList<>(processed.length);
         ApplicationManager.getApplication().runReadAction(() -> {
           for (FileProcessingCompiler.ProcessingItem item : processed) {
             vFiles.add(item.getFile());

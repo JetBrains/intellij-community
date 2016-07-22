@@ -146,7 +146,7 @@ public class MoveFilesOrDirectoriesUtil {
 
           try {
             final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
-            final List<PsiElement> els = new ArrayList<PsiElement>();
+            final List<PsiElement> els = new ArrayList<>();
             for (final PsiElement psiElement : newElements) {
               if (psiElement instanceof PsiFile) {
                 final PsiFile file = (PsiFile)psiElement;
@@ -203,7 +203,7 @@ public class MoveFilesOrDirectoriesUtil {
       case 1:
         return directories[0];
       default:
-        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<PsiDirectory, String>());
+        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
     }
 
   }

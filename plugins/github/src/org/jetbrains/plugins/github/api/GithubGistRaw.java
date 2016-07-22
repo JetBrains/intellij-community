@@ -68,7 +68,7 @@ class GithubGistRaw implements DataConstructor {
   public GithubGist createGist() {
     GithubUser user = this.owner == null ? null : this.owner.createUser();
 
-    List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
+    List<GithubGist.GistFile> files = new ArrayList<>();
     for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {
       files.add(entry.getValue().create());
     }

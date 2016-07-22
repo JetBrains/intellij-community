@@ -32,8 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author mike
  */
 public class VirtualFileTrackerImpl implements VirtualFileTracker {
-  private final Map<String, Set<VirtualFileListener>> myNonRefreshTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
-  private final Map<String, Set<VirtualFileListener>> myAllTrackers = new ConcurrentHashMap<String, Set<VirtualFileListener>>();
+  private final Map<String, Set<VirtualFileListener>> myNonRefreshTrackers = new ConcurrentHashMap<>();
+  private final Map<String, Set<VirtualFileListener>> myAllTrackers = new ConcurrentHashMap<>();
 
   public VirtualFileTrackerImpl(VirtualFileManager virtualFileManager) {
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
@@ -210,7 +210,7 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
   private static <T> Set<T> addToSet(Set<T> to, final Set<T> what) {
     if (what == null || what.size() == 0) return to;
 
-    if (to == null) to = new HashSet<T>();
+    if (to == null) to = new HashSet<>();
     to.addAll(what);
     return to;
   }

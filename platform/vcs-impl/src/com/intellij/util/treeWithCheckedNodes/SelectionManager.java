@@ -46,7 +46,7 @@ public class SelectionManager {
 
   public SelectionManager(int selectedSize, int queueSize, final Convertor<DefaultMutableTreeNode, VirtualFile> nodeConvertor) {
     myNodeConvertor = nodeConvertor;
-    myState = new SelectedState<VirtualFile>(selectedSize, queueSize);
+    myState = new SelectedState<>(selectedSize, queueSize);
   }
 
   public void toggleSelection(final DefaultMutableTreeNode node) {
@@ -58,7 +58,7 @@ public class SelectionManager {
     if (TreeNodeState.HAVE_SELECTED_ABOVE.equals(state)) return;
     if (TreeNodeState.CLEAR.equals(state) && (! myState.canAddSelection())) return;
 
-    final HashSet<VirtualFile> old = new HashSet<VirtualFile>(myState.getSelected());
+    final HashSet<VirtualFile> old = new HashSet<>(myState.getSelected());
 
     final TreeNodeState futureState =
       myState.putAndPass(vf, TreeNodeState.SELECTED.equals(state) ? TreeNodeState.CLEAR : TreeNodeState.SELECTED);
@@ -140,7 +140,7 @@ public class SelectionManager {
     final TreeNodeState stateSelf = myState.get(stateWorker.getVf());
     if (stateSelf != null) return stateSelf;
 
-    final Ref<TreeNodeState> result = new Ref<TreeNodeState>();
+    final Ref<TreeNodeState> result = new Ref<>();
     stateWorker.iterateParents(myState, new PairProcessor<VirtualFile, TreeNodeState>() {
       @Override
       public boolean process(VirtualFile virtualFile, TreeNodeState state) {

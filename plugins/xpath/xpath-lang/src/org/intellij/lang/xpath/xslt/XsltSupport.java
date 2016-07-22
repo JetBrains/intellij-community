@@ -52,8 +52,8 @@ public class XsltSupport {
   public static final TextAttributesKey XSLT_DIRECTIVE =
     TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
-  private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<String, String>(10);
-  private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<String, Set<String>>(10);
+  private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<>(10);
+  private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<>(10);
 
   static {
     XPATH_ATTR_MAP.put("select", "");
@@ -67,24 +67,24 @@ public class XsltSupport {
     XPATH_ATTR_MAP.put("value", "number");
     XPATH_ATTR_MAP.put("use", "key");
 
-    XPATH_AVT_MAP.put("element", new THashSet<String>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("attribute", new THashSet<String>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("namespace", new THashSet<String>(Arrays.asList("name")));
-    XPATH_AVT_MAP.put("processing-instruction", new THashSet<String>(Arrays.asList("name")));
+    XPATH_AVT_MAP.put("element", new THashSet<>(Arrays.asList("name", "namespace")));
+    XPATH_AVT_MAP.put("attribute", new THashSet<>(Arrays.asList("name", "namespace")));
+    XPATH_AVT_MAP.put("namespace", new THashSet<>(Arrays.asList("name")));
+    XPATH_AVT_MAP.put("processing-instruction", new THashSet<>(Arrays.asList("name")));
 
-    XPATH_AVT_MAP.put("number", new THashSet<String>(
+    XPATH_AVT_MAP.put("number", new THashSet<>(
       Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal")));
-    XPATH_AVT_MAP.put("sort", new THashSet<String>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
+    XPATH_AVT_MAP.put("sort", new THashSet<>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
 
-    XPATH_AVT_MAP.put("message", new THashSet<String>(Arrays.asList("terminate")));
-    XPATH_AVT_MAP.put("value-of", new THashSet<String>(Arrays.asList("separator")));
+    XPATH_AVT_MAP.put("message", new THashSet<>(Arrays.asList("terminate")));
+    XPATH_AVT_MAP.put("value-of", new THashSet<>(Arrays.asList("separator")));
 
-    XPATH_AVT_MAP.put("result-document", new THashSet<String>(Arrays.asList("format", "href", "method", "byte-order-mark",
-                                                                            "cdata-section-elements", "doctype-public", "doctype-system",
-                                                                            "encoding", "escape-uri-attributes", "include-content-type",
-                                                                            "indent", "media-type", "normalization-form",
-                                                                            "omit-xml-declaration", "standalone", "undeclare-prefixes",
-                                                                            "output-version")));
+    XPATH_AVT_MAP.put("result-document", new THashSet<>(Arrays.asList("format", "href", "method", "byte-order-mark",
+                                                                      "cdata-section-elements", "doctype-public", "doctype-system",
+                                                                      "encoding", "escape-uri-attributes", "include-content-type",
+                                                                      "indent", "media-type", "normalization-form",
+                                                                      "omit-xml-declaration", "standalone", "undeclare-prefixes",
+                                                                      "output-version")));
   }
 
   private XsltSupport() {
@@ -94,7 +94,7 @@ public class XsltSupport {
   public static PsiFile[] getFiles(XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
-      final List<PsiFile> files = new SmartList<PsiFile>();
+      final List<PsiFile> files = new SmartList<>();
       InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           if (injectedPsi instanceof XPathFile) {

@@ -62,7 +62,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private boolean myHasDragDelta = false;
 
   private DraggedComponentList(Collection<RadComponent> selection) {
-    mySelection = new ArrayList<RadComponent>(selection);
+    mySelection = new ArrayList<>(selection);
     fillOriginalConstraints();
   }
 
@@ -148,7 +148,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   }
 
   public static DraggedComponentList withComponents(RadComponent... c) {
-    ArrayList<RadComponent> list = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> list = new ArrayList<>();
     Collections.addAll(list, c);
     return new DraggedComponentList(list);
   }

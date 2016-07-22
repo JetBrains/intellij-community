@@ -95,7 +95,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> modulesFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> modulesFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!file.getFileType().equals(StdFileTypes.IDEA_MODULE)) {
         return Collections.emptyList();

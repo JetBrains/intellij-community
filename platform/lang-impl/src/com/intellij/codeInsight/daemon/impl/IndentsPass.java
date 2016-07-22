@@ -216,7 +216,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     myDescriptors = buildDescriptors();
 
-    ArrayList<TextRange> ranges = new ArrayList<TextRange>();
+    ArrayList<TextRange> ranges = new ArrayList<>();
     for (IndentGuideDescriptor descriptor : myDescriptors) {
       ProgressManager.checkCanceled();
       int endOffset =
@@ -240,7 +240,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     if (stamp != null && stamp.longValue() == nowStamp()) return;
 
     List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
-    final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
+    final List<RangeHighlighter> newHighlighters = new ArrayList<>();
     final MarkupModel mm = myEditor.getMarkupModel();
 
     int curRange = 0;
@@ -294,7 +294,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
 
-    List<IndentGuideDescriptor> descriptors = new ArrayList<IndentGuideDescriptor>();
+    List<IndentGuideDescriptor> descriptors = new ArrayList<>();
 
     IntStack lines = new IntStack();
     IntStack indents = new IntStack();

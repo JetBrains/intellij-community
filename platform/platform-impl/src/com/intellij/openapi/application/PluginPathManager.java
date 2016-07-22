@@ -33,7 +33,7 @@ public class PluginPathManager {
     public static List<File> subrepos = findSubrepos();
 
     private static List<File> findSubrepos() {
-      List<File> result = new ArrayList<File>();
+      List<File> result = new ArrayList<>();
       File[] gitRoots = getSortedGitRoots(new File(PathManager.getHomePath()));
       for (File subdir : gitRoots) {
         File pluginsDir = new File(subdir, "plugins");

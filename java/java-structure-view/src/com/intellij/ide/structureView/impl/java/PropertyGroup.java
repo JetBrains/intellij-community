@@ -52,7 +52,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   public static final Icon PROPERTY_READ_WRITE_ICON = loadIcon("/nodes/propertyReadWrite.png");
   public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = loadIcon("/nodes/propertyReadWriteStatic.png");
   private final Project myProject;
-  private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
+  private final Collection<TreeElement> myChildren = new ArrayList<>();
 
   private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, @NotNull Project project) {
     myPropertyName = propertyName;

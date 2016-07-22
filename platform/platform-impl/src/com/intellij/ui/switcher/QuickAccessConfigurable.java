@@ -43,7 +43,7 @@ import java.util.*;
 * @author nik
 */
 public class QuickAccessConfigurable extends JPanel implements SearchableConfigurable {
-  private Set<String> myModifiers = new HashSet<String>();
+  private Set<String> myModifiers = new HashSet<>();
   private boolean myQaEnabled;
   private int myDelay;
   private JCheckBox myEnabled;
@@ -133,7 +133,7 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
   }
 
   private Set<String> getModifierTexts() {
-    HashSet<String> result = new HashSet<String>();
+    HashSet<String> result = new HashSet<>();
 
     for (Integer each : myQuickAccessSettings.getModiferCodes()) {
       if (each == KeyEvent.VK_SHIFT) {

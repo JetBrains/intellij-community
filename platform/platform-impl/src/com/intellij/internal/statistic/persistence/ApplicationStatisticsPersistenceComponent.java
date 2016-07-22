@@ -80,7 +80,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
         String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new THashSet<UsageDescriptor>();
+          Set<UsageDescriptor> frameworkDescriptors = new THashSet<>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
             UsageDescriptor descriptor = getUsageDescriptor(key);
             if (descriptor != null) {

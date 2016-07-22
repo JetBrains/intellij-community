@@ -35,7 +35,7 @@ public class SelectedFilesHelper implements Runnable {
   private SelectedFilesHelper(final Project project, final AnActionEvent e) {
     myStatusManager = FileStatusManager.getInstance(project);
     myData = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    myCheckers = new LinkedList<MyChecker>();
+    myCheckers = new LinkedList<>();
   }
 
   private void add(final MyChecker checker) {

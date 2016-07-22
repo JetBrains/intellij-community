@@ -67,7 +67,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
   @Override
   protected void doOKAction() {
-    final List<UsageInfo> foreignMethodUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> foreignMethodUsages = new ArrayList<>();
     final Runnable runnable = () -> {
       final Set<MethodNodeBase<PsiMethod>> nodes = getSelectedNodes();
       for (MethodNodeBase<PsiMethod> node : nodes) {
@@ -104,7 +104,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         if (expressions.length > parameterIndex) {
           final PsiExpression expression = PsiUtil.deparenthesizeExpression(expressions[parameterIndex]);
           if (expression != null) {
-            final Set<PsiParameter> paramRefs = new HashSet<PsiParameter>();
+            final Set<PsiParameter> paramRefs = new HashSet<>();
             expression.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -121,7 +121,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
               final PsiElement scope = parameter.getDeclarationScope();
               if (scope instanceof PsiMethod && ((PsiMethod)scope).findDeepestSuperMethods().length == 0) {
                 final int scopeParamIdx = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
-                final Ref<Boolean> ref = new Ref<Boolean>(false);
+                final Ref<Boolean> ref = new Ref<>(false);
                 if (ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
                   @Override
                   public boolean process(PsiReference reference) {
@@ -216,7 +216,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
       }
 
       //find first method call
-      final Ref<PsiParameter> ref = new Ref<PsiParameter>();
+      final Ref<PsiParameter> ref = new Ref<>();
       ReferencesSearch.search(myMethod, new LocalSearchScope(caller)).forEach(reference -> {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiReferenceExpression) {

@@ -52,7 +52,7 @@ public class ContainingBranchesGetter {
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
-    myTaskExecutor = new SequentialLimitedLifoExecutor<Task>(parentDisposable, 10, task -> {
+    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
       final List<String> branches = task.getContainingBranches(myLogData);
       ApplicationManager.getApplication().invokeLater(() -> {
         // if cache is cleared (because of log refresh) during this task execution,
@@ -148,7 +148,7 @@ public class ContainingBranchesGetter {
 
   @NotNull
   private static SLRUMap<CommitId, List<String>> createCache() {
-    return new SLRUMap<CommitId, List<String>>(1000, 1000);
+    return new SLRUMap<>(1000, 1000);
   }
 
   private static class Task {
@@ -177,20 +177,20 @@ public class ContainingBranchesGetter {
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
           Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
 
-          Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
+          Collection<VcsRef> branchesRefs = new HashSet<>();
           for (Integer index : branchesIndexes) {
             branchesRefs.addAll(refs.branchesToCommit(index));
           }
           branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
 
-          ArrayList<String> branchesList = new ArrayList<String>();
+          ArrayList<String> branchesList = new ArrayList<>();
           for (VcsRef ref : branchesRefs) {
             branchesList.add(ref.getName());
           }
           return branchesList;
         }
         else {
-          List<String> branches = new ArrayList<String>(provider.getContainingBranches(root, hash));
+          List<String> branches = new ArrayList<>(provider.getContainingBranches(root, hash));
           Collections.sort(branches);
           return branches;
         }

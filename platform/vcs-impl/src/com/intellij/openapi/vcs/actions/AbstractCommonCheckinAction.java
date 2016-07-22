@@ -186,7 +186,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected static FilePath[] getAllContentRoots(final VcsContext context) {
     Project project = context.getProject();
-    ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
+    ArrayList<FilePath> virtualFiles = new ArrayList<>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     VirtualFile[] roots = manager.getAllVersionedRoots();
     for (VirtualFile root : roots) {

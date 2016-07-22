@@ -32,7 +32,7 @@ import java.util.Collections;
 
 public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> implements DumbAware {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
-    Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
+    Collection<AbstractVcs> result = new HashSet<>();
     final Project project = dataContext.getProject();
     if (project != null) {
       Collections.addAll(result, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());

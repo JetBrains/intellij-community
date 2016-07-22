@@ -97,7 +97,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   public static void registerFixes(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
                                         @NotNull final HighlightInfo out) {
-    final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
+    final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
     }
@@ -114,7 +114,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
                                    @NotNull final PsiMethodCallExpression methodCall,
                                    @Nullable final HighlightInfo info) {
     if (info == null) return;
-    final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
+    final Set<PsiLiteralExpression> literals = new HashSet<>();
     boolean exactMatch = false;
     for (CandidateInfo candidate : candidates) {
       if (candidate instanceof MethodCandidateInfo) {

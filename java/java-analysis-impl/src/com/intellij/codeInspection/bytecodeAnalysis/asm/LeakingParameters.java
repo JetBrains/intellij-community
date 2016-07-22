@@ -42,8 +42,8 @@ public class LeakingParameters {
   @NotNull
   public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     Frame<ParamsValue>[] frames = jsr ?
-                                  new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
-                                  new LiteAnalyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
+                                  new Analyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
+                                  new LiteAnalyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
     for (int i = 0; i < frames.length; i++) {
@@ -56,7 +56,7 @@ public class LeakingParameters {
           case AbstractInsnNode.FRAME:
             break;
           default:
-            new Frame<ParamsValue>(frame).execute(insnNode, collector);
+            new Frame<>(frame).execute(insnNode, collector);
         }
       }
     }
@@ -72,8 +72,8 @@ public class LeakingParameters {
   public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
     Frame<?>[] frames = jsr ?
-                        new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode) :
-                        new LiteAnalyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
+                        new Analyzer<>(parametersUsage).analyze(className, methodNode) :
+                        new LiteAnalyzer<>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
     int nullableLeakingMask = parametersUsage.nullableLeaking;
     boolean[] notNullParameters = new boolean[parametersUsage.arity];

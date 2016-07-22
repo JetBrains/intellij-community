@@ -131,7 +131,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       protected void run(@NotNull final Result result) {
         final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
         if (librarySettings != null) {
-          librarySettings.addLibraries(rootModel, new ArrayList<Library>(), myModel.getLibrariesContainer());
+          librarySettings.addLibraries(rootModel, new ArrayList<>(), myModel.getLibrariesContainer());
         }
         myConfigurable.addSupport(myModule, rootModel, myModifiableModelsProvider);
         myModifiableModelsProvider.commitModuleModifiableModel(rootModel);
@@ -155,7 +155,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   }
 
   private boolean askAndRemoveDuplicatedLibraryEntry(@NotNull ModifiableRootModel rootModel, @NotNull CustomLibraryDescription description) {
-    List<OrderEntry> existingEntries = new ArrayList<OrderEntry>();
+    List<OrderEntry> existingEntries = new ArrayList<>();
     final LibrariesContainer container = myModel.getLibrariesContainer();
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (!(entry instanceof LibraryOrderEntry)) continue;

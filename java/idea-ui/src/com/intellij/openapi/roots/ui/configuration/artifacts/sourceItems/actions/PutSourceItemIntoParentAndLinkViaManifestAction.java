@@ -110,7 +110,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     }
 
     final CompositePackagingElement<?> grandParent = parentsInfo.getGrandparentElement();
-    final List<String> classpath = new ArrayList<String>();
+    final List<String> classpath = new ArrayList<>();
     context.editLayout(artifact, () -> {
       for (PackagingSourceItem item : items) {
         final List<? extends PackagingElement<?>> elements = item.createElements(context);

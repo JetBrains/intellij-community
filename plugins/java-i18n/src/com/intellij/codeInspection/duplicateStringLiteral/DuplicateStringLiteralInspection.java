@@ -114,7 +114,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         continue;
       }
       progress.checkCanceled();
-      final Set<PsiFile> files = new THashSet<PsiFile>();
+      final Set<PsiFile> files = new THashSet<>();
       Processor<PsiFile> processor = Processors.cancelableCollectProcessor(files);
       searchHelper.processAllFilesWithWordInLiterals(word, scope, processor);
       if (resultFiles == null) {
@@ -127,7 +127,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
 
     if (resultFiles == null || resultFiles.isEmpty()) return;
-    final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
+    final List<PsiExpression> foundExpr = new ArrayList<>();
 
     for (final PsiFile file : resultFiles) {
       progress.checkCanceled();
@@ -151,7 +151,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       });
     }
     if (foundExpr.isEmpty()) return;
-    Set<PsiClass> classes = new THashSet<PsiClass>();
+    Set<PsiClass> classes = new THashSet<>();
     for (PsiElement aClass : foundExpr) {
       progress.checkCanceled();
       do {
@@ -188,7 +188,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     String msg = InspectionsBundle.message("inspection.duplicates.message", classList);
 
-    Collection<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
+    Collection<LocalQuickFix> fixes = new SmartList<>();
     if (isOnTheFly) {
       final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
       fixes.add(introduceConstFix);
@@ -199,13 +199,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<String, Object>())) return false;
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<>())) return false;
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
   private static void createReplaceFixes(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression,
                                          final Collection<LocalQuickFix> fixes) {
-    Set<PsiField> constants = new THashSet<PsiField>();
+    Set<PsiField> constants = new THashSet<>();
     for (Iterator<PsiExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
       PsiExpression expression1 = iterator.next();
       PsiElement parent = expression1.getParent();
@@ -308,7 +308,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) return;
-        final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+        final List<PsiExpression> expressions = new ArrayList<>();
         for(SmartPsiElementPointer ptr: myExpressions) {
           final PsiElement element = ptr.getElement();
           if (element != null) {

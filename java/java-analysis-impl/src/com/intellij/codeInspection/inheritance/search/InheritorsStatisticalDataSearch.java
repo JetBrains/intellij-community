@@ -43,15 +43,15 @@ public class InheritorsStatisticalDataSearch {
                                           final int minPercentRatio) {
     final String superClassName = superClass.getName();
     final String aClassName = aClass.getName();
-    final Set<String> disabledNames = new HashSet<String>();
+    final Set<String> disabledNames = new HashSet<>();
     disabledNames.add(aClassName);
     disabledNames.add(superClassName);
-    final Set<InheritorsCountData> collector = new TreeSet<InheritorsCountData>();
+    final Set<InheritorsCountData> collector = new TreeSet<>();
     final Couple<Integer> collectingResult = collectInheritorsInfo(superClass, collector, disabledNames);
     final int allAnonymousInheritors = collectingResult.getSecond();
     final int allInheritors = collectingResult.getFirst() + allAnonymousInheritors - 1;
 
-    final List<InheritorsStatisticsSearchResult> result = new ArrayList<InheritorsStatisticsSearchResult>();
+    final List<InheritorsStatisticsSearchResult> result = new ArrayList<>();
 
     Integer firstPercent = null;
     for (final InheritorsCountData data : collector) {
@@ -82,7 +82,7 @@ public class InheritorsStatisticalDataSearch {
   private static Couple<Integer> collectInheritorsInfo(final PsiClass superClass,
                                                               final Set<InheritorsCountData> collector,
                                                               final Set<String> disabledNames) {
-    return collectInheritorsInfo(superClass, collector, disabledNames, new HashSet<String>(), new HashSet<String>());
+    return collectInheritorsInfo(superClass, collector, disabledNames, new HashSet<>(), new HashSet<>());
   }
 
   private static Couple<Integer> collectInheritorsInfo(final PsiClass aClass,
@@ -115,7 +115,7 @@ public class InheritorsStatisticalDataSearch {
       myCollector = collector;
       myDisabledNames = disabledNames;
       myProcessedElements = processedElements;
-      myAllNotAnonymousInheritors = new HashSet<String>();
+      myAllNotAnonymousInheritors = new HashSet<>();
     }
 
     private int myAnonymousInheritorsCount;

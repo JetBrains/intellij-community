@@ -30,27 +30,27 @@ import java.util.List;
 public class TaskActivationState {
   @Tag("before_sync")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> beforeSyncTasks = new ArrayList<String>();
+  public List<String> beforeSyncTasks = new ArrayList<>();
 
   @Tag("after_sync")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> afterSyncTasks = new ArrayList<String>();
+  public List<String> afterSyncTasks = new ArrayList<>();
 
   @Tag("before_compile")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> beforeCompileTasks = new ArrayList<String>();
+  public List<String> beforeCompileTasks = new ArrayList<>();
 
   @Tag("after_compile")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> afterCompileTasks = new ArrayList<String>();
+  public List<String> afterCompileTasks = new ArrayList<>();
 
   @Tag("after_rebuild")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> afterRebuildTask = new ArrayList<String>();
+  public List<String> afterRebuildTask = new ArrayList<>();
 
   @Tag("before_rebuild")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
-  public List<String> beforeRebuildTask = new ArrayList<String>();
+  public List<String> beforeRebuildTask = new ArrayList<>();
 
   public boolean isEmpty() {
     for (ExternalSystemTaskActivator.Phase phase : ExternalSystemTaskActivator.Phase.values()) {

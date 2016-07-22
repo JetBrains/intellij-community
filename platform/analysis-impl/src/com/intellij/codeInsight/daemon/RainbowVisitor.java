@@ -91,7 +91,7 @@ public abstract class RainbowVisitor implements HighlightVisitor {
     if (colorIndex == null) {
       colorIndex = Math.abs(StringHash.murmur(id, 0x55AA));
 
-      Map<Integer, Integer> index2usage = new HashMap<Integer, Integer>();
+      Map<Integer, Integer> index2usage = new HashMap<>();
       id2index.values().forEach(i -> {
         Integer useCount = index2usage.get(i);
         index2usage.put(i, useCount == null ? 1 : ++useCount);

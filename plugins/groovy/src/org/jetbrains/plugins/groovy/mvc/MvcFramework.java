@@ -240,7 +240,7 @@ public abstract class MvcFramework {
   protected abstract boolean isCoreJar(@NotNull VirtualFile localFile);
 
   protected List<File> getImplicitClasspathRoots(@NotNull Module module) {
-    final List<File> toExclude = new ArrayList<File>();
+    final List<File> toExclude = new ArrayList<>();
 
     VirtualFile sdkRoot = getSdkRoot(module);
     if (sdkRoot != null) toExclude.add(VfsUtil.virtualToIoFile(sdkRoot));
@@ -472,7 +472,7 @@ public abstract class MvcFramework {
   }
 
   public Collection<VirtualFile> getCommonPluginRoots(@NotNull Module module, boolean refresh) {
-    Map<String, VirtualFile> result = new HashMap<String, VirtualFile>();
+    Map<String, VirtualFile> result = new HashMap<>();
     collectCommonPluginRoots(result, module, refresh);
     return result.values();
   }

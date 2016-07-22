@@ -126,7 +126,7 @@ public abstract class ChooseByNameBase {
   private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
-  private final MyListModel<Object> myListModel = new MyListModel<Object>();
+  private final MyListModel<Object> myListModel = new MyListModel<>();
   protected final JList myList = new JBList(myListModel);
   private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
   private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
@@ -304,7 +304,7 @@ public abstract class ChooseByNameBase {
       else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         final List<Object> chosenElements = getChosenElements();
         if (chosenElements != null) {
-          List<PsiElement> result = new ArrayList<PsiElement>(chosenElements.size());
+          List<PsiElement> result = new ArrayList<>(chosenElements.size());
           for (Object element : chosenElements) {
             if (element instanceof PsiElement) {
               result.add((PsiElement)element);
@@ -438,8 +438,8 @@ public abstract class ChooseByNameBase {
       @Override
       public PsiElement[][] getElements() {
         final Object[] objects = myListModel.toArray();
-        final List<PsiElement> prefixMatchElements = new ArrayList<PsiElement>(objects.length);
-        final List<PsiElement> nonPrefixMatchElements = new ArrayList<PsiElement>(objects.length);
+        final List<PsiElement> prefixMatchElements = new ArrayList<>(objects.length);
+        final List<PsiElement> nonPrefixMatchElements = new ArrayList<>(objects.length);
         List<PsiElement> curElements = prefixMatchElements;
         for (Object object : objects) {
           if (object instanceof PsiElement) {
@@ -731,7 +731,7 @@ public abstract class ChooseByNameBase {
 
   @NotNull
   private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
-    Set<KeyStroke> result = new HashSet<KeyStroke>();
+    Set<KeyStroke> result = new HashSet<>();
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     if (shortcuts == null) {
@@ -1515,7 +1515,7 @@ public abstract class ChooseByNameBase {
     public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
       if (myProject != null && myProject.isDisposed()) return null;
 
-      final Set<Object> elements = new LinkedHashSet<Object>();
+      final Set<Object> elements = new LinkedHashSet<>();
 
       boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
 
@@ -1678,14 +1678,14 @@ public abstract class ChooseByNameBase {
       presentation.setTabText(prefixPattern);
       presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(patternToLowerCase(prefixPattern)));
       final Object[][] elements = getElements();
-      final List<PsiElement> targets = new ArrayList<PsiElement>();
-      final List<Usage> usages = new ArrayList<Usage>();
+      final List<PsiElement> targets = new ArrayList<>();
+      final List<Usage> usages = new ArrayList<>();
       fillUsages(Arrays.asList(elements[0]), usages, targets, false);
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final boolean everywhere = myCheckBox.isSelected();
-        final Set<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
-        final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
+        final Set<Object> prefixMatchElementsArray = new LinkedHashSet<>();
+        final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;

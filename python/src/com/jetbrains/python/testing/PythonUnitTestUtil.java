@@ -132,7 +132,7 @@ public class PythonUnitTestUtil {
   }
 
   private static boolean hasAssertOrYield(PyStatementList list) {
-    Stack<PsiElement> stack = new Stack<PsiElement>();
+    Stack<PsiElement> stack = new Stack<>();
     if (list != null) {
       for (PyStatement st : list.getStatements()) {
         stack.push(st);
@@ -184,13 +184,13 @@ public class PythonUnitTestUtil {
     if (fileName.contains("%")) {
       fileName = fileName.substring(0, fileName.lastIndexOf("%"));
     }
-    final List<Location> locations = new ArrayList<Location>();
+    final List<Location> locations = new ArrayList<>();
     if (methodName == null && className == null) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
       if (virtualFile == null) return locations;
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile != null) {
-        locations.add(new PsiLocation<PsiFile>(project, psiFile));
+        locations.add(new PsiLocation<>(project, psiFile));
       }
     }
 
@@ -206,7 +206,7 @@ public class PythonUnitTestUtil {
           continue;
         }
         if (methodName == null) {
-          locations.add(new PsiLocation<PyClass>(project, cls));
+          locations.add(new PsiLocation<>(project, cls));
         }
         else {
           final PyFunction method = cls.findMethodByName(methodName, true, null);
@@ -229,7 +229,7 @@ public class PythonUnitTestUtil {
           if (!clsFileNameWithoutExt.endsWith(fileName)) {
             continue;
           }
-          locations.add(new PsiLocation<PyFunction>(project, function));
+          locations.add(new PsiLocation<>(project, function));
         }
       }
     }

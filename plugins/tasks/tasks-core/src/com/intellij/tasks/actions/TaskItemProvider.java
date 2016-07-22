@@ -35,7 +35,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   private String myOldPattern = "";
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<Future<List<Task>>>();
+  private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<>();
 
   public TaskItemProvider(Project project) {
     myProject = project;
@@ -68,7 +68,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       return true;
     }
 
-    FutureTask<List<Task>> future = new FutureTask<List<Task>>(() -> fetchFromServer(pattern, everywhere, cancelled));
+    FutureTask<List<Task>> future = new FutureTask<>(() -> fetchFromServer(pattern, everywhere, cancelled));
 
     // Newer request always wins
     Future<List<Task>> oldFuture = myFutureReference.getAndSet(future);

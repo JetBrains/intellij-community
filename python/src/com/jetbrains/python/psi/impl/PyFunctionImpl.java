@@ -314,7 +314,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     Ref<PyType> elementType = null;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyStatementList statements = getStatementList();
-    final Set<PyType> types = new LinkedHashSet<PyType>();
+    final Set<PyType> types = new LinkedHashSet<>();
     statements.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyYieldExpression(PyYieldExpression node) {
@@ -763,7 +763,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    */
   @NotNull
   private static List<PyAssignmentStatement> findAttributesStatic(@NotNull final PsiElement self) {
-    final List<PyAssignmentStatement> result = new ArrayList<PyAssignmentStatement>();
+    final List<PyAssignmentStatement> result = new ArrayList<>();
     for (final PyAssignmentStatement statement : new PsiQuery(self).siblings(PyAssignmentStatement.class).getElements()) {
       for (final PyQualifiedExpression targetExpression : new PsiQuery(statement.getTargets()).filter(PyQualifiedExpression.class)
         .getElements()) {

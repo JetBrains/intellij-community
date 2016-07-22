@@ -50,7 +50,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
 
   static {
-    ANNOTATIONS_MAP = new HashMap<String, String>();
+    ANNOTATIONS_MAP = new HashMap<>();
     ANNOTATIONS_MAP.put("org.junit.Test", "@org.testng.annotations.Test");
     ANNOTATIONS_MAP.put("org.junit.BeforeClass", "@org.testng.annotations.BeforeClass");
     ANNOTATIONS_MAP.put("org.junit.Before", "@org.testng.annotations.BeforeMethod");
@@ -110,7 +110,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
-        final List<PsiElement> convertedElements = new SmartList<PsiElement>();
+        final List<PsiElement> convertedElements = new SmartList<>();
 
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);

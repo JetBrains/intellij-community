@@ -26,7 +26,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
   @Override
   public void copy(@NotNull File src, @NotNull File dst, boolean makeParents, boolean isMove) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, src);
     CommandUtil.put(parameters, dst, false);
@@ -53,7 +53,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
       throw new IllegalArgumentException("Only urls are supported as destination " + destination);
     }
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, source);
     CommandUtil.put(parameters, destination);
@@ -79,7 +79,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
                    @Nullable SVNRevision revision,
                    boolean makeParents,
                    @Nullable ProgressTracker handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, source);
     CommandUtil.put(parameters, destination);

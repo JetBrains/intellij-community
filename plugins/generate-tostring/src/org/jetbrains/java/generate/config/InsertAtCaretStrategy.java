@@ -39,7 +39,7 @@ public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
   public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
     int offset = (editor != null) ? editor.getCaretModel().getOffset() : (clazz.getTextRange().getEndOffset() - 1);
-    final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<PsiMethod>(newMethod, false);
+    final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<>(newMethod, false);
     GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(generationInfo));
     return generationInfo.getPsiMember();
   }

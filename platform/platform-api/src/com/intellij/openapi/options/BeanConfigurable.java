@@ -142,7 +142,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     }
   }
 
-  private final List<BeanField> myFields = new ArrayList<BeanField>();
+  private final List<BeanField> myFields = new ArrayList<>();
 
   protected BeanConfigurable(T beanInstance) {
     myInstance = beanInstance;

@@ -96,8 +96,8 @@ public abstract class DiffActionExecutor {
   }
 
   public void showDiff() {
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
-    final Ref<DiffRequest> requestRef = new Ref<DiffRequest>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
+    final Ref<DiffRequest> requestRef = new Ref<>();
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject,
                                                              VcsBundle.message("show.diff.progress.title.detailed",

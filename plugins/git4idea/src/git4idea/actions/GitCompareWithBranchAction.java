@@ -54,9 +54,9 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
   @NotNull
   @Override
   protected List<String> getBranchNamesExceptCurrent(@NotNull GitRepository repository) {
-    List<GitBranch> localBranches = new ArrayList<GitBranch>(repository.getBranches().getLocalBranches());
+    List<GitBranch> localBranches = new ArrayList<>(repository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
-    List<GitBranch> remoteBranches = new ArrayList<GitBranch>(repository.getBranches().getRemoteBranches());
+    List<GitBranch> remoteBranches = new ArrayList<>(repository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
 
     if (repository.isOnBranch()) {

@@ -71,8 +71,8 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   public FormattingProgressTask(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
     super(project, getTitle(file));
-    myFile = new WeakReference<VirtualFile>(file.getVirtualFile());
-    myDocument = new WeakReference<Document>(document);
+    myFile = new WeakReference<>(file.getVirtualFile());
+    myDocument = new WeakReference<>(document);
     myFileTextLength = file.getTextLength();
     addCallback(EventType.CANCEL, new MyCancelCallback());
   }

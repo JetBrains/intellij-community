@@ -87,7 +87,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     @Nullable private final Project myProject;
     @NotNull private final Label myBefore;
     @NotNull private final Label myAfter;
-    @NotNull private final List<MyDiffRequestProducer> myRequests = new ArrayList<MyDiffRequestProducer>();
+    @NotNull private final List<MyDiffRequestProducer> myRequests = new ArrayList<>();
 
     private int myIndex;
 

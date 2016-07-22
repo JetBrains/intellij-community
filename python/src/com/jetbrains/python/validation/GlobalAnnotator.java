@@ -34,7 +34,7 @@ public class GlobalAnnotator extends PyAnnotator {
     if (function != null) {
       PyParameterList paramList = function.getParameterList();
       // collect param names
-      final Set<String> paramNames = new HashSet<String>();
+      final Set<String> paramNames = new HashSet<>();
 
       ParamHelper.walkDownParamArray(
         paramList.getParameters(),

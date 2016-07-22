@@ -69,10 +69,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private String myAuthor;
   private Date myDate;
   private String myMessage;
-  private final Set<String> myChangedPaths = new HashSet<String>();
-  private final Set<String> myAddedPaths = new HashSet<String>();
-  private final Set<String> myDeletedPaths = new HashSet<String>();
-  private final Set<String> myReplacedPaths = new HashSet<String>();
+  private final Set<String> myChangedPaths = new HashSet<>();
+  private final Set<String> myAddedPaths = new HashSet<>();
+  private final Set<String> myDeletedPaths = new HashSet<>();
+  private final Set<String> myReplacedPaths = new HashSet<>();
 
   private ChangesListCreationHelper myListsHolder;
 
@@ -81,7 +81,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private boolean myCachedInfoLoaded;
 
   // key: added path, value: copied-from
-  private final TreeMap<String, String> myCopiedAddedPaths = new TreeMap<String, String>();
+  private final TreeMap<String, String> myCopiedAddedPaths = new TreeMap<>();
   private RootUrlInfo myWcRoot;
   private final CommonPathSearcher myCommonPathSearcher;
   private final Set<String> myKnownAsDirectories;
@@ -105,7 +105,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       myDeletedPaths.addAll(svnList.myDeletedPaths);
       myReplacedPaths.addAll(svnList.myReplacedPaths);
     }
-    myKnownAsDirectories = new HashSet<String>(0);
+    myKnownAsDirectories = new HashSet<>(0);
   }
 
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final LogEntry logEntry, String repositoryRoot) {
@@ -119,7 +119,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     myCommonPathSearcher = new CommonPathSearcher();
 
-    myKnownAsDirectories = new HashSet<String>(0);
+    myKnownAsDirectories = new HashSet<>(0);
     for(LogEntryPath entry : logEntry.getChangedPaths().values()) {
       final String path = entry.getPath();
 
@@ -151,7 +151,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
                        final boolean supportsReplaced) throws IOException {
     myVcs = vcs;
     myLocation = location;
-    myKnownAsDirectories = new HashSet<String>();
+    myKnownAsDirectories = new HashSet<>();
     readFromStream(stream, supportsCopyFromInfo, supportsReplaced);
     myCommonPathSearcher = new CommonPathSearcher();
     myCommonPathSearcher.next(myAddedPaths);
@@ -197,10 +197,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myListsHolder = new ChangesListCreationHelper();
     
     // key: copied-from
-    final Map<String, ExternallyRenamedChange> copiedAddedChanges = new HashMap<String, ExternallyRenamedChange>();
+    final Map<String, ExternallyRenamedChange> copiedAddedChanges = new HashMap<>();
 
     correctBeforePaths();
-    final List<String> copyDeleted = new ArrayList<String>(myDeletedPaths);
+    final List<String> copyDeleted = new ArrayList<>(myDeletedPaths);
 
     for(String path: myAddedPaths) {
       final Change addedChange;
@@ -292,7 +292,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private void processDeletedForBeforePaths(Set<String> paths) {
     final RenameHelper helper = new RenameHelper();
-    final HashSet<String> copy = new HashSet<String>(paths);
+    final HashSet<String> copy = new HashSet<>(paths);
     paths.clear();
     for (String s : copy) {
       paths.add(helper.convertBeforePath(s, myCopiedAddedPaths));
@@ -322,9 +322,9 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     private final List<Pair<Integer, Boolean>> myWithoutDirStatus;
 
     private ChangesListCreationHelper() {
-      myList = new ArrayList<Change>();
-      myWithoutDirStatus = new ArrayList<Pair<Integer, Boolean>>();
-      myPathToChangeMapping = new HashMap<String, Change>();
+      myList = new ArrayList<>();
+      myWithoutDirStatus = new ArrayList<>();
+      myPathToChangeMapping = new HashMap<>();
     }
 
     public void add(final String path, final Change change) {
@@ -364,7 +364,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         public Boolean fun(final File file) {
           if (knownAsDirectory) return Boolean.TRUE;
           // list will be next
-          myWithoutDirStatus.add(new Pair<Integer, Boolean>(myList.size(), isBeforeRevision));
+          myWithoutDirStatus.add(new Pair<>(myList.size(), isBeforeRevision));
           return Boolean.FALSE;
         }
       });
@@ -380,7 +380,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     public List<Change> getDetailedList() {
       if (myDetailedList == null) {
-        myDetailedList = new ArrayList<Change>(myList);
+        myDetailedList = new ArrayList<>(myList);
 
         try {
           doRemoteDetails();
@@ -485,7 +485,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
                                                     final boolean isBefore,
                                                     @NotNull final Set<Pair<Boolean, String>> duplicates)
       throws VcsException {
-      final List<Change> result = new ArrayList<Change>();
+      final List<Change> result = new ArrayList<>();
 
       final String path = getRelativePath(contentRevision);
       SVNURL fullPath = SvnUtil.createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
@@ -510,7 +510,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     private SvnRepositoryContentRevision createRevision(final String path, final boolean isBeforeRevision, final boolean isDir) {
       return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path,
-                                                 getLocalPath(path, new ConstantFunction<File, Boolean>(isDir)), getRevision(isBeforeRevision));
+                                                 getLocalPath(path, new ConstantFunction<>(isDir)), getRevision(isBeforeRevision));
     }
   }
 

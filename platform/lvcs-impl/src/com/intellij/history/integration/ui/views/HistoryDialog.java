@@ -325,7 +325,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected abstract Runnable doUpdateDiffs(T model);
 
   protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
-    final Ref<ContentDiffRequest> requestRef = new Ref<ContentDiffRequest>();
+    final Ref<ContentDiffRequest> requestRef = new Ref<>();
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
       public void run(@NotNull final ProgressIndicator i) {

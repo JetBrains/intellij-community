@@ -65,7 +65,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
   public static NavigationItem[] getSymbolsByName(final String name, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    final Collection<NavigationItem> result = new ArrayList<NavigationItem>();
+    final Collection<NavigationItem> result = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
 
     for(VirtualFile file:FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope)) {
@@ -105,7 +105,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull FileContent inputData) {
-        final HashMap<String, Void> map = new HashMap<String, Void>();
+        final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
           if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();

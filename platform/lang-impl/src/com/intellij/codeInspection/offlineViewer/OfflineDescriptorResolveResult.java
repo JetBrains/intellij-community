@@ -152,7 +152,7 @@ class OfflineDescriptorResolveResult {
 
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
+    final Set<PsiElement> result = new LinkedHashSet<>();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(psiRoot)) {
@@ -164,7 +164,7 @@ class OfflineDescriptorResolveResult {
 
   @Nullable
   private static LocalQuickFix[] getFixes(@NotNull CommonProblemDescriptor descriptor, List<String> hints, InspectionToolPresentation presentation) {
-    final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(hints == null ? 1 : hints.size());
+    final List<LocalQuickFix> fixes = new ArrayList<>(hints == null ? 1 : hints.size());
     if (hints == null) {
       addFix(descriptor, fixes, null, presentation);
     }

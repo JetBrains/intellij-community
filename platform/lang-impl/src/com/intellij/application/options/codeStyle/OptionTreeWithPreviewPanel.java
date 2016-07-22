@@ -230,7 +230,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
-    List<BooleanOptionKey> result = new ArrayList<BooleanOptionKey>(options.size());
+    List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
     Collections.sort(result, (key1, key2) -> {
       String group1 = key1.groupName;
@@ -250,7 +250,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
-    List<String> groupOrder = new ArrayList<String>();
+    List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {
         groupOrder.add(each.groupName);
@@ -616,7 +616,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
       if (key.groupName != null) {

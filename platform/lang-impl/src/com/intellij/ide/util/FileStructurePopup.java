@@ -114,12 +114,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private final PsiElement myInitialPsiElement;
-  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
-  private final List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
+  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<>();
+  private final List<JCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
-  private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
+  private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
   private final TreeExpander myTreeExpander;
   @NotNull private final FileEditor myFileEditor;
   private final StructureView myStructureViewDelegate;
@@ -499,7 +499,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private static Set<PsiElement> getAllParents(PsiElement element) {
-    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
+    Set<PsiElement> parents = new java.util.HashSet<>();
 
     while (element != null) {
       parents.add(element);
@@ -555,8 +555,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   public JComponent createCenterPanel() {
-    List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
-    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
+    List<FileStructureFilter> fileStructureFilters = new ArrayList<>();
+    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<>();
     if (myTreeActionsOwner != null) {
       for (Filter filter : myBaseTreeModel.getFilters()) {
         if (filter instanceof FileStructureFilter) {
@@ -785,7 +785,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }
 
-    final Ref<Boolean> succeeded = new Ref<Boolean>();
+    final Ref<Boolean> succeeded = new Ref<>();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       if (selectedNode != null) {
@@ -982,7 +982,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
-    private final Set<Object> myVisibleParents = new HashSet<Object>();
+    private final Set<Object> myVisibleParents = new HashSet<>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
 
     @Override
@@ -1071,11 +1071,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         return paths.get(0).node;
       }
       final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
-      ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<SpeedSearchObjectWithWeight>();
+      ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<>();
       int max = -1;
       for (SpeedSearchObjectWithWeight p : paths) {
         final Object last = ((TreePath)p.node).getLastPathComponent();
-        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        final List<PsiElement> elements = new ArrayList<>();
         final Object object = ((DefaultMutableTreeNode)last).getUserObject();
         if (object instanceof FilteringTreeStructure.FilteringNode) {
           FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;

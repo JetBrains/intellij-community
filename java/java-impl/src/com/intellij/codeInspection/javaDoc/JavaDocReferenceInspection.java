@@ -97,7 +97,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
           if (word == null || StringUtil.isEmptyOrSpaces(word)) {
             return;
           }
-          final List<LookupElement> items = new ArrayList<LookupElement>();
+          final List<LookupElement> items = new ArrayList<>();
           for (String variant : myUnboundParams) {
             items.add(LookupElementBuilder.create(variant));
           }

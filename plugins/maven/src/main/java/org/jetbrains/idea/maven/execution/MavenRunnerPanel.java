@@ -134,7 +134,7 @@ public class MavenRunnerPanel {
 
   private void collectProperties() {
     MavenProjectsManager s = MavenProjectsManager.getInstance(myProject);
-    Map<String, String> result = new LinkedHashMap<String, String>();
+    Map<String, String> result = new LinkedHashMap<>();
 
     for (MavenProject each : s.getProjects()) {
       Properties properties = each.getProperties();

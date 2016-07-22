@@ -170,7 +170,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {
-    final ArrayList<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
+    final ArrayList<LocalInspectionTool> result = new ArrayList<>();
     for (InspectionToolProvider toolProvider : provider) {
       for (Class aClass : toolProvider.getInspectionClasses()) {
         try {
@@ -342,7 +342,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @NotNull
   public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
-    ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    ArrayList<HighlightInfo> result = new ArrayList<>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
     }
@@ -376,7 +376,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+      final List<IntentionAction> availableActions = new ArrayList<>();
 
       for (HighlightInfo info :infos) {
         if (info.quickFixActionRanges != null) {

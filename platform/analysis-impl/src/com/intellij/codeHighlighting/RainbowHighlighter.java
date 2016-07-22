@@ -75,7 +75,7 @@ public class RainbowHighlighter {
       return registryColors.stream().map((s -> ColorUtil.fromHex(s.trim()))).collect(Collectors.toList());
     }
 
-    List<Color> colors = new ArrayList<Color>(COLOR_COUNT);
+    List<Color> colors = new ArrayList<>(COLOR_COUNT);
     TextAttributes attributes = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT);
     Color foregroundColor = attributes != null ? attributes.getForegroundColor() : JBColor.gray;
     float[] floats = Color.RGBtoHSB(foregroundColor.getRed(), foregroundColor.getGreen(), foregroundColor.getBlue(), null);

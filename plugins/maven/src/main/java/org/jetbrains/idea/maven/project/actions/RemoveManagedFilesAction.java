@@ -45,7 +45,7 @@ public class RemoveManagedFilesAction extends MavenAction {
     if(projectsManager == null) return;
 
     List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
-    List<VirtualFile> removableFiles = new ArrayList<VirtualFile>();
+    List<VirtualFile> removableFiles = new ArrayList<>();
 
     for (VirtualFile pomXml : selectedFiles) {
       if (projectsManager.isManagedFile(pomXml)) {

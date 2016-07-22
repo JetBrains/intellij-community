@@ -143,7 +143,7 @@ public class HgStatusCommand {
     HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
 
-    List<String> options = new LinkedList<String>();
+    List<String> options = new LinkedList<>();
     if (myIncludeAdded) {
       options.add("--added");
     }
@@ -177,12 +177,12 @@ public class HgStatusCommand {
       }
     }
 
-    final Set<HgChange> changes = new HashSet<HgChange>();
+    final Set<HgChange> changes = new HashSet<>();
 
     if (paths != null) {
       final List<List<String>> chunked = VcsFileUtil.chunkPaths(repo, paths);
       for (List<String> chunk : chunked) {
-        List<String> args = new ArrayList<String>();
+        List<String> args = new ArrayList<>();
         args.addAll(options);
         args.addAll(chunk);
         HgCommandResult result = executor.executeInCurrentThread(repo, "status", args);
@@ -196,7 +196,7 @@ public class HgStatusCommand {
   }
 
   private  Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result, List<String> args) {
-    final Set<HgChange> changes = new HashSet<HgChange>();
+    final Set<HgChange> changes = new HashSet<>();
     HgChange previous = null;
     if (result == null) {
       return changes;
@@ -238,7 +238,7 @@ public class HgStatusCommand {
 
   @NotNull
   public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
-    Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
+    Collection<VirtualFile> untrackedFiles = new HashSet<>();
     List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
     Set<HgChange> change = executeInCurrentThread(repo, filePaths);
     for (HgChange hgChange : change) {

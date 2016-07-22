@@ -40,7 +40,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
   }
 
   public void setTooltipProvider(MemberInfoTooltipManager.TooltipProvider <T, M> tooltipProvider) {
-    myTooltipManager = new MemberInfoTooltipManager<T, M>(tooltipProvider);
+    myTooltipManager = new MemberInfoTooltipManager<>(tooltipProvider);
   }
 
   @Override

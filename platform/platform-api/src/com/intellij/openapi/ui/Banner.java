@@ -42,7 +42,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurableBanner, SwingConstants.LEFT);
   private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
-  private final Map<Action, LinkLabel> myActions = new HashMap<Action, LinkLabel>();
+  private final Map<Action, LinkLabel> myActions = new HashMap<>();
 
   public Banner() {
     setLayout(new BorderLayout());

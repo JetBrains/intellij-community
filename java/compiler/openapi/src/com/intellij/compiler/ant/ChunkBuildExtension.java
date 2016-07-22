@@ -69,7 +69,7 @@ public abstract class ChunkBuildExtension {
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {
-    List<String> allTargets = new ArrayList<String>();
+    List<String> allTargets = new ArrayList<>();
     final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     for (ChunkBuildExtension extension : extensions) {
       ContainerUtil.addAll(allTargets, extension.getTargets(chunk));

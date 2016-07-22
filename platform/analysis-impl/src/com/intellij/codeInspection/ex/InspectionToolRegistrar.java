@@ -46,11 +46,11 @@ public class InspectionToolRegistrar {
   private synchronized void ensureInitialized() {
     if (!myInspectionComponentsLoaded) {
       myInspectionComponentsLoaded = true;
-      Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
+      Set<InspectionToolProvider> providers = new THashSet<>();
       //noinspection unchecked
       providers.addAll((((ComponentManagerEx)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
       ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
-      List<Factory<InspectionToolWrapper>> factories = new ArrayList<Factory<InspectionToolWrapper>>();
+      List<Factory<InspectionToolWrapper>> factories = new ArrayList<>();
       registerTools(providers, factories);
       final boolean isInternal = ApplicationManager.getApplication().isInternal();
       for (final LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
@@ -101,7 +101,7 @@ public class InspectionToolRegistrar {
   public List<InspectionToolWrapper> createTools() {
     ensureInitialized();
 
-    final List<InspectionToolWrapper> tools = new ArrayList<InspectionToolWrapper>(myInspectionToolFactories.size());
+    final List<InspectionToolWrapper> tools = new ArrayList<>(myInspectionToolFactories.size());
     for (final Factory<InspectionToolWrapper> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
       final InspectionToolWrapper toolWrapper = factory.create();

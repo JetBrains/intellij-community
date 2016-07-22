@@ -62,8 +62,8 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
    * Invoked by reflection
    */
   public TodoConfigurable() {
-    myPatterns = new ArrayList<TodoPattern>();
-    myFilters = new ArrayList<TodoFilter>();
+    myPatterns = new ArrayList<>();
+    myFilters = new ArrayList<>();
     myFiltersModel = new FiltersTableModel(myFilters);
     myPatternsModel = new PatternsTableModel(myPatterns);
   }

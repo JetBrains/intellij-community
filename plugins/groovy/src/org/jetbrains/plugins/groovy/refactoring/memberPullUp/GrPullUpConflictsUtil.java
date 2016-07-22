@@ -94,7 +94,7 @@ public class GrPullUpConflictsUtil {
       }
     }
 
-    final Set<PsiMethod> allAbstractMethods = new HashSet<PsiMethod>(abstractMethods);
+    final Set<PsiMethod> allAbstractMethods = new HashSet<>(abstractMethods);
     if (superClass != null) {
       for (PsiMethod method : subclass.getMethods()) {
         if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -105,7 +105,7 @@ public class GrPullUpConflictsUtil {
       }
     }
 
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     GrRefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement,
                                                              allAbstractMethods);
@@ -127,7 +127,7 @@ public class GrPullUpConflictsUtil {
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
-    List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
+    List<PsiElement> checkModuleConflictsList = new ArrayList<>();
     for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
         GrClassMemberReferenceVisitor visitor =

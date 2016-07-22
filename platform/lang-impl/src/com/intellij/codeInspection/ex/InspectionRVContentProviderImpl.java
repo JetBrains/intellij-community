@@ -101,7 +101,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     if (!moduleProblems.isEmpty()) {
       Set<RefEntity> entities = contents.get("");
       if (entities == null) {
-        entities = new HashSet<RefEntity>();
+        entities = new HashSet<>();
         contents.put("", entities);
       }
       entities.addAll(moduleProblems);
@@ -110,7 +110,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               contents,
               false,
               toolWrapper,
-              refElement -> new RefEntityContainer<CommonProblemDescriptor>(refElement, problems.get(refElement)),
+              refElement -> new RefEntityContainer<>(refElement, problems.get(refElement)),
               showStructure,
               node -> merge(node, mergedToolNode, true));
     return mergedToolNode;
@@ -140,7 +140,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       if (canPackageRepeat && pNode instanceof InspectionPackageNode) {
         final Set<RefEntity> currentElements = presentation.getContent().get(((InspectionPackageNode) pNode).getPackageName());
         if (currentElements != null) {
-          final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
+          final Set<RefEntity> currentEntities = new HashSet<>(currentElements);
           if (RefUtil.contains(refElement, currentEntities)) return;
         }
       }

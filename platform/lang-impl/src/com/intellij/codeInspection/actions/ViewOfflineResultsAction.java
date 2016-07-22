@@ -101,7 +101,7 @@ public class ViewOfflineResultsAction extends AnAction {
     if (virtualFile == null || !virtualFile.isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
-      new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
+      new HashMap<>();
     final String [] profileName = new String[1];
     final Runnable process = () -> {
       final VirtualFile[] files = virtualFile.getChildren();
@@ -192,7 +192,7 @@ public class ViewOfflineResultsAction extends AnAction {
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
-    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     final InspectionResultsView view = new InspectionResultsView(context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();

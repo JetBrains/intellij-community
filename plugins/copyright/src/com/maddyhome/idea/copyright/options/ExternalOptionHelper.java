@@ -33,7 +33,7 @@ public class ExternalOptionHelper {
   @Nullable
   public static List<CopyrightProfile> loadOptions(File file) {
     try {
-      List<CopyrightProfile> profiles = new ArrayList<CopyrightProfile>();
+      List<CopyrightProfile> profiles = new ArrayList<>();
       Element root = JDOMUtil.load(file);
       if (root.getName().equals("component")) {
         final Element copyrightElement = root.getChild("copyright");

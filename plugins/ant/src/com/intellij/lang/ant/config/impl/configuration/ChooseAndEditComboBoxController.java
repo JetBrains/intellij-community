@@ -31,7 +31,7 @@ import java.util.Map;
 public abstract class ChooseAndEditComboBoxController<Item, Ref> {
   private final ComboboxWithBrowseButton myCombobox;
   private final Convertor<Item, Ref> myToString;
-  private final Map<Ref, Item> myItems = new HashMap<Ref, Item>();
+  private final Map<Ref, Item> myItems = new HashMap<>();
 
   public ChooseAndEditComboBoxController(ComboboxWithBrowseButton combobox,
                                          Convertor<Item, Ref> toRef,
@@ -43,7 +43,7 @@ public abstract class ChooseAndEditComboBoxController<Item, Ref> {
         resetList(openConfigureDialog(myItems.get(getSelectedString()), getCombobox()));
       }
     });
-    getCombobox().setModel(new SortedComboBoxModel<Ref>(comparator));
+    getCombobox().setModel(new SortedComboBoxModel<>(comparator));
   }
 
   public void resetList(Item selection) {

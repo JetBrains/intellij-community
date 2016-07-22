@@ -30,7 +30,7 @@ class OneBaseStrategy extends AutoMatchStrategy {
   OneBaseStrategy(VirtualFile baseDir) {
     super(baseDir);
     mySucceeded = true;
-    myVariants = new MultiMap<VirtualFile, TextFilePatchInProgress>();
+    myVariants = new MultiMap<>();
     myCheckExistingVariants = false;
   }
 
@@ -42,8 +42,8 @@ class OneBaseStrategy extends AutoMatchStrategy {
       mySucceeded = false;
       return;
     }
-    final List<TextFilePatchInProgress> results = new LinkedList<TextFilePatchInProgress>();
-    final Set<VirtualFile> keysToRemove = new HashSet<VirtualFile>(myVariants.keySet());
+    final List<TextFilePatchInProgress> results = new LinkedList<>();
+    final Set<VirtualFile> keysToRemove = new HashSet<>(myVariants.keySet());
     for (VirtualFile file : foundByName) {
       final TextFilePatchInProgress textFilePatchInProgress = processMatch(patch, file);
       if (textFilePatchInProgress != null) {

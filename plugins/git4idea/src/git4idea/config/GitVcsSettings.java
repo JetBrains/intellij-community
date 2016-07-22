@@ -61,7 +61,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public static class State {
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>();
+    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
     public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
@@ -70,7 +70,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean PUSH_UPDATE_ALL_ROOTS = true;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
-    public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
+    public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<>();
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
     public boolean WARN_ABOUT_CRLF = true;
@@ -270,7 +270,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,
                             @NotNull String targetRemote, @NotNull String targetBranch) {
     String repositoryPath = repository.getRoot().getPath();
-    List<PushTargetInfo> targets = new ArrayList<PushTargetInfo>(myState.PUSH_TARGETS);
+    List<PushTargetInfo> targets = new ArrayList<>(myState.PUSH_TARGETS);
     Iterator<PushTargetInfo> iterator = targets.iterator();
     PushTargetInfo existingInfo = find(iterator, repository, sourceBranch);
     if (existingInfo != null) {

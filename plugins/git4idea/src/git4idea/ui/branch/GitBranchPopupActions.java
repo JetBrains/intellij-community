@@ -62,7 +62,7 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Local Branches");
-    List<GitBranch> localBranches = new ArrayList<GitBranch>(myRepository.getBranches().getLocalBranches());
+    List<GitBranch> localBranches = new ArrayList<>(myRepository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
     for (GitBranch localBranch : localBranches) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
@@ -71,7 +71,7 @@ class GitBranchPopupActions {
     }
 
     popupGroup.addSeparator("Remote Branches");
-    List<GitBranch> remoteBranches = new ArrayList<GitBranch>(myRepository.getBranches().getRemoteBranches());
+    List<GitBranch> remoteBranches = new ArrayList<>(myRepository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
     for (GitBranch remoteBranch : remoteBranches) {
       popupGroup.add(new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository));

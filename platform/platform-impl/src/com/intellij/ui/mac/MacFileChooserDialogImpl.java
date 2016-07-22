@@ -59,7 +59,7 @@ import java.util.List;
 public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final int OK = 1;
 
-  private static final Map<ID, MacFileChooserDialogImpl> ourImplMap = new HashMap<ID, MacFileChooserDialogImpl>(2);
+  private static final Map<ID, MacFileChooserDialogImpl> ourImplMap = new HashMap<>(2);
 
   private final FileChooserDescriptor myChooserDescriptor;
   private final Project myProject;
@@ -167,7 +167,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   @NotNull
   private static List<String> processResult(final ID result, final ID panel) {
-    final List<String> resultPaths = new ArrayList<String>();
+    final List<String> resultPaths = new ArrayList<>();
 
     if (result != null && OK == result.intValue()) {
       final ID fileNamesArray = invoke(panel, "URLs");

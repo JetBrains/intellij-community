@@ -56,7 +56,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   public XmlText[] getTextElements() {
     XmlText[] textElements = myTextElements;
     if(textElements != null) return textElements;
-    final List<XmlText> textElementsList = new ArrayList<XmlText>();
+    final List<XmlText> textElementsList = new ArrayList<>();
     for (final XmlTagChild element : myElements) {
       if (element instanceof XmlText) textElementsList.add((XmlText)element);
     }
@@ -160,7 +160,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   }
 
   public static XmlTagValue createXmlTagValue(XmlTag tag) {
-    final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>();
+    final List<XmlTagChild> bodyElements = new ArrayList<>();
 
     tag.processElements(new PsiElementProcessor() {
       boolean insideBody;

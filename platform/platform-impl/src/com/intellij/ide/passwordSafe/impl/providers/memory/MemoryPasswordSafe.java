@@ -38,7 +38,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private final transient AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private final transient AtomicReference<byte[]> key = new AtomicReference<>();
   /**
    * The password database
    */

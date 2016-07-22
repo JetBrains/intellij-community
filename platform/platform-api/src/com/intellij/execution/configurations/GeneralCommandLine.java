@@ -300,7 +300,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<String>();
+    List<String> commands = new ArrayList<>();
     if (exeName != null) {
       commands.add(exeName);
     }
@@ -389,7 +389,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
-        THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+        THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();

@@ -100,7 +100,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
   protected abstract T findItemToAdd();
 
   public Object [] getListItems(){
-    List<Object> items = new ArrayList<Object>();
+    List<Object> items = new ArrayList<>();
     for (int i = 0; i < myListModel.size(); i++){
       items.add(myListModel.getElementAt(i));
     }

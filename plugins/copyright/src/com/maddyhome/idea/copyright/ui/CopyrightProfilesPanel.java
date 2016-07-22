@@ -90,7 +90,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
+    final List<CopyrightProfile> deleted = new ArrayList<>();
     for (CopyrightProfile profile : myManager.getCopyrights()) {
       if (!profiles.containsValue(profile)) {
         deleted.add(profile);
@@ -127,7 +127,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   @Override
   public void apply() throws ConfigurationException {
-    final Set<String> profiles = new HashSet<String>();
+    final Set<String> profiles = new HashSet<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
@@ -141,7 +141,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   }
 
   public Map<String, CopyrightProfile> getAllProfiles() {
-    final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
+    final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
       for (CopyrightProfile profile : myManager.getCopyrights()) {
         profiles.put(profile.getName(), profile);
@@ -166,7 +166,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);

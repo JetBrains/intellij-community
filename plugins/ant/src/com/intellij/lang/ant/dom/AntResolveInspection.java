@@ -110,7 +110,7 @@ public class AntResolveInspection extends AntInspection {
       }
 
       if (!isResolvable(ref)) {
-        final List<LocalQuickFix> quickFixList = new SmartList<LocalQuickFix>();
+        final List<LocalQuickFix> quickFixList = new SmartList<>();
         quickFixList.add(new AntChangeContextLocalFix());
 
         if (ref instanceof AntDomPropertyReference) {
@@ -140,7 +140,7 @@ public class AntResolveInspection extends AntInspection {
 
         if (ref instanceof AntDomFileReference) {
           if (processed == null) {
-            processed = new HashSet<PsiReference>();
+            processed = new HashSet<>();
           }
           ContainerUtil.addAll(processed, ((AntDomFileReference)ref).getFileReferenceSet().getAllReferences());
         }
@@ -163,7 +163,7 @@ public class AntResolveInspection extends AntInspection {
     if (antDomProject == null) {
       return Collections.emptyList();
     }
-    final Set<PropertiesFile> files = new java.util.HashSet<PropertiesFile>();
+    final Set<PropertiesFile> files = new java.util.HashSet<>();
     final int stopOffset = stopElement.getTextOffset();
 
     for (Iterator<AntDomElement> iterator = antDomProject.getAntChildrenIterator(); iterator.hasNext(); ) {

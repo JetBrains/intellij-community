@@ -221,7 +221,7 @@ public class FileTypeUtil {
   }
 
   public FileType[] getSupportedTypes() {
-    HashSet<FileType> set = new HashSet<FileType>(getMap().values());
+    HashSet<FileType> set = new HashSet<>(getMap().values());
     return set.toArray(new FileType[set.size()]);
   }
 
@@ -269,19 +269,19 @@ public class FileTypeUtil {
   }
 
   private void createMappings() {
-    Set<FileType> maps = new HashSet<FileType>();
+    Set<FileType> maps = new HashSet<>();
     maps.add(StdFileTypes.DTD);
     maps.add(StdFileTypes.XML);
 
     mappings.put(StdFileTypes.XML, maps);
 
-    maps = new HashSet<FileType>();
+    maps = new HashSet<>();
     maps.add(StdFileTypes.HTML);
     maps.add(StdFileTypes.XHTML);
 
     mappings.put(StdFileTypes.HTML, maps);
 
-    maps = new HashSet<FileType>();
+    maps = new HashSet<>();
     maps.add(StdFileTypes.JSP);
 
     mappings.put(StdFileTypes.JSP, maps);
@@ -324,7 +324,7 @@ public class FileTypeUtil {
 
   private void loadFileTypes() {
     logger.debug("loadFileTypes");
-    Map<String, FileType> map = new HashMap<String, FileType>();
+    Map<String, FileType> map = new HashMap<>();
     for (FileType ftype : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       // Ignore binary files
       // Ignore IDEA specific file types (PROJECT, MODULE, WORKSPACE)
@@ -368,8 +368,8 @@ public class FileTypeUtil {
   }
 
   private Map<String, FileType> types;
-  private final Map<FileType, Set<FileType>> mappings = new HashMap<FileType, Set<FileType>>();
-  private final Set<FileType> noSeparators = new HashSet<FileType>();
+  private final Map<FileType, Set<FileType>> mappings = new HashMap<>();
+  private final Set<FileType> noSeparators = new HashSet<>();
 
   private static final Logger logger = Logger.getInstance(FileTypeUtil.class.getName());
 }

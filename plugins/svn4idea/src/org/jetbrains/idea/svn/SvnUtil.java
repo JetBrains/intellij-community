@@ -144,7 +144,7 @@ public class SvnUtil {
   }
 
   private static Collection<VirtualFile> crawlWCRoots(final Project project, VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final Collection<VirtualFile> result = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> result = new HashSet<>();
     final boolean isDirectory = vf.isDirectory();
     VirtualFile parent = ! isDirectory || !vf.exists() ? vf.getParent() : vf;
 
@@ -198,7 +198,7 @@ public class SvnUtil {
     }
 
     final VcsException[] exception = new VcsException[1];
-    final Collection<String> failedLocks = new ArrayList<String>();
+    final Collection<String> failedLocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
@@ -241,7 +241,7 @@ public class SvnUtil {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
@@ -263,7 +263,7 @@ public class SvnUtil {
   public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
     final boolean force = true;
     final VcsException[] exception = new VcsException[1];
-    final Collection<String> failedUnlocks = new ArrayList<String>();
+    final Collection<String> failedUnlocks = new ArrayList<>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
@@ -306,7 +306,7 @@ public class SvnUtil {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
       String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
-      List<VcsException> exceptions = new ArrayList<VcsException>();
+      List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.failed.to.unlock.file", file)));
@@ -586,7 +586,7 @@ public class SvnUtil {
 
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
-    final Ref<Boolean> result = new Ref<Boolean>(true);
+    final Ref<Boolean> result = new Ref<>(true);
     DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
 
       @Override

@@ -30,7 +30,7 @@ public class FrameworkTypeUtil {
     (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
 
   public static Map<String, FrameworkType> computeFrameworkTypeByIdMap() {
-    Map<String, FrameworkType> frameworkTypes = new HashMap<String, FrameworkType>();
+    Map<String, FrameworkType> frameworkTypes = new HashMap<>();
     for (FrameworkTypeEx type : FrameworkTypeEx.EP_NAME.getExtensions()) {
       frameworkTypes.put(type.getId(), type);
     }

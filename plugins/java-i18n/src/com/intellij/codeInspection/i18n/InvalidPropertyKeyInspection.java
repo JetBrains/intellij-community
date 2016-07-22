@@ -85,7 +85,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
@@ -99,7 +99,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> result = new ArrayList<>();
     appendProblems(manager, isOnTheFly, result, field.getInitializer());
     appendProblems(manager, isOnTheFly, result, field.getModifierList());
     if (field instanceof PsiEnumConstant) {
@@ -143,7 +143,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
-    private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+    private final List<ProblemDescriptor> myProblems = new ArrayList<>();
     private final boolean onTheFly;
 
 
@@ -193,7 +193,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
     private void visitPropertyKeyAnnotationParameter(PsiExpression expression, String key) {
       if (!(expression.getParent() instanceof PsiExpressionList)) return;
-      Ref<String> resourceBundleName = new Ref<String>();
+      Ref<String> resourceBundleName = new Ref<>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
         String bundleName = resourceBundleName.get();
         if (bundleName != null) { // can be null if we were unable to resolve literal expression, e.g. when JDK was not set
@@ -219,7 +219,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
         }
       }
       else if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
-        final Map<String, Object> annotationParams = new HashMap<String, Object>();
+        final Map<String, Object> annotationParams = new HashMap<>();
         annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
         if (!JavaI18nUtil.mustBePropertyKey(expression, annotationParams)) return;
 
@@ -285,7 +285,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
                                                            @NotNull List<PropertiesFile> propertiesFiles) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-      final List<PropertiesFile> result = new ArrayList<PropertiesFile>(propertiesFiles.size());
+      final List<PropertiesFile> result = new ArrayList<>(propertiesFiles.size());
       for (final PropertiesFile file : propertiesFiles) {
         if (!fileIndex.isInLibraryClasses(file.getVirtualFile()) && !fileIndex.isInLibrarySource(file.getVirtualFile())) {
           result.add(file);

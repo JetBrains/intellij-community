@@ -68,7 +68,7 @@ public class KillRingTransferable implements Transferable {
                               boolean cut)
   {
     myData = data;
-    myDocument = new WeakReference<Document>(document);
+    myDocument = new WeakReference<>(document);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myCut = cut;

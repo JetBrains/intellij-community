@@ -53,8 +53,8 @@ public class InspectionValidatorUtil {
 
   public static Collection<VirtualFile> expandCompileScopeIfNeeded(final Collection<VirtualFile> result, final CompileContext context) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-    final THashSet<VirtualFile> set = new THashSet<VirtualFile>();
-    final THashSet<Module> modules = new THashSet<Module>();
+    final THashSet<VirtualFile> set = new THashSet<>();
+    final THashSet<Module> modules = new THashSet<>();
     for (VirtualFile file : result) {
       if (index.getSourceRootForFile(file) == null) {
         set.add(file);

@@ -40,13 +40,13 @@ class ExtractedClassBuilder {
 
   private String className;
   private String packageName;
-  private final List<PsiField> fields = new ArrayList<PsiField>(5);
-  private final List<PsiMethod> methods = new ArrayList<PsiMethod>(5);
-  private final List<PsiClassInitializer> initializers = new ArrayList<PsiClassInitializer>(5);
-  private final List<PsiClass> innerClasses = new ArrayList<PsiClass>(5);
-  private final List<PsiClass> innerClassesToMakePublic = new ArrayList<PsiClass>(5);
-  private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
-  private final List<PsiClass> interfaces = new ArrayList<PsiClass>();
+  private final List<PsiField> fields = new ArrayList<>(5);
+  private final List<PsiMethod> methods = new ArrayList<>(5);
+  private final List<PsiClassInitializer> initializers = new ArrayList<>(5);
+  private final List<PsiClass> innerClasses = new ArrayList<>(5);
+  private final List<PsiClass> innerClassesToMakePublic = new ArrayList<>(5);
+  private final List<PsiTypeParameter> typeParams = new ArrayList<>();
+  private final List<PsiClass> interfaces = new ArrayList<>();
 
   private boolean requiresBackPointer;
   private String originalClassName;
@@ -269,7 +269,7 @@ class ExtractedClassBuilder {
       out.append(";");
     }
 
-    final List<PsiClassInitializer> remainingInitializers = new ArrayList<PsiClassInitializer>(initializers);
+    final List<PsiClassInitializer> remainingInitializers = new ArrayList<>(initializers);
     for (final PsiField field : fields) {
       if (normalizeDeclaration) {
         field.normalizeDeclaration();
@@ -361,7 +361,7 @@ class ExtractedClassBuilder {
   }
 
   private boolean fieldIsExtracted(PsiField field) {
-    final ArrayList<PsiField> extractedFields = new ArrayList<PsiField>(fields);
+    final ArrayList<PsiField> extractedFields = new ArrayList<>(fields);
     extractedFields.addAll(enumConstantFields);
     if (extractedFields.contains(field)) return true;
 

@@ -59,8 +59,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
-  private final List<TodoPanel> myPanels = new ArrayList<TodoPanel>();
-  private final List<Content> myNotAddedContent = new ArrayList<Content>();
+  private final List<TodoPanel> myPanels = new ArrayList<>();
+  private final List<Content> myNotAddedContent = new ArrayList<>();
 
   private State state = new State();
 

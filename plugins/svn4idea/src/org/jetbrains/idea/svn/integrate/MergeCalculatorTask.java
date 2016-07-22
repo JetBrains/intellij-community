@@ -68,7 +68,7 @@ public class MergeCalculatorTask extends BaseMergeTask
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
     ((OneShotMergeInfoHelper)myMergeChecker).prepare();
-    myCopyData = new AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>>();
+    myCopyData = new AtomicReference<>();
   }
 
   @Override
@@ -231,7 +231,7 @@ public class MergeCalculatorTask extends BaseMergeTask
    */
   // true if errors found
   private static boolean checkForSubtree(@NotNull LogHierarchyNode tree, @NotNull String relativeBranch, @NotNull String localURL) {
-    final LinkedList<LogHierarchyNode> queue = new LinkedList<LogHierarchyNode>();
+    final LinkedList<LogHierarchyNode> queue = new LinkedList<>();
     queue.addLast(tree);
 
     while (!queue.isEmpty()) {

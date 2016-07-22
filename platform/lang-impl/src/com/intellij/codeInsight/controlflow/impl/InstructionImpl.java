@@ -28,8 +28,8 @@ import java.util.List;
  * @author oleg
  */
 public class InstructionImpl implements Instruction {
-  final List<Instruction> myPred = new SmartList<Instruction> ();
-  final List<Instruction> mySucc = new SmartList<Instruction>();
+  final List<Instruction> myPred = new SmartList<>();
+  final List<Instruction> mySucc = new SmartList<>();
 
   protected final PsiElement myElement;
   private final int myNumber;

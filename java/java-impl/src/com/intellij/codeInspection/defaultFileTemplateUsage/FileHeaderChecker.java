@@ -44,7 +44,7 @@ public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
   static ProblemDescriptor checkFileHeader(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {
-    TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
+    TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<>();
     FileTemplate defaultTemplate = FileTemplateManager.getInstance(file.getProject()).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     Pattern pattern = FileTemplateUtil.getTemplatePattern(defaultTemplate, file.getProject(), offsetToProperty);
     Matcher matcher = pattern.matcher(file.getViewProvider().getContents());

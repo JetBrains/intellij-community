@@ -98,7 +98,7 @@ public abstract class ChunkCustomCompilerExtension {
    */
   public static ChunkCustomCompilerExtension[] getCustomCompile(ModuleChunk chunk) {
     final ChunkCustomCompilerExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
-    LinkedList<ChunkCustomCompilerExtension> compilers = new LinkedList<ChunkCustomCompilerExtension>();
+    LinkedList<ChunkCustomCompilerExtension> compilers = new LinkedList<>();
     for (ChunkCustomCompilerExtension extension : extensions) {
       if (extension.hasCustomCompile(chunk)) {
         compilers.add(extension);

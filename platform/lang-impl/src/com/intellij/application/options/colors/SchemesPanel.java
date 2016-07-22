@@ -217,7 +217,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   
   private void chooseAndImport() {
     ImportSourceChooserDialog<EditorColorsScheme> importSourceChooserDialog =
-      new ImportSourceChooserDialog<EditorColorsScheme>(this, EditorColorsScheme.class);
+      new ImportSourceChooserDialog<>(this, EditorColorsScheme.class);
     if (importSourceChooserDialog.showAndGet()) {
       final String selectedImporterName = importSourceChooserDialog.getSelectedSourceName();
       if (selectedImporterName != null) {

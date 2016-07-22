@@ -90,7 +90,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return null;
 
-    List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
+    List<LocalQuickFix> result = new ArrayList<>();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     String fullReferenceText = reference.getCanonicalText();
     for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
@@ -114,7 +114,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return result;
     }
 
-    Set<Object> librariesToAdd = new THashSet<Object>();
+    Set<Object> librariesToAdd = new THashSet<>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
     PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
     List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
@@ -161,7 +161,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private static List<PsiClass> filterAllowedDependencies(PsiElement element, PsiClass[] classes) {
     DependencyValidationManager dependencyValidationManager = DependencyValidationManager.getInstance(element.getProject());
     PsiFile fromFile = element.getContainingFile();
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     for (PsiClass psiClass : classes) {
       PsiFile containingFile = psiClass.getContainingFile();
       if (containingFile != null && dependencyValidationManager.getViolatorDependencyRule(fromFile, containingFile) == null) {

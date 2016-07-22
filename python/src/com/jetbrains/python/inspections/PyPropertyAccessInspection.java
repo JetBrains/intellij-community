@@ -59,7 +59,7 @@ public class PyPropertyAccessInspection extends PyInspection {
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<Pair<PyClass, String>, Property>();
+    private final HashMap<Pair<PyClass, String>, Property> myPropertyCache = new HashMap<>();
 
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);

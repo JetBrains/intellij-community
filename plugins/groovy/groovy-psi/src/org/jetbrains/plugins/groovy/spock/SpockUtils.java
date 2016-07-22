@@ -110,7 +110,7 @@ public class SpockUtils {
 
     if (elementUnderLabel == null) return Collections.emptyMap();
 
-    Map<String, SpockVariableDescriptor> res = new HashMap<String, SpockVariableDescriptor>();
+    Map<String, SpockVariableDescriptor> res = new HashMap<>();
 
     PsiElement e = elementUnderLabel;
 
@@ -159,12 +159,12 @@ public class SpockUtils {
       }
       else if (isOrStatement(e)) {
         // See org.spockframework.compiler.WhereBlockRewriter#rewriteTableLikeParameterization()
-        List<GrExpression> variableDefinitions = new ArrayList<GrExpression>();
+        List<GrExpression> variableDefinitions = new ArrayList<>();
         splitOr(variableDefinitions, (GrExpression)e);
 
         SpockVariableDescriptor[] variables = createVariables(res, variableDefinitions);
 
-        List<GrExpression> row = new ArrayList<GrExpression>();
+        List<GrExpression> row = new ArrayList<>();
 
         PsiElement rowElement = getNext(e, elementUnderLabel, elementAfterLabel);
         while (isOrStatement(rowElement)) {

@@ -205,7 +205,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   public void prependItem(String item) {
-    ArrayList<Object> objects = new ArrayList<Object>();
+    ArrayList<Object> objects = new ArrayList<>();
     objects.add(item);
     int count = getItemCount();
     for (int i = 0; i < count; i++) {
@@ -218,7 +218,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   public void appendItem(String item) {
-    ArrayList<Object> objects = new ArrayList<Object>();
+    ArrayList<Object> objects = new ArrayList<>();
 
     int count = getItemCount();
     for (int i = 0; i < count; i++) {

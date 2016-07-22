@@ -225,7 +225,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
           PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
 
-          Set<String> allStrings = new HashSet<String>();
+          Set<String> allStrings = new HashSet<>();
           allStrings.add(name);
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
             // inner class name should be shown qualified if its not accessible by single name

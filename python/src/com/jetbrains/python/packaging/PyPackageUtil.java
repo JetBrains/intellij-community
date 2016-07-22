@@ -204,7 +204,7 @@ public class PyPackageUtil {
   @NotNull
   public static List<String> getPackageNames(@NotNull Module module) {
     // TODO: Cache found module packages, clear cache on module updates
-    final List<String> packageNames = new ArrayList<String>();
+    final List<String> packageNames = new ArrayList<>();
     final Project project = module.getProject();
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (roots.length == 0) {
@@ -223,7 +223,7 @@ public class PyPackageUtil {
 
   @Nullable
   public static PyCallExpression findSetupCall(@NotNull PyFile file) {
-    final Ref<PyCallExpression> result = new Ref<PyCallExpression>(null);
+    final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {

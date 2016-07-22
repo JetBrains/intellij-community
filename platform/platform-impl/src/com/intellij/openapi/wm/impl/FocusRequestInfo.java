@@ -33,6 +33,6 @@ public final class FocusRequestInfo {
     this.trace = trace;
     timestamp = System.currentTimeMillis();
     componentString = String.valueOf(c);
-    component = new WeakReference<Component>(c);
+    component = new WeakReference<>(c);
   }
 }

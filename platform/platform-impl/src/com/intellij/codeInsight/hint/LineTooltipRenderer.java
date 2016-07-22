@@ -107,7 +107,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       pane.setFocusable(true);
     }
 
-    final Ref<AnAction> actionRef = new Ref<AnAction>();
+    final Ref<AnAction> actionRef = new Ref<>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       @Override
       public void hide() {

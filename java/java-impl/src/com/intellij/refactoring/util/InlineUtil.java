@@ -312,7 +312,7 @@ public class InlineUtil {
   }
 
   public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
-    final Map<PsiElement, PsiElement> replacement = new HashMap<PsiElement, PsiElement>();
+    final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitTypeElement(PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);

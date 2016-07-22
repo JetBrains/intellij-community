@@ -46,7 +46,7 @@ import java.util.Map;
 public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
-  private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+  private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
 
   public JarApplicationConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -57,10 +57,10 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<JarApplicationConfiguration> group = new SettingsEditorGroup<JarApplicationConfiguration>();
+    SettingsEditorGroup<JarApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JarApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<JarApplicationConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -77,7 +77,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @Override
   public RunConfiguration clone() {
     JarApplicationConfiguration clone = (JarApplicationConfiguration)super.clone();
-    clone.myEnvs = new LinkedHashMap<String, String>(myEnvs);
+    clone.myEnvs = new LinkedHashMap<>(myEnvs);
     clone.myConfigurationModule = new JavaRunConfigurationModule(getProject(), true);
     clone.myConfigurationModule.setModule(myConfigurationModule.getModule());
     clone.myBean = XmlSerializerUtil.createCopy(myBean);

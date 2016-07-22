@@ -62,7 +62,7 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    final List<HighlightInfo> result = new ArrayList<>();
     myFile.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {

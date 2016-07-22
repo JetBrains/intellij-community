@@ -112,7 +112,7 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   public List<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
-    List<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
+    List<IdeaPluginDescriptorImpl> list = new ArrayList<>();
     for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {
         PluginId[] dep = any.getDependentPluginIds();

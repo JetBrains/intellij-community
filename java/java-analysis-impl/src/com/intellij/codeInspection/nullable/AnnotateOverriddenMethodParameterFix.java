@@ -67,7 +67,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int index = ArrayUtilRt.find(parameters, parameter);
 
-    List<PsiParameter> toAnnotate = new ArrayList<PsiParameter>();
+    List<PsiParameter> toAnnotate = new ArrayList<>();
 
     PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod psiMethod : methods) {

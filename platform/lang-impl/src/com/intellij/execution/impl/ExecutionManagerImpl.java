@@ -262,7 +262,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       ProcessHandler processHandler = descriptor.getProcessHandler();
       if (processHandler != null) {
         if (handlers == null) {
-          handlers = new SmartList<ProcessHandler>();
+          handlers = new SmartList<>();
         }
         handlers.add(processHandler);
       }
@@ -453,7 +453,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     }
 
     RunContentDescriptor contentToReuse = environment.getContentToReuse();
-    final List<RunContentDescriptor> runningOfTheSameType = new SmartList<RunContentDescriptor>();
+    final List<RunContentDescriptor> runningOfTheSameType = new SmartList<>();
     if (configuration != null && configuration.isSingleton()) {
       runningOfTheSameType.addAll(getRunningDescriptorsOfTheSameConfigType(configuration));
     }
@@ -544,7 +544,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
   @NotNull
   public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
-    List<RunContentDescriptor> result = new SmartList<RunContentDescriptor>();
+    List<RunContentDescriptor> result = new SmartList<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
@@ -558,7 +558,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
 
   @NotNull
   public Set<Executor> getExecutors(RunContentDescriptor descriptor) {
-    Set<Executor> result = new HashSet<Executor>();
+    Set<Executor> result = new HashSet<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (descriptor == trinity.first) result.add(trinity.third);
     }

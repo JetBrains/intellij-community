@@ -60,7 +60,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    Collection<PsiClass> allClasses = new SmartList<PsiClass>();
+    Collection<PsiClass> allClasses = new SmartList<>();
     processClassesWithName(name, Processors.cancelableCollectProcessor(allClasses), scope, null);
     if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
     return allClasses.toArray(new PsiClass[allClasses.size()]);
@@ -74,7 +74,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
       return Collections.emptyList();
     }
 
-    final ArrayList<PsiClass> result = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> result = new ArrayList<>();
     for (GroovyFile file : files) {
       if (file.isScript()) {
         final PsiClass scriptClass = file.getScriptClass();

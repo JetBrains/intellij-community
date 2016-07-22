@@ -35,7 +35,7 @@ public class MethodCallUtils {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls private static final Set<String> regexMethodNames = new HashSet<String>(5);
+  @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
   static {
     regexMethodNames.add("compile");

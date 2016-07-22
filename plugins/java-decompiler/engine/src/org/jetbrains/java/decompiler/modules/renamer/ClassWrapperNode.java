@@ -26,7 +26,7 @@ public class ClassWrapperNode {
 
   private ClassWrapperNode superclass;
 
-  private final List<ClassWrapperNode> subclasses = new ArrayList<ClassWrapperNode>();
+  private final List<ClassWrapperNode> subclasses = new ArrayList<>();
 
   public ClassWrapperNode(StructClass cl) {
     this.classStruct = cl;

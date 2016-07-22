@@ -78,7 +78,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
 
   public boolean execute(final DataContext context, final long executionId) {
     final Semaphore targetDone = new Semaphore();
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
 
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {

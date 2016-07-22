@@ -58,7 +58,7 @@ public class TestNGRelatedFilesProvider extends GotoRelatedProvider {
           else {
             names = new String[]{qName};
           }
-          final List<PsiElement> tags = new ArrayList<PsiElement>();
+          final List<PsiElement> tags = new ArrayList<>();
           for (final String name : names) {
             PsiSearchHelper.SERVICE.getInstance(project)
               .processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {

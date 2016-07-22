@@ -30,7 +30,7 @@ import java.util.List;
 
 public abstract class SerializationManager {
 
-  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<ObjectStubSerializer>();
+  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<>();
   private volatile boolean mySerializersLoaded;
 
   public static SerializationManager getInstance() {

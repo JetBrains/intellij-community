@@ -29,7 +29,7 @@ import java.util.List;
 */
 class ReferencedElementsCollector extends GroovyRecursiveElementVisitor {
 
-  private final List<PsiElement> myResult = new ArrayList<PsiElement>();
+  private final List<PsiElement> myResult = new ArrayList<>();
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {

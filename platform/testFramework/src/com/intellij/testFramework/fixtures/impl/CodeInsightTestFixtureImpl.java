@@ -188,7 +188,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     List<GutterMark> renderers = result.get(offset);
     if (renderers == null) {
-      result.put(offset, renderers = new SmartList<GutterMark>());
+      result.put(offset, renderers = new SmartList<>());
     }
     renderers.add(renderer);
   }
@@ -206,7 +206,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       });
 
     final InspectionProfileImpl profile = InspectionProfileImpl.createSimple(LightPlatformTestCase.PROFILE, project, wrapped);
-    profile.disableToolByDefault(new ArrayList<String>(disabledInspections), project);
+    profile.disableToolByDefault(new ArrayList<>(disabledInspections), project);
 
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     final Profile oldRootProfile = inspectionProfileManager.getRootProfile();
@@ -304,7 +304,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
 
-    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    List<IntentionAction> result = new ArrayList<>();
     IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
       result.add(entry.getKey());
@@ -463,7 +463,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                        final boolean checkInfos,
                                        final boolean checkWeakWarnings,
                                        @NotNull final String... filePaths) {
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> files = new ArrayList<>();
     for (String path : filePaths) {
       files.add(copyFileToProject(path));
     }
@@ -611,7 +611,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       configureByFilesInner(filePaths);
     }
     List<HighlightInfo> infos = doHighlighting();
-    ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
+    ArrayList<IntentionAction> actions = new ArrayList<>();
     for (HighlightInfo info : infos) {
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
@@ -950,7 +950,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
-    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
     Assert.assertNotNull("Cannot find handler for: " + targetElement, handler);
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     final FindUsagesOptions options = handler.getFindUsagesOptions(null);
@@ -990,7 +990,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public GutterMark findGutter(@NotNull final String filePath) {
     configureByFilesInner(filePath);
-    CommonProcessors.FindFirstProcessor<GutterMark> processor = new CommonProcessors.FindFirstProcessor<GutterMark>();
+    CommonProcessors.FindFirstProcessor<GutterMark> processor = new CommonProcessors.FindFirstProcessor<>();
     findGutters(processor);
     return processor.getFoundValue();
   }
@@ -998,9 +998,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<GutterMark> findGuttersAtCaret() {
-    CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<GutterMark>();
+    CommonProcessors.CollectProcessor<GutterMark> processor = new CommonProcessors.CollectProcessor<>();
     findGutters(processor);
-    return new ArrayList<GutterMark>(processor.getResults());
+    return new ArrayList<>(processor.getResults());
   }
 
   private void findGutters(Processor<GutterMark> processor) {
@@ -1037,7 +1037,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<GutterMark> findAllGutters() {
     final Project project = getProject();
-    final SortedMap<Integer, List<GutterMark>> result = new TreeMap<Integer, List<GutterMark>>();
+    final SortedMap<Integer, List<GutterMark>> result = new TreeMap<>();
 
     List<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
@@ -1149,7 +1149,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
-    final List<Integer> originalOffsets = new ArrayList<Integer>(carets.size());
+    final List<Integer> originalOffsets = new ArrayList<>(carets.size());
 
     for (final Caret caret : carets) {
       originalOffsets.add(caret.getOffset());
@@ -1159,7 +1159,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // We do it in reverse order because completions would affect offsets
     // i.e.: when you complete "spa" to "spam", next caret offset increased by 1
     Collections.reverse(originalOffsets);
-    final List<LookupElement> result = new ArrayList<LookupElement>();
+    final List<LookupElement> result = new ArrayList<>();
     for (final int originalOffset : originalOffsets) {
       caretModel.moveToOffset(originalOffset);
       final LookupElement[] lookupElements = completeBasic();
@@ -1708,7 +1708,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     final FoldingModel model = myEditor.getFoldingModel();
     final FoldRegion[] foldingRegions = model.getAllFoldRegions();
-    final List<Border> borders = new LinkedList<Border>();
+    final List<Border> borders = new LinkedList<>();
 
     for (FoldRegion region : foldingRegions) {
       borders.add(new Border(Border.LEFT, region.getStartOffset(), region.getPlaceholderText(), region.isExpanded()));
@@ -1730,7 +1730,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public String getHighlightingDescription(@NotNull List<HighlightInfo> highlighting, @NotNull String tagName, boolean withColor) {
-    final List<Border> borders = new LinkedList<Border>();
+    final List<Border> borders = new LinkedList<>();
     for (HighlightInfo region : highlighting) {
       TextAttributes attributes = region.getTextAttributes(null, null);
       borders.add(new Border(Border.LEFT, region.getStartOffset(),
