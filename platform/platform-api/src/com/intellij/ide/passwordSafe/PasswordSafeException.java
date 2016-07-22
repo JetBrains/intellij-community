@@ -15,9 +15,7 @@
  */
 package com.intellij.ide.passwordSafe;
 
-/**
- * The exception that is thrown when password safe is not available (unable to ask for master password)
- */
+@Deprecated
 public class PasswordSafeException extends RuntimeException {
   public PasswordSafeException(String message, Throwable cause) {
     super(message, cause);
