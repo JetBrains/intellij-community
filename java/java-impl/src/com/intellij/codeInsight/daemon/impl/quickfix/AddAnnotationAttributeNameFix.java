@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -59,6 +60,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     doFix((PsiNameValuePair)startElement, myName);
   }
 

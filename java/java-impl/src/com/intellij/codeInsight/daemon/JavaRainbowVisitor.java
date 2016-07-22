@@ -21,6 +21,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +39,17 @@ public class JavaRainbowVisitor extends RainbowVisitor {
 
     if (element instanceof PsiReferenceExpression
         || element instanceof PsiLocalVariable
-        || element instanceof PsiParameter) {
+        || element instanceof PsiParameter
+        || element instanceof PsiDocParamRef) {
       PsiElement context = PsiTreeUtil.findFirstParent(element, p -> p instanceof PsiMethod);
       if (context != null) {
         HighlightInfo attrs = getRainbowSymbolKey(
           context,
           element instanceof PsiReferenceExpression
           ? Pair.create(element, ((PsiReferenceExpression)element).resolve())
-          : Pair.create(((PsiVariable)element).getNameIdentifier(), element));
+          : element instanceof PsiDocParamRef
+            ? Pair.create(element, element.getReference() == null ? null : element.getReference().resolve())
+            : Pair.create(((PsiVariable)element).getNameIdentifier(), element));
         if (attrs != null) {
           addInfo(attrs);
         }
@@ -62,7 +67,9 @@ public class JavaRainbowVisitor extends RainbowVisitor {
       if (name != null) {
         return getInfo(context, rainbow.first, name, rainbow.second instanceof PsiLocalVariable
                                                      ? JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES
-                                                     : JavaHighlightingColors.PARAMETER_ATTRIBUTES);
+                                                     : rainbow.first instanceof PsiDocTagValue
+                                                       ? JavaHighlightingColors.DOC_COMMENT_TAG_VALUE
+                                                       : JavaHighlightingColors.PARAMETER_ATTRIBUTES);
       }
     }
     return null;

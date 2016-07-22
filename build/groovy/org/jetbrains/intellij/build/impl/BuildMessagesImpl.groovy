@@ -39,6 +39,7 @@ class BuildMessagesImpl implements BuildMessages {
     this.antProject = antProject
     this.builder = builder
     buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
+    builder.buildInfoPrinter = buildInfoPrinter
   }
 
   @Override

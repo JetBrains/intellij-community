@@ -41,6 +41,7 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -632,10 +633,10 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String fileName) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String fileName,
+                                                                @NotNull JDOMXIncluder.PathResolver pathResolver) {
     try {
-      String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
-      URL jarURL = new URL(URLUtil.JAR_PROTOCOL + ':' + fileURL + URLUtil.JAR_SEPARATOR + META_INF + '/' + fileName);
+      URL jarURL = URLUtil.getJarEntryURL(file, META_INF + '/' + fileName);
 
       ZipFile zipFile = new ZipFile(file);
       try {
@@ -643,7 +644,7 @@ public class PluginManagerCore {
         if (entry != null) {
           Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
           IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
-          descriptor.readExternal(document, jarURL);
+          descriptor.readExternal(document, jarURL, pathResolver);
           return descriptor;
         }
       }
@@ -689,9 +690,10 @@ public class PluginManagerCore {
             return 0;
           }
         });
+        PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
         for (final File f : files) {
           if (FileUtil.isJarOrZip(f)) {
-            descriptor = loadDescriptorFromJar(f, fileName);
+            descriptor = loadDescriptorFromJar(f, fileName, pathResolver);
             if (descriptor != null) {
               descriptor.setPath(file);
               break;
@@ -712,7 +714,7 @@ public class PluginManagerCore {
       }
     }
     else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && file.exists()) {
-      descriptor = loadDescriptorFromJar(file, fileName);
+      descriptor = loadDescriptorFromJar(file, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
 
     if (descriptor != null) {
@@ -1334,7 +1336,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromDir(pluginRoot, fileName);
     }
     else {
-      descriptor = loadDescriptorFromJar(pluginRoot, fileName);
+      descriptor = loadDescriptorFromJar(pluginRoot, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
     }
     if (descriptor != null) {
       registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));

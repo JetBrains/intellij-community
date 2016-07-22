@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,67 +227,63 @@ class C {
 '''
   }
 
-
   public void testAnnotatedImport() {
+    myFixture.addClass '''
+      import java.lang.annotation.*;
+      @Target(ElementType.TYPE_USE) @interface TA { }'''.stripIndent().trim()
+
     myFixture.configureByText 'a.java', '''
-import java.lang.annotation.*;
+      class Test {
+          @TA
+          public <caret>Collection<@TA String> c;
+      }'''.stripIndent().trim()
 
-@Target(ElementType.TYPE_USE) @interface TA { }
+    importClass()
 
-class Test {
-    @TA Collection<caret> c;
-}
-'''
-    importClass();
     myFixture.checkResult '''
-import java.lang.annotation.*;
-import java.util.Collection;
+      import java.util.Collection;
 
-@Target(ElementType.TYPE_USE) @interface TA { }
-
-class Test {
-    @TA Collection<caret> c;
-}
-'''
+      class Test {
+          @TA
+          public <caret>Collection<@TA String> c;
+      }'''.stripIndent().trim()
   }
 
   public void testAnnotatedQualifiedImport() {
+    myFixture.addClass '''
+      import java.lang.annotation.*;
+      @Target(ElementType.TYPE_USE) @interface TA { }'''.stripIndent().trim()
+
     myFixture.configureByText 'a.java', '''
-import java.lang.annotation.*;
+      class Test {
+          java.util.@TA <caret>Collection<@TA String> c;
+      }'''.stripIndent().trim()
 
-@Target(ElementType.TYPE_USE) @interface TA { }
+    reimportClass()
 
-class Test {
-    java.util.@TA Collection<caret> c;
-}
-'''
-    reimportClass();
     myFixture.checkResult '''
-import java.lang.annotation.*;
-import java.util.Collection;
+      import java.util.Collection;
 
-@Target(ElementType.TYPE_USE) @interface TA { }
-
-class Test {
-    @TA Collection<caret> c;
-}
-'''
+      class Test {
+          @TA <caret>Collection<@TA String> c;
+      }'''.stripIndent().trim()
   }
 
   public void testUnresolvedAnnotatedImport() {
     myFixture.configureByText 'a.java', '''
-class Test {
-    @Nullable Collection<caret> c;
-}
-'''
-    importClass();
-    myFixture.checkResult '''import java.util.Collection;
+      class Test {
+          @Nullable Collection<caret> c;
+      }'''.stripIndent().trim()
 
-class Test {
-    @Nullable
-    Collection<caret> c;
-}
-'''
+    importClass()
+
+    myFixture.checkResult '''
+      import java.util.Collection;
+
+      class Test {
+          @Nullable
+          Collection<caret> c;
+      }'''.stripIndent().trim()
   }
 
   public void "test import class in class reference expression"() {

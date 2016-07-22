@@ -153,7 +153,7 @@ public class Restarter {
       if (argv[i].endsWith("com.intellij.idea.Main") ||
           argv[i].endsWith(".exe")) {
         countArgs = i + 1;
-        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separator) < 0) {
+        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
           //absolute path
           argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
         }

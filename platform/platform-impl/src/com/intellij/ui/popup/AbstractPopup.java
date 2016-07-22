@@ -956,6 +956,8 @@ public class AbstractPopup implements JBPopup {
     };
 
     if (myRequestFocus) {
+      getPopupWindow().setFocusableWindowState(true);
+      getPopupWindow().setFocusable(true);
       getFocusManager().requestFocus(new FocusCommand() {
         @NotNull
         @Override

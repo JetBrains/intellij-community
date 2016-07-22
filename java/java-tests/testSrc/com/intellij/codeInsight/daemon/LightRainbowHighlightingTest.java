@@ -58,7 +58,7 @@ public class LightRainbowHighlightingTest extends LightCodeInsightFixtureTestCas
       "}", true, false);
   }
 
-  public void fixme_testRainbowParamsInJavadocHaveTheSameColorsAsInCode() throws Exception {
+  public void testRainbowParamsInJavadocHaveTheSameColorsAsInCode() throws Exception {
     checkRainbow(
       "class TestClass {\n" +
       "    /**\n" +

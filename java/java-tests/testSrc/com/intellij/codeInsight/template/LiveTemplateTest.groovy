@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -986,6 +985,24 @@ class Foo {
   }
 }
 """
+  }
+
+  public void "test concat macro"() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("result", "user", '$A$ $B$ c');
+    template.addVariable('A', new EmptyNode(), true)
+    
+    def macroCallNode = new MacroCallNode(new ConcatMacro())
+    macroCallNode.addParameter(new VariableNode('A', null))
+    macroCallNode.addParameter(new TextExpression("ID"))
+    template.addVariable('B', macroCallNode, false)
+
+    myFixture.configureByText "a.txt", "<caret>"
+    startTemplate(template);
+    myFixture.type('tableName')
+    state.nextTab()
+    assert !state
+    myFixture.checkResult('tableName tableNameID c')
   }
 
   public void "test snakeCase should convert hyphens to underscores"() {

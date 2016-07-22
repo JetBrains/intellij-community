@@ -327,6 +327,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testHighlightFaultyLambdaReturnExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

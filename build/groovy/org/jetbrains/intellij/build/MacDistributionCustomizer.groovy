@@ -20,7 +20,8 @@ package org.jetbrains.intellij.build
  */
 abstract class MacDistributionCustomizer {
   /**
-   * Path to icns file containing 32x32 product icon for Mac OS distribution
+   * Path to icns file containing product icon bundle for Mac OS distribution
+   * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
    */
   String icnsPath
 
@@ -28,9 +29,41 @@ abstract class MacDistributionCustomizer {
    * The minimum version of Mac OS where the product is allowed to be installed
    */
   String minOSXVersion = "10.8"
+
+  /**
+   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format
+   * If there's no help bundled, leave empty
+   */
   String helpId = ""
+
+  /**
+   * String with declarations of additional file types that should be automatically opened by the application.
+   * Example:
+   * <pre>
+   * &lt;dict&gt;
+   *   &lt;key&gt;CFBundleTypeExtensions&lt;/key&gt;
+   *   &lt;array&gt;
+   *     &lt;string&gt;extension&lt;/string&gt;
+   *   &lt;/array&gt;
+   *   &lt;key&gt;CFBundleTypeIconFile&lt;/key&gt;
+   *   &lt;string&gt;path_to_icons.icns&lt;/string&gt;
+   *   &lt;key&gt;CFBundleTypeName&lt;/key&gt;
+   *   &lt;string&gt;File type description&lt;/string&gt;
+   *   &lt;key&gt;CFBundleTypeRole&lt;/key&gt;
+   *   &lt;string&gt;Editor&lt;/string&gt;
+   * &lt;/dict&gt;
+   * </pre>
+   */
   String additionalDocTypes = ""
+
+  /**
+   * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
+   */
   List<String> urlSchemes = []
+
+  /**
+   * CPU architectures app can be launched on, currently only x86_64 is supported
+   */
   List<String> architectures = ["x86_64"]
 
   /**
@@ -49,6 +82,10 @@ abstract class MacDistributionCustomizer {
    */
   List<String> extraExecutables = []
 
+  /**
+   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)
+   * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
+   */
   String bundleIdentifier
 
   /**
@@ -61,10 +98,26 @@ abstract class MacDistributionCustomizer {
    */
   String dmgImagePathForEAP = null
 
+  /**
+   * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
+   * @param applicationInfo application info that can be used to check for EAP and building version
+   * @param buildNumber current build number
+   * @return application bundle directory name
+   */
   abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
 
+  /**
+   * Custom properties to be added to the properties file. They will be used for launched product, e.g. you can add additional logging in EAP builds
+   * @param applicationInfo application info that can be used to check for EAP and building version
+   * @return map propertyName-&gt;propertyValue
+   */
   Map<String, String> customIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
 
+  /**
+   * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
+   * @param context build context that contains information about build directories, product properties and application info
+   * @param targetDirectory application bundle directory
+   */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
   }
 }

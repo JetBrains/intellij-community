@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.icons.AllIcons.Ide.Shadow.Popup.*;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -31,11 +32,38 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
 /**
  * @author Sergey.Malenkov
  */
-final class WindowShadowPainter extends AbstractPainter implements AWTEventListener {
+final class WindowShadowPainter extends AbstractPainter {
   private static final ShadowPainter PAINTER = new ShadowPainter(Top, Top_right, Right, Bottom_right, Bottom, Bottom_left, Left, Top_left);
   private static final long MASK = AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK;
+  private static final AtomicReference<AWTEventListener> WINDOW_LISTENER = new AtomicReference<>(new AWTEventListener() {
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      Object source = event == null ? null : event.getSource();
+      if (source instanceof Window) {
+        for (Container c = (Window)source; c instanceof Window && c instanceof RootPaneContainer; c = c.getParent()) {
+          JRootPane root = ((RootPaneContainer)c).getRootPane();
+          if (root != null) {
+            Component pane = root.getGlassPane();
+            if (pane instanceof IdeGlassPaneImpl) {
+              WindowShadowPainter painter = ((IdeGlassPaneImpl)pane).myWindowShadowPainter;
+              if (painter != null && pane == painter.myComponent) {
+                List<Rectangle> shadows = painter.myShadows;
+                painter.myShadows = getShadows(pane, (Window)c);
+                if (!Objects.equals(painter.myShadows, shadows)) pane.repaint();
+              }
+            }
+          }
+        }
+      }
+    }
+  });
   private List<Rectangle> myShadows;
   private Component myComponent;
+
+  public WindowShadowPainter() {
+    AWTEventListener listener = WINDOW_LISTENER.getAndSet(null); // add only one window listener
+    if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, MASK);
+  }
 
   @Override
   public boolean needsRepaint() {
@@ -43,28 +71,12 @@ final class WindowShadowPainter extends AbstractPainter implements AWTEventListe
   }
 
   @Override
-  public void eventDispatched(AWTEvent event) {
-    Component component = myComponent;
-    if (component == null) return;
-    Window window = UIUtil.getWindow(component);
-    if (window == null) return;
-    Object source = event.getSource();
-    if (source instanceof Window && SwingUtilities.isDescendingFrom((Window)source, window)) {
-      List<Rectangle> shadows = myShadows;
-      myShadows = getShadows(component, window);
-      if (!Objects.equals(myShadows, shadows)) component.repaint();
-    }
-  }
-
-  @Override
   public void executePaint(Component component, Graphics2D g) {
     Window window = UIUtil.getWindow(component);
     if (window != null) {
       if (myComponent != component) {
-        boolean add = myComponent == null;
         myComponent = component;
         myShadows = getShadows(component, window);
-        if (add) Toolkit.getDefaultToolkit().addAWTEventListener(this, MASK);
       }
       List<Rectangle> shadows = myShadows;
       if (shadows != null) {
@@ -72,10 +84,6 @@ final class WindowShadowPainter extends AbstractPainter implements AWTEventListe
           PAINTER.paintShadow(component, g, bounds.x, bounds.y, bounds.width, bounds.height);
         }
       }
-    }
-    else if (myComponent != null) {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-      myComponent = null;
     }
   }
 

@@ -70,7 +70,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setText(getProjectName());
+    e.getPresentation().setText(getProjectName(), false);
   }
 
   public String getProjectPath() {
