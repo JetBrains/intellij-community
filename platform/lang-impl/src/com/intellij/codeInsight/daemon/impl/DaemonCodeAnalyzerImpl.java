@@ -626,9 +626,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myUpdateRunnableFuture.cancel(false);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
-      if (LOG.isDebugEnabled()) {
-        myFrequentEventDetector.eventHappened(reason);
-      }
       myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
     }
   }
