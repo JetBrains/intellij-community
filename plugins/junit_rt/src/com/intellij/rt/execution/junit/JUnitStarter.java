@@ -172,6 +172,15 @@ public class JUnitStarter {
       }
     }
 
+    if (JUNIT4_RUNNER_NAME.equals(agentName)) {
+      try {
+        Class.forName("org.junit.Test");
+      }
+      catch (ClassNotFoundException e) {
+        return JUNIT3_RUNNER_NAME;
+      }
+    }
+
     try {
       final String forceJUnit3 = System.getProperty("idea.force.junit3");
       if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return JUNIT3_RUNNER_NAME;
