@@ -44,7 +44,12 @@ public class PyMissingConstructorTest extends PyTestCase {
     doTest();
   }
 
-  public void testDunderClass() {  // PY-4038
+  public void testExplicitDunderClass() {  // PY-4038
+    doTest();
+  }
+
+  public void testImplicitDunderClass() {  // PY-20038
+    setLanguageLevel(LanguageLevel.PYTHON30);
     doTest();
   }
 
