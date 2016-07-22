@@ -64,11 +64,11 @@ public class PropertiesEncryptionSupport {
     FileUtil.writeToFile(file, encrypt(out.toByteArray()));
   }
 
-  private byte[] encrypt(byte[] bytes) throws Exception {
+  public byte[] encrypt(byte[] bytes) throws Exception {
     return encrypt(bytes, myKey);
   }
 
-  private byte[] decrypt(byte[] bytes) throws Exception {
+  public byte[] decrypt(byte[] bytes) throws Exception {
     return decrypt(bytes, myKey);
   }
 
@@ -92,10 +92,10 @@ public class PropertiesEncryptionSupport {
   }
 
   private static byte[] decrypt(byte[] data, Key key) throws Exception {
-    int bodyLength = data[0] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[1] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[2] & 0xFF;
-    bodyLength = (bodyLength << 8) + data[3] & 0xFF;
+    final int bodyLength = ((data[0] & 0xFF) << 24) |
+                           ((data[1] & 0xFF) << 16) |
+                           ((data[2] & 0xFF) <<  8) |
+                           ((data[3] & 0xFF)      );
 
     final int ivlength = data.length - 4 - bodyLength;
 
@@ -103,5 +103,23 @@ public class PropertiesEncryptionSupport {
     ciph.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(data, 4, ivlength));
     return ciph.doFinal(data, 4 + ivlength, bodyLength);
   }
+
+  //public static void main(String[] args) throws Exception {
+  //  final PropertiesEncryptionSupport support = new PropertiesEncryptionSupport();
+  //  final Charset charset = Charset.forName("utf-8");
+  //  final SecureRandom rnd = new SecureRandom();
+  //  for (int idx = 0; idx < 90; idx++) {
+  //    final String message = new BigInteger(10 * 1024, rnd).toString();
+  //    final byte[] encrypted = support.encrypt(message.getBytes(charset));
+  //    String decrypted = new String(support.decrypt(encrypted), charset);
+  //    if (message.equals(decrypted)) {
+  //      System.out.println("Test " + idx + " ok");
+  //    }
+  //    else {
+  //      System.out.println("Test " + idx + " FAILED");
+  //    }
+  //  }
+  //}
+
 
 }
