@@ -29,14 +29,6 @@ public class SimpleDuplicatesFinder {
   private final Set<String> myParameters;
   private final Collection<String> myOutputVariables;
 
-  @Deprecated
-  public SimpleDuplicatesFinder(@NotNull final PsiElement statement1,
-                                @NotNull final PsiElement statement2,
-                                com.intellij.refactoring.extractMethod.AbstractVariableData[] variableData,
-                                Collection<String> variables) {
-    this(statement1, statement2, variables, variableData);
-  }
-
   public SimpleDuplicatesFinder(@NotNull final PsiElement statement1,
                                 @NotNull final PsiElement statement2,
                                 Collection<String> variables,

@@ -119,11 +119,6 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     return datas;
   }
 
-  @Deprecated
-  public static com.intellij.refactoring.extractMethod.AbstractVariableData[] createVariableData(final List<String> args) {
-    return com.intellij.refactoring.extractMethod.AbstractVariableData.copy(createVariableDataByNames(args));
-  }
-
   public static Map<String, AbstractVariableData> createVariableMap(final AbstractVariableData[] data) {
     final HashMap<String, AbstractVariableData> map = new HashMap<String, AbstractVariableData>();
     for (AbstractVariableData variableData : data) {
