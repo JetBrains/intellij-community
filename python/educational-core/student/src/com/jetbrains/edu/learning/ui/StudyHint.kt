@@ -163,7 +163,6 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
   }
 
   companion object {
-
     private val OUR_WARNING_MESSAGE = "Put the caret in the answer placeholder to get hint"
   }
 }
