@@ -24,9 +24,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
@@ -83,6 +84,28 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           registerProblem(source, String.format("Expected 'collections.%s', got '%s' instead",
                                                 iterableClassName, PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
+        }
+      }
+    }
+
+    @Override
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      final PyExpression returnExpr = node.getExpression();
+      if (returnExpr != null) {
+        ScopeOwner owner = ScopeUtil.getScopeOwner(returnExpr);
+        if (owner instanceof PyFunction) {
+          final PyFunction function = (PyFunction)owner;
+          final PyAnnotation annotation = function.getAnnotation();
+          final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+          if (annotation != null || typeCommentAnnotation != null) {
+            final PyType actual = myTypeEvalContext.getType(returnExpr);
+            final PyType expected = myTypeEvalContext.getReturnType(function);
+            if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+              final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+              registerProblem(returnExpr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+            }
+          }
         }
       }
     }
