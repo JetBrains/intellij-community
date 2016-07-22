@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
 package com.intellij.rt.ant.execution;
 
 /**
- * @author dyoma
+ * @noinspection HardCodedStringLiteral
  */
-class PacketFactory {
-  private int myLastMessageId = -1;
-  public static final PacketFactory ourInstance = new PacketFactory();
+public interface PoolOfDelimiters {
+  char REFERENCE_END = ':';
+  String REFERENCE_END_STR = ":";
+  char INTEGER_DELIMITER = ' ';
 
-  public synchronized PacketWriter createPacket(char id) {
-    PacketWriter writer = new PacketWriter();
-    myLastMessageId++;
-    writer.appendLong(myLastMessageId);
-    writer.appendChar(id);
-    return writer;
-  }
+  String OBJECT_PREFIX = "O";
+  String TREE_PREFIX = "T";
+  String INPUT_COSUMER = "I";
+  String CHANGE_STATE = "S";
+  String TESTS_DONE = "D";
 }

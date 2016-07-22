@@ -29,12 +29,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -57,14 +58,11 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private final Project myProject;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
-  private final IDEARemoteTestRunnerClient myClient;
 
   public SearchingForTestsTask(ServerSocket serverSocket,
                                TestNGConfiguration config,
-                               File tempFile,
-                               IDEARemoteTestRunnerClient client) {
+                               File tempFile) {
     super(config.getProject(), serverSocket);
-    myClient = client;
     myData = config.getPersistantData();
     myProject = config.getProject();
     myConfig = config;
@@ -99,11 +97,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   protected void search() throws CantRunException {
     myClasses.clear();
     fillTestObjects(myClasses);
-  }
-
-  @Override
-  protected void startListening() {
-    if (!Registry.is("testng_sm")) myClient.startListening(myConfig);
   }
 
   protected void logCantRunException(ExecutionException e) {
