@@ -92,6 +92,9 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     if (myShownHintNumber == 0 && hintText.equals(ourDefaultHintText)) {
       myHints.set(myShownHintNumber, "");
     }
+    else {
+      myHints.set(myShownHintNumber, hintText);
+    }
     
     return myHints;
   }
