@@ -164,10 +164,10 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   @Override
   protected LogicalPosition buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion) {
     // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
-    String placeholder = foldRegion.getPlaceholderText();
+    int placeholderColumnCount = foldRegion.getRenderer() == null ? foldRegion.getPlaceholderText().length() : 1;
 
     // Check if target visual position points inside collapsed fold region placeholder
-    if (myTargetVisual.column < /* note that we don't use <= here */ context.visualColumn + placeholder.length()) {
+    if (myTargetVisual.column < /* note that we don't use <= here */ context.visualColumn + placeholderColumnCount) {
       // Map all visual positions that point inside collapsed fold region as the logical position of it's start.
       return context.buildLogicalPosition();
     }

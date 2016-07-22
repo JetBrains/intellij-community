@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,10 @@ public interface FoldingModelEx extends FoldingModel {
 
   @Nullable
   FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
+                              boolean neverExpands);
+
+  @Nullable
+  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull Inlay.Renderer renderer, @Nullable FoldingGroup group,
                               boolean neverExpands);
 
   void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable);

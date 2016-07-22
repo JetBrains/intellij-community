@@ -128,9 +128,9 @@ class EditorPosition implements Cloneable {
    */
   public void advance(@NotNull FoldRegion foldRegion, int collapsedSymbolsWidthInColumns) {
     // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
-    String placeholder = foldRegion.getPlaceholderText();
+    int placeholderColumnCount = foldRegion.getRenderer() == null ? foldRegion.getPlaceholderText().length() : 1;
 
-    visualColumn += placeholder.length();
+    visualColumn += placeholderColumnCount;
     offset = foldRegion.getEndOffset();
 
     Document document = myEditor.getDocument();
@@ -142,7 +142,7 @@ class EditorPosition implements Cloneable {
           .toVisualColumnSymbolsNumber(foldRegion.getStartOffset(), foldRegion.getEndOffset(), x);
       }
       logicalColumn += collapsedSymbolsWidthInColumns;
-      foldingColumnDiff += placeholder.length() - collapsedSymbolsWidthInColumns;
+      foldingColumnDiff += placeholderColumnCount - collapsedSymbolsWidthInColumns;
     }
     else {
       // Multi-line fold region.

@@ -49,6 +49,8 @@ public interface FoldRegion extends RangeMarker {
   @NotNull
   String getPlaceholderText();
 
+  @Nullable Inlay.Renderer getRenderer();
+
   Editor getEditor();
 
   @Nullable

@@ -341,12 +341,18 @@ public class SoftWrapApplianceManager implements Dumpable {
       return true;
     }
 
-    String placeholder = foldRegion.getPlaceholderText();
     int placeholderWidthInPixels = 0;
-    for (int i = 0; i < placeholder.length(); i++) {
-      char c = placeholder.charAt(i);
-      if (myEditor.myUseNewRendering && c == '\n') c = ' '; // we display \n as space (see com.intellij.openapi.editor.impl.view.EditorView.getFoldRegionLayout)
-      placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor).charWidth(c, myContext.fontType);
+    if (foldRegion.getRenderer() == null) {
+      String placeholder = foldRegion.getPlaceholderText();
+      for (int i = 0; i < placeholder.length(); i++) {
+        char c = placeholder.charAt(i);
+        if (myEditor.myUseNewRendering && c == '\n') c = ' '; // we display \n as space (see com.intellij.openapi.editor.impl.view.EditorView.getFoldRegionLayout)
+        placeholderWidthInPixels += SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor)
+          .charWidth(c, myContext.fontType);
+      }
+    }
+    else {
+      placeholderWidthInPixels = ((FoldRegionImpl)foldRegion).getWidthInPixels();
     }
 
     if (myContext.delayedSoftWrap == null) {

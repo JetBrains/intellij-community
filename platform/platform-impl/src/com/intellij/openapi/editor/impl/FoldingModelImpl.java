@@ -272,14 +272,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(Point p) {
     assertReadAccess();
-    LogicalPosition pos = myEditor.xyToLogicalPosition(p);
+    VisualPosition vp = myEditor.xyToVisualPosition(p);
+    LogicalPosition pos = myEditor.visualToLogicalPosition(vp);
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
 
     int offset = myEditor.logicalPositionToOffset(pos);
 
-    return myFoldTree.fetchOutermost(offset);
+    FoldRegion[] regions = myFoldTree.fetchTopLevel();
+    if (regions == null) return null;
+    int index = myFoldTree.getLastTopLevelIndexBefore(offset);
+
+    if (index >= 0 && regions[index].getEndOffset() == offset) return regions[index];
+    else if (index + 1 < regions.length && regions[index + 1].getStartOffset() <= offset) return regions[index + 1];
+    else return null;
   }
 
   @Override
@@ -572,7 +579,19 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @NotNull String placeholder,
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
-    FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
+    FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, null, group, neverExpands);
+    LOG.assertTrue(region.isValid());
+    return region;
+  }
+
+  @Nullable
+  @Override
+  public FoldRegion createFoldRegion(int startOffset,
+                                     int endOffset,
+                                     @NotNull Inlay.Renderer renderer,
+                                     @Nullable FoldingGroup group,
+                                     boolean neverExpands) {
+    FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, "", renderer, group, neverExpands);
     LOG.assertTrue(region.isValid());
     return region;
   }

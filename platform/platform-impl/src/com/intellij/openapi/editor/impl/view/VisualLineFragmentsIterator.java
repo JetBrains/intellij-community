@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,14 +215,19 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   }
   
   private float getFoldRegionWidthInPixels(FoldRegion foldRegion) {
-    return myView.getFoldRegionLayout(foldRegion).getWidth();
+    return foldRegion.getRenderer() == null ? myView.getFoldRegionLayout(foldRegion).getWidth()
+                                            : ((FoldRegionImpl)foldRegion).getWidthInPixels();
   }
 
   private static int getFoldRegionWidthInColumns(FoldRegion foldRegion) {
-    return foldRegion.getPlaceholderText().length();
+    return foldRegion.getRenderer() == null ? foldRegion.getPlaceholderText().length() : 1;
   }
 
   private int[] getVisualColumnForXInsideFoldRegion(FoldRegion foldRegion, float x) {
+    if (foldRegion.getRenderer() != null) {
+      boolean closerToStart = x < ((FoldRegionImpl)foldRegion).getWidthInPixels() / 2f;
+      return closerToStart ? new int[] {0, 1} : new int[] {1, 0};
+    }
     LineLayout layout = myView.getFoldRegionLayout(foldRegion);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (x <= fragment.getEndX()) {
@@ -231,7 +237,10 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     return new int[] {getFoldRegionWidthInColumns(foldRegion), 1};
   }
 
-  private float getXForVisualColumnInsideFoldRegion(FoldRegion foldRegion, int column) { 
+  private float getXForVisualColumnInsideFoldRegion(FoldRegion foldRegion, int column) {
+    if (foldRegion.getRenderer() != null) {
+      return column == 0 ? 0 : ((FoldRegionImpl)foldRegion).getWidthInPixels();
+    }
     LineLayout layout = myView.getFoldRegionLayout(foldRegion);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(0)) {
       if (column <= fragment.getEndVisualColumn()) {
@@ -447,13 +456,20 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
         myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
       }
       else if (myFoldRegion != null) {
-        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
-          int fragmentStart = fragment.getStartVisualColumn();
-          int fragmentEnd = fragment.getEndVisualColumn();
-          if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
-            fragment.draw(g, fragment.getStartX(), y,
-                          Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+        Inlay.Renderer renderer = myFoldRegion.getRenderer();
+        if (renderer == null) {
+          for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
+            int fragmentStart = fragment.getStartVisualColumn();
+            int fragmentEnd = fragment.getEndVisualColumn();
+            if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
+              fragment.draw(g, fragment.getStartX(), y,
+                            Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+            }
           }
+        }
+        else {
+          renderer.paint(g, new Rectangle((int) x, (int)(y - myView.getAscent()),
+                                          (int) (getEndX() - x), myView.getLineHeight()), myView.getEditor());
         }
       }
     }

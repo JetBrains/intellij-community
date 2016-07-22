@@ -9,6 +9,9 @@
   <action id="EditorAddBlockInlay">
     <keyboard-shortcut first-keystroke="control alt W"/>
   </action>
+  <action id="CollapseSelectionAsCustomRegion">
+    <keyboard-shortcut first-keystroke="control alt R"/>
+  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>

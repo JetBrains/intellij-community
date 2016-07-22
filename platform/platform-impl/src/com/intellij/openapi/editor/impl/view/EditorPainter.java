@@ -854,7 +854,8 @@ class EditorPainter implements TextDrawingCallback {
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
                                                                                                   false)) {
-            if (fragment.getCurrentInlays() != null) continue;
+            if (fragment.getCurrentInlays() != null ||
+                fragment.getCurrentFoldRegion() != null && fragment.getCurrentFoldRegion().getRenderer() != null) continue;
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
             if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||

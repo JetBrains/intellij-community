@@ -423,6 +423,12 @@ abstract class FoldRegionsTree {
       throw new UnsupportedOperationException();
     }
 
+    @Nullable
+    @Override
+    public Inlay.Renderer getRenderer() {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     public Editor getEditor() {
       throw new UnsupportedOperationException();

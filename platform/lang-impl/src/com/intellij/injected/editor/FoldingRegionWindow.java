@@ -18,8 +18,10 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: cdr
@@ -54,6 +56,12 @@ class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   @NotNull
   public String getPlaceholderText() {
     return myHostRegion.getPlaceholderText();
+  }
+
+  @Nullable
+  @Override
+  public Inlay.Renderer getRenderer() {
+    return myHostRegion.getRenderer();
   }
 
   @Override

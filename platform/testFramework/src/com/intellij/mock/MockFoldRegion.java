@@ -15,12 +15,10 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
@@ -55,6 +53,12 @@ public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
   @Override
   public String getPlaceholderText() {
     return "...";
+  }
+
+  @Nullable
+  @Override
+  public Inlay.Renderer getRenderer() {
+    return null;
   }
 
   @Override

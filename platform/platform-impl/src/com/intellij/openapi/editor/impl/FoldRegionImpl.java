@@ -27,15 +27,17 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
   private final Editor myEditor;
   private final String myPlaceholderText;
+  private final CustomRendererData myRendererData;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
@@ -44,6 +46,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
                  int startOffset,
                  int endOffset,
                  @NotNull String placeholder,
+                 @Nullable Inlay.Renderer renderer,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
     super((DocumentEx)editor.getDocument(), startOffset, endOffset,true);
@@ -52,6 +55,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     myIsExpanded = true;
     myEditor = editor;
     myPlaceholderText = placeholder;
+    myRendererData = renderer == null ? null : new CustomRendererData(editor, renderer);
   }
 
   @Override
@@ -106,6 +110,14 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return myPlaceholderText;
   }
 
+  public Inlay.Renderer getRenderer() {
+    return myRendererData == null ? null : myRendererData.myRenderer;
+  }
+
+  public int getWidthInPixels() {
+    return myRendererData == null ? 0 : myRendererData.myWidthInPixels;
+  }
+
   @Override
   public Editor getEditor() {
     return myEditor;
@@ -146,5 +158,18 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   public String toString() {
     return "FoldRegion " + (myIsExpanded ? "-" : "+") + "(" + getStartOffset() + ":" + getEndOffset() + ")"
            + (isValid() ? "" : "(invalid)") + ", placeholder='" + myPlaceholderText + "'";
+  }
+
+  private static class CustomRendererData {
+    private final Inlay.Renderer myRenderer;
+    private final int myWidthInPixels;
+
+    private CustomRendererData(Editor editor, Inlay.Renderer renderer) {
+      myRenderer = renderer;
+      myWidthInPixels = renderer.calcWidthInPixels(editor);
+      if (myWidthInPixels <= 0) {
+        throw new IllegalArgumentException("Non-positive widht is requested for a folding region: " + myWidthInPixels);
+      }
+    }
   }
 }
