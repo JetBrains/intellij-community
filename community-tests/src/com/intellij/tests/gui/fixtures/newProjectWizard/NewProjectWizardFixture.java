@@ -30,6 +30,7 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.fixture.DialogFixture;
 import org.fest.swing.fixture.JListFixture;
 import org.fest.swing.fixture.JTextComponentFixture;
@@ -108,8 +109,15 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     pause(new Condition("Waiting for the sliding to project name settings") {
       @Override
       public boolean test() {
-        final Component label = robot().finder().findByLabel(labelText);
-        return label != null;
+        final Component label;
+        try {
+          label = robot().finder().findByLabel(labelText);
+        }
+        catch (ComponentLookupException componentLookupException) {
+          componentLookupException.printStackTrace();
+          return false;
+        }
+        return true;
       }
     }, GuiTests.SHORT_TIMEOUT);
     final JTextComponentFixture textField = findTextField(labelText);
