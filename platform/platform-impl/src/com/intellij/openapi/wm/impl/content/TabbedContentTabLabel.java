@@ -26,6 +26,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,8 +84,9 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       @NotNull
       @Override
       public JComponent fun(Object dom) {
-        label.setText(dom.toString());
-        setTabIconInLabel(dom.toString(), label);
+        String tabName = dom.toString();
+        label.setText(tabName);
+        setIconInPopupLabel(label, tabName);
         return label;
       }
     });
@@ -93,14 +95,42 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         int index = list.getSelectedIndex();
         if (index != -1) {
           myContent.selectContent(index);
-          JComponent tabComponent = myContent.getTabs().get(index).getSecond();
-          if (tabComponent instanceof Iconable) {
-            setIcon(((Iconable)tabComponent).getIcon(Iconable.ICON_FLAG_VISIBILITY));
-          }
         }
       }).createPopup();
     myPopupReference = new WeakReference<JBPopup>(popup);
     popup.showUnderneathOf(this);
+  }
+
+  private void setIconInPopupLabel(JLabel label, String tabName) {
+    boolean hasIconsInTabs = hasIconsInTabs();
+    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
+      if (nextTabWithName.getFirst().equals(tabName)) {
+        JComponent tab = nextTabWithName.getSecond();
+        Icon tabIcon = null;
+        if (tab instanceof Iconable) {
+          tabIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
+          if (hasIconsInTabs && tabIcon == null) {
+            tabIcon = EmptyIcon.ICON_16;
+          }
+        }
+        label.setIcon(tabIcon);
+      }
+    }
+  }
+
+  private boolean hasIconsInTabs() {
+    boolean hasIconsInTabs = false;
+    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
+      JComponent tabComponent = nextTabWithName.getSecond();
+      if (tabComponent instanceof Iconable) {
+        Icon tabIcon = ((Iconable)tabComponent).getIcon(Iconable.ICON_FLAG_VISIBILITY);
+        if (tabIcon != null) {
+          hasIconsInTabs = true;
+          break;
+        }
+      }
+    }
+    return hasIconsInTabs;
   }
 
   @Override
@@ -109,15 +139,14 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     if (myContent != null) {
       String tabName = myContent.getTabName();
       setText(tabName);
-      setTabIconInLabel(tabName, this);
+      setTabIcon(tabName, this);
     }
     setHorizontalAlignment(LEFT);
   }
 
-  private void setTabIconInLabel(String tabName, JLabel jLabel) {
+  private void setTabIcon(String tabName, JLabel jLabel) {
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (nextTabWithName.getFirst().equals(tabName)
-        || nextTabWithName.getFirst().equals(myContent.getTabNameWithoutPrefix(tabName))) {
+      if (nextTabWithName.getFirst().equals(myContent.getTabNameWithoutPrefix(tabName))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           jLabel.setIcon(((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY));
