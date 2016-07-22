@@ -54,7 +54,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   @Override
   protected void checkout(@NotNull String taskName, @NotNull List<HgRepository> repos, @Nullable Runnable callInAwtLater) {
     HgUpdateCommand.updateTo(
-      !HgBranchUtil.getCommonBookmarks(repos).contains(taskName) ? "head() and not bookmark() and branch(" + taskName + ")" : taskName,
+      !HgBranchUtil.getCommonBookmarks(repos).contains(taskName) ? "head() and not bookmark() and branch(\"" + taskName + "\")" : taskName,
       repos, callInAwtLater);
   }
 
