@@ -49,7 +49,12 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   private void updateHintNumberLabel() {
-    myHintLabel.setText("Hints" + "(" + (myShownHintNumber + 1) + "/" + myHints.size() + "):");
+    if (myHints.size() > 1) {
+      myHintLabel.setText("Hint" + "(" + (myShownHintNumber + 1) + "/" + myHints.size() + "):");
+    }
+    else {
+      myHintLabel.setText("Hint: ");
+    }
   }
 
   public void setAnswerPlaceholderText(String answerPlaceholderText) {
