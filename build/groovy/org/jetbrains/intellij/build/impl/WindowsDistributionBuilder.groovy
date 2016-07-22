@@ -63,7 +63,7 @@ class WindowsDistributionBuilder {
     buildWinLauncher(JvmArchitecture.x32)
     buildWinLauncher(JvmArchitecture.x64)
     customizer.copyAdditionalFiles(buildContext, winDistPath)
-    new File(winDistPath, "bin").listFiles(FileFilters.withExtension("exe"))?.each {
+    new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
       buildContext.signExeFile(it.absolutePath)
     }
 
