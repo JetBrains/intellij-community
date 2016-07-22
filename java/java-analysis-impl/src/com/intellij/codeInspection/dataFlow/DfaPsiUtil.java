@@ -234,7 +234,7 @@ public class DfaPsiUtil {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
         }
 
-        final MultiMap<PsiField, PsiExpression> result = new MultiMap<PsiField, PsiExpression>();
+        final MultiMap<PsiField, PsiExpression> result = new MultiMap<>();
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
@@ -287,8 +287,11 @@ public class DfaPsiUtil {
     final Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
     final PsiCodeBlock codeBlock = place == null? null : getTopmostBlockInSameClass(place);
     final int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
+    PsiFile containingFile = psiVariable.getContainingFile();
+    LocalSearchScope scope = new LocalSearchScope(new PsiElement[]{containingFile}, null, true);
+    Collection<PsiReference> references = ReferencesSearch.search(psiVariable, scope).findAll();
     List<PsiExpression> list = ContainerUtil.mapNotNull(
-      ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
+      references,
       (NullableFunction<PsiReference, PsiExpression>)psiReference -> {
         if (modificationRef.get()) return null;
         final PsiElement parent = psiReference.getElement().getParent();
@@ -325,11 +328,11 @@ public class DfaPsiUtil {
     return list;
   }
 
-  public static boolean allOperandsAreLiterals(@Nullable final PsiExpression expression) {
+  private static boolean allOperandsAreLiterals(@Nullable final PsiExpression expression) {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) return true;
     if (expression instanceof PsiPolyadicExpression) {
-      Stack<PsiExpression> stack = new Stack<PsiExpression>();
+      Stack<PsiExpression> stack = new Stack<>();
       stack.add(expression);
       while (!stack.isEmpty()) {
         PsiExpression psiExpression = stack.pop();
