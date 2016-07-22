@@ -23,17 +23,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.setOwnerPermissions
-import com.intellij.util.EncryptionSupport
-import com.intellij.util.generateAesKey
-import com.intellij.util.readBytes
-import com.intellij.util.write
+import com.intellij.util.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.nio.file.*
 import java.security.Key
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.spec.SecretKeySpec
 
@@ -89,6 +86,11 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       val masterKey = generateAesKey()
       encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
       masterKeyStorage.set(masterKey)
+    }
+
+    if (db.isEmpty()) {
+      dbFile.delete()
+      return
     }
 
     val byteOut = BufferExposingByteArrayOutputStream()

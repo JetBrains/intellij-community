@@ -32,7 +32,7 @@ class FilePasswordSafeProviderTest {
   @Test
   fun test() {
     val baseDir = tempDirManager.newPath()
-    val provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+    var provider = FilePasswordSafeProvider(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
     assertThat(provider.getPassword("foo")).isNull()
@@ -48,6 +48,34 @@ class FilePasswordSafeProviderTest {
     provider.save()
 
     assertThat(pdbFile).isRegularFile()
+    assertThat(pdbPwdFile).isRegularFile()
+    assertThat(pdbPwdTmpFile).doesNotExist()
+
+    provider.setPassword("am", "pass2")
+
+    assertThat(provider.getPassword("foo")).isEqualTo("pass")
+    assertThat(provider.getPassword("am")).isEqualTo("pass2")
+
+    provider.setPassword("foo", null)
+    assertThat(provider.getPassword("foo")).isNull()
+
+    provider.save()
+
+    assertThat(pdbFile).isRegularFile()
+    assertThat(pdbPwdFile).isRegularFile()
+    assertThat(pdbPwdTmpFile).doesNotExist()
+
+    provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+
+    assertThat(provider.getPassword("foo")).isNull()
+    assertThat(provider.getPassword("am")).isEqualTo("pass2")
+
+    provider.setPassword("am", null)
+    assertThat(provider.getPassword("am")).isNull()
+
+    provider.save()
+
+    assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).isRegularFile()
     assertThat(pdbPwdTmpFile).doesNotExist()
   }
