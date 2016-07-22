@@ -310,4 +310,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testMutableMapping() {
     doTest();
   }
+
+  // PY-16055
+  public void testFunctionReturnType() {
+    doTest();
+  }
 }

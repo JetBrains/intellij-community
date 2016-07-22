@@ -24,11 +24,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +83,30 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           registerProblem(source, String.format("Expected 'collections.%s', got '%s' instead",
                                                 iterableClassName, PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
+        }
+      }
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      PyType type = myTypeEvalContext.getType(node);
+      if (type instanceof PyFunctionTypeImpl && node instanceof PyFunctionImpl) {
+        PyType expected = ((PyFunctionTypeImpl)type).getReturnType(myTypeEvalContext);
+        PyType actual = ((PyFunctionImpl)node).getReturnStatementType(myTypeEvalContext);
+        PyStatement[] statements = node.getStatementList().getStatements();
+
+        if (!PyTypeChecker.isUnknown(expected) && !PyTypeChecker.isUnknown(actual)) {
+          PyExpression expr = null;
+          for (PyStatement statement : statements) {
+            if (statement instanceof PyReturnStatement) {
+              expr = ((PyReturnStatement)statement).getExpression();
+            }
+          }
+          if (expr != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+            registerProblem(expr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+          }
         }
       }
     }
