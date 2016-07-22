@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedList;
 
 public class StudyShowHintAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "ShowHintAction";
@@ -67,19 +66,8 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
       return;
     }
     EduUsagesCollector.hintShown();
-    LinkedList<String> hints = new LinkedList<>();
-    if (answerPlaceholder != null) {
-      hints.addAll(answerPlaceholder.getHints());
-      //final ArrayList<String> strings = new ArrayList<>();
-      //strings.add(answerPlaceholder.getHints());
-      //strings.add("test");
-      //hints.addAll(strings);
-    }
-    else {
-      hints.add(ourWarningMessage);
-    }
+    
     final StudyToolWindow hintComponent = new StudyHint(answerPlaceholder, project).getStudyToolWindow();
-
     showHintPopUp(project, studyState, editor, hintComponent);
   }
 
