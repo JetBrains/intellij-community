@@ -51,7 +51,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
         return new TestNGRunnableState(env, configuration) {
           @Override
           public SearchingForTestsTask createSearchingForTestsTask() {
-            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile, client) {
+            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
                 final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = ContainerUtil.newHashMap();

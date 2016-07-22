@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.ide.CommonActionsManager;
@@ -32,6 +31,7 @@ import com.intellij.lang.ant.config.actions.*;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.HelpID;
+import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;

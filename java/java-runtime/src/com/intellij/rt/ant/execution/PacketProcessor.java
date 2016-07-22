@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,7 @@
  */
 package com.intellij.rt.ant.execution;
 
-/**
- * @author dyoma
- */
-class PacketFactory {
-  private int myLastMessageId = -1;
-  public static final PacketFactory ourInstance = new PacketFactory();
+public interface PacketProcessor {
 
-  public synchronized PacketWriter createPacket(char id) {
-    PacketWriter writer = new PacketWriter();
-    myLastMessageId++;
-    writer.appendLong(myLastMessageId);
-    writer.appendChar(id);
-    return writer;
-  }
+  void processPacket(String packet);
 }

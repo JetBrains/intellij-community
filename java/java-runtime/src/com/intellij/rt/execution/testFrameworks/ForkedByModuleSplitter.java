@@ -60,10 +60,8 @@ public abstract class ForkedByModuleSplitter {
       bufferedReader.close();
     }
 
-    long time = System.currentTimeMillis();
     int result = startSplitting(args, configName, repeatCount);
     myForkedDebuggerHelper.closeDebugSocket();
-    sendTime(time);
     return result;
   }
 
@@ -154,9 +152,6 @@ public abstract class ForkedByModuleSplitter {
                                             String repeatCount, int result) throws Exception;
 
   protected abstract String getStarterName();
-  
-  protected void sendTime(long time) {}
-  protected void sendTree(Object rootDescription) {}
 
   public static File createClasspathJarFile(Manifest manifest, String classpath) throws IOException {
     final Attributes attributes = manifest.getMainAttributes();

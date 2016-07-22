@@ -20,10 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.ResetConfigurationModuleAdapter;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -40,7 +37,6 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -58,14 +54,6 @@ public class TestPackage extends TestObject {
   public SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
-  }
-
-  @NotNull
-  @Override
-  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
-    final JUnitProcessHandler handler = super.createJUnitHandler(executor);
-    createSearchingForTestsTask().attachTaskToProcess(handler);
-    return handler;
   }
 
   @Override
@@ -204,13 +192,6 @@ public class TestPackage extends TestObject {
     }
     if (getSourceScope() == null) {
       getConfiguration().getConfigurationModule().checkForWarning();
-    }
-  }
-
-  @Override
-  protected void notifyByBalloon(JUnitRunningModel model, boolean started, final JUnitConsoleProperties consoleProperties) {
-    if (myFoundTests || !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), consoleProperties.isDebug())) {
-      super.notifyByBalloon(model, started, consoleProperties);
     }
   }
 
