@@ -104,7 +104,10 @@ abstract class MacDistributionCustomizer {
    * @param buildNumber current build number
    * @return application bundle directory name
    */
-  abstract String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber)
+  String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
+    "$applicationInfo.productName${suffix}.app"
+  }
 
   /**
    * Custom properties to be added to the properties file. They will be used for launched product, e.g. you can add additional logging in EAP builds

@@ -213,7 +213,7 @@ class MacDistributionBuilder {
     return buildContext.messages.block("Build zip archive for Mac OS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      def zipRoot = customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+      String zipRoot = "${customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {

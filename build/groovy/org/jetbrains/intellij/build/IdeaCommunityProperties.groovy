@@ -91,8 +91,8 @@ class IdeaCommunityProperties extends ProductProperties {
 
       @Override
       String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"
-                              : "IntelliJ IDEA CE.app/Contents"
+        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app"
+                              : "IntelliJ IDEA CE.app"
       }
     }
   }
