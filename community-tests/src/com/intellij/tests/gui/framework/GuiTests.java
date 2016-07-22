@@ -61,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -540,10 +542,20 @@ public final class GuiTests {
   }
 
   public static void findAndClickButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
+    final boolean[] checkClick = {false};
     Robot robot = container.robot();
     JButton button = findButton(container, text, robot);
+    button.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        checkClick[0] = true;
+      }
+    });
     robot.click(button);
+    //click button again if previous action is missed
+    if (!checkClick[0]) robot.click(button);
   }
+
 
   public static void findAndClickButtonWhenEnabled(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
     Robot robot = container.robot();

@@ -114,7 +114,6 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
           label = robot().finder().findByLabel(labelText);
         }
         catch (ComponentLookupException componentLookupException) {
-          componentLookupException.printStackTrace();
           return false;
         }
         return true;
