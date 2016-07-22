@@ -224,10 +224,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private void analyzeReadsInScope(@NotNull String name, 
+  private void analyzeReadsInScope(@NotNull String name,
                                    @NotNull ScopeOwner owner,
                                    @NotNull Instruction[] instructions,
-                                   int startInstruction, 
+                                   int startInstruction,
                                    @Nullable PsiElement scopeAnchor) {
     // Check if the element is declared out of scope, mark all out of scope write accesses as used
     if (scopeAnchor != null) {
@@ -343,10 +343,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
-            if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
-              if (!namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
-                mayBeField = true;
-              }
+            if (PyNames.INIT.equals(func.getName()) && containingClass != null && !namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
+              mayBeField = true;
             }
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
               continue;
@@ -412,7 +410,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (functionsWithInheritors.contains(func)) {
       return true;
     }
-    if (PySuperMethodsSearch.search(func, myTypeEvalContext).findFirst() != null ||
+    if (!PyNames.INIT.equals(func.getName()) && PySuperMethodsSearch.search(func, myTypeEvalContext).findFirst() != null ||
         PyOverridingMethodsSearch.search(func, true).findFirst() != null) {
       functionsWithInheritors.add(func);
       return true;
