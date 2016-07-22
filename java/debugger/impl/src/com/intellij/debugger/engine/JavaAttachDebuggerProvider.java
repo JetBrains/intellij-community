@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -75,7 +76,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //
       //ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
 
-      String name = StringUtil.notNullize(address.first) + ":" + address.second;
+      String name = getAttachString(address);
       RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
         .createRunConfiguration(name, ConfigurationTypeUtil.findConfigurationType("Remote").getConfigurationFactories()[0]);
 
@@ -99,6 +100,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   };
 
+  private static String getAttachString(Pair<String, Integer> address) {
+    return StringUtil.notNullize(address.first) + ":" + address.second;
+  }
+
   private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
     @Override
     public int getOrder() {
@@ -114,7 +119,9 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info) {
-      return info.getCommandLine();
+      Pair<String, Integer> address = getAttachAddress(info);
+      assert address != null;
+      return StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" "))) + " (" + getAttachString(address) + ')';
     }
   };
 
