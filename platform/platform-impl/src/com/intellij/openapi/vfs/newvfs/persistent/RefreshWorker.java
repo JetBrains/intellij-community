@@ -63,7 +63,7 @@ public class RefreshWorker {
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     myIsRecursive = isRecursive;
-    myRefreshQueue.addLast(Pair.create(refreshRoot, (FileAttributes)null));
+    myRefreshQueue.addLast(pair(refreshRoot, null));
   }
 
   @NotNull
@@ -372,7 +372,7 @@ public class RefreshWorker {
     if (!checkAndScheduleFileTypeChange(parent, child, childAttributes)) {
       boolean upToDateIsDirectory = childAttributes.isDirectory();
       if (myIsRecursive || !upToDateIsDirectory) {
-        myRefreshQueue.addLast(Pair.create((NewVirtualFile)child, childAttributes));
+        myRefreshQueue.addLast(pair((NewVirtualFile)child, childAttributes));
       }
     }
   }
