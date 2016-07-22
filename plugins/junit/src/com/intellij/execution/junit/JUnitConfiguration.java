@@ -664,8 +664,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {
-      //TODO[dyoma]!
-      return TestObject.fromString(TEST_OBJECT, configuration, ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build());
+      final ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+      final TestObject testObject = TestObject.fromString(TEST_OBJECT, configuration, environment);
+      return testObject == null ? new UnknownTestTarget(configuration, environment) : testObject;
     }
 
     public Module setMainClass(final PsiClass testClass) {

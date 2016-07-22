@@ -76,8 +76,9 @@ public abstract class TestNGTestObject {
     if (testObject.equals(TestType.SOURCE.getType())) {
       return new TestNGSource(config);
     }
-    assert false : testObject;
-    return null;
+
+    LOG.info("Unknown test object" + testObject);
+    return new UnknownTestNGTestObject(config);
   }
 
   public abstract void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException;
@@ -293,5 +294,27 @@ public abstract class TestNGTestObject {
         psiMethods.put(method, Collections.<String>emptyList());
       }
     }
+  }
+
+  private static class UnknownTestNGTestObject extends TestNGTestObject {
+    public UnknownTestNGTestObject(TestNGConfiguration config) {
+      super(config);
+    }
+
+    @Override
+    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {}
+
+    @Override
+    public String getGeneratedName() {
+      return getActionName();
+    }
+
+    @Override
+    public String getActionName() {
+      return "Unknown";
+    }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {}
   }
 }
