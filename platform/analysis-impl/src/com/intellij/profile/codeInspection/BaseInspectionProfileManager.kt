@@ -102,12 +102,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 }
 
 abstract class InspectionProfileProcessor : LazySchemeProcessor<InspectionProfileImpl, InspectionProfileImpl>() {
-  override final fun getState(scheme: InspectionProfileImpl): SchemeState {
-    if (scheme is InspectionProfileImpl) {
-      return if (scheme.wasInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
-    }
-    else {
-      return SchemeState.NON_PERSISTENT
-    }
+  override fun getState(scheme: InspectionProfileImpl): SchemeState {
+    return if (scheme.wasInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.concurrency.runAsync
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.digest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -38,12 +39,14 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.Profile
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
@@ -53,6 +56,12 @@ private const val VERSION = "1.0"
 private const val SCOPE = "scope"
 private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
+
+private val defaultSchemeDigest = loadElement("""<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+  </profile>
+</component>""").digest()
 
 @State(name = "InspectionProjectProfileManager", storages = arrayOf(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true)))
 class ProjectInspectionProfileManager(val project: Project,
@@ -96,6 +105,10 @@ class ProjectInspectionProfileManager(val project: Project,
       }
 
       override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
+        return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
+      }
 
       override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
         schemeRemoved(scheme)

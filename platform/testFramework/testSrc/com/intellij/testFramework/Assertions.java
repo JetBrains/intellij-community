@@ -15,11 +15,22 @@
  */
 package com.intellij.testFramework;
 
+import org.assertj.core.api.AbstractPathAssert;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 public final class Assertions extends org.assertj.core.api.Assertions {
+  @NotNull
   public static JdomAssert assertThat(@Nullable Element element) {
     return new JdomAssert(element);
+  }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static AbstractPathAssert<?> assertThat(@Nullable Path actual) {
+    return new PathAssertEx(actual);
   }
 }

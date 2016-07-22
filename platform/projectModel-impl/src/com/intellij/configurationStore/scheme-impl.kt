@@ -18,6 +18,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import org.jdom.Element
+import java.io.OutputStream
+import java.security.MessageDigest
 import java.util.function.Function
 
 interface SchemeDataHolder<in MUTABLE_SCHEME : Scheme> {
@@ -59,4 +61,27 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : S
   override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
+
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+}
+
+class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
+  override fun write(b: Int) {
+    digest.update(b.toByte())
+  }
+
+  override fun write(b: ByteArray, off: Int, len: Int) {
+    digest.update(b, off, len)
+  }
+
+  override fun toString(): String {
+    return "[Digest Output Stream] " + digest.toString()
+  }
+}
+
+fun Element.digest(): ByteArray {
+  // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
+  val digest = MessageDigest.getInstance("SHA-1")
+  serializeElementToBinary(this, DigestOutputStream(digest))
+  return digest.digest()
 }

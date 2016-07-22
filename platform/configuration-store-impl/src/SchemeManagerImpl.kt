@@ -51,9 +51,7 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.io.OutputStream
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -621,6 +619,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       return
     }
 
+    // we must check it only here to avoid delete old scheme just because it is empty (old idea save -> new idea delete on open)
+    if (processor is LazySchemeProcessor && processor.isSchemeDefault(scheme, newDigest)) {
+      externalInfo?.scheduleDelete()
+      return
+    }
+
     val fileName = fileNameWithoutExtension!! + schemeExtension
     // file will be overwritten, so, we don't need to delete it
     filesToDelete.remove(fileName)
@@ -998,27 +1002,6 @@ fun createDir(ioDir: Path, requestor: Any): VirtualFile {
 
 fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {
   return parent.findChild(fileName) ?: runWriteAction { parent.createChildData(requestor, fileName) }
-}
-
-class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
-  override fun write(b: Int) {
-    digest.update(b.toByte())
-  }
-
-  override fun write(b: ByteArray, off: Int, len: Int) {
-    digest.update(b, off, len)
-  }
-
-  override fun toString(): String {
-    return "[Digest Output Stream] " + digest.toString()
-  }
-}
-
-fun Element.digest(): ByteArray {
-  // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
-  val digest = MessageDigest.getInstance("SHA-1")
-  serializeElementToBinary(this, DigestOutputStream(digest))
-  return digest.digest()
 }
 
 private inline fun catchAndLog(fileName: String, runnable: (fileName: String) -> Unit) {
