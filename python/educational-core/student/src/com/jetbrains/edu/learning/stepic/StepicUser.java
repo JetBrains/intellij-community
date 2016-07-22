@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -64,28 +63,13 @@ public class StepicUser {
   public String getPassword() {
     final String login = getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) return "";
-
-    String password;
-    try {
-      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
-      password = "";
-    }
-
-    return StringUtil.notNullize(password);
+    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login));
   }
 
   @Transient
   public void setPassword(@NotNull final String password) {
     if (password.isEmpty()) return;
-    try {
-      PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't set password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + getEmail() + "]", e);
-    }
+    PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
   }
 
   @NotNull

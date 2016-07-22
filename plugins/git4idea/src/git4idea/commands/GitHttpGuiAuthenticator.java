@@ -16,7 +16,6 @@
 package git4idea.commands;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,14 +171,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     // save password
     if (myPasswordKey != null && myPassword != null) {
       PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-      try {
-        passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        if (mySaveOnDisk) {
-          passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        }
-      }
-      catch (PasswordSafeException e) {
-        LOG.error("Couldn't remember password for " + myPasswordKey, e);
+      passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
+      if (mySaveOnDisk) {
+        passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
       }
     }
   }
@@ -292,14 +286,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      try {
-        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
-        return new AuthData(StringUtil.notNullize(userName), password);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't get the password for key [" + key + "]", e);
-        return null;
-      }
+      String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
+      return new AuthData(StringUtil.notNullize(userName), password);
     }
 
     @Nullable
@@ -311,13 +299,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     public void forgetPassword(@NotNull String url) {
       String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
       LOG.debug("forgetPassword. key=" + key);
-      try {
-        PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't forget the password for " + myPasswordKey);
-      }
+      PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
     }
   }
-
 }

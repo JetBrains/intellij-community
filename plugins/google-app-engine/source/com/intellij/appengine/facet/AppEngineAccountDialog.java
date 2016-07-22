@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineCloudConfigurable;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -60,12 +59,7 @@ public class AppEngineAccountDialog {
   }
 
   public static void storePassword(@NotNull String email, @NotNull String password, @Nullable Project project) {
-    try {
-      PasswordSafe.getInstance().storePassword(project, AppEngineAccountDialog.class, getPasswordKey(email), password);
-    }
-    catch (PasswordSafeException e) {
-      LOG.info(e);
-    }
+    PasswordSafe.getInstance().storePassword(project, AppEngineAccountDialog.class, getPasswordKey(email), password);
   }
 
   private static String getPasswordKey(String email) {
@@ -77,13 +71,6 @@ public class AppEngineAccountDialog {
     if (StringUtil.isEmpty(email)) {
       return null;
     }
-
-    try {
-      return PasswordSafe.getInstance().getPassword(project, AppEngineAccountDialog.class, getPasswordKey(email));
-    }
-    catch (PasswordSafeException e) {
-      LOG.info(e);
-      return null;
-    }
+    return PasswordSafe.getInstance().getPassword(project, AppEngineAccountDialog.class, getPasswordKey(email));
   }
 }

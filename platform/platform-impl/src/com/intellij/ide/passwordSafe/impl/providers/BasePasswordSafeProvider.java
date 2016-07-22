@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
@@ -38,8 +37,6 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    *    Calling this method from the dispatch thread is allowed.</p>
    *
    * @return the secret key to use
-   * @throws PasswordSafeException in case of problems with access to the password database.
-   * @throws IllegalStateException if the method is called from the read action.
    */
   @NotNull
   protected abstract byte[] key();
@@ -71,9 +68,8 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
     return EncryptionUtil.dbKey(key(), requestor, key);
   }
 
-  public void removePassword(@Nullable Project project, @Nullable Class requestor, String key) throws PasswordSafeException {
-    byte[] k = dbKey(requestor, key);
-    removeEncryptedPassword(k);
+  public void removePassword(@Nullable Project project, @Nullable Class requestor, String key) {
+    removeEncryptedPassword(dbKey(requestor, key));
   }
 
   /**
@@ -83,7 +79,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  public void storePassword(@Nullable Project project, @Nullable Class requestor, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, @Nullable Class requestor, String key, String value) {
     byte[] k = dbKey(requestor, key);
     byte[] ct = EncryptionUtil.encryptText(key(), value);
     storeEncryptedPassword(k, ct);

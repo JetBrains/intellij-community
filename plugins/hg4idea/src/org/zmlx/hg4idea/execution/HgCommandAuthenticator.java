@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,20 +55,15 @@ class HgCommandAuthenticator {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     final String url = VirtualFileManager.extractPath(myGetPassword.getURL());
     final String key = keyForUrlAndLogin(url, myGetPassword.getUserName());
-    try {
-      if (myGetPassword.isRememberPassword()) {
-        PasswordSafe.getInstance().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
-      }
-      else if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-        passwordSafe.getMemoryProvider().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
-      }
-      final HgVcs vcs = HgVcs.getInstance(myProject);
-      if (vcs != null) {
-        vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
-      }
+    if (myGetPassword.isRememberPassword()) {
+      PasswordSafe.getInstance().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
     }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't store the password for key [" + key + "]", e);
+    else if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
+      passwordSafe.getMemoryProvider().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
+    }
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs != null) {
+      vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
     }
   }
 
@@ -137,17 +131,12 @@ class HgCommandAuthenticator {
       if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
         // if we've logged in with this login, search for password
         final String key = keyForUrlAndLogin(myURL, login);
-        try {
-          final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-          if (mySilent) {
-            password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
-          }
-          else {
-            password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
-          }
+        final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+        if (mySilent) {
+          password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
         }
-        catch (PasswordSafeException e) {
-          LOG.info("Couldn't get password for key [" + key + "]", e);
+        else {
+          password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
         }
       }
 
