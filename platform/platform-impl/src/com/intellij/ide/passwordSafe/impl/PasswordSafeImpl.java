@@ -16,12 +16,13 @@
 package com.intellij.ide.passwordSafe.impl;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
 import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
 import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
 import com.intellij.ide.passwordSafe.masterKey.DbV1ConvertorKt;
 import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,8 @@ public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComp
 
   public PasswordSafeImpl(@NotNull PasswordSafeSettings settings) {
     mySettings = settings;
-    myMasterKeyProvider = new FilePasswordSafeProvider(DbV1ConvertorKt.convertOldDb());
+    //noinspection deprecation
+    myMasterKeyProvider = new FilePasswordSafeProvider(DbV1ConvertorKt.convertOldDb(ServiceManager.getService(PasswordDatabase.class)));
     myNilProvider = new NilProvider();
     myMemoryProvider = new MemoryPasswordSafe();
   }
@@ -72,7 +74,7 @@ public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComp
   }
 
   @Nullable
-  public String getPassword(@Nullable Project project, @Nullable Class requester, @NotNull String key) throws PasswordSafeException {
+  public String getPassword(@Nullable Project project, @Nullable Class requester, @NotNull String key) {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       String password = getMemoryProvider().getPassword(project, requester, key);
       if (password == null) {
@@ -87,14 +89,14 @@ public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComp
     return provider().getPassword(project, requester, key);
   }
 
-  public void removePassword(@Nullable Project project, @Nullable Class requester, String key) throws PasswordSafeException {
+  public void removePassword(@Nullable Project project, @Nullable Class requester, String key) {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().removePassword(project, requester, key);
     }
     provider().removePassword(project, requester, key);
   }
 
-  public void storePassword(@Nullable Project project, @Nullable Class requester, String key, String value) throws PasswordSafeException {
+  public void storePassword(@Nullable Project project, @Nullable Class requester, String key, String value) {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       getMemoryProvider().storePassword(project, requester, key, value);
     }

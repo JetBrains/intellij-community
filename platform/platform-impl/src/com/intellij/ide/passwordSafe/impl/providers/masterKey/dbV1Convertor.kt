@@ -24,10 +24,13 @@ import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDial
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import gnu.trove.THashMap
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import java.util.function.Function
 
@@ -52,7 +55,7 @@ internal fun checkPassAndConvertOldDb(password: String, @Suppress("DEPRECATION")
 }
 
 fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, String>? {
-  if (db.myDatabase.isEmpty()) {
+  if (db.myDatabase.size <= 1) {
     return null
   }
 
@@ -71,6 +74,11 @@ fun convertOldDb(@Suppress("DEPRECATION") db: PasswordDatabase): Map<String, Str
     }?.let {
       checkPassAndConvertOldDb(it, db)?.let { return it }
     }
+  }
+
+  // if db contains only one entry (+ test entry) - do not ask master pass, just skip
+  if (db.myDatabase.size <= 2) {
+    return null
   }
 
   var result: Map<String, String>? = null
@@ -108,17 +116,21 @@ fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeTo
 
 private fun rawTestKey(oldKey: String) = EncryptionUtil.hash("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe/TEST_PASSWORD:${oldKey}".toByteArray())
 
-fun convertOldDb(): Map<String, String>? {
-  @Suppress("DEPRECATION")
-  val oldDb = ServiceManager.getService(PasswordDatabase::class.java)
-  if (oldDb.myDatabase.isNotEmpty()) {
-    return convertOldDb(oldDb)
-  }
-  return null
-}
-
 internal class PasswordDatabaseConvertor : ApplicationLoadListener {
   override fun beforeComponentsCreated() {
-    PasswordSafe.getInstance()
+    try {
+      val oldDbFile = Paths.get(PathManager.getConfigPath(), "options", "security.xml")
+      if (Files.exists(oldDbFile)) {
+        @Suppress("DEPRECATION")
+        val oldDb = ServiceManager.getService(PasswordDatabase::class.java)
+        // old db contains at least one test key - skip it
+        if (oldDb.myDatabase.size > 1) {
+          PasswordSafe.getInstance()
+        }
+      }
+    }
+    catch (e: Throwable) {
+      LOG.warn("Cannot check old password safe DB", e)
+    }
   }
 }
