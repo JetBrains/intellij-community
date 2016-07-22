@@ -121,4 +121,10 @@ public class StepicUser {
     accessToken = tokenInfo.getAccessToken();
     refreshToken = tokenInfo.getRefreshToken();
   }
+
+  public void update(StepicUser tmpUser) {
+    id = tmpUser.getId();
+    firstName = tmpUser.getFirstName();
+    lastName = tmpUser.getLastName();
+  }
 }

@@ -50,6 +50,9 @@ public class EduNames {
   public static final String ANSWER_PLACEHOLDER = "Answer Placeholder";
   public static final String PLACEHOLDER = "placeholder";
   public static final String SRC = "src";
+
+  public static final String SEPARATOR = "#/*";
+
   private EduNames() {
   }
 

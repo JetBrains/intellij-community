@@ -575,6 +575,8 @@ public class StudyUtils {
          studyProject = project;
       }
     }
+    if (studyProject == null)
+      return ProjectManager.getInstance().getDefaultProject();
     return studyProject;
   }
 
