@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileFilters
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -62,6 +63,9 @@ class WindowsDistributionBuilder {
     buildWinLauncher(JvmArchitecture.x32)
     buildWinLauncher(JvmArchitecture.x64)
     customizer.copyAdditionalFiles(buildContext, winDistPath)
+    new File(winDistPath, "bin").listFiles(FileFilters.withExtension("exe"))?.each {
+      buildContext.signExeFile(it.absolutePath)
+    }
 
     def arch = customizer.bundledJreArchitecture
     def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
@@ -184,7 +188,6 @@ IDS_VM_OPTIONS=$vmOptions
           }
         }
       }
-      buildContext.signExeFile(outputPath)
     }
   }
 
