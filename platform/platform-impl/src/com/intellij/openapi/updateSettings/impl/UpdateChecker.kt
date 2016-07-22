@@ -40,11 +40,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
@@ -97,7 +93,7 @@ object UpdateChecker {
 
   @JvmStatic
   private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
-  
+
   /**
    * For scheduled update checks.
    */
@@ -446,7 +442,7 @@ object UpdateChecker {
       return
     }
 
-    var listener = NotificationListener { notification, event ->
+    val listener = NotificationListener { notification, event ->
       notification.expire()
       action.invoke()
     }
@@ -500,7 +496,7 @@ object UpdateChecker {
         val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            val bytes = FileUtil.loadFileBytes(permanentIdFile);
+            val bytes = FileUtil.loadFileBytes(permanentIdFile)
             val offset = skipUtf8BOM(bytes)
             return String(bytes, offset, bytes.size - offset, Charset.forName("utf-8"))
           }
@@ -520,7 +516,7 @@ object UpdateChecker {
 
     return null
   }
-  
+
   @JvmStatic
   private fun skipUtf8BOM(bytes: ByteArray): Int {
     if (bytes.size < UTF8_BOM.size) {
