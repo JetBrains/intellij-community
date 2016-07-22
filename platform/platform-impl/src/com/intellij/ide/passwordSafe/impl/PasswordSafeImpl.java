@@ -13,106 +13,87 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.impl;
+package com.intellij.ide.passwordSafe.impl
 
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase;
-import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe;
-import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider;
-import com.intellij.ide.passwordSafe.masterKey.DbV1ConvertorKt;
-import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.SettingsSavingComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
+import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
+import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe
+import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider
+import com.intellij.ide.passwordSafe.masterKey.*
+import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 
-public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComponent {
-  private static final Logger LOG = Logger.getInstance(PasswordSafeImpl.class);
+class PasswordSafeImpl(val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
+  private val myMasterKeyProvider: FilePasswordSafeProvider
+  private val myNilProvider: NilProvider
 
-  private final PasswordSafeSettings mySettings;
-  private final FilePasswordSafeProvider myMasterKeyProvider;
-  private final NilProvider myNilProvider;
-  private final MemoryPasswordSafe myMemoryProvider;
-
-  public PasswordSafeImpl(@NotNull PasswordSafeSettings settings) {
-    mySettings = settings;
+  init {
     //noinspection deprecation
-    myMasterKeyProvider = new FilePasswordSafeProvider(DbV1ConvertorKt.convertOldDb(ServiceManager.getService(PasswordDatabase.class)));
-    myNilProvider = new NilProvider();
-    myMemoryProvider = new MemoryPasswordSafe();
+    myMasterKeyProvider = FilePasswordSafeProvider(convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java!!)))
+    myNilProvider = NilProvider()
   }
 
   /**
    * @return get currently selected provider
    */
-  private PasswordSafeProvider provider() {
-    PasswordSafeProvider p = null;
-    switch (mySettings.getProviderType()) {
-      case DO_NOT_STORE:
-        p = myNilProvider;
-        break;
-      case MEMORY_ONLY:
-        p = myMemoryProvider;
-        break;
-      case MASTER_PASSWORD:
-        p = myMasterKeyProvider;
-        break;
-      default:
-        LOG.error("Unknown provider type: " + mySettings.getProviderType());
+  private fun provider(): PasswordSafeProvider {
+    var p: PasswordSafeProvider? = null
+    when (settings.getProviderType()) {
+      PasswordSafeSettings.ProviderType.DO_NOT_STORE -> p = myNilProvider
+      PasswordSafeSettings.ProviderType.MEMORY_ONLY, PasswordSafeSettings.ProviderType.MASTER_PASSWORD -> p = myMasterKeyProvider
+      else -> LOG.error("Unknown provider type: " + settings.getProviderType())
     }
-    if (!p.isSupported()) {
-      p = myMemoryProvider;
-    }
-    return p;
+    return p
   }
 
-  public PasswordSafeSettings getSettings() {
-    return mySettings;
-  }
-
-  @Nullable
-  public String getPassword(@Nullable Project project, @Nullable Class requester, @NotNull String key) {
-    if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      String password = getMemoryProvider().getPassword(project, requester, key);
+  public override fun getPassword(project: Project?, requester: Class<*>?, key: String): String? {
+    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+      var password = memoryProvider.getPassword(project, requester, key)
       if (password == null) {
-        password = provider().getPassword(project, requester, key);
+        password = provider().getPassword(project, requester, key)
         if (password != null) {
           // cache the password in memory as well for easier access during the session
-          getMemoryProvider().storePassword(project, requester, key, password);
+          memoryProvider.storePassword(project, requester, key, password)
         }
       }
-      return password;
+      return password
     }
-    return provider().getPassword(project, requester, key);
+    return provider().getPassword(project, requester, key)
   }
 
-  public void removePassword(@Nullable Project project, @Nullable Class requester, String key) {
-    if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      getMemoryProvider().removePassword(project, requester, key);
+  public override fun removePassword(project: Project?, requester: Class<*>?, key: String) {
+    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+      memoryProvider.removePassword(project, requester, key)
     }
-    provider().removePassword(project, requester, key);
+    provider().removePassword(project, requester, key)
   }
 
-  public void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, String value) {
-    if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      getMemoryProvider().storePassword(project, requestor, key, value);
+  public override fun storePassword(project: Project?, requestor: Class<*>?, key: String, value: String?) {
+    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+      memoryProvider.storePassword(project, requestor, key, value)
     }
-    provider().storePassword(project, requestor, key, value);
+    provider().storePassword(project, requestor, key, value)
   }
 
-  public PasswordSafeProvider getMasterKeyProvider() {
-    return myMasterKeyProvider;
+  val masterKeyProvider: PasswordSafeProvider
+    get() {
+      return myMasterKeyProvider
+    }
+
+  val memoryProvider: MemoryPasswordSafe
+    get() {
+      return myMemoryProvider
+    }
+
+  public override fun save() {
+    myMasterKeyProvider.save()
   }
 
-  public MemoryPasswordSafe getMemoryProvider() {
-    return myMemoryProvider;
-  }
-
-  @Override
-  public void save() {
-    myMasterKeyProvider.save();
+  companion object {
+    private val LOG = Logger.getInstance(PasswordSafeImpl::class.java!!)
   }
 }
