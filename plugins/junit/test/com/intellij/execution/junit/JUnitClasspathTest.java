@@ -19,22 +19,16 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -72,48 +66,25 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
 
     //ensure fork when whole project is used
     persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-    final RegistryValue smRunnerProperty = Registry.get("junit_sm");
-    final boolean oldValue = smRunnerProperty.asBoolean();
-    try {
-      //check old format
-      smRunnerProperty.setValue(false);
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      String file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-      assertEquals("p\n" +
-                   "MODULE_1\n" +
-                   "mod1\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T1\n" +
-                   "MODULE_2\n" +
-                   "mod2\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T2", file);
-
-      //check sm runner
-      smRunnerProperty.setValue(true);
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-      assertEquals("p\n" +
-                   "MODULE_1\n" +
-                   "mod1\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T1\n" +
-                   "MODULE_2\n" +
-                   "mod2\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T2", file);
-    }
-    finally {
-      smRunnerProperty.setValue(oldValue);
-    }
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    String file;
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
+    assertEquals("p\n" +
+                 "MODULE_1\n" +
+                 "mod1\n" +
+                 "CLASSPATH\n" +
+                 "1\n" +
+                 "p.T1\n" +
+                 "MODULE_2\n" +
+                 "mod2\n" +
+                 "CLASSPATH\n" +
+                 "1\n" +
+                 "p.T2", file);
   }
 
   public void testNoWorkingDirsFileWhenOnlyOneModuleExist() throws Exception {
