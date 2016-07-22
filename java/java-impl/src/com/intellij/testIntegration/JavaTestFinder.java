@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -136,7 +137,8 @@ public class JavaTestFinder implements TestFinder {
   @Nullable
   private static Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-    return index.getModuleForFile(element.getContainingFile().getVirtualFile());
+    VirtualFile file = element.getContainingFile().getVirtualFile();
+    return file == null ? null : index.getModuleForFile(file);
   }
 
   public boolean isTest(@NotNull PsiElement element) {
