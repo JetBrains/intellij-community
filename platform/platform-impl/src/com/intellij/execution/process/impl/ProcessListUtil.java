@@ -54,25 +54,25 @@ public class ProcessListUtil {
   private static List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
     if (SystemInfo.isWindows) {
-      result = getProcessList_WinNativeFetcher();
+      result = getProcessListUsingWinNativeHelper();
       if (result != null) return result;
-      LOG.info("Cannot get process list via NativeFetcher, fallback to wmic");
+      LOG.info("Cannot get process list via " + WIN_PROCESS_LIST_HELPER_FILENAME + ", fallback to wmic");
 
-      result = getProcessList_WindowsWMIC();
+      result = getProcessListUsingWindowsWMIC();
       if (result != null) return result;
 
       LOG.info("Cannot get process list via wmic, fallback to tasklist");
-      result = getProcessList_WindowsTaskList();
+      result = getProcessListUsingWindowsTaskList();
       if (result != null) return result;
 
       LOG.error("Cannot get process list via wmic and tasklist");
     }
     else if (SystemInfo.isUnix) {
       if (SystemInfo.isMac) {
-        result = getProcessList_Mac();
+        result = getProcessListOnMac();
       }
       else {
-        result = getProcessList_Unix();
+        result = getProcessListOnUnix();
       }
       if (result != null) return result;
 
@@ -107,7 +107,7 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  private static List<ProcessInfo> getProcessList_Unix() {
+  private static List<ProcessInfo> getProcessListOnUnix() {
     File proc = new File("/proc");
 
     File[] processes = proc.listFiles();
@@ -161,7 +161,7 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  private static List<ProcessInfo> getProcessList_Mac() {
+  private static List<ProcessInfo> getProcessListOnMac() {
     // In order to correctly determine executable file name and retrieve arguments from the command line
     // we need first to get the executable from 'comm' parameter, and then subtract it from the 'command' parameter.
     // Example:
@@ -255,54 +255,56 @@ public class ProcessListUtil {
     }
   }
 
-  private static List<ProcessInfo> getProcessList_WinNativeFetcher() {
+  private static List<ProcessInfo> getProcessListUsingWinNativeHelper() {
     try {
-      File nativeFetcher = findNativeFetcher();
-      return parseCommandOutput(Collections.singletonList(nativeFetcher.getAbsolutePath()), ProcessListUtil::parseWinNativeFetcherOutput);
-    } catch (FileNotFoundException e) {
+      File nativeHelper = findNativeHelper();
+      return parseCommandOutput(Collections.singletonList(nativeHelper.getAbsolutePath()), ProcessListUtil::parseWinNativeHelperOutput);
+    }
+    catch (FileNotFoundException e) {
       LOG.error(e);
       return null;
     }
   }
 
-  private static List<ProcessInfo> parseWinNativeFetcherOutput(String output) throws IllegalStateException {
+  private static List<ProcessInfo> parseWinNativeHelperOutput(String output) throws IllegalStateException {
     String[] strings = StringUtil.splitByLines(output, false);
     ArrayList<ProcessInfo> result = new ArrayList<>();
     int processCount = strings.length / 3;
     for (int i = 0; i < processCount; i++) {
       int offset = i * 3;
       int id = StringUtil.parseInt(strings[offset], -1);
-      if (id == -1 || id == 0)
-        continue;
+      if (id == -1 || id == 0) continue;
+
       String name = strings[offset + 1];
-      if (StringUtil.isEmpty(name))
-        continue;
+      if (StringUtil.isEmpty(name)) continue;
+
       String commandLine = strings[offset + 2];
-      String args = "";
+      String args;
       if (commandLine.isEmpty()) {
         commandLine = name;
+        args = "";
       }
       else {
-        args = findArgs(commandLine, name);
+        args = extractCommandLineArgs(commandLine, name);
       }
       result.add(new ProcessInfo(id, commandLine, name, args));
     }
     return result;
   }
 
-  private static String findArgs(String commandLine, String name) {
-    List<String> commandLineList = StringUtil.splitHonorQuotes(commandLine, ' ');
-    if (commandLineList.isEmpty())
-      return "";
+  private static String extractCommandLineArgs(String fullCommandLine, String executableName) {
+    List<String> commandLineList = StringUtil.splitHonorQuotes(fullCommandLine, ' ');
+    if (commandLineList.isEmpty()) return "";
+
     String first = StringUtil.unquoteString(commandLineList.get(0));
-    if (StringUtil.endsWithIgnoreCase(first, name)) {
+    if (StringUtil.endsWithIgnoreCase(first, executableName)) {
       List<String> argsList = commandLineList.subList(1, commandLineList.size());
       return StringUtil.join(argsList, " ");
     }
     return "";
   }
 
-  private static File findNativeFetcher() throws FileNotFoundException {
+  private static File findNativeHelper() throws FileNotFoundException {
     String prefix = "win";
     String[] dirs = {
       PathManager.getBinPath(),
@@ -312,14 +314,15 @@ public class ProcessListUtil {
     };
     for (String dir : dirs) {
       File file = new File(dir, WIN_PROCESS_LIST_HELPER_FILENAME);
-      if (file.exists() && file.isFile())
+      if (file.isFile()) {
         return file;
+      }
     }
-    throw new FileNotFoundException(String.format("%s was not found at: %s", WIN_PROCESS_LIST_HELPER_FILENAME, String.join(",", (CharSequence[]) dirs)));
+    throw new FileNotFoundException(String.format("%s was not found at: %s", WIN_PROCESS_LIST_HELPER_FILENAME, StringUtil.join(dirs, ",")));
   }
 
   @Nullable
-  static List<ProcessInfo> getProcessList_WindowsWMIC() {
+  static List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
                               output -> parseWMICOutput(output));
   }
@@ -359,7 +362,7 @@ public class ProcessListUtil {
         commandLine = name;
       }
       else {
-        args = findArgs(commandLine, name);
+        args = extractCommandLineArgs(commandLine, name);
       }
 
       result.add(new ProcessInfo(pid, commandLine, name, args, executablePath));
@@ -368,7 +371,7 @@ public class ProcessListUtil {
   }
 
   @Nullable
-  static List<ProcessInfo> getProcessList_WindowsTaskList() {
+  static List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
                               output -> parseListTasksOutput(output));
   }
