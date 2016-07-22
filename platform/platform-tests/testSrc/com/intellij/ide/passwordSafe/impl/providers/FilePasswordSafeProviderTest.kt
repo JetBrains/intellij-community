@@ -21,6 +21,8 @@ import com.intellij.testFramework.TemporaryDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
+import java.math.BigInteger
+import java.util.*
 
 class FilePasswordSafeProviderTest {
   private val tempDirManager = TemporaryDirectory()
@@ -28,6 +30,21 @@ class FilePasswordSafeProviderTest {
     @Rule
     @JvmField
     val ruleChain = RuleChain(tempDirManager)
+
+  @Test
+  fun many() {
+    val baseDir = tempDirManager.newPath()
+    var provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+
+    assertThat(baseDir).doesNotExist()
+    val random = Random()
+    for (i in 0..9) {
+      provider.setPassword(BigInteger(8 * 16, random).toString(), BigInteger(8 * 16, random).toString())
+    }
+
+    provider.save()
+    provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+  }
 
   @Test
   fun test() {

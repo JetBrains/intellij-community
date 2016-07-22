@@ -96,11 +96,11 @@ public class PasswordSafeImpl extends PasswordSafe implements SettingsSavingComp
     provider().removePassword(project, requester, key);
   }
 
-  public void storePassword(@Nullable Project project, @Nullable Class requester, @NotNull String key, String value) {
+  public void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, String value) {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-      getMemoryProvider().storePassword(project, requester, key, value);
+      getMemoryProvider().storePassword(project, requestor, key, value);
     }
-    provider().storePassword(project, requester, key, value);
+    provider().storePassword(project, requestor, key, value);
   }
 
   public PasswordSafeProvider getMasterKeyProvider() {

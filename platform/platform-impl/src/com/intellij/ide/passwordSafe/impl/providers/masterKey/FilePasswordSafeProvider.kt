@@ -22,10 +22,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.IOException
 import java.nio.file.*
 import java.security.Key
 import java.security.MessageDigest
@@ -82,6 +84,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       return
     }
 
+
     if (encryptionSupport == null) {
       val masterKey = generateAesKey()
       encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
@@ -103,14 +106,30 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
 
     val tempFile = Paths.get(PathManager.getConfigPath(), "pdb.pwd.tmp")
     tempFile.write(encryptionSupport!!.encrypt(byteOut.internalBuffer, byteOut.size()))
-    Files.move(tempFile, dbFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+
+    try {
+      Files.move(tempFile, dbFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      FileUtil.rename(tempFile.toFile(), dbFile.toFile())
+    }
     dbFile.setOwnerPermissions()
+
+    isNeedToSave = false
   }
 
   override fun getPassword(project: Project?, requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
     // try old key - as hash
-    val value = db.get(rawKey) ?: db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
+    var value = db.get(rawKey)
+    if (value == null) {
+      value = db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
+      if (value != null) {
+        db.put(rawKey, value)
+        isNeedToSave = true
+      }
+    }
     return value
   }
 

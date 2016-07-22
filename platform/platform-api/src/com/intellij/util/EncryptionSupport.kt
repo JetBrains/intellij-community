@@ -15,12 +15,14 @@
  */
 package com.intellij.util
 
+import java.nio.ByteBuffer
 import java.security.Key
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+// opposite to PropertiesEncryptionSupport, we store iv length, but not body length (because iv length < body length always)
 open class EncryptionSupport(private val key: Key = SecretKeySpec(generateAesKey(), "AES")) {
   open fun encrypt(data: ByteArray, size: Int = data.size) = encrypt(data, size, key)
 
@@ -35,33 +37,24 @@ fun generateAesKey(): ByteArray {
 }
 
 private fun encrypt(message: ByteArray, size: Int, key: Key): ByteArray {
-  val ciph = Cipher.getInstance("AES/CBC/PKCS5Padding")
-  ciph.init(Cipher.ENCRYPT_MODE, key)
-  val body = ciph.doFinal(message, 0, size)
-  val iv = ciph.iv
+  val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+  cipher.init(Cipher.ENCRYPT_MODE, key)
+  val body = cipher.doFinal(message, 0, size)
+  val iv = cipher.iv
 
-  val data = ByteArray(4 + iv.size + body.size)
-
-  val length = body.size
-  data[0] = (length shr 24 and 0xFF).toByte()
-  data[1] = (length shr 16 and 0xFF).toByte()
-  data[2] = (length shr 8 and 0xFF).toByte()
-  data[3] = (length and 0xFF).toByte()
-
-  System.arraycopy(iv, 0, data, 4, iv.size)
-  System.arraycopy(body, 0, data, 4 + iv.size, body.size)
-  return data
+  val byteBuffer = ByteBuffer.wrap(ByteArray(4 + iv.size + body.size))
+  byteBuffer.putInt(iv.size)
+  byteBuffer.put(iv)
+  byteBuffer.put(body)
+  return byteBuffer.array()
 }
 
 private fun decrypt(data: ByteArray, key: Key): ByteArray {
-  var bodyLength = data[0].toInt() and 0xFF.toInt()
-  bodyLength = (bodyLength shl 8) + data[1] and 0xFF
-  bodyLength = (bodyLength shl 8) + data[2] and 0xFF
-  bodyLength = (bodyLength shl 8) + data[3] and 0xFF
-
-  val ivlength = data.size - 4 - bodyLength
-
+  val byteBuffer = ByteBuffer.wrap(data)
+  @Suppress("UsePropertyAccessSyntax")
+  val ivLength = byteBuffer.getInt()
   val ciph = Cipher.getInstance("AES/CBC/PKCS5Padding")
-  ciph.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, 4, ivlength))
-  return ciph.doFinal(data, 4 + ivlength, bodyLength)
+  ciph.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, 4, ivLength))
+  val dataOffset = 4 + ivLength
+  return ciph.doFinal(data, dataOffset, data.size - dataOffset)
 }
