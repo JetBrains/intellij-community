@@ -7,15 +7,15 @@ lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.11) released on 04.04.2016**
+**Last version (0.12) released on 23.07.2016**
 
-Eighteenth version of plugin released. Bugfixes, performance optimization and new features support!
+Nineteenth version of plugin released. Bugfixes, performance optimization and new features support!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 12.1.7, 13.1.6, 14.1.4, 15.0.4, 2016.1.1  
+Tested and supports IntelliJ versions: 14.1.4, 15.0.4, 2016.2  
 
-Updated support for IntelliJ 11.1.5 by plugin version 0.11!
+Last support for IntelliJ 11.1.5, 12.1.7, 13.1.6 by plugin version 0.11!
 
 Last support for IntelliJ 10.5.4 by plugin version 0.8.7
 
@@ -29,15 +29,16 @@ Features / Supports
 - [@EqualsAndHashCode](http://projectlombok.org/features/EqualsAndHashCode.html)
 - [@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor](http://projectlombok.org/features/Constructor.html)
 - [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog](http://projectlombok.org/features/Log.html)
-- [@Data](http://projectlombok.org/features/Data.html)
+- [@Data](https://projectlombok.org/features/Data.html)
 - [@Builder](https://projectlombok.org/features/Builder.html)
 - [@Singular](https://projectlombok.org/features/Builder.html#singular)
-- [@Delegate](http://projectlombok.org/features/Delegate.html)
-- [@Value](http://projectlombok.org/features/Value.html)
-- [@Accessors](http://projectlombok.org/features/experimental/Accessors.html)
-- [@Wither](http://projectlombok.org/features/experimental/Wither.html)
-- [@SneakyThrows](http://projectlombok.org/features/SneakyThrows.html)
-- [@val](http://projectlombok.org/features/val.html) with IntelliJ 14.1
+- [@Delegate](https://projectlombok.org/features/Delegate.html)
+- [@Value](https://projectlombok.org/features/Value.html)
+- [@Accessors](https://projectlombok.org/features/experimental/Accessors.html)
+- [@Wither](https://projectlombok.org/features/experimental/Wither.html)
+- [@SneakyThrows](https://projectlombok.org/features/SneakyThrows.html)
+- [@val](https://projectlombok.org/features/val.html) with IntelliJ 14.1
+- [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) with IntelliJ 2016.2
 - [lombok config files syntax highlighting](https://projectlombok.org/features/configuration.html)
 - code inspections
 - refactoring actions (lombok and delombok)
