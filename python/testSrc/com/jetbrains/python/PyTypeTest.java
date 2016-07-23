@@ -816,6 +816,12 @@ public class PyTypeTest extends PyTestCase {
            "  expr, foo = xs\n");
   }
 
+  // PY-19826
+  public void testListFromTupleType() {
+    doTest("List[Union[str, int]]",
+           "t = ('1',2,3); expr = list(t)");
+  }
+
   public void testTupleIterationType() {
     doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
