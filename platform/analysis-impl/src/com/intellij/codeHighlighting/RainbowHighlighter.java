@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class RainbowHighlighter {
   private final static String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
   private final static int COLOR_COUNT = 16;
@@ -77,7 +79,7 @@ public class RainbowHighlighter {
 
     List<Color> colors = new ArrayList<Color>(COLOR_COUNT);
     TextAttributes attributes = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT);
-    Color foregroundColor = attributes != null ? attributes.getForegroundColor() : JBColor.gray;
+    Color foregroundColor = notNull(attributes != null ? attributes.getForegroundColor() : null, JBColor.gray);
     float[] floats = Color.RGBtoHSB(foregroundColor.getRed(), foregroundColor.getGreen(), foregroundColor.getBlue(), null);
     for (int i = 0; i < COLOR_COUNT; ++i) {
       float factor = ((float)i) / COLOR_COUNT;
