@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class QuickActionManager implements ProjectComponent {
 
           JBPopupFactory.getInstance()
             .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
-                                    () -> myActiveProvider = null, -1).showInFocusCenter();
+                                    () -> myActiveProvider = null, -1).showInBestPositionFor(context);
         }
       }
     });
