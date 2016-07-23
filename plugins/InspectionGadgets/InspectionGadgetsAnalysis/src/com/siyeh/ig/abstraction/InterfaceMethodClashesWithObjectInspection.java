@@ -68,7 +68,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
       if ("clone".equals(name) && !(method.getReturnType() instanceof PsiClassType)) {
         registerMethodError(method);
       }
-      else if ("finalize".equals(name) && method.getReturnType() != PsiType.VOID) {
+      else if ("finalize".equals(name) && !PsiType.VOID.equals(method.getReturnType())) {
         registerMethodError(method);
       }
     }
