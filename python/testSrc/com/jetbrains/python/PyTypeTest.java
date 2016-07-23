@@ -822,6 +822,26 @@ public class PyTypeTest extends PyTestCase {
            "t = ('1',2,3); expr = list(t)");
   }
 
+  public void testListFromMixedSequence() {
+    doTest("List[Union[int, str]]",
+           "expr = [1,2,'3']");
+  }
+
+  public void testTupleConstructorFromTuple() {
+    doTest("Tuple[str, int, int]",
+           "t = ('1',2,3); expr = tuple(t)");
+  }
+
+  public void testTupleConstructorFromList() {
+    doTest("Tuple[int, ...]",
+           "l = [1,2,3]; expr = tuple(l)");
+  }
+
+  public void testTupleConstructorFromMixedList() {
+    doTest("Tuple[Union[int, str], ...]",
+           "l = [1,2,'str']; expr = tuple(l)");
+  }
+
   public void testTupleIterationType() {
     doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
