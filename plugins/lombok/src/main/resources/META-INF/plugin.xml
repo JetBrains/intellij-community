@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.12</version>
+  <version>0.13</version>
 
   <idea-version since-build="138.00"/>
 
@@ -252,6 +252,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.13
+				<ol>
+				     <li>...</li>
+				</ol>
+			</li>
 		<li>0.12
 				<ol>
 				     <li>Added support for transparent changing of visibility of existing fields and variables for IntelliJ 2016.2</li>

@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.1.6"
+    id "org.jetbrains.intellij" version "0.1.10"
     id 'de.undercouch.download' version '2.1.0'
 }
 
@@ -61,9 +61,9 @@ intellij {
 
     pluginName pluginName
     downloadSources !Boolean.valueOf(System.getenv('CI'))
-    sameSinceUntilBuild Boolean.valueOf(isEAP)
     alternativeIdePath idePath
     updateSinceUntilBuild false
+    sameSinceUntilBuild Boolean.valueOf(isEAP)
 
     sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
 
@@ -72,7 +72,7 @@ intellij {
     publish {
         channel publishChannel
         username publishUsername
-        password System.properties['intellij.publish.password']
+        password publishPassword
     }
 }
 
@@ -108,7 +108,7 @@ configurations {
 }
 
 dependencies {
-    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.8', classifier: 'sources', ext: 'jar'
+    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.10', classifier: 'sources', ext: 'jar'
     hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
     bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
