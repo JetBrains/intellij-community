@@ -31,6 +31,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,16 +64,34 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
 
   @Override
   public FunctionalExpressionStub<T> createStub(LighterAST tree, LighterASTNode funExpr, StubElement parentStub) {
+    return new FunctionalExpressionStub<T>(parentStub, this,
+                                           new FunctionalExpressionKey(getFunExprParameterCount(tree, funExpr),
+                                                                       isVoid(tree, funExpr),
+                                                                       calcLocation(tree, funExpr)));
+  }
+
+  @NotNull
+  private static FunctionalExpressionKey.Location calcLocation(LighterAST tree, LighterASTNode funExpr) {
     LighterASTNode call = getContainingCall(tree, funExpr);
     List<LighterASTNode> args = getArgList(tree, call);
-    int argCount = args == null ? -1 : args.size();
     int argIndex = args == null ? -1 : getArgIndex(args, funExpr);
+    String methodName = call == null ? null : getCalledMethodName(tree, call);
+    return methodName == null || argIndex < 0
+           ? createVarLocation(tree, funExpr)
+           : new FunctionalExpressionKey.CallLocation(methodName, args.size(), argIndex);
+  }
 
-    int lambdaParamCount = getFunExprParameterCount(tree, funExpr);
-
-    String methodName = call != null && argIndex >= 0 ? getCalledMethodName(tree, call) : "";
-    FunctionalExpressionKey key = new FunctionalExpressionKey(methodName, lambdaParamCount, argCount, argIndex, isVoid(tree, funExpr));
-    return new FunctionalExpressionStub<T>(parentStub, this, key);
+  @NotNull
+  private static FunctionalExpressionKey.Location createVarLocation(LighterAST tree, LighterASTNode funExpr) {
+    LighterASTNode var = findParent(tree, funExpr, TokenSet.create(LOCAL_VARIABLE, FIELD));
+    if (var != null) {
+      LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, var, TYPE);
+      String typeText = getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, typeElement, JAVA_CODE_REFERENCE));
+      if (typeText != null) {
+        return new FunctionalExpressionKey.VariableLocation(typeText);
+      }
+    }
+    return FunctionalExpressionKey.Location.UNKNOWN;
   }
 
   private static int getArgIndex(List<LighterASTNode> args, LighterASTNode expr) {
@@ -129,12 +148,12 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     return LightTreeUtil.getChildrenOfType(tree, paramList, Constants.PARAMETER_BIT_SET).size();
   }
 
-  @NotNull
+  @Nullable
   private static String getCalledMethodName(LighterAST tree, LighterASTNode call) {
     if (call.getTokenType() == NEW_EXPRESSION) {
       LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, JAVA_CODE_REFERENCE);
-      return ref == null ? "" : getNameIdentifierText(tree, ref);
+      return ref == null ? null : getNameIdentifierText(tree, ref);
     }
 
     LighterASTNode methodExpr = tree.getChildren(call).get(0);
@@ -148,22 +167,22 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     return getNameIdentifierText(tree, methodExpr);
   }
 
-  @NotNull
+  @Nullable
   private static String getSuperClassName(LighterAST tree, LighterASTNode call) {
     LighterASTNode aClass = findClass(tree, call);
     LighterASTNode extendsList = LightTreeUtil.firstChildOfType(tree, aClass, EXTENDS_LIST);
     return getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, extendsList, JAVA_CODE_REFERENCE));
   }
 
-  @NotNull
+  @Nullable
   private static String getNameIdentifierText(LighterAST tree, LighterASTNode idOwner) {
     LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
-    return id != null ? RecordUtil.intern(tree.getCharTable(), id) : "";
+    return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;
   }
 
   @Nullable
   private static LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
-    LighterASTNode expressionList = findExpressionList(tree, node);
+    LighterASTNode expressionList = findParent(tree, node, TokenSet.create(EXPRESSION_LIST));
     if (expressionList != null) {
       LighterASTNode parent = tree.getParent(expressionList);
       if (parent != null && parent.getTokenType() == ANONYMOUS_CLASS) {
@@ -176,11 +195,11 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     return null;
   }
 
-  private static LighterASTNode findExpressionList(LighterAST tree, LighterASTNode node) {
+  private static LighterASTNode findParent(LighterAST tree, LighterASTNode node, TokenSet elementType) {
     while (node != null) {
       final IElementType type = node.getTokenType();
+      if (elementType.contains(type)) return node;
       if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type) || ElementType.MEMBER_BIT_SET.contains(type)) return null;
-      if (type == EXPRESSION_LIST) return node;
       node = tree.getParent(node);
     }
     return null;

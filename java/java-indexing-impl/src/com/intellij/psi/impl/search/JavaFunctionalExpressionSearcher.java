@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.CallLocation;
 import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -159,8 +160,13 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     Collection<PsiMethod> methodCandidates = getCandidateMethodsWithSuitableParams(aClass, useScope, candidateModules, samParamCount, samVoid);
 
     MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries = MultiMap.createSet();
-    for (FunctionalExpressionKey key : generateKeys(samParamCount, samVoid, "", -1, -1)) {
-      queries.putValue(key, useScope); // check all fun-exprs that aren't inside calls
+    for (FunctionalExpressionKey key : generateKeys(samParamCount, samVoid, FunctionalExpressionKey.Location.UNKNOWN)) {
+      queries.putValue(key, useScope); // check all fun-exprs that aren't inside calls or variables
+    }
+
+    for (FunctionalExpressionKey key : generateKeys(samParamCount, samVoid,
+                                                    new FunctionalExpressionKey.VariableLocation(assertNotNull(aClass.getName())))) {
+      queries.putValue(key, useScope);
     }
 
     //find all usages of method candidates in files with functional expressions
@@ -191,7 +197,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       if (canPassFunctionalExpression(samClass, parameter)) {
         for (int argCount : getPossibleArgCounts(parameters, paramIndex)) {
           for (int argIndex : getPossibleArgIndices(parameter, paramIndex, argCount)) {
-            keys.addAll(generateKeys(samParamCount, samVoid, methodName, argCount, argIndex));
+            keys.addAll(generateKeys(samParamCount, samVoid, new CallLocation(methodName, argCount, argIndex)));
           }
         }
       }
@@ -202,11 +208,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static List<FunctionalExpressionKey> generateKeys(int samMethodParamsCount,
                                                             boolean samMethodVoid,
-                                                            String methodName, int argCount, int argIndex) {
+                                                            FunctionalExpressionKey.Location location) {
     List<FunctionalExpressionKey> result = new ArrayList<>();
     for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samMethodParamsCount}) {
-      result.add(new FunctionalExpressionKey(methodName, lambdaParamCount, argCount, argIndex, ThreeState.UNSURE));
-      result.add(new FunctionalExpressionKey(methodName, lambdaParamCount, argCount, argIndex, ThreeState.fromBoolean(samMethodVoid)));
+      result.add(new FunctionalExpressionKey(lambdaParamCount, ThreeState.UNSURE, location));
+      result.add(new FunctionalExpressionKey(lambdaParamCount, ThreeState.fromBoolean(samMethodVoid), location));
     }
     return result;
   }
@@ -214,21 +220,21 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static int[] getPossibleArgCounts(PsiParameter[] parameters, int paramIndex) {
     if (parameters[parameters.length - 1].isVarArgs()) {
       return IntStream
-        .rangeClosed(parameters.length - 1, FunctionalExpressionKey.MAX_ARG_COUNT)
+        .rangeClosed(parameters.length - 1, CallLocation.MAX_ARG_COUNT)
         .filter(i -> i > paramIndex)
         .toArray();
     }
-    return new int[]{Math.min(parameters.length, FunctionalExpressionKey.MAX_ARG_COUNT)};
+    return new int[]{Math.min(parameters.length, CallLocation.MAX_ARG_COUNT)};
   }
 
   private static int[] getPossibleArgIndices(PsiParameter parameter, int paramIndex, int argCount) {
     if (parameter.isVarArgs()) {
       return IntStream
-        .rangeClosed(paramIndex + 1, FunctionalExpressionKey.MAX_ARG_COUNT)
+        .rangeClosed(paramIndex + 1, CallLocation.MAX_ARG_COUNT)
         .filter(i -> i < argCount)
         .toArray();
     }
-    return new int[]{Math.min(paramIndex, FunctionalExpressionKey.MAX_ARG_COUNT)};
+    return new int[]{Math.min(paramIndex, CallLocation.MAX_ARG_COUNT)};
   }
 
   @NotNull
@@ -264,8 +270,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         Set<String> usedMethodNames = new HashSet<>();
         StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key -> {
           ProgressManager.checkCanceled();
-          if (key.canRepresent(expectedFunExprParamsCount, isVoid)) {
-            usedMethodNames.add(key.methodName);
+          if (key.canRepresent(expectedFunExprParamsCount, isVoid) && key.location instanceof CallLocation) {
+            usedMethodNames.add(((CallLocation)key.location).methodName);
           }
           return true;
         }, useScope, null);

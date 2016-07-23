@@ -17,7 +17,6 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.google.common.base.Objects;
 import com.intellij.util.ThreeState;
-import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,46 +29,54 @@ import java.io.IOException;
  */
 public class FunctionalExpressionKey {
   public static final int UNKNOWN_PARAM_COUNT = -1;
-  public static final int MAX_ARG_COUNT = 10;
-  @NotNull public final String methodName;
   public final int lambdaParameterCount;
-  public final int methodArgsLength;
-  public final int callArgIndex;
   public final ThreeState isVoid;
+  public final Location location;
 
-  public FunctionalExpressionKey(@NotNull String methodName,
-                                 int lambdaParameterCount,
-                                 int methodArgsLength,
-                                 int callArgIndex,
-                                 ThreeState isVoid) {
-    this.methodName = methodName;
+  public FunctionalExpressionKey(int lambdaParameterCount, @NotNull ThreeState isVoid, @NotNull Location location) {
+    this.location = location;
     this.lambdaParameterCount = lambdaParameterCount;
-    this.methodArgsLength = Math.min(methodArgsLength, MAX_ARG_COUNT);
-    this.callArgIndex = Math.min(callArgIndex, MAX_ARG_COUNT - 1);
     this.isVoid = isVoid;
   }
 
   @NotNull
   public static FunctionalExpressionKey deserializeKey(@NotNull DataInput dataStream) throws IOException {
-    String methodName = IOUtil.readUTF(dataStream);
-    int parameterCount = DataInputOutputUtil.readINT(dataStream);
-    int methodArgsLength = DataInputOutputUtil.readINT(dataStream);
-    int argIndex = DataInputOutputUtil.readINT(dataStream);
+    int parameterCount = dataStream.readByte();
     ThreeState voidCompatible = ThreeState.values()[dataStream.readByte()];
-    return new FunctionalExpressionKey(methodName, parameterCount, methodArgsLength, argIndex, voidCompatible);
+    return new FunctionalExpressionKey(parameterCount, voidCompatible, deserializeLocation(dataStream));
+  }
+
+  public void serializeKey(@NotNull DataOutput dataStream) throws IOException {
+    dataStream.writeByte(lambdaParameterCount);
+    dataStream.writeByte(isVoid.ordinal());
+    serializeLocation(dataStream);
+  }
+
+  private static Location deserializeLocation(DataInput dataStream) throws IOException {
+    byte locationType = dataStream.readByte();
+    if (locationType == 0) return Location.UNKNOWN;
+    if (locationType == 1) return CallLocation.deserializeCall(dataStream);
+    if (locationType == 2) return VariableLocation.deserializeField(dataStream);
+    throw new AssertionError(locationType);
+  }
+
+  private void serializeLocation(@NotNull DataOutput dataStream) throws IOException {
+    if (location == Location.UNKNOWN) {
+      dataStream.writeByte(0);
+    }
+    else if (location instanceof CallLocation) {
+      dataStream.writeByte(1);
+      ((CallLocation)location).serializeCall(dataStream);
+    }
+    else if (location instanceof VariableLocation) {
+      dataStream.writeByte(2);
+      ((VariableLocation)location).serializeVariable(dataStream);
+    }
   }
 
   public boolean canRepresent(int samParamCount, boolean samVoid) {
     return (samParamCount == lambdaParameterCount || lambdaParameterCount == -1) &&
            (isVoid == ThreeState.UNSURE || samVoid == isVoid.toBoolean());
-  }
-
-  public void serializeKey(@NotNull DataOutput dataStream) throws IOException {
-    IOUtil.writeUTF(dataStream, methodName);
-    DataInputOutputUtil.writeINT(dataStream, lambdaParameterCount);
-    DataInputOutputUtil.writeINT(dataStream, methodArgsLength);
-    DataInputOutputUtil.writeINT(dataStream, callArgIndex);
-    dataStream.writeByte(isVoid.ordinal());
   }
 
   @Override
@@ -80,32 +87,134 @@ public class FunctionalExpressionKey {
     FunctionalExpressionKey key = (FunctionalExpressionKey)o;
 
     if (lambdaParameterCount != key.lambdaParameterCount) return false;
-    if (methodArgsLength != key.methodArgsLength) return false;
-    if (callArgIndex != key.callArgIndex) return false;
-    if (!methodName.equals(key.methodName)) return false;
     if (isVoid != key.isVoid) return false;
+    if (!location.equals(key.location)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = methodName.hashCode();
-    result = 31 * result + lambdaParameterCount;
-    result = 31 * result + methodArgsLength;
-    result = 31 * result + callArgIndex;
+    int result = lambdaParameterCount;
     result = 31 * result + isVoid.hashCode();
+    result = 31 * result + location.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("methodName", methodName)
       .add("lambdaParameterCount", lambdaParameterCount)
-      .add("methodArgsLength", methodArgsLength)
-      .add("callArgIndex", callArgIndex)
       .add("isVoid", isVoid)
+      .add("location", location)
       .toString();
+  }
+
+  public interface Location {
+    Location UNKNOWN = new Location() {
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+    };
+  }
+
+  public static class CallLocation implements Location {
+    public static final int MAX_ARG_COUNT = 10;
+    @NotNull public final String methodName;
+    public final int methodArgsLength;
+    public final int callArgIndex;
+
+    public CallLocation(@NotNull String methodName, int methodArgsLength, int callArgIndex) {
+      this.methodName = methodName;
+      this.methodArgsLength = Math.min(methodArgsLength, MAX_ARG_COUNT);
+      this.callArgIndex = Math.min(callArgIndex, MAX_ARG_COUNT - 1);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CallLocation)) return false;
+
+      CallLocation location = (CallLocation)o;
+
+      if (methodArgsLength != location.methodArgsLength) return false;
+      if (callArgIndex != location.callArgIndex) return false;
+      if (!methodName.equals(location.methodName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = methodName.hashCode();
+      result = 31 * result + methodArgsLength;
+      result = 31 * result + callArgIndex;
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("methodName", methodName)
+        .add("methodArgsLength", methodArgsLength)
+        .add("callArgIndex", callArgIndex)
+        .toString();
+    }
+
+    @NotNull
+    private static Location deserializeCall(DataInput dataStream) throws IOException {
+      String methodName = IOUtil.readUTF(dataStream);
+      int methodArgsLength = dataStream.readByte();
+      int argIndex = dataStream.readByte();
+      return new CallLocation(methodName, methodArgsLength, argIndex);
+    }
+
+    private void serializeCall(@NotNull DataOutput dataStream) throws IOException {
+      IOUtil.writeUTF(dataStream, methodName);
+      dataStream.writeByte(methodArgsLength);
+      dataStream.writeByte(callArgIndex);
+    }
+
+  }
+
+  public static class VariableLocation implements Location {
+    @NotNull public final String varType;
+
+    public VariableLocation(@NotNull String varType) {
+      this.varType = varType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof VariableLocation)) return false;
+
+      VariableLocation location = (VariableLocation)o;
+
+      if (!varType.equals(location.varType)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return varType.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("fieldType", varType)
+        .toString();
+    }
+
+    public static VariableLocation deserializeField(DataInput dataStream) throws IOException {
+      return new VariableLocation(IOUtil.readUTF(dataStream));
+    }
+
+    public void serializeVariable(DataOutput dataStream) throws IOException {
+      IOUtil.writeUTF(dataStream, varType);
+    }
   }
 }
