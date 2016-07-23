@@ -297,9 +297,8 @@ public class PyTypeChecker {
       }
     }
     else if (type instanceof PyTupleType) {
-      //TODO: What about homogeneus tuple types?
       final PyTupleType tuple = (PyTupleType)type;
-      final int n = tuple.getElementCount();
+      final int n = tuple.isHomogeneous() ? 1 : tuple.getElementCount();
       for (int i = 0; i < n; i++) {
         collectGenerics(tuple.getElementType(i), context, collected, visited);
       }

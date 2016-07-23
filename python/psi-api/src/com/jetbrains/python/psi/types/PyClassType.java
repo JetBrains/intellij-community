@@ -25,4 +25,11 @@ import org.jetbrains.annotations.NotNull;
 public interface PyClassType extends PyClassLikeType, UserDataHolder {
   @NotNull
   PyClass getPyClass();
+
+  /**
+   * @param newClass
+   * @return This class type repalced with another type. Intended to be used for 'upcasting'
+   */
+  @NotNull
+  PyClassType toClass(@NotNull PyClass newClass);
 }

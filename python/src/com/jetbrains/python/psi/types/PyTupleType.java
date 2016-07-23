@@ -137,4 +137,15 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType,
       return Collections.singletonList(PyUnionType.union(Arrays.asList(myElementTypes)));
     }
   }
+
+  @Override
+  public PyClassType toInstance() {
+    return myIsDefinition ? withUserDataCopy(new PyTupleType(myClass, myElementTypes, myHomogeneous)) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassType toClass(@NotNull PyClass newClass) {
+    return myClass.equals(newClass) ? this : new PyTupleType(newClass, myElementTypes, myHomogeneous);
+  }
 }
