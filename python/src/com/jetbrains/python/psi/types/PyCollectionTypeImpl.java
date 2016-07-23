@@ -77,7 +77,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyCollectionType)) return false;
+    if (!(o instanceof PyCollectionTypeImpl)) return false;
     if (!super.equals(o)) return false;
 
     PyCollectionType type = (PyCollectionType)o;

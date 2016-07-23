@@ -116,22 +116,7 @@ public class PyTypeChecker {
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
       final PyClass subClass = ((PyClassType)actual).getPyClass();
-      if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
-        if (!matchClasses(superClass, subClass, context)) {
-          return false;
-        }
-        // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
-        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
-        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
-        for (int i = 0; i < subElementTypes.size(); i++) {
-          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
-          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
+      if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
         final PyTupleType subTupleType = (PyTupleType)actual;
         if (!superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
@@ -163,6 +148,22 @@ public class PyTypeChecker {
           return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context);
         }
       }
+      else if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
+        if (!matchClasses(superClass, subClass, context)) {
+          return false;
+        }
+        // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
+        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
+        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
+        for (int i = 0; i < subElementTypes.size(); i++) {
+          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
+          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
       else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
@@ -295,19 +296,21 @@ public class PyTypeChecker {
         collectGenerics(t, context, collected, visited);
       }
     }
-    else if (type instanceof PyCollectionType) {
-      final PyCollectionType collection = (PyCollectionType)type;
-      for (PyType elementType : collection.getElementTypes(context)) {
-        collectGenerics(elementType, context, collected, visited);
-      }
-    }
     else if (type instanceof PyTupleType) {
+      //TODO: What about homogeneus tuple types?
       final PyTupleType tuple = (PyTupleType)type;
       final int n = tuple.getElementCount();
       for (int i = 0; i < n; i++) {
         collectGenerics(tuple.getElementType(i), context, collected, visited);
       }
     }
+    else if (type instanceof PyCollectionType) {
+      final PyCollectionType collection = (PyCollectionType)type;
+      for (PyType elementType : collection.getElementTypes(context)) {
+        collectGenerics(elementType, context, collected, visited);
+      }
+    }
+
     else if (type instanceof PyCallableType) {
       final PyCallableType callable = (PyCallableType)type;
       final List<PyCallableParameter> parameters = callable.getParameters(context);

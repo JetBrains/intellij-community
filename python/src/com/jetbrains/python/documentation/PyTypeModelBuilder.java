@@ -197,7 +197,16 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyCollectionType) {
+    if (type instanceof PyTupleType) {
+      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      final PyTupleType tupleType = (PyTupleType)type;
+      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
+        final PyType elementType = tupleType.getElementType(i);
+        elementModels.add(build(elementType, true));
+      }
+      result = new TupleType(elementModels, tupleType.isHomogeneous());
+    }
+    else if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(myContext);
       boolean nullOnlyTypes = true;
@@ -232,15 +241,7 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = build((PyCallableType)type);
     }
-    else if (type instanceof PyTupleType) {
-      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
-      final PyTupleType tupleType = (PyTupleType)type;
-      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
-        final PyType elementType = tupleType.getElementType(i);
-        elementModels.add(build(elementType, true));
-      }
-      result = new TupleType(elementModels, tupleType.isHomogeneous());
-    }
+
     if (result == null) {
       result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
@@ -364,7 +365,7 @@ public class PyTypeModelBuilder {
     @Override
     public void oneOf(OneOf oneOf) {
       myDepth++;
-      if (myDepth>MAX_DEPTH) {
+      if (myDepth > MAX_DEPTH) {
         add("...");
         return;
       }
@@ -393,7 +394,7 @@ public class PyTypeModelBuilder {
     @Override
     public void collectionOf(CollectionOf collectionOf) {
       myDepth++;
-      if (myDepth>MAX_DEPTH) {
+      if (myDepth > MAX_DEPTH) {
         add("...");
         return;
       }
@@ -416,7 +417,7 @@ public class PyTypeModelBuilder {
     @Override
     public void function(FunctionType function) {
       myDepth++;
-      if (myDepth>MAX_DEPTH) {
+      if (myDepth > MAX_DEPTH) {
         add("...");
         return;
       }
@@ -436,7 +437,7 @@ public class PyTypeModelBuilder {
     @Override
     public void param(ParamType param) {
       myDepth++;
-      if (myDepth>MAX_DEPTH) {
+      if (myDepth > MAX_DEPTH) {
         add("...");
         return;
       }

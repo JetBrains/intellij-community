@@ -26,11 +26,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType {
+public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType, PyCollectionType {
   private final PyType[] myElementTypes;
   private final boolean myHomogeneous;
 
@@ -47,7 +49,7 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
   public static PyTupleType createHomogeneous(@NotNull PsiElement anchor, @Nullable PyType elementType) {
     PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
-      return new PyTupleType(tuple, new PyType[] {elementType}, true);
+      return new PyTupleType(tuple, new PyType[]{elementType}, true);
     }
     return null;
   }
@@ -123,5 +125,16 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
     int result = super.hashCode();
     result = 31 * result + (myElementTypes != null ? Arrays.hashCode(myElementTypes) : 0);
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
+    if (myHomogeneous) {
+      return Collections.singletonList(myElementTypes[0]);
+    }
+    else {
+      return Collections.singletonList(PyUnionType.union(Arrays.asList(myElementTypes)));
+    }
   }
 }
