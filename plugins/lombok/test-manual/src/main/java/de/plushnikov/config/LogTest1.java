@@ -11,7 +11,6 @@ public class LogTest1 {
 
   public static void main(String[] args) {
     LOG2.info("Test");
-
     new LogTest1().logSomething();
   }
 }

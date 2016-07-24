@@ -255,6 +255,7 @@
 		<ul>
 		<li>0.13
 				<ol>
+            <li>Fixed #254: Properties from lombok.config does not involve on suggestion list</li>
             <li>Fixed #259: Support JBoss Logging (new in Lombok 1.16.10)</li>
 				</ol>
 			</li>

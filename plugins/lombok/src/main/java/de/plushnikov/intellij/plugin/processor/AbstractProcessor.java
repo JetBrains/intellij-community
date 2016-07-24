@@ -33,7 +33,7 @@ import java.util.List;
  */
 public abstract class AbstractProcessor implements Processor {
   /**
-   * Anntotation classes this processor supports
+   * Annotation classes this processor supports
    */
   private final Class<? extends Annotation>[] supportedAnnotationClasses;
   /**
@@ -46,7 +46,7 @@ public abstract class AbstractProcessor implements Processor {
    *
    * @param supportedClass              kind of output elements this processor supports
    * @param supportedAnnotationClass    annotation this processor supports
-   * @param equivalentAnnotationClasses any other aquivalent annotations
+   * @param equivalentAnnotationClasses any other equivalent annotations
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
@@ -103,8 +103,8 @@ public abstract class AbstractProcessor implements Processor {
     }
   }
 
-  public static boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
-                                                       @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
+  protected static boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
+                                                          @NotNull String annotationParameter, @NotNull ConfigKey configKey) {
     final boolean result;
     final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {

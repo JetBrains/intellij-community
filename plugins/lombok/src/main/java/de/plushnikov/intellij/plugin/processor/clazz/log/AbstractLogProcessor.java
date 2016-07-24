@@ -90,7 +90,8 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     final PsiManager manager = psiClass.getContainingFile().getManager();
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
-    PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
+    final PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
+
     LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, getLoggerName(psiClass), psiLoggerType)
         .withContainingClass(psiClass)
         .withModifier(PsiModifier.FINAL)

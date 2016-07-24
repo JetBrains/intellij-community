@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
-  private static final String LOMBOK_SRC_PATH = "./generated/src";
+  private static final String LOMBOK_SRC_PATH = "./generated/src/lombok";
+  private static final String HRISEY_SRC_PATH = "./generated/src/hrisey";
 
   @Override
   protected String getTestDataPath() {
@@ -55,19 +56,19 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeIn
 
   @Override
   public void setUp() throws Exception {
-    final String absoluteTestDataPath = new File(getTestDataPath(), getBasePath()).getCanonicalPath();
-    final String absoluteLombokPath = new File(LOMBOK_SRC_PATH).getCanonicalPath();
-    VfsRootAccess.allowRootAccess(absoluteTestDataPath, absoluteLombokPath);
+    VfsRootAccess.allowRootAccess(new File(getTestDataPath(), getBasePath()).getCanonicalPath(),
+        new File(LOMBOK_SRC_PATH).getCanonicalPath(), new File(HRISEY_SRC_PATH).getCanonicalPath());
 
     super.setUp();
     loadFilesFrom(LOMBOK_SRC_PATH);
+    loadFilesFrom(HRISEY_SRC_PATH);
   }
 
   private void loadFilesFrom(final String srcPath) {
     List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
     for (File javaFile : filesByMask) {
       String filePath = PathUtil.toSystemIndependentName(javaFile.getPath());
-      myFixture.copyFileToProject(filePath, filePath.substring(srcPath.length() + 1));
+      myFixture.copyFileToProject(filePath, filePath.substring(srcPath.lastIndexOf("/") + 1));
     }
   }
 

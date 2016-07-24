@@ -89,15 +89,24 @@ public class ConfigDiscovery {
     }
 
     if (null != psiFile) {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (null != virtualFile) {
-        final VirtualFile fileDirectory = virtualFile.getParent();
-        if (null != fileDirectory) {
-          canonicalPath = fileDirectory.getCanonicalPath();
-        }
+      canonicalPath = getDirectoryCanonicalPath(psiFile);
+      if (null == canonicalPath) {
+        canonicalPath = getDirectoryCanonicalPath(psiFile.getOriginalFile());
       }
     }
     return PathUtil.toSystemIndependentName(canonicalPath);
+  }
+
+  @Nullable
+  private String getDirectoryCanonicalPath(@NotNull PsiFile psiFile) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (null != virtualFile) {
+      final VirtualFile fileDirectory = virtualFile.getParent();
+      if (null != fileDirectory) {
+        return fileDirectory.getCanonicalPath();
+      }
+    }
+    return null;
   }
 
   @NotNull
