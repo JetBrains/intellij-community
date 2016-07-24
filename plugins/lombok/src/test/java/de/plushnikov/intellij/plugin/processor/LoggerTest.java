@@ -48,4 +48,8 @@ public class LoggerTest extends AbstractLombokParsingTestCase {
   public void testLogger$LoggerXSlf4j() throws IOException {
     doTest(true);
   }
+
+  public void testLogger$LoggerJBossLog() throws IOException {
+    doTest(true);
+  }
 }

@@ -50,6 +50,7 @@ public enum ConfigKey {
   LOG_LOG4J2_FLAG_USAGE("lombok.log.log4j2.flagUsage", ""),
   LOG_SLF4J_FLAG_USAGE("lombok.log.slf4j.flagUsage", ""),
   LOG_XSLF4J_FLAG_USAGE("lombok.log.xslf4j.flagUsage", ""),
+  LOG_JBOSSLOG_FLAG_USAGE("lombok.log.jbosslog.flagUsage", ""),
   NOARGSCONSTRUCTOR_FLAG_USAGE("lombok.noArgsConstructor.flagUsage", ""),
   NONNULL_FLAG_USAGE("lombok.nonNull.flagUsage", ""),
   REQUIREDARGSCONSTRUCTOR_FLAG_USAGE("lombok.requiredArgsConstructor.flagUsage", ""),

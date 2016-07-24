@@ -13,6 +13,7 @@ import com.intellij.util.ProcessingContext;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 
 public class LombokConfigCompletionContributor extends CompletionContributor {
 
-  private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = "lombok.equalsAndHashCode.callSuper";
+  private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey();
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = new HashSet<String>(Arrays.asList(
@@ -36,13 +37,15 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
         "lombok.fieldDefaults.flagUsage", "lombok.getter.flagUsage", "lombok.getter.lazy.flagUsage",
         "lombok.log.apacheCommons.flagUsage", "lombok.log.flagUsage", "lombok.log.javaUtilLogging.flagUsage",
         "lombok.log.log4j.flagUsage", "lombok.log.log4j2.flagUsage", "lombok.log.slf4j.flagUsage",
-        "lombok.log.xslf4j.flagUsage", "lombok.noArgsConstructor.flagUsage", "lombok.nonNull.flagUsage",
+        "lombok.log.xslf4j.flagUsage", "lombok.log.jbosslog.flagUsage",
+        "lombok.noArgsConstructor.flagUsage", "lombok.nonNull.flagUsage",
         "lombok.requiredArgsConstructor.flagUsage", "lombok.setter.flagUsage", "lombok.sneakyThrows.flagUsage",
         "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
         "lombok.wither.flagUsage"));
 
     final Collection<String> otherOptions = new HashSet<String>(Arrays.asList(
-        "lombok.accessors.prefix", "lombok.log.fieldName", "lombok.nonNull.exceptionType", LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER));
+        ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.LOG_FIELDNAME.getConfigKey(),
+        ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey()));
 
     final Collection<String> allOptions = new HashSet<String>(booleanOptions);
     allOptions.addAll(flagUsageOptions);

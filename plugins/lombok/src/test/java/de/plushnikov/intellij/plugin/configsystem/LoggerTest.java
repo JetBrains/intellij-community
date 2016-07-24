@@ -36,6 +36,10 @@ public class LoggerTest extends AbstractLombokConfigSystemTestCase {
     doTest();
   }
 
+  public void testFieldIsStatic$JBossLogTest() throws IOException {
+    doTest();
+  }
+
 
   public void testFieldName$LogTest() throws IOException {
     doTest();
@@ -58,6 +62,10 @@ public class LoggerTest extends AbstractLombokConfigSystemTestCase {
   }
 
   public void testFieldName$XSlf4jTest() throws IOException {
+    doTest();
+  }
+
+  public void testFieldName$JBossLogTest() throws IOException {
     doTest();
   }
 }

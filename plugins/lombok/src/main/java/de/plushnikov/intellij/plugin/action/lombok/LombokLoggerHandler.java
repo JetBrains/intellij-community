@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.rename.RenameProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
@@ -22,8 +23,9 @@ public class LombokLoggerHandler extends BaseLombokHandler {
 
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
-        new CommonsLogProcessor(), new Log4jProcessor(), new Log4j2Processor(),
-        new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor());
+        new CommonsLogProcessor(), new JBossLogProcessor(),
+        new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(),
+        new Slf4jProcessor(), new XSlf4jProcessor());
 
     final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);

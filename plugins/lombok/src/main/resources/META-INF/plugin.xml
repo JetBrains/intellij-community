@@ -26,7 +26,7 @@
         <li><a href="https://projectlombok.org/features/ToString.html">@ToString</a></li>
         <li><a href="https://projectlombok.org/features/EqualsAndHashCode.html">@EqualsAndHashCode</a></li>
         <li><a href="https://projectlombok.org/features/Constructor.html">@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor</a></li>
-        <li><a href="https://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog</a></li>
+        <li><a href="https://projectlombok.org/features/Log.html">@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog, @JBossLog</a></li>
         <li><a href="https://projectlombok.org/features/Data.html">@Data</a></li>
         <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
         <li><a href="https://projectlombok.org/features/Builder.html#singular">@Singular</a></li>
@@ -125,6 +125,7 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor"/>
@@ -254,7 +255,7 @@
 		<ul>
 		<li>0.13
 				<ol>
-				     <li>...</li>
+            <li>Fixed #259: Support JBoss Logging (new in Lombok 1.16.10)</li>
 				</ol>
 			</li>
 		<li>0.12
