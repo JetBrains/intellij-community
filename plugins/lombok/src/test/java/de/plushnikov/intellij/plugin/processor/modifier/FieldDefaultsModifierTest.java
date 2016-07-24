@@ -4,14 +4,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-
 import org.jetbrains.annotations.NotNull;
-
-import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
 
 /**
  * @author Alexej Kubarev
@@ -26,7 +21,6 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil.registerExtension(PsiAugmentProvider.EP_NAME, new LombokAugmentProvider(), myTestRootDisposable);
     myFixture.addClass("package lombok;\npublic enum AccessLevel { PUBLIC, MODULE, PROTECTED, PACKAGE, PRIVATE, NONE; }");
     myFixture.addClass("package lombok.experimental;\npublic @interface PackagePrivate { }");
     myFixture.addClass("package lombok.experimental;\npublic @interface NonFinal { }");

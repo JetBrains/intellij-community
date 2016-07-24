@@ -6,12 +6,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-
-import de.plushnikov.intellij.plugin.provider.LombokAugmentProvider;
 
 /**
  * @author Florian Böhm
@@ -26,7 +22,6 @@ public class UtilityClassModifierTest extends LightCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil.registerExtension(PsiAugmentProvider.EP_NAME, new LombokAugmentProvider(), myTestRootDisposable);
     myFixture.addClass("package lombok.experimental;\npublic @interface UtilityClass { }");
   }
 
