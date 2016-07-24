@@ -21,4 +21,10 @@ public class FieldSetter {
 
   @Setter(AccessLevel.NONE)
   private int noAccessProperty;
+
+  @Setter
+  private final int finalProperty = 0;
+
+  @Setter(AccessLevel.NONE)
+  private final int finalAccessProperty = 0;
 }

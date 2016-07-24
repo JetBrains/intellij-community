@@ -66,8 +66,8 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
 
   private boolean validateFinalModifier(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-      builder.addError(String.format("'@%s' on final field is not allowed", psiAnnotation.getQualifiedName()),
+    if (psiField.hasModifierProperty(PsiModifier.FINAL) && null != LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
+      builder.addWarning("Not generating setter for this field: Setters cannot be generated for final fields.",
           PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }

@@ -3,10 +3,14 @@ package de.plushnikov.intellij.plugin;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.PathUtil;
 import de.plushnikov.intellij.plugin.inspection.LombokInspection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -21,7 +25,9 @@ public class InspectionTest extends InspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     VfsRootAccess.allowRootAccess(new File("./" + LIB_MOCK_JDK).getCanonicalPath());
+    VfsRootAccess.allowRootAccess(new File(getTestDataPath(), "lib").getCanonicalPath());
     super.setUp();
+
   }
 
   @Override
@@ -79,4 +85,15 @@ public class InspectionTest extends InspectionTestCase {
   public void testValInspection() throws Exception {
     doTest();
   }
+
+  public void testSetterOnFinalField() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
+    super.setupRootModel(testDir, sourceDir, sdkName);
+    PsiTestUtil.addLibrary(getModule(), "Lombok", PathUtil.toSystemIndependentName(new File(getTestDataPath(), "lib").getAbsolutePath()), "lombok.jar");
+  }
+
 }
