@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.validation;
+package com.jetbrains.python.codeInsight.functionTypeComments;
 
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
-import com.jetbrains.python.psi.PyStarExpression;
+import com.jetbrains.python.psi.PyElementType;
 
 /**
- * @author yole
+ * @author Mikhail Golubev
  */
-public class StarAnnotator extends PyAnnotator {
-  @Override
-  public void visitPyStarExpression(PyStarExpression node) {
-    super.visitPyStarExpression(node);
-    if (!node.isAssignmentTarget() && !node.isUnpacking() && !(node.getParent() instanceof PyParameterTypeList)) {
-      getHolder().createErrorAnnotation(node, "Can't use starred expression here");
-    }
-  }
+public interface PyFunctionTypeAnnotationElementTypes {
+  PyElementType FUNCTION_SIGNATURE = new PyElementType("FUNCTION_SIGNATURE", PyFunctionTypeAnnotation.class);
+  PyElementType PARAMETER_TYPE_LIST = new PyElementType("PARAMETER_TYPE_LIST", PyParameterTypeList.class);
 }
