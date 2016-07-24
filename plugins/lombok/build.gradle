@@ -55,9 +55,25 @@ sourceSets {
     }
 }
 
+def versionOfGrammarKit = "1.4.2"
+def versionOfLitePsi = "1.4.0"
+
 intellij {
     def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
     version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+    println "Building for IntelliJ version: ${version}"
+
+    def slurper = new groovy.json.JsonSlurper();
+    def fallBackVersionGrammarKit = slurper.parseText(grammarKitVersionMap)[version]
+    if (fallBackVersionGrammarKit) {
+        versionOfGrammarKit = fallBackVersionGrammarKit;
+    }
+    def fallBackVersionLitePsi = slurper.parseText(grammarLitePsiVersionMap)[version]
+    if (fallBackVersionLitePsi) {
+        versionOfLitePsi = fallBackVersionLitePsi;
+    }
+    println "Using version: ${versionOfGrammarKit} for GrammarKit"
+    println "Using version: ${versionOfLitePsi} for LitePsi"
 
     pluginName pluginName
     downloadSources !Boolean.valueOf(System.getenv('CI'))
@@ -115,7 +131,7 @@ dependencies {
     bnf files("$buildDir/tools/light-psi-all.jar")
     jflex files("$buildDir/tools/JFlex.jar")
 
-    compile (project(':patcher'))  {
+    compile(project(':patcher')) {
         exclude group: 'org.javassist'
     }
 
@@ -189,7 +205,7 @@ task downloadJFlexSkeleton(type: Download) {
 task downloadGrammarKit(type: Download) {
     description 'Downloads GrammarKit.'
 
-    src 'https://github.com/JetBrains/Grammar-Kit/releases/download/1.2.0.1/GrammarKit.zip'
+    src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfGrammarKit}/GrammarKit.zip"
     dest "$buildDir/tools/GrammarKit.zip"
     onlyIfNewer true
 }
@@ -197,7 +213,7 @@ task downloadGrammarKit(type: Download) {
 task downloadGrammarLightPsi(type: Download) {
     description 'Downloads GrammarKit Light Psi.'
 
-    src 'https://github.com/JetBrains/Grammar-Kit/releases/download/1.2.0.1/light-psi-all.jar'
+    src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfLitePsi}/light-psi-all.jar"
     dest "$buildDir/tools/light-psi-all.jar"
     onlyIfNewer true
 }
