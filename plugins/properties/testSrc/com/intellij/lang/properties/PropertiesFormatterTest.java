@@ -37,6 +37,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
     myCustomSettings = settings.getCustomSettings(PropertiesCodeStyleSettings.class);
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = false;
     myCustomSettings.SPACES_AROUND_KEY_VALUE_DELIMITER = false;
+    myCustomSettings.KEEP_BLANK_LINES = false;
   }
 
   @Override
@@ -80,6 +81,33 @@ public class PropertiesFormatterTest extends FormatterTestCase {
 
   public void testWhitespaceDelimiter() {
     doTextTest("k    v", "k v");
+  }
+
+  public void testKeepBlankLines() {
+    myCustomSettings.KEEP_BLANK_LINES = true;
+    String propertiesWithBlankLines =
+      "#comment\n" +
+      "\n" +
+      "key1=value1\n" +
+      "\n" +
+      "\n" +
+      "key2=value2\n";
+
+    doTextTest(propertiesWithBlankLines, propertiesWithBlankLines);
+  }
+
+  public void testDoNotKeepBlankLines() {
+    myCustomSettings.KEEP_BLANK_LINES = false;
+    doTextTest("#comment\n" +
+               "\n" +
+               "key1=value1\n" +
+               "\n" +
+               "\n" +
+               "key2=value2\n",
+
+               "#comment\n" +
+               "key1=value1\n" +
+               "key2=value2\n");
   }
 
   protected void doTextTest(String text) {

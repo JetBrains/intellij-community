@@ -38,6 +38,7 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   public boolean SPACES_AROUND_KEY_VALUE_DELIMITER = false;
+  public boolean KEEP_BLANK_LINES = false;
   public int KEY_VALUE_DELIMITER_CODE = 0;
 
   public char getDelimiter() {
