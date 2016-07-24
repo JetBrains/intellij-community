@@ -51,6 +51,8 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
                      "KEY_VALUE_DELIMITER_CODE",
                      "Key-value delimiter", null,
                      new String[]{"=", ":", "whitespace symbol"}, new int[]{0, 1, 2});
+    showCustomOption(PropertiesCodeStyleSettings.class, "KEEP_BLANK_LINES",
+                     "Keep blank lines", null);
   }
 
   @Nullable
@@ -69,7 +71,7 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
   @Override
   protected String getPreviewText() {
     return "key1=value\n" +
-           "some_key=some_value\n" +
+           "some_key=some_value\n\n" +
            "#commentaries\n" +
            "last.key=some text here";
   }
