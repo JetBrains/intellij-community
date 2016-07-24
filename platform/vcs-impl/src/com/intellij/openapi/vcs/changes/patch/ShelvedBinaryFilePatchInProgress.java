@@ -38,11 +38,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 
-public class BinaryFilePatchInProgress extends AbstractFilePatchInProgress<ShelvedBinaryFilePatch> {
+public class ShelvedBinaryFilePatchInProgress extends AbstractFilePatchInProgress<ShelvedBinaryFilePatch> {
 
-  protected BinaryFilePatchInProgress(ShelvedBinaryFilePatch patch,
-                                      Collection<VirtualFile> autoBases,
-                                      VirtualFile baseDir) {
+  protected ShelvedBinaryFilePatchInProgress(ShelvedBinaryFilePatch patch,
+                                             Collection<VirtualFile> autoBases,
+                                             VirtualFile baseDir) {
     super(ShelvedBinaryFilePatch.patchCopy(patch), autoBases, baseDir);
   }
 
