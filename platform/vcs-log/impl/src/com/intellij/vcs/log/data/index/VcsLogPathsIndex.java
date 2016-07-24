@@ -17,10 +17,11 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
@@ -35,9 +36,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
@@ -84,7 +85,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   public TIntHashSet getCommitsForPaths(@NotNull Collection<FilePath> paths) throws IOException, StorageException {
     Set<Integer> allPathIds = ContainerUtil.newHashSet();
     for (FilePath path : paths) {
-      allPathIds.add(myPathsIndexer.getPathId(path));
+      allPathIds.add(myPathsIndexer.myPathsEnumerator.enumerate(path.getPath()));
     }
 
     TIntHashSet result = new TIntHashSet();
@@ -133,11 +134,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   private static class PathsIndexer implements DataIndexer<Integer, Integer, VcsFullCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<String> myPathsEnumerator;
-    @NotNull private final Set<VirtualFile> myRoots;
+    @NotNull private final Set<String> myRoots;
 
     private PathsIndexer(@NotNull PersistentEnumeratorBase<String> enumerator, @NotNull Set<VirtualFile> roots) {
       myPathsEnumerator = enumerator;
-      myRoots = roots;
+      myRoots = roots.stream().map(VirtualFile::getPath).collect(Collectors.toSet());
     }
 
     @NotNull
@@ -145,77 +146,53 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     public Map<Integer, Integer> map(@NotNull VcsFullCommitDetails inputData) {
       Map<Integer, Integer> result = new THashMap<>();
 
-      Collection<Change> changes = inputData.getChanges();
-      for (Change change : changes) {
+
+      Collection<Couple<String>> moves = ContainerUtil.newHashSet();
+      Collection<String> changedPaths = ContainerUtil.newHashSet();
+      for (Change change : inputData.getChanges()) {
+        if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
+        if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
         if (change.getType().equals(Change.Type.MOVED)) {
-          putMove(result, change);
-        }
-        else {
-          putChange(result, change);
+          moves.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
         }
       }
+
+      getParentPaths(changedPaths).forEach(changedPath -> {
+        try {
+          result.put(myPathsEnumerator.enumerate(changedPath), null);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
+      moves.forEach(renamedPaths -> {
+        try {
+          int beforeId = myPathsEnumerator.enumerate(renamedPaths.first);
+          int afterId = myPathsEnumerator.enumerate(renamedPaths.second);
+
+          result.put(beforeId, afterId);
+          result.put(afterId, beforeId);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
+
       return result;
-    }
-
-    private void putMove(@NotNull Map<Integer, Integer> result, @NotNull Change change) {
-      ContentRevision beforeRevision = change.getBeforeRevision();
-      ContentRevision afterRevision = change.getAfterRevision();
-
-      assert beforeRevision != null && afterRevision != null;
-
-      List<Integer> beforeIds = getPathIds(beforeRevision.getFile());
-      if (beforeIds.size() > 1) {
-        for (Integer pathId : ContainerUtil.subList(beforeIds, 1)) {
-          result.put(pathId, null);
-        }
-      }
-      List<Integer> afterIds = getPathIds(afterRevision.getFile());
-      if (afterIds.size() > 1) {
-        for (Integer pathId : ContainerUtil.subList(afterIds, 1)) {
-          result.put(pathId, null);
-        }
-      }
-
-      result.put(beforeIds.get(0), afterIds.get(0));
-      result.put(afterIds.get(0), beforeIds.get(0));
-    }
-
-    private void putChange(@NotNull Map<Integer, Integer> result, @NotNull Change change) {
-      ContentRevision beforeRevision = change.getBeforeRevision();
-      if (beforeRevision != null) {
-        for (Integer pathId : getPathIds(beforeRevision.getFile())) {
-          result.put(pathId, null);
-        }
-      }
-
-      ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        for (Integer pathId : getPathIds(afterRevision.getFile())) {
-          result.put(pathId, null);
-        }
-      }
     }
 
     @NotNull
-    private List<Integer> getPathIds(@NotNull FilePath path) {
-      List<Integer> result = ContainerUtil.newArrayList();
-      try {
-        while (path != null) {
-          result.add(getPathId(path));
-          VirtualFile file = path.getVirtualFile();
-          if (file != null && myRoots.contains(file)) break;
+    private Collection<String> getParentPaths(@NotNull Collection<String> paths) {
+      Set<String> result = ContainerUtil.newHashSet();
+      for (String path : paths) {
+        while (!path.isEmpty() && !result.contains(path)) {
+          result.add(path);
+          if (myRoots.contains(path)) break;
 
-          path = path.getParentPath();
+          path = PathUtil.getParentPath(path);
         }
       }
-      catch (IOException e) {
-        e.printStackTrace(); // TODO ?
-      }
       return result;
-    }
-
-    public int getPathId(@NotNull FilePath path) throws IOException {
-      return myPathsEnumerator.enumerate(path.getPath());
     }
 
     @NotNull
