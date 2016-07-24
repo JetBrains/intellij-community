@@ -27,6 +27,7 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
@@ -147,13 +148,21 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
       Map<Integer, Integer> result = new THashMap<>();
 
 
-      Collection<Couple<String>> moves = ContainerUtil.newHashSet();
-      Collection<String> changedPaths = ContainerUtil.newHashSet();
-      for (Change change : inputData.getChanges()) {
-        if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
-        if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
-        if (change.getType().equals(Change.Type.MOVED)) {
-          moves.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
+      Collection<Couple<String>> moves;
+      Collection<String> changedPaths;
+      if (inputData instanceof VcsChangesLazilyParsedDetails) {
+        changedPaths = ((VcsChangesLazilyParsedDetails)inputData).getModifiedPaths();
+        moves = ((VcsChangesLazilyParsedDetails)inputData).getRenamedPaths();
+      }
+      else {
+        moves = ContainerUtil.newHashSet();
+        changedPaths = ContainerUtil.newHashSet();
+        for (Change change : inputData.getChanges()) {
+          if (change.getAfterRevision() != null) changedPaths.add(change.getAfterRevision().getFile().getPath());
+          if (change.getBeforeRevision() != null) changedPaths.add(change.getBeforeRevision().getFile().getPath());
+          if (change.getType().equals(Change.Type.MOVED)) {
+            moves.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
+          }
         }
       }
 
