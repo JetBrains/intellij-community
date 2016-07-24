@@ -215,7 +215,7 @@ class TestRunningCode(TestBase):
 
         client_thread = start_client_thread(self.client_port)
         orig_stdin = sys.stdin
-        sys.stdin = StdIn(self, get_localhost(), self.client_port)
+        sys.stdin = StdIn(self, get_localhost(), self.client_port, orig_stdin)
         try:
             filename = 'made_up_file.py'
             self.add_exec('%edit ' + filename)
