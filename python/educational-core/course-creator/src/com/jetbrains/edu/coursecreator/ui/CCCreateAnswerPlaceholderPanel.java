@@ -38,7 +38,8 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
     myHintTextField.setLineWrap(true);
     myHintTextField.setWrapStyleWord(true);
-    myHintTextField.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     myHintTextField.setFont(myPlaceholderTextArea.getFont());
     if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
       myHintTextField.setForeground(UIUtil.getInactiveTextColor());
