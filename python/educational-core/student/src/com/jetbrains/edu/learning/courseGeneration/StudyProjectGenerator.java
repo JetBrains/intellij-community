@@ -104,7 +104,7 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  protected Course getCourse(@NotNull final Project project) {
+  public Course getCourse(@NotNull final Project project) {
 
     final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
     if (courseFile.exists()) {
@@ -157,7 +157,9 @@ public class StudyProjectGenerator {
   public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
     LocalFileSystem.getInstance().refresh(false);
     final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
+    if (firstLesson == null) return;
     final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
+    if (firstTask == null) return;
     final VirtualFile taskDir = firstTask.getTaskDir(project);
     if (taskDir == null) return;
     final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
