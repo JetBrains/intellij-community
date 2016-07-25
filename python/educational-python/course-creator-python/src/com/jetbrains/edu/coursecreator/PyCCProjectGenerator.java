@@ -149,7 +149,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
 
   private static void setupLanguageLevels(CCNewProjectPanel panel) {
     JLabel languageLevelLabel = panel.getLanguageLevelLabel();
-    languageLevelLabel.setText("Python Version:");
+    languageLevelLabel.setText("Python:");
     languageLevelLabel.setVisible(true);
     ComboBox<String> languageLevelCombobox = panel.getLanguageLevelCombobox();
     languageLevelCombobox.addItem(ALL_VERSIONS);
