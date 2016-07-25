@@ -19,7 +19,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CCChangeCourseInfo extends DumbAwareAction {
-
   private static final String ACTION_TEXT = "Change Course Information";
 
   public CCChangeCourseInfo() {
@@ -61,14 +60,20 @@ public class CCChangeCourseInfo extends DumbAwareAction {
 
     CCNewProjectPanel panel =
       new CCNewProjectPanel(course.getName(), Course.getAuthorsString(course.getAuthors()), course.getDescription());
+    setupLanguageLevels(course, panel);
     DialogBuilder builder = createChangeInfoDialog(project, panel);
     if (builder.showAndGet()) {
       course.setAuthors(panel.getAuthors());
       course.setName(panel.getName());
       course.setDescription(panel.getDescription());
+      setVersion(course, panel);
       ProjectView.getInstance(project).refresh();
     }
   }
+
+  protected void setVersion(Course course, CCNewProjectPanel panel) {}
+
+  protected void setupLanguageLevels(Course course, CCNewProjectPanel panel) {}
 
   private static DialogBuilder createChangeInfoDialog(Project project, @NotNull CCNewProjectPanel panel) {
     DialogBuilder builder = new DialogBuilder(project);
