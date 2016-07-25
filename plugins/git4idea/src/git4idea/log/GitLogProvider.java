@@ -312,6 +312,15 @@ public class GitLogProvider implements VcsLogProvider {
     return new LogDataImpl(refs, userRegistry);
   }
 
+  @Override
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    if (!isRepositoryReady(root)) {
+      return;
+    }
+
+    GitHistoryUtils.readAllFullDetails(myProject, root, commitConsumer);
+  }
+
   @NotNull
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)

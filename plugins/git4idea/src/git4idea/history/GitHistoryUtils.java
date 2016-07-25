@@ -503,6 +503,93 @@ public class GitHistoryUtils {
     });
   }
 
+  public static void readAllFullDetails(@NotNull Project project,
+                                        @NotNull VirtualFile root,
+                                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLogParser.GitLogOption[] options = {HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+      PARENTS, SUBJECT, BODY, RAW_BODY};
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, options);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-M", /*find and report renames*/
+                    "--name-status",
+                    "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
+    h.addParameters(LOG_ALL);
+    h.endOptions();
+
+    AtomicReference<Throwable> parseError = new AtomicReference<>(null);
+    Consumer<StringBuilder> recordConsumer = builder -> {
+      try {
+        GitLogRecord record = parser.parseOneRecord(builder.toString());
+        if (record != null) {
+          commitConsumer.consume(createCommit(project, root, record, factory));
+        }
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable t) {
+        if (parseError.compareAndSet(null, t)) {
+          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
+        }
+      }
+    };
+    final StringBuilder buffer = new StringBuilder();
+    final Ref<VcsException> ex = new Ref<>();
+    h.addLineListener(new GitLineHandlerListener() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        try {
+          String tail = null;
+          int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
+          if (nextRecordStart == -1) {
+            buffer.append(line).append("\n");
+          }
+          else if (nextRecordStart == 0) {
+            tail = line + "\n";
+          }
+          else {
+            buffer.append(line.substring(0, nextRecordStart));
+            tail = line.substring(nextRecordStart) + "\n";
+          }
+
+          if (tail != null) {
+            recordConsumer.consume(buffer);
+            buffer.setLength(0);
+            buffer.append(tail);
+          }
+        }
+        catch (Exception e) {
+          ex.set(new VcsException(e));
+        }
+      }
+
+      @Override
+      public void processTerminated(int exitCode) {
+        try {
+          recordConsumer.consume(buffer);
+        }
+        catch (Exception e) {
+          ex.set(new VcsException(e));
+        }
+      }
+
+      @Override
+      public void startFailed(Throwable exception) {
+        ex.set(new VcsException(exception));
+      }
+    });
+    h.runInCurrentThread(null);
+    if (!ex.isNull()) {
+      throw ex.get();
+    }
+  }
+
   public static void readCommits(@NotNull final Project project,
                                  @NotNull final VirtualFile root,
                                  @NotNull List<String> parameters,
@@ -696,7 +783,6 @@ public class GitHistoryUtils {
     private GitLogRecord processResult(final String line) {
       return myParser.parseOneRecord(line);
     }
-
   }
 
   /**
@@ -728,11 +814,13 @@ public class GitHistoryUtils {
     final List<VcsException> exceptions = new ArrayList<>();
 
     history(project, path, root, startingFrom, new Consumer<GitFileRevision>() {
-      @Override public void consume(GitFileRevision gitFileRevision) {
+      @Override
+      public void consume(GitFileRevision gitFileRevision) {
         rc.add(gitFileRevision);
       }
     }, new Consumer<VcsException>() {
-      @Override public void consume(VcsException e) {
+      @Override
+      public void consume(VcsException e) {
         exceptions.add(e);
       }
     }, parameters);
@@ -757,7 +845,10 @@ public class GitHistoryUtils {
    * @deprecated To remove in IDEA 17
    */
   @Deprecated
-  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final VirtualFile root, final String... parameters)
+  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project,
+                                                            FilePath path,
+                                                            final VirtualFile root,
+                                                            final String... parameters)
     throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);

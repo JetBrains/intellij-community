@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
@@ -46,7 +45,7 @@ import java.util.Set;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
-  static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
