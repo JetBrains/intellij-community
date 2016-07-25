@@ -349,46 +349,47 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       long time = System.currentTimeMillis();
 
-      int allCommits = myCommits.values().stream().mapToInt(TIntHashSet::size).sum();
-      LOG.info("Indexing " + allCommits + " commits");
+      CommitsCounter counter = new CommitsCounter(indicator, myCommits.values().stream().mapToInt(TIntHashSet::size).sum());
+      LOG.info("Indexing " + counter.allCommits + " commits");
 
-      int newCommits = 0;
       for (VirtualFile root : myCommits.keySet()) {
-        newCommits += indexOneByOne(root, myCommits.get(root), indicator, allCommits);
+        indexOneByOne(root, myCommits.get(root), counter);
       }
 
-      LOG.info((System.currentTimeMillis() - time) / 1000.0 + "sec for indexing " + newCommits + " new commits");
+      LOG.info((System.currentTimeMillis() - time) / 1000.0 +
+               "sec for indexing " +
+               counter.newIndexedCommits +
+               " new commits out of " +
+               counter.allCommits);
+      int leftCommits = counter.allCommits - counter.newIndexedCommits - counter.oldCommits;
+      if (leftCommits > 0) {
+        LOG.warn("Did not index " + leftCommits + " commits");
+      }
     }
 
-    private int indexOneByOne(@NotNull VirtualFile root,
-                              @NotNull TIntHashSet commitsSet,
-                              @NotNull ProgressIndicator indicator,
-                              int allCommits) {
-      Ref<Integer> indexedCommits = new Ref<>(0);
-      Ref<Integer> newCommits = new Ref<>(0);
-
+    private void indexOneByOne(@NotNull VirtualFile root,
+                               @NotNull TIntHashSet commitsSet,
+                               @NotNull CommitsCounter counter) {
       IntStream commits = TroveUtil.stream(commitsSet).filter(c -> {
         if (isIndexed(c)) {
-          indexedCommits.set(indexedCommits.get() + 1);
+          counter.oldCommits++;
           return false;
         }
         return true;
       });
 
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
-        indexOneByOne(root, batch);
+        counter.indicator.checkCanceled();
 
-        newCommits.set(newCommits.get() + batch.size());
-        indexedCommits.set(indexedCommits.get() + batch.size());
-        indicator.setFraction(((double)indexedCommits.get() / allCommits));
-        indicator.checkCanceled();
+        if (indexOneByOne(root, batch)) {
+          counter.newIndexedCommits += batch.size();
+        }
+
+        counter.displayProgress();
       });
-
-      return newCommits.get();
     }
 
-
-    private void indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
+    private boolean indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
       VcsLogProvider provider = myProviders.get(root);
       try {
         storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())));
@@ -399,7 +400,25 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           markForIndexing(value, root);
           return true;
         });
+        return false;
       }
+      return true;
+    }
+
+  }
+  private static class CommitsCounter {
+    @NotNull public final ProgressIndicator indicator;
+    public final int allCommits;
+    public volatile int newIndexedCommits;
+    public volatile int oldCommits;
+
+    private CommitsCounter(@NotNull ProgressIndicator indicator, int commits) {
+      this.indicator = indicator;
+      this.allCommits = commits;
+    }
+
+    public void displayProgress() {
+      indicator.setFraction(((double)newIndexedCommits + oldCommits) / allCommits);
     }
   }
 }
