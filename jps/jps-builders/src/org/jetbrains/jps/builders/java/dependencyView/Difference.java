@@ -43,21 +43,22 @@ abstract class Difference {
   public static final int SIGNATURE = 8;
   public static final int SUPERCLASS = 16;
   public static final int USAGES = 32;
+  public static final int ANNOTATIONS = 64;
 
-  public interface Specifier<T> {
+  public interface Specifier<T, D extends Difference> {
     Collection<T> added();
 
     Collection<T> removed();
 
-    Collection<Pair<T, Difference>> changed();
+    Collection<Pair<T, D>> changed();
 
     boolean unchanged();
   }
 
-  public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {
+  public static <T, D extends Difference> Specifier<T, D> make(final Set<T> past, final Set<T> now) {
     if (past == null) {
       final Collection<T> _now = Collections.unmodifiableCollection(now);
-      return new Specifier<T>() {
+      return new Specifier<T, D>() {
         public Collection<T> added() {
           return _now;
         }
@@ -66,7 +67,7 @@ abstract class Difference {
           return Collections.emptyList();
         }
 
-        public Collection<Pair<T, Difference>> changed() {
+        public Collection<Pair<T, D>> changed() {
           return Collections.emptyList();
         }
 
@@ -84,9 +85,9 @@ abstract class Difference {
 
     removed.removeAll(now);
 
-    final Set<Pair<T, Difference>> changed;
+    final Set<Pair<T, D>> changed;
     if (canContainChangedElements(past, now)) {
-      changed = new HashSet<Pair<T, Difference>>();
+      changed = new HashSet<Pair<T, D>>();
       final Set<T> intersect = new HashSet<T>(past);
       final Map<T, T> nowMap = new HashMap<T, T>();
 
@@ -101,7 +102,8 @@ abstract class Difference {
       for (T x : intersect) {
         final Proto px = (Proto)x;
         final Proto py = (Proto)nowMap.get(x);
-        final Difference diff = py.difference(px);
+        //noinspection unchecked
+        final D diff = (D)py.difference(px);
 
         if (!diff.no()) {
           changed.add(Pair.create(x, diff));
@@ -112,7 +114,7 @@ abstract class Difference {
       changed = Collections.emptySet();
     }
 
-    return new Specifier<T>() {
+    return new Specifier<T, D>() {
       public Collection<T> added() {
         return added;
       }
@@ -121,7 +123,7 @@ abstract class Difference {
         return removed;
       }
 
-      public Collection<Pair<T, Difference>> changed() {
+      public Collection<Pair<T, D>> changed() {
         return changed;
       }
 
