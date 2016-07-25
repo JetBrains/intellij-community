@@ -22,10 +22,10 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   
   private JPanel myPanel;
   private JTextArea myHintTextField;
-  private JTextField myAnswerPlaceholderText;
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
   private JPanel myHintsPanel;
+  private JTextArea myPlaceholderTextArea;
   private int myShownHintNumber = 0;
 
   private List<String> myHints = new ArrayList<String>() {{
@@ -39,7 +39,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     myHintTextField.setLineWrap(true);
     myHintTextField.setWrapStyleWord(true);
     myHintTextField.setBorder(BorderFactory.createLineBorder(JBColor.border()));
-    myHintTextField.setFont(myAnswerPlaceholderText.getFont());
+    myHintTextField.setFont(myPlaceholderTextArea.getFont());
     if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
       myHintTextField.setForeground(UIUtil.getInactiveTextColor());
     }
@@ -54,7 +54,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
       }
     });
 
-    myAnswerPlaceholderText.grabFocus();
+    myPlaceholderTextArea.grabFocus();
     updateHintNumberLabel();
 
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
@@ -75,7 +75,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public void setAnswerPlaceholderText(String answerPlaceholderText) {
-    myAnswerPlaceholderText.setText(answerPlaceholderText);
+    myPlaceholderTextArea.setText(answerPlaceholderText);
   }
 
   public void setHintText(String hintTextField) {
@@ -84,7 +84,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public String getAnswerPlaceholderText() {
-    return myAnswerPlaceholderText.getText();
+    return myPlaceholderTextArea.getText();
   }
 
   public List<String> getHints() {
@@ -100,7 +100,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myAnswerPlaceholderText;
+    return myPlaceholderTextArea;
   }
 
   public void setHints(List<String> hints) {
