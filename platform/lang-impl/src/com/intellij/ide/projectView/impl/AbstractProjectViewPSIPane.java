@@ -48,6 +48,8 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -118,6 +120,25 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     installComparator();
     initTree();
 
+    Disposer.register(getTreeBuilder(), new UiNotifyConnector(myTree, new Activatable() {
+      private boolean showing;
+
+      @Override
+      public void showNotify() {
+        if (!showing) {
+          showing = true;
+          restoreExpandedPaths();
+        }
+      }
+
+      @Override
+      public void hideNotify() {
+        if (showing) {
+          showing = false;
+          saveExpandedPaths();
+        }
+      }
+    }));
     return myComponent;
   }
 
