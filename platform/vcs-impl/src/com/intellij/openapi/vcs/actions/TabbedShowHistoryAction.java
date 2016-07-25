@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
@@ -78,9 +79,9 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   @NotNull
   private static Pair<FilePath, VirtualFile> getPathAndParentFile(@NotNull VcsContext context) {
-    VirtualFile[] files = context.getSelectedFiles();
-    if (files.length != 0) {
-      return files.length == 1 ? Pair.create(VcsUtil.getFilePath(files[0]), files[0]) : Pair.empty();
+    if (context.getSelectedFilesStream().findAny().isPresent()) {
+      VirtualFile file = getIfSingle(context.getSelectedFilesStream());
+      return file != null ? Pair.create(VcsUtil.getFilePath(file), file) : Pair.empty();
     }
 
     File[] ioFiles = context.getSelectedIOFiles();
