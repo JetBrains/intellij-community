@@ -252,7 +252,7 @@ class VisiblePackBuilderTest {
       return false
     }
 
-    override fun scheduleIndex() {
+    override fun scheduleIndex(full: Boolean) {
     }
 
     override fun markForIndexing(index: Int, root: VirtualFile) {

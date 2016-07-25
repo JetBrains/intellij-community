@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface VcsLogIndex {
-  void scheduleIndex();
+  void scheduleIndex(boolean full);
 
   void markForIndexing(int commit, @NotNull VirtualFile root);
 

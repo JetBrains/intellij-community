@@ -140,7 +140,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       }
     }.iterate(getProvidersForRoots(requirements.keySet()));
     myUserRegistry.flush();
-    myIndex.scheduleIndex();
+    myIndex.scheduleIndex(false);
     sw.report();
     return logInfo;
   }
@@ -364,7 +364,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         }
       }.iterate(myProviders);
       myUserRegistry.flush();
-      myIndex.scheduleIndex();
+      myIndex.scheduleIndex(true);
       sw.report();
       return logInfo;
     }
