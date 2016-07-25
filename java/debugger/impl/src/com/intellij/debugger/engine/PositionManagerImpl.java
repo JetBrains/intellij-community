@@ -543,21 +543,20 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
         final int positionLine = position.getLine();
         if (positionLine >= rangeBegin && positionLine <= rangeEnd) {
+          // Now we use the last line to find the class, previously it was:
           // choose the second line to make sure that only this class' code exists on the line chosen
           // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
           // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
           // Example of such line:
           // list.add(new Runnable(){......
           // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-          final int finalRangeBegin = rangeBegin;
           final int finalRangeEnd = rangeEnd;
           return ApplicationManager.getApplication().runReadAction(new NullableComputable<ReferenceType>() {
             public ReferenceType compute() {
               if (!classToFind.isValid()) {
                 return null;
               }
-              final int line = Math.min(finalRangeBegin + 1, finalRangeEnd);
-              Set<PsiClass> lineClasses = getLineClasses(position.getFile(), line);
+              Set<PsiClass> lineClasses = getLineClasses(position.getFile(), finalRangeEnd);
               if (lineClasses.size() > 1) {
                 // if there's more than one class on the line - try to match by name
                 for (PsiClass aClass : lineClasses) {
