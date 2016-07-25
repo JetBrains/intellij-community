@@ -97,15 +97,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
 
-          int newLine = oldLine;
-          if (oldContent != null) {
-            String content = fileAnnotation.getAnnotatedContent();
-            try {
-              newLine = Diff.translateLine(oldContent, content, oldLine, true);
-            }
-            catch (FilesTooBigForDiffException ignore) {
-            }
-          }
+          int newLine = translateLine(oldContent, fileAnnotation.getAnnotatedContent(), oldLine);
 
           fileAnnotationRef.set(fileAnnotation);
           newLineRef.set(newLine);
@@ -116,14 +108,12 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
       }
 
       @Override
-      public void onCancel() {
-        onSuccess();
+      public void onFinished() {
+        VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).unlock();
       }
 
       @Override
       public void onSuccess() {
-        VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).unlock();
-
         if (!exceptionRef.isNull()) {
           AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"));
         }
@@ -132,5 +122,15 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
         AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get());
       }
     });
+  }
+
+  private static int translateLine(@Nullable CharSequence oldContent, @Nullable CharSequence newContent, int line) {
+    if (oldContent == null || newContent == null) return line;
+    try {
+      return Diff.translateLine(oldContent, newContent, line, true);
+    }
+    catch (FilesTooBigForDiffException ignore) {
+      return line;
+    }
   }
 }
