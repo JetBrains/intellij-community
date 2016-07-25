@@ -21,13 +21,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.*
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.IOException
-import java.nio.file.*
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.Key
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -102,16 +102,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       }
     }
 
-    val tempFile = Paths.get(PathManager.getConfigPath(), "pdb.pwd.tmp")
-    tempFile.write(encryptionSupport!!.encrypt(byteOut.internalBuffer, byteOut.size()))
-
-    try {
-      Files.move(tempFile, dbFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-    }
-    catch (e: IOException) {
-      LOG.warn(e)
-      FileUtil.rename(tempFile.toFile(), dbFile.toFile())
-    }
+    dbFile.writeSafe(encryptionSupport!!.encrypt(byteOut.internalBuffer, byteOut.size()))
     dbFile.setOwnerPermissions()
 
     needToSave = false
@@ -174,7 +165,7 @@ interface MasterKeyStorage {
 class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
   override fun encrypt(data: ByteArray, size: Int) = WindowsCryptUtils.protect(super.encrypt(data, size))
 
-  override fun decrypt(data: ByteArray) = WindowsCryptUtils.unprotect(super.decrypt(data))
+  override fun decrypt(data: ByteArray) = super.decrypt(WindowsCryptUtils.unprotect(data))
 }
 
 class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {
@@ -214,7 +205,7 @@ class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {
       return
     }
 
-    passwordFile.write(encryptionSupport.encrypt(key))
+    passwordFile.writeSafe(encryptionSupport.encrypt(key))
     passwordFile.setOwnerPermissions()
   }
 }
