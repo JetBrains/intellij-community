@@ -76,6 +76,7 @@
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
+    <getDataRule key="virtualFileStream" implementationClass="com.intellij.openapi.vcs.VirtualFileStreamRule"/>
     <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
     <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule"/>
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
