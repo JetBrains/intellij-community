@@ -206,7 +206,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isInitialized() {
-    return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
+    if (isDisposed() || !isOpen()) return false;
+    StartupManagerEx managerEx = StartupManagerEx.getInstanceEx(this);
+    return managerEx != null && managerEx.startupActivityPassed();
   }
 
   @NotNull
