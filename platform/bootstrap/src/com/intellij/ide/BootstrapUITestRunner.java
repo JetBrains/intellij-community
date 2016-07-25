@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class BootstrapUITestRunner {
 
@@ -72,6 +73,11 @@ public class BootstrapUITestRunner {
     );
 
     if (!(Boolean) result.getMethod("wasSuccessful").invoke(r)) {
+      List<?> failures = (List<?>) result.getMethod("getFailures").invoke(r);
+      for (Object failure : failures) {
+        System.err.println(failure);
+      }
+
       System.exit(1);
     }
   }
