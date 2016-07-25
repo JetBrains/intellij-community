@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
@@ -72,8 +73,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     Project project = vcsContext.getProject();
 
     if (project != null && isVisible(vcsContext)) {
-      VirtualFile[] files = vcsContext.getSelectedFiles();
-      result = files.length == 1 && isEnabled(project, files[0], actionKey);
+      VirtualFile file = getIfSingle(vcsContext.getSelectedFilesStream());
+      result = file != null && isEnabled(project, file, actionKey);
     }
 
     return result;

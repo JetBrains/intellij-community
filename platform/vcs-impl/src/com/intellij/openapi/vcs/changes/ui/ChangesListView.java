@@ -53,6 +53,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -145,16 +146,20 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists().toArray(ChangeList[]::new));
     }
     else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
+    }
+    else if (key == VcsDataKeys.VIRTUAL_FILE_STREAM) {
+      sink.put(VcsDataKeys.VIRTUAL_FILE_STREAM, getSelectedFiles());
     }
     else if (key == CommonDataKeys.NAVIGATABLE) {
-      final VirtualFile[] files = getSelectedFiles();
-      if (files.length == 1 && !files [0].isDirectory()) {
-        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, files[0], 0));
+      VirtualFile file = getIfSingle(getSelectedFiles());
+      if (file != null && !file.isDirectory()) {
+        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, file, 0));
       }
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+      sink
+        .put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles().toArray(VirtualFile[]::new)));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
@@ -293,7 +298,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  protected VirtualFile[] getSelectedFiles() {
+  protected Stream<VirtualFile> getSelectedFiles() {
     Stream<VirtualFile> filesFromChanges = getSelectedChanges()
       .map(Change::getAfterRevision)
       .filter(Objects::nonNull)
@@ -302,9 +307,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .filter(Objects::nonNull)
       .filter(VirtualFile::isValid);
 
-    return Stream.concat(filesFromChanges, getSelectedVirtualFiles(null))
-      .distinct()
-      .toArray(VirtualFile[]::new);
+    return Stream.concat(filesFromChanges, getSelectedVirtualFiles(null)).distinct();
   }
 
   // TODO: Does not correspond to getSelectedChanges() - for instance, hijacked changes are not tracked here
