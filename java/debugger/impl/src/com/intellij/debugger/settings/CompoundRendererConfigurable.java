@@ -68,6 +68,7 @@ class CompoundRendererConfigurable extends JPanel {
   private XDebuggerExpressionEditor myListChildrenEditor;
   private final JLabel myExpandedLabel;
   private JBTable myTable;
+  private final JBCheckBox myAppendDefaultChildren;
   @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
   @NonNls private static final String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
@@ -132,6 +133,8 @@ class CompoundRendererConfigurable extends JPanel {
       }
     });
 
+    myAppendDefaultChildren = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.append.default.children"));
+
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -176,6 +179,9 @@ class CompoundRendererConfigurable extends JPanel {
     panel.add(myChildrenListEditor,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                      JBUI.insets(4, 30, 0, 0), 0, 0));
+    panel.add(myAppendDefaultChildren,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     JBUI.insetsLeft(25), 0, 0));
     add(new JPanel(), EMPTY_PANEL_ID);
     add(panel, DATA_PANEL_ID);
   }
@@ -214,7 +220,10 @@ class CompoundRendererConfigurable extends JPanel {
     myChildrenExpandedEditor.setEnabled(isChildrenExpression);
     myExpandedLabel.setEnabled(isChildrenExpression);
     myChildrenEditor.setEnabled(isChildrenExpression);
-    myTable.setEnabled(myRbListChildrenRenderer.isSelected());
+
+    boolean isListChildren = myRbListChildrenRenderer.isSelected();
+    myTable.setEnabled(isListChildren);
+    myAppendDefaultChildren.setEnabled(isListChildren);
   }
 
   private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
@@ -318,7 +327,9 @@ class CompoundRendererConfigurable extends JPanel {
       ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpandable(TextWithImportsImpl.fromXExpression(myChildrenExpandedEditor.getExpression()));
     }
     else if (myRbListChildrenRenderer.isSelected()) {
-      childrenRenderer = new EnumerationChildrenRenderer(getTableModel().getExpressions());
+      EnumerationChildrenRenderer enumerationChildrenRenderer = new EnumerationChildrenRenderer(getTableModel().getExpressions());
+      enumerationChildrenRenderer.setAppendDefaultChildren(myAppendDefaultChildren.isSelected());
+      childrenRenderer = enumerationChildrenRenderer;
     }
     renderer.setChildrenRenderer(childrenRenderer);
     // classname
@@ -351,28 +362,28 @@ class CompoundRendererConfigurable extends JPanel {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(((LabelRenderer)labelRenderer).getLabelExpression()));
     }
 
+    getTableModel().clear();
+    myAppendDefaultChildren.setSelected(false);
+
     if (rendererSettings.isBase(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      getTableModel().clear();
     }
     else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
       final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
-      getTableModel().clear();
     }
     else {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        getTableModel().init(((EnumerationChildrenRenderer)childrenRenderer).getChildren());
-      }
-      else {
-        getTableModel().clear();
+        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+        getTableModel().init(enumerationRenderer.getChildren());
+        myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }
     }
 
