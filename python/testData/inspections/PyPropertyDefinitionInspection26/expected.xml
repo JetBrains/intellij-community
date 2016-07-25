@@ -25,5 +25,37 @@
     <line>38</line>
     <description>Deleter should not return a value</description>
   </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>222</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="temp:///src/src/prop_test.py" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Property definitions</problem_class>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>237</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="temp:///src/src/prop_test.py" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Property definitions</problem_class>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>268</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="temp:///src/src/prop_test.py" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Property definitions</problem_class>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>284</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="temp:///src/src/prop_test.py" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Property definitions</problem_class>
+    <description>Setter should not return a value</description>
+  </problem>
 </problems>
 
