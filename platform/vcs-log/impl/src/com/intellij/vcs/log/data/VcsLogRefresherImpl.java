@@ -186,7 +186,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     List<Integer> parents = ContainerUtil.map(commit.getParents(),
                                               (NotNullFunction<Hash, Integer>)hash -> myHashMap.getCommitIndex(hash, root));
     int index = myHashMap.getCommitIndex(commit.getId(), root);
-    myIndex.markForIndexing(index);
+    myIndex.markForIndexing(index, root);
     return new GraphCommitImpl<>(index, parents, commit.getTimestamp());
   }
 

@@ -42,7 +42,6 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CommitDetailsGetter;
 import com.intellij.vcs.log.data.InMemoryMap;
 import com.intellij.vcs.log.data.TroveUtil;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
@@ -58,7 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -66,7 +65,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
-  @NotNull private final CommitDetailsGetter myDetailsGetter;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Set<VirtualFile> myRoots;
@@ -76,17 +75,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Nullable private final VcsLogUserIndex myUserIndex;
   @Nullable private final VcsLogPathsIndex myPathsIndex;
 
-  @NotNull private TIntHashSet myCommitsToIndex = new TIntHashSet();
+  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage hashMap,
                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull CommitDetailsGetter detailsGetter,
                                @NotNull Consumer<Exception> fatalErrorsConsumer,
                                @NotNull Disposable disposableParent) {
     myHashMap = hashMap;
     myProject = project;
-    myDetailsGetter = detailsGetter;
+    myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = providers.keySet();
 
@@ -129,8 +127,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Override
   public synchronized void scheduleIndex() {
     if (myCommitsToIndex.isEmpty()) return;
-    TIntHashSet commitsToIndex = myCommitsToIndex;
-    myCommitsToIndex = new TIntHashSet();
+    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
+    myCommitsToIndex = ContainerUtil.newHashMap();
 
     Task.Backgroundable task = new MyIndexingTask(commitsToIndex);
 
@@ -141,20 +139,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     );
   }
 
-  private void index(@NotNull TIntHashSet commits) {
-    try {
-      storeDetails(TroveUtil.streamValues(myDetailsGetter.preLoadCommitData(commits, false)).collect(Collectors.toList()));
-    }
-    catch (VcsException e) {
-      LOG.error(e);
-      commits.forEach(value -> {
-        markForIndexing(value);
-        return true;
-      });
-    }
-  }
-
-  private void storeDetails(@NotNull Collection<VcsFullCommitDetails> details) {
+  private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details) {
     try {
       for (VcsFullCommitDetails detail : details) {
         int index = myHashMap.getCommitIndex(detail.getId(), detail.getRoot());
@@ -188,8 +173,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @Override
-  public synchronized void markForIndexing(int index) {
-    myCommitsToIndex.add(index);
+  public synchronized void markForIndexing(int index, @NotNull VirtualFile root) {
+    if (isIndexed(index)) return;
+    TIntHashSet set = myCommitsToIndex.get(root);
+    if (set == null) {
+      set = new TIntHashSet();
+      myCommitsToIndex.put(root, set);
+    }
+    set.add(index);
   }
 
   @NotNull
@@ -342,9 +333,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private class MyIndexingTask extends Task.Backgroundable {
-    private final TIntHashSet myCommits;
+    private final Map<VirtualFile, TIntHashSet> myCommits;
 
-    public MyIndexingTask(@NotNull TIntHashSet commits) {
+    public MyIndexingTask(@NotNull Map<VirtualFile, TIntHashSet> commits) {
       super(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true, PerformInBackgroundOption.ALWAYS_BACKGROUND);
       myCommits = commits;
     }
@@ -352,41 +343,58 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
-
-      Ref<Integer> nCommit = new Ref<>(0);
-      Ref<Integer> indexedCommits = new Ref<>(0);
-      LOG.info("Indexing " + myCommits.size() + " commits");
+      indicator.setFraction(0);
 
       long time = System.currentTimeMillis();
-      Ref<TIntHashSet> commitsBatch = new Ref<>(new TIntHashSet());
-      myCommits.forEach(commit -> {
-        if (!isIndexed(commit)) {
-          indexedCommits.set(indexedCommits.get() + 1);
-          commitsBatch.get().add(commit);
-          if (commitsBatch.get().size() >= BATCH_SIZE) {
-            try {
-              index(commitsBatch.get());
-            }
-            finally {
-              commitsBatch.set(new TIntHashSet());
-            }
-          }
-        }
-        nCommit.set(nCommit.get() + 1);
 
-        indicator.checkCanceled();
-        indicator.setFraction(((double)nCommit.get()) / myCommits.size());
+      int allCommits = myCommits.values().stream().mapToInt(TIntHashSet::size).sum();
+      LOG.info("Indexing " + allCommits + " commits");
+
+      int newCommits = 0;
+      for (VirtualFile root : myCommits.keySet()) {
+        newCommits += index(root, myCommits.get(root), indicator, allCommits);
+      }
+
+      LOG.info((System.currentTimeMillis() - time) / 1000.0 + "sec for indexing " + newCommits + " new commits");
+    }
+
+    private int index(@NotNull VirtualFile root, @NotNull TIntHashSet commitsSet, @NotNull ProgressIndicator indicator, int allCommits) {
+      Ref<Integer> indexedCommits = new Ref<>(0);
+      Ref<Integer> newCommits = new Ref<>(0);
+
+      IntStream commits = TroveUtil.stream(commitsSet).filter(c -> {
+        if (isIndexed(c)) {
+          indexedCommits.set(indexedCommits.get() + 1);
+          return false;
+        }
         return true;
       });
 
-      if (!commitsBatch.get().isEmpty()) {
-        index(commitsBatch.get());
+      TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
+        index(root, batch);
 
-        indicator.checkCanceled(); // TODO schedule for reindexing?
-        indicator.setFraction(((double)nCommit.get() * BATCH_SIZE) / myCommits.size());
+        newCommits.set(newCommits.get() + batch.size());
+        indexedCommits.set(indexedCommits.get() + batch.size());
+        indicator.setFraction(((double)indexedCommits.get() / allCommits));
+        indicator.checkCanceled();
+      });
+
+      return newCommits.get();
+    }
+
+
+    private void index(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
+      VcsLogProvider provider = myProviders.get(root);
+      try {
+        storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())));
       }
-
-      LOG.info((System.currentTimeMillis() - time) / 1000.0 + "sec for indexing " + indexedCommits.get() + " new commits");
+      catch (VcsException e) {
+        LOG.error(e);
+        commits.forEach(value -> {
+          markForIndexing(value, root);
+          return true;
+        });
+      }
     }
   }
 }

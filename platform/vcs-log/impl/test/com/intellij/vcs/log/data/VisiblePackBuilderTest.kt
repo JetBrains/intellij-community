@@ -255,7 +255,7 @@ class VisiblePackBuilderTest {
     override fun scheduleIndex() {
     }
 
-    override fun markForIndexing(index: Int) {
+    override fun markForIndexing(index: Int, root: VirtualFile) {
     }
 
     override fun filter(detailsFilters: MutableList<VcsLogDetailsFilter>): MutableSet<Int> {

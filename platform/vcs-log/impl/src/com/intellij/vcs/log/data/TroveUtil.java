@@ -15,16 +15,18 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -112,5 +114,35 @@ public class TroveUtil {
       where.add(value);
       return true;
     });
+  }
+
+  @NotNull
+  public static IntStream stream(@NotNull TIntHashSet set) {
+    TIntIterator it = set.iterator();
+    return IntStream.generate(it::next).limit(set.size());
+  }
+
+  @NotNull
+  public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
+    return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  public static void processBatches(@NotNull IntStream stream, int batchSize, @NotNull Consumer<TIntHashSet> consumer) {
+    Ref<TIntHashSet> batch = new Ref<>(new TIntHashSet());
+    stream.forEach(commit -> {
+      batch.get().add(commit);
+      if (batch.get().size() >= batchSize) {
+        try {
+          consumer.consume(batch.get());
+        }
+        finally {
+          batch.set(new TIntHashSet());
+        }
+      }
+    });
+
+    if (!batch.get().isEmpty()) {
+      consumer.consume(batch.get());
+    }
   }
 }

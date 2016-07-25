@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ import java.util.Set;
 public interface VcsLogIndex {
   void scheduleIndex();
 
-  void markForIndexing(int commit);
+  void markForIndexing(int commit, @NotNull VirtualFile root);
 
   boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters);
 
