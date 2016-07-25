@@ -84,7 +84,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     for (PsiClass funInterface : funInterfaces) {
       final GlobalSearchScope useScope;
-      final int expectedFunExprParamsCount;
+      final int samParamCount;
       final PsiType samType;
       try (AccessToken ignored = ReadAction.start()) {
         if (!funInterface.isValid()) continue;
@@ -93,12 +93,13 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
         final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(funInterface);
         LOG.assertTrue(functionalInterfaceMethod != null);
-        expectedFunExprParamsCount = functionalInterfaceMethod.getParameterList().getParameters().length;
+        samParamCount = functionalInterfaceMethod.getParameterList().getParameters().length;
         samType = functionalInterfaceMethod.getReturnType();
+        if (samType == null) continue;
       }
 
       MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries =
-        collectQueryKeys(useScope, funInterface, expectedFunExprParamsCount, samType, highLevelModules);
+        collectQueryKeys(useScope, funInterface, samParamCount, samType, highLevelModules);
 
       for (PsiFunctionalExpression expression : getCandidates(useScope, funInterface.getProject(), queries)) {
         if (!processExpression(consumer, funInterface, expression)) {
@@ -153,7 +154,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static MultiMap<FunctionalExpressionKey, GlobalSearchScope> collectQueryKeys(GlobalSearchScope useScope,
                                                                                        PsiClass aClass,
                                                                                        int samParamCount,
-                                                                                       PsiType samType,
+                                                                                       @NotNull PsiType samType,
                                                                                        Set<Module> candidateModules) {
     MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries = MultiMap.createSet();
 
