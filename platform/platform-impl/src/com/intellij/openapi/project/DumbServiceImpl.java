@@ -525,16 +525,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    //todo remove invokeLater when transactions are executed in "any" modality state
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(
-      () -> TransactionGuard.getInstance().submitTransaction(app, myDumbStartTransaction, () -> {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
-      }));
+    SwingUtilities.invokeLater(() -> {
+      try {
+        runnable.run();
+      } finally {
+        semaphore.up();
+      }
+    });
     try {
       semaphore.waitFor();
     }
