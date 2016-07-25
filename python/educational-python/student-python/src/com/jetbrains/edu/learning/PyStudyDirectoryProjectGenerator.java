@@ -16,6 +16,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -34,6 +36,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -206,6 +209,14 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
             }
             catch (ConfigurationException exception) {
               LOG.error("Error adding created virtual env " + exception.getMessage());
+            }
+            if (associateWithProject) {
+              SdkAdditionalData additionalData = createdSdk.getSdkAdditionalData();
+              if (additionalData == null) {
+                additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(createdSdk.getHomePath()));
+                ((ProjectJdkImpl)createdSdk).setSdkAdditionalData(additionalData);
+              }
+              ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
             }
           }
         });
