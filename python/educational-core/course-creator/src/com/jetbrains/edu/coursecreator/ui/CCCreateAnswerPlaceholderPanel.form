@@ -57,6 +57,7 @@
             <properties>
               <alignmentX value="0.5"/>
               <text value=""/>
+              <toolTipText value="To add the first hint type its text here"/>
             </properties>
           </component>
           <grid id="4a2a2" binding="actionsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">

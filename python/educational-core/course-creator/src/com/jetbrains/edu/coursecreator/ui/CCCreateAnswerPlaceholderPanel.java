@@ -111,7 +111,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class GoForward extends AnAction {
 
     public GoForward() {
-      super(AllIcons.Actions.Forward);
+      super("Forward", "Forward", AllIcons.Actions.Forward);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class GoBackward extends AnAction {
 
     public GoBackward() {
-      super(AllIcons.Actions.Back);
+      super("Back", "Back", AllIcons.Actions.Back);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class AddHint extends AnAction {
 
     public AddHint() {
-      super(AllIcons.General.Add);
+      super("Add New Hint", "Add New Hint", AllIcons.General.Add);
     }
 
     @Override
@@ -164,7 +164,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class RemoveHint extends AnAction {
 
     public RemoveHint() {
-      super(AllIcons.General.Remove);
+      super("Remove Hint", "Remove Hint", AllIcons.General.Remove);
     }
 
     @Override
