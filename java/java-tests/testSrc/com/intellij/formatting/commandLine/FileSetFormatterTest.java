@@ -16,10 +16,13 @@
 package com.intellij.formatting.commandLine;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +34,14 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine";
 
   public void testFormat() throws IOException {
+    CodeStyleSettings settings = new CodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.getIndentOptions().INDENT_SIZE = 2;
+    javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     File sourceDir = createSourceDir("original");
     String fileSpec = sourceDir.getCanonicalPath() + File.separator + "**.java";
     MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
-    FileSetFormatter formatter = new FileSetFormatter(fileSpec, messageOutput);
+    FileSetFormatter formatter = new FileSetFormatter(fileSpec, settings, messageOutput);
     formatter.processFiles();
     compareDirs(new File(BASE_PATH + File.separator + "expected"), sourceDir);
   }
@@ -53,7 +60,7 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
         File resultEntry = new File(resultDir.getCanonicalPath() + File.separator + file.getName());
         assertTrue("Cannot find expected" + resultEntry.getPath(), resultEntry.exists());
         if (!file.isDirectory()) {
-          assertContentEquals(resultEntry, file);
+          assertContentEquals(file, resultEntry);
         }
         else {
           compareDirs(file, resultEntry);
