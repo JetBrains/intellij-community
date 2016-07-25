@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
@@ -45,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Checks that arguments to property() and @property and friends are ok.
@@ -295,38 +298,53 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private void checkReturnValueAllowed(PyCallable callable, PsiElement beingChecked, boolean allowed, String message) {
-      // TODO: use a real flow analysis to check all exit points
-      boolean hasReturns;
+    private void checkReturnValueAllowed(@NotNull PyCallable callable,
+                                         @NotNull PsiElement beingChecked,
+                                         boolean allowed,
+                                         @NotNull String message) {
       if (callable instanceof PyFunction) {
-        final PsiElement[] returnStatements = PsiTreeUtil.collectElements(callable, new PsiElementFilter() {
-          @Override
-          public boolean isAccepted(PsiElement element) {
-            return (element instanceof PyReturnStatement && ((PyReturnStatement)element).getExpression() != null) ||
-                   (element instanceof PyYieldExpression);
-          }
-        });
-        hasReturns = returnStatements.length > 0;
+        final PyFunction function = (PyFunction)callable;
+
+        if (PyUtil.isDecoratedAsAbstract(function)) {
+          return;
+        }
+
+        if (allowed && !someFlowHasExitPoint(function, Visitor::isAllowedExitPoint) ||
+            !allowed && someFlowHasExitPoint(function, Visitor::isDisallowedExitPoint)) {
+          registerProblem(beingChecked, message);
+        }
       }
       else {
         final PyType type = myTypeEvalContext.getReturnType(callable);
-        hasReturns = !(type instanceof PyNoneType);
-      }
-      if (allowed ^ hasReturns) {
-        if (allowed && callable instanceof PyFunction) {
-          if (PyUtil.isDecoratedAsAbstract(((PyFunction)callable))) {
-            return;
-          }
-          // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
-          PyStatementList statementList = ((PyFunction)callable).getStatementList();
-          for (PyStatement stmt : statementList.getStatements()) {
-            if (stmt instanceof PyRaiseStatement) {
-              return;
-            }
-          }
+        final boolean hasReturns = !(type instanceof PyNoneType);
+
+        if (allowed ^ hasReturns) {
+          registerProblem(beingChecked, message);
         }
-        registerProblem(beingChecked, message);
       }
+    }
+
+    private static boolean someFlowHasExitPoint(@NotNull PyFunction function, @NotNull Predicate<PsiElement> exitPointPredicate) {
+      final Ref<Boolean> result = new Ref<>(false);
+
+      ControlFlowUtil.process(ControlFlowCache.getControlFlow(function).getInstructions(),
+                              0,
+                              instruction -> {
+                                result.set(exitPointPredicate.test(instruction.getElement()));
+                                return !result.get();
+                              }
+      );
+
+      return result.get();
+    }
+
+    private static boolean isAllowedExitPoint(@Nullable PsiElement element) {
+      return element instanceof PyRaiseStatement || element instanceof PyReturnStatement || element instanceof PyYieldExpression;
+    }
+
+    private static boolean isDisallowedExitPoint(@Nullable PsiElement element) {
+      return element instanceof PyReturnStatement && ((PyReturnStatement)element).getExpression() != null ||
+             element instanceof PyYieldExpression;
     }
   }
 }
