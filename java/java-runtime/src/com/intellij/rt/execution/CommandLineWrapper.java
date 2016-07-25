@@ -41,7 +41,6 @@ public class CommandLineWrapper {
                                                        : loadMainClassWithOldCustomLoader(jarFile, args);
     String[] mainArgs = mainPair.getArgs();
     Class mainClass = mainPair.getMainClass();
-    System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
     //noinspection SSBasedInspection
     Class mainArgType = (new String[0]).getClass();
     Method main = mainClass.getMethod("main", new Class[]{mainArgType});
@@ -70,7 +69,9 @@ public class CommandLineWrapper {
       jarFile.deleteOnExit();
     }
 
-    return new MainPair(Class.forName(args[1]), new String[args.length - 2]);
+    String[] mainArgs = new String[args.length - 2];
+    System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+    return new MainPair(Class.forName(args[1]), mainArgs);
   }
 
   private static class MainPair {
