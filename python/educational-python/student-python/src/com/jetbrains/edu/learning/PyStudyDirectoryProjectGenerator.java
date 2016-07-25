@@ -22,6 +22,7 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -189,7 +190,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
 
   public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final String baseSdk = getBaseSdk();
+    final String baseSdk = getBaseSdk(project);
 
     if (baseSdk != null) {
       final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
@@ -215,20 +216,29 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     }
   }
 
-  private static String getBaseSdk() {
+  private String getBaseSdk(@NotNull final Project project) {
+    final Course course = myGenerator.getCourse(project);
+    LanguageLevel baseLevel = LanguageLevel.PYTHON30;
+    if (course != null) {
+      final String version = course.getLanguageVersion();
+      if (version != null) {
+        baseLevel = LanguageLevel.fromPythonVersion(version);
+      }
+    }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);
-    String python3Sdk = null;
+    String baseSdk = null;
     final Collection<String> baseSdks = flavor.suggestHomePaths();
     for (String sdk : baseSdks) {
       final String versionString = flavor.getVersionString(sdk);
       final String prefix = flavor.getName() + " ";
       if (versionString != null && versionString.startsWith(prefix)) {
         final LanguageLevel level = LanguageLevel.fromPythonVersion(versionString.substring(prefix.length()));
-        if (level.isAtLeast(LanguageLevel.PYTHON30)) {
-          python3Sdk = sdk;
+        if (level.isAtLeast(baseLevel)) {
+          baseSdk = sdk;
+          break;
         }
       }
     }
-    return python3Sdk != null ? python3Sdk : baseSdks.iterator().next();
+    return baseSdk != null ? baseSdk : baseSdks.iterator().next();
   }
 }

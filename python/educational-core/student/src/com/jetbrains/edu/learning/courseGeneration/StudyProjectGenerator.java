@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -105,7 +104,7 @@ public class StudyProjectGenerator {
   }
 
   @Nullable
-  protected Course getCourse(@NotNull final Project project) {
+  public Course getCourse(@NotNull final Project project) {
 
     final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
     if (courseFile.exists()) {
@@ -119,20 +118,17 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
-      @Override
-      public Course compute() throws RuntimeException {
-        ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-        return execCancelable(() -> {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+      return execCancelable(() -> {
 
-          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-          if (course != null) {
-            flushCourse(project, course);
-            course.initCourse(false);
-          }
-          return course;
-        });
-      }
+        final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+        if (course != null) {
+          flushCourse(project, course);
+          course.initCourse(false);
+        }
+        return course;
+      });
     }, "Creating Course", true, project);
   }
 
@@ -161,7 +157,9 @@ public class StudyProjectGenerator {
   public static void openFirstTask(@NotNull final Course course, @NotNull final Project project) {
     LocalFileSystem.getInstance().refresh(false);
     final Lesson firstLesson = StudyUtils.getFirst(course.getLessons());
+    if (firstLesson == null) return;
     final Task firstTask = StudyUtils.getFirst(firstLesson.getTaskList());
+    if (firstTask == null) return;
     final VirtualFile taskDir = firstTask.getTaskDir(project);
     if (taskDir == null) return;
     final Map<String, TaskFile> taskFiles = firstTask.getTaskFiles();
