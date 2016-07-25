@@ -165,7 +165,9 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
             String typeName = PsiNameHelper.getShortClassName(type.text);
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
-            if (methodTypeParams.contains(typeName)) {
+            if (typeName.equals(type.text) &&
+                (type.arrayCount == 0 || type.arrayCount == 1 && type.isEllipsis) &&
+                methodTypeParams.contains(typeName)) {
               sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, TYPE_PARAMETER_PSEUDO_NAME);
             }
           }

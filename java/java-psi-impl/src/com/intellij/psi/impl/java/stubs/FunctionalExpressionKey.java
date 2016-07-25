@@ -16,7 +16,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.google.common.base.Objects;
-import com.intellij.util.ThreeState;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,25 +31,25 @@ import java.io.IOException;
 public class FunctionalExpressionKey {
   public static final int UNKNOWN_PARAM_COUNT = -1;
   public final int lambdaParameterCount;
-  public final ThreeState isVoid;
+  public final CoarseType lambdaType;
   public final Location location;
 
-  public FunctionalExpressionKey(int lambdaParameterCount, @NotNull ThreeState isVoid, @NotNull Location location) {
+  public FunctionalExpressionKey(int lambdaParameterCount, @NotNull CoarseType lambdaType, @NotNull Location location) {
     this.location = location;
     this.lambdaParameterCount = lambdaParameterCount;
-    this.isVoid = isVoid;
+    this.lambdaType = lambdaType;
   }
 
   @NotNull
   public static FunctionalExpressionKey deserializeKey(@NotNull DataInput dataStream) throws IOException {
     int parameterCount = dataStream.readByte();
-    ThreeState voidCompatible = ThreeState.values()[dataStream.readByte()];
-    return new FunctionalExpressionKey(parameterCount, voidCompatible, deserializeLocation(dataStream));
+    CoarseType type = CoarseType.values()[dataStream.readByte()];
+    return new FunctionalExpressionKey(parameterCount, type, deserializeLocation(dataStream));
   }
 
   public void serializeKey(@NotNull DataOutput dataStream) throws IOException {
     dataStream.writeByte(lambdaParameterCount);
-    dataStream.writeByte(isVoid.ordinal());
+    dataStream.writeByte(lambdaType.ordinal());
     serializeLocation(dataStream);
   }
 
@@ -74,9 +75,19 @@ public class FunctionalExpressionKey {
     }
   }
 
-  public boolean canRepresent(int samParamCount, boolean samVoid) {
-    return (samParamCount == lambdaParameterCount || lambdaParameterCount == -1) &&
-           (isVoid == ThreeState.UNSURE || samVoid == isVoid.toBoolean());
+  public boolean canRepresent(int samParamCount, boolean booleanCompatible, boolean isVoid) {
+    if (lambdaParameterCount >= 0 && samParamCount != lambdaParameterCount) return false;
+
+    switch (lambdaType) {
+      case VOID: return isVoid;
+      case NON_VOID: return !isVoid;
+      case BOOLEAN: return booleanCompatible;
+      default: return true;
+    }
+  }
+
+  public static boolean isBooleanCompatible(PsiType samType) {
+    return PsiType.BOOLEAN.equals(samType) || TypeConversionUtil.isAssignableFromPrimitiveWrapper(TypeConversionUtil.erasure(samType));
   }
 
   @Override
@@ -87,7 +98,7 @@ public class FunctionalExpressionKey {
     FunctionalExpressionKey key = (FunctionalExpressionKey)o;
 
     if (lambdaParameterCount != key.lambdaParameterCount) return false;
-    if (isVoid != key.isVoid) return false;
+    if (lambdaType != key.lambdaType) return false;
     if (!location.equals(key.location)) return false;
 
     return true;
@@ -96,7 +107,7 @@ public class FunctionalExpressionKey {
   @Override
   public int hashCode() {
     int result = lambdaParameterCount;
-    result = 31 * result + isVoid.hashCode();
+    result = 31 * result + lambdaType.ordinal();
     result = 31 * result + location.hashCode();
     return result;
   }
@@ -105,13 +116,18 @@ public class FunctionalExpressionKey {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("lambdaParameterCount", lambdaParameterCount)
-      .add("isVoid", isVoid)
+      .add("type", lambdaType)
       .add("location", location)
       .toString();
   }
 
   public interface Location {
     Location UNKNOWN = new Location() {
+      @Override
+      public String toString() {
+        return "UNKNOWN";
+      }
+
       @Override
       public int hashCode() {
         return 0;
@@ -216,5 +232,9 @@ public class FunctionalExpressionKey {
     public void serializeVariable(DataOutput dataStream) throws IOException {
       IOUtil.writeUTF(dataStream, varType);
     }
+  }
+
+  public enum CoarseType {
+    VOID, UNKNOWN, BOOLEAN, NON_VOID
   }
 }
