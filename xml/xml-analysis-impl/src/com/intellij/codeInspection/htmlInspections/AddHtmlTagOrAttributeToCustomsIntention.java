@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     profile.modifyToolSettings(myInspectionKey, file, entry -> {
       XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection) entry;
       xmlEntitiesInspection.addEntry(myName);

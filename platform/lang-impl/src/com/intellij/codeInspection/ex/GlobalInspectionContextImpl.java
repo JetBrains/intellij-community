@@ -759,11 +759,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
         }
       }
-
-      @Override
-      public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
-        return null;
-      }
     };
   }
 

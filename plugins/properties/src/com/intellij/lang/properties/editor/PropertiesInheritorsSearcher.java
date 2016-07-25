@@ -54,6 +54,7 @@ public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, 
       currentFile.getResourceBundle()
         .getPropertiesFiles()
         .stream()
+        .filter(f -> f.equals(currentFile))
         .filter(f -> scope.contains(f.getVirtualFile()))
         .filter(f -> PropertiesUtil.getParent(f, Collections.singleton(currentFile)) == currentFile)
         .map(f -> f.findPropertyByKey(key))

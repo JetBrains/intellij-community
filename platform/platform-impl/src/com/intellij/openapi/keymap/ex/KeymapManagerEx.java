@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.intellij.openapi.keymap.ex;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.impl.KeymapImpl;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,17 +40,17 @@ public abstract class KeymapManagerEx extends KeymapManager {
   /**
    * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
    * action's config located at plugin.xml).
-   * 
+   *
    * @param sourceActionId  if of the action which shortcut should be used for the 'target action'
    * @param targetActionId  id of the action which should use shortcut of the 'source action'
    */
   public abstract void bindShortcuts(String sourceActionId, String targetActionId);
   public abstract void unbindShortcuts(String targetActionId);
-  
+
   public abstract Set<String> getBoundActions();
   public abstract String getActionBinding(String actionId);
 
-  public abstract SchemesManager<Keymap, KeymapImpl> getSchemesManager();
+  public abstract SchemeManager<Keymap> getSchemeManager();
 
   public abstract void addWeakListener(@NotNull KeymapManagerListener listener);
 

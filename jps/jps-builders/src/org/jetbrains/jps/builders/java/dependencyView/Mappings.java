@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -954,6 +955,9 @@ public class Mappings {
 
     final boolean myEasyMode; // true means: no need to search for affected files, only preprocess data for integrate
 
+    private final Iterable<MemberAnnotationsChangeTracker> myAnnotationChangeTracker =
+      JpsServiceManager.getInstance().getExtensions(MemberAnnotationsChangeTracker.class);
+
     private class DelayedWorks {
       class Triple {
         final int owner;
@@ -1055,9 +1059,9 @@ public class Mappings {
       final public Set<UsageRepr.AnnotationUsage> myAnnotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
       final public Map<UsageRepr.Usage, Util.UsageConstraint> myUsageConstraints = new HashMap<UsageRepr.Usage, Util.UsageConstraint>();
 
-      final Difference.Specifier<ClassRepr> myClassDiff;
+      final Difference.Specifier<ClassRepr, ClassRepr.Diff> myClassDiff;
 
-      private DiffState(Difference.Specifier<ClassRepr> classDiff) {
+      private DiffState(Difference.Specifier<ClassRepr, ClassRepr.Diff> classDiff) {
         this.myClassDiff = classDiff;
       }
     }
@@ -1395,7 +1399,7 @@ public class Mappings {
     }
 
     private void processChangedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
-      final Collection<Pair<MethodRepr, Difference>> changed = diff.methods().changed();
+      final Collection<Pair<MethodRepr, MethodRepr.Diff>> changed = diff.methods().changed();
       if (changed.isEmpty()) {
         return;
       }
@@ -1404,9 +1408,9 @@ public class Mappings {
       assert myFuture != null;
       assert myAffectedFiles != null;
 
-      for (final Pair<MethodRepr, Difference> mr : changed) {
+      for (final Pair<MethodRepr, MethodRepr.Diff> mr : changed) {
         final MethodRepr m = mr.first;
-        final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
+        final MethodRepr.Diff d = mr.second;
         final boolean throwsChanged = !d.exceptions().unchanged();
 
         debug("Method: ", m.name);
@@ -1427,7 +1431,7 @@ public class Mappings {
           boolean affected = false;
           boolean constrained = false;
 
-          final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+          final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
 
           if (d.packageLocalOn()) {
             debug("Method became package-private, affecting method usages outside the package");
@@ -1463,6 +1467,7 @@ public class Mappings {
               }
 
               state.myAffectedUsages.addAll(usages);
+              affected = true;
             }
           }
           else if ((d.base() & Difference.ACCESS) > 0) {
@@ -1473,6 +1478,7 @@ public class Mappings {
                 debug("Added static or private specifier or removed static specifier --- affecting method usages");
                 myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
+                affected = true;
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
@@ -1494,12 +1500,35 @@ public class Mappings {
                   if (!affected) {
                     myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                     state.myAffectedUsages.addAll(usages);
+                    affected = true;
                   }
 
                   for (final UsageRepr.Usage usage : usages) {
                     state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
                   }
+                  constrained = true;
                 }
+              }
+            }
+          }
+
+          if ((!affected || constrained) && (d.base() & Difference.ANNOTATIONS) > 0) {
+            final Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff = d.annotations();
+            final Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff = d.parameterAnnotations();
+            for (MemberAnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              final MemberAnnotationsChangeTracker.Action action = extension.methodAnnotationsChanged(m, annotationsDiff, paramAnnotationsDiff);
+              if (action == MemberAnnotationsChangeTracker.Action.RECOMPILE_USAGES) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting method usages");
+                myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+                state.myAffectedUsages.addAll(usages);
+                if (constrained) {
+                  // remove any constraints so that all usages of this method are recompiled
+                  for (UsageRepr.Usage usage : usages) {
+                    state.myUsageConstraints.remove(usage);
+                  }
+                }
+                affected = true;
+                break;
               }
             }
           }
@@ -1646,15 +1675,15 @@ public class Mappings {
     }
 
     private boolean processChangedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
-      final Collection<Pair<FieldRepr, Difference>> changed = diff.fields().changed();
+      final Collection<Pair<FieldRepr, FieldRepr.Diff>> changed = diff.fields().changed();
       if (changed.isEmpty()) {
         return true;
       }
       debug("Processing changed fields:");
       assert myFuture != null;
 
-      for (final Pair<FieldRepr, Difference> f : changed) {
-        final Difference d = f.second;
+      for (final Pair<FieldRepr, FieldRepr.Diff> f : changed) {
+        final FieldRepr.Diff d = f.second;
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
@@ -1684,11 +1713,13 @@ public class Mappings {
 
         if (d.base() != Difference.NONE) {
           final TIntHashSet propagated = myFuture.propagateFieldAccess(field.name, it.name);
+          boolean affected = false;
 
           if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
             debug("Type or signature changed --- affecting field usages");
             myFuture
               .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            affected = true;
           }
           else if ((d.base() & Difference.ACCESS) > 0) {
             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
@@ -1698,10 +1729,10 @@ public class Mappings {
               debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
               myFuture
                 .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              affected = true;
             }
             else {
-              boolean affected = false;
-              final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+              final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
 
               if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
                 debug("Added final modifier --- affecting field assign usages");
@@ -1715,6 +1746,7 @@ public class Mappings {
                 if (!affected) {
                   myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
                   state.myAffectedUsages.addAll(usages);
+                  affected = true;
                 }
 
                 for (final UsageRepr.Usage usage : usages) {
@@ -1728,6 +1760,26 @@ public class Mappings {
               }
             }
           }
+
+          if (!affected && (d.base() & Difference.ANNOTATIONS) > 0) {
+            final Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff = d.annotations();
+            for (MemberAnnotationsChangeTracker extension : myAnnotationChangeTracker) {
+              final MemberAnnotationsChangeTracker.Action action = extension.fieldAnnotationsChanged(field, annotationsDiff);
+              if (action == MemberAnnotationsChangeTracker.Action.RECOMPILE_USAGES) {
+                debug("Extension "+extension.getClass().getName()+" requested recompilation because of changes in annotations list --- affecting field usages");
+                final Set<UsageRepr.Usage> usages = new THashSet<UsageRepr.Usage>();
+                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                state.myAffectedUsages.addAll(usages);
+                // remove any constraints to ensure all field usages are recompiled
+                for (UsageRepr.Usage usage : usages) {
+                  state.myUsageConstraints.remove(usage);
+                }
+                affected = true;
+                break;
+              }
+            }
+          }
+
         }
       }
       debug("End of changed fields processing");
@@ -1736,7 +1788,7 @@ public class Mappings {
     }
 
     private boolean processChangedClasses(final DiffState state) {
-      final Collection<Pair<ClassRepr, Difference>> changedClasses = state.myClassDiff.changed();
+      final Collection<Pair<ClassRepr, ClassRepr.Diff>> changedClasses = state.myClassDiff.changed();
       if (!changedClasses.isEmpty()) {
         debug("Processing changed classes:");
         assert myFuture != null;
@@ -1744,9 +1796,9 @@ public class Mappings {
 
         final Util.FileFilterConstraint fileFilterConstraint = myFilter != null? myPresent.new FileFilterConstraint(myFilter) : null;
 
-        for (final Pair<ClassRepr, Difference> changed : changedClasses) {
+        for (final Pair<ClassRepr, ClassRepr.Diff> changed : changedClasses) {
           final ClassRepr changedClass = changed.first;
-          final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
+          final ClassRepr.Diff diff = changed.second;
 
           myDelta.addChangedClass(changedClass.name);
 
@@ -2154,7 +2206,7 @@ public class Mappings {
             final File fileName = compiledFile.myFileName;
             final Set<ClassRepr> classes = compiledFile.myFileClasses;
             final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-            final DiffState state = new DiffState(Difference.make(pastClasses, classes));
+            final DiffState state = new DiffState(Difference.<ClassRepr, ClassRepr.Diff>make(pastClasses, classes));
   
             if (!processChangedClasses(state)) {
               if (!myEasyMode) {

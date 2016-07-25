@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class PyCompatibilityInspection extends PyInspection {
   
   @Nullable
   public static PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyCompatibilityInspection.class.getSimpleName();
     return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }

@@ -445,3 +445,11 @@ class AssignInAssert {
       System.out.println();
   }
 }
+
+class CompoundAssign {
+  void f() {
+    int i;
+    <error descr="Variable 'i' might not have been initialized">i</error> += i = 2;
+    System.out.println(i);
+  }
+}

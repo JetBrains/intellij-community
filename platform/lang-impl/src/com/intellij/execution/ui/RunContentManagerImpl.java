@@ -575,10 +575,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectOpened(final Project project) {
-    }
-
-    @Override
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
@@ -598,10 +594,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         myContent = null;
       }
       return canClose;
-    }
-
-    @Override
-    public void projectClosing(final Project project) {
     }
 
     private boolean closeQuery(boolean modal) {

@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -61,6 +62,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -292,7 +294,17 @@ public class RefManagerImpl extends RefManager {
       final String groupName = extension.getGroupName(entity);
       if (groupName != null) return groupName;
     }
-    return null;
+
+    final LinkedList<String> containingDirs = new LinkedList<>();
+    RefEntity parent = entity.getOwner();
+    while (parent != null && !(parent instanceof RefDirectory)) {
+      parent = parent.getOwner();
+    }
+    while (parent instanceof RefDirectory) {
+      containingDirs.addFirst(parent.getName());
+      parent = parent.getOwner();
+    }
+    return containingDirs.isEmpty() ? null : StringUtil.join(containingDirs, File.separator);
   }
 
   private static void appendModule(final Element problem, final RefModule refModule) {

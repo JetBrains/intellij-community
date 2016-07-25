@@ -15,8 +15,8 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -27,7 +27,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author: db
@@ -38,7 +38,7 @@ abstract class ProtoMember extends Proto {
   @NotNull
   public final TypeRepr.AbstractType myType;
   @NotNull
-  public final Collection<TypeRepr.ClassType> myAnnotations;
+  public final Set<TypeRepr.ClassType> myAnnotations;
   public final Object myValue;
 
   private static abstract class DataDescriptor<T> {
@@ -201,7 +201,7 @@ abstract class ProtoMember extends Proto {
                         @NotNull
                         final TypeRepr.AbstractType t,
                         @NotNull
-                        Collection<TypeRepr.ClassType> annotations,
+                        Set<TypeRepr.ClassType> annotations,
                         final Object value) {
     super(access, signature, name);
     myType = t;
@@ -214,7 +214,7 @@ abstract class ProtoMember extends Proto {
     try {
       myType = TypeRepr.externalizer(context).read(in);
       myValue = loadTyped(in);
-      myAnnotations = RW.read(TypeRepr.classTypeExternalizer(context), new SmartList<TypeRepr.ClassType>(), in);
+      myAnnotations = (Set<TypeRepr.ClassType>)RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<TypeRepr.ClassType>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -278,13 +278,23 @@ abstract class ProtoMember extends Proto {
     RW.save(myAnnotations, out);
   }
 
-  public Difference difference(final Proto past) {
+  public abstract static class Diff extends Difference {
+    public abstract Specifier<TypeRepr.ClassType, Difference> annotations();
+  }
+
+  public Diff difference(final Proto past) {
     final ProtoMember m = (ProtoMember)past;
     final Difference diff = super.difference(past);
     int base = diff.base();
 
     if (!m.myType.equals(myType)) {
       base |= Difference.TYPE;
+    }
+
+    final Difference.Specifier<TypeRepr.ClassType, Difference> annotations = Difference.make(m.myAnnotations, myAnnotations);
+
+    if (!annotations.unchanged()) {
+      base |= Difference.ANNOTATIONS;
     }
 
     switch ((myValue == null ? 0 : 1) + (m.myValue == null ? 0 : 2)) {
@@ -308,7 +318,12 @@ abstract class ProtoMember extends Proto {
 
     final int newBase = base;
 
-    return new Difference() {
+    return new Diff() {
+      @Override
+      public Specifier<TypeRepr.ClassType, Difference> annotations() {
+        return annotations;
+      }
+
       @Override
       public int base() {
         return newBase;

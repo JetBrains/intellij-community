@@ -104,7 +104,7 @@ public class AnnotationProcessorProfileSerializer {
 
   public static void writeExternal(@NotNull ProcessorConfigProfile profile, @NotNull Element element) {
     element.setAttribute(NAME, profile.getName());
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || profile.isEnabled()) {
+    if (!Registry.is("saving.state.in.new.format.is.allowed", true) || profile.isEnabled()) {
       element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
     }
 
@@ -141,7 +141,7 @@ public class AnnotationProcessorProfileSerializer {
 
 
     Element pathElement = null;
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !profile.isObtainProcessorsFromClasspath()) {
+    if (!Registry.is("saving.state.in.new.format.is.allowed", true) || !profile.isObtainProcessorsFromClasspath()) {
       pathElement = addChild(element, "processorPath");
       pathElement.setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
     }

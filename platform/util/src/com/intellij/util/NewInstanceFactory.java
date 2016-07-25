@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import java.lang.reflect.Constructor;
 
 public class NewInstanceFactory<T> implements Factory<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.NewInstanceFactory");
-  private final Constructor myConstructor;
+
+  private final Constructor<T> myConstructor;
   private final Object[] myArgs;
 
-  private NewInstanceFactory(@NotNull Constructor constructor, @NotNull Object[] args) {
+  private NewInstanceFactory(@NotNull Constructor<T> constructor, @NotNull Object[] args) {
     myConstructor = constructor;
     myArgs = args;
   }
@@ -34,7 +35,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
   @Override
   public T create() {
     try {
-      return (T)myConstructor.newInstance(myArgs);
+      return myConstructor.newInstance(myArgs);
     }
     catch (Exception e) {
       LOG.error(e);

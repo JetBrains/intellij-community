@@ -23,9 +23,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -101,7 +102,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
 
   private int myMaxKeyLength = 0;
-  private final SchemesManager<TemplateGroup, TemplateGroup> mySchemeManager;
+  private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
 
@@ -187,25 +188,26 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
-    mySchemeManager = schemesManagerFactory.create(TEMPLATES_DIR_PATH, new SchemeProcessor<TemplateGroup>() {
+  public TemplateSettings(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
       @Nullable
       @Override
-      public TemplateGroup readScheme(@NotNull Element element) {
+      public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
         return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
       }
 
       @NotNull
       @Override
-      public State getState(@NotNull TemplateGroup template) {
+      public SchemeState getState(@NotNull TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            return State.POSSIBLY_CHANGED;
+            return SchemeState.POSSIBLY_CHANGED;
           }
         }
-        return State.NON_PERSISTENT;
+        return SchemeState.NON_PERSISTENT;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);

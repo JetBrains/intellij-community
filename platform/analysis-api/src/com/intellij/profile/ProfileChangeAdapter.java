@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.intellij.profile;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 20-Nov-2005
- */
-public abstract class ProfileChangeAdapter {
-  public void profileChanged(Profile profile){}
-  public void profileActivated(Profile oldProfile, Profile profile){}
-  public void profilesInitialized() {}
-  public void profilesShutdown(){}
+public interface ProfileChangeAdapter {
+  default void profileChanged(@Nullable Profile profile) {
+  }
+
+  default void profileActivated(@Nullable Profile oldProfile, @Nullable Profile profile) {
+  }
+
+  default void profilesInitialized() {
+  }
+
+  default void profilesShutdown() {
+  }
 }

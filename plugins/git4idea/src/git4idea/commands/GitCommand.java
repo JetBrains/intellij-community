@@ -50,6 +50,7 @@ public class GitCommand {
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
   public static final GitCommand LS_FILES = read("ls-files");
+  public static final GitCommand LS_TREE = read("ls-tree");
   public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
   public static final GitCommand MERGE_BASE = read("merge-base");

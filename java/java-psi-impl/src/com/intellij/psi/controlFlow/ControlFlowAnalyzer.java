@@ -1307,9 +1307,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
-      if (rExpr != null) {
-        rExpr.accept(this);
-      }
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
       if (variable != null) {
         if (myAssignmentTargetsAreElements) {
@@ -1324,11 +1321,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if (expression.getOperationTokenType() != JavaTokenType.EQ) {
           generateReadInstruction(variable);
         }
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         generateWriteInstruction(variable);
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
       else {
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         lExpr.accept(this); //?
       }
     }

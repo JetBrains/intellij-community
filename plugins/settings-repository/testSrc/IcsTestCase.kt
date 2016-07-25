@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository.test
 
+import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.writeChild
 import org.eclipse.jgit.lib.Repository
@@ -46,8 +47,9 @@ abstract class IcsTestCase {
   val tempDirManager = TemporaryDirectory()
   @Rule fun getTemporaryFolder() = tempDirManager
 
-  private val fsRule = InMemoryFsRule()
-  @Rule fun _inMemoryFsRule() = fsRule
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   val fs: FileSystem
     get() = fsRule.fs

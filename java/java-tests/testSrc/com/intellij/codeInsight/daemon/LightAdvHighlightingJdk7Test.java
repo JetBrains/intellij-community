@@ -114,8 +114,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
       @Override public String[] getIgnoreAnnotations() { return new String[]{"MyAnno"}; }
     };
 
-    UnusedDeclarationInspectionBase deadCodeInspection = new UnusedDeclarationInspectionBase(true);
-    enableInspectionTool(deadCodeInspection);
+    enableInspectionTool(new UnusedDeclarationInspectionBase(true));
 
     doTest(true, false);
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -102,7 +100,7 @@ public class InspectionApplication {
         application.doNotSave();
         logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-        InspectionApplication.this.run();
+        this.run();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -164,7 +162,7 @@ public class InspectionApplication {
       if (mySourceDirectory == null) {
         final String scopeName = System.getProperty("idea.analyze.scope");
         final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(myProject, scopeName) : null;
-        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(myProject, namedScope), myProject) 
+        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(myProject, namedScope), myProject)
                                    : new AnalysisScope(myProject);
       }
       else {
@@ -341,7 +339,7 @@ public class InspectionApplication {
         if (inspectionProfile != null) return inspectionProfile;
       }
 
-      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+      inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
       logError("Using default project profile");
     }
     return inspectionProfile;
@@ -349,7 +347,7 @@ public class InspectionApplication {
 
   @Nullable
   private Profile loadProfileByPath(final String profilePath) throws IOException, JDOMException {
-    Profile inspectionProfile = InspectionProfileManager.getInstance().loadProfile(profilePath);
+    Profile inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
     if (inspectionProfile != null) {
       logMessageLn(1, "Loaded profile \'" + inspectionProfile.getName() + "\' from file \'" + profilePath + "\'");
     }
@@ -379,7 +377,7 @@ public class InspectionApplication {
 
 
   @Nullable
-  private InspectionsReportConverter getReportConverter(@Nullable final String outputFormat) {
+  private static InspectionsReportConverter getReportConverter(@Nullable final String outputFormat) {
     for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
       if (converter.getFormatName().equals(outputFormat)) {
         return converter;

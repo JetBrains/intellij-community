@@ -283,7 +283,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     init(progressIndicator);
 
     long time = System.currentTimeMillis() - start;
-    LOG.info(getComponentConfigCount() + " project components initialized in " + time + " ms");
+    String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.debug(message);
+    } else {
+      LOG.info(message);
+    }
 
     if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       distributeProgress();

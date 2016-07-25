@@ -18,8 +18,9 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import java.io.File
+import java.nio.file.Paths
 
-private val MODULE_FILE_STORAGE_ANNOTATION = ProjectFileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
+private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
 private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ModuleStoreBase() {
   override val project = module.project
@@ -60,7 +61,7 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
 
   override fun setPath(path: String) {
     if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
-      storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, File(path))
+      storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, Paths.get(path))
     }
   }
 }

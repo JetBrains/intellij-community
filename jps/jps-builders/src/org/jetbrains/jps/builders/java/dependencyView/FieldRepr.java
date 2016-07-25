@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,7 +38,7 @@ class FieldRepr extends ProtoMember {
                    final int descriptor,
                    final int signature,
                    @NotNull
-                   final List<TypeRepr.ClassType> annotations, final Object value) {
+                   final Set<TypeRepr.ClassType> annotations, final Object value) {
     super(access, signature, name, TypeRepr.getType(context, descriptor), annotations, value);
   }
 

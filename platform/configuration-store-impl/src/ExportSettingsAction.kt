@@ -38,7 +38,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
-import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
@@ -240,7 +240,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   })
 
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
-  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (it.roamingType != RoamingType.DISABLED && it.presentableName != null && it.fileSpec.getOrNull(0) != '$') {
       val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
       if (!result.containsKey(file) && !isSkipFile(file)) {

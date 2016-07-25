@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspe
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,7 +89,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   @NotNull
   public static IncompletePropertyInspection getInstance(PsiElement element) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(element.getProject());
-    InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
+    InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
     return (IncompletePropertyInspection) inspectionProfile.getUnwrappedTool(TOOL_KEY, element);
   }
 

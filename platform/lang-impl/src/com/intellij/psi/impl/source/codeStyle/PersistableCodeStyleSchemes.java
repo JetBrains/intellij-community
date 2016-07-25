@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -41,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
 
-  public PersistableCodeStyleSchemes(@NotNull SchemesManagerFactory schemesManagerFactory) {
-    super(schemesManagerFactory);
+  public PersistableCodeStyleSchemes(@NotNull SchemeManagerFactory schemeManagerFactory) {
+    super(schemeManagerFactory);
   }
 
   @Nullable

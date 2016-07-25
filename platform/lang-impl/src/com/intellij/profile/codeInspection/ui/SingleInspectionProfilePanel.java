@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ApplicationProfileManager;
-import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
 import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
@@ -92,6 +90,8 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
+import com.intellij.util.containers.Queue;
+
 /**
  * User: anna
  * Date: 31-May-2006
@@ -108,7 +108,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
-  private final InspectionProjectProfileManager myProjectProfileManager;
+  private final ProjectInspectionProfileManager myProjectProfileManager;
   @NotNull private Profile myOriginal;
   private InspectionProfileImpl mySelectedProfile;
   private JEditorPane myBrowser;
@@ -137,7 +137,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     public void dispose() {}
   };
 
-  public SingleInspectionProfilePanel(@NotNull InspectionProjectProfileManager projectProfileManager,
+  public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
                                       @NotNull String inspectionProfileName,
                                       @NotNull ModifiableModel profile,
                                       @NotNull Profile original) {
@@ -150,12 +150,11 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
-    if (profile.getProfileManager() instanceof ApplicationProfileManager) {
-      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
+    if (profile.isProjectLevel()) {
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
     }
     else {
-      DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)profile.getProfileManager();
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(profile);
+      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
     }
   }
 
@@ -1166,13 +1165,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
 
-    final InspectionProfile parentProfile = selectedProfile.getParentProfile();
-    try {
-      selectedProfile.commit();
-    }
-    catch (IOException e) {
-      throw new ConfigurationException(e.getMessage());
-    }
+    InspectionProfile parentProfile = selectedProfile.getParentProfile();
+    selectedProfile.commit();
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;

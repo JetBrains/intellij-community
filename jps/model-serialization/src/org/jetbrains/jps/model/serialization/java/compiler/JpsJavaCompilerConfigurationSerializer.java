@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,6 +45,9 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
   public static final String MODULE = "module";
   public static final String TARGET_ATTRIBUTE = "target";
 
+  public static final List<String> DEFAULT_WILDCARD_PATTERNS =
+    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
+
   public JpsJavaCompilerConfigurationSerializer() {
     super("compiler.xml", "CompilerConfiguration");
   }
@@ -59,10 +63,17 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
     readExcludes(componentTag.getChild(EXCLUDE_FROM_COMPILE), configuration.getCompilerExcludes());
 
     Element resourcePatternsTag = componentTag.getChild(WILDCARD_RESOURCE_PATTERNS);
-    for (Element entry : JDOMUtil.getChildren(resourcePatternsTag, ENTRY)) {
-      String pattern = entry.getAttributeValue(NAME);
-      if (!StringUtil.isEmpty(pattern)) {
+    if (resourcePatternsTag == null) {
+      for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
         configuration.addResourcePattern(pattern);
+      }
+    }
+    else {
+      for (Element entry : resourcePatternsTag.getChildren(ENTRY)) {
+        String pattern = entry.getAttributeValue(NAME);
+        if (!StringUtil.isEmpty(pattern)) {
+          configuration.addResourcePattern(pattern);
+        }
       }
     }
 
@@ -94,6 +105,14 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
     String compilerId = JDOMExternalizerUtil.readField(componentTag, "DEFAULT_COMPILER");
     if (compilerId != null) {
       configuration.setJavaCompilerId(compilerId);
+    }
+  }
+
+  @Override
+  public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
+      configuration.addResourcePattern(pattern);
     }
   }
 

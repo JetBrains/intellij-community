@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
         XmlFile xmlFile = (XmlFile)file;
         Project project = xmlFile.getProject();
         HighlightDisplayKey key = HighlightDisplayKey.find(myInspection.getShortName());
-        if (!InspectionProjectProfileManager.getInstance(project).getInspectionProfile().isToolEnabled(key, xmlFile)) return;
+        if (!InspectionProjectProfileManager.getInstance(project).getCurrentProfile().isToolEnabled(key, xmlFile)) return;
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(project), xmlFile, false);
         final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
         new PsiRecursiveElementVisitor() {

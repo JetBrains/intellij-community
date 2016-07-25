@@ -54,7 +54,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   private void readExternal(final Element element) {
     String level = element.getAttributeValue(LANGUAGE_LEVEL);
     if (level == null) {
-      myLanguageLevel = Registry.is("saving.state.in.new.format.is.allowed", false) ? null : migrateFromIdea7(element);
+      myLanguageLevel = Registry.is("saving.state.in.new.format.is.allowed", true) ? null : migrateFromIdea7(element);
     }
     else {
       myLanguageLevel = LanguageLevel.valueOf(level);
@@ -86,7 +86,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
 
-    if (!Registry.is("saving.state.in.new.format.is.allowed", false)) {
+    if (!Registry.is("saving.state.in.new.format.is.allowed", true)) {
       writeAttributesForIdea7(element);
     }
   }

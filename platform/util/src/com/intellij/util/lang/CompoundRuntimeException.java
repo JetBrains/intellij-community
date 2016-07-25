@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -140,16 +141,7 @@ public class CompoundRuntimeException extends RuntimeException {
     }
 
     if (throwables.size() == 1) {
-      Throwable throwable = throwables.get(0);
-      if (throwable instanceof Error) {
-        throw (Error)throwable;
-      }
-      else if (throwable instanceof RuntimeException) {
-        throw (RuntimeException)throwable;
-      }
-      else {
-        throw new RuntimeException(throwable);
-      }
+      ExceptionUtil.rethrow(throwables.get(0));
     }
     else {
       throw new CompoundRuntimeException(throwables);

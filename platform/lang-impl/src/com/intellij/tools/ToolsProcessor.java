@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.tools;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 
 
-abstract public class ToolsProcessor<T extends Tool> extends SchemeProcessor<ToolsGroup<T>> {
+abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> {
   @NonNls private static final String TOOL_SET = "toolSet";
   @NonNls private static final String TOOL = "tool";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -56,7 +56,7 @@ abstract public class ToolsProcessor<T extends Tool> extends SchemeProcessor<Too
 
   @NotNull
   @Override
-  public ToolsGroup<T> readScheme(@NotNull Element root) throws InvalidDataException, IOException, JDOMException {
+  public ToolsGroup<T> readScheme(@NotNull Element root, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
     if (!TOOL_SET.equals(root.getName())) {
       throw new InvalidDataException();
     }
@@ -128,6 +128,7 @@ abstract public class ToolsProcessor<T extends Tool> extends SchemeProcessor<Too
 
   protected abstract T createTool();
 
+  @NotNull
   @Override
   public Element writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);

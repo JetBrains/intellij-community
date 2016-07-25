@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,28 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfile current = projectProfileManager.getInspectionProfile();
+    final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
+    InspectionProfile current = projectProfileManager.getCurrentProfile();
     for (Profile profile : projectProfileManager.getProfiles()) {
       addScheme(group, projectProfileManager, current, profile);
     }
   }
 
   private static void addScheme(final DefaultActionGroup group,
-                                final InspectionProjectProfileManager projectProfileManager, 
+                                final ProjectInspectionProfileManager projectProfileManager,
                                 final Profile current,
                                 final Profile scheme) {
     group.add(new DumbAwareAction(scheme.getName(), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@Nullable AnActionEvent e) {
-        projectProfileManager.setProjectProfile(scheme.getName());
+        projectProfileManager.setRootProfile(scheme.getName());
       }
     });
   }
