@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -25,6 +26,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -101,7 +103,7 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
 
   private class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, DataContext dataContext) {
+    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final SelectionModel selectionModel = editor.getSelectionModel();
       int changedLines = 0;
       if (selectionModel.hasSelection()) {
