@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -419,7 +420,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     private final Lexer myLexer;
 
     public TemplateHighlighter() {
-      myLexer = new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
+      myLexer = createDefaultLexer();
     }
 
     @NotNull
@@ -437,6 +438,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
       return EMPTY;
     }
+  }
+
+  @NotNull
+  @VisibleForTesting
+  static Lexer createDefaultLexer() {
+    return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
 

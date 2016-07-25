@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.lang.Language;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.lexer.Lexer;
+import com.intellij.testFramework.LexerTestCase;
 
-interface FileTemplateTokenType {
-  IElementType ESCAPE = new IElementType("ESCAPE", Language.ANY);
-  IElementType TEXT = new IElementType("TEXT", Language.ANY);
-  IElementType MACRO = new IElementType("MACRO", Language.ANY);
-  IElementType DIRECTIVE = new IElementType("DIRECTIVE", Language.ANY);
+/**
+ * @author peter
+ */
+public class FileTemplateLexerTest extends LexerTestCase {
+
+  public void testEscapes() {
+    doTest("\\#include foo $bar", "ESCAPE ('\\#')\n" +
+                                  "TEXT ('include foo ')\n" +
+                                  "MACRO ('$bar')");
+  }
+
+  @Override
+  protected Lexer createLexer() {
+    return FileTemplateConfigurable.createDefaultLexer();
+  }
+
+  @Override
+  protected String getDirPath() {
+    return null;
+  }
 }
