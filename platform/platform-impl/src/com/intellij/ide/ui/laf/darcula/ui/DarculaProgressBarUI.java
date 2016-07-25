@@ -58,12 +58,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     g.setColor(new JBColor(Gray._240, Gray._128));
     int w = c.getWidth();
     int h = c.getPreferredSize().height;
+    if (!isEven(c.getHeight() - h)) h++;
+
     if (c.isOpaque()) {
       g.fillRect(0, (c.getHeight() - h)/2, w, h);
     }
     g.setColor(new JBColor(Gray._165, Gray._88));
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    g.translate(0f, (c.getHeight() - h) / 2f);
+    g.translate(0, (c.getHeight() - h) / 2);
     int x = -offset;
     final float R = JBUI.scale(8f);
     final float R2 = JBUI.scale(9f);
@@ -96,7 +98,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g.fill(area);
     }
     g.draw(new RoundRectangle2D.Float(1f, 1f, w - 2f - 1f, h - 2f -1f, R, R));
-    g.translate(0f, -(c.getHeight() - h)/2f);
+    g.translate(0, -(c.getHeight() - h) / 2);
 
     // Deal with possible text painting
     if (progressBar.isStringPainted()) {
@@ -122,8 +124,10 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     Insets b = progressBar.getInsets(); // area for border
-    final int w = progressBar.getWidth();
-    final int h = progressBar.getPreferredSize().height;
+    int w = progressBar.getWidth();
+    int h = progressBar.getPreferredSize().height;
+    if (!isEven(c.getHeight() - h)) h++;
+
     int barRectWidth = w - (b.right + b.left);
     int barRectHeight = h - (b.top + b.bottom);
 
@@ -205,5 +209,9 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
   protected int getPeriodLength() {
     return JBUI.scale(16);
+  }
+
+  private static boolean isEven(int value) {
+    return value % 2 == 0;
   }
 }
