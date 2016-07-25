@@ -151,7 +151,7 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
                   continue
                 }
 
-                result.add(CallFrameView(frame, viewSupport, script, sourceInfo, isInLibraryContent))
+                result.add(CallFrameView(frame, viewSupport, script, sourceInfo, isInLibraryContent, suspendContext.vm))
               }
             }
           }
