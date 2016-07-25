@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PasswordStorage {
   @Nullable
   default String getPassword(@NotNull String key) {
+    //noinspection deprecation
     return getPassword(null, null, key);
   }
 

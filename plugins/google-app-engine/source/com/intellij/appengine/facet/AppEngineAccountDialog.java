@@ -19,7 +19,6 @@ import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineCloudConfigurable;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class AppEngineAccountDialog {
-  private static final Logger LOG = Logger.getInstance(AppEngineAccountDialog.class);
   private static final String PASSWORD_KEY = "GOOGLE_APP_ENGINE_PASSWORD";
 
   @Nullable
@@ -41,7 +39,7 @@ public class AppEngineAccountDialog {
 
     String email = configuration.getEmail();
     if (!StringUtil.isEmpty(email) && configuration.isPasswordStored()) {
-      String password = getStoredPassword(project, email);
+      String password = getStoredPassword(email);
       if (!StringUtil.isEmpty(password)) {
         return AppEngineAuthData.login(email, password);
       }
@@ -58,8 +56,8 @@ public class AppEngineAccountDialog {
     return AppEngineAuthData.login(configurable.getEmail(), configurable.getPassword());
   }
 
-  public static void storePassword(@NotNull String email, @NotNull String password, @Nullable Project project) {
-    PasswordSafe.getInstance().storePassword(project, AppEngineAccountDialog.class, getPasswordKey(email), password);
+  public static void storePassword(@NotNull String email, @NotNull String password) {
+    PasswordSafe.getInstance().setPassword(AppEngineAccountDialog.class, getPasswordKey(email), password);
   }
 
   private static String getPasswordKey(String email) {
@@ -67,10 +65,10 @@ public class AppEngineAccountDialog {
   }
 
   @Nullable
-  private static String getStoredPassword(Project project, String email) {
+  private static String getStoredPassword(String email) {
     if (StringUtil.isEmpty(email)) {
       return null;
     }
-    return PasswordSafe.getInstance().getPassword(project, AppEngineAccountDialog.class, getPasswordKey(email));
+    return PasswordSafe.getInstance().getPassword(AppEngineAccountDialog.class, getPasswordKey(email));
   }
 }

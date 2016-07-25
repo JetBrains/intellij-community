@@ -63,7 +63,7 @@ public class StepicUser {
   public String getPassword() {
     final String login = getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) return "";
-    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login));
+    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login));
   }
 
   @Transient

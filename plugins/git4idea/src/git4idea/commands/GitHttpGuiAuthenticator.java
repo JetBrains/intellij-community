@@ -281,7 +281,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
+      String password = passwordSafe.getPassword(PASS_REQUESTER, key);
       return new AuthData(StringUtil.notNullize(userName), password);
     }
 

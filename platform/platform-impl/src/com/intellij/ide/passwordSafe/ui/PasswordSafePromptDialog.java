@@ -152,7 +152,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       ps.setPassword(requestor, key, null);
     }
     else {
-      String pw = ps.getPassword(null, requestor, key);
+      String pw = ps.getPassword(requestor, key);
       if (pw != null) {
         return pw;
       }

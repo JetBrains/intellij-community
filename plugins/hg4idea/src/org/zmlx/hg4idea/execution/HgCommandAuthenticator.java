@@ -114,7 +114,7 @@ class HgCommandAuthenticator {
       String password = null;
       if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
         // if we've logged in with this login, search for password
-        password = PasswordSafe.getInstance().getPassword(myProject, HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
+        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
       }
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required
