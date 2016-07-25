@@ -15,7 +15,7 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Name:"/>
+          <text value="Title:"/>
         </properties>
       </component>
       <component id="7e88" class="javax.swing.JTextField" binding="myName">
@@ -53,7 +53,7 @@
       <component id="389a7" class="javax.swing.JTextArea" binding="myDescription">
         <constraints>
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="-1" height="50"/>
+            <preferred-size width="-1" height="150"/>
           </grid>
         </constraints>
         <properties>
