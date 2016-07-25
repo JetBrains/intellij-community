@@ -95,7 +95,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     if (course == null) {
       return false;
     }
-    return EduNames.STUDY.equals(course.getCourseMode());
+    return EduNames.STUDY.equals(course.getCourseMode()) || EduNames.STEPIC_CODE.equals(course.getCourseMode());
   }
 
   @Nullable

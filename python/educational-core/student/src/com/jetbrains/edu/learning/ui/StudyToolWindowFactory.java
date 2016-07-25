@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
   public static final String STUDY_TOOL_WINDOW = "Task Description";
+  private static final Logger LOG = Logger.getInstance(StudyToolWindowFactory.class.getName());
 
 
   @Override
@@ -22,9 +24,10 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
     toolWindow.setIcon(InteractiveLearningIcons.TaskDescription);
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     final Course course = taskManager.getCourse();
-    if (course != null) {
+    if (course != null || !taskManager.getUser().getEmail().isEmpty()) {
+      LOG.info("create TW");
       final StudyToolWindow studyToolWindow;
-      if (StudyUtils.hasJavaFx() && StudyTaskManager.getInstance(project).shouldUseJavaFx()) {
+      if (StudyUtils.hasJavaFx() && taskManager.shouldUseJavaFx()) {
         studyToolWindow = new StudyJavaFxToolWindow();
       }
       else {
@@ -35,6 +38,9 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
       final Content content = contentManager.getFactory().createContent(studyToolWindow, null, false);
       contentManager.addContent(content);
       Disposer.register(project, studyToolWindow);
+    }
+    else {
+      LOG.warn("do not create TW");
     }
   }
 }

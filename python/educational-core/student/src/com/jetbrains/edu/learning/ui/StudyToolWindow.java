@@ -64,7 +64,10 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
   public void init(@NotNull final Project project, final boolean isToolwindow) {
     String taskText = StudyUtils.getTaskText(project);
-    if (taskText == null) return;
+    if (taskText == null){
+      LOG.warn("task text is empty");
+      return;
+    }
 
     final DefaultActionGroup group = getActionGroup(project);
     setActionToolbar(group);
