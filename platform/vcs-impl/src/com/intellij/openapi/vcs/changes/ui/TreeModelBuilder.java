@@ -252,7 +252,7 @@ public class TreeModelBuilder {
       FilePath fp1 = ChangesUtil.getFilePath(o1);
       FilePath fp2 = ChangesUtil.getFilePath(o2);
 
-      return Comparing.compare(fp1.getIOFile().getPath().length(), fp2.getIOFile().getPath().length());
+      return Comparing.compare(fp1.getPath().length(), fp2.getPath().length());
     }
   }
 
