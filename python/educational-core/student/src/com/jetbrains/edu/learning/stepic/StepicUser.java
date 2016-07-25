@@ -12,16 +12,24 @@ public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private static final Logger LOG = Logger.getInstance(StepicUser.class);
   private int id = -1;
-  private String myFirstName = "";
-  private String myLastName = "";
-  private String myEmail = "";
+  private String firstName = "";
+  private String lastName = "";
+  private String email = "";
+  private String accessToken = "";
+  private String refreshToken = "";
+
 
   public StepicUser() {
   }
   
   public StepicUser(@NotNull final String email, @NotNull final String password) {
-    this.myEmail = email;
+    this.email = email;
     setPassword(password);
+  }
+
+  public StepicUser(StepicWrappers.TokenInfo tokenInfo) {
+    this.accessToken = tokenInfo.accessToken;
+    this.refreshToken = tokenInfo.refreshToken;
   }
 
   public int getId() {
@@ -34,40 +42,40 @@ public class StepicUser {
 
   @NotNull
   public String getFirstName() {
-    return myFirstName;
+    return firstName;
   }
 
   public void setFirstName(@NotNull final String firstName) {
-    this.myFirstName = firstName;
+    this.firstName = firstName;
   }
 
   @NotNull
   public String getLastName() {
-    return myLastName;
+    return lastName;
   }
 
   public void setLastName(@NotNull final String last_name) {
-    this.myLastName = last_name;
+    this.lastName = last_name;
   }
 
   @NotNull
   public String getEmail() {
-    return myEmail;
+    return email;
   }
 
   public void setEmail(@NotNull final String email) {
-    this.myEmail = email;
+    this.email = email;
   }
 
   @Transient
   @NotNull
   public String getPassword() {
-    final String login = getEmail();
-    if (StringUtil.isEmptyOrSpaces(login)) return "";
+    final String email = getEmail();
+    if (StringUtil.isEmptyOrSpaces(email)) return "";
 
     String password;
     try {
-      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login);
+      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + email);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
@@ -90,6 +98,42 @@ public class StepicUser {
 
   @NotNull
   public String getName() {
-    return StringUtil.join(new String[]{myFirstName, myLastName}, " ");
+    return StringUtil.join(new String[]{firstName, lastName}, " ");
+  }
+
+  public String getAccessToken() {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken) {
+    this.refreshToken = refreshToken;
+  }
+
+  public void setupTokenInfo(StepicWrappers.TokenInfo tokenInfo) {
+    accessToken = tokenInfo.getAccessToken();
+    refreshToken = tokenInfo.getRefreshToken();
+  }
+
+  public void update(StepicUser tmpUser) {
+    id = tmpUser.getId();
+    firstName = tmpUser.getFirstName();
+    lastName = tmpUser.getLastName();
+  }
+
+  @Override
+  public String toString() {
+    return "StepicUser{" +
+            "id=" + id +
+            ", firstName='" + firstName + '\'' +
+            ", email='" + email + '\'' +
+            '}';
   }
 }

@@ -23,7 +23,8 @@ public class CourseInfo {
 
   List<StepicUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;
-  @SerializedName("course_format") private String myType = "pycharm Python"; //course type in format "pycharm <language>"
+  @SerializedName("course_format") private String myType;
+  //= "pycharm Python"; //course type in format "pycharm <language>"
   @Nullable private String username;
 
   public String getName() {

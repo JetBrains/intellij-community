@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.Expose;
@@ -12,6 +27,9 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,16 +60,6 @@ public class StepicWrappers {
       step.source = StepOptions.fromTask(project, task);
       return step;
     }
-
-    @Override
-    public String toString() {
-      return "Step{" +
-        "options=" + options +
-        ", text='" + text + '\'' +
-        ", name='" + name + '\'' +
-        ", source=" + source +
-        '}';
-    }
   }
 
   public static class StepOptions {
@@ -62,21 +70,8 @@ public class StepicWrappers {
     @Expose List<List<String>> samples;
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
+//    @Expose Map<String, String> codeTemplates;
     @Expose CodeTemplatesWrapper codeTemplates;
-
-    @Override
-    public String toString() {
-      return "StepOptions{" +
-             "test=" + test +
-             ", title='" + title + '\'' +
-             ", files=" + files +
-             ", text='" + text + '\'' +
-             ", samples=" + samples +
-             ", executionMemoryLimit=" + executionMemoryLimit +
-             ", executionTimeLimit=" + executionTimeLimit +
-             ", codeTemplates=" + codeTemplates +
-             '}';
-    }
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
@@ -136,6 +131,8 @@ public class StepicWrappers {
   static class CodeTemplatesWrapper {
     String python3;
     String python27;
+    String java;
+    String java8;
 
     @Nullable
     public String getTemplateForLanguage(@NotNull final String langauge) {
@@ -145,6 +142,14 @@ public class StepicWrappers {
 
       if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
         return python3;
+      }
+
+      if (langauge.equals("java")) {
+        return java;
+      }
+
+      if (langauge.equals("java8")) {
+        return java8;
       }
 
       return null;
@@ -310,8 +315,8 @@ public class StepicWrappers {
     }
   }
 
-  static class AuthorWrapper {
-    List<StepicUser> users;
+  public static class AuthorWrapper {
+    public List<StepicUser> users;
   }
 
   static class SubmissionWrapper {
@@ -422,12 +427,12 @@ public class StepicWrappers {
   static class AssignmentsWrapper {
     List<Assignment> assignments;
   }
-  
+
   static class Assignment {
     int id;
     int step;
   }
-  
+
   static class ViewsWrapper {
     View view;
 
@@ -435,7 +440,7 @@ public class StepicWrappers {
       this.view = new View(assignment, step);
     }
   }
-  
+
   static class View {
     int assignment;
     int step;
@@ -445,7 +450,7 @@ public class StepicWrappers {
       this.step = step;
     }
   }
-  
+
   static class Enrollment {
     String course;
 
@@ -453,6 +458,7 @@ public class StepicWrappers {
       course = courseId;
     }
   }
+
   static class EnrollmentWrapper {
     Enrollment enrollment;
 
@@ -460,4 +466,25 @@ public class StepicWrappers {
       enrollment = new Enrollment(courseId);
     }
   }
-}
+
+  static class TokenInfo {
+    @Expose String accessToken;
+    @Expose String refreshToken;
+    @Expose String tokenType;
+    @Expose String scope;
+    @Expose int expiresIn;
+
+    public TokenInfo() {
+      accessToken = "";
+      refreshToken = "";
+    }
+
+    public String getAccessToken() {
+      return accessToken;
+    }
+
+    public String getRefreshToken() {
+      return refreshToken;
+    }
+  }
+  }
