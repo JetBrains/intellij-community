@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,10 @@ import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 
@@ -119,7 +119,7 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
         String path = fileSet.getParent(key) + '/' + key;
-        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, new File(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
+        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, Paths.get(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
         try {
           EclipseJDOMUtil.output(content, writer, module.getProject());
         }

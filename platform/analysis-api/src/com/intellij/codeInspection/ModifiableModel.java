@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,6 @@ public interface ModifiableModel extends Profile {
 
   InspectionProfile getParentProfile();
 
-  @Nullable
-  String getBaseProfileName();
-
-  @Deprecated // use corresponding constructor instead
-  void setBaseProfile(InspectionProfile profile);
-
   void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
 
   void disableTool(@NotNull String inspectionTool, NamedScope namedScope, @NotNull Project project);
@@ -52,9 +46,9 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  boolean isToolEnabled(HighlightDisplayKey key, PsiElement element);
+  boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
-  void commit() throws IOException;
+  void commit();
 
   boolean isChanged();
 
@@ -75,8 +69,6 @@ public interface ModifiableModel extends Profile {
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
   InspectionToolWrapper[] getInspectionTools(PsiElement element);
-
-  void copyFrom(@NotNull InspectionProfile profile);
 
   /**
    * @see InspectionProfile#getSingleTool()

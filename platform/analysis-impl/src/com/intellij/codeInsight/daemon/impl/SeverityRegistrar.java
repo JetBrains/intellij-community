@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,7 +83,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
     return project == null
            ? InspectionProfileManager.getInstance().getSeverityRegistrar()
-           : InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar();
+           : InspectionProfileManager.getInstance(project).getSeverityRegistrar();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
@@ -135,7 +134,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
 
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     myMap.clear();
     myRendererColors.clear();
     for (Element infoElement : element.getChildren(INFO_TAG)) {
@@ -151,8 +150,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     final List<HighlightSeverity> knownSeverities = getDefaultOrder();
     for (String name : myReadOrder) {
       HighlightSeverity severity = getSeverity(name);
-      if (severity == null || !knownSeverities.contains(severity)) continue;
-      read.add(severity);
+      if (severity != null && knownSeverities.contains(severity)) {
+        read.add(severity);
+      }
     }
     OrderMap orderMap = fromList(read);
     if (orderMap.isEmpty()) {
@@ -292,7 +292,6 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;
   }
-
 
   @NotNull
   private OrderMap getOrderMap() {

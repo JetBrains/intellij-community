@@ -76,7 +76,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Nullable
   public static PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
     return (PyPackageRequirementsInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
@@ -444,7 +444,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             }
           }
           if (changed) {
-            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
             InspectionProfileManager.getInstance().fireProfileChanged(profile);
           }
         }

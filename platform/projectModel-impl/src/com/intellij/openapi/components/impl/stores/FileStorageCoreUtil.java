@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -44,6 +45,11 @@ public class FileStorageCoreUtil {
 
     StringInterner interner = intern ? new StringInterner() : null;
     List<Element> children = rootElement.getChildren(COMPONENT);
+    if (children.isEmpty() && rootElement.getName().equals(COMPONENT) && rootElement.getAttributeValue(NAME) != null) {
+      // exclusive component data
+      children = Collections.singletonList(rootElement);
+    }
+
     TreeMap<String, Element> map = new TreeMap<String, Element>();
     for (Element element : children) {
       String name = getComponentNameIfValid(element);

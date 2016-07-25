@@ -21,9 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.runBatchUpdate
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -130,7 +128,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
               restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus, syncType == SyncType.OVERWRITE_LOCAL)
             }
             if (!restartApplication && !isSmartSchemeReload) {
-              (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+              (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
                 it.reload()
               }
             }
@@ -157,8 +155,8 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
   val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, { toIdeaPath(it) })
 
-  val schemeManagersToReload = SmartList<SchemeManagerImpl<Scheme, ExternalizableScheme>>()
-  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+  val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
+  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (reloadAllSchemes) {
       schemeManagersToReload.add(it)
     }

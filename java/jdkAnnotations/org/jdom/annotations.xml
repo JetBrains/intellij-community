@@ -48,6 +48,12 @@
   <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.jdom.Element org.jdom.Attribute getAttribute(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.jdom.Element org.jdom.Element getChild(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.jdom.Element org.jdom.Element setAttribute(java.lang.String, java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

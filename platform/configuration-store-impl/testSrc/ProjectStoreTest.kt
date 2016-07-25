@@ -26,14 +26,13 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.readText
 import com.intellij.util.systemIndependentPath
 import com.intellij.util.write
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -58,8 +57,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
-    val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else projectManager.loadProject(filePath)!!
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
     project.runInLoadComponentStateMode {
       project.use(task)
     }
@@ -69,7 +67,8 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 internal class ProjectStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
@@ -116,7 +115,7 @@ internal class ProjectStoreTest {
 
   @Test fun fileBasedStorage() {
     loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
-      test(project as ProjectEx)
+      test(project)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
     }

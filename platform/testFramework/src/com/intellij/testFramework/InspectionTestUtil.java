@@ -44,8 +44,8 @@ public class InspectionTestUtil {
   }
 
   protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
-    List<Element> expectedProblems = new ArrayList<Element>(expectedDoc.getRootElement().getChildren("problem"));
-    List<Element> reportedProblems = new ArrayList<Element>(doc.getRootElement().getChildren("problem"));
+    List<Element> expectedProblems = new ArrayList<>(expectedDoc.getRootElement().getChildren("problem"));
+    List<Element> reportedProblems = new ArrayList<>(doc.getRootElement().getChildren("problem"));
 
     Element[] expectedArray = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;

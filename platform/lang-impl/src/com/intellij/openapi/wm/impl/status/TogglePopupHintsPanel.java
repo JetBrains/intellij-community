@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
       else if (HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) {
         myCurrentIcon = AllIcons.Ide.HectorOn;
         myToolTipText = "Current inspection profile: " +
-                        InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() +
+                        InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile().getName() +
                         ".\n";
       }
       else if (HighlightingLevelManager.getInstance(myProject).shouldHighlight(file)) {

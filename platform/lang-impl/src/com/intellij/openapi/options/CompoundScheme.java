@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompoundScheme<E extends SchemeElement> extends ExternalizableSchemeAdapter {
+public class CompoundScheme<E extends SchemeElement> implements ExternalizableScheme {
+  protected String myName;
   protected final ArrayList<E> myElements = new ArrayList<E>();
 
   public CompoundScheme(final String name) {
-    myName = name;
+    setName(name);
   }
 
   public final void addElement(E t) {
@@ -42,6 +43,12 @@ public class CompoundScheme<E extends SchemeElement> extends ExternalizableSchem
   @NotNull
   public final List<E> getElements() {
     return Collections.unmodifiableList(new ArrayList<E>(myElements));
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
   }
 
   @Override
@@ -109,7 +116,7 @@ public class CompoundScheme<E extends SchemeElement> extends ExternalizableSchem
   }
 
   public static final class MutatorHelper<T extends CompoundScheme<E>, E extends SchemeElement> {
-    private final THashMap<T, T> copiedToOriginal = new THashMap<T, T>(ContainerUtil.<T>identityStrategy());
+    private final THashMap<T, T> copiedToOriginal = new THashMap<T, T>(ContainerUtil.identityStrategy());
 
     @NotNull
     public T copy(@NotNull T scheme) {

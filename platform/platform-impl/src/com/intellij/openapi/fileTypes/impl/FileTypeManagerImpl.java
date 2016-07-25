@@ -32,9 +32,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.NonLazySchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -143,7 +144,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<String, StandardFileType>();
   @NonNls
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
+  private final SchemeManager<FileType> mySchemeManager;
   @NonNls
   static final String FILE_SPEC = "filetypes";
 
@@ -161,13 +162,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
-  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory, PropertiesComponent propertiesComponent) {
+  public FileTypeManagerImpl(MessageBus bus, SchemeManagerFactory schemeManagerFactory, PropertiesComponent propertiesComponent) {
     int fileTypeChangedCounter = StringUtilRt.parseInt(propertiesComponent.getValue("fileTypeChangedCounter"), 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
     autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
 
     myMessageBus = bus;
-    mySchemesManager = schemesManagerFactory.create(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new NonLazySchemeProcessor<FileType, AbstractFileType>() {
       @NotNull
       @Override
       public AbstractFileType readScheme(@NotNull Element element, boolean duringLoad) {
@@ -183,16 +184,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @NotNull
       @Override
-      public State getState(@NotNull AbstractFileType fileType) {
-        if (!shouldSave(fileType)) {
-          return State.NON_PERSISTENT;
+      public SchemeState getState(@NotNull FileType fileType) {
+        if (!(fileType instanceof AbstractFileType) || !shouldSave(fileType)) {
+          return SchemeState.NON_PERSISTENT;
         }
         if (!myDefaultTypes.contains(fileType)) {
-          return State.POSSIBLY_CHANGED;
+          return SchemeState.POSSIBLY_CHANGED;
         }
-        return fileType.isModified() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+        return ((AbstractFileType)fileType).isModified() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull AbstractFileType fileType) {
         Element root = new Element(ELEMENT_FILETYPE);
@@ -474,7 +476,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     boolean isAtLeastOneStandardFileTypeHasBeenRead = false;
-    for (AbstractFileType fileType : mySchemesManager.loadSchemes()) {
+    for (FileType fileType : mySchemeManager.loadSchemes()) {
       isAtLeastOneStandardFileTypeHasBeenRead |= myInitialAssociations.hasAssociationsFor(fileType);
     }
     if (isAtLeastOneStandardFileTypeHasBeenRead) {
@@ -736,7 +738,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
     if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
-      for (FileType fileType: mySchemesManager.getAllSchemes()) {
+      for (FileType fileType: mySchemeManager.getAllSchemes()) {
         if (fileTypeName.equals(fileType.getName())) {
           return fileType;
         }
@@ -951,7 +953,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
     myPatternsTable.removeAllAssociations(fileType);
-    mySchemesManager.removeScheme(fileType);
+    mySchemeManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
       mySpecialFileTypes = ArrayUtil.remove(mySpecialFileTypes, fakeFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
@@ -961,7 +963,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType[] getRegisteredFileTypes() {
-    Collection<FileType> fileTypes = mySchemesManager.getAllSchemes();
+    Collection<FileType> fileTypes = mySchemeManager.getAllSchemes();
     return fileTypes.toArray(new FileType[fileTypes.size()]);
   }
 
@@ -1230,7 +1232,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
 
     List<FileType> notExternalizableFileTypes = new ArrayList<FileType>();
-    for (FileType type : mySchemesManager.getAllSchemes()) {
+    for (FileType type : mySchemeManager.getAllSchemes()) {
       if (!(type instanceof AbstractFileType) || myDefaultTypes.contains(type)) {
         notExternalizableFileTypes.add(type);
       }
@@ -1299,7 +1301,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Nullable
   private FileType getFileTypeByName(@NotNull String name) {
-    return mySchemesManager.findSchemeByName(name);
+    return mySchemeManager.findSchemeByName(name);
   }
 
   @NotNull
@@ -1321,7 +1323,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    */
   private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
     if (addScheme) {
-      mySchemesManager.addScheme(fileType);
+      mySchemeManager.addScheme(fileType);
     }
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
@@ -1470,11 +1472,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {
-        mySchemesManager.removeScheme(existing);
+        mySchemeManager.removeScheme(existing);
       }
     }
     for (FileType fileType : fileTypes) {
-      mySchemesManager.addScheme(fileType);
+      mySchemeManager.addScheme(fileType);
       if (fileType instanceof AbstractFileType) {
         ((AbstractFileType)fileType).initSupport();
       }
@@ -1557,7 +1559,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
-    mySchemesManager.clearAllSchemes();
+    mySchemeManager.clearAllSchemes();
 
   }
 

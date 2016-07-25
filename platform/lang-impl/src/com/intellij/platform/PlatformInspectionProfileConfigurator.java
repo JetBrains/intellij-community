@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,6 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class PlatformInspectionProfileConfigurator implements DirectoryProjectConfigurator {
   @Override
   public void configureProject(Project project, @NotNull VirtualFile baseDir, Ref<Module> moduleRef) {
-    InspectionProjectProfileManager.getInstance(project).setProjectProfile(null);
+    ProjectInspectionProfileManager.getInstanceImpl(project).setRootProfile(null);
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.ui.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -24,7 +23,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -34,7 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,7 +40,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -83,39 +79,35 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       final boolean enabled = super.isEnabled(view, e);
       if (!enabled) return false;
       final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-      final InspectionProfile profile = (InspectionProfile)InspectionProjectProfileManager.getInstance(view.getProject()).getProjectProfileImpl();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(view.getProject())
+        .getCurrentProfile();
       return profile.isToolEnabled(key);
     }
 
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      try {
-        if (view.isSingleInspectionRun()) {
-          final ModifiableModel model = view.getCurrentProfile().getModifiableModel();
-          model.disableTool(key.toString(), view.getProject());
-          model.commit();
-          view.updateCurrentProfile();
-        } else {
-          final RefEntity[] selectedElements = view.getTree().getSelectedElements();
-          final Set<PsiElement> files = new HashSet<PsiElement>();
-          final Project project = view.getProject();
-          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-          for (RefEntity selectedElement : selectedElements) {
-            if (selectedElement instanceof RefElement) {
-              final PsiElement element = ((RefElement)selectedElement).getElement();
-              files.add(element);
-            }
+      if (view.isSingleInspectionRun()) {
+        final ModifiableModel model = view.getCurrentProfile().getModifiableModel();
+        model.disableTool(key.toString(), view.getProject());
+        model.commit();
+        view.updateCurrentProfile();
+      } else {
+        final RefEntity[] selectedElements = view.getTree().getSelectedElements();
+        final Set<PsiElement> files = new HashSet<>();
+        final Project project = view.getProject();
+        final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+        for (RefEntity selectedElement : selectedElements) {
+          if (selectedElement instanceof RefElement) {
+            final PsiElement element = ((RefElement)selectedElement).getElement();
+            files.add(element);
           }
-          ModifiableModel model = ((InspectionProfileImpl)profileManager.getProjectProfileImpl()).getModifiableModel();
-          for (PsiElement element : files) {
-            model.disableTool(key.toString(), element);
-          }
-          model.commit();
-          DaemonCodeAnalyzer.getInstance(project).restart();
         }
-      }
-      catch (IOException e1) {
-        Messages.showErrorDialog(view.getProject(), e1.getMessage(), CommonBundle.getErrorTitle());
+        ModifiableModel model = profileManager.getCurrentProfile().getModifiableModel();
+        for (PsiElement element : files) {
+          model.disableTool(key.toString(), element);
+        }
+        model.commit();
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
 
   @Override
   public void actionPerformed(final AnActionEvent event) {
-    final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
-    final InspectionToolWrapper[] tools = (InspectionToolWrapper[])profile.getInspectionTools(null);
+    final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
+    final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
 
     final Collection<String> classes = ContainerUtil.newTreeSet();
     final Map<String, Collection<String>> groups = ContainerUtil.newTreeMap();

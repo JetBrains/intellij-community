@@ -32,12 +32,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseSchemeProcessor;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.EventDispatcher;
@@ -71,48 +70,43 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final DefaultColorSchemesManager myDefaultColorSchemeManager;
-  private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemeManager;
+  private final SchemeManager<EditorColorsScheme> mySchemeManager;
   static final String FILE_SPEC = "colors";
 
   private State myState = new State();
 
-  public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemesManagerFactory schemeManagerFactory) {
+  public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
     myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl>() {
       @NotNull
       @Override
-      public EditorColorsSchemeImpl readScheme(@NotNull Element element) {
+      public EditorColorsSchemeImpl readScheme(@NotNull Element element, boolean duringLoad) {
         EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
         scheme.readExternal(element);
         return scheme;
       }
 
+      @NotNull
       @Override
       public Element writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
         Element root = new Element(SCHEME_NODE_NAME);
-        try {
-          scheme.writeExternal(root);
-        }
-        catch (WriteExternalException e) {
-          LOG.error(e);
-          return null;
-        }
+        scheme.writeExternal(root);
         return root;
       }
 
       @NotNull
       @Override
-      public State getState(@NotNull EditorColorsSchemeImpl scheme) {
-        return !(scheme instanceof ReadOnlyColorsScheme) && scheme.isSaveNeeded() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+      public SchemeState getState(@NotNull EditorColorsScheme scheme) {
+        return scheme instanceof EditorColorsSchemeImpl && !(scheme instanceof ReadOnlyColorsScheme) && ((EditorColorsSchemeImpl)scheme).isSaveNeeded() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
       }
 
       @Override
-      public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
+      public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
         LafManager.getInstance().updateUI();
         schemeChangedOrSwitched();
 
-        fireChanges(mySchemeManager.getCurrentScheme());
+        fireChanges(newScheme);
       }
 
       @NotNull
@@ -332,7 +326,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   @NotNull
-  public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemeManager() {
+  public SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
   }
 }

@@ -18,7 +18,7 @@ class BinaryXmlOutputterTest {
   private fun test(xml: String) {
     val byteOut = BufferExposingByteArrayOutputStream()
     byteOut.use {
-      writeElement(loadElement(xml), it)
+      serializeElementToBinary(loadElement(xml), it)
     }
 
     val xmlAfter = JDOMUtil.writeElement(byteOut.toByteArray().inputStream().use { readElement(it) })

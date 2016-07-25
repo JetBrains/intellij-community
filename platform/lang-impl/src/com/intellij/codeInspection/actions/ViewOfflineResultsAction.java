@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
@@ -101,7 +100,7 @@ public class ViewOfflineResultsAction extends AnAction {
     if (virtualFile == null || !virtualFile.isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
-      new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
+      new HashMap<>();
     final String [] profileName = new String[1];
     final Runnable process = () -> {
       final VirtualFile[] files = virtualFile.getChildren();
@@ -172,7 +171,7 @@ public class ViewOfflineResultsAction extends AnAction {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
         @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
-          return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
+          return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
         }
       };
       for (String id : resMap.keySet()) {
@@ -192,7 +191,7 @@ public class ViewOfflineResultsAction extends AnAction {
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
-    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     final InspectionResultsView view = new InspectionResultsView(context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,9 +174,15 @@ public class LaterInvocator {
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
     if (!exception.isNull()) {
-      // wrap everything to keep the current thread stacktrace
-      // also TC ComparisonFailure feature depends on this
-      throw new RuntimeException(exception.get());
+      Throwable cause = exception.get();
+      if (SystemPropertyUtil.getBoolean("invoke.later.wrap.error", true)) {
+        // wrap everything to keep the current thread stacktrace
+        // also TC ComparisonFailure feature depends on this
+        throw new RuntimeException(cause);
+      }
+      else {
+        ExceptionUtil.rethrow(cause);
+      }
     }
   }
 

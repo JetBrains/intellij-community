@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   @Nullable
   private InspectionToolWrapper getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getCurrentProfile();
     return inspectionProfile.getToolById(myId, file);
   }
 
@@ -100,7 +100,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     InspectionToolWrapper toolWrapper = getTool(project, file);
     if (toolWrapper == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
+    final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getCurrentProfile();
     EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, toolWrapper.getShortName());
   }
 

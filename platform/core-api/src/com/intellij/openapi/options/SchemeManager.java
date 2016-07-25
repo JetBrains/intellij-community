@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("UnusedParameters")
-public abstract class SchemesManager<T extends Scheme, E extends ExternalizableScheme> {
+public abstract class SchemeManager<T extends Scheme> {
   @NotNull
-  public abstract Collection<E> loadSchemes();
+  public abstract Collection<T> loadSchemes();
 
   public abstract void addNewScheme(@NotNull T scheme, boolean replaceExisting);
 
@@ -41,9 +41,12 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
    */
   public abstract void clearAllSchemes();
 
-  @SuppressWarnings("NullableProblems")
   @NotNull
   public abstract List<T> getAllSchemes();
+
+  public boolean isEmpty() {
+    return getAllSchemes().isEmpty();
+  }
 
   @Nullable
   public abstract T findSchemeByName(@NotNull String schemeName);
@@ -76,6 +79,16 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
 
   public abstract void removeScheme(@NotNull T scheme);
 
+  @Nullable
+  public T removeScheme(@NotNull String name) {
+    T scheme = findSchemeByName(name);
+    if (scheme != null) {
+      removeScheme(scheme);
+      return scheme;
+    }
+    return null;
+  }
+
   @NotNull
   public abstract Collection<String> getAllSchemeNames();
 
@@ -101,7 +114,7 @@ public abstract class SchemesManager<T extends Scheme, E extends ExternalizableS
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  public boolean isMetadataEditable(@NotNull E scheme) {
+  public boolean isMetadataEditable(@NotNull T scheme) {
     return true;
   }
 }

@@ -2,7 +2,7 @@
   <project-components>
     <component>
       <interface-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</interface-class>
-      <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl</implementation-class>
+      <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
       <loadForDefaultProject/>
     </component>
   </project-components>

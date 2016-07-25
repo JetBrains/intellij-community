@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.profile;
+package com.intellij.testFramework;
 
+import org.assertj.core.api.AbstractPathAssert;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 30-Nov-2005
- */
-public abstract class ProjectProfileManager implements ProfileManager {
-  public abstract String getProfileName();
+import java.nio.file.Path;
 
-  public abstract String getProjectProfile();
+public final class Assertions extends org.assertj.core.api.Assertions {
+  @NotNull
+  public static JdomAssert assertThat(@Nullable Element element) {
+    return new JdomAssert(element);
+  }
 
-  public abstract void setProjectProfile(@Nullable String projectProfile);
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static AbstractPathAssert<?> assertThat(@Nullable Path actual) {
+    return new PathAssertEx(actual);
+  }
 }

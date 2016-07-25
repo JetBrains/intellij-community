@@ -21,7 +21,6 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.loadElement
 import gnu.trove.THashMap
@@ -29,7 +28,7 @@ import org.jdom.Attribute
 import org.jdom.Element
 
 abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
-                                                       protected val rootElementName: String,
+                                                       protected val rootElementName: String?,
                                                        protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
@@ -62,7 +61,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     else {
       element = loadLocalData()
     }
-    return if (element == null) StateMap.EMPTY else loadState(element)
+    return element?.let { loadState(element) } ?: StateMap.EMPTY
   }
 
   protected open fun dataLoadedFromProvider(element: Element?) {
@@ -76,7 +75,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 
   fun setDefaultState(element: Element) {
-    element.name = rootElementName
+    element.name = rootElementName!!
     storageDataRef.set(loadState(element))
   }
 
@@ -94,7 +93,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData)
       LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}" }
-      if (!ContainerUtil.isEmpty(changedComponentNames)) {
+      if (changedComponentNames.isNotEmpty()) {
         componentNames.addAll(changedComponentNames)
       }
     }
@@ -111,7 +110,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     private val newLiveStates = THashMap<String, Element>()
 
-    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || copiedStates == null) null else this
+    override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
       element?.normalizeRootName()
@@ -125,11 +124,8 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
 
     override fun save() {
       val stateMap = StateMap.fromMap(copiedStates!!)
-      var element = save(stateMap, storage.rootElementName, newLiveStates)
-      if (element == null || JDOMUtil.isEmpty(element)) {
-        element = null
-      }
-      else {
+      val element = save(stateMap, storage.rootElementName, newLiveStates)
+      if (element != null) {
         storage.beforeElementSaved(element)
       }
 
@@ -194,12 +190,12 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   }
 }
 
-fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, Element>? = null): Element? {
+private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<String, Element>? = null): Element? {
   if (states.isEmpty()) {
     return null
   }
 
-  val rootElement = Element(rootElementName)
+  val rootElement = if (rootElementName == null) null else Element(rootElementName)
   for (componentName in states.keys()) {
     val element = states.getElement(componentName, newLiveStates) ?: continue
     // name attribute should be first
@@ -208,7 +204,7 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
       element.setAttribute(FileStorageCoreUtil.NAME, componentName)
     }
     else {
-      var nameAttribute: Attribute? = element.getAttribute(FileStorageCoreUtil.NAME)
+      var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
         nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
@@ -222,9 +218,13 @@ fun save(states: StateMap, rootElementName: String, newLiveStates: Map<String, E
       }
     }
 
+    if (rootElement == null) {
+      return element
+    }
+
     rootElement.addContent(element)
   }
-  return rootElement
+  return if (JDOMUtil.isEmpty(rootElement)) null else rootElement
 }
 
 internal fun Element.normalizeRootName(): Element {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,29 @@ package com.intellij.lang.properties.editor.inspections;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author Dmitry Batkovich
@@ -60,7 +60,7 @@ public class ResourceBundleEditorInspectionPass {
 
     final Project project = representativeElement.getProject();
 
-    InspectionProfileWrapper profileToUse = InspectionProjectProfileManagerImpl.getInstanceImpl(project).getProfileWrapper();
+    InspectionProfile profileToUse = InspectionProfileManager.getInstance().getCurrentProfile();
     final PsiFile containingFile = representativeFile.getContainingFile();
     final InspectionToolWrapper[] propertiesTools = profileToUse.getInspectionTools(containingFile);
 
@@ -84,7 +84,7 @@ public class ResourceBundleEditorInspectionPass {
             if (currentFixes != null) {
               allDescriptors.add(Pair.create(descriptor, toolKey));
             }
-            HighlightSeverity severity = profileToUse.getInspectionProfile().getErrorLevel(toolKey, containingFile).getSeverity();
+            HighlightSeverity severity = profileToUse.getErrorLevel(toolKey, containingFile).getSeverity();
             final HighlightInfoType infoType =
               ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
                                                          severity,

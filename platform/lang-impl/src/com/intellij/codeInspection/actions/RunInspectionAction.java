@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class RunInspectionAction extends GotoActionBase {
                                    PsiElement psiElement,
                                    PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
-    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
                                                               : currentProfile.getInspectionTool(shortName, project);
     LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);

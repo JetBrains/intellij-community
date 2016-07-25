@@ -40,9 +40,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
- */
 public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
@@ -166,7 +163,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       groups.add(myGroupName);
       final InspectionProfile inspectionProfile =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+        InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       //correct save settings
       InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya

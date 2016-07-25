@@ -71,16 +71,7 @@ public class JsonSchemaFileTypeManager implements ProjectManagerListener {
   }
 
   @Override
-  public boolean canCloseProject(Project project) {
-    return true;
-  }
-
-  @Override
   public void projectClosed(Project project) {
     reset();
-  }
-
-  @Override
-  public void projectClosing(Project project) {
   }
 }
