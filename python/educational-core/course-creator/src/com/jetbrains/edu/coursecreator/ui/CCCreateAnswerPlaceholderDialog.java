@@ -64,7 +64,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    return myPanel;
+    return myPanel.getMailPanel();
   }
 
   @Nullable
