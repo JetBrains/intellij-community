@@ -16,13 +16,16 @@
 package com.intellij.util.proxy;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.EncryptionSupport;
 import org.jetbrains.annotations.NotNull;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.security.Key;
+import java.security.SecureRandom;
 import java.util.Properties;
 
 /**
@@ -30,24 +33,25 @@ import java.util.Properties;
  *         Date: 08-Jul-16
  */
 public class PropertiesEncryptionSupport {
-  private final EncryptionSupport myEncryptionSupport;
+  private final Key myKey;
 
   public PropertiesEncryptionSupport(Key key) {
-    myEncryptionSupport = new EncryptionSupport(key);
+    myKey = key;
   }
 
   public PropertiesEncryptionSupport() {
-    myEncryptionSupport = new EncryptionSupport();
+    this(generateKey());
+  }
+
+  public static Key generateKey() {
+    final byte[] bytes = new byte[16];
+    new SecureRandom().nextBytes(bytes);
+    return new SecretKeySpec(bytes, "AES");
   }
 
   @NotNull
   public Properties load(@NotNull File file) throws Exception {
-    return load(FileUtil.loadFileBytes(file));
-  }
-
-  @NotNull
-  public Properties load(@NotNull byte[] data) throws Exception {
-    final byte[] bytes = myEncryptionSupport.decrypt(data);
+    final byte[] bytes = decrypt(FileUtil.loadFileBytes(file));
     final Properties props = new Properties();
     props.load(new ByteArrayInputStream(bytes));
     return props;
@@ -57,7 +61,7 @@ public class PropertiesEncryptionSupport {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     props.store(out, comments);
     out.close();
-    FileUtil.writeToFile(file, myEncryptionSupport.encrypt(out.toByteArray(), out.size()));
+    FileUtil.writeToFile(file, encrypt(out.toByteArray()));
   }
 
   public byte[] encrypt(byte[] bytes) throws Exception {
