@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -9,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
-  private static final Logger LOG = Logger.getInstance(StepicUser.class);
   private int id = -1;
   private String myFirstName = "";
   private String myLastName = "";
@@ -69,7 +67,7 @@ public class StepicUser {
   @Transient
   public void setPassword(@NotNull final String password) {
     if (password.isEmpty()) return;
-    PasswordSafe.getInstance().storePassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
+    PasswordSafe.getInstance().setPassword(StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + getEmail(), password);
   }
 
   @NotNull

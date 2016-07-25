@@ -29,15 +29,20 @@ public interface PasswordStorage {
   @Nullable
   String getPassword(@Nullable Class<?> requestor, @NotNull String key);
 
-  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, String key) {
-    setPassword(requestor, key, null);
-  }
-
   default void setPassword(@NotNull String key, @Nullable String value) {
     setPassword(null, key, value);
   }
 
   void setPassword(@Nullable Class<?> requestor, @NotNull String key, @Nullable String value);
+
+  /**
+   * @deprecated Please use {@link #setPassword} and pass value as null
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, String key) {
+    setPassword(requestor, key, null);
+  }
 
   /**
    * @deprecated Please use {@link #setPassword}
@@ -49,7 +54,7 @@ public interface PasswordStorage {
 
   @Deprecated
   @Nullable
-  default String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key) {
+  default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, @NotNull String key) {
     return getPassword(requestor, key);
   }
 }

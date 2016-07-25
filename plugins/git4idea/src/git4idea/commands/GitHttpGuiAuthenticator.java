@@ -294,7 +294,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     public void forgetPassword(@NotNull String url) {
       String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
       LOG.debug("forgetPassword. key=" + key);
-      PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
+      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, key, null);
     }
   }
 }
