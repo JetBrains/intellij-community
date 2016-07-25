@@ -21,7 +21,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private static String ourFirstHintText = "Type here to add hint";
   
   private JPanel myPanel;
-  private JTextArea myHintTextField;
+  private JTextArea myHintTextArea;
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
   private JPanel myHintsPanel;
@@ -36,21 +36,21 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    myHintTextField.setLineWrap(true);
-    myHintTextField.setWrapStyleWord(true);
+    myHintTextArea.setLineWrap(true);
+    myHintTextArea.setWrapStyleWord(true);
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
-    myHintTextField.setFont(myPlaceholderTextArea.getFont());
+    myHintTextArea.setFont(myPlaceholderTextArea.getFont());
     if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
-      myHintTextField.setForeground(UIUtil.getInactiveTextColor());
+      myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
     }
-    myHintTextField.setText(myHints.get(myShownHintNumber));
-    myHintTextField.addFocusListener(new FocusAdapter() {
+    myHintTextArea.setText(myHints.get(myShownHintNumber));
+    myHintTextArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (myHintTextField.getText().equals(ourFirstHintText)) {
-          myHintTextField.setForeground(UIUtil.getActiveTextColor());
-          myHintTextField.setText("");
+        if (myHintTextArea.getText().equals(ourFirstHintText)) {
+          myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+          myHintTextArea.setText("");
         }
       }
     });
@@ -80,8 +80,8 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public void setHintText(String hintTextField) {
-    myHintTextField.setForeground(UIUtil.getActiveTextColor());
-    myHintTextField.setText(hintTextField);
+    myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+    myHintTextArea.setText(hintTextField);
   }
 
   public String getAnswerPlaceholderText() {
@@ -89,7 +89,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public List<String> getHints() {
-    final String hintText = myHintTextField.getText();
+    final String hintText = myHintTextArea.getText();
     if (myShownHintNumber == 0 && hintText.equals(ourFirstHintText)) {
       myHints.set(myShownHintNumber, "");
     }
@@ -117,7 +117,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
       setHintText(myHints.get(++myShownHintNumber));
       updateHintNumberLabel();
     }
@@ -136,7 +136,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
       setHintText(myHints.get(--myShownHintNumber));
       updateHintNumberLabel();
     }
