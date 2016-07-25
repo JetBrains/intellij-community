@@ -168,6 +168,9 @@ public class JavaGenerateMemberCompletionContributor {
     LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).
       withLookupString(signature).withLookupString(overrideSignature).withInsertHandler(insertHandler).
       appendTailText(parameters, false).appendTailText(" {...}", true).withTypeText(typeText).withIcon(icon);
+    if (prototype.isDeprecated()) {
+      element = element.setStrikeout(true);
+    }
     element.putUserData(GENERATE_ELEMENT, true);
     return element;
   }

@@ -1410,6 +1410,13 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testStrikeOutDeprecatedSuperMethods() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'void foo1', 'void foo2'
+    assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
+    assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
+  }
+
   public void testAccessorViaCompletion() {
     configure()
 
