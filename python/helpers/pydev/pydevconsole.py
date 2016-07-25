@@ -500,7 +500,7 @@ if __name__ == '__main__':
     #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446:
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
-    sys.stdin = pydevconsole.BaseStdIn()
+    sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
     from _pydev_bundle import pydev_localhost
 

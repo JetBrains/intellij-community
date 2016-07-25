@@ -436,3 +436,12 @@ class ClassInitializerConstantEval {
     }
   }
 }
+
+class AssignInAssert {
+  void f() {
+    boolean a;
+    assert a = true;
+    if(<error descr="Variable 'a' might not have been initialized">a</error>)
+      System.out.println();
+  }
+}

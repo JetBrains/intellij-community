@@ -24,6 +24,7 @@ import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -40,7 +41,6 @@ import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -91,7 +91,7 @@ public abstract class DiffActionExecutor {
       diffContent = FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
     }
 
-    diffContent.putUserData(VcsHistoryUtil.REVISION_INFO_KEY, Pair.create(fileRevision.getFile(), fileRevision.getRevisionNumber()));
+    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(fileRevision.getFile(), fileRevision.getRevisionNumber()));
     return diffContent;
   }
 

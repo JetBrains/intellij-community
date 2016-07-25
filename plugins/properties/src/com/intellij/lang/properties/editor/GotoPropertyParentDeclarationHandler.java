@@ -51,7 +51,8 @@ public class GotoPropertyParentDeclarationHandler extends GotoDeclarationHandler
     while (true);
   }
 
-  static Property findProperty(PsiElement source) {
+  static Property findProperty(@Nullable PsiElement source) {
+    if (source == null) return null;
     if (source instanceof Property) return (Property)source;
     final PsiElement parent = source.getParent();
     return parent instanceof Property ? (Property)parent : null;

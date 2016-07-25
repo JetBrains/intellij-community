@@ -78,4 +78,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testThisInArgListOfAnonymous() {
     doTest(false, false);
   }
+
+  public void testEnumConstantWithoutInterfaceImplementation() throws Exception {
+    doTest(false, false);
+  }
 }

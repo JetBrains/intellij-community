@@ -142,6 +142,14 @@ public class Executor {
     append(child(fileName), content);
   }
 
+  public static void rm(@NotNull String fileName) {
+    rm(child(fileName));
+  }
+
+  public static void rm(@NotNull File file) {
+    FileUtil.delete(file);
+  }
+
   @NotNull
   public static File mkdir(@NotNull String dirName) {
     File file = child(dirName);

@@ -210,6 +210,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    * @return a resolved revision number with correct time
    * @throws VcsException if there is a problem with running git
    */
+  @NotNull
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
     h.setSilent(true);

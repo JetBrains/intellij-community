@@ -16,21 +16,15 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
-import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class MethodReferenceElementType extends
-                                        JavaStubElementType<FunctionalExpressionStub<PsiMethodReferenceExpression>, PsiMethodReferenceExpression> {
+public class MethodReferenceElementType extends FunctionalExpressionElementType<PsiMethodReferenceExpression> {
   public MethodReferenceElementType() {
     super("METHOD_REF_EXPRESSION");
   }
@@ -41,27 +35,8 @@ public class MethodReferenceElementType extends
   }
 
   @Override
-  public FunctionalExpressionStub<PsiMethodReferenceExpression> createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
-    return new FunctionalExpressionStub<PsiMethodReferenceExpression>(parentStub, this);
-  }
-
-  @Override
   public PsiMethodReferenceExpression createPsi(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
     return new PsiMethodReferenceExpressionImpl(stub);
-  }
-
-  @Override
-  public void serialize(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub, @NotNull StubOutputStream dataStream) throws IOException {
-  }
-
-  @NotNull
-  @Override
-  public FunctionalExpressionStub<PsiMethodReferenceExpression> deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new FunctionalExpressionStub<PsiMethodReferenceExpression>(parentStub, this);
-  }
-
-  @Override
-  public void indexStub(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub, @NotNull IndexSink sink) {
   }
 
   @NotNull

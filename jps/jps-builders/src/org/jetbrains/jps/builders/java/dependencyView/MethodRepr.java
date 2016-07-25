@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashSet;
@@ -26,20 +27,19 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: db
  * Date: 01.02.11
  */
 class MethodRepr extends ProtoMember {
+
   interface Predicate {
     boolean satisfy(MethodRepr m);
   }
 
+  public final Collection<ParamAnnotation> myParameterAnnotations;
   public final TypeRepr.AbstractType[] myArgumentTypes;
   public final Set<TypeRepr.AbstractType> myExceptions;
 
@@ -128,9 +128,10 @@ class MethodRepr extends ProtoMember {
                     final int name,
                     final int signature,
                     final String descriptor,
-                    final String[] exceptions,
+                    final Collection<TypeRepr.ClassType> annotations, Collection<ParamAnnotation> parameterAnnotations, final String[] exceptions,
                     final Object defaultValue) {
-    super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), defaultValue);
+    super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), annotations, defaultValue);
+    myParameterAnnotations = parameterAnnotations;
     Set<TypeRepr.AbstractType> typeCollection =
       exceptions != null ? new THashSet<TypeRepr.AbstractType>(exceptions.length) : Collections.<TypeRepr.AbstractType>emptySet();
     myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, exceptions, typeCollection);
@@ -141,9 +142,23 @@ class MethodRepr extends ProtoMember {
     super(context, in);
     try {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
+
       final int size = DataInputOutputUtil.readINT(in);
       myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
+
       myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<TypeRepr.AbstractType>(0), in);
+
+      final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.classTypeExternalizer(context);
+      myParameterAnnotations = RW.read(new DataExternalizer<ParamAnnotation>() {
+        @Override
+        public void save(@NotNull DataOutput out, ParamAnnotation value) throws IOException {
+          value.save(out);
+        }
+        @Override
+        public ParamAnnotation read(@NotNull DataInput in) throws IOException {
+          return new ParamAnnotation(clsTypeExternalizer, in);
+        }
+      }, new SmartList<ParamAnnotation>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -155,6 +170,7 @@ class MethodRepr extends ProtoMember {
     super.save(out);
     RW.save(myArgumentTypes, out);
     RW.save(myExceptions, out);
+    RW.save(myParameterAnnotations, out);
   }
 
   public static DataExternalizer<MethodRepr> externalizer(final DependencyContext context) {

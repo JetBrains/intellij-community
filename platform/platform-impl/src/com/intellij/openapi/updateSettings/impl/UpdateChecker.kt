@@ -70,7 +70,7 @@ object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
 
   @JvmField
-  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
+  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val DISABLED_UPDATE = "disabled_update.txt"
   private val NO_PLATFORM_UPDATE = "ide.no.platform.update"

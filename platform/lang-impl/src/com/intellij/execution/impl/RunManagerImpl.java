@@ -438,6 +438,19 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         break;
       }
     }
+    for (Map.Entry<RunConfiguration, List<BeforeRunTask>> entry : myConfigurationToBeforeTasksMap.entrySet()) {
+      for (Iterator<BeforeRunTask> iterator = entry.getValue().iterator(); iterator.hasNext(); ) {
+        BeforeRunTask task = iterator.next();
+        if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask &&
+            settings.equals(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task).getSettings())) {
+          iterator.remove();
+          RunnerAndConfigurationSettings changedSettings = getSettings(entry.getKey());
+          if (changedSettings != null) {
+            myDispatcher.getMulticaster().runConfigurationChanged(changedSettings, null);
+          }
+        }
+      }
+    }
   }
 
   @Override

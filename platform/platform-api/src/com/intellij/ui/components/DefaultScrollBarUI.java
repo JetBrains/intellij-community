@@ -316,28 +316,28 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
     else if (VERTICAL == myScrollBar.getOrientation()) {
       int extent = myScrollBar.getVisibleAmount();
-      int height = Math.max(myTrackBounds.height * extent / range, 2 * getThickness());
+      int height = Math.max(convert(myTrackBounds.height, extent, range), 2 * getThickness());
       if (myTrackBounds.height <= height) {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
         value = getValue();
         int maxY = myTrackBounds.y + myTrackBounds.height - height;
-        int y = (value < max - extent) ? (myTrackBounds.height - height) * (value - min) / (range - extent) : maxY;
+        int y = (value < max - extent) ? convert(myTrackBounds.height - height, value - min, range - extent) : maxY;
         myThumbBounds.setBounds(myTrackBounds.x, adjust(y, myTrackBounds.y, maxY), myTrackBounds.width, height);
         if (myOldValue != value) onThumbMove();
       }
     }
     else {
       int extent = myScrollBar.getVisibleAmount();
-      int width = Math.max(myTrackBounds.width * extent / range, 2 * getThickness());
+      int width = Math.max(convert(myTrackBounds.width, extent, range), 2 * getThickness());
       if (myTrackBounds.width <= width) {
         myThumbBounds.setBounds(0, 0, 0, 0);
       }
       else {
         value = getValue();
         int maxX = myTrackBounds.x + myTrackBounds.width - width;
-        int x = (value < max - extent) ? (myTrackBounds.width - width) * (value - min) / (range - extent) : maxX;
+        int x = (value < max - extent) ? convert(myTrackBounds.width - width, value - min, range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrackBounds.x - x + maxX;
         myThumbBounds.setBounds(adjust(x, myTrackBounds.x, maxX), myTrackBounds.y, width, myTrackBounds.height);
         if (myOldValue != value) onThumbMove();
@@ -348,6 +348,14 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   private int getValue() {
     return isValueCached ? myCachedValue : myScrollBar.getValue();
+  }
+
+  /**
+   * Converts a value from old range to new one.
+   * It is necessary to use floating point calculation to avoid integer overflow.
+   */
+  private static int convert(double newRange, double oldValue, double oldRange) {
+    return (int)(.5 + newRange * oldValue / oldRange);
   }
 
   private static int adjust(int value, int min, int max) {
@@ -580,7 +588,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
                          ? thumbPos - thumbMin
                          : thumbMax - thumbPos;
         isValueCached = true;
-        myCachedValue = valueMin + valueRange * thumbValue / thumbRange;
+        myCachedValue = valueMin + convert(valueRange, thumbValue, thumbRange);
         myScrollBar.setValue(myCachedValue);
       }
       if (!isDragging) updateMouse(x, y);

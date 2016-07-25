@@ -59,7 +59,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public XDebugSession attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
       Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
@@ -87,10 +87,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       DebugEnvironment environment = new DefaultDebugEnvironment(env, new RemoteStateState(project, remoteConnection), remoteConnection, 0);
       final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
       if (debuggerSession == null) {
-        return null;
+        return;
       }
 
-      return XDebuggerManager.getInstance(project).startSessionAndShowTab(name, null, new XDebugProcessStarter() {
+      XDebuggerManager.getInstance(project).startSessionAndShowTab(name, null, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull XDebugSession session) {
@@ -118,7 +118,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @NotNull
     @Override
-    public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info) {
+    public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       Pair<String, Integer> address = getAttachAddress(info);
       assert address != null;
       return StringUtil.notNullize(ArrayUtil.getLastElement(info.getCommandLine().split(" "))) + " (" + getAttachString(address) + ')';

@@ -275,3 +275,11 @@ class InitializedInClassInitializerUsedInTheFollowingFieldInitializer {
     k = 1;
   }
 }
+
+class AssignInAssert {
+  <error descr="Variable 'b' might not have been initialized">private final boolean b</error>;
+
+  AssignInAssert() {
+    assert b = true;
+  }
+}

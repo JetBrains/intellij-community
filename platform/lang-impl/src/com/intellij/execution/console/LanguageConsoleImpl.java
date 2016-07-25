@@ -30,6 +30,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -87,6 +89,12 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private final JPanel myPanel = new JPanel(new MyLayout());
   private final JScrollBar myScrollBar = new JBScrollBar(Adjustable.HORIZONTAL);
+  private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
+    @Override
+    public void documentChanged(DocumentEvent event) {
+      myPanel.revalidate();
+    }
+  };
 
   @Nullable
   private String myPrompt = "> ";
@@ -123,12 +131,14 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     EditorFactory editorFactory = EditorFactory.getInstance();
     myEditorDocument = helper.getDocument();
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, getProject());
+    myConsoleEditor.getDocument().addDocumentListener(myDocumentAdapter);
     myConsoleEditor.getScrollPane().getHorizontalScrollBar().setEnabled(false);
     myConsoleEditor.addFocusListener(myFocusListener);
     myCurrentEditor = myConsoleEditor;
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
     myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject());
+    myHistoryViewer.getDocument().addDocumentListener(myDocumentAdapter);
 
     myScrollBar.setOpaque(false);
     myScrollBar.setModel(new MyModel(myScrollBar, myHistoryViewer, myConsoleEditor));
@@ -421,6 +431,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     super.dispose();
     // double dispose via RunContentDescriptor and ContentImpl
     if (myHistoryViewer.isDisposed()) return;
+
+    myConsoleEditor.getDocument().removeDocumentListener(myDocumentAdapter);
+    myHistoryViewer.getDocument().removeDocumentListener(myDocumentAdapter);
 
     myBusConnection.deliverImmediately();
     Disposer.dispose(myBusConnection);

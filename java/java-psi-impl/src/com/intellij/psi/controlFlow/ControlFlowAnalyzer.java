@@ -986,6 +986,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
 
+    myStartStatementStack.pushStatement(statement, false);
+    myEndStatementStack.pushStatement(statement, false);
+    Instruction passByWhenAssertionsDisabled = new ConditionalGoToInstruction(0, BranchingInstruction.Role.END, null);
+    myCurrentFlow.addInstruction(passByWhenAssertionsDisabled);
+    addElementOffsetLater(statement, false);
+
     // should not try to compute constant expression within assert
     // since assertions can be disabled/enabled at any moment via JVM flags
 
@@ -1013,6 +1019,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     Instruction instruction = new ConditionalThrowToInstruction(0, statement.getAssertCondition());
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(myCodeFragment, false);
+
+    myStartStatementStack.popStatement();
+    myEndStatementStack.popStatement();
 
     finishElement(statement);
   }

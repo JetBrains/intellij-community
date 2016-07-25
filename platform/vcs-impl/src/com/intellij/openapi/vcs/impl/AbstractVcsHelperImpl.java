@@ -28,9 +28,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -78,6 +76,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -399,8 +398,25 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
-    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    TextEditor textFileEditor;
+    FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+    if (fileEditor instanceof TextEditor) {
+      textFileEditor = ((TextEditor)fileEditor);
+    }
+    else {
+      FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(file);
+      textFileEditor = ContainerUtil.findInstance(editors, TextEditor.class);
+    }
+
+    Editor editor;
+    if (textFileEditor != null) {
+      editor = textFileEditor.getEditor();
+    }
+    else {
+      OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
+      editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
+    }
+
     if (editor == null) {
       Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
                                  VcsBundle.message("message.title.cannot.open.editor"), Messages.getInformationIcon());
