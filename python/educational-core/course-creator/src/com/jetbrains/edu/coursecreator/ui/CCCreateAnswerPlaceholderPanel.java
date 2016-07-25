@@ -18,19 +18,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CCCreateAnswerPlaceholderPanel extends JPanel {
-
+  private static String ourFirstHintText = "Type here to add hint";
+  
   private JPanel myPanel;
   private JTextArea myHintTextField;
   private JTextField myAnswerPlaceholderText;
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
   private JPanel myHintsPanel;
+  private int myShownHintNumber = 0;
 
   private List<String> myHints = new ArrayList<String>() {{
-    add(ourDefaultHintText);
+    add(ourFirstHintText);
   }};
-  private int myShownHintNumber = 0;
-  private static String ourDefaultHintText = "To add hint type text here";
 
   public CCCreateAnswerPlaceholderPanel() {
     super(new BorderLayout());
@@ -40,23 +40,23 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     myHintTextField.setWrapStyleWord(true);
     myHintTextField.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     myHintTextField.setFont(myAnswerPlaceholderText.getFont());
-    if (myHints.get(myShownHintNumber).equals(ourDefaultHintText)) {
+    if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
       myHintTextField.setForeground(UIUtil.getInactiveTextColor());
     }
     myHintTextField.setText(myHints.get(myShownHintNumber));
     myHintTextField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (myHintTextField.getText().equals(ourDefaultHintText)) {
+        if (myHintTextField.getText().equals(ourFirstHintText)) {
           myHintTextField.setForeground(UIUtil.getActiveTextColor());
           myHintTextField.setText("");
         }
       }
     });
-    
+
     myAnswerPlaceholderText.grabFocus();
     updateHintNumberLabel();
-    
+
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
     final DefaultActionGroup addRemoveGroup = new DefaultActionGroup();
@@ -89,13 +89,13 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
 
   public List<String> getHints() {
     final String hintText = myHintTextField.getText();
-    if (myShownHintNumber == 0 && hintText.equals(ourDefaultHintText)) {
+    if (myShownHintNumber == 0 && hintText.equals(ourFirstHintText)) {
       myHints.set(myShownHintNumber, "");
     }
     else {
       myHints.set(myShownHintNumber, hintText);
     }
-    
+
     return myHints;
   }
 
