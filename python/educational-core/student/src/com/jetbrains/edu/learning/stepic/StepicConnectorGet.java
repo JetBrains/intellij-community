@@ -32,7 +32,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +48,6 @@ public class StepicConnectorGet {
   public static final String CODE_PREFIX = "code";
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
-  private static CloseableHttpClient ourClient;
 
   static final private Gson GSON =
     new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter())
@@ -58,11 +56,8 @@ public class StepicConnectorGet {
 
   static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
     final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
-    if (ourClient == null) {
-      ourClient = StepicConnectorLogin.getHttpClient();
-    }
 
-    final CloseableHttpResponse response = ourClient.execute(request);
+    final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";

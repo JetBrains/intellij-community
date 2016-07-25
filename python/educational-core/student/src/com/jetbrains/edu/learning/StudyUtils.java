@@ -575,8 +575,11 @@ public class StudyUtils {
          studyProject = project;
       }
     }
-    if (studyProject == null)
+    if (studyProject == null) {
+      LOG.info("return default project");
       return ProjectManager.getInstance().getDefaultProject();
+    }
+    LOG.info("return normal project");
     return studyProject;
   }
 

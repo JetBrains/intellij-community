@@ -36,6 +36,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicConnectorGet;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +127,7 @@ public class StudyProjectGenerator {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
         return execCancelable(() -> {
 
-          final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
+          final Course course = StepicConnectorGet.getCourse(project, mySelectedCourseInfo);
           if (course != null) {
             flushCourse(project, course);
             course.initCourse(false);

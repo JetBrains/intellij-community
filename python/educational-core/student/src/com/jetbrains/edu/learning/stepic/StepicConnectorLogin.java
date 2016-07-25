@@ -63,9 +63,11 @@ public class StepicConnectorLogin {
 
   //use it !!
   public static boolean login(@NotNull final Project project) {
+    resetClient();
     StepicUser user = StudyTaskManager.getInstance(project).getUser();
     String email = user.getEmail();
     if (StringUtil.isEmptyOrSpaces(email)) {
+      LOG.info("current project user is empty");
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
       StepicUser defaultUser = StudyTaskManager.getInstance(defaultProject).getUser();
       String defaultEmail = defaultUser.getEmail();
@@ -85,6 +87,11 @@ public class StepicConnectorLogin {
     }
 
     return true;
+  }
+
+  private static void resetClient() {
+    ourClient = null;
+    accessToken = "";
   }
 
   private static void minorLogin(StepicUser user){

@@ -28,7 +28,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,17 +37,14 @@ import java.util.Map;
 
 // Using postToStepic via ourClient garant authorization
 public class StepicConnectorPost {
-  private static CloseableHttpClient ourClient;
   private static final Logger LOG = Logger.getInstance(StepicConnectorPost.class.getName());
 
   // TODO All methods must be rewrite by this, else NPE from ourClient
   static boolean postToStepic(String link, AbstractHttpEntity entity) throws IOException {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + link);
     request.setEntity(entity);
-    if (ourClient == null) {
-      ourClient = StepicConnectorLogin.getHttpClient();
-    }
-    final CloseableHttpResponse response = ourClient.execute(request);
+
+    final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -64,9 +60,6 @@ public class StepicConnectorPost {
     if (task.getStepicId() <= 0) {
       return;
     }
-    if (ourClient == null) {
-      ourClient = StepicConnectorLogin.getHttpClient();
-    }
 
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     //setHeaders(attemptRequest, "application/json");
@@ -74,7 +67,7 @@ public class StepicConnectorPost {
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
     try {
-      final CloseableHttpResponse attemptResponse = ourClient.execute(attemptRequest);
+      final CloseableHttpResponse attemptResponse = StepicConnectorLogin.getHttpClient().execute(attemptRequest);
       final HttpEntity responseEntity = attemptResponse.getEntity();
       final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = attemptResponse.getStatusLine();
@@ -105,7 +98,7 @@ public class StepicConnectorPost {
 
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-    final CloseableHttpResponse response = ourClient.execute(request);
+    final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     final StatusLine line = response.getStatusLine();

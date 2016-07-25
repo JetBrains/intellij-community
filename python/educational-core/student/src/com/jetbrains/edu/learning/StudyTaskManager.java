@@ -114,7 +114,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   @Nullable
   @Override
   public Element getState() {
-    if (myCourse == null) {
+    if (myCourse == null && myUser.getEmail().isEmpty()) {
       return null;
     }
     Element el = new Element("taskManager");
@@ -193,7 +193,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public void setTurnEditingMode(boolean turnEditingMode) {
     myTurnEditingMode = turnEditingMode;
   }
-  
+
   @NotNull
   public StepicUser getUser() {
     return myUser;

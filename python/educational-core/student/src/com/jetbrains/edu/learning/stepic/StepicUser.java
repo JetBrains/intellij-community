@@ -70,12 +70,12 @@ public class StepicUser {
   @Transient
   @NotNull
   public String getPassword() {
-    final String login = getEmail();
-    if (StringUtil.isEmptyOrSpaces(login)) return "";
+    final String email = getEmail();
+    if (StringUtil.isEmptyOrSpaces(email)) return "";
 
     String password;
     try {
-      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + login);
+      password = PasswordSafe.getInstance().getPassword(null, StudyTaskManager.class, STEPIC_SETTINGS_PASSWORD_KEY + email);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + STEPIC_SETTINGS_PASSWORD_KEY + "]", e);
@@ -126,5 +126,14 @@ public class StepicUser {
     id = tmpUser.getId();
     firstName = tmpUser.getFirstName();
     lastName = tmpUser.getLastName();
+  }
+
+  @Override
+  public String toString() {
+    return "StepicUser{" +
+            "id=" + id +
+            ", firstName='" + firstName + '\'' +
+            ", email='" + email + '\'' +
+            '}';
   }
 }
