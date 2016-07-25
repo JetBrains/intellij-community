@@ -22,11 +22,13 @@ package com.intellij.lang;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
@@ -97,4 +99,16 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   protected Key<T> getLanguageCache() {
     return IN_LANGUAGE_CACHE;
   }
+
+  @NotNull
+  protected Set<String> getAllBaseLanguageIdsWithAny(@NotNull Language key) {
+    Set<String> allowed = new THashSet<String>();
+    while (key != null) {
+      allowed.add(keyToString(key));
+      key = key.getBaseLanguage();
+    }
+    allowed.add("any");
+    return allowed;
+  }
+
 }
