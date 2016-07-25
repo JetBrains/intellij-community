@@ -21,11 +21,11 @@ import java.awt.event.MouseEvent;
 
 public class PressureShortcut extends MouseShortcut {
 
-  private double stage;
+  private double myStage;
 
   public PressureShortcut(double stage) {
     super(MouseEvent.BUTTON1, 0, 1);
-    this.stage = stage;
+    this.myStage = stage;
   }
 
   public int getButton() {
@@ -42,11 +42,16 @@ public class PressureShortcut extends MouseShortcut {
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof PressureShortcut;
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+
+    PressureShortcut other = (PressureShortcut) obj;
+
+    return myStage == other.myStage;
   }
 
   public int hashCode() {
-    return super.hashCode() + (int)stage;
+    return super.hashCode() + (int)myStage;
   }
 
   @Override
