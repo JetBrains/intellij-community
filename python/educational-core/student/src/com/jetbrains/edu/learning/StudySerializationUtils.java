@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning;
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -400,7 +401,8 @@ public class StudySerializationUtils {
           final JsonArray hintsArray = new JsonArray();
 
           try {
-            final List<String> hints = gson.fromJson(hintString, List.class);
+            final Type listType = new TypeToken<List<String>>() {}.getType();
+            final List<String> hints = gson.fromJson(hintString, listType);
             for (String hint : hints) {
               hintsArray.add(hint);
             }
