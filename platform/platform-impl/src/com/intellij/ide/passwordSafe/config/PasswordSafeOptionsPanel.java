@@ -24,10 +24,6 @@ public class PasswordSafeOptionsPanel {
   /**
    * The password storage policy option
    */
-  private JRadioButton myDoNotRememberPasswordsRadioButton;
-  /**
-   * The password storage policy option
-   */
   private JRadioButton myRememberPasswordsUntilClosingRadioButton;
   /**
    * The password storage policy option
@@ -45,9 +41,6 @@ public class PasswordSafeOptionsPanel {
   public void reset(PasswordSafeSettings settings) {
     PasswordSafeSettings.ProviderType t = settings.getProviderType();
     switch (t) {
-      case DO_NOT_STORE:
-        myDoNotRememberPasswordsRadioButton.setSelected(true);
-        break;
       case MEMORY_ONLY:
         myRememberPasswordsUntilClosingRadioButton.setSelected(true);
         break;
@@ -60,13 +53,12 @@ public class PasswordSafeOptionsPanel {
   }
 
   private PasswordSafeSettings.ProviderType getProviderType() {
-    if (myDoNotRememberPasswordsRadioButton.isSelected()) {
-      return PasswordSafeSettings.ProviderType.DO_NOT_STORE;
-    }
     if (myRememberPasswordsUntilClosingRadioButton.isSelected()) {
       return PasswordSafeSettings.ProviderType.MEMORY_ONLY;
     }
-    return PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+    else {
+      return PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+    }
   }
 
   /**

@@ -19,7 +19,6 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
@@ -38,7 +37,7 @@ import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
 
-class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath())) : PasswordSafeProvider()  {
+class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider()  {
   private val db = ConcurrentHashMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
@@ -46,7 +45,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
 
   private var encryptionSupport: EncryptionSupport? = null
 
-  private var isNeedToSave = false
+  private @Volatile var needToSave = false
 
   init {
     if (keyToValue == null) {
@@ -54,7 +53,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
     }
     else {
       db.putAll(keyToValue)
-      isNeedToSave = true
+      needToSave = true
     }
   }
 
@@ -80,10 +79,9 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
 
   @Synchronized
   fun save() {
-    if (!isNeedToSave) {
+    if (memoryOnly || !needToSave) {
       return
     }
-
 
     if (encryptionSupport == null) {
       val masterKey = generateAesKey()
@@ -116,10 +114,21 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
     }
     dbFile.setOwnerPermissions()
 
-    isNeedToSave = false
+    needToSave = false
   }
 
-  override fun getPassword(project: Project?, requestor: Class<*>?, key: String): String? {
+  @Synchronized
+  fun deleteFileStorage() {
+    try {
+      dbFile.delete()
+    }
+    finally {
+      masterKeyStorage.set(null)
+      encryptionSupport = null
+    }
+  }
+
+  override fun getPassword(requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
     // try old key - as hash
     var value = db.get(rawKey)
@@ -127,21 +136,21 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       value = db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
       if (value != null) {
         db.put(rawKey, value)
-        isNeedToSave = true
+        needToSave = true
       }
     }
     return value
   }
 
-  override fun storePassword(project: Project?, requestor: Class<*>?, key: String, value: String?) {
+  override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
     val rawKey = getRawKey(key, requestor)
     if (value == null) {
       if (db.remove(rawKey) != null) {
-        isNeedToSave = true
+        needToSave = true
       }
     }
     else if (db.put(rawKey, value) != value) {
-      isNeedToSave = true
+      needToSave = true
     }
   }
 
@@ -159,7 +168,7 @@ internal fun generate(): ByteArray {
 interface MasterKeyStorage {
   fun get(): ByteArray?
 
-  fun set(key: ByteArray)
+  fun set(key: ByteArray?)
 }
 
 class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
@@ -199,7 +208,12 @@ class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {
     }
   }
 
-  override fun set(key: ByteArray) {
+  override fun set(key: ByteArray?) {
+    if (key == null) {
+      passwordFile.delete()
+      return
+    }
+
     passwordFile.write(encryptionSupport.encrypt(key))
     passwordFile.setOwnerPermissions()
   }

@@ -44,6 +44,16 @@ class FilePasswordSafeProviderTest {
 
     provider.save()
     provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+
+    provider.deleteFileStorage()
+
+    val pdbFile = baseDir.resolve("pdb")
+    val pdbPwdFile = baseDir.resolve("pdb.pwd")
+    val pdbPwdTmpFile = baseDir.resolve("pdb.pwd.tmp")
+
+    assertThat(pdbFile).doesNotExist()
+    assertThat(pdbPwdFile).doesNotExist()
+    assertThat(pdbPwdTmpFile).doesNotExist()
   }
 
   @Test
@@ -94,6 +104,12 @@ class FilePasswordSafeProviderTest {
 
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).isRegularFile()
+    assertThat(pdbPwdTmpFile).doesNotExist()
+
+    provider.deleteFileStorage()
+
+    assertThat(pdbFile).doesNotExist()
+    assertThat(pdbPwdFile).doesNotExist()
     assertThat(pdbPwdTmpFile).doesNotExist()
   }
 }

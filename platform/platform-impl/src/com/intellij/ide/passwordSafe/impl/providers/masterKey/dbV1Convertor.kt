@@ -16,7 +16,7 @@
 package com.intellij.ide.passwordSafe.masterKey
 
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.EnterPasswordComponent
@@ -121,11 +121,19 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
     try {
       val oldDbFile = Paths.get(PathManager.getConfigPath(), "options", "security.xml")
       if (Files.exists(oldDbFile)) {
+        val settings = ServiceManager.getService(PasswordSafeSettings::class.java)
+        if (settings.providerType != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
+          return
+        }
+
         @Suppress("DEPRECATION")
         val oldDb = ServiceManager.getService(PasswordDatabase::class.java)
         // old db contains at least one test key - skip it
         if (oldDb.myDatabase.size > 1) {
-          PasswordSafe.getInstance()
+          val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
+          if (newDb != null && newDb.isNotEmpty()) {
+            FilePasswordSafeProvider(newDb).save()
+          }
         }
       }
     }

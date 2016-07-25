@@ -16,84 +16,78 @@
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
-import com.intellij.ide.passwordSafe.impl.providers.memory.MemoryPasswordSafe
-import com.intellij.ide.passwordSafe.impl.providers.nil.NilProvider
-import com.intellij.ide.passwordSafe.masterKey.*
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
 import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 
-class PasswordSafeImpl(val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  private val myMasterKeyProvider: FilePasswordSafeProvider
-  private val myNilProvider: NilProvider
+class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
+  private val currentProvider: FilePasswordSafeProvider
+
+  // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
+  private val memoryHelperProvider = lazy { FilePasswordSafeProvider(emptyMap(), memoryOnly = true) }
+
+  override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
   init {
-    //noinspection deprecation
-    myMasterKeyProvider = FilePasswordSafeProvider(convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java!!)))
-    myNilProvider = NilProvider()
-  }
-
-  /**
-   * @return get currently selected provider
-   */
-  private fun provider(): PasswordSafeProvider {
-    var p: PasswordSafeProvider? = null
-    when (settings.getProviderType()) {
-      PasswordSafeSettings.ProviderType.DO_NOT_STORE -> p = myNilProvider
-      PasswordSafeSettings.ProviderType.MEMORY_ONLY, PasswordSafeSettings.ProviderType.MASTER_PASSWORD -> p = myMasterKeyProvider
-      else -> LOG.error("Unknown provider type: " + settings.getProviderType())
-    }
-    return p
-  }
-
-  public override fun getPassword(project: Project?, requester: Class<*>?, key: String): String? {
-    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
-      var password = memoryProvider.getPassword(project, requester, key)
-      if (password == null) {
-        password = provider().getPassword(project, requester, key)
-        if (password != null) {
-          // cache the password in memory as well for easier access during the session
-          memoryProvider.storePassword(project, requester, key, password)
+    currentProvider = FilePasswordSafeProvider(memoryOnly = settings.providerType == ProviderType.MEMORY_ONLY)
+    ApplicationManager.getApplication().messageBus.connect().subscribe(PasswordSafeSettings.TOPIC, object: PasswordSafeSettingsListener {
+      override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
+        val memoryOnly = newValue == ProviderType.MEMORY_ONLY
+        currentProvider.memoryOnly = memoryOnly
+        if (memoryOnly) {
+          currentProvider.deleteFileStorage()
         }
       }
-      return password
-    }
-    return provider().getPassword(project, requester, key)
+    })
   }
 
-  public override fun removePassword(project: Project?, requester: Class<*>?, key: String) {
-    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
-      memoryProvider.removePassword(project, requester, key)
+  override fun getPassword(requestor: Class<*>?, key: String): String? {
+    val value = currentProvider.getPassword(requestor, key)
+    if (value == null && memoryHelperProvider.isInitialized()) {
+      // if password was set as `memoryOnly`
+      return memoryHelperProvider.value.getPassword(requestor, key)
     }
-    provider().removePassword(project, requester, key)
+    return value
   }
 
-  public override fun storePassword(project: Project?, requestor: Class<*>?, key: String, value: String?) {
-    if (settings.getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
-      memoryProvider.storePassword(project, requestor, key, value)
+  override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
+    currentProvider.setPassword(requestor, key, value)
+    if (memoryHelperProvider.isInitialized()) {
+      val memoryHelper = memoryHelperProvider.value
+      // update password in the memory helper, but only if it was previously set
+      if (value == null || memoryHelper.getPassword(requestor, key) != null) {
+        memoryHelper.setPassword(requestor, key, value)
+      }
     }
-    provider().storePassword(project, requestor, key, value)
   }
 
+  override fun setPassword(requestor: Class<*>?, key: String, value: String?, memoryOnly: Boolean) {
+    if (memoryOnly) {
+      memoryHelperProvider.value.setPassword(requestor, key, value)
+      // remove to ensure that on getPassword we will not return some value from default provider
+      currentProvider.setPassword(requestor, key, null)
+    }
+    else {
+      setPassword(requestor, key, value)
+    }
+  }
+
+  override fun save() {
+    currentProvider.save()
+  }
+
+  // public - backward compatibility
+  @Suppress("unused", "DeprecatedCallableAddReplaceWith")
+  @Deprecated("Do not use it")
   val masterKeyProvider: PasswordSafeProvider
-    get() {
-      return myMasterKeyProvider
-    }
+    get() = currentProvider
 
-  val memoryProvider: MemoryPasswordSafe
-    get() {
-      return myMemoryProvider
-    }
-
-  public override fun save() {
-    myMasterKeyProvider.save()
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(PasswordSafeImpl::class.java!!)
-  }
+  @Suppress("unused")
+  @Deprecated("Do not use it")
+  // public - backward compatibility
+  val memoryProvider: PasswordSafeProvider
+    get() = memoryHelperProvider.value
 }

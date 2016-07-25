@@ -16,13 +16,10 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +34,6 @@ import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 @SuppressWarnings("MethodMayBeStatic")
 @State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
-  private static final Logger LOG = GithubUtil.LOG;
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private State myState = new State();
@@ -128,8 +124,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   public boolean isSavePasswordMakesSense() {
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+    return !PasswordSafe.getInstance().isMemoryOnly();
   }
 
   public boolean isCloneGitUsingSsh() {
@@ -175,15 +170,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   private void setPassword(@NotNull String password, boolean rememberPassword) {
-    if (rememberPassword) {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-    }
-    else {
-      final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-      if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-        passwordSafe.getMemoryProvider().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
-      }
-    }
+    PasswordSafe.getInstance().setPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password, !rememberPassword);
   }
 
   private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {

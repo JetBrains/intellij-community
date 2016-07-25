@@ -22,7 +22,7 @@ import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-// opposite to PropertiesEncryptionSupport, we store iv length, but not body length (because iv length < body length always)
+// opposite to PropertiesEncryptionSupport, we store iv length, but not body length
 open class EncryptionSupport(private val key: Key = SecretKeySpec(generateAesKey(), "AES")) {
   open fun encrypt(data: ByteArray, size: Int = data.size) = encrypt(data, size, key)
 
@@ -54,7 +54,7 @@ private fun decrypt(data: ByteArray, key: Key): ByteArray {
   @Suppress("UsePropertyAccessSyntax")
   val ivLength = byteBuffer.getInt()
   val ciph = Cipher.getInstance("AES/CBC/PKCS5Padding")
-  ciph.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, 4, ivLength))
-  val dataOffset = 4 + ivLength
+  ciph.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(data, byteBuffer.position(), ivLength))
+  val dataOffset = byteBuffer.position() + ivLength
   return ciph.doFinal(data, dataOffset, data.size - dataOffset)
 }

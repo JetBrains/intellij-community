@@ -16,7 +16,6 @@
 package git4idea.commands;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -170,11 +169,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     // save password
     if (myPasswordKey != null && myPassword != null) {
-      PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-      passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-      if (mySaveOnDisk) {
-        passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-      }
+      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, myPasswordKey, myPassword, !mySaveOnDisk);
     }
   }
 

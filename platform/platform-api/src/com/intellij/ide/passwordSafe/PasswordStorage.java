@@ -26,21 +26,29 @@ public interface PasswordStorage {
   }
 
   @Nullable
-  String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key);
+  String getPassword(@Nullable Class<?> requestor, @NotNull String key);
 
-  /**
-   * Remove password stored in a password safe
-   *
-   * @param requestor the requestor class
-   * @param key       the key for the password
-   */
-  default void removePassword(@Nullable Project project, @Nullable Class requestor, String key) {
-    storePassword(project, requestor, key, null);
+  default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, String key) {
+    setPassword(requestor, key, null);
   }
 
   default void setPassword(@NotNull String key, @Nullable String value) {
-    storePassword(null, null, key, value);
+    setPassword(null, key, value);
   }
 
-  void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, @Nullable String value);
+  void setPassword(@Nullable Class<?> requestor, @NotNull String key, @Nullable String value);
+
+  /**
+   * @deprecated Please use {@link #setPassword}
+   */
+  @Deprecated
+  default void storePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @Nullable Class requestor, @NotNull String key, @Nullable String value) {
+    setPassword(requestor, key, value);
+  }
+
+  @Deprecated
+  @Nullable
+  default String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key) {
+    return getPassword(requestor, key);
+  }
 }

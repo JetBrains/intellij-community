@@ -18,7 +18,6 @@ package com.intellij.ide.passwordSafe.impl.providers;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
   protected abstract byte[] key();
 
   @Nullable
-  public String getPassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key) {
+  public String getPassword(@Nullable Class requestor, @NotNull String key) {
     byte[] masterKey = key();
     byte[] encryptedPassword = getEncryptedPassword(EncryptionUtil.dbKey(masterKey, requestor, key));
     return encryptedPassword == null ? null : EncryptionUtil.decryptText(masterKey, encryptedPassword);
@@ -68,10 +67,6 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
     return EncryptionUtil.dbKey(key(), requestor, key);
   }
 
-  public void removePassword(@Nullable Project project, @Nullable Class requestor, String key) {
-    removeEncryptedPassword(dbKey(requestor, key));
-  }
-
   /**
    * Remove encrypted password from database
    *
@@ -79,7 +74,12 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    */
   protected abstract void removeEncryptedPassword(byte[] key);
 
-  public void storePassword(@Nullable Project project, @Nullable Class requestor, @NotNull String key, String value) {
+  public void setPassword(@Nullable Class requestor, @NotNull String key, @Nullable String value) {
+    if (value == null) {
+      removeEncryptedPassword(dbKey(requestor, key));
+      return;
+    }
+
     byte[] k = dbKey(requestor, key);
     byte[] ct = EncryptionUtil.encryptText(key(), value);
     storeEncryptedPassword(k, ct);

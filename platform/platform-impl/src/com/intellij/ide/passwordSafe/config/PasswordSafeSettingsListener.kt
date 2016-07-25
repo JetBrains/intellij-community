@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe;
+package com.intellij.ide.passwordSafe
 
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 
-public abstract class PasswordSafe implements PasswordStorage {
-  @NotNull
-  public static PasswordSafe getInstance() {
-    return ServiceManager.getService(PasswordSafe.class);
-  }
-
-  public abstract void setPassword(@Nullable Class<?> requestor, @NotNull String key, @Nullable String value, boolean memoryOnly);
-
-  public abstract boolean isMemoryOnly();
+interface PasswordSafeSettingsListener {
+  fun typeChanged(oldValue: PasswordSafeSettings.ProviderType, newValue: PasswordSafeSettings.ProviderType)
 }

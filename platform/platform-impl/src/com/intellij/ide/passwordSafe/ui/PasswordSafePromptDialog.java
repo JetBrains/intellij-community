@@ -16,8 +16,6 @@
 package com.intellij.ide.passwordSafe.ui;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -37,11 +35,6 @@ public class PasswordSafePromptDialog extends DialogWrapper {
 
   /**
    * The private constructor. Note that it does not do init on dialog.
-   *
-   * @param project      the project
-   * @param title        the dialog title
-   * @param message      the message on the dialog
-   * @param type
    */
   private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
     super(project, true);
@@ -154,12 +147,12 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                     final String error,
                                     final String promptLabel,
                                     final String checkboxLabel) {
-    final PasswordSafeImpl ps = (PasswordSafeImpl)PasswordSafe.getInstance();
+    PasswordSafe ps = PasswordSafe.getInstance();
     if (resetPassword) {
-      ps.removePassword(project, requestor, key);
+      ps.setPassword(requestor, key, null);
     }
     else {
-      String pw = ps.getPassword(project, requestor, key);
+      String pw = ps.getPassword(null, requestor, key);
       if (pw != null) {
         return pw;
       }
@@ -167,19 +160,13 @@ public class PasswordSafePromptDialog extends DialogWrapper {
 
     final Ref<String> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      PasswordSafeSettings.ProviderType type = ps.getSettings().getProviderType();
-      final PasswordPromptComponent component = new PasswordPromptComponent(type, message, false, promptLabel, checkboxLabel);
+      final PasswordPromptComponent component = new PasswordPromptComponent(ps.isMemoryOnly(), message, false, promptLabel, checkboxLabel);
       PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
 
       d.setErrorText(error);
       if (d.showAndGet()) {
         ref.set(new String(component.getPassword()));
-        if (component.isRememberSelected()) {
-          ps.storePassword(project, requestor, key, ref.get());
-        }
-        else if (!type.equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-          ps.getMemoryProvider().storePassword(project, requestor, key, ref.get());
-        }
+        ps.setPassword(requestor, key, ref.get(), !component.isRememberSelected());
       }
     }, ModalityState.any());
     return ref.get();
