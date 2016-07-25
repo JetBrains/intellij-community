@@ -176,7 +176,7 @@ private val Url.host: String?
 
 @JvmOverloads
 fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
-  if (uri == null) {
+  if (uri == null || uri == "about:blank") {
     return true
   }
 
