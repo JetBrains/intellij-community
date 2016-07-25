@@ -17,7 +17,7 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CCCreateAnswerPlaceholderPanel extends JPanel {
+public class CCCreateAnswerPlaceholderPanel {
   private static String ourFirstHintText = "Type here to add hint";
   
   private JPanel myPanel;
@@ -33,9 +33,6 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }};
 
   public CCCreateAnswerPlaceholderPanel() {
-    super(new BorderLayout());
-    add(myPanel, BorderLayout.CENTER);
-
     myHintTextArea.setLineWrap(true);
     myHintTextArea.setWrapStyleWord(true);
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
@@ -107,6 +104,10 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   public void setHints(List<String> hints) {
     myHints = hints;
     updateHintNumberLabel();
+  }
+
+  public JPanel getMailPanel() {
+    return myPanel;
   }
 
   private class GoForward extends AnAction {
