@@ -50,7 +50,8 @@ public class LineSet{
     return createLineSet(text, false);
   }
 
-  private static LineSet createLineSet(CharSequence text, boolean markModified) {
+  @NotNull
+  private static LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
     TIntArrayList starts = new TIntArrayList();
     TByteArrayList flags = new TByteArrayList();
 
@@ -63,7 +64,8 @@ public class LineSet{
     return new LineSet(starts.toNativeArray(), flags.toNativeArray(), text.length());
   }
 
-  LineSet update(CharSequence prevText, int _start, int _end, CharSequence replacement, boolean wholeTextReplaced) {
+  @NotNull
+  LineSet update(@NotNull CharSequence prevText, int _start, int _end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
     if (myLength == 0) {
       return createLineSet(replacement, !wholeTextReplaced);
     }
@@ -98,7 +100,7 @@ public class LineSet{
     return wholeTextReplaced ? applied.clearModificationFlags() : applied;
   }
 
-  private void checkEquals(LineSet fresh) {
+  private void checkEquals(@NotNull LineSet fresh) {
     if (getLineCount() != fresh.getLineCount()) {
       throw new AssertionError();
     }
@@ -113,7 +115,7 @@ public class LineSet{
   }
 
   @NotNull
-  private LineSet applyPatch(int startOffset, int endOffset, int startLine, int endLine, LineSet patch) {
+  private LineSet applyPatch(int startOffset, int endOffset, int startLine, int endLine, @NotNull LineSet patch) {
     int lineShift = patch.myStarts.length - (endLine - startLine);
     int lengthShift = patch.myLength - (endOffset - startOffset);
 
@@ -147,6 +149,7 @@ public class LineSet{
     return bsResult >= 0 ? bsResult : -bsResult - 2;
   }
 
+  @NotNull
   public LineIterator createIterator() {
     return new LineIteratorImpl(this);
   }
@@ -176,6 +179,7 @@ public class LineSet{
     return !isLastEmptyLine(index) && BitUtil.isSet(myFlags[index], MODIFIED_MASK);
   }
 
+  @NotNull
   final LineSet setModified(int index) {
     if (isLastEmptyLine(index) || isModified(index)) return this;
 
@@ -184,6 +188,7 @@ public class LineSet{
     return new LineSet(myStarts, flags, myLength);
   }
 
+  @NotNull
   LineSet clearModificationFlags(int startLine, int endLine) {
     if (startLine > endLine) {
       throw new IllegalArgumentException("endLine < startLine: " + endLine + " < " + startLine + "; lineCount: " + getLineCount());
@@ -201,6 +206,7 @@ public class LineSet{
     return new LineSet(myStarts, flags, myLength);
   }
 
+  @NotNull
   LineSet clearModificationFlags() {
     byte[] flags = myFlags.clone();
     for (int i = 0; i < flags.length; i++) {
