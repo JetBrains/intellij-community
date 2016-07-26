@@ -203,8 +203,11 @@ class CompoundRendererConfigurable extends JPanel {
 
   private void updateContext(final String qName) {
     ApplicationManager.getApplication().runReadAction(() -> {
-      final Project project = myProject;
-      final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
+      Project project = myProject;
+      PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
+      if (psiClass != null) {
+        psiClass = (PsiClass)psiClass.getNavigationElement();
+      }
       XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
       myLabelEditor.setSourcePosition(position);
       myChildrenEditor.setSourcePosition(position);
