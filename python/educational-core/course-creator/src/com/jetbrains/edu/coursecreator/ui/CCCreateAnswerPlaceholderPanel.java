@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -78,7 +79,8 @@ public class CCCreateAnswerPlaceholderPanel {
 
   private void updateHintNumberLabel() {
     if (myHints.size() > 1) {
-      myHintLabel.setText("Hint" + "(" + (myShownHintNumber + 1) + "/" + myHints.size() + "):");
+      final String color = String.valueOf(ColorUtil.toHex(UIUtil.getHeaderInactiveColor()));
+      myHintLabel.setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
     }
     else {
       myHintLabel.setText("Hint: ");
