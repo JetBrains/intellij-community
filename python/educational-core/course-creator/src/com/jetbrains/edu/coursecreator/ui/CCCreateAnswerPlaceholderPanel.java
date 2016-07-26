@@ -50,6 +50,14 @@ public class CCCreateAnswerPlaceholderPanel {
           myHintTextArea.setText("");
         }
       }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        if (myShownHintNumber == 0 && myHintTextArea.getText().isEmpty()) {
+          myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
+          myHintTextArea.setText(ourFirstHintText);
+        }
+      }
     });
 
     myPlaceholderTextArea.grabFocus();
