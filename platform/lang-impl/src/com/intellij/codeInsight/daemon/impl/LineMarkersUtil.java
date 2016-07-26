@@ -67,7 +67,8 @@ class LineMarkersUtil {
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+"); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
+      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+", group: " + group+
+                "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
     for (final LineMarkerInfo info : markers) {
