@@ -68,6 +68,7 @@ import static junit.framework.Assert.assertNotNull;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -91,10 +92,10 @@ public abstract class GuiTestCase {
   @Before
   public void setUp() throws Exception {
     if (!canRunGuiTests()) {
-      // We currently do not support running UI tests in headless environments.
       return;
     }
-    System.setProperty("GuiTestMode", "true");
+
+    assertEquals(System.getProperty("idea.test.guiTestMode"), "true");
 
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
