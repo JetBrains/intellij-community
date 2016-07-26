@@ -167,7 +167,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
     final DumbModePermission schedulerPermission = getExplicitPermission();
-    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
+    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -525,16 +525,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    //todo remove invokeLater when transactions are executed in "any" modality state
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(
-      () -> TransactionGuard.getInstance().submitTransaction(app, myDumbStartTransaction, () -> {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
-      }));
+    SwingUtilities.invokeLater(() -> {
+      try {
+        runnable.run();
+      } finally {
+        semaphore.up();
+      }
+    });
     try {
       semaphore.waitFor();
     }

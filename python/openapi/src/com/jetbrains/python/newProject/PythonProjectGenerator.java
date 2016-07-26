@@ -17,6 +17,7 @@ package com.jetbrains.python.newProject;
 
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,4 +84,6 @@ public abstract class PythonProjectGenerator {
   public MouseListener getErrorLabelMouseListener() {
     return myErrorLabelMouseListener;
   }
+
+  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {}
 }

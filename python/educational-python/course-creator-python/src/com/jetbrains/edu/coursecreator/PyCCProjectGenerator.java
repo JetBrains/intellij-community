@@ -56,14 +56,11 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    generateProject(project, baseDir, mySettingsPanel.getName(),
-                    mySettingsPanel.getAuthors(), mySettingsPanel.getDescription());
+    generateProject(project, baseDir, mySettingsPanel);
   }
 
-  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                                     @NotNull final String name, @NotNull final String[] authors,
-                                     @NotNull final String description) {
-    final Course course = getCourse(project, name, authors, description);
+  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, CCNewProjectPanel settingsPanel) {
+    final Course course = getCourse(project, settingsPanel);
     EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
@@ -94,12 +91,15 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   }
 
   @NotNull
-  private static Course getCourse(@NotNull Project project, @NotNull String name, @NotNull String[] authors, @NotNull String description) {
+  private static Course getCourse(@NotNull Project project, @NotNull CCNewProjectPanel settingsPanel) {
     final Course course = new Course();
+    String name = settingsPanel.getName();
     course.setName(name);
-    course.setAuthors(authors);
-    course.setDescription(description);
-    course.setLanguage(PythonLanguage.getInstance().getID());
+    course.setAuthors(settingsPanel.getAuthors());
+    course.setDescription(settingsPanel.getDescription());
+
+    String language = PythonLanguage.getInstance().getID();
+    course.setLanguage(language);
     course.setCourseMode(CCUtils.COURSE_MODE);
 
     File coursesDir = new File(PathManager.getConfigPath(), "courses");
@@ -136,4 +136,5 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     });
     return mySettingsPanel.getMainPanel();
   }
+
 }

@@ -424,7 +424,7 @@ public final class PythonSdkType extends SdkType {
     return suggestSdkNameFromVersion(sdkHome, name);
   }
 
-  public static String suggestSdkNameFromVersion(String sdkHome, String version) {
+  private static String suggestSdkNameFromVersion(String sdkHome, String version) {
     sdkHome = FileUtil.toSystemDependentName(sdkHome);
     final String shortHomeName = FileUtil.getLocationRelativeToUserHome(sdkHome);
     if (version != null) {

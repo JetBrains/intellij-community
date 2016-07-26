@@ -29,7 +29,10 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author: db
@@ -385,7 +388,7 @@ class ClassfileAnalyzer {
       processSignature(signature);
 
       return new FieldVisitor(ASM_API_VERSION) {
-        final List<TypeRepr.ClassType> annotations = new SmartList<TypeRepr.ClassType>();
+        final Set<TypeRepr.ClassType> annotations = new THashSet<TypeRepr.ClassType>();
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -413,8 +416,8 @@ class ClassfileAnalyzer {
     @Override
     public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
       final Ref<Object> defaultValue = Ref.create();
-      final Collection<TypeRepr.ClassType> annotations = new SmartList<TypeRepr.ClassType>();
-      final Collection<ParamAnnotation> paramAnnotations = new SmartList<ParamAnnotation>();
+      final Set<TypeRepr.ClassType> annotations = new THashSet<TypeRepr.ClassType>();
+      final Set<ParamAnnotation> paramAnnotations = new THashSet<ParamAnnotation>();
       processSignature(signature);
 
       return new MethodVisitor(ASM_API_VERSION) {

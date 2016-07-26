@@ -43,6 +43,11 @@ public class MouseShortcut extends Shortcut {
     return event.getButton();
   }
 
+  /**
+   * @param button Mouse buttons MouseEvent.BUTTON_LEFT, MouseEvent.BUTTON2, etc...
+   * @param modifiers modifiersEx masks like InputEvent.ALT_DOWN_MASK and so on...
+   * @param clickCount click count from the MouseEvent that caused the MouseShortcut creation
+   */
   public MouseShortcut(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     myButton = button;
     // TODO[vova] check modifiers?
@@ -67,12 +72,14 @@ public class MouseShortcut extends Shortcut {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof MouseShortcut)) {
-      return false;
-    }
-    MouseShortcut shortcut = (MouseShortcut)obj;
-    return myButton == shortcut.myButton && myModifiers == shortcut.myModifiers && myClickCount ==
-                                                                                   shortcut.myClickCount;
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+
+    MouseShortcut other = (MouseShortcut) obj;
+
+    return myButton == other.myButton
+           && myModifiers == other.myModifiers
+           && myClickCount == other.myClickCount;
   }
 
   public int hashCode() {

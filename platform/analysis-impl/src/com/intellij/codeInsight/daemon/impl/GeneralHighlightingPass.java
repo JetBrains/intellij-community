@@ -76,7 +76,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected volatile boolean myHasErrorElement;
   private volatile boolean myErrorFound;
   protected final EditorColorsScheme myGlobalScheme;
-  private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = () -> cloneHighlightVisitors();
+  private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = this::cloneHighlightVisitors;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,

@@ -25,6 +25,8 @@ DIRECTIVE="#"{ALPHA}+
 
 %%
 
+<YYINITIAL> "\\#" { return FileTemplateTokenType.ESCAPE; }
+<YYINITIAL> "\\$" { return FileTemplateTokenType.ESCAPE; }
 <YYINITIAL> {MACRO} { return FileTemplateTokenType.MACRO; }
 <YYINITIAL> {DIRECTIVE} { return FileTemplateTokenType.DIRECTIVE; }
 <YYINITIAL> [^] { return FileTemplateTokenType.TEXT; }

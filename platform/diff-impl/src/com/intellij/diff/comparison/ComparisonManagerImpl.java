@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ComparisonManagerImpl extends ComparisonManagerEx {
+public class ComparisonManagerImpl extends ComparisonManager {
   public static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
 
   @NotNull
@@ -166,7 +166,6 @@ public class ComparisonManagerImpl extends ComparisonManagerEx {
   }
 
   @NotNull
-  @Override
   public List<Range> compareLines(@NotNull List<? extends CharSequence> lines1,
                                   @NotNull List<? extends CharSequence> lines2,
                                   @NotNull ComparisonPolicy policy,

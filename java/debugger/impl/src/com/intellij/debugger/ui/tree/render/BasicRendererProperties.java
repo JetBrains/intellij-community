@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -117,10 +118,7 @@ public final class BasicRendererProperties implements Cloneable, JDOMExternaliza
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void addOption(final Element element, final String optionName, final String optionValue) {
-    final Element option = new Element("option");
-    element.addContent(option);
-    option.setAttribute("name", optionName);
-    option.setAttribute("value", optionValue);
+    JDOMExternalizerUtil.writeField(element, optionName, optionValue);
   }
 
   public BasicRendererProperties clone()  {

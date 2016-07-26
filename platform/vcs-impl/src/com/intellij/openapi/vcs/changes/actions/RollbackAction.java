@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
@@ -66,11 +68,11 @@ public class RollbackAction extends AnAction implements DumbAware {
 
     final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
     boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
-                              hasReversibleFiles(e, project) ||
-                              currentChangelistNotEmpty(project);
+                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
+                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
+                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
+                        hasReversibleFiles(e) ||
+                        currentChangelistNotEmpty(project);
     e.getPresentation().setEnabled(isEnabled);
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName + "...");
@@ -79,18 +81,13 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
   }
 
-  private static boolean hasReversibleFiles(AnActionEvent e, Project project) {
-    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (files != null) {
-      ChangeListManager clManager = ChangeListManager.getInstance(project);
-      Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(clManager.getModifiedWithoutEditing());
-      for (VirtualFile file : files) {
-        if (clManager.haveChangesUnder(file) != ThreeState.NO || clManager.isFileAffected(file)  || modifiedWithoutEditing.contains(file)) {
-          return true;
-        }
-      }
-    }
-    return false;
+  private static boolean hasReversibleFiles(@NotNull AnActionEvent e) {
+    ChangeListManager manager = ChangeListManager.getInstance(e.getRequiredData(CommonDataKeys.PROJECT));
+    Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(manager.getModifiedWithoutEditing());
+    Stream<VirtualFile> fileStream = ObjectUtils.notNull(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM), Stream.empty());
+
+    return fileStream.anyMatch(
+      file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file));
   }
 
   private static boolean currentChangelistNotEmpty(Project project) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -33,7 +34,10 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.createConstrai
 public class HardcodedContracts {
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
-    if (owner == null) return Collections.emptyList();
+    if (owner == null ||
+        InjectedLanguageManager.getInstance(owner.getProject()).isInjectedFragment(owner.getContainingFile())) {
+      return Collections.emptyList();
+    }
 
     final int paramCount = method.getParameterList().getParametersCount();
     String className = owner.getQualifiedName();

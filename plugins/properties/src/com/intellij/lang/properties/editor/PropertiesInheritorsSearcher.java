@@ -23,6 +23,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
@@ -36,7 +37,7 @@ import java.util.Objects;
  * @author Dmitry Batkovich
  */
 public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters> {
-  private final static Logger LOG = Logger.getInstance(PropertiesInheritorsSearcher.class);
+  private static final Logger LOG = Logger.getInstance(PropertiesInheritorsSearcher.class);
 
   @Override
   public void processQuery(@NotNull DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull Processor<PsiElement> consumer) {
@@ -60,7 +61,10 @@ public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, 
         .map(f -> f.findPropertyByKey(key))
         .filter(Objects::nonNull)
         .map(IProperty::getPsiElement)
-        .forEach(consumer::process);
+        .anyMatch(psiElement -> {
+          ProgressManager.checkCanceled();
+          return !consumer.process(psiElement);
+        });
     });
   }
 

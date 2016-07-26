@@ -17,46 +17,44 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CCCreateAnswerPlaceholderPanel extends JPanel {
-
+public class CCCreateAnswerPlaceholderPanel {
+  private static String ourFirstHintText = "Type here to add hint";
+  
   private JPanel myPanel;
-  private JTextArea myHintTextField;
-  private JTextField myAnswerPlaceholderText;
+  private JTextArea myHintTextArea;
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
   private JPanel myHintsPanel;
+  private JTextArea myPlaceholderTextArea;
+  private int myShownHintNumber = 0;
 
   private List<String> myHints = new ArrayList<String>() {{
-    add(ourDefaultHintText);
+    add(ourFirstHintText);
   }};
-  private int myShownHintNumber = 0;
-  private static String ourDefaultHintText = "To add hint type text here";
 
   public CCCreateAnswerPlaceholderPanel() {
-    super(new BorderLayout());
-    add(myPanel, BorderLayout.CENTER);
-
-    myHintTextField.setLineWrap(true);
-    myHintTextField.setWrapStyleWord(true);
-    myHintTextField.setBorder(BorderFactory.createLineBorder(JBColor.border()));
-    myHintTextField.setFont(myAnswerPlaceholderText.getFont());
-    if (myHints.get(myShownHintNumber).equals(ourDefaultHintText)) {
-      myHintTextField.setForeground(UIUtil.getInactiveTextColor());
+    myHintTextArea.setLineWrap(true);
+    myHintTextArea.setWrapStyleWord(true);
+    myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myHintTextArea.setFont(myPlaceholderTextArea.getFont());
+    if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
+      myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
     }
-    myHintTextField.setText(myHints.get(myShownHintNumber));
-    myHintTextField.addFocusListener(new FocusAdapter() {
+    myHintTextArea.setText(myHints.get(myShownHintNumber));
+    myHintTextArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (myHintTextField.getText().equals(ourDefaultHintText)) {
-          myHintTextField.setForeground(UIUtil.getActiveTextColor());
-          myHintTextField.setText("");
+        if (myHintTextArea.getText().equals(ourFirstHintText)) {
+          myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+          myHintTextArea.setText("");
         }
       }
     });
-    
-    myAnswerPlaceholderText.grabFocus();
+
+    myPlaceholderTextArea.grabFocus();
     updateHintNumberLabel();
-    
+
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
     final DefaultActionGroup addRemoveGroup = new DefaultActionGroup();
@@ -75,32 +73,32 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   }
 
   public void setAnswerPlaceholderText(String answerPlaceholderText) {
-    myAnswerPlaceholderText.setText(answerPlaceholderText);
+    myPlaceholderTextArea.setText(answerPlaceholderText);
   }
 
   public void setHintText(String hintTextField) {
-    myHintTextField.setForeground(UIUtil.getActiveTextColor());
-    myHintTextField.setText(hintTextField);
+    myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+    myHintTextArea.setText(hintTextField);
   }
 
   public String getAnswerPlaceholderText() {
-    return myAnswerPlaceholderText.getText();
+    return myPlaceholderTextArea.getText();
   }
 
   public List<String> getHints() {
-    final String hintText = myHintTextField.getText();
-    if (myShownHintNumber == 0 && hintText.equals(ourDefaultHintText)) {
+    final String hintText = myHintTextArea.getText();
+    if (myShownHintNumber == 0 && hintText.equals(ourFirstHintText)) {
       myHints.set(myShownHintNumber, "");
     }
     else {
       myHints.set(myShownHintNumber, hintText);
     }
-    
+
     return myHints;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myAnswerPlaceholderText;
+    return myPlaceholderTextArea;
   }
 
   public void setHints(List<String> hints) {
@@ -108,15 +106,19 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     updateHintNumberLabel();
   }
 
+  public JPanel getMailPanel() {
+    return myPanel;
+  }
+
   private class GoForward extends AnAction {
 
     public GoForward() {
-      super(AllIcons.Actions.Forward);
+      super("Forward", "Forward", AllIcons.Actions.Forward);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
       setHintText(myHints.get(++myShownHintNumber));
       updateHintNumberLabel();
     }
@@ -130,12 +132,12 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class GoBackward extends AnAction {
 
     public GoBackward() {
-      super(AllIcons.Actions.Back);
+      super("Back", "Back", AllIcons.Actions.Back);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
       setHintText(myHints.get(--myShownHintNumber));
       updateHintNumberLabel();
     }
@@ -149,7 +151,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class AddHint extends AnAction {
 
     public AddHint() {
-      super(AllIcons.General.Add);
+      super("Add New Hint", "Add New Hint", AllIcons.General.Add);
     }
 
     @Override
@@ -164,7 +166,7 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class RemoveHint extends AnAction {
 
     public RemoveHint() {
-      super(AllIcons.General.Remove);
+      super("Remove Hint", "Remove Hint", AllIcons.General.Remove);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.diff.comparison.ComparisonManagerEx;
+import com.intellij.diff.comparison.ComparisonManagerImpl;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.util.Range;
@@ -39,6 +39,9 @@ public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
+
+  // we can't use ComparisonManager.getInstance() because of Upsource
+  private static final ComparisonManagerImpl ourComparisonManager = new ComparisonManagerImpl();
 
   @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
@@ -263,8 +266,7 @@ public class TextPatchBuilder {
   }
 
   private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
-    return ComparisonManagerEx.getInstanceEx().compareLines(beforeLines, afterLines, ComparisonPolicy.DEFAULT,
-                                                            DumbProgressIndicator.INSTANCE);
+    return ourComparisonManager.compareLines(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
   }
 
   @NotNull

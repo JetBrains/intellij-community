@@ -50,6 +50,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
@@ -671,4 +672,10 @@ public class VcsUtil {
     return mappings;
   }
 
+  @Nullable
+  public static <T> T getIfSingle(@NotNull Stream<T> items) {
+    return items.limit(2).map(Optional::ofNullable)
+      .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
+      .orElse(null);
+  }
 }

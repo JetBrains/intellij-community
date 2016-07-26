@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.newProject.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
@@ -28,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
@@ -46,11 +44,9 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,10 +75,11 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
       }
     }
     final Project newProject = generateProject(settingsStep);
-    if (sdk == null) {
-      createAndAddVirtualEnv(settingsStep);
+    if (generator instanceof PythonProjectGenerator && sdk == null) {
+      final PyNewProjectSettings settings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
+      ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, settings);
+      sdk = settings.getSdk();
     }
-    sdk = settingsStep.getSdk();
 
     if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
@@ -102,9 +99,10 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   private static void installRequirements(@NotNull Project project) {
     final Module module = ModuleManager.getInstance(project).getModules()[0];
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    if (sdk == null) return;
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = manager.getRequirements(module);
-    if (requirements != null && sdk != null) {
+    if (requirements != null) {
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, sdk, null);
       ui.install(requirements, Collections.emptyList());
     }
@@ -134,49 +132,6 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
     }
     catch (ConfigurationException exception) {
       LOG.error("Error adding detected python interpreter " + exception.getMessage());
-    }
-  }
-
-  private static void createAndAddVirtualEnv(final ProjectSpecificSettingsStep settingsStep) {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
-    String baseSdk = null;
-    for (PythonSdkFlavor flavor : flavors) {
-      final Collection<String> baseSdks = flavor.suggestHomePaths();
-      if (!baseSdks.isEmpty()) {
-        baseSdk = baseSdks.iterator().next();
-      }
-    }
-    if (baseSdk != null) {
-      final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
-      try {
-        final String path = packageManager.createVirtualEnv(settingsStep.getProjectLocation() + "/.idea/VirtualEnvironment", false);
-        AbstractCreateVirtualEnvDialog.setupVirtualEnvSdk(path, true, new AbstractCreateVirtualEnvDialog.VirtualEnvCallback() {
-          @Override
-          public void virtualEnvCreated(Sdk createdSdk, boolean associateWithProject) {
-            settingsStep.setSdk(createdSdk);
-            model.addSdk(createdSdk);
-            try {
-              model.apply();
-            }
-            catch (ConfigurationException exception) {
-              LOG.error("Error adding created virtual env " + exception.getMessage());
-            }
-            if (associateWithProject) {
-              SdkAdditionalData additionalData = createdSdk.getSdkAdditionalData();
-              if (additionalData == null) {
-                additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(createdSdk.getHomePath()));
-                ((ProjectJdkImpl)createdSdk).setSdkAdditionalData(additionalData);
-              }
-            ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
-            }
-          }
-        });
-      }
-      catch (ExecutionException e) {
-        LOG.warn("Failed to create virtual env " + e.getMessage());
-      }
     }
   }
 

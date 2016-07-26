@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.commandLine;
 
+import com.intellij.formatting.FormatTextRanges;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,12 +27,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,23 +50,24 @@ class FileSetFormatter extends FileSetProcessor {
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
   private MessageOutput myMessageOutput;
+  private @NotNull CodeStyleSettings mySettings;
 
-  FileSetFormatter(@NotNull String fileSpec, @NotNull MessageOutput messageOutput) {
+  FileSetFormatter(@NotNull String fileSpec,
+                   @Nullable CodeStyleSettings settings,
+                   @NotNull MessageOutput messageOutput) {
     super(fileSpec);
     myMessageOutput = messageOutput;
+    mySettings = settings != null ? settings : new CodeStyleSettings();
     myProjectUID = UUID.randomUUID().toString();
   }
 
-  @Nullable
-  private File createProject() throws IOException {
+  private void createProject() throws IOException {
     ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
     File projectDir = createProjectDir();
     myProject = projectManager.createProject(myProjectUID, projectDir.getPath());
     if (myProject != null) {
       projectManager.openProject(myProject);
-      return projectDir;
     }
-    return null;
   }
 
   private File createProjectDir() throws IOException {
@@ -86,8 +90,8 @@ class FileSetFormatter extends FileSetProcessor {
 
   @Override
   public void processFiles() throws IOException {
-    File projectDir = createProject();
-    if (projectDir != null) {
+    createProject();
+    if (myProject != null) {
       super.processFiles();
       closeProject();
     }
@@ -116,13 +120,14 @@ class FileSetFormatter extends FileSetProcessor {
     }
   }
 
-  private void reformatFile(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document) {
+  private void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
     AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(this.getClass());
     try {
       CommandProcessor.getInstance().executeCommand(
         myProject,
         () -> {
-          CodeStyleManager.getInstance(project).reformatText(file, 0, file.getTextLength());
+          CodeFormatterFacade formatterFacade = new CodeFormatterFacade(mySettings, file.getLanguage());
+          formatterFacade.processText(file, new FormatTextRanges(new TextRange(0, file.getTextLength()), true), false);
           PsiDocumentManager.getInstance(project).commitDocument(document);
         }, null, null);
     }

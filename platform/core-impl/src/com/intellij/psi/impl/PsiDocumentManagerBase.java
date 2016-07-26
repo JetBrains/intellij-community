@@ -308,6 +308,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                               final boolean synchronously,
                               @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final boolean[] ok = {true};
     Runnable runnable = new DocumentRunnable(document, myProject) {
       @Override
@@ -339,6 +340,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected boolean finishCommitInWriteAction(@NotNull final Document document,
                                               @NotNull final List<Processor<Document>> finishProcessors,
                                               final boolean synchronously) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
 
@@ -454,6 +456,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return Boolean.TRUE.equals(file.getUserData(SingleRootFileViewProvider.FREE_THREADED));
   }
 
+  // true if the PSI is being modified and events being sent
   public boolean isCommitInProgress() {
     return myIsCommitInProgress;
   }
@@ -574,7 +577,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     };
     if (ApplicationManager.getApplication().isDispatchThread() && isInsideCommitHandler()) {
       whenAllCommitted.run();
-    } else {
+    }
+    else {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
