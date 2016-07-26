@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +26,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -48,6 +46,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -891,6 +890,35 @@ public final class EditorUtil {
   public static boolean attributesImpactFontStyleOrColor(@Nullable TextAttributes attributes) {
     return attributes == TextAttributes.ERASE_MARKER ||
            (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getForegroundColor() != null));
+  }
+
+  @NotNull
+  public static List<Inlay> getVisibleLineExtendingElements(@NotNull EditorEx editor) {
+    assert !(editor instanceof EditorWindow);
+    List<Inlay> inlays = editor.getInlayModel().getLineExtendingElements();
+    FoldRegion[] foldRegions = editor.getFoldingModel().fetchTopLevel();
+    if (foldRegions == null) return inlays;
+    ArrayList<Inlay> result = new ArrayList<>();
+    int inlayIndex = 0;
+    int foldRegionIndex = 0;
+    int lineHeight = editor.getLineHeight();
+    while (foldRegionIndex < foldRegions.length) {
+      FoldRegion foldRegion = foldRegions[foldRegionIndex++];
+      int foldRegionStart = foldRegion.getStartOffset();
+      while (inlayIndex < inlays.size()) {
+        Inlay inlay = inlays.get(inlayIndex);
+        if (inlay.getOffset() < foldRegionStart) {
+          result.add(inlay);
+          inlayIndex++;
+        }
+        else break;
+      }
+      int foldRegionEnd = foldRegion.getEndOffset();
+      while (inlayIndex < inlays.size() && inlays.get(inlayIndex).getOffset() < foldRegionEnd) inlayIndex++;
+      if (((FoldRegionImpl)foldRegion).getHeightInPixels() > lineHeight) result.add((FoldRegionImpl)foldRegion);
+    }
+    result.addAll(inlays.subList(inlayIndex, inlays.size()));
+    return result;
   }
 }
 

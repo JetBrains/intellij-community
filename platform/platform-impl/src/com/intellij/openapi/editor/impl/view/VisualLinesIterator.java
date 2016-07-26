@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class VisualLinesIterator {
     FoldRegion[] regions = myEditor.getFoldingModel().fetchTopLevel();
     myFoldRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
     mySoftWraps = softWrapModel.getRegisteredSoftWraps();
-    myInlays = myEditor.getInlayModel().getVisibleLineExtendingElements();
+    myInlays = EditorUtil.getVisibleLineExtendingElements(myEditor);
     myLocation = new Location(startVisualLine);
   }
 

@@ -54,7 +54,7 @@ class EditorCoordinateMapper {
     int lineHeight = myView.getLineHeight();
     y += line * lineHeight;
 
-    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleLineExtendingElements();
+    List<Inlay> inlays = EditorUtil.getVisibleLineExtendingElements(myView.getEditor());
     int from = 0;
     int to = inlays.size() - 1;
     while (from <= to) {
@@ -76,7 +76,7 @@ class EditorCoordinateMapper {
 
   int yToVisualLine(int y) {
     y = Math.max(0, y - myView.getInsets().top);
-    List<Inlay> inlays = myView.getEditor().getInlayModel().getVisibleLineExtendingElements();
+    List<Inlay> inlays = EditorUtil.getVisibleLineExtendingElements(myView.getEditor());
     int[] cumulativeHeights = new int[inlays.size()];
     calcCumulativeHeight(inlays, cumulativeHeights.length, cumulativeHeights);
     int from = 0;

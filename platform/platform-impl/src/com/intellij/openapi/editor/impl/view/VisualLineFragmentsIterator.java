@@ -219,6 +219,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
                                             : ((FoldRegionImpl)foldRegion).getWidthInPixels();
   }
 
+  private float getFoldRegionHeightInPixels(FoldRegion foldRegion) {
+    return foldRegion.getRenderer() == null ? myView.getLineHeight()
+                                            : ((FoldRegionImpl)foldRegion).getHeightInPixels();
+  }
+
   private static int getFoldRegionWidthInColumns(FoldRegion foldRegion) {
     return foldRegion.getRenderer() == null ? foldRegion.getPlaceholderText().length() : 1;
   }
@@ -468,8 +473,10 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
           }
         }
         else {
-          renderer.paint(g, new Rectangle((int) x, (int)(y - myView.getAscent()),
-                                          (int) (getEndX() - x), myView.getLineHeight()), myView.getEditor());
+          renderer.paint(g,
+                         new Rectangle((int) x, (int)(y - myView.getAscent()),
+                                       (int) (getEndX() - x), (int) getFoldRegionHeightInPixels(myFoldRegion)),
+                         myView.getEditor());
         }
       }
     }

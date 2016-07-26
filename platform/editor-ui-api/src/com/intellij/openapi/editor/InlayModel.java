@@ -34,7 +34,7 @@ public interface InlayModel {
   List<Inlay> getVisibleElements(@NotNull Inlay.Type type);
 
   @NotNull
-  List<Inlay> getVisibleLineExtendingElements();
+  List<Inlay> getLineExtendingElements();
 
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 

@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Inlay {
   private boolean myIsExpanded;
   private final Editor myEditor;
   private final String myPlaceholderText;
@@ -100,6 +100,17 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return super.isValid() && intervalStart() < intervalEnd();
   }
 
+  @Override
+  public int getOffset() {
+    return getStartOffset();
+  }
+
+  @NotNull
+  @Override
+  public Type getType() {
+    return Type.INLINE;
+  }
+
   void setExpandedInternal(boolean toExpand) {
     myIsExpanded = toExpand;
   }
@@ -116,6 +127,10 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   public int getWidthInPixels() {
     return myRendererData == null ? 0 : myRendererData.myWidthInPixels;
+  }
+
+  public int getHeightInPixels() {
+    return myRendererData == null ? 0 : myRendererData.myHeightInPixels;
   }
 
   @Override
@@ -163,12 +178,17 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private static class CustomRendererData {
     private final Inlay.Renderer myRenderer;
     private final int myWidthInPixels;
+    private final int myHeightInPixels;
 
     private CustomRendererData(Editor editor, Inlay.Renderer renderer) {
       myRenderer = renderer;
       myWidthInPixels = renderer.calcWidthInPixels(editor);
       if (myWidthInPixels <= 0) {
-        throw new IllegalArgumentException("Non-positive widht is requested for a folding region: " + myWidthInPixels);
+        throw new IllegalArgumentException("Non-positive width is requested for a folding region: " + myWidthInPixels);
+      }
+      myHeightInPixels = renderer.calcHeightInPixels(editor);
+      if (myHeightInPixels <= 0) {
+        throw new IllegalArgumentException("Non-positive height is requested for a folding region: " + myHeightInPixels);
       }
     }
   }

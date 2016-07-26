@@ -102,12 +102,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @NotNull
   @Override
-  public List<Inlay> getVisibleLineExtendingElements() {
+  public List<Inlay> getLineExtendingElements() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<Inlay> result = new ArrayList<>();
     myInlayTree.process(inlay -> {
-      if ((inlay.getType() == Inlay.Type.BLOCK || inlay.getHeightInPixels() > myEditor.getLineHeight()) &&
-          !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+      if (inlay.getType() == Inlay.Type.BLOCK || inlay.getHeightInPixels() > myEditor.getLineHeight()) {
         result.add(inlay);
       }
       return true;

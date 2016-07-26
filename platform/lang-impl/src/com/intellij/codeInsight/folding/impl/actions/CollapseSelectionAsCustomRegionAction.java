@@ -50,6 +50,11 @@ public class CollapseSelectionAsCustomRegionAction extends EditorAction implemen
           public int calcWidthInPixels(@NotNull Editor editor) {
             return 60;
           }
+
+          @Override
+          public int calcHeightInPixels(@NotNull Editor editor) {
+            return editor.getLineHeight() * 2;
+          }
         };
         foldingModel.runBatchFoldingOperation(() -> {
           FoldRegion region = ((FoldingModelEx)foldingModel).createFoldRegion(finalCaret.getSelectionStart(), finalCaret.getSelectionEnd(),
