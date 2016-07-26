@@ -72,7 +72,7 @@ public class CCCreateAnswerPlaceholderPanel {
 
   private JComponent createHintToolbarComponent() {
     final DefaultActionGroup addRemoveGroup = new DefaultActionGroup();
-    addRemoveGroup.addAll(new AddHint(), new RemoveHint(), new GoForward(), new GoBackward());
+    addRemoveGroup.addAll(new AddHint(), new RemoveHint(), new ShowNext(), new ShowPrevious());
     return ActionManager.getInstance().createActionToolbar("Hint", addRemoveGroup, false).getComponent();
   }
 
@@ -125,10 +125,10 @@ public class CCCreateAnswerPlaceholderPanel {
     return myPanel;
   }
 
-  private class GoForward extends AnAction {
+  private class ShowNext extends AnAction {
 
-    public GoForward() {
-      super("Forward", "Forward", AllIcons.Actions.Forward);
+    public ShowNext() {
+      super("Next", "Next", AllIcons.Actions.Forward);
     }
 
     @Override
@@ -143,10 +143,10 @@ public class CCCreateAnswerPlaceholderPanel {
     }
   }
 
-  private class GoBackward extends AnAction {
+  private class ShowPrevious extends AnAction {
 
-    public GoBackward() {
-      super("Back", "Back", AllIcons.Actions.Back);
+    public ShowPrevious() {
+      super("Previous", "Previous", AllIcons.Actions.Back);
     }
 
     @Override
