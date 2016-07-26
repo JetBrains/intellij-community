@@ -17,7 +17,7 @@ public class CourseInfo {
   @SerializedName("title") private String myName;
   int id;
   boolean isAdaptive;
-  boolean isPublic;
+  @SerializedName("is_public") boolean isPublic;
   List<Integer> sections;
   List<Integer> instructors = new ArrayList<Integer>();
 
