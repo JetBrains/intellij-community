@@ -170,10 +170,12 @@ public class JdkUtil {
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
+    boolean passProgramParametersViaClassPathJar = false;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {
       if (forceDynamicClasspath && !vmParametersList.hasParameter("-classpath") && !vmParametersList.hasParameter("-cp")) {
         if (isClassPathJarEnabled(javaParameters, PathUtil.getJarPathForClass(ClassPath.class))) {
-          appendJarClasspathParams(javaParameters, commandLine, vmParametersList, commandLineWrapper);
+          passProgramParametersViaClassPathJar = javaParameters.isPassProgramParametersViaClasspathJar();
+          appendJarClasspathParams(javaParameters, commandLine, vmParametersList, commandLineWrapper, passProgramParametersViaClassPathJar);
         }
         else {
           appendOldCommandLineWrapper(javaParameters, commandLine, vmParametersList, commandLineWrapper);
@@ -197,7 +199,9 @@ public class JdkUtil {
       commandLine.addParameter(jarPath);
     }
 
-    commandLine.addParameters(javaParameters.getProgramParametersList().getList());
+    if (!passProgramParametersViaClassPathJar) {
+      commandLine.addParameters(javaParameters.getProgramParametersList().getList());
+    }
 
     commandLine.withWorkDirectory(javaParameters.getWorkingDirectory());
 
@@ -283,7 +287,9 @@ public class JdkUtil {
 
   private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,
                                                GeneralCommandLine commandLine,
-                                               ParametersList vmParametersList, Class commandLineWrapper) {
+                                               ParametersList vmParametersList,
+                                               Class commandLineWrapper,
+                                               boolean storeProgramParametersInJar) {
     try {
       final Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By",
@@ -305,6 +311,10 @@ public class JdkUtil {
       else {
         commandLine.addParameters(vmParametersList.getList());
       }
+      if (storeProgramParametersInJar) {
+        manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
+      }
+
       final boolean notEscape = vmParametersList.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
       final List<String> classPathList = javaParameters.getClassPath().getPathList();
 
@@ -313,7 +323,7 @@ public class JdkUtil {
 
       final String jarFile = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
-      if (writeDynamicVMOptions) {
+      if (writeDynamicVMOptions || storeProgramParametersInJar) {
         commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
         appendEncoding(javaParameters, commandLine, vmParametersList);
         commandLine.addParameter(commandLineWrapper.getName());
