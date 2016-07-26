@@ -50,6 +50,6 @@ public class MergingCharSequence implements CharSequence {
   @Override
   @NotNull
   public String toString() {
-    return s1.toString() + s2.toString();
+    return s1 + s2.toString();
   }
 }

@@ -128,7 +128,7 @@ public abstract class LineOutputWriter extends Writer {
       return false;
     }
 
-    public boolean hasData() {
+    boolean hasData() {
       return myData.length() > 0;
     }
 
