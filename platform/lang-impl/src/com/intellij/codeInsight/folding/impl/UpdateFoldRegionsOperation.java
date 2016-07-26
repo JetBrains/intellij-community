@@ -162,19 +162,19 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
+    if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
+      TextRange lineRange = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
+      if (lineRange.intersects(range)) {
+        return true;
+      }
+    }
+    final Boolean oldStatus = rangeToExpandStatusMap.get(range);
+    if (oldStatus != null && !oldStatus.booleanValue() && !FoldingUtil.caretInsideRange(myEditor, range)) return false;
     if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
-      if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
-        TextRange lineRange = OpenFileDescriptor.getRangeToUnfoldOnNavigation(myEditor);
-        if (lineRange.intersects(range)) {
-          return true;
-        }
-      }
       return !FoldingPolicy.isCollapseByDefault(element);
     }
-
-    final Boolean oldStatus = rangeToExpandStatusMap.get(range);
-    return oldStatus == null || FoldingUtil.caretInsideRange(myEditor, range) || oldStatus.booleanValue();
+    return true;
   }
 
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,

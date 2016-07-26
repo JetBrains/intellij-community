@@ -86,7 +86,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     EditorFoldingInfo info = EditorFoldingInfo.get(editor);
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : foldRegions) {
-      if (!region.isValid() || region.getRenderer() != null) continue;
+      if (!region.isValid()) continue;
       PsiElement element = info.getPsiElement(region);
       boolean expanded = region.isExpanded();
       boolean collapseByDefault = element != null &&
