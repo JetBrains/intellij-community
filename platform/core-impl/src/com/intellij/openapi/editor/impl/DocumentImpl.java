@@ -848,13 +848,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myText;
   }
 
-  // Breaks encapsulation, yet required for current zero-latency typing implementation.
-  // TODO Should be removed when we implement typing without starting write actions.
-  @NotNull
-  public ImmutableText getImmutableText() {
-    return myText;
-  }
-
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners.set(null);
@@ -896,11 +889,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     doRemoveDocumentListener(listener, myCachedDocumentListeners, myDocumentListeners);
   }
 
-  public void addInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
+  void addInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
     myBulkDocumentInternalListeners.add(listener);
   }
 
-  public void removeInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
+  void removeInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
     myBulkDocumentInternalListeners.remove(listener);
   }
 

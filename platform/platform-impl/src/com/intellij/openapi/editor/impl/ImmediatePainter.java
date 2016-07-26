@@ -17,9 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -230,7 +227,7 @@ public class ImmediatePainter {
   private void paintImmediately(Graphics g, int offset, char c, boolean insert) {
     if (g == null) return; // editor component is currently not displayable
 
-    TextAttributes attributes = ((LexerEditorHighlighter)getHighlighter()).getAttributes((DocumentImpl)getDocument(), offset, c);
+    TextAttributes attributes = ((LexerEditorHighlighter)getHighlighter()).getAttributesForTypedChar(getDocument(), offset, c);
 
     int fontType = attributes.getFontType();
     FontInfo fontInfo = EditorUtil.fontForChar(c, attributes.getFontType(), myEditor);
