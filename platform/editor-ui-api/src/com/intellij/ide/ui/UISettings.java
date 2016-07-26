@@ -40,6 +40,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -57,6 +58,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   private static UISettings ourSettings;
 
+  @Nullable
   public static UISettings getInstance() {
     return ourSettings = ServiceManager.getService(UISettings.class);
   }
@@ -65,6 +67,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    * Use this method if you are not sure whether the application is initialized.
    * @return persisted UISettings instance or default values.
    */
+  @NotNull
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
     UISettings settings = application == null ? null : getInstance();
