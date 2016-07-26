@@ -31,6 +31,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
@@ -673,6 +674,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return stub.isAsync();
     }
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
+  }
+
+  @Override
+  public boolean isAsyncAllowed() {
+    final LanguageLevel languageLevel = LanguageLevel.forElement(this);
+    final String functionName = getName();
+
+    return languageLevel.isAtLeast(LanguageLevel.PYTHON35) && (
+      functionName == null ||
+      ArrayUtil.contains(functionName, PyNames.AITER, "__anext__", "__aenter__", "__aexit__") ||
+      !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
+    );
   }
 
   @Nullable

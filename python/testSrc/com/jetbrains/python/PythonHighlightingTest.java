@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,11 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testUnpackingStar() {
     doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-19775
+  public void testAsyncBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON35, true, false);
   }
 
   // ---
