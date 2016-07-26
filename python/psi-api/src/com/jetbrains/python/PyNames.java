@@ -166,6 +166,9 @@ public class PyNames {
   public static final String DIV = "__div__";
   public static final String TRUEDIV = "__truediv__";
   public static final String AITER = "__aiter__";
+  public static final String ANEXT = "__anext__";
+  public static final String AENTER = "__aenter__";
+  public static final String AEXIT = "__aexit__";
   public static final String SIZEOF = "__sizeof__";
 
   public static final String NAME = "__name__";
@@ -408,10 +411,10 @@ public class PyNames {
     .put("__matmul__", _self_other_descr)
     .put("__rmatmul__", _self_other_descr)
     .put("__await__", _only_self_descr)
-    .put("__aenter__", _only_self_descr)
-    .put("__aexit__", _exit_descr)
+    .put(AENTER, _only_self_descr)
+    .put(AEXIT, _exit_descr)
     .put(AITER, _only_self_descr)
-    .put("__anext__", _only_self_descr)
+    .put(ANEXT, _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
