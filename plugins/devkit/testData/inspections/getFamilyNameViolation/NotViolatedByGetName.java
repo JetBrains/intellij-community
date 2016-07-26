@@ -8,7 +8,7 @@ class MyQuickFix implements QuickFix {
     return someField;
   };
 
-  public String <warning descr="QuickFix's getFamilyName() implementation must not depend on a specific context">getFamilyName</warning>() {
+  public String getFamilyName() {
     return getName() + "123";
   };
 

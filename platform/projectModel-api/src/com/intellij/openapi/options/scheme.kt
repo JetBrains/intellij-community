@@ -21,12 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import org.jdom.Parent
 
-interface Scheme {
-  val name: String
-}
-
 interface ExternalizableScheme : Scheme {
-  override var name: String
+  fun setName(value: String)
 }
 
 abstract class SchemeManagerFactory {
