@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
@@ -173,7 +174,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       public void mouseEntered(MouseEvent e) {
         final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(myProject);
         if (task != null && task.getStatus() != StudyStatus.Solved && myPanel.isEnabled()) {
-          setBackground(UIUtil.getButtonSelectColor());
+          setBackground(JBColor.GRAY);
         }
       }
 
