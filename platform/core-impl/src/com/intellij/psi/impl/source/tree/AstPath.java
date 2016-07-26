@@ -173,7 +173,10 @@ public abstract class AstPath extends SubstrateRef {
     public CompositeElement getNode() {
       CompositeElement node = SoftReference.dereference(myNode);
       if (node == null) {
-        myNode = new WeakReference<CompositeElement>(node = super.getNode());
+        node = super.getNode();
+        if (myFile.mayCacheAst()) {
+          myNode = new WeakReference<CompositeElement>(node);
+        }
       }
       return node;
     }

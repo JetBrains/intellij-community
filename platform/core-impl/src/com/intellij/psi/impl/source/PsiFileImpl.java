@@ -1155,4 +1155,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public boolean useStrongRefs() {
     return myUseStrongRefs;
   }
+
+  public boolean mayCacheAst() {
+    return myFileElementBeingLoaded.get() == null;
+  }
 }
