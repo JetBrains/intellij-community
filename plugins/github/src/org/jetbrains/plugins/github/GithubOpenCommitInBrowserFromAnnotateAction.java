@@ -29,11 +29,11 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommitInBrowserAction implements UpToDateLineNumberListener {
+public class GithubOpenCommitInBrowserFromAnnotateAction extends GithubOpenInBrowserAction implements UpToDateLineNumberListener {
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
 
-  public GithubShowCommitInBrowserFromAnnotateAction(FileAnnotation annotation) {
+  public GithubOpenCommitInBrowserFromAnnotateAction(FileAnnotation annotation) {
     myAnnotation = annotation;
   }
 
