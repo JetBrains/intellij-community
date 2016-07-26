@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDocumentManager;
@@ -50,7 +51,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     if (document == null) {
       return;
     }
-
+    FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
