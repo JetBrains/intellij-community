@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.*
+import com.intellij.util.containers.ContainerUtil
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.nio.file.NoSuchFileException
@@ -32,80 +33,85 @@ import java.security.Key
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
 
 class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider()  {
-  private val db = ConcurrentHashMap<String, String>()
+  private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
   private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
 
   private var encryptionSupport: EncryptionSupport? = null
 
-  private @Volatile var needToSave = false
+  private val needToSave: AtomicBoolean
 
   init {
     if (keyToValue == null) {
-      init()
+      needToSave = AtomicBoolean(false)
+      run {
+        encryptionSupport = EncryptionSupport(SecretKeySpec(masterKeyStorage.get() ?: return@run, "AES"))
+
+        val data: ByteArray
+        try {
+          data = encryptionSupport!!.decrypt(dbFile.readBytes())
+        }
+        catch (e: NoSuchFileException) {
+          LOG.warn("key file exists, but db file not")
+          return@run
+        }
+
+        val input = DataInputStream(data.inputStream())
+        while (input.available() > 0) {
+          db.put(input.readUTF(), input.readUTF())
+        }
+      }
     }
     else {
+      needToSave = AtomicBoolean(!memoryOnly)
       db.putAll(keyToValue)
-      needToSave = true
-    }
-  }
-
-  @Synchronized
-  private fun init() {
-    val masterKey = masterKeyStorage.get() ?: return
-    encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
-
-    val data: ByteArray
-    try {
-      data = encryptionSupport!!.decrypt(dbFile.readBytes())
-    }
-    catch (e: NoSuchFileException) {
-      LOG.warn("key file exists, but db file not")
-      return
-    }
-
-    val input = DataInputStream(data.inputStream())
-    while (input.available() > 0) {
-      db.put(input.readUTF(), input.readUTF())
     }
   }
 
   @Synchronized
   fun save() {
-    if (memoryOnly || !needToSave) {
+    if (memoryOnly || !needToSave.compareAndSet(true, false)) {
       return
     }
 
-    if (encryptionSupport == null) {
-      val masterKey = generateAesKey()
-      encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
-      masterKeyStorage.set(masterKey)
-    }
-
-    if (db.isEmpty()) {
-      dbFile.delete()
-      return
-    }
-
-    val byteOut = BufferExposingByteArrayOutputStream()
-    DataOutputStream(byteOut).use { out ->
-      for ((key, value) in db) {
-        out.writeUTF(key)
-        out.writeUTF(value)
+    try {
+      var encryptionSupport = encryptionSupport
+      if (encryptionSupport == null) {
+        val masterKey = generateAesKey()
+        masterKeyStorage.set(masterKey)
+        // set only if key stored successfully
+        encryptionSupport = EncryptionSupport(SecretKeySpec(masterKey, "AES"))
+        this.encryptionSupport = encryptionSupport
       }
+
+      if (db.isEmpty()) {
+        dbFile.delete()
+        return
+      }
+
+      val byteOut = BufferExposingByteArrayOutputStream()
+      DataOutputStream(byteOut).use { out ->
+        for ((key, value) in db) {
+          out.writeUTF(key)
+          out.writeUTF(value)
+        }
+      }
+
+      dbFile.writeSafe(encryptionSupport.encrypt(byteOut.internalBuffer, byteOut.size()))
+      dbFile.setOwnerPermissions()
     }
-
-    dbFile.writeSafe(encryptionSupport!!.encrypt(byteOut.internalBuffer, byteOut.size()))
-    dbFile.setOwnerPermissions()
-
-    needToSave = false
+    catch (e: Throwable) {
+      // schedule save again
+      needToSave.set(true)
+      LOG.error("Cannot save password database", e)
+    }
   }
 
   @Synchronized
@@ -127,7 +133,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       value = db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
       if (value != null) {
         db.put(rawKey, value)
-        needToSave = true
+        needToSave.set(true)
       }
     }
     return value
@@ -137,11 +143,11 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
     val rawKey = getRawKey(key, requestor)
     if (value == null) {
       if (db.remove(rawKey) != null) {
-        needToSave = true
+        needToSave.set(true)
       }
     }
     else if (db.put(rawKey, value) != value) {
-      needToSave = true
+      needToSave.set(true)
     }
   }
 
