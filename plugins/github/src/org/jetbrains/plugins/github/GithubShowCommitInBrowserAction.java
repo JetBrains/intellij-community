@@ -42,7 +42,7 @@ import java.util.List;
 
 public class GithubShowCommitInBrowserAction extends DumbAwareAction {
   public GithubShowCommitInBrowserAction() {
-    super("Open on GitHub", "Open selected commit in browser", GithubIcons.Github_icon);
+    super("Open commit on GitHub", "Open selected commit in browser", GithubIcons.Github_icon);
   }
 
   @Override

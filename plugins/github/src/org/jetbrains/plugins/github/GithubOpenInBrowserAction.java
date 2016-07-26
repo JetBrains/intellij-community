@@ -57,7 +57,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final String CANNOT_OPEN_IN_BROWSER = "Can't open in browser";
 
   protected GithubOpenInBrowserAction() {
-    super("Open on GitHub", "Open selected file in browser", GithubIcons.Github_icon);
+    super("Open file on GitHub", "Open selected file in browser", GithubIcons.Github_icon);
   }
 
   @Override
