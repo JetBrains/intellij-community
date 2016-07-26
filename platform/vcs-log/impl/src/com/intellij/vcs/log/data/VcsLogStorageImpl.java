@@ -41,11 +41,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Supports the int <-> Hash persistent mapping.
+ * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
-public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
+public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
-  public static final VcsLogHashMap EMPTY = new VcsLogHashMap() {
+  public static final VcsLogStorage EMPTY = new VcsLogStorage() {
     @Override
     public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
       return 0;
@@ -79,7 +79,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
     }
   };
 
-  @NotNull private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
+  @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
   @NotNull private static final String HASHES_STORAGE = "hashes";
   @NotNull private static final String REFS_STORAGE = "refs";
   private static final int VERSION = 4;
@@ -92,7 +92,7 @@ public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
   @NotNull private final PersistentUtil.MyPersistentEnumerator<VcsRef> myRefsEnumerator;
   @NotNull private final Consumer<Exception> myExceptionReporter;
 
-  public VcsLogHashMapImpl(@NotNull Project project,
+  public VcsLogStorageImpl(@NotNull Project project,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                            @NotNull Consumer<Exception> exceptionReporter,
                            @NotNull Disposable parent) throws IOException {

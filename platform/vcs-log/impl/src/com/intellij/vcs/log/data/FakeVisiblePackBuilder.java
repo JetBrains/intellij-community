@@ -18,7 +18,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class FakeVisiblePackBuilder {
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
 
-  public FakeVisiblePackBuilder(@NotNull VcsLogHashMap hashMap) {
+  public FakeVisiblePackBuilder(@NotNull VcsLogStorage hashMap) {
     myHashMap = hashMap;
   }
 

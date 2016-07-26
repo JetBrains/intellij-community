@@ -41,13 +41,13 @@ class VisiblePackBuilder {
 
   private static final Logger LOG = Logger.getInstance(VisiblePackBuilder.class);
 
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                     @NotNull VcsLogHashMap hashMap,
+                     @NotNull VcsLogStorage hashMap,
                      @NotNull ConcurrentIntObjectMap<VcsCommitMetadata> topCommitsDetailsCache,
                      @NotNull DataGetter<VcsFullCommitDetails> detailsGetter) {
     myHashMap = hashMap;

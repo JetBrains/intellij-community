@@ -15,8 +15,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
@@ -47,7 +47,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private static final int MAX_LOADING_TASKS = 10;
 
-  @NotNull protected final VcsLogHashMap myHashMap;
+  @NotNull protected final VcsLogStorage myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
@@ -59,7 +59,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
 
-  AbstractDataGetter(@NotNull VcsLogHashMap hashMap,
+  AbstractDataGetter(@NotNull VcsLogStorage hashMap,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                      @NotNull VcsCommitCache<Integer, T> cache,
                      @NotNull Disposable parentDisposable) {

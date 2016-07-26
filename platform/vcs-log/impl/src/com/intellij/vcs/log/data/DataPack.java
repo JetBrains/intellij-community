@@ -46,7 +46,7 @@ public class DataPack extends DataPackBase {
   static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
                         @NotNull Map<VirtualFile, CompressedRefs> refs,
                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull final VcsLogHashMap hashMap,
+                        @NotNull final VcsLogStorage hashMap,
                         boolean full) {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
@@ -69,7 +69,7 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogHashMap hashMap) {
+  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogStorage hashMap) {
     return commitIndex -> {
       CommitId commitId = hashMap.getCommitId(commitIndex);
       if (commitId == null) return null;
@@ -96,7 +96,7 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogHashMap hashMap) {
+  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<VcsRef> branches, @NotNull VcsLogStorage hashMap) {
     Set<Integer> result = new HashSet<Integer>();
     for (VcsRef vcsRef : branches) {
       result.add(hashMap.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
@@ -116,7 +116,7 @@ public class DataPack extends DataPackBase {
   @NotNull
   private static DataPack createEmptyInstance() {
     RefsModel emptyModel =
-      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogHashMapImpl.EMPTY, ContainerUtil.newHashMap());
+      new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.<Integer>newHashSet(), VcsLogStorageImpl.EMPTY, ContainerUtil.newHashMap());
     return new DataPack(emptyModel, EmptyPermanentGraph.getInstance(), Collections.<VirtualFile, VcsLogProvider>emptyMap(), false);
   }
 

@@ -20,13 +20,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InMemoryHashMap implements VcsLogHashMap {
+public class InMemoryStorage implements VcsLogStorage {
   private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator =
     new BiDirectionalEnumerator<CommitId>(1, TObjectHashingStrategy.CANONICAL);
   private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator = new BiDirectionalEnumerator<VcsRef>(1, TObjectHashingStrategy.CANONICAL);

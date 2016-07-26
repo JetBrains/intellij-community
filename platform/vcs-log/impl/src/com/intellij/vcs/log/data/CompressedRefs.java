@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogHashMap;
+import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -35,14 +35,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CompressedRefs {
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
 
   // maps each commit id to the list of tag ids on this commit
   @NotNull private final TIntObjectHashMap<TIntArrayList> myTags;
   // maps each commit id to the list of branches on this commit
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myBranches;
 
-  public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogHashMap hashMap) {
+  public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage hashMap) {
     myHashMap = hashMap;
 
     myTags = new TIntObjectHashMap<>();
@@ -118,14 +118,14 @@ public class CompressedRefs {
     return result;
   }
 
-  public static void putRef(@NotNull TIntObjectHashMap<SmartList<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogHashMap hashMap) {
+  public static void putRef(@NotNull TIntObjectHashMap<SmartList<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage hashMap) {
     int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
     SmartList<VcsRef> list = map.get(index);
     if (list == null) map.put(index, list = new SmartList<>());
     list.add(ref);
   }
 
-  public static void putRefIndex(@NotNull TIntObjectHashMap<TIntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogHashMap hashMap) {
+  public static void putRefIndex(@NotNull TIntObjectHashMap<TIntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage hashMap) {
     int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
     TIntArrayList list = map.get(index);
     if (list == null) map.put(index, list = new TIntArrayList());

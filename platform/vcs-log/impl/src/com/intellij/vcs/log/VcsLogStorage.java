@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Map of {@link Hash} to <b>{@code int}</b>.
  */
-public interface VcsLogHashMap {
+public interface VcsLogStorage {
 
   int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root);
 

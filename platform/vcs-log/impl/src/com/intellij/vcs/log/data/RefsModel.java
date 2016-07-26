@@ -15,13 +15,13 @@ import java.util.stream.Stream;
 public class RefsModel implements VcsLogRefs {
   private static final Logger LOG = Logger.getInstance(RefsModel.class);
 
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
   @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
-                   @NotNull VcsLogHashMap hashMap,
+                   @NotNull VcsLogStorage hashMap,
                    @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     myRefs = refs;
     myHashMap = hashMap;

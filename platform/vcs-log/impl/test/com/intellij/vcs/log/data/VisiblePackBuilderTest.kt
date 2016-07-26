@@ -118,7 +118,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 1)
   }
 
-  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogHashMap) = TimedVcsCommitImpl(map.getCommitId(this.id)!!.hash, map.getHashes(this.parents), 1)
+  private fun GraphCommit<Int>.toVcsCommit(map: VcsLogStorage) = TimedVcsCommitImpl(map.getCommitId(this.id)!!.hash, map.getHashes(this.parents), 1)
 
   fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
     assertTrue(null == (1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
@@ -163,7 +163,7 @@ class VisiblePackBuilderTest {
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, refs: Set<VisiblePackBuilderTest.Ref>, root: VirtualFile): ConstantVcsLogHashMap {
+    fun generateHashMap(num: Int, refs: Set<VisiblePackBuilderTest.Ref>, root: VirtualFile): ConstantVcsLogStorage {
       val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
         hashes.put(i, HashImpl.build(i.toString()))
@@ -171,12 +171,12 @@ class VisiblePackBuilderTest {
       val vcsRefs = refs.mapTo(ArrayList<VcsRef>(), {
         VcsRefImpl(hashes[it.commit]!!, it.name, BRANCH_TYPE, root)
       })
-      return ConstantVcsLogHashMap(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
+      return ConstantVcsLogStorage(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
     }
 
   }
 
-  fun VcsLogHashMap.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
+  fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
   fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
 
@@ -230,7 +230,7 @@ class VisiblePackBuilderTest {
     fun done() = Graph(commits, refs, data)
   }
 
-  class ConstantVcsLogHashMap(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogHashMap {
+  class ConstantVcsLogStorage(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogStorage {
     val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
     val refsReversed = refs.entries.map { Pair(it.value, it.key) }.toMap()
 

@@ -46,7 +46,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache;
@@ -60,7 +60,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private volatile DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull Project project,
-                             @NotNull VcsLogHashMap hashMap,
+                             @NotNull VcsLogStorage hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull VcsUserRegistryImpl userRegistry,
                              @NotNull ConcurrentIntObjectMap<VcsCommitMetadata> topCommitsDetailsCache,
@@ -409,11 +409,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
-    private final VcsLogHashMap myHashMap;
+    private final VcsLogStorage myHashMap;
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = ContainerUtil.newHashMap();
 
-    public LogInfo(VcsLogHashMap hashMap) {
+    public LogInfo(VcsLogStorage hashMap) {
       myHashMap = hashMap;
     }
 

@@ -66,7 +66,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    */
   @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -98,13 +98,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  private VcsLogHashMap createLogHashMap() {
-    VcsLogHashMap hashMap;
+  private VcsLogStorage createLogHashMap() {
+    VcsLogStorage hashMap;
     try {
-      hashMap = new VcsLogHashMapImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
-      hashMap = new InMemoryHashMap();
+      hashMap = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
     }
     return hashMap;
@@ -148,7 +148,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsLogHashMap getHashMap() {
+  public VcsLogStorage getHashMap() {
     return myHashMap;
   }
 
