@@ -26,24 +26,15 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   public CCCreateAnswerPlaceholderDialog(@NotNull final Project project,
                                          @NotNull final AnswerPlaceholder answerPlaceholder) {
     super(project, true);
-    setTitle(ourTitle);
+    
     myAnswerPlaceholder = answerPlaceholder;
-    myPanel = new CCCreateAnswerPlaceholderPanel();
-    if (!answerPlaceholder.getHints().isEmpty()) {
-      setHintText(answerPlaceholder);
-    }
     myProject = project;
-    String answerPlaceholderTaskText = answerPlaceholder.getTaskText();
-    myPanel.setAnswerPlaceholderText(answerPlaceholderTaskText != null ? answerPlaceholderTaskText : "");
+    myPanel = new CCCreateAnswerPlaceholderPanel(answerPlaceholder);
+    myPanel.showAnswerPlaceholderText(StringUtil.notNullize(answerPlaceholder.getTaskText()));
+    
+    setTitle(ourTitle);
     init();
     initValidation();
-  }
-
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private void setHintText(AnswerPlaceholder answerPlaceholder) {
-    List<String> hintTexts = answerPlaceholder.getHints();
-    myPanel.setHintText(hintTexts.get(0));
-    myPanel.setHints(hintTexts);
   }
 
   @Override
