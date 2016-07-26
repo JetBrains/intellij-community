@@ -184,12 +184,7 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.remove(myShownHintNumber);
-      if (myHints.size() == 1) {
-        myShownHintNumber = 0;
-      }
-      else {
-        myShownHintNumber += myShownHintNumber + 1 < myHints.size() ? 1 : -1;
-      }
+      myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
       showHint(myHints.get(myShownHintNumber));
     }
 
