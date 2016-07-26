@@ -24,6 +24,7 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 
   private void doTest() {
+    myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyTypeCheckerInspection.class);
     myFixture.checkHighlighting(true, false, true);
