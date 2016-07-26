@@ -43,18 +43,20 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _LastInSuiteTest extends TestCase {
   public void testProjectLeak() throws Exception {
-    if (System.getProperty("GuiTestMode") == null || System.getProperty("GuiTestMode").equals("false")) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
-        }
-        catch (RuntimeException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
+    boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
+    if (!guiTestMode) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
+          }
+          catch (RuntimeException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
 
         // disposes default projects too

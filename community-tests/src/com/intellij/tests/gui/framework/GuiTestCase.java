@@ -95,8 +95,6 @@ public abstract class GuiTestCase {
       return;
     }
 
-    assertEquals(System.getProperty("idea.test.guiTestMode"), "true");
-
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
     setUpDefaultProjectCreationLocationPath();
