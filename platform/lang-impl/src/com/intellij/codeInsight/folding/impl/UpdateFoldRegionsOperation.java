@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.FoldingDescriptorWithCustomRenderer;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -125,10 +126,13 @@ class UpdateFoldRegionsOperation implements Runnable {
                                   descriptor, myEditor.getDocument().getTextLength()));
           continue;
         }
-        FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
+        FoldRegion region = descriptor instanceof FoldingDescriptorWithCustomRenderer
+                            ? foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
+                                                            ((FoldingDescriptorWithCustomRenderer)descriptor).getRenderer(),
+                                                            group, descriptor.isNonExpandable())
+                            : foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
                                                           placeholder == null ? "..." : placeholder,
-                                                          group,
-                                                          descriptor.isNonExpandable());
+                                                          group, descriptor.isNonExpandable());
         if (region == null) continue;
 
         PsiElement psi = descriptor.getElement().getPsi();
@@ -199,6 +203,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                 region.getGroup() != null ||
                 descriptor.getGroup() != null ||
                 !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
+                region.getRenderer() != null || descriptor instanceof FoldingDescriptorWithCustomRenderer ||
                 range.getLength() < 2
               ) {
               rangeToExpandStatusMap.put(range, region.isExpanded());

@@ -208,15 +208,16 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return new UnfairTextRange(first.getTextOffset(), element.getTextOffset());
   }
 
-  private static void addAnnotationsToFold(@Nullable PsiModifierList modifierList,
+  private void addAnnotationsToFold(@Nullable PsiModifierList modifierList,
                                            @NotNull List<FoldingDescriptor> foldElements,
-                                           @NotNull Document document) {
+                                           @NotNull Document document,
+                                           boolean quick) {
     if (modifierList == null) return;
     PsiElement[] children = modifierList.getChildren();
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       if (child instanceof PsiAnnotation) {
-        addToFold(foldElements, child, document, false);
+        addToFold(foldElements, child, document, false, quick);
         int j;
         for (j = i + 1; j < children.length; j++) {
           PsiElement nextChild = children[j];
@@ -280,7 +281,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private static void addMethodGenericParametersFolding(@NotNull PsiMethodCallExpression expression,
+  private void addMethodGenericParametersFolding(@NotNull PsiMethodCallExpression expression,
                                                         @NotNull List<FoldingDescriptor> foldElements,
                                                         @NotNull Document document,
                                                         boolean quick) {
@@ -310,7 +311,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return true;
   }
 
-  private static void addGenericParametersFolding(@NotNull PsiNewExpression expression,
+  private void addGenericParametersFolding(@NotNull PsiNewExpression expression,
                                                   @NotNull List<FoldingDescriptor> foldElements,
                                                   @NotNull Document document,
                                                   boolean quick) {
@@ -361,7 +362,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private static void addTypeParametersFolding(@NotNull List<FoldingDescriptor> foldElements,
+  private void addTypeParametersFolding(@NotNull List<FoldingDescriptor> foldElements,
                                                @NotNull Document document,
                                                @NotNull PsiReferenceParameterList list,
                                                int ifLongerThan,
@@ -382,7 +383,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     final String text = list.getText();
     if (text.startsWith("<") && text.endsWith(">") && text.length() > ifLongerThan) {
       final TextRange range = list.getTextRange();
-      addFoldRegion(foldElements, list, document, true, range);
+      addFoldRegion(foldElements, list, document, true, range, quick);
     }
   }
 
@@ -457,20 +458,22 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private static boolean addToFold(@NotNull List<FoldingDescriptor> list,
+  private boolean addToFold(@NotNull List<FoldingDescriptor> list,
                                    @NotNull PsiElement elementToFold,
                                    @NotNull Document document,
-                                   boolean allowOneLiners) {
+                                   boolean allowOneLiners,
+                                   boolean quick) {
     PsiUtilCore.ensureValid(elementToFold);
     TextRange range = getRangeToFold(elementToFold);
-    return range != null && addFoldRegion(list, elementToFold, document, allowOneLiners, range);
+    return range != null && addFoldRegion(list, elementToFold, document, allowOneLiners, range, quick);
   }
 
-  private static boolean addFoldRegion(@NotNull List<FoldingDescriptor> list,
+  protected boolean addFoldRegion(@NotNull List<FoldingDescriptor> list,
                                        @NotNull PsiElement elementToFold,
                                        @NotNull Document document,
                                        boolean allowOneLiners,
-                                       @NotNull TextRange range) {
+                                       @NotNull TextRange range,
+                                       boolean quick) {
     final TextRange fileRange = elementToFold.getContainingFile().getTextRange();
     if (range.equals(fileRange)) return false;
 
@@ -556,17 +559,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                  boolean foldJavaDocs,
                                  boolean quick) {
     if (!(aClass.getParent() instanceof PsiJavaFile) || ((PsiJavaFile)aClass.getParent()).getClasses().length > 1) {
-      addToFold(list, aClass, document, true);
+      addToFold(list, aClass, document, true, quick);
     }
 
     PsiDocComment docComment;
     if (foldJavaDocs) {
       docComment = aClass.getDocComment();
       if (docComment != null) {
-        addToFold(list, docComment, document, true);
+        addToFold(list, docComment, document, true, quick);
       }
     }
-    addAnnotationsToFold(aClass.getModifierList(), list, document);
+    addAnnotationsToFold(aClass.getModifierList(), list, document, quick);
 
     PsiElement[] children = aClass.getChildren();
     Set<PsiElement> processedComments = new HashSet<PsiElement>();
@@ -577,14 +580,14 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         PsiMethod method = (PsiMethod)child;
         boolean oneLiner = addOneLineMethodFolding(list, method);
         if (!oneLiner) {
-          addToFold(list, method, document, true);
+          addToFold(list, method, document, true, quick);
         }
-        addAnnotationsToFold(method.getModifierList(), list, document);
+        addAnnotationsToFold(method.getModifierList(), list, document, quick);
 
         if (foldJavaDocs) {
           docComment = method.getDocComment();
           if (docComment != null) {
-            addToFold(list, docComment, document, true);
+            addToFold(list, docComment, document, true, quick);
           }
         }
 
@@ -598,10 +601,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         if (foldJavaDocs) {
           docComment = field.getDocComment();
           if (docComment != null) {
-            addToFold(list, docComment, document, true);
+            addToFold(list, docComment, document, true, quick);
           }
         }
-        addAnnotationsToFold(field.getModifierList(), list, document);
+        addAnnotationsToFold(field.getModifierList(), list, document, quick);
         PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
           addCodeBlockFolds(initializer, list, processedComments, document, quick);
@@ -611,7 +614,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
       else if (child instanceof PsiClassInitializer) {
         PsiClassInitializer initializer = (PsiClassInitializer)child;
-        addToFold(list, initializer, document, true);
+        addToFold(list, initializer, document, true, quick);
         addCodeBlockFolds(initializer, list, processedComments, document, quick);
       }
       else if (child instanceof PsiClass) {
@@ -772,7 +775,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       @Override
       public void visitClass(PsiClass aClass) {
         if (dumb || !addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
-          addToFold(foldElements, aClass, document, true);
+          addToFold(foldElements, aClass, document, true, quick);
           addElementsToFold(foldElements, aClass, document, false, quick);
         }
       }
