@@ -348,7 +348,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
       InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
       if (!(myView == null ? view : myView).hasProblems()) {
-        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                        scope.getFileCount(),
+                                                                        scope.getShortenName()),
+                                              MessageType.INFO).notify(getProject());
         close(true);
         if (view != null) {
           Disposer.dispose(view);
