@@ -32,6 +32,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,9 +56,17 @@ public class StepicConnectorGet {
 
 
   static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
+    return getFromStepic(link, container, StepicConnectorLogin.getHttpClient());
+  }
+
+  static <T> T getFromStepicUnLogin(String link, final Class<T> container) throws IOException {
+    return getFromStepic(link, container, StepicConnectorInit.getHttpClient());
+  }
+
+  private static <T> T getFromStepic(String link, final Class<T> container, CloseableHttpClient client) throws IOException {
     final HttpGet request = new HttpGet(EduStepicNames.STEPIC_API_URL + link);
 
-    final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
+    final CloseableHttpResponse response = client.execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -68,6 +77,7 @@ public class StepicConnectorGet {
   }
 
   @NotNull
+  // un login
   public static List<CourseInfo> getCourses() {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
@@ -97,7 +107,7 @@ public class StepicConnectorGet {
 
   private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
     final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
-    final StepicWrappers.CoursesContainer coursesContainer = getFromStepic(url, StepicWrappers.CoursesContainer.class);
+    final StepicWrappers.CoursesContainer coursesContainer = getFromStepicUnLogin(url, StepicWrappers.CoursesContainer.class);
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
       final String courseType = info.getType();
