@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
             final Object value = list.getSelectedValue();
             if (value != null) {
               configureEditor(getEditor(), value);
-              IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+              IdeFocusManager.getGlobalInstance().requestFocus(this, true);
               assert myJBPopup != null;
-              ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
+              this.getUI().setPopupVisible(this, false);
               myJBPopup.cancel();
             }
           })
