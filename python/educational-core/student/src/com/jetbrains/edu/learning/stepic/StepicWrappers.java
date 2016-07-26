@@ -27,9 +27,6 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -262,14 +259,14 @@ public class StepicWrappers {
     Unit unit;
   }
 
-  static class AttemptWrapper {
-    static class Attempt {
+  public static class AttemptWrapper {
+    public static class Attempt {
       public Attempt(int step) {
         this.step = step;
       }
 
-      int step;
-      int id;
+      public int step;
+      public int id;
     }
 
     public AttemptWrapper(int step) {
@@ -301,8 +298,8 @@ public class StepicWrappers {
     Attempt attempt;
   }
 
-  static class AttemptContainer {
-    List<AttemptWrapper.Attempt> attempts;
+  public static class AttemptContainer {
+    public List<AttemptWrapper.Attempt> attempts;
   }
 
   static class SolutionFile {
@@ -319,17 +316,17 @@ public class StepicWrappers {
     public List<StepicUser> users;
   }
 
-  static class SubmissionWrapper {
-    Submission submission;
+  public static class SubmissionWrapper {
+    public Submission submission;
 
 
     public SubmissionWrapper(int attempt, String score, ArrayList<SolutionFile> files) {
       submission = new Submission(score, attempt, files);
     }
 
-    static class Submission {
-      int attempt;
-      private final Reply reply;
+    public static class Submission {
+      public int attempt;
+      public final Reply reply;
 
       public Submission(String score, int attempt, ArrayList<SolutionFile> files) {
         reply = new Reply(files, score);
@@ -414,10 +411,10 @@ public class StepicWrappers {
     }
   }
 
-  static class ResultSubmissionWrapper {
+  public static class ResultSubmissionWrapper {
     ResultSubmission[] submissions;
 
-    static class ResultSubmission {
+    public static class ResultSubmission {
       int id;
       String status;
       String hint;
