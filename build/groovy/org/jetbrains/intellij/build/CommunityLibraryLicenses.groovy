@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");,
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -123,9 +123,7 @@ class CommunityLibraryLicenses {
                    licenseUrl: "http://www.gnu.org/licenses/lgpl-2.1.txt"),
     libraryLicense(name: "Groovy", version: "2.4.6", license: "Apache 2.0", url: "http://groovy-lang.org/"),
     libraryLicense(name: "Gson", version: "2.2.4", libraryName: "gson", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/"),
-    libraryLicense(name: "Guava", libraryName: "guava-tools", version: "14.0.1", license: "Apache 2.0",
-                   url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html"),
-    libraryLicense(name: "Guava", version: "17.0", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/",
+    libraryLicense(name: "Guava", version: "19.0", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/",
                    licenseUrl: "http://ant.apache.org/license.html"),
     libraryLicense(name: "hamcrest", version: "1.3", license: "BSD", url: "http://hamcrest.org/",
                    licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
