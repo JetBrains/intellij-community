@@ -5,6 +5,7 @@ import com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 
 import javax.swing.*;
 
@@ -35,6 +36,9 @@ public class PyCCChangeCourseInfo extends CCChangeCourseInfo {
     languageLevelCombobox.addItem(ALL_VERSIONS);
     languageLevelCombobox.addItem(PYTHON_3);
     languageLevelCombobox.addItem(PYTHON_2);
+    for (LanguageLevel level : LanguageLevel.values()) {
+      languageLevelCombobox.addItem(level.toString());
+    }
     languageLevelCombobox.setVisible(true);
     final String version = course.getLanguageVersion();
     if (version != null) {
