@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.hierarchy.HierarchyBrowserBase;
 import com.intellij.ide.projectView.impl.AbstractUrl;
+import com.intellij.ide.scratch.ScratchFileServiceImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -78,6 +79,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScopesCore.projectProductionScope(project));
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
+
+    result.add(ScratchFileServiceImpl.buildScratchesSearchScope());
 
     final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
     if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
