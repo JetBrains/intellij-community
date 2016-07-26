@@ -683,7 +683,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
     return languageLevel.isAtLeast(LanguageLevel.PYTHON35) && (
       functionName == null ||
-      ArrayUtil.contains(functionName, PyNames.AITER, "__anext__", "__aenter__", "__aexit__") ||
+      ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT) ||
       !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
     );
   }
