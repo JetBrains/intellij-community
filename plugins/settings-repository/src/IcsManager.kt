@@ -208,11 +208,9 @@ class IcsManager(dir: Path) {
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
-    }
+    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }
