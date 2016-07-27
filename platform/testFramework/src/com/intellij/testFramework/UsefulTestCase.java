@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -90,6 +91,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
+
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
 
   @NotNull
   private final Disposable myTestRootDisposable = new Disposable() {
@@ -321,22 +326,28 @@ public abstract class UsefulTestCase extends TestCase {
   protected void runTest() throws Throwable {
     final Throwable[] throwables = new Throwable[1];
 
-    invokeTestRunnable(() -> {
+    Runnable runnable = () -> {
       try {
         super.runTest();
+        TestLoggerFactory.onTestFinished(true);
       }
       catch (InvocationTargetException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e.getTargetException();
       }
       catch (IllegalAccessException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e;
       }
       catch (Throwable e) {
+        TestLoggerFactory.onTestFinished(false);
         throwables[0] = e;
       }
-    });
+    };
+
+    invokeTestRunnable(runnable);
 
     if (throwables[0] != null) {
       throw throwables[0];

@@ -18,11 +18,12 @@ package com.intellij.testFramework;
 import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestLogger extends Log4jBasedLogger {
-  public TestLogger(Logger logger) {
+  TestLogger(@NotNull Logger logger) {
     super(logger);
   }
 
@@ -38,7 +39,38 @@ public class TestLogger extends Log4jBasedLogger {
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 
-  public Level getLevel() {
-    return myLogger.getLevel();
+  @Override
+  public void debug(@NonNls String message) {
+    super.debug(message);
+    TestLoggerFactory.log(myLogger, Level.DEBUG, message, null);
+  }
+
+  @Override
+  public void debug(@Nullable Throwable t) {
+    super.debug(t);
+    TestLoggerFactory.log(myLogger, Level.DEBUG, null, t);
+  }
+
+  @Override
+  public void debug(@NonNls String message, @Nullable Throwable t) {
+    super.debug(message, t);
+    TestLoggerFactory.log(myLogger, Level.DEBUG, message, t);
+  }
+
+  @Override
+  public void info(@NonNls String message) {
+    super.info(message);
+    TestLoggerFactory.log(myLogger, Level.INFO, message, null);
+  }
+
+  @Override
+  public void info(@NonNls String message, @Nullable Throwable t) {
+    super.info(message, t);
+    TestLoggerFactory.log(myLogger, Level.INFO, message, t);
+  }
+
+  @Override
+  public boolean isDebugEnabled() {
+    return true;
   }
 }

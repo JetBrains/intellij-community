@@ -116,10 +116,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
-  static {
-    Logger.setFactory(TestLoggerFactory.class);
-  }
-
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
    * Ensure they're removed

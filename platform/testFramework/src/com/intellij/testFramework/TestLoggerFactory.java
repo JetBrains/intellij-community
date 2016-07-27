@@ -21,15 +21,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
+import org.apache.log4j.*;
+import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.StringReader;
+import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,5 +141,33 @@ public class TestLoggerFactory implements Logger.Factory {
       logger.setLevel(Level.DEBUG);
       Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
     }
+  }
+
+  private static final StringWriter STRING_WRITER = new StringWriter();
+  private static final StringBuffer BUFFER = STRING_WRITER.getBuffer();
+  private static final WriterAppender APPENDER = new WriterAppender(new PatternLayout("%d{HH:mm:ss,SSS} %p %.30c - %m%n"), STRING_WRITER);
+  private static final int MAX_BUFFER_LENGTH = 100000;
+  private static final String CFQN = Category.class.getName();
+  static void log(@NotNull org.apache.log4j.Logger logger, @NotNull Level level, @Nullable String message, @Nullable Throwable t) {
+    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+      //return;
+    }
+    LoggingEvent event = new LoggingEvent(CFQN, logger, level, message, t);
+    APPENDER.append(event);
+
+    if (BUFFER.length() > MAX_BUFFER_LENGTH) {
+      synchronized (BUFFER) {
+        if (BUFFER.length() > MAX_BUFFER_LENGTH) {
+          BUFFER.delete(0, BUFFER.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
+        }
+      }
+    }
+  }
+
+  public static void onTestFinished(boolean success) {
+    if (!success) {
+      System.err.println(BUFFER);
+    }
+    BUFFER.setLength(0);
   }
 }
