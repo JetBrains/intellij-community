@@ -116,6 +116,8 @@
 
     <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
     <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
+
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
   </extensions>
 
   <project-components>
