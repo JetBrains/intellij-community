@@ -175,7 +175,7 @@ class ProjectInspectionProfileManager(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstanceImpl(project).apply {
-        initialLoadSchemesFuture.thenAccept {
+        initialLoadSchemesFuture.thenRun {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
 

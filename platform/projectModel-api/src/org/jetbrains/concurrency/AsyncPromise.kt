@@ -85,7 +85,8 @@ open class AsyncPromise<T> : Promise<T>(), Getter<T> {
     when (state.get()!!) {
       Promise.State.PENDING -> {
       }
-      Promise.State.FULFILLED -> return DonePromise<SUB_RESULT>(fulfilled.`fun`(result as T?))
+      Promise.State.FULFILLED -> return DonePromise<SUB_RESULT>(
+          fulfilled.`fun`(result as T?))
       Promise.State.REJECTED -> return rejectedPromise(result as Throwable)
     }
 
