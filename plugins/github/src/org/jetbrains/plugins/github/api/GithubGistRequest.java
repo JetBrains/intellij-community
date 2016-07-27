@@ -26,7 +26,7 @@ import java.util.Map;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
-class GithubGistRequest {
+public class GithubGistRequest {
   @NotNull private final String description;
   @NotNull private final Map<String, GistFile> files;
 
@@ -41,13 +41,53 @@ class GithubGistRequest {
     }
   }
 
-  public GithubGistRequest(@NotNull List<GithubGist.FileContent> files, @NotNull String description, boolean isPublic) {
+  public GithubGistRequest(@NotNull List<FileContent> files, @NotNull String description, boolean isPublic) {
     this.description = description;
     this.isPublic = isPublic;
 
     this.files = new HashMap<String, GistFile>();
-    for (GithubGist.FileContent file : files) {
+    for (FileContent file : files) {
       this.files.put(file.getFileName(), new GistFile(file.getContent()));
+    }
+  }
+
+  public static class FileContent {
+    @NotNull private final String myFileName;
+    @NotNull private final String myContent;
+
+    public FileContent(@NotNull String fileName, @NotNull String content) {
+      myFileName = fileName;
+      myContent = content;
+    }
+
+    @NotNull
+    public String getFileName() {
+      return myFileName;
+    }
+
+    @NotNull
+    public String getContent() {
+      return myContent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FileContent that = (FileContent)o;
+
+      if (!myContent.equals(that.myContent)) return false;
+      if (!myFileName.equals(that.myFileName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileName.hashCode();
+      result = 31 * result + myContent.hashCode();
+      return result;
     }
   }
 }

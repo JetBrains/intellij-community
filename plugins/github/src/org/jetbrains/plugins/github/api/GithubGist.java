@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,15 +64,6 @@ public class GithubGist {
     }
   }
 
-  @NotNull
-  public List<FileContent> getContent() {
-    List<FileContent> ret = new ArrayList<FileContent>();
-    for (GistFile file : getFiles()) {
-      ret.add(new FileContent(file.getFilename(), file.getContent()));
-    }
-    return ret;
-  }
-
   public GithubGist(@NotNull String id,
                     @Nullable String description,
                     boolean isPublic,
@@ -115,45 +105,5 @@ public class GithubGist {
   @Nullable
   public GithubUser getUser() {
     return myUser;
-  }
-
-  public static class FileContent {
-    @NotNull private final String myFileName;
-    @NotNull private final String myContent;
-
-    public FileContent(@NotNull String fileName, @NotNull String content) {
-      myFileName = fileName;
-      myContent = content;
-    }
-
-    @NotNull
-    public String getFileName() {
-      return myFileName;
-    }
-
-    @NotNull
-    public String getContent() {
-      return myContent;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      FileContent that = (FileContent)o;
-
-      if (!myContent.equals(that.myContent)) return false;
-      if (!myFileName.equals(that.myFileName)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myFileName.hashCode();
-      result = 31 * result + myContent.hashCode();
-      return result;
-    }
   }
 }

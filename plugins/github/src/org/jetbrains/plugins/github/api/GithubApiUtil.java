@@ -377,7 +377,7 @@ public class GithubApiUtil {
 
   @NotNull
   public static GithubGist createGist(@NotNull GithubConnection connection,
-                                      @NotNull List<GithubGist.FileContent> contents,
+                                      @NotNull List<GithubGistRequest.FileContent> contents,
                                       @NotNull String description,
                                       boolean isPrivate) throws IOException {
     try {

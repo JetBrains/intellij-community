@@ -20,11 +20,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.plugins.github.api.GithubGistRequest.FileContent;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
