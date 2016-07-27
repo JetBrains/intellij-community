@@ -101,7 +101,7 @@ class EditorCoordinateMapper {
         curEnd++;
       }
       int curEndY = (curVisualLine + 1) * lineHeight + cumulativeHeights[curEnd];
-      if (y > curEndY) {
+      if (y >= curEndY) {
         from = curEnd + 1;
         continue;
       }
