@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.requests;
 
+import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-class GithubPullRequestRequest {
-  @NotNull private final String title;
-  @NotNull private final String body;
-  @NotNull private final String head; // branch with changes
-  @NotNull private final String base; // branch requested to
+public class GithubRepoRequest {
+  @NotNull private final String name;
+  @NotNull private final String description;
 
-  public GithubPullRequestRequest(@NotNull String title, @NotNull String description, @NotNull String head, @NotNull String base) {
-    this.title = title;
-    this.body = description;
-    this.head = head;
-    this.base = base;
+  @SerializedName("private") private final boolean isPrivate;
+
+  public GithubRepoRequest(@NotNull String name, @NotNull String description, boolean aPrivate) {
+    this.name = name;
+    this.description = description;
+    isPrivate = aPrivate;
   }
 }

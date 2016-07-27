@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.github.api.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 
 import java.util.ArrayList;
 import java.util.List;

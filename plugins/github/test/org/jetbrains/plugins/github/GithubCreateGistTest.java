@@ -18,7 +18,7 @@ package org.jetbrains.plugins.github;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.plugins.github.api.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 

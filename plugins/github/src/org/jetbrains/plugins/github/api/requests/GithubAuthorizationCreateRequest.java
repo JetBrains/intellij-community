@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.requests;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-class GithubAuthorizationUpdateRequest {
-  @NotNull private final List<String> addScopes;
+public class GithubAuthorizationCreateRequest {
+  @NotNull private final List<String> scopes;
 
-  public GithubAuthorizationUpdateRequest(@NotNull List<String> newScopes) {
-    this.addScopes = newScopes;
+  @Nullable private final String note;
+  @Nullable private final String noteUrl;
+
+  public GithubAuthorizationCreateRequest(@NotNull List<String> scopes, @Nullable String note, @Nullable String noteUrl) {
+    this.scopes = scopes;
+    this.note = note;
+    this.noteUrl = noteUrl;
   }
 }
