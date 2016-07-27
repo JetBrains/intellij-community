@@ -404,11 +404,8 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       });
-      y += visLinesIterator.getInlineInlaysHeight();
-      int startOffset = visLinesIterator.getVisualLineStartOffset();
-      int endOffset = visLinesIterator.getVisualLineEndOffset();
-      if (myEditor.getSoftWrapModel().getSoftWrap(endOffset) == null) endOffset++;
-      List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(startOffset, endOffset, Inlay.Type.BLOCK);
+      y += visLinesIterator.getLineHeightWithoutBlockInlays();
+      List<Inlay> inlays = visLinesIterator.getVisibleBlockInlays();
       int visibleWidth = myEditor.getScrollingModel().getVisibleArea().width;
       for (Inlay inlay : inlays) {
         if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {

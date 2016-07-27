@@ -24,7 +24,9 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class VisualLinesIterator {
   private final EditorImpl myEditor;
@@ -104,17 +106,30 @@ public class VisualLinesIterator {
     return myLocation.y;
   }
 
-  public int getInlineInlaysHeight() {
-    int height = myEditor.getLineHeight();
-    int lineStartOffset = getVisualLineStartOffset();
-    int lineEndOffset = getVisualLineEndOffset();
+  public int getLineHeightWithoutBlockInlays() {
+    final int[] height = {myEditor.getLineHeight()};
+    doForCurrentLineInlays(inlay -> {
+      if (inlay.getType() == Inlay.Type.INLINE) height[0] = Math.max(height[0], inlay.getHeightInPixels());
+    });
+    return height[0];
+  }
+
+  public List<Inlay> getVisibleBlockInlays() {
+    List<Inlay> result = new ArrayList<>();
+    doForCurrentLineInlays(inlay -> {
+      if (inlay.getType() == Inlay.Type.BLOCK) result.add(inlay);
+    });
+    return result;
+  }
+
+  private void doForCurrentLineInlays(Consumer<Inlay> consumer) {
+    int endOffset = getVisualLineEndOffset();
+    if (myLocation.softWrap < mySoftWraps.size() && endOffset == mySoftWraps.get(myLocation.softWrap).getStart()) endOffset--;
     for (int i = myLocation.inlay; i < myInlays.size(); i++) {
       Inlay inlay = myInlays.get(i);
-      int offset = inlay.getOffset();
-      if (offset > lineEndOffset || offset == lineEndOffset && lineEndOffset > lineStartOffset) break;
-      if (inlay.getType() == Inlay.Type.INLINE) height = Math.max(height, inlay.getHeightInPixels());
+      if (inlay.getOffset() > endOffset) break;
+      consumer.accept(inlay);
     }
-    return height;
   }
 
   private void checkEnd() {
