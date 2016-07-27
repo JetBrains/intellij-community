@@ -290,6 +290,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(3, myItems.length);
   }
 
+  public void testSwitchCaseWithEnumConstant() { doTest() }
+
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");
     checkResultByFile("Annotation_after.java");

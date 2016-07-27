@@ -462,6 +462,8 @@ public class JavaCompletionContributor extends CompletionContributor {
         result.addElement(element);
       }
     });
+
+    JavaKeywordCompletion.addEnumCases(result, parameters.getPosition());
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
