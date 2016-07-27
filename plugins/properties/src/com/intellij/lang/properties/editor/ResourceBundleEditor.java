@@ -84,6 +84,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -415,7 +416,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                   new Insets(5, 5, 5, 5), 0, 0);
+                                                   JBUI.insets(5), 0, 0);
     releaseAllEditors();
     myTitledPanels.clear();
     int y = 0;
