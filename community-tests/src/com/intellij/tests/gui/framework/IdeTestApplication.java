@@ -73,6 +73,9 @@ public class IdeTestApplication implements Disposable {
     // Force Swing FileChooser on Mac (instead of native one) to be able to use FEST to drive it.
     System.setProperty("native.mac.file.chooser.enabled", "false");
 
+    //We are using this property to skip testProjectLeak in _LastSuiteTests
+    System.setProperty("idea.test.guimode", "true");
+
     if (!isLoaded()) {
       ourInstance = new IdeTestApplication();
       recreateDirectory(configDirPath);

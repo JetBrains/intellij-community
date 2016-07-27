@@ -258,16 +258,17 @@ public final class GuiTests {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
 
+      //TODO: clarify here what the hell is going on?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
       // we attempt to clear here. All other events, including those posted by the Robot, will go through the IDE event queue.
-      try {
-        if (SYSTEM_EVENT_QUEUE.peekEvent() != null) {
-          SYSTEM_EVENT_QUEUE.getNextEvent();
-        }
-      }
-      catch (InterruptedException ex) {
-        // Ignored.
-      }
+      //try {
+      //  if (SYSTEM_EVENT_QUEUE.peekEvent() != null) {
+      //    SYSTEM_EVENT_QUEUE.getNextEvent();
+      //  }
+      //}
+      //catch (InterruptedException ex) {
+      //  // Ignored.
+      //}
 
       if (listener.myActive) {
         pause(new Condition("Project to be opened") {

@@ -67,9 +67,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     //replacing of IdeEventQueue may cause problems with RepaintManager and EventQueue especially on Windows for GUI tests
     boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
-    if (!guiTestMode) {
-      TestRunnerUtil.replaceIdeEventQueueSafely();
-    }
+    TestRunnerUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
     // force platform JNA load
