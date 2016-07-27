@@ -22,16 +22,18 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiNameValuePairStubImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.NameValuePairElement;
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -57,13 +59,17 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
   @Override
   public PsiNameValuePairStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
     String name = null;
-    for (LighterASTNode child : tree.getChildren(node)) {
+    String value = null;
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (LighterASTNode child : children) {
       if (child.getTokenType() == JavaTokenType.IDENTIFIER) {
         name = RecordUtil.intern(tree.getCharTable(), child);
-        break;
+      }
+      else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getTokenType())) {
+        value = LightTreeUtil.toFilteredString(tree, child, null);
       }
     }
-    return new PsiNameValuePairStubImpl(parentStub, StringRef.fromString(name));
+    return new PsiNameValuePairStubImpl(parentStub, name, value);
   }
 
   @Override
@@ -73,13 +79,22 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
 
   @Override
   public void serialize(@NotNull PsiNameValuePairStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeName(stub.getName());
+    dataStream.writeUTFFast(stub.getName());
+
+    String value = stub.getValue();
+    boolean hasValue = value != null;
+    dataStream.writeBoolean(hasValue);
+    if (hasValue) {
+      dataStream.writeUTFFast(value);
+    }
   }
 
   @NotNull
   @Override
   public PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new PsiNameValuePairStubImpl(parentStub, dataStream.readName());
+    String name = dataStream.readUTFFast();
+    boolean hasValue = dataStream.readBoolean();
+    return new PsiNameValuePairStubImpl(parentStub, name, hasValue ? dataStream.readUTFFast() : null);
   }
 
   @Override
