@@ -24,6 +24,7 @@ public class Task implements StudyItem {
   private String name;
 
   // index is visible to user number of task from 1 to task number
+  // TODO maybe rename to position? [Petr]
   private int myIndex;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 

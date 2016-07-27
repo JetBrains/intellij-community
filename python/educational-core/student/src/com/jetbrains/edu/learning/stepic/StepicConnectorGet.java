@@ -214,6 +214,7 @@ public class StepicConnectorGet {
     final StepicWrappers.SectionContainer
       sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
+    sectionContainer.sections.forEach(x -> x.title = x.position + "." + x.title);
 
     StepicWrappers.UnitContainer
       unitContainer = getFromStepic(EduStepicNames.UNITS + "/" + getIdQuery(unitIds), StepicWrappers.UnitContainer.class);
@@ -222,11 +223,13 @@ public class StepicConnectorGet {
     StepicWrappers.LessonContainer
       lessonContainer = getFromStepic(EduStepicNames.LESSONS + getIdQuery(lessonsIds), StepicWrappers.LessonContainer.class);
 
+    final int[] i = {1};
+    lessonContainer.lessons.forEach(x -> x.setName(i[0]++ + "." + x.getName()));
+
     String sectionName = sectionContainer.sections.get(0).title;
     final List<Lesson> lessons = new ArrayList<Lesson>();
     for (Lesson lesson : lessonContainer.lessons) {
       lesson.setName(sectionName + EduNames.SEPARATOR + lesson.getName());
-      //      LOG.info("set lesson name " + lesson.getName());
       createTasks(lesson, lesson.steps);
       if (!lesson.taskList.isEmpty()) {
         lessons.add(lesson);
@@ -241,6 +244,7 @@ public class StepicConnectorGet {
       if (supported(stepSource.block.name)) {
         final Task task = new Task();
         task.setStepicId(stepSource.id);
+        task.setIndex(stepSource.position);
 
         switch (stepSource.block.name) {
           case (CODE_PREFIX):
@@ -275,7 +279,7 @@ public class StepicConnectorGet {
   }
 
   private static void createCodeTask(Task task, StepicWrappers.Step step) {
-    task.setName("step" + task.getStepicId());
+    task.setName("step" + task.getIndex());
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
       for (List<String> sample : step.options.samples) {

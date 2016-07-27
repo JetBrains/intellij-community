@@ -15,6 +15,7 @@ public class Lesson implements StudyItem {
   @Transient public List<Integer> steps;
   @Transient public List<String> tags;
   @Transient boolean is_public;
+  @Transient int position;
 
   @Expose
   @SerializedName("title")
