@@ -27,8 +27,6 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefFile;
@@ -40,6 +38,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiQualifiedNamedElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
@@ -87,18 +86,6 @@ public class InspectionResultsViewComparator implements Comparator {
     }
     if (node1 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof InspectionPackageNode) return 1;
-
-    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) {
-      final Object userObject1 = ((OfflineRefElementNode)node1).getOfflineDescriptor();
-      final Object userObject2 = ((OfflineRefElementNode)node2).getOfflineDescriptor();
-      final OfflineProblemDescriptor descriptor1 = (OfflineProblemDescriptor)userObject1;
-      final OfflineProblemDescriptor descriptor2 = (OfflineProblemDescriptor)userObject2;
-      final int res = descriptor1.getFQName().compareToIgnoreCase(descriptor2.getFQName());
-      if (res != 0) {
-        return res;
-      }
-      return descriptor1.getLine() - descriptor2.getLine();
-    }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
       return compareEntities(((RefElementNode)node1).getElement(), ((RefElementNode)node2).getElement());
@@ -173,9 +160,17 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-      if (positionComparing != 0) {
-        return positionComparing;
+      final SmartPsiElementPointer p1 = ((RefElement)entity1).getPointer();
+      final SmartPsiElementPointer p2 = ((RefElement)entity2).getPointer();
+      if (p1 != null && p2 != null) {
+        final VirtualFile file1 = p1.getVirtualFile();
+        final VirtualFile file2 = p2.getVirtualFile();
+        if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
+          final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+          if (positionComparing != 0) {
+            return positionComparing;
+          }
+        }
       }
     }
     if (entity1 instanceof RefFile && entity2 instanceof RefFile) {
