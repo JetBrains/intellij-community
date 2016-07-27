@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -74,7 +75,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     try (AccessToken ignored = ReadAction.start()) {
       PsiClass aClass = queryParameters.getElementToSearch();
-      if (!aClass.isValid() || !aClass.isInterface()) return;
+      if (!aClass.isValid() ||
+          !aClass.isInterface() ||
+          InjectedLanguageManager.getInstance(aClass.getProject()).isInjectedFragment(aClass.getContainingFile())) {
+        return;
+      }
 
       highLevelModules = getJava8Modules(aClass.getProject());
       if (highLevelModules.isEmpty()) return;
