@@ -19,15 +19,15 @@ import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubOrgRaw {
-  @Mandatory private String login;
-  private Long id;
-  private String url;
+public class GithubIssuesSearchResult {
+  @Mandatory private List<GithubIssue> items;
 
   @NotNull
-  public String getLogin() {
-    return login;
+  public List<GithubIssue> getIssues() {
+    return items;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,36 @@ package org.jetbrains.plugins.github.api;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubCommitShaRaw {
-  @Mandatory private String url;
-  @Mandatory private String sha;
+public class GithubAuthorization {
+  @Mandatory private Long id;
+  private String url;
+  @Mandatory private String token;
+  private String note;
+  private String noteUrl;
+  @Mandatory private List<String> scopes;
 
   @NotNull
-  public String getUrl() {
-    return url;
+  public String getToken() {
+    return token;
   }
 
   @NotNull
-  public String getSha() {
-    return sha;
+  public List<String> getScopes() {
+    return scopes;
+  }
+
+  @Nullable
+  public String getNote() {
+    return note;
+  }
+
+  public long getId() {
+    return id;
   }
 }

@@ -28,7 +28,7 @@ import java.util.Map;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubGistRaw {
+public class GithubGist {
   @Mandatory private String id;
   @Mandatory private String description;
 
@@ -40,13 +40,13 @@ class GithubGistRaw {
   private String gitPullUrl;
   private String gitPushUrl;
 
-  @Mandatory private Map<String, GistFileRaw> files;
+  @Mandatory private Map<String, GistFile> files;
 
-  private GithubUserRaw owner;
+  private GithubUser owner;
 
   private Date createdAt;
 
-  public static class GistFileRaw {
+  public static class GistFile {
     private Long size;
     @Mandatory private String filename;
     @Mandatory private String content;
@@ -92,12 +92,12 @@ class GithubGistRaw {
   }
 
   @NotNull
-  public List<GistFileRaw> getFiles() {
+  public List<GistFile> getFiles() {
     return new ArrayList<>(files.values());
   }
 
   @Nullable
-  public GithubUserRaw getUser() {
+  public GithubUser getUser() {
     return owner;
   }
 }

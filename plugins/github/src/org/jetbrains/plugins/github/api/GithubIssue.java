@@ -18,25 +18,24 @@ package org.jetbrains.plugins.github.api;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubCommitCommentRaw {
-  @Mandatory private String htmlUrl;
+public class GithubIssue {
   private String url;
+  @Mandatory private String htmlUrl;
+  @Mandatory private Long number;
+  @Mandatory private String state;
+  @Mandatory private String title;
+  @Mandatory private String body;
 
-  @Mandatory private Long id;
-  @Mandatory private String commitId;
-  @Mandatory private String path;
-  @Mandatory private Long position;
-  private Long line;
-  private String body;
-  @Mandatory private String bodyHtml;
+  @Mandatory private GithubUser user;
+  private GithubUser assignee;
 
-  @Mandatory private GithubUserRaw user;
-
+  private Date closedAt;
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
 
@@ -45,32 +44,38 @@ class GithubCommitCommentRaw {
     return htmlUrl;
   }
 
-  public long getId() {
-    return id;
+  public long getNumber() {
+    return number;
   }
 
   @NotNull
-  public String getSha() {
-    return commitId;
+  public String getState() {
+    return state;
   }
 
   @NotNull
-  public String getPath() {
-    return path;
-  }
-
-  public long getPosition() {
-    return position;
+  public String getTitle() {
+    return title;
   }
 
   @NotNull
-  public String getBodyHtml() {
-    return bodyHtml;
+  public String getBody() {
+    return body;
   }
 
   @NotNull
-  public GithubUserRaw getUser() {
+  public GithubUser getUser() {
     return user;
+  }
+
+  @Nullable
+  public GithubUser getAssignee() {
+    return assignee;
+  }
+
+  @Nullable
+  public Date getClosedAt() {
+    return closedAt;
   }
 
   @NotNull

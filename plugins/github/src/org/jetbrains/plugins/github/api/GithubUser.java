@@ -24,67 +24,34 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubIssueRaw {
+public class GithubUser {
+  @Mandatory private String login;
+  private Long id;
+
   private String url;
   @Mandatory private String htmlUrl;
-  @Mandatory private Long number;
-  @Mandatory private String state;
-  @Mandatory private String title;
-  @Mandatory private String body;
 
-  @Mandatory private GithubUserRaw user;
-  private GithubUserRaw assignee;
+  private Integer followers;
+  private Integer following;
+  private String avatarUrl;
+  private String gravatarId;
+  private Integer collaborators;
+  private String blog;
 
-  private Date closedAt;
-  @Mandatory private Date createdAt;
-  @Mandatory private Date updatedAt;
+  private Date createdAt;
+
+  @NotNull
+  public String getLogin() {
+    return login;
+  }
 
   @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
   }
 
-  public long getNumber() {
-    return number;
-  }
-
-  @NotNull
-  public String getState() {
-    return state;
-  }
-
-  @NotNull
-  public String getTitle() {
-    return title;
-  }
-
-  @NotNull
-  public String getBody() {
-    return body;
-  }
-
-  @NotNull
-  public GithubUserRaw getUser() {
-    return user;
-  }
-
   @Nullable
-  public GithubUserRaw getAssignee() {
-    return assignee;
-  }
-
-  @Nullable
-  public Date getClosedAt() {
-    return closedAt;
-  }
-
-  @NotNull
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  @NotNull
-  public Date getUpdatedAt() {
-    return updatedAt;
+  public String getAvatarUrl() {
+    return avatarUrl;
   }
 }

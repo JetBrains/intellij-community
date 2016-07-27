@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubRepoOrgRaw extends GithubRepoRaw {
-  @Mandatory private Permissions permissions;
-
-  public static class Permissions {
-    @Mandatory private Boolean admin;
-    @Mandatory private Boolean pull;
-    @Mandatory private Boolean push;
-
-    public boolean isAdmin() {
-      return admin;
-    }
-
-    public boolean isPull() {
-      return pull;
-    }
-
-    public boolean isPush() {
-      return push;
-    }
-  }
+public class GithubBranch {
+  @Mandatory private String name;
 
   @NotNull
-  public Permissions getPermissions() {
-    return permissions;
+  public String getName() {
+    return name;
   }
 }

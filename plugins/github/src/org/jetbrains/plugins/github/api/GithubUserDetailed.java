@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubUserDetailedRaw extends GithubUserRaw {
+public class GithubUserDetailed extends GithubUser {
   private String name;
   private String email;
   private String company;
@@ -36,9 +36,9 @@ class GithubUserDetailedRaw extends GithubUserRaw {
   private Integer privateGists;
   private Long diskUsage;
 
-  private UserPlanRaw plan;
+  private UserPlan plan;
 
-  public static class UserPlanRaw {
+  public static class UserPlan {
     @Mandatory private String name;
     private Long space;
     private Long collaborators;
@@ -75,7 +75,7 @@ class GithubUserDetailedRaw extends GithubUserRaw {
   }
 
   @Nullable
-  public UserPlanRaw getPlan() {
+  public UserPlan getPlan() {
     return plan;
   }
 

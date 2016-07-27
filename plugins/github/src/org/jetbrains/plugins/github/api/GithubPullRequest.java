@@ -24,7 +24,7 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubPullRequestRaw {
+public class GithubPullRequest {
   @Mandatory private Long number;
   @Mandatory private String state;
   @Mandatory private String title;
@@ -51,18 +51,18 @@ class GithubPullRequestRaw {
   private Date closedAt;
   private Date mergedAt;
 
-  @Mandatory private GithubUserRaw user;
+  @Mandatory private GithubUser user;
 
-  @Mandatory private LinkRaw head;
-  @Mandatory private LinkRaw base;
+  @Mandatory private Link head;
+  @Mandatory private Link base;
 
-  public static class LinkRaw {
+  public static class Link {
     @Mandatory private String label;
     @Mandatory private String ref;
     @Mandatory private String sha;
 
-    @Mandatory private GithubRepoRaw repo;
-    @Mandatory private GithubUserRaw user;
+    @Mandatory private GithubRepo repo;
+    @Mandatory private GithubUser user;
 
     @NotNull
     public String getLabel() {
@@ -80,12 +80,12 @@ class GithubPullRequestRaw {
     }
 
     @NotNull
-    public GithubRepoRaw getRepo() {
+    public GithubRepo getRepo() {
       return repo;
     }
 
     @NotNull
-    public GithubUserRaw getUser() {
+    public GithubUser getUser() {
       return user;
     }
   }
@@ -150,17 +150,17 @@ class GithubPullRequestRaw {
   }
 
   @NotNull
-  public GithubUserRaw getUser() {
+  public GithubUser getUser() {
     return user;
   }
 
   @NotNull
-  public LinkRaw getHead() {
+  public Link getHead() {
     return head;
   }
 
   @NotNull
-  public LinkRaw getBase() {
+  public Link getBase() {
     return base;
   }
 }

@@ -23,31 +23,54 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubIssueCommentRaw {
-  @Mandatory private Long id;
-
-  private String url;
+public class GithubCommitComment {
   @Mandatory private String htmlUrl;
+  private String url;
+
+  @Mandatory private Long id;
+  @Mandatory private String commitId;
+  @Mandatory private String path;
+  @Mandatory private Long position;
+  private Long line;
   private String body;
   @Mandatory private String bodyHtml;
 
+  @Mandatory private GithubUser user;
+
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
-
-  @Mandatory private GithubUserRaw user;
-
-  public long getId() {
-    return id;
-  }
 
   @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
   }
 
+  public long getId() {
+    return id;
+  }
+
+  @NotNull
+  public String getSha() {
+    return commitId;
+  }
+
+  @NotNull
+  public String getPath() {
+    return path;
+  }
+
+  public long getPosition() {
+    return position;
+  }
+
   @NotNull
   public String getBodyHtml() {
     return bodyHtml;
+  }
+
+  @NotNull
+  public GithubUser getUser() {
+    return user;
   }
 
   @NotNull
@@ -58,10 +81,5 @@ class GithubIssueCommentRaw {
   @NotNull
   public Date getUpdatedAt() {
     return updatedAt;
-  }
-
-  @NotNull
-  public GithubUserRaw getUser() {
-    return user;
   }
 }

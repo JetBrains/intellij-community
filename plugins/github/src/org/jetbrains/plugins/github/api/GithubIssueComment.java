@@ -19,48 +19,49 @@ import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Date;
+
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubFileRaw {
-  @Mandatory private String filename;
+public class GithubIssueComment {
+  @Mandatory private Long id;
 
-  @Mandatory private Integer additions;
-  @Mandatory private Integer deletions;
-  @Mandatory private Integer changes;
-  @Mandatory private String status;
-  @Mandatory private String rawUrl;
-  private String blobUrl;
-  @Mandatory private String patch;
+  private String url;
+  @Mandatory private String htmlUrl;
+  private String body;
+  @Mandatory private String bodyHtml;
 
-  @NotNull
-  public String getFilename() {
-    return filename;
-  }
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
 
-  public int getAdditions() {
-    return additions;
-  }
+  @Mandatory private GithubUser user;
 
-  public int getDeletions() {
-    return deletions;
-  }
-
-  public int getChanges() {
-    return changes;
+  public long getId() {
+    return id;
   }
 
   @NotNull
-  public String getStatus() {
-    return status;
+  public String getHtmlUrl() {
+    return htmlUrl;
   }
 
   @NotNull
-  public String getRawUrl() {
-    return rawUrl;
+  public String getBodyHtml() {
+    return bodyHtml;
   }
 
   @NotNull
-  public String getPatch() {
-    return patch;
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+
+  @NotNull
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  @NotNull
+  public GithubUser getUser() {
+    return user;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,39 @@ import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubBranchRaw {
-  @Mandatory private String name;
+public class GithubCommitDetailed extends GithubCommit {
+  @Mandatory private CommitStats stats;
+  @Mandatory private List<GithubFile> files;
+
+  public static class CommitStats {
+    @Mandatory private Integer additions;
+    @Mandatory private Integer deletions;
+    @Mandatory private Integer total;
+
+    public int getAdditions() {
+      return additions;
+    }
+
+    public int getDeletions() {
+      return deletions;
+    }
+
+    public int getTotal() {
+      return total;
+    }
+  }
 
   @NotNull
-  public String getName() {
-    return name;
+  public CommitStats getStats() {
+    return stats;
+  }
+
+  @NotNull
+  public List<GithubFile> getFiles() {
+    return files;
   }
 }

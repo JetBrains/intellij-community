@@ -25,7 +25,7 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubRepoRaw {
+public class GithubRepo {
   private Long id;
   @Mandatory private String name;
   private String fullName;
@@ -62,8 +62,8 @@ class GithubRepoRaw {
   private Boolean hasWiki;
   private Boolean hasDownloads;
 
-  @Mandatory private GithubUserRaw owner;
-  private GithubUserRaw organization;
+  @Mandatory private GithubUser owner;
+  private GithubUser organization;
 
   private Date pushedAt;
   private Date createdAt;
@@ -103,7 +103,7 @@ class GithubRepoRaw {
   }
 
   @NotNull
-  public GithubUserRaw getOwner() {
+  public GithubUser getOwner() {
     return owner;
   }
 

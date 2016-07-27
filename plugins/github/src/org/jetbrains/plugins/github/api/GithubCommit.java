@@ -25,20 +25,20 @@ import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubCommitRaw extends GithubCommitShaRaw {
-  private GithubUserRaw author;
-  private GithubUserRaw committer;
+public class GithubCommit extends GithubCommitSha {
+  private GithubUser author;
+  private GithubUser committer;
 
-  @Mandatory private GitCommitRaw commit;
+  @Mandatory private GitCommit commit;
 
-  @Mandatory private List<GithubCommitShaRaw> parents;
+  @Mandatory private List<GithubCommitSha> parents;
 
-  public static class GitCommitRaw {
+  public static class GitCommit {
     private String url;
     @Mandatory private String message;
 
-    @Mandatory private GitUserRaw author;
-    @Mandatory private GitUserRaw committer;
+    @Mandatory private GitUser author;
+    @Mandatory private GitUser committer;
 
     @NotNull
     public String getMessage() {
@@ -46,17 +46,17 @@ class GithubCommitRaw extends GithubCommitShaRaw {
     }
 
     @NotNull
-    public GitUserRaw getAuthor() {
+    public GitUser getAuthor() {
       return author;
     }
 
     @NotNull
-    public GitUserRaw getCommitter() {
+    public GitUser getCommitter() {
       return committer;
     }
   }
 
-  public static class GitUserRaw {
+  public static class GitUser {
     @Mandatory private String name;
     @Mandatory private String email;
     @Mandatory private Date date;
@@ -78,22 +78,22 @@ class GithubCommitRaw extends GithubCommitShaRaw {
   }
 
   @Nullable
-  public GithubUserRaw getAuthor() {
+  public GithubUser getAuthor() {
     return author;
   }
 
   @Nullable
-  public GithubUserRaw getCommitter() {
+  public GithubUser getCommitter() {
     return committer;
   }
 
   @NotNull
-  public List<GithubCommitShaRaw> getParents() {
+  public List<GithubCommitSha> getParents() {
     return parents;
   }
 
   @NotNull
-  public GitCommitRaw getCommit() {
+  public GitCommit getCommit() {
     return commit;
   }
 }

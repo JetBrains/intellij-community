@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,39 +19,48 @@ import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubCommitDetailedRaw extends GithubCommitRaw {
-  @Mandatory private CommitStatsRaw stats;
-  @Mandatory private List<GithubFileRaw> files;
+public class GithubFile {
+  @Mandatory private String filename;
 
-  public static class CommitStatsRaw {
-    @Mandatory private Integer additions;
-    @Mandatory private Integer deletions;
-    @Mandatory private Integer total;
+  @Mandatory private Integer additions;
+  @Mandatory private Integer deletions;
+  @Mandatory private Integer changes;
+  @Mandatory private String status;
+  @Mandatory private String rawUrl;
+  private String blobUrl;
+  @Mandatory private String patch;
 
-    public int getAdditions() {
-      return additions;
-    }
+  @NotNull
+  public String getFilename() {
+    return filename;
+  }
 
-    public int getDeletions() {
-      return deletions;
-    }
+  public int getAdditions() {
+    return additions;
+  }
 
-    public int getTotal() {
-      return total;
-    }
+  public int getDeletions() {
+    return deletions;
+  }
+
+  public int getChanges() {
+    return changes;
   }
 
   @NotNull
-  public CommitStatsRaw getStats() {
-    return stats;
+  public String getStatus() {
+    return status;
   }
 
   @NotNull
-  public List<GithubFileRaw> getFiles() {
-    return files;
+  public String getRawUrl() {
+    return rawUrl;
+  }
+
+  @NotNull
+  public String getPatch() {
+    return patch;
   }
 }

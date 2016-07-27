@@ -20,17 +20,17 @@ import org.jetbrains.annotations.Nullable;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-class GithubRepoDetailedRaw extends GithubRepoRaw {
-  private GithubRepoRaw parent;
-  private GithubRepoRaw source;
+public class GithubRepoDetailed extends GithubRepo {
+  private GithubRepo parent;
+  private GithubRepo source;
 
   @Nullable
-  public GithubRepoRaw getParent() {
+  public GithubRepo getParent() {
     return parent;
   }
 
   @Nullable
-  public GithubRepoRaw getSource() {
+  public GithubRepo getSource() {
     return source;
   }
 }
