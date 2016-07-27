@@ -80,15 +80,8 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiAnnotationMemberValue findDeclaredAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
-    if ("value".equals(attributeName)) attributeName = null;
-    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      @NonNls final String name = attribute.getName();
-      if (Comparing.equal(name, attributeName) || attributeName == null && PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
-        return attribute.getValue();
-      }
-    }
-    return null;
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, attributeName);
+    return attribute == null ? null : attribute.getValue();
   }
 
   @Nullable
