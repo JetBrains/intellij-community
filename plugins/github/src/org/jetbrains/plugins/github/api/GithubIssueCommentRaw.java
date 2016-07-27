@@ -15,24 +15,19 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Date;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubIssueCommentRaw {
-  @Nullable public Long id;
+  private Long id;
 
-  @Nullable public String url;
-  @Nullable public String htmlUrl;
-  @Nullable public String body;
-  @Nullable public String bodyHtml;
+  private String url;
+  private String htmlUrl;
+  private String body;
+  private String bodyHtml;
 
-  @Nullable public Date createdAt;
-  @Nullable public Date updatedAt;
+  private Date createdAt;
+  private Date updatedAt;
 
-  @Nullable public GithubUserRaw user;
+  private GithubUserRaw user;
 }

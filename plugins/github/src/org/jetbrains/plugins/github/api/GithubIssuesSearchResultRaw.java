@@ -15,14 +15,9 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
-/**
- * @author Aleksey Pivovarov
- */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+@SuppressWarnings("UnusedDeclaration")
 class GithubIssuesSearchResultRaw {
-  @Nullable public List<GithubIssueRaw> items;
+  private List<GithubIssueRaw> items;
 }

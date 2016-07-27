@@ -15,14 +15,9 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubOrgRaw {
-  @Nullable public String login;
-  @Nullable public Long id;
-  @Nullable public String url;
+  private String login;
+  private Long id;
+  private String url;
 }

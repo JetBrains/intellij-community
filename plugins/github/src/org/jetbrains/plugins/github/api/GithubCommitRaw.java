@@ -15,46 +15,41 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubCommitRaw {
-  @Nullable public String url;
-  @Nullable public String sha;
+  private String url;
+  private String sha;
 
-  @Nullable public GithubUserRaw author;
-  @Nullable public GithubUserRaw committer;
+  private GithubUserRaw author;
+  private GithubUserRaw committer;
 
-  @Nullable public GitCommitRaw commit;
+  private GitCommitRaw commit;
 
-  @Nullable public CommitStatsRaw stats;
-  @Nullable public List<GithubFileRaw> files;
+  private CommitStatsRaw stats;
+  private List<GithubFileRaw> files;
 
-  @Nullable public List<GithubCommitRaw> parents;
+  private List<GithubCommitRaw> parents;
 
   public static class GitCommitRaw {
-    @Nullable public String url;
-    @Nullable public String message;
+    private String url;
+    private String message;
 
-    @Nullable public GitUserRaw author;
-    @Nullable public GitUserRaw committer;
+    private GitUserRaw author;
+    private GitUserRaw committer;
   }
 
   public static class GitUserRaw {
-    @Nullable public String name;
-    @Nullable public String email;
-    @Nullable public Date date;
+    private String name;
+    private String email;
+    private Date date;
   }
 
   public static class CommitStatsRaw {
-    @Nullable public Integer additions;
-    @Nullable public Integer deletions;
-    @Nullable public Integer total;
+    private Integer additions;
+    private Integer deletions;
+    private Integer total;
   }
 }

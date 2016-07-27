@@ -15,52 +15,47 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Date;
 
-/**
- * @author Aleksey Pivovarov
- */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+@SuppressWarnings("UnusedDeclaration")
 class GithubPullRequestRaw {
-  @Nullable public Long number;
-  @Nullable public String state;
-  @Nullable public String title;
-  @Nullable public String body;
-  @Nullable public String bodyHtml;
+  private Long number;
+  private String state;
+  private String title;
+  private String body;
+  private String bodyHtml;
 
-  @Nullable public String url;
-  @Nullable public String htmlUrl;
-  @Nullable public String diffUrl;
-  @Nullable public String patchUrl;
-  @Nullable public String issueUrl;
+  private String url;
+  private String htmlUrl;
+  private String diffUrl;
+  private String patchUrl;
+  private String issueUrl;
 
-  @Nullable public Boolean merged;
-  @Nullable public Boolean mergeable;
+  private Boolean merged;
+  private Boolean mergeable;
 
-  @Nullable public Integer comments;
-  @Nullable public Integer commits;
-  @Nullable public Integer additions;
-  @Nullable public Integer deletions;
-  @Nullable public Integer changedFiles;
+  private Integer comments;
+  private Integer commits;
+  private Integer additions;
+  private Integer deletions;
+  private Integer changedFiles;
 
-  @Nullable public Date createdAt;
-  @Nullable public Date updatedAt;
-  @Nullable public Date closedAt;
-  @Nullable public Date mergedAt;
+  private Date createdAt;
+  private Date updatedAt;
+  private Date closedAt;
+  private Date mergedAt;
 
-  @Nullable public GithubUserRaw user;
+  private GithubUserRaw user;
 
-  @Nullable public LinkRaw head;
-  @Nullable public LinkRaw base;
+  private LinkRaw head;
+  private LinkRaw base;
 
   public static class LinkRaw {
-    @Nullable public String label;
-    @Nullable public String ref;
-    @Nullable public String sha;
+    private String label;
+    private String ref;
+    private String sha;
 
-    @Nullable public GithubRepoRaw repo;
-    @Nullable public GithubUserRaw user;
+    private GithubRepoRaw repo;
+    private GithubUserRaw user;
   }
 }

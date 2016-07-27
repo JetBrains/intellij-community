@@ -16,66 +16,62 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubRepoRaw {
-  @Nullable public Long id;
-  @Nullable public String name;
-  @Nullable public String fullName;
-  @Nullable public String description;
+  private Long id;
+  private String name;
+  private String fullName;
+  private String description;
 
   @SerializedName("private")
-  @Nullable public Boolean isPrivate;
+  private Boolean isPrivate;
   @SerializedName("fork")
-  @Nullable public Boolean isFork;
+  private Boolean isFork;
 
-  @Nullable public String url;
-  @Nullable public String htmlUrl;
-  @Nullable public String cloneUrl;
-  @Nullable public String gitUrl;
-  @Nullable public String sshUrl;
-  @Nullable public String svnUrl;
-  @Nullable public String mirrorUrl;
+  private String url;
+  private String htmlUrl;
+  private String cloneUrl;
+  private String gitUrl;
+  private String sshUrl;
+  private String svnUrl;
+  private String mirrorUrl;
 
-  @Nullable public String homepage;
-  @Nullable public String language;
-  @Nullable public Integer size;
+  private String homepage;
+  private String language;
+  private Integer size;
 
-  @Nullable public Integer forks;
-  @Nullable public Integer forksCount;
-  @Nullable public Integer watchers;
-  @Nullable public Integer watchersCount;
-  @Nullable public Integer openIssues;
-  @Nullable public Integer openIssuesCount;
+  private Integer forks;
+  private Integer forksCount;
+  private Integer watchers;
+  private Integer watchersCount;
+  private Integer openIssues;
+  private Integer openIssuesCount;
 
-  @Nullable public String masterBranch;
-  @Nullable public String defaultBranch;
+  private String masterBranch;
+  private String defaultBranch;
 
-  @Nullable public Boolean hasIssues;
-  @Nullable public Boolean hasWiki;
-  @Nullable public Boolean hasDownloads;
+  private Boolean hasIssues;
+  private Boolean hasWiki;
+  private Boolean hasDownloads;
 
-  @Nullable public GithubRepoRaw parent;
-  @Nullable public GithubRepoRaw source;
+  private GithubRepoRaw parent;
+  private GithubRepoRaw source;
 
-  @Nullable public GithubUserRaw owner;
-  @Nullable public GithubUserRaw organization;
+  private GithubUserRaw owner;
+  private GithubUserRaw organization;
 
-  @Nullable public Date pushedAt;
-  @Nullable public Date createdAt;
-  @Nullable public Date updatedAt;
+  private Date pushedAt;
+  private Date createdAt;
+  private Date updatedAt;
 
-  @Nullable public Permissions permissions;
+  private Permissions permissions;
 
   public static class Permissions {
-    @Nullable public Boolean admin;
-    @Nullable public Boolean pull;
-    @Nullable public Boolean push;
+    private Boolean admin;
+    private Boolean pull;
+    private Boolean push;
   }
 }

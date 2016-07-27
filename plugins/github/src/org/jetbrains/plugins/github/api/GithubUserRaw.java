@@ -15,51 +15,44 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Date;
 
-/**
- * Information about a user on GitHub.
- *
- * @author Kirill Likhodedov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubUserRaw {
-  @Nullable public String login;
-  @Nullable public Long id;
+  private String login;
+  private Long id;
 
-  @Nullable public String url;
-  @Nullable public String htmlUrl;
+  private String url;
+  private String htmlUrl;
 
-  @Nullable public String name;
-  @Nullable public String email;
-  @Nullable public String company;
-  @Nullable public String location;
-  @Nullable public String type;
+  private String name;
+  private String email;
+  private String company;
+  private String location;
+  private String type;
 
-  @Nullable public Integer publicRepos;
-  @Nullable public Integer publicGists;
-  @Nullable public Integer totalPrivateRepos;
-  @Nullable public Integer ownedPrivateRepos;
-  @Nullable public Integer privateGists;
-  @Nullable public Long diskUsage;
+  private Integer publicRepos;
+  private Integer publicGists;
+  private Integer totalPrivateRepos;
+  private Integer ownedPrivateRepos;
+  private Integer privateGists;
+  private Long diskUsage;
 
-  @Nullable public Integer followers;
-  @Nullable public Integer following;
-  @Nullable public String avatarUrl;
-  @Nullable public String gravatarId;
-  @Nullable public Integer collaborators;
-  @Nullable public String blog;
+  private Integer followers;
+  private Integer following;
+  private String avatarUrl;
+  private String gravatarId;
+  private Integer collaborators;
+  private String blog;
 
-  @Nullable public UserPlanRaw plan;
+  private UserPlanRaw plan;
 
-  @Nullable public Date createdAt;
+  private Date createdAt;
 
   public static class UserPlanRaw {
-    @Nullable public String name;
-    @Nullable public Long space;
-    @Nullable public Long collaborators;
-    @Nullable public Long privateRepos;
+    private String name;
+    private Long space;
+    private Long collaborators;
+    private Long privateRepos;
   }
 }

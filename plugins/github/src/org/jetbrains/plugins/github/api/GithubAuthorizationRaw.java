@@ -15,19 +15,14 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubAuthorizationRaw {
-  @Nullable public Long id;
-  @Nullable public String url;
-  @Nullable public String token;
-  @Nullable public String note;
-  @Nullable public String noteUrl;
-  @Nullable public List<String> scopes;
+  private Long id;
+  private String url;
+  private String token;
+  private String note;
+  private String noteUrl;
+  private List<String> scopes;
 }

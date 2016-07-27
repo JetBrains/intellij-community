@@ -15,20 +15,15 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubFileRaw {
-  @Nullable public String filename;
+  private String filename;
 
-  @Nullable public Integer additions;
-  @Nullable public Integer deletions;
-  @Nullable public Integer changes;
-  @Nullable public String status;
-  @Nullable public String rawUrl;
-  @Nullable public String blobUrl;
-  @Nullable public String patch;
+  private Integer additions;
+  private Integer deletions;
+  private Integer changes;
+  private String status;
+  private String rawUrl;
+  private String blobUrl;
+  private String patch;
 }

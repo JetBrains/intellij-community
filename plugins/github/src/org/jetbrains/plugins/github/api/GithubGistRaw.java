@@ -16,41 +16,37 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.Map;
 
-/**
- * @author Aleksey Pivovarov
- */
 @SuppressWarnings("UnusedDeclaration")
 class GithubGistRaw {
-  @Nullable public String id;
-  @Nullable public String description;
+  private String id;
+  private String description;
 
   @SerializedName("public")
-  @Nullable public Boolean isPublic;
+  private Boolean isPublic;
 
-  @Nullable public String url;
-  @Nullable public String htmlUrl;
-  @Nullable public String gitPullUrl;
-  @Nullable public String gitPushUrl;
+  private String url;
+  private String htmlUrl;
+  private String gitPullUrl;
+  private String gitPushUrl;
 
-  @Nullable public Map<String, GistFileRaw> files;
+  private Map<String, GistFileRaw> files;
 
-  @Nullable public GithubUserRaw owner;
+  private GithubUserRaw owner;
 
-  @Nullable public Date createdAt;
+  private Date createdAt;
 
   public static class GistFileRaw {
-    @Nullable public Long size;
-    @Nullable public String filename;
-    @Nullable public String content;
+    private Long size;
+    private String filename;
+    private String content;
 
-    @Nullable public String raw_url;
+    private String raw_url;
 
-    @Nullable public String type;
-    @Nullable public String language;
+    private String type;
+    private String language;
   }
 }
