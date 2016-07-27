@@ -78,7 +78,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private Editor myEditor;
   private Collection<RangeHighlighter> myHighlighed;
   private final VirtualFile myFile;
-  private boolean myUserCaretChange;
+  private boolean myUserCaretChange = true;
   private final MergingUpdateQueue myQueue;
   private final BreadcrumbsInfoProvider myInfoProvider;
 

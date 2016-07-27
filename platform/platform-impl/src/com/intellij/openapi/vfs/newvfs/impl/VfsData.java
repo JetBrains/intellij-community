@@ -235,8 +235,8 @@ public class VfsData {
     }
 
     void setFlag(int id, int mask, boolean value) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
       assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       int offset = getOffset(id) * 2 + 1;

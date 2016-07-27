@@ -247,6 +247,11 @@ class Test88 {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  public void testCallBeforeLambda() {
+    configureByTestName()
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   public void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')

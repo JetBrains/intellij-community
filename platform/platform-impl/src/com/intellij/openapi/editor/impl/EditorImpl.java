@@ -6038,7 +6038,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             mySelectionModel.setSelection(caretOffset, caretOffset);
           }
           else {
-            if (!e.isPopupTrigger()
+            if (e.getButton() == MouseEvent.BUTTON1
                 && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
                 && (!toggleCaret || lastPressCreatedCaret)) {
               switch (e.getClickCount()) {

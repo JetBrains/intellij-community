@@ -259,4 +259,9 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     info.separatorPlacement = SeparatorPlacement.TOP;
     return info;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + "; myBounds: "+myBounds;
+  }
 }
