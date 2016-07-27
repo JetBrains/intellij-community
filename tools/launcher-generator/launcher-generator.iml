@@ -11,7 +11,5 @@
     <orderEntry type="library" name="jdom" level="project" />
     <orderEntry type="library" name="sanselan-0.98-snapshot" level="project" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="library" name="guava" level="project" />
   </component>
 </module>
-
