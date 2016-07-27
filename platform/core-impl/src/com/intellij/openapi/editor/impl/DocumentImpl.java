@@ -38,7 +38,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.ImmutableText;
+import com.intellij.util.text.ImmutableCharSequence;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +66,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @SuppressWarnings("RedundantStringConstructorCall") private final Object myLineSetLock = new String("line set lock");
   private volatile LineSet myLineSet;
-  private volatile ImmutableText myText;
+  private volatile ImmutableCharSequence myText;
   private volatile SoftReference<String> myTextString;
   private volatile FrozenDocument myFrozen;
 
@@ -133,7 +133,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
     setAcceptSlashR(acceptSlashR);
     assertValidSeparators(chars);
-    myText = ImmutableText.valueOf(chars);
+    myText = CharArrayUtil.createImmutableCharSequence(chars);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
     myAssertThreading = !forUseInNonAWTThread;
@@ -472,12 +472,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     RangeMarker marker = getRangeGuard(offset, offset);
     if (marker != null) {
-      throwGuardedFragment(marker, offset, null, s.toString());
+      throwGuardedFragment(marker, offset, "", s);
     }
 
-    myText = myText.ensureChunked();
-    ImmutableText newText = myText.insert(offset, ImmutableText.valueOf(s));
-    updateText(newText, offset, null, newText.subtext(offset, offset + s.length()), false, LocalTimeCounter.currentTime(), offset, 0);
+    ImmutableCharSequence newText = myText.insert(offset, s);
+    ImmutableCharSequence newString = newText.subtext(offset, offset + s.length());
+    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(), offset, 0);
     trimToSize();
   }
 
@@ -497,11 +497,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     RangeMarker marker = getRangeGuard(startOffset, endOffset);
     if (marker != null) {
-      throwGuardedFragment(marker, startOffset, myText.subSequence(startOffset, endOffset).toString(), null);
+      throwGuardedFragment(marker, startOffset, myText.subSequence(startOffset, endOffset), "");
     }
 
-    myText = myText.ensureChunked();
-    updateText(myText.delete(startOffset, endOffset), startOffset, myText.subtext(startOffset, endOffset), null, false, LocalTimeCounter.currentTime(), startOffset, endOffset - startOffset);
+    ImmutableCharSequence newText = myText.delete(startOffset, endOffset);
+    ImmutableCharSequence oldString = myText.subtext(startOffset, endOffset);
+    updateText(newText, startOffset, oldString, "", false, LocalTimeCounter.currentTime(), startOffset, endOffset - startOffset);
   }
 
   @Override
@@ -575,15 +576,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     CharSequence sToDelete = myText.subtext(startOffset, endOffset);
     RangeMarker guard = getRangeGuard(startOffset, endOffset);
     if (guard != null) {
-      throwGuardedFragment(guard, startOffset, sToDelete.toString(), changedPart.toString());
+      throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
     }
 
-    ImmutableText newText;
-    if (wholeTextReplaced && s instanceof ImmutableText) {
-      newText = (ImmutableText)s;
+    ImmutableCharSequence newText;
+    if (wholeTextReplaced && s instanceof ImmutableCharSequence) {
+      newText = (ImmutableCharSequence)s;
     }
     else {
-      myText = myText.ensureChunked();
       newText = myText.delete(startOffset, endOffset).insert(startOffset, changedPart);
       changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
     }
@@ -649,7 +649,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, String oldString, String newString) {
+  private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, @NotNull CharSequence oldString, @NotNull CharSequence newString) {
     if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false);
       throw new ReadOnlyFragmentModificationException(event, guard);
@@ -698,10 +698,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myFrozen = null;
   }
 
-  private void updateText(@NotNull ImmutableText newText,
+  private void updateText(@NotNull ImmutableCharSequence newText,
                           int offset,
-                          @Nullable CharSequence oldString,
-                          @Nullable CharSequence newString,
+                          @NotNull CharSequence oldString,
+                          @NotNull CharSequence newString,
                           boolean wholeTextReplaced,
                           long newModificationStamp,
                           int initialStartOffset,
@@ -712,7 +712,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
       doBeforeChangedUpdate(event);
       myTextString = null;
-      ImmutableText prevText = myText;
+      ImmutableCharSequence prevText = myText;
       myText = newText;
       sequence.incrementAndGet(); // increment sequence before firing events so that modification sequence on commit will match this sequence now
       changedUpdate(event, newModificationStamp, prevText);
@@ -764,7 +764,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, ImmutableText prevText) {
+  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText) {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 

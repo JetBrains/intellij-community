@@ -25,8 +25,14 @@ public abstract class ImmutableCharSequence implements CharSequence {
 
   public static boolean isImmutable(@NotNull final CharSequence cs) {
     if (cs instanceof ImmutableCharSequence) return true;
-    if (cs instanceof CharSequenceSubSequence) return isImmutable(((CharSequenceSubSequence)cs).getBaseSequence());
-    return false;
+    return cs instanceof CharSequenceSubSequence && isImmutable(((CharSequenceSubSequence)cs).getBaseSequence());
   }
-  
+
+  public abstract ImmutableCharSequence concat(CharSequence sequence);
+
+  public abstract ImmutableCharSequence insert(int index, CharSequence seq);
+
+  public abstract ImmutableCharSequence delete(int start, int end);
+
+  public abstract ImmutableCharSequence subtext(int start, int end);
 }

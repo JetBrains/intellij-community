@@ -55,7 +55,7 @@ import org.jetbrains.annotations.Nullable;
  * @version 5.3, January 10, 2007
  */
 @SuppressWarnings({"AssignmentToForLoopParameter","UnnecessaryThis"})
-public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
+final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
    */
@@ -78,7 +78,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @param  obj the object to represent as text.
    * @return the textual representation of the specified object.
    */
-  public static ImmutableText valueOf(@NotNull Object obj) {
+  static ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
     if (obj instanceof CharSequence) return ((CharSequence)obj).length() == 0 ? EMPTY : valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
@@ -129,7 +129,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    *
    * @return a copy of this text better prepared for small modifications to fully enable structure-sharing capabilities
    */
-  public ImmutableText ensureChunked() {
+  private ImmutableText ensureChunked() {
     if (length() > BLOCK_SIZE && myNode instanceof LeafNode) {
       return new ImmutableText(nodeOf((LeafNode)myNode, 0, length()));
     }
@@ -144,22 +144,6 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     int half = ((length + BLOCK_SIZE) >> 1) & BLOCK_MASK;
     return new CompositeNode(nodeOf(node, offset, half), nodeOf(node, offset + half, length - half));
   }
-
-  /**
-   * Returns the text representation of the <code>boolean</code> argument.
-   *
-   * @param b a <code>boolean</code>.
-   * @return if the argument is <code>true</code>, the text 
-   *          <code>"true"</code> is returned; otherwise, the text 
-   *          <code>"false"</code> is returned.
-   */
-  public static ImmutableText valueOf(boolean b) {
-    return b ? TRUE : FALSE;
-  }
-
-  private static final ImmutableText TRUE = valueOf("true");
-
-  private static final ImmutableText FALSE = valueOf("false");
 
   private static final LeafNode EMPTY_NODE = new Leaf8BitNode(ArrayUtil.EMPTY_BYTE_ARRAY);
   private static final ImmutableText EMPTY = new ImmutableText(EMPTY_NODE);
@@ -183,8 +167,13 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @param  that the text that is concatenated.
    * @return <code>this + that</code>
    */
-  public ImmutableText concat(ImmutableText that) {
+  private ImmutableText concat(ImmutableText that) {
     return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked().myNode, that.ensureChunked().myNode));
+  }
+
+  @Override
+  public ImmutableText concat(CharSequence sequence) {
+    return concat(valueOf(sequence));
   }
 
   /**
@@ -209,10 +198,11 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @throws IndexOutOfBoundsException if <code>(index < 0) ||
    *            (index > this.length())</code>
    */
-  public ImmutableText insert(int index, ImmutableText txt) {
+  private ImmutableText insert(int index, ImmutableText txt) {
     return subtext(0, index).concat(txt).concat(subtext(index));
   }
 
+  @Override
   public ImmutableText insert(int index, CharSequence seq) {
     return insert(index, valueOf(seq));
   }
@@ -226,6 +216,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
    *         (start > end) || (end > this.length()</code>
    */
+  @Override
   public ImmutableText delete(int start, int end) {
     if (start == end) return this;
     if (start > end) {
@@ -333,11 +324,12 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
    * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
    *         (start > end) || (end > this.length())</code>
    */
+  @Override
   public ImmutableText subtext(int start, int end) {
-    if ((start < 0) || (start > end) || (end > length())) {
+    if (start < 0 || start > end || end > length()) {
       throw new IndexOutOfBoundsException();
     }
-    if ((start == 0) && (end == length())) {
+    if (start == 0 && end == length()) {
       return this;
     }
     if (start == end) {
@@ -405,7 +397,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       Node head = node1;
       Node tail = node2;
 
-      if (((head.length() << 1) < tail.length()) && tail instanceof CompositeNode) {
+      if ((head.length() << 1) < tail.length() && tail instanceof CompositeNode) {
         // head too small, returns (head + tail/2) + (tail/2)
         if (((CompositeNode)tail).head.length() > ((CompositeNode)tail).tail.length()) {
           // Rotates to concatenate with smaller part.
@@ -414,7 +406,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
         head = concatNodes(head, ((CompositeNode)tail).head);
         tail = ((CompositeNode)tail).tail;
       }
-      else if (((tail.length() << 1) < head.length()) && head instanceof CompositeNode) {
+      else if ((tail.length() << 1) < head.length() && head instanceof CompositeNode) {
         // tail too small, returns (head/2) + (head/2 concat tail)
         if (((CompositeNode)head).tail.length() > ((CompositeNode)head).head.length()) {
           // Rotates to concatenate with smaller part.
@@ -441,7 +433,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
     @Override
     void getChars(int start, int end, @NotNull char[] dest, int destPos) {
-      if ((start < 0) || (end > length()) || (start > end)) {
+      if (start < 0 || end > length() || start > end) {
         throw new IndexOutOfBoundsException();
       }
       System.arraycopy(data, start, dest, destPos, end - start);
@@ -480,7 +472,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
     @Override
     void getChars(int start, int end, @NotNull char[] dest, int destPos) {
-      if ((start < 0) || (end > length()) || (start > end)) {
+      if (start < 0 || end > length() || start > end) {
         throw new IndexOutOfBoundsException();
       }
       for (int i=start;i<end;i++) {
@@ -579,7 +571,7 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
       if (start >= cesure) {
         return tail.subNode(start - cesure, end - cesure);
       }
-      if ((start == 0) && (end == count)) {
+      if (start == 0 && end == count) {
         return this;
       }
       // Overlaps head and tail.

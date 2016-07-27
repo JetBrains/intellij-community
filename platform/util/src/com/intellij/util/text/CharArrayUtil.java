@@ -571,4 +571,9 @@ public class CharArrayUtil {
     //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
+
+  @NotNull
+  public static ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
+    return ImmutableText.valueOf(sequence);
+  }
 }
