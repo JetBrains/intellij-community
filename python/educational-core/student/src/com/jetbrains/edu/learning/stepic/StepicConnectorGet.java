@@ -244,7 +244,7 @@ public class StepicConnectorGet {
       if (supported(stepSource.block.name)) {
         final Task task = new Task();
         task.setStepicId(stepSource.id);
-        task.setIndex(stepSource.position);
+        task.setPosition(stepSource.position);
 
         switch (stepSource.block.name) {
           case (CODE_PREFIX):
@@ -279,7 +279,7 @@ public class StepicConnectorGet {
   }
 
   private static void createCodeTask(Task task, StepicWrappers.Step step) {
-    task.setName("step" + task.getIndex());
+    task.setName("step" + task.getPosition());
     if (step.options.samples != null) {
       final StringBuilder builder = new StringBuilder();
       for (List<String> sample : step.options.samples) {

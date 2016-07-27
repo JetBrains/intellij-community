@@ -24,8 +24,8 @@ public class Task implements StudyItem {
   private String name;
 
   // index is visible to user number of task from 1 to task number
-  // TODO maybe rename to position? [Petr]
   private int myIndex;
+  private int position;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
   @Expose private int myStepicId;
@@ -220,5 +220,13 @@ public class Task implements StudyItem {
         placeholder.setStatus(status);
       }
     }
+  }
+
+  public int getPosition() {
+    return position;
+  }
+
+  public void setPosition(int position) {
+    this.position = position;
   }
 }
