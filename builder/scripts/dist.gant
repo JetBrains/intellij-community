@@ -90,6 +90,7 @@ target(compile: "Compile project") {
   clearBuildCaches()
   projectBuilder.cleanOutput()
 
+  bundledJDKs()
   bundledJDK64s()
 
   projectBuilder.buildProduction()
@@ -209,9 +210,13 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   def archiveName = productProperties.archiveName()
 
   buildWinZip("$paths.artifacts/${archiveName}-no-jdk.win.zip", [paths.distAll, paths.distWin], winAppRoot)
-  requireProperty("jdk.win", "false")
-  if (p("jdk.win") != "false") {
-    buildWinZip("$paths.artifacts/${archiveName}.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.win"], winAppRoot)
+  requireProperty("jdk64.win", "false")
+  if (p("jdk64.win") != "false") {
+    buildWinZip("$paths.artifacts/${archiveName}.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk64.win"], winAppRoot)
+  }
+  requireProperty("jdk32.win", "false")
+  if (p("jdk32.win") != "false") {
+    buildWinZip("$paths.artifacts/${archiveName}-x86.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk32.win"], winAppRoot)
   }
 
   /*
