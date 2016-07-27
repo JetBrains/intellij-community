@@ -249,6 +249,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.14
+				<ol>
+            <li></li>
+				</ol>
+			</li>
 		<li>0.13
 				<ol>
             <li>Fixed #226: @Setter(AccessLevel.NONE) triggers error and not just warning on final fields</li>
