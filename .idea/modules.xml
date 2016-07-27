@@ -265,7 +265,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/testng.iml" filepath="$PROJECT_DIR$/plugins/testng/testng.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/../base/bazel/tests/tests.iml" filepath="$PROJECT_DIR$/../base/bazel/tests/tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/../base/testutils/testutils.iml" filepath="$PROJECT_DIR$/../base/testutils/testutils.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/typeMigration.iml" group="java" />
