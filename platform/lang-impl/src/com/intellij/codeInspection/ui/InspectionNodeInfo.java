@@ -28,6 +28,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
+import com.intellij.ui.components.panels.SingleComponentLayout;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -80,10 +81,13 @@ public class InspectionNodeInfo extends JPanel {
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
+    int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
+    pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
+    pane.setAlignmentX(0);
 
-    add(pane,
-        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
-                               new JBInsets(0, 10, 0, 0), getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width, 0));
+    add(SingleComponentLayout.wrap(pane),
+        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                               new JBInsets(0, 10, 0, 0), 0, 0));
     JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
     new ClickListener() {
       @Override
