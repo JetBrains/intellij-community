@@ -104,10 +104,23 @@ public class VisualLinesIterator {
     return myLocation.y;
   }
 
+  public int getInlineInlaysHeight() {
+    int height = myEditor.getLineHeight();
+    int lineStartOffset = getVisualLineStartOffset();
+    int lineEndOffset = getVisualLineEndOffset();
+    for (int i = myLocation.inlay; i < myInlays.size(); i++) {
+      Inlay inlay = myInlays.get(i);
+      int offset = inlay.getOffset();
+      if (offset > lineEndOffset || offset == lineEndOffset && lineEndOffset > lineStartOffset) break;
+      if (inlay.getType() == Inlay.Type.INLINE) height = Math.max(height, inlay.getHeightInPixels());
+    }
+    return height;
+  }
+
   private void checkEnd() {
     if (atEnd()) throw new IllegalStateException("Iteration finished");
   }
-  
+
   private final class Location implements Cloneable {
     private int visualLine;       // current visual line
     private int offset;           // start offset of the current visual line
