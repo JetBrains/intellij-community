@@ -49,10 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectAndLibrariesScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UseScopeEnlarger;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
@@ -367,6 +364,8 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Nullable
     @Override
     public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
+      SearchScope useScope = element.getUseScope();
+      if (useScope instanceof LocalSearchScope) return null;
       return buildScratchesSearchScope();
     }
   }
