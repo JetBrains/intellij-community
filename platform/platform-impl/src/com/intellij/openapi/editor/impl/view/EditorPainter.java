@@ -343,6 +343,7 @@ class EditorPainter implements TextDrawingCallback {
       if (visualLine > endVisualLine || visualLine >= lineCount) break;
 
       int y = visLinesIterator.getY();
+      int[] lineHeight = new int[] {myView.getLineHeight()};
       final boolean paintSoftWraps = paintAllSoftWraps || 
                                      myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
       final int[] currentLogicalLine = new int[] {-1}; 
@@ -366,8 +367,10 @@ class EditorPainter implements TextDrawingCallback {
             for (Inlay inlay : inlays) {
               Inlay.Renderer renderer = inlay.getRenderer();
               int width = inlay.getWidthInPixels();
-              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, inlay.getHeightInPixels()), myEditor);
+              int height = inlay.getHeightInPixels();
+              renderer.paint(g, new Rectangle((int) xStart, y - myView.getAscent(), width, height), myEditor);
               xStart += width;
+              lineHeight[0] = Math.max(lineHeight[0], height);
             }
             return;
           }
@@ -403,7 +406,7 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       });
-      y += myEditor.getLineHeight();
+      y += lineHeight[0];
       int startOffset = visLinesIterator.getVisualLineStartOffset();
       int endOffset = visLinesIterator.getVisualLineEndOffset();
       if (myEditor.getSoftWrapModel().getSoftWrap(endOffset) == null) endOffset++;
