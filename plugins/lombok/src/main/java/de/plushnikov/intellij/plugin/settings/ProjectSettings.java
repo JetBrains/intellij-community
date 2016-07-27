@@ -32,6 +32,10 @@ public class ProjectSettings {
     return isEnabled(PropertiesComponent.getInstance(project), propertyName);
   }
 
+  public static boolean isEnabled(@NotNull Project project, final String propertyName, boolean defaultValue) {
+    return isEnabled(PropertiesComponent.getInstance(project), propertyName, defaultValue);
+  }
+
   public static boolean isEnabled(PropertiesComponent properties, String propertyName) {
     return isEnabled(properties, propertyName, true);
   }
