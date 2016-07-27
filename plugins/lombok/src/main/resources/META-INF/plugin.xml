@@ -42,10 +42,6 @@
         <li>Refactoring actions (lombok and delombok)</li>
       </ul>
       <br/>
-
-      <i>Compiled with Java 1.6</i>
-      <br/>
-      <br/>
     ]]></description>
   <category>Tools Integration</category>
 
