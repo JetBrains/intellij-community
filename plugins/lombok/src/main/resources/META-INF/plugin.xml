@@ -58,6 +58,8 @@
   <project-components>
     <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokPluginUpdateProjectComponent</implementation-class>
+    </component>
+    <component>
       <implementation-class>de.plushnikov.intellij.plugin.LombokPluginProjectValidatorComponent</implementation-class>
     </component>
   </project-components>
