@@ -899,20 +899,25 @@ binding.setVariable("signExecutableFiles", { String binDir ->
   projectBuilder.stage("Signing done")
 })
 
+// Android Studio: we bundle a 32-bit JDK only for Windows
 binding.setVariable("bundledJDKs"){
-  bundledJDK(false)
+  if (new File("${home}/../../prebuilts/studio/jdk").exists()) {
+    def customJdkDir = new File("${home}/../../prebuilts/studio/jdk/win32")
+    if (customJdkDir.exists() && customJdkDir.isDirectory()) {
+      requireProperty("jdk32.win", "true")
+      ant.copy(todir: "${paths.sandbox}/jdk32.win/jre") {
+        fileset(dir: customJdkDir)
+      }
+    }
+  }
 }
 
 binding.setVariable("bundledJDK64s"){
-  bundledJDK(true)
-}
-
-private bundledJDK(boolean win64) {
   if (new File("${home}/../../prebuilts/studio/jdk").exists()) {
-    def customJdkDir = new File("${home}/../../prebuilts/studio/jdk/" + (win64 ? "win64" : "win32"))
+    def customJdkDir = new File("${home}/../../prebuilts/studio/jdk/win64")
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
-      requireProperty("jdk.win", "true")
-      ant.copy(todir: "${paths.sandbox}/jdk.win/jre") {
+      requireProperty("jdk64.win", "true")
+      ant.copy(todir: "${paths.sandbox}/jdk64.win/jre") {
         fileset(dir: customJdkDir)
       }
     }
