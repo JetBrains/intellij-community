@@ -88,10 +88,10 @@ public class StepicConnectorPost {
     }
   }
 
-  public static StepicWrappers.SubmissionWrapper postSubmission(String text, String attemptId) {
+  public static StepicWrappers.SubmissionContainer postSubmission(String text, String attemptId) {
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionToPostWrapper(attemptId, "java8", text));
     try {
-      return postToStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionWrapper.class, requestBody);
+      return postToStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionContainer.class, requestBody);
     }
     catch (IOException e) {
       LOG.warn("Can not post Submission\n" + e.toString());
@@ -140,7 +140,7 @@ public class StepicConnectorPost {
                                      ArrayList<StepicWrappers.SolutionFile> files) throws IOException {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
 
-    String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
+    String requestBody = new Gson().toJson(new StepicWrappers.SubmissionContainer(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
     final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
     final HttpEntity responseEntity = response.getEntity();

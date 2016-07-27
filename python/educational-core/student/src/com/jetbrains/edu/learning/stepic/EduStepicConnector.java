@@ -588,7 +588,7 @@ public class EduStepicConnector {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
     setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
 
-    String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
+    String requestBody = new Gson().toJson(new StepicWrappers.SubmissionContainer(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
     final CloseableHttpResponse response = ourClient.execute(request);
     final HttpEntity responseEntity = response.getEntity();

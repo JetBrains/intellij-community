@@ -317,12 +317,13 @@ public class StepicWrappers {
     public List<StepicUser> users;
   }
 
-  public static class SubmissionWrapper {
-    public Submission submission;
+  public static class SubmissionContainer {
+    public List<Submission> submissions;
 
 
-    public SubmissionWrapper(int attempt, String score, ArrayList<SolutionFile> files) {
-      submission = new Submission(score, attempt, files);
+    public SubmissionContainer(int attempt, String score, ArrayList<SolutionFile> files) {
+      submissions = new ArrayList<>();
+      submissions.add(new Submission(score, attempt, files));
     }
 
     public static class Submission {
