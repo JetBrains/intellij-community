@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -64,6 +65,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -87,6 +89,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
     myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, this);
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).addPropertyChangeListener(this::updateEditorFont, this);
+    }
 
     final Project project = editor.getProject();
     assert project != null;
@@ -111,7 +116,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        updateCrumbs();
+        queueUpdate(myEditor);
       }
     }, this);
 
@@ -174,9 +179,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     myComponent = new BreadcrumbsComponent<BreadcrumbsPsiItem>();
     myComponent.addBreadcrumbsItemListener(this);
-
-    final Font editorFont = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
-    myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
+    myComponent.setFont(getEditorFont(myEditor));
 
     final EditorGutterComponentEx gutterComponent = ((EditorImpl)editor).getGutterComponentEx();
     final ComponentAdapter resizeListener = new ComponentAdapter() {
@@ -208,8 +211,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   private void updateCrumbs() {
     if (myComponent != null && myEditor != null && !myEditor.isDisposed()) {
-      final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
-      myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
+      myComponent.setFont(getEditorFont(myEditor));
       updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
     }
   }
@@ -452,7 +454,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     @Override
     public void run() {
-      myBreadcrumbsComponent.updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+      myBreadcrumbsComponent.updateCrumbs();
     }
 
     @Override
@@ -461,4 +463,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }
   }
 
+  private void updateEditorFont(PropertyChangeEvent event) {
+    if (EditorEx.PROP_FONT_SIZE.equals(event.getPropertyName())) queueUpdate(myEditor);
+  }
+
+  private static Font getEditorFont(Editor editor) {
+    Font font = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    return Font.PLAIN == font.getStyle() ? font : font.deriveFont(Font.PLAIN, font.getSize2D());
+  }
 }
