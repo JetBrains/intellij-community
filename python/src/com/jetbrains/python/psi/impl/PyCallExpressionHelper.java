@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -699,9 +699,22 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull List<PyExpression> arguments,
-                                                                 @NotNull List<PyParameter> parameters) {
-    return analyzeArguments(arguments, parameters).getMappedParameters();
+  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                 @NotNull PyCallable callable,
+                                                                 @NotNull List<PyParameter> parameters,
+                                                                 @NotNull TypeEvalContext context) {
+    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    return analyzeArguments(arguments, explicitParameters).getMappedParameters();
+  }
+
+  @NotNull
+  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                 @NotNull PyCallable callable,
+                                                                 @NotNull TypeEvalContext context) {
+    final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
+    return mapArguments(callSite, callable, parameters, context);
   }
 
   @NotNull

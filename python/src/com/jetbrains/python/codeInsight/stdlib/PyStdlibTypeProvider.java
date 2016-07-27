@@ -166,11 +166,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       else if (callSite != null && isListGetItem(function)) {
         final PyExpression receiver = PyTypeChecker.getReceiver(callSite, function);
-        final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, function);
-        final List<PyParameter> parameters = PyUtil.getParameters(function, context);
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, function, callSite, resolveContext);
-        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+        final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
         if (substitutions != null) {
           return analyzeListGetItemCallType(receiver, mapping, substitutions, context);
