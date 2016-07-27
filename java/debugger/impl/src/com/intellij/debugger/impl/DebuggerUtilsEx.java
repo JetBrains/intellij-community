@@ -925,7 +925,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
-      return containingClass != null && Objects.equals(containingClass.getQualifiedName(), className) &&
+      return containingClass != null && Objects.equals(JVMNameUtil.getClassVMName(containingClass), className) &&
              JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
              JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature);
     }

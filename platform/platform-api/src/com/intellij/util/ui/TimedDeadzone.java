@@ -17,13 +17,15 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.MouseEvent;
+
 public final class TimedDeadzone {
   public static final Length DEFAULT = new Length(150);
   public static final Length NULL = new Length(-1);
   
   private Length myLength = NULL;
-  private boolean myWithin;
-  private long myEntered = -1;
+  private boolean myMouseWithin;
+  private long myTimeEntered = -1;
 
   public TimedDeadzone(Length zoneLength) {
     myLength = zoneLength;
@@ -33,31 +35,21 @@ public final class TimedDeadzone {
     return myLength.getLength();
   }
 
-  public void enter() {
-    if (!isWithin()) {
-      reEnter();
-    }
-  }
-
-  public void reEnter() {
-    if (myLength == NULL) {
-      clear();
+  public void enter(MouseEvent e) {
+    if (myMouseWithin) {
       return;
     }
 
-    myEntered = System.currentTimeMillis();
-    myWithin = true;
+    myTimeEntered = e.getWhen();
+    myMouseWithin = true;
   }
 
   public void clear() {
-    myWithin = false;
+    myMouseWithin = false;
   }
 
   public boolean isWithin() {
-    if (myWithin && System.currentTimeMillis() - myEntered > getLength()) {
-      myWithin = false;
-    }
-    return myWithin;
+    return myMouseWithin && System.currentTimeMillis() - myTimeEntered < getLength();
   }
 
   public void setLength(@NotNull final Length deadZone) {

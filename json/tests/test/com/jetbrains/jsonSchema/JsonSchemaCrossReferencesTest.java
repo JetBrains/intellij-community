@@ -217,12 +217,12 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.addSchema(inherited);
 
-    testIsSchemaFile(moduleFile, "localRefSchema.json");
-    testIsSchemaFile(moduleFile, "referencingSchema.json");
-
     try {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       JsonSchemaService.Impl.get(getProject()).reset();
+
+      testIsSchemaFile(moduleFile, "localRefSchema.json");
+      testIsSchemaFile(moduleFile, "referencingSchema.json");
 
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
@@ -316,24 +316,30 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
     JsonSchemaService.Impl.get(getProject()).reset();
 
-    int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-    PsiElement element = myFile.findElementAt(offset);
-    boolean found = false;
-    while (element.getTextRange().contains(offset)) {
-      if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
-        found = true;
-        break;
-      }
-      element = element.getParent();
-    }
-    Assert.assertTrue(found);
-    final PsiReference referenceAt = myFile.findReferenceAt(offset);
-    Assert.assertNotNull(referenceAt);
-    final PsiElement resolve = referenceAt.resolve();
-    Assert.assertNotNull(resolve);
-    Assert.assertEquals("\"baseEnum\"", resolve.getText());
-    Assert.assertEquals("baseProperties.json", resolve.getContainingFile().getName());
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+    try {
 
-    instance.removeSchema(inherited);
+      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+      PsiElement element = myFile.findElementAt(offset);
+      boolean found = false;
+      while (element.getTextRange().contains(offset)) {
+        if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
+          found = true;
+          break;
+        }
+        element = element.getParent();
+      }
+      Assert.assertTrue(found);
+      final PsiReference referenceAt = myFile.findReferenceAt(offset);
+      Assert.assertNotNull(referenceAt);
+      final PsiElement resolve = referenceAt.resolve();
+      Assert.assertNotNull(resolve);
+      Assert.assertEquals("\"baseEnum\"", resolve.getText());
+      Assert.assertEquals("baseProperties.json", resolve.getContainingFile().getName());
+
+    } finally {
+      instance.removeSchema(inherited);
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+    }
   }
 }

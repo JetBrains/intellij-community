@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,11 @@ import java.io.File;
 import java.io.IOException;
 
 public abstract class FileSetProcessor {
+  private static final Logger LOG = Logger.getInstance("#" + FileSetProcessor.class.getName());
+
   private File myRoot;
   private String myPattern;
+  private int myProcessedFiles;
 
   FileSetProcessor(@NotNull String fileSpec) {
     setRootAndPattern(fileSpec);
@@ -37,6 +41,7 @@ public abstract class FileSetProcessor {
   private void processEntry(@NotNull File entry) throws IOException {
     if (entry.exists()) {
       if (entry.isDirectory()) {
+        LOG.info("Scanning directory " + entry.getPath());
         File[] subEntries = entry.listFiles();
         if (subEntries != null) {
           for (File subEntry : subEntries) {
@@ -50,7 +55,9 @@ public abstract class FileSetProcessor {
           if (virtualFile == null) {
             throw new IOException("Can not find " + entry.getPath());
           }
+          LOG.info("Processing " + virtualFile.getPath());
           processFile(virtualFile);
+          myProcessedFiles ++;
         }
       }
     }
@@ -97,6 +104,11 @@ public abstract class FileSetProcessor {
           break;
       }
     }
+    LOG.info("Regexp: " + result);
     return result.toString();
+  }
+
+  public int getProcessedFiles() {
+    return myProcessedFiles;
   }
 }

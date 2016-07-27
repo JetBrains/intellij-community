@@ -1971,12 +1971,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 }
               }
               else {
+                ProcessHandler processHandler = getProcessHandler();
+                boolean terminated =
+                  processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
+
                 fail();
                 DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
                   // propagate exception only in case we succeeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  if (myExecutionResult != null || !connectorIsReady.get()) {
+                  if ((myExecutionResult != null && !terminated) || !connectorIsReady.get()) {
                     ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
                   }
                 });

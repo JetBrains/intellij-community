@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import com.intellij.openapi.options.SchemeImportUtil;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -47,14 +47,13 @@ import java.util.List;
 public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
-  private JComboBox mySchemeComboBox;
+  private ComboBox<String> mySchemeComboBox;
 
   private JButton myDeleteButton;
   private JButton myImportButton;
   private JLabel myHintLabel;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
-
 
   public SchemesPanel(ColorAndFontOptions options) {
     super(new BorderLayout());
@@ -98,7 +97,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5),
                                      0, 0));
 
-    mySchemeComboBox = new JComboBox();
+    mySchemeComboBox = new ComboBox<String>();
     panel.add(mySchemeComboBox,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 10),
                                      0, 0));

@@ -73,6 +73,7 @@ import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -2268,28 +2269,28 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }*/
 
     final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
+    JBIterable<VirtualFile> contributedRoots = JBIterable.empty();
     for (IndexableSetContributor contributor : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
         return tasks;
       }
-      for (final VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-        if (visitedRoots.add(root)) {
-          //System.out.println(root);
-          tasks.add(() -> {
-            if (project.isDisposed() || !root.isValid()) return;
-            iterateRecursively(root, processor, indicator, visitedRoots, null);
-          });
-        }
+      contributedRoots = contributedRoots.append(IndexableSetContributor.getRootsToIndex(contributor));
+      contributedRoots = contributedRoots.append(IndexableSetContributor.getProjectRootsToIndex(contributor, project));
+    }
+    for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      if (project.isDisposed()) {
+        return tasks;
       }
-      for (final VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(contributor, project)) {
-        if (visitedRoots.add(root)) {
-          tasks.add(() -> {
-            if (project.isDisposed() || !root.isValid()) return;
-            iterateRecursively(root, processor, indicator, visitedRoots, null);
-          });
-        }
+      contributedRoots = contributedRoots.append(provider.getAdditionalProjectLibrarySourceRoots(project));
+    }
+    for (VirtualFile root : contributedRoots) {
+      if (visitedRoots.add(root)) {
+        tasks.add(() -> {
+          if (project.isDisposed() || !root.isValid()) return;
+          iterateRecursively(root, processor, indicator, visitedRoots, null);
+        });
       }
     }
 

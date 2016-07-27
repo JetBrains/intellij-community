@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,7 @@ import java.io.PrintWriter;
 public class FormatterStarter extends ApplicationStarterEx {
 
   public static final String FORMAT_COMMAND_NAME = "format";
+  private static final Logger LOG = Logger.getInstance("#" + FormatterStarter.class.getName());
 
   @Override
   public boolean isHeadless() {
@@ -60,6 +62,7 @@ public class FormatterStarter extends ApplicationStarterEx {
       new PrintWriter(System.err));
     messageOutput.info(getAppInfo() + " Formatter\n");
     CodeStyleSettings settings = null;
+    logArgs(args);
     if (args.length < 2) {
       showUsageInfo(messageOutput);
     }
@@ -89,6 +92,7 @@ public class FormatterStarter extends ApplicationStarterEx {
         FileSetFormatter fileSetFormatter = new FileSetFormatter(args[i], settings, messageOutput);
         try {
           fileSetFormatter.processFiles();
+          messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " files formatted.\n");
         }
         catch (IOException e) {
           fatalError(messageOutput, e.getLocalizedMessage());
@@ -129,5 +133,14 @@ public class FormatterStarter extends ApplicationStarterEx {
     messageOutput.info("Usage: format [-s|--settings settingsPath] fileSpec...\n");
     messageOutput.info("  -s|--settings  A path to Intellij IDEA code style settings .xml file.\n");
     messageOutput.info("  fileSpec       A file specification, may contain wildcards.\n");
+  }
+
+  private static void logArgs(@NotNull String[] args) {
+    StringBuilder sb = new StringBuilder();
+    for (String arg : args) {
+      if (sb.length() > 0) sb.append(",");
+      sb.append(arg);
+    }
+    LOG.info("Arguments: " + sb);
   }
 }

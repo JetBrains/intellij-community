@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema;
+package com.intellij.codeInspection.unused;
 
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.properties.psi.Property;
 
-/**
- * @author Irina.Chernushina on 4/1/2016.
- */
-public class JsonSchemaFileTypeFactory extends FileTypeFactory {
+public class LoggerConfigPropertyUsageProvider extends ImplicitPropertyUsageProvider {
+  private final static String[] LOGGER_PROPERTIES_KEYWORDS = new String[]{"log4j", "commons-logging", "logging"};
+
   @Override
-  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(JsonSchemaFileType.INSTANCE, (String) null);
+  protected boolean isUsed(Property property) {
+    final String propertiesFileName = property.getPropertiesFile().getName();
+    for (String keyword : LOGGER_PROPERTIES_KEYWORDS) {
+      if (propertiesFileName.startsWith(keyword)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
