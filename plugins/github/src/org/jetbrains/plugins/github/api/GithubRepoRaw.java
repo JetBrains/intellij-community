@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -25,7 +24,7 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubRepoRaw implements DataConstructor {
+class GithubRepoRaw {
   @Nullable public Long id;
   @Nullable public String name;
   @Nullable public String fullName;
@@ -78,50 +77,5 @@ class GithubRepoRaw implements DataConstructor {
     @Nullable public Boolean admin;
     @Nullable public Boolean pull;
     @Nullable public Boolean push;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubRepoOrg.Permissions create() {
-      return new GithubRepoOrg.Permissions(admin, pull, push);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubRepo createRepo() {
-    return new GithubRepo(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser());
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubRepoOrg createRepoOrg() {
-    return new GithubRepoOrg(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
-                             permissions.create());
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubRepoDetailed createRepoDetailed() {
-    GithubRepo parent = this.parent == null ? null : this.parent.createRepo();
-    GithubRepo source = this.source == null ? null : this.source.createRepo();
-    return new GithubRepoDetailed(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
-                                  parent, source);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubRepo.class) {
-      return (T)createRepo();
-    }
-    if (resultClass == GithubRepoOrg.class) {
-      return (T)createRepoOrg();
-    }
-    if (resultClass == GithubRepoDetailed.class) {
-      return (T)createRepoDetailed();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

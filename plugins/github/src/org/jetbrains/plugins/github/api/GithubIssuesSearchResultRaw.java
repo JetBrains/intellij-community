@@ -15,37 +15,14 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubIssuesSearchResultRaw implements DataConstructor {
+class GithubIssuesSearchResultRaw {
   @Nullable public List<GithubIssueRaw> items;
-
-  @NotNull
-  GithubIssuesSearchResult createIssueSearchResult() {
-    List<GithubIssue> issues = new ArrayList<GithubIssue>();
-    for (GithubIssueRaw raw : items) {
-      issues.add(raw.createIssue());
-    }
-    return new GithubIssuesSearchResult(issues);
-  }
-
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubIssuesSearchResult.class) {
-      return (T)createIssueSearchResult();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
-  }
 }

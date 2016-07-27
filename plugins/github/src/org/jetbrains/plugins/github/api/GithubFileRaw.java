@@ -15,14 +15,13 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubFileRaw implements DataConstructor {
+class GithubFileRaw {
   @Nullable public String filename;
 
   @Nullable public Integer additions;
@@ -32,21 +31,4 @@ class GithubFileRaw implements DataConstructor {
   @Nullable public String rawUrl;
   @Nullable public String blobUrl;
   @Nullable public String patch;
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubFile createFile() {
-    return new GithubFile(filename, additions, deletions, changes, status, rawUrl, patch);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubFile.class) {
-      return (T)createFile();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
-  }
 }

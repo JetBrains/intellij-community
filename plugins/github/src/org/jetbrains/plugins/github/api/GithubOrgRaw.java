@@ -15,32 +15,14 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubOrgRaw implements DataConstructor {
+class GithubOrgRaw {
   @Nullable public String login;
   @Nullable public Long id;
   @Nullable public String url;
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubOrg createGithubOrg() {
-    return new GithubOrg(login);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubOrg.class) {
-      return (T)createGithubOrg();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
-  }
 }

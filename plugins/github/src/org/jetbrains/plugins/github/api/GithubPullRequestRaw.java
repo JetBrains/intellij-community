@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -24,7 +23,7 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubPullRequestRaw implements DataConstructor {
+class GithubPullRequestRaw {
   @Nullable public Long number;
   @Nullable public String state;
   @Nullable public String title;
@@ -63,27 +62,5 @@ class GithubPullRequestRaw implements DataConstructor {
 
     @Nullable public GithubRepoRaw repo;
     @Nullable public GithubUserRaw user;
-
-    @NotNull
-    public GithubPullRequest.Link create() {
-      return new GithubPullRequest.Link(label, ref, sha, repo.createRepo(), user.createUser());
-    }
-  }
-
-  @NotNull
-  public GithubPullRequest createPullRequest() {
-    return new GithubPullRequest(number, state, title, bodyHtml, htmlUrl, diffUrl, patchUrl, issueUrl, createdAt, updatedAt, closedAt, mergedAt,
-                                 user.createUser(), head.create(), base.create());
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubPullRequest.class) {
-      return (T)createPullRequest();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

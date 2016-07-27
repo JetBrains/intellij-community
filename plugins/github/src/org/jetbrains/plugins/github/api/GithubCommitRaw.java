@@ -15,10 +15,8 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -26,7 +24,7 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubCommitRaw implements DataConstructor {
+class GithubCommitRaw {
   @Nullable public String url;
   @Nullable public String sha;
 
@@ -46,84 +44,17 @@ class GithubCommitRaw implements DataConstructor {
 
     @Nullable public GitUserRaw author;
     @Nullable public GitUserRaw committer;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubCommit.GitCommit create() {
-      return new GithubCommit.GitCommit(message, author.create(), committer.create());
-    }
   }
 
   public static class GitUserRaw {
     @Nullable public String name;
     @Nullable public String email;
     @Nullable public Date date;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubCommit.GitUser create() {
-      return new GithubCommit.GitUser(name, email, date);
-    }
   }
 
   public static class CommitStatsRaw {
     @Nullable public Integer additions;
     @Nullable public Integer deletions;
     @Nullable public Integer total;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubCommitDetailed.CommitStats create() {
-      return new GithubCommitDetailed.CommitStats(additions, deletions, total);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubCommitSha createCommitSha() {
-    return new GithubCommitSha(url, sha);
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubCommit createCommit() {
-    GithubUser author = this.author == null ? null : this.author.createUser();
-    GithubUser committer = this.committer == null ? null : this.committer.createUser();
-
-    List<GithubCommitSha> parents = new ArrayList<GithubCommitSha>();
-    for (GithubCommitRaw raw : this.parents) {
-      parents.add(raw.createCommitSha());
-    }
-    return new GithubCommit(url, sha, author, committer, parents, commit.create());
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubCommitDetailed createCommitDetailed() {
-    GithubCommit commit = createCommit();
-    List<GithubFile> files = new ArrayList<GithubFile>();
-    for (GithubFileRaw raw : this.files) {
-      files.add(raw.createFile());
-    }
-
-    return new GithubCommitDetailed(commit.getUrl(), commit.getSha(), commit.getAuthor(), commit.getCommitter(), commit.getParents(),
-                                    commit.getCommit(), stats.create(), files);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubCommitSha.class) {
-      return (T)createCommitSha();
-    }
-    if (resultClass == GithubCommit.class) {
-      return (T)createCommit();
-    }
-    if (resultClass == GithubCommitDetailed.class) {
-      return (T)createCommitDetailed();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -26,8 +25,7 @@ import java.util.Date;
  * @author Kirill Likhodedov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubUserRaw implements DataConstructor {
-
+class GithubUserRaw {
   @Nullable public String login;
   @Nullable public Long id;
 
@@ -63,38 +61,5 @@ class GithubUserRaw implements DataConstructor {
     @Nullable public Long space;
     @Nullable public Long collaborators;
     @Nullable public Long privateRepos;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubUserDetailed.UserPlan create() {
-      return new GithubUserDetailed.UserPlan(name, privateRepos);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubUser createUser() {
-    return new GithubUser(login, htmlUrl, avatarUrl);
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubUserDetailed createUserDetailed() {
-    GithubUserDetailed.UserPlan plan = this.plan == null ? null : this.plan.create();
-    return new GithubUserDetailed(login, htmlUrl, avatarUrl, name, email, ownedPrivateRepos, type, plan);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubUser.class) {
-      return (T)createUser();
-    }
-    if (resultClass == GithubUserDetailed.class) {
-      return (T)createUserDetailed();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

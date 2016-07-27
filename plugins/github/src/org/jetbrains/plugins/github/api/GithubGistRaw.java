@@ -16,19 +16,16 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubGistRaw implements DataConstructor {
+class GithubGistRaw {
   @Nullable public String id;
   @Nullable public String description;
 
@@ -55,35 +52,5 @@ class GithubGistRaw implements DataConstructor {
 
     @Nullable public String type;
     @Nullable public String language;
-
-    @SuppressWarnings("ConstantConditions")
-    @NotNull
-    public GithubGist.GistFile create() {
-      return new GithubGist.GistFile(filename, content, raw_url);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubGist createGist() {
-    GithubUser user = this.owner == null ? null : this.owner.createUser();
-
-    List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
-    for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {
-      files.add(entry.getValue().create());
-    }
-
-    return new GithubGist(id, description, isPublic, htmlUrl, files, user);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubGist.class) {
-      return (T)createGist();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

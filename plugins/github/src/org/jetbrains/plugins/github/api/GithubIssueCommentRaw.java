@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -24,7 +23,7 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubIssueCommentRaw implements DataConstructor {
+class GithubIssueCommentRaw {
   @Nullable public Long id;
 
   @Nullable public String url;
@@ -36,21 +35,4 @@ class GithubIssueCommentRaw implements DataConstructor {
   @Nullable public Date updatedAt;
 
   @Nullable public GithubUserRaw user;
-
-  @SuppressWarnings("ConstantConditions")
-  @NotNull
-  public GithubIssueComment createIssueComment() {
-    return new GithubIssueComment(id, htmlUrl, bodyHtml, createdAt, updatedAt, user.createUser());
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass == GithubIssueComment.class) {
-      return (T)createIssueComment();
-    }
-
-    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
-  }
 }
