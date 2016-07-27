@@ -195,6 +195,7 @@ public class StepicWrappers {
 
   static class StepSource {
     @Expose Step block;
+    @Expose int id;
     @Expose int position = 0;
     @Expose int lesson = 0;
 

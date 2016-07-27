@@ -51,7 +51,7 @@ public class StepicConnectorLogin {
       List<BasicHeader> headers = new ArrayList<>();
       if (!accessToken.isEmpty()) {
         headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
-        headers.add(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
+        headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
       }
       else {
         LOG.warn("access_token is empty");

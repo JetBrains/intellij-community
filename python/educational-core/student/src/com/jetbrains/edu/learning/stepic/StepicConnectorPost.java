@@ -62,20 +62,21 @@ public class StepicConnectorPost {
   private static <T> T postToStepic(String link, final Class<T> container, String requestBody) throws IOException {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + link);
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-    LOG.warn("requestBody" + requestBody);
 
     final CloseableHttpResponse response = StepicConnectorLogin.getHttpClient().execute(request);
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-      throw new IOException("Stepic returned non 200 status code " + responseString);
+    if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+      throw new IOException("Stepic returned non " + HttpStatus.SC_CREATED + " status code " + responseString);
     }
+    LOG.info("request "+requestBody);
+    LOG.info("response "+responseString);
     return GSON.fromJson(responseString, container);
   }
 
 
-  public static StepicWrappers.AttemptContainer getAttempt(int stepId){
+  public static StepicWrappers.AttemptContainer getAttempt(int stepId) {
     String requestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(stepId));
     try {
       return postToStepic(EduStepicNames.ATTEMPTS, StepicWrappers.AttemptContainer.class, requestBody);
@@ -83,11 +84,11 @@ public class StepicConnectorPost {
     catch (IOException e) {
       LOG.warn("Can not get Attempt\n" + e.toString());
       throw new NullPointerException(e.getMessage());
-//      return null;
+      //      return null;
     }
   }
 
-  public static StepicWrappers.SubmissionWrapper postSubmission(String text, String attemptId){
+  public static StepicWrappers.SubmissionWrapper postSubmission(String text, String attemptId) {
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionToPostWrapper(attemptId, "java8", text));
     try {
       return postToStepic(EduStepicNames.SUBMISSIONS, StepicWrappers.SubmissionWrapper.class, requestBody);

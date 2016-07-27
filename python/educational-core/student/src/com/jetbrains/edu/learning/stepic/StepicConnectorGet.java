@@ -237,20 +237,17 @@ public class StepicConnectorGet {
 
   private static void createTasks(Lesson lesson, List<Integer> stepicIds) throws IOException {
     final StepicWrappers.StepContainer stepContainer = getSteps(stepicIds);
-    List<StepicWrappers.Step> steps = new ArrayList<>();
-    stepContainer.steps.forEach(x -> steps.add(x.block));
-    int i = 0;
-    for (StepicWrappers.Step step : steps) {
-      if (supported(step.name)) {
+    for (StepicWrappers.StepSource stepSource : stepContainer.steps) {
+      if (supported(stepSource.block.name)) {
         final Task task = new Task();
-        task.setStepicId(stepicIds.get(i++));
+        task.setStepicId(stepSource.id);
 
-        switch (step.name) {
+        switch (stepSource.block.name) {
           case (CODE_PREFIX):
-            createCodeTask(task, step);
+            createCodeTask(task, stepSource.block);
             break;
           case (PYCHARM_PREFIX):
-            createPyCharmTask(task, step);
+            createPyCharmTask(task, stepSource.block);
             break;
         }
         lesson.taskList.add(task);
