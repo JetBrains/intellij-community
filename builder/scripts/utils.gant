@@ -77,10 +77,10 @@ binding.setVariable("isEap", {
 
 binding.setVariable("mem32", "-server -Xms256m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("mem64", "-Xms256m -Xmx1280m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
-binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea -XX:-OmitStackTraceInFastThrow " +
+binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                         "-Djna.nosys=true -Djna.boot.library.path=  -Djna.debug_load=true -Djna.debug_load.jna=true " +
                                         "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                        "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow")
+                                        "-XX:-OmitStackTraceInFastThrow")
 
 binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
