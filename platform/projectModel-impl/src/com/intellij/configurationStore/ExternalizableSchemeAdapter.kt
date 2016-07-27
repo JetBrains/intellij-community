@@ -20,7 +20,13 @@ import org.jdom.Element
 import kotlin.properties.Delegates
 
 abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
-  override var name: String by Delegates.notNull()
+  private var myName: String by Delegates.notNull()
+
+  override fun getName() = myName
+
+  override fun setName(value: String) {
+    myName = value
+  }
 
   override fun toString() = name
 }

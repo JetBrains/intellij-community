@@ -646,7 +646,7 @@ public class AbstractPopup implements JBPopup {
         if (root != null) {
           final Container popupWindow = root.getParent();
           if (popupWindow != null && popupWindow.isShowing()) {
-            storeLocation(popupWindow.getLocationOnScreen());
+            storeLocation(fixLocateByContent(popupWindow.getLocationOnScreen(), true));
           }
         }
       }
@@ -804,10 +804,7 @@ public class AbstractPopup implements JBPopup {
       xy = myForcedLocation;
     }
 
-    if (myLocateByContent) {
-      final Dimension captionSize = myHeaderPanel.getPreferredSize();
-      xy.y -= captionSize.height;
-    }
+    fixLocateByContent(xy, false);
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
     Rectangle original = new Rectangle(targetBounds);
@@ -1555,14 +1552,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public Point getLocationOnScreen() {
-    Dimension headerCorrectionSize = myLocateByContent ? myHeaderPanel.getPreferredSize() : null;
     Point screenPoint = myContent.getLocation();
     SwingUtilities.convertPointToScreen(screenPoint, myContent);
-    if (headerCorrectionSize != null) {
-      screenPoint.y -= headerCorrectionSize.height;
-    }
-
-    return screenPoint;
+    return fixLocateByContent(screenPoint, false);
   }
 
 
@@ -1882,6 +1874,12 @@ public class AbstractPopup implements JBPopup {
 
   public static boolean isCloseRequest(KeyEvent e) {
     return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+  }
+
+  private Point fixLocateByContent(Point location, boolean save) {
+    Dimension size = !myLocateByContent ? null : myHeaderPanel.getPreferredSize();
+    if (size != null) location.y -= save ? -size.height : size.height;
+    return location;
   }
 
   private boolean isBusy() {

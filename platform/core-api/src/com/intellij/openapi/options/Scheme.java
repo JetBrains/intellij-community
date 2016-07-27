@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema;
+package com.intellij.openapi.options;
 
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Irina.Chernushina on 4/1/2016.
- */
-public class JsonSchemaFileTypeFactory extends FileTypeFactory {
-  @Override
-  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(JsonSchemaFileType.INSTANCE, (String) null);
-  }
+public interface Scheme {
+  @NotNull
+  String getName();
 }

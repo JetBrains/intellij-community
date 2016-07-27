@@ -363,7 +363,12 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(override @field:com.intellij.util.xmlb.annotations.Attribute var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
+  override fun getName() = name
+
+  override fun setName(value: String) {
+    name = value
+  }
 }
 
 open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme, TestScheme>() {

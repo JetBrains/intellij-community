@@ -76,6 +76,9 @@ public abstract class CachedEvaluator {
       }
       else {
         contextClass = DebuggerUtils.findClass(className, project, GlobalSearchScope.allScope(project));
+        if (contextClass != null) {
+          contextClass = (PsiClass)contextClass.getNavigationElement();
+        }
         if (contextClass instanceof PsiCompiledElement) {
           contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
         }

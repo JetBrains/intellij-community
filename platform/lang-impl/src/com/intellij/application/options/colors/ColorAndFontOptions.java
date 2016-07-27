@@ -27,7 +27,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -819,13 +818,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static class GetSetColor {
     private final ColorKey myKey;
     private final EditorColorsScheme myScheme;
-    private boolean isModified = false;
+    private final Color myInitialColor;
     private Color myColor;
 
     private GetSetColor(ColorKey key, EditorColorsScheme scheme) {
       myKey = key;
       myScheme = scheme;
       myColor = myScheme.getColor(myKey);
+      myInitialColor = myColor;
     }
 
     public Color getColor() {
@@ -834,7 +834,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public void setColor(Color col) {
       if (getColor() == null || !getColor().equals(col)) {
-        isModified = true;
         myColor = col;
       }
     }
@@ -845,7 +844,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public boolean isModified() {
-      return isModified;
+      return !Comparing.equal(myColor, myInitialColor);
     }
   }
 
