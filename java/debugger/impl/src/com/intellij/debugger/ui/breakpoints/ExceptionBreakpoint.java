@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
@@ -200,6 +204,19 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
         locationLine
       );
     }
+  }
+
+  @Override
+  public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+    if (getProperties().isCatchFiltersEnabled() && event instanceof ExceptionEvent) {
+      Location location = ((ExceptionEvent)event).catchLocation();
+      if (location != null && !typeMatchesClassFilters(location.declaringType().name(),
+                                   getProperties().getCatchClassFilters(),
+                                   getProperties().getCatchClassExclusionFilters())) {
+        return false;
+      }
+    }
+    return super.evaluateCondition(context, event);
   }
 
   public boolean isValid() {
