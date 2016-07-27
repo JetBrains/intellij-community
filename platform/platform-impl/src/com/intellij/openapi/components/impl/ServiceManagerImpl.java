@@ -222,7 +222,11 @@ public class ServiceManagerImpl implements BaseComponent {
           ComponentAdapter delegate = getDelegate();
 
           // useReadActionToInitService is enabled currently only in internal or test mode or explicitly (registry) - we have enough feedback to fix, so, don't disturb all users
-          if (!useReadActionToInitService && LOG.isDebugEnabled() && ApplicationManager.getApplication().isWriteAccessAllowed() && PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
+          if (!useReadActionToInitService &&
+              LOG.isDebugEnabled() &&
+              ApplicationManager.getApplication().isWriteAccessAllowed() &&
+              !ApplicationManager.getApplication().isUnitTestMode() &&
+              PersistentStateComponent.class.isAssignableFrom(delegate.getComponentImplementation())) {
             LOG.warn(new Throwable("Getting service from write-action leads to possible deadlock. Service implementation " + myDescriptor.getImplementation()));
           }
 
