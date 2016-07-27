@@ -32,11 +32,11 @@ public class PsiElementUtil {
    * false otherwise
    */
   public static boolean methodMatches(
-      @NotNull PsiMethod method,
-      @NonNls @Nullable String containingClassName,
-      @Nullable PsiType returnType,
-      @NonNls @Nullable String methodName,
-      @Nullable List<PsiType> parameterTypes) {
+    @NotNull PsiMethod method,
+    @NonNls @Nullable String containingClassName,
+    @Nullable PsiType returnType,
+    @NonNls @Nullable String methodName,
+    @Nullable List<PsiType> parameterTypes) {
     final String name = method.getName();
     if (methodName != null && !methodName.equals(name)) {
       return false;
@@ -55,8 +55,8 @@ public class PsiElementUtil {
           continue;
         }
         if (parameterType != null &&
-            !typesAreEquivalent(type,
-                parameterType)) {
+          !typesAreEquivalent(type,
+            parameterType)) {
           return false;
         }
       }
@@ -64,20 +64,20 @@ public class PsiElementUtil {
     if (returnType != null) {
       final PsiType methodReturnType = method.getReturnType();
       if (!typesAreEquivalent(returnType,
-          methodReturnType)) {
+        methodReturnType)) {
         return false;
       }
     }
     if (containingClassName != null) {
       final PsiClass containingClass = method.getContainingClass();
       return InheritanceUtil.isInheritor(containingClass,
-          containingClassName);
+        containingClassName);
     }
     return true;
   }
 
   public static boolean typesAreEquivalent(
-      @Nullable PsiType type1, @Nullable PsiType type2) {
+    @Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null) {
       return type2 == null;
     }

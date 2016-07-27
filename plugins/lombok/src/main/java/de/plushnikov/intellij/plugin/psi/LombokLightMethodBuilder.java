@@ -39,10 +39,10 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
-        new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
-        new LombokLightModifierList(manager, JavaLanguage.INSTANCE),
-        new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
-        new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
+      new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
+      new LombokLightModifierList(manager, JavaLanguage.INSTANCE),
+      new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
+      new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     setBaseIcon(LombokIcons.METHOD_ICON);
   }
 

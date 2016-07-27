@@ -1,8 +1,6 @@
 package de.plushnikov;
 
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,14 +20,14 @@ public class TestUtil {
   }
 
   @NotNull
-  public static String getTestDataPathRelativeToIdeaHome(@NotNull  String relativePath) {
+  public static String getTestDataPathRelativeToIdeaHome(@NotNull String relativePath) {
     File homePath = new File(PathManager.getHomePath());
     File testDir = new File(getTestDataRoot(), relativePath);
 
     String relativePathToIdeaHome = FileUtil.getRelativePath(homePath, testDir);
     if (relativePathToIdeaHome == null) {
       throw new RuntimeException("getTestDataPathRelativeToIdeaHome: FileUtil.getRelativePath('" + homePath +
-          "', '" + testDir + "') returned null");
+        "', '" + testDir + "') returned null");
     }
 
     return relativePathToIdeaHome;

@@ -33,10 +33,10 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
     final LombokLightFieldBuilder fieldBuilder =
-        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
-            .withModifier(PsiModifier.PRIVATE)
-            .withNavigationElement(psiVariable)
-            .withContainingClass(innerClass);
+      new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
+        .withModifier(PsiModifier.PRIVATE)
+        .withNavigationElement(psiVariable)
+        .withContainingClass(innerClass);
     fields.add(fieldBuilder);
   }
 
@@ -80,18 +80,18 @@ class SingularGuavaTableHandler extends SingularMapHandler {
 
   protected String getOneMethodBody(@NotNull String singularName, @NotNull String psiFieldName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
-        "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");{4}";
+      "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");{4}";
 
     return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, collectionQualifiedName,
-        sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
+      sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
   protected String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, @NotNull PsiManager psiManager, boolean fluentBuilder) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
-        + "this.{0}.putAll({0});{3}";
+      + "this.{0}.putAll({0});{3}";
 
     return MessageFormat.format(codeBlockTemplate, singularName, collectionQualifiedName,
-        sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
+      sortedCollection ? "naturalOrder()" : "builder()", fluentBuilder ? "\nreturn this;" : "");
   }
 
   @Override
@@ -104,11 +104,11 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);
 
     buildMethodCode.append(MessageFormat.format(
-        "{4}<{1}, {2}, {3}> {0} = " +
-            "this.{0} == null ? " +
-            "{4}.<{1}, {2}, {3}>of() : " +
-            "this.{0}.build();\n",
-        fieldName, rowKeyType.getCanonicalText(false), columnKeyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName));
+      "{4}<{1}, {2}, {3}> {0} = " +
+        "this.{0} == null ? " +
+        "{4}.<{1}, {2}, {3}>of() : " +
+        "this.{0}.build();\n",
+      fieldName, rowKeyType.getCanonicalText(false), columnKeyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName));
   }
 
 }

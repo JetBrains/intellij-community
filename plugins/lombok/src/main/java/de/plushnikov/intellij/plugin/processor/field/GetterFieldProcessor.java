@@ -60,8 +60,8 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     if (result && lazy) {
       if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
         builder.addError("'lazy' requires the field to be private and final",
-            PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
-            PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
+          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
         result = false;
       }
       if (null == psiField.getInitializer()) {
@@ -121,9 +121,9 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     final String methodName = getGetterName(psiField);
 
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
-        .withMethodReturnType(psiField.getType())
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiField);
+      .withMethodReturnType(psiField.getType())
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
       method.withModifier(methodModifier);
     }
@@ -136,7 +136,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
     PsiModifierList modifierList = method.getModifierList();
     copyAnnotations(psiField, modifierList,
-        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
+      LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     addOnXAnnotations(PsiAnnotationSearchUtil.findAnnotation(psiField, Getter.class), modifierList, "onMethod");
     return method;
   }

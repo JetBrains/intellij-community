@@ -10,10 +10,10 @@ import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 public class DelombokValueAction extends BaseDelombokAction {
   public DelombokValueAction() {
     super(new BaseDelombokHandler(
-        new ValueProcessor(
-            new GetterProcessor(new GetterFieldProcessor()),
-            new EqualsAndHashCodeProcessor(),
-            new ToStringProcessor(),
-            new AllArgsConstructorProcessor())));
+      new ValueProcessor(
+        new GetterProcessor(new GetterFieldProcessor()),
+        new EqualsAndHashCodeProcessor(),
+        new ToStringProcessor(),
+        new AllArgsConstructorProcessor())));
   }
 }

@@ -7,12 +7,10 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 
 /**
  * @author Alexej Kubarev
@@ -48,10 +46,10 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
       // PRIVATE
       if (modifierList.getParent() instanceof PsiField &&
-          // Visibility is only changed for package private fields
-          hasPackagePrivateModifier(modifierList) &&
-          // except they are annotated with @PackagePrivate
-          !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
+        // Visibility is only changed for package private fields
+        hasPackagePrivateModifier(modifierList) &&
+        // except they are annotated with @PackagePrivate
+        !PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
         modifiers.add(PsiModifier.PRIVATE);
 
         // IDEA _right now_ checks if other modifiers are set, and ignores PACKAGE_LOCAL but may as well clean it up
@@ -62,6 +60,6 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
   private boolean hasPackagePrivateModifier(@NotNull PsiModifierList modifierList) {
     return !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) || modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||
-        modifierList.hasExplicitModifier(PsiModifier.PROTECTED));
+      modifierList.hasExplicitModifier(PsiModifier.PROTECTED));
   }
 }

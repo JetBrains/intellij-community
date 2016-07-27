@@ -19,8 +19,6 @@ import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceParameterList;
@@ -28,16 +26,14 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import lombok.val;
 
 public class ValProcessor extends AbstractProcessor {
 
@@ -114,7 +110,7 @@ public class ValProcessor extends AbstractProcessor {
 
     final PsiElement parent = typeElement.getParent();
     if ((parent instanceof PsiLocalVariable && isVal((PsiLocalVariable) parent)) ||
-        (parent instanceof PsiParameter && isVal((PsiParameter) parent))) {
+      (parent instanceof PsiParameter && isVal((PsiParameter) parent))) {
 
       if (parent instanceof PsiLocalVariable) {
         psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());

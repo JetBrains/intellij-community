@@ -93,10 +93,10 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     final PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
 
     LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, getLoggerName(psiClass), psiLoggerType)
-        .withContainingClass(psiClass)
-        .withModifier(PsiModifier.FINAL)
-        .withModifier(PsiModifier.PRIVATE)
-        .withNavigationElement(psiAnnotation);
+      .withContainingClass(psiClass)
+      .withModifier(PsiModifier.FINAL)
+      .withModifier(PsiModifier.PRIVATE)
+      .withNavigationElement(psiAnnotation);
     if (isLoggerStatic(psiClass)) {
       loggerField.withModifier(PsiModifier.STATIC);
     }

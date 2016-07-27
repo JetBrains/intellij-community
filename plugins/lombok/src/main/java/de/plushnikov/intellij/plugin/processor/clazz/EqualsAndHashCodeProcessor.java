@@ -62,7 +62,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
       builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -80,9 +80,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
       if (!"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-                "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+            "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
       }
     }
   }
@@ -91,8 +91,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     boolean callSuperProperty = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     if (callSuperProperty && !PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
+        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
     }
   }
 
@@ -148,7 +148,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
 
     final boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL) ||
-        (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
+      (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Value.class, lombok.experimental.Value.class) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NonFinal.class));
     return !isFinal;
   }
 
@@ -157,14 +157,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiManager psiManager = psiClass.getManager();
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, EQUALS_METHOD_NAME)
-        .withModifier(PsiModifier.PUBLIC)
-        .withMethodReturnType(PsiType.BOOLEAN)
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withBody(createEqualsCodeBlock(psiClass, psiAnnotation, hasCanEqualMethod));
+      .withModifier(PsiModifier.PUBLIC)
+      .withMethodReturnType(PsiType.BOOLEAN)
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withBody(createEqualsCodeBlock(psiClass, psiAnnotation, hasCanEqualMethod));
 
     final LombokLightParameter methodParameter = new LombokLightParameter("o", PsiType.getJavaLangObject(
-        psiManager, GlobalSearchScope.allScope(psiClass.getProject())), methodBuilder, JavaLanguage.INSTANCE);
+      psiManager, GlobalSearchScope.allScope(psiClass.getProject())), methodBuilder, JavaLanguage.INSTANCE);
     addOnXAnnotations(psiAnnotation, methodParameter.getModifierList(), "onParam");
 
     return methodBuilder.withParameter(methodParameter);
@@ -186,11 +186,11 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiManager psiManager = psiClass.getManager();
 
     return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
-        .withModifier(PsiModifier.PUBLIC)
-        .withMethodReturnType(PsiType.INT)
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withBody(createHashCodeBlock(psiClass, psiAnnotation));
+      .withModifier(PsiModifier.PUBLIC)
+      .withMethodReturnType(PsiType.INT)
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withBody(createHashCodeBlock(psiClass, psiAnnotation));
   }
 
   @NotNull
@@ -209,14 +209,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiManager psiManager = psiClass.getManager();
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, CAN_EQUAL_METHOD_NAME)
-        .withModifier(PsiModifier.PROTECTED)
-        .withMethodReturnType(PsiType.BOOLEAN)
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withBody(createCanEqualCodeBlock(psiClass));
+      .withModifier(PsiModifier.PROTECTED)
+      .withMethodReturnType(PsiType.BOOLEAN)
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withBody(createCanEqualCodeBlock(psiClass));
 
     final LombokLightParameter methodParameter = new LombokLightParameter("other", PsiType.getJavaLangObject(
-        psiManager, GlobalSearchScope.allScope(psiClass.getProject())), methodBuilder, JavaLanguage.INSTANCE);
+      psiManager, GlobalSearchScope.allScope(psiClass.getProject())), methodBuilder, JavaLanguage.INSTANCE);
     addOnXAnnotations(psiAnnotation, methodParameter.getModifierList(), "onParam");
 
     return methodBuilder.withParameter(methodParameter);
@@ -278,7 +278,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
           builder.append("final java.lang.Object this$").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
           builder.append("final java.lang.Object other$").append(fieldName).append(" = other.").append(fieldAccessor).append(";\n");
           builder.append("if (this$").append(fieldName).append(" == null ? other$").append(fieldName).append(" != null : !this$")
-              .append(fieldName).append(".equals(other$").append(fieldName).append(")) return false;\n");
+            .append(fieldName).append(".equals(other$").append(fieldName).append(")) return false;\n");
         }
       }
       builder.append("return true;\n");

@@ -83,7 +83,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
-        lombok.experimental.Builder.class, lombok.Builder.class)) {
+      lombok.experimental.Builder.class, lombok.Builder.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
       // and only if there are no any other constructors!

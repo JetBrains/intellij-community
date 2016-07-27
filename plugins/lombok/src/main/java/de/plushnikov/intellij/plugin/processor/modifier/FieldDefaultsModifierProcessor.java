@@ -7,15 +7,13 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
-
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import lombok.AccessLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
-
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import lombok.AccessLevel;
 
 /**
  * Processor for <strong>experimental</strong> {@literal @FieldDefaults} feature of Lombok.
@@ -64,9 +62,9 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
     final AccessLevel defaultAccessLevel = AccessLevel.valueOf(Iterables.getFirst(defaultLevels, AccessLevel.NONE.name()));
 
     if (// If explicit visibility modifier is set - no point to continue.
-        !hasPackagePrivateModifier(modifierList) ||
-            // If @PackagePrivate is requested, leave the field as is
-            PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
+      !hasPackagePrivateModifier(modifierList) ||
+        // If @PackagePrivate is requested, leave the field as is
+        PsiAnnotationSearchUtil.isAnnotatedWith(parentElement, lombok.experimental.PackagePrivate.class)) {
       return;
     }
 
@@ -91,6 +89,6 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private boolean hasPackagePrivateModifier(@NotNull PsiModifierList modifierList) {
     return !(modifierList.hasExplicitModifier(PsiModifier.PUBLIC) || modifierList.hasExplicitModifier(PsiModifier.PRIVATE) ||
-        modifierList.hasExplicitModifier(PsiModifier.PROTECTED));
+      modifierList.hasExplicitModifier(PsiModifier.PROTECTED));
   }
 }

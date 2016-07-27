@@ -30,21 +30,21 @@ class NonSingularHandler implements BuilderElementHandler {
   public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
     final LombokLightFieldBuilder fieldBuilder =
-        new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, psiVariable.getType())
-            .withModifier(PsiModifier.PRIVATE)
-            .withNavigationElement(psiVariable)
-            .withContainingClass(innerClass);
+      new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, psiVariable.getType())
+        .withModifier(PsiModifier.PRIVATE)
+        .withNavigationElement(psiVariable)
+        .withContainingClass(innerClass);
     fields.add(fieldBuilder);
   }
 
   public void addBuilderMethod(@NotNull List<PsiMethod> methods, @NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull PsiClass innerClass, boolean fluentBuilder, PsiType returnType, String psiFieldName) {
     methods.add(new LombokLightMethodBuilder(psiVariable.getManager(), createSetterName(psiFieldName, fluentBuilder))
-        .withMethodReturnType(returnType)
-        .withContainingClass(innerClass)
-        .withParameter(psiFieldName, psiVariable.getType())
-        .withNavigationElement(psiVariable)
-        .withModifier(PsiModifier.PUBLIC)
-        .withBody(createCodeBlock(innerClass, fluentBuilder, psiFieldName)));
+      .withMethodReturnType(returnType)
+      .withContainingClass(innerClass)
+      .withParameter(psiFieldName, psiVariable.getType())
+      .withNavigationElement(psiVariable)
+      .withModifier(PsiModifier.PUBLIC)
+      .withBody(createCodeBlock(innerClass, fluentBuilder, psiFieldName)));
   }
 
   @NotNull

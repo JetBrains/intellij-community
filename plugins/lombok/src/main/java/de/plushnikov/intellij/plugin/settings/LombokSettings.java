@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * Persistent global settings object for the Lombok plugin.
  */
 @State(
-    name = "LombokSettings",
-    storages = @Storage(id = "other", file = StoragePathMacros.APP_CONFIG + "/lombok.xml")
+  name = "LombokSettings",
+  storages = @Storage(id = "other", file = StoragePathMacros.APP_CONFIG + "/lombok.xml")
 )
 public class LombokSettings implements PersistentStateComponent<LombokPluginState> {
 

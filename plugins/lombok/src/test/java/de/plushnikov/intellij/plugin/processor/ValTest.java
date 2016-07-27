@@ -31,13 +31,13 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testIntParameter() throws Exception {
     myFixture.configureByText("a.java", "import lombok.val;\n" +
-        "abstract class Test {\n" +
-        "    private void test() {\n" +
-        "       int[] myArray = new int[] {1, 2, 3, 4, 5};\n" +
-        "       for(val my<caret>Var: myArray) {" +
-        "       }\n" +
-        "    } \n" +
-        "}\n");
+      "abstract class Test {\n" +
+      "    private void test() {\n" +
+      "       int[] myArray = new int[] {1, 2, 3, 4, 5};\n" +
+      "       for(val my<caret>Var: myArray) {" +
+      "       }\n" +
+      "    } \n" +
+      "}\n");
 
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertTrue(elementAtCaret instanceof PsiIdentifier);
@@ -65,9 +65,9 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testGenericMethod168() throws Exception {
     configureClass("forClass(Integer.class)",
-        "public static <T> java.util.List<T> forClass(Class<T> clazz) {\n" +
-            "            return new java.util.ArrayList<T>();\n" +
-            "        }\n");
+      "public static <T> java.util.List<T> forClass(Class<T> clazz) {\n" +
+        "            return new java.util.ArrayList<T>();\n" +
+        "        }\n");
     verifyLocalVariableType("java.util.List<java.lang.Integer>");
   }
 
@@ -77,12 +77,12 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
 
   private void configureClass(String valDefinition, String extraDefinition) {
     myFixture.configureByText("a.java", "import lombok.val;\n" +
-        "abstract class Test {\n" +
-        "    private void test() {\n" +
-        "       val my<caret>Var = " + valDefinition + "; \n" +
-        "    } \n" +
-        extraDefinition +
-        "}\n");
+      "abstract class Test {\n" +
+      "    private void test() {\n" +
+      "       val my<caret>Var = " + valDefinition + "; \n" +
+      "    } \n" +
+      extraDefinition +
+      "}\n");
   }
 
   private void verifyLocalVariableType(final String expectedType) {

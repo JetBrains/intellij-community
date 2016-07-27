@@ -25,11 +25,11 @@ public class DelombokBuilderAction extends BaseDelombokAction {
     final BuilderHandler builderHandler = new BuilderHandler(toStringProcessor, noArgsConstructorProcessor);
     final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
     return new BaseDelombokHandler(true,
-        new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
-        new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
-        new BuilderClassProcessor(builderHandler),
-        new BuilderClassMethodProcessor(builderHandler),
-        new BuilderMethodProcessor(builderHandler),
-        new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
+      new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
+      new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
+      new BuilderClassProcessor(builderHandler),
+      new BuilderClassMethodProcessor(builderHandler),
+      new BuilderMethodProcessor(builderHandler),
+      new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
   }
 }

@@ -189,7 +189,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     PsiMethod[] afterMethods = afterClass.getMethods();
 
     assertEquals("Methods are different for Class: " + beforeClass.getName(),
-        Arrays.toString(toList(afterMethods)), Arrays.toString(toList(beforeMethods)));
+      Arrays.toString(toList(afterMethods)), Arrays.toString(toList(beforeMethods)));
 
     for (PsiMethod afterMethod : afterMethods) {
 
@@ -238,7 +238,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       final PsiParameterList compareMethodParameterList = compareMethod.getParameterList();
       final PsiParameterList psiMethodParameterList = psiMethod.getParameterList();
       if (compareMethod.getName().equals(psiMethod.getName()) &&
-          compareMethodParameterList.getParametersCount() == psiMethodParameterList.getParametersCount()) {
+        compareMethodParameterList.getParametersCount() == psiMethodParameterList.getParametersCount()) {
         final Collection<String> typesOfCompareMethod = mapToTypeString(compareMethodParameterList);
         final Collection<String> typesOfPsiMethod = mapToTypeString(psiMethodParameterList);
         if (typesOfCompareMethod.equals(typesOfPsiMethod)) {
@@ -298,7 +298,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       final PsiModifierList theirsFieldModifierList = afterConstructor.getModifierList();
       for (PsiMethod beforeConstructor : beforeConstructors) {
         if (afterConstructor.getName().equals(beforeConstructor.getName()) &&
-            afterConstructor.getParameterList().getParametersCount() == beforeConstructor.getParameterList().getParametersCount()) {
+          afterConstructor.getParameterList().getParametersCount() == beforeConstructor.getParameterList().getParametersCount()) {
           PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
 
           compareModifiers(intellijConstructorModifierList, theirsFieldModifierList);

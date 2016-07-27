@@ -41,7 +41,7 @@ public class LombokElementRenameHandler implements RenameHandler {
 
   private void invokeInner(Project project, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor,
-        RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed."),
-        RefactoringBundle.message("rename.title"), null);
+      RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed."),
+      RefactoringBundle.message("rename.title"), null);
   }
 }

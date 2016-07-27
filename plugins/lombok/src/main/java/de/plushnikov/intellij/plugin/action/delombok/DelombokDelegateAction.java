@@ -14,7 +14,7 @@ public class DelombokDelegateAction extends BaseDelombokAction {
   private static BaseDelombokHandler createHandler() {
     final DelegateHandler delegateHandler = new DelegateHandler();
     return new BaseDelombokHandler(
-        new DelegateFieldProcessor(delegateHandler),
-        new DelegateMethodProcessor(delegateHandler));
+      new DelegateFieldProcessor(delegateHandler),
+      new DelegateMethodProcessor(delegateHandler));
   }
 }

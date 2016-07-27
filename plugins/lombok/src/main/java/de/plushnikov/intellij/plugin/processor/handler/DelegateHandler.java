@@ -76,7 +76,7 @@ public class DelegateHandler {
     for (PsiType type : psiTypes) {
       if (!checkConcreteClass(type)) {
         builder.addError("'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
-            type.getCanonicalText());
+          type.getCanonicalText());
         result = false;
       }
     }
@@ -193,11 +193,11 @@ public class DelegateHandler {
     final PsiType returnType = psiSubstitutor.substitute(psiMethod.getReturnType());
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
-        .withModifier(PsiModifier.PUBLIC)
-        .withMethodReturnType(returnType)
-        .withContainingClass(psiClass)
-        //Have to go to original method, or some refactoring action will not work (like extract parameter oder change signature)
-        .withNavigationElement(psiMethod);
+      .withModifier(PsiModifier.PUBLIC)
+      .withMethodReturnType(returnType)
+      .withContainingClass(psiClass)
+      //Have to go to original method, or some refactoring action will not work (like extract parameter oder change signature)
+      .withNavigationElement(psiMethod);
 
     for (PsiTypeParameter typeParameter : psiMethod.getTypeParameters()) {
       methodBuilder.withTypeParameter(typeParameter);
@@ -241,11 +241,11 @@ public class DelegateHandler {
 
       final boolean isMethodCall = psiElement instanceof PsiMethod;
       blockText = String.format("%sthis.%s%s.%s(%s);",
-          PsiType.VOID.equals(returnType) ? "" : "return ",
-          psiElement.getName(),
-          isMethodCall ? "()" : "",
-          psiMethod.getName(),
-          paramString.toString());
+        PsiType.VOID.equals(returnType) ? "" : "return ",
+        psiElement.getName(),
+        isMethodCall ? "()" : "",
+        psiMethod.getName(),
+        paramString.toString());
     } else {
       blockText = "return " + PsiTypeUtil.getReturnValueOfType(returnType) + ";";
     }

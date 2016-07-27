@@ -20,23 +20,23 @@ public class OnXAnnotationHandler {
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
-      "lombok.Getter",
-      "lombok.Setter",
-      "lombok.experimental.Wither",
-      "lombok.NoArgsConstructor",
-      "lombok.RequiredArgsConstructor",
-      "lombok.AllArgsConstructor",
-      "lombok.EqualsAndHashCode"
+    "lombok.Getter",
+    "lombok.Setter",
+    "lombok.experimental.Wither",
+    "lombok.NoArgsConstructor",
+    "lombok.RequiredArgsConstructor",
+    "lombok.AllArgsConstructor",
+    "lombok.EqualsAndHashCode"
   );
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
-      "onConstructor",
-      "onMethod",
-      "onParam"
+    "onConstructor",
+    "onMethod",
+    "onParam"
   );
 
   public static boolean isOnXParameterAnnotation(HighlightInfo highlightInfo, PsiFile file) {
     if (!(ANNOTATION_TYPE_EXPECTED.equals(highlightInfo.getDescription())
-        || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(StringUtil.notNullize(highlightInfo.getDescription())).matches())) {
+      || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(StringUtil.notNullize(highlightInfo.getDescription())).matches())) {
       return false;
     }
 

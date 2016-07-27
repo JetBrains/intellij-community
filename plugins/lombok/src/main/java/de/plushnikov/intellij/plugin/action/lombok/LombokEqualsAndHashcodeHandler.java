@@ -10,7 +10,7 @@ public class LombokEqualsAndHashcodeHandler extends BaseLombokHandler {
 
   protected void processClass(@NotNull PsiClass psiClass) {
     final PsiMethod equalsMethod = findPublicNonStaticMethod(psiClass, "equals", PsiType.BOOLEAN,
-        PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope()));
+      PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope()));
     if (null != equalsMethod) {
       equalsMethod.delete();
     }

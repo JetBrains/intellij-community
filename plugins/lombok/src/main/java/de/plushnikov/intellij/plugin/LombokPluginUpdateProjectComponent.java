@@ -37,10 +37,10 @@ public class LombokPluginUpdateProjectComponent implements ProjectComponent {
 
       NotificationGroup group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.STICKY_BALLOON, true);
       Notification notification = group.createNotification(
-          LombokBundle.message("daemon.donate.title", Version.PLUGIN_VERSION),
-          LombokBundle.message("daemon.donate.content"),
-          NotificationType.INFORMATION,
-          new NotificationListener.UrlOpeningListener(false)
+        LombokBundle.message("daemon.donate.title", Version.PLUGIN_VERSION),
+        LombokBundle.message("daemon.donate.content"),
+        NotificationType.INFORMATION,
+        new NotificationListener.UrlOpeningListener(false)
       );
 
       Notifications.Bus.notify(notification);

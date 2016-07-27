@@ -70,7 +70,7 @@ public class ConfigDiscoveryTest {
   public void testStringConfigPropertySameDirectory() throws Exception {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList(EXPECTED_VALUE));
+      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -81,7 +81,7 @@ public class ConfigDiscoveryTest {
   public void testStringConfigPropertySubDirectory() throws Exception {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList(EXPECTED_VALUE));
+      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -92,9 +92,9 @@ public class ConfigDiscoveryTest {
   public void testStringConfigPropertySubDirectoryStopBubling() throws Exception {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList(EXPECTED_VALUE));
+      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("true"));
+      .thenReturn(Collections.singletonList("true"));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -105,13 +105,13 @@ public class ConfigDiscoveryTest {
   public void testMultipleStringConfigProperty() throws Exception {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("+a;+b"));
+      .thenReturn(Collections.singletonList("+a;+b"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("-a;+cc"));
+      .thenReturn(Collections.singletonList("-a;+cc"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.<String>emptyList());
+      .thenReturn(Collections.<String>emptyList());
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("+_d;"));
+      .thenReturn(Collections.singletonList("+_d;"));
 
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);
@@ -126,13 +126,13 @@ public class ConfigDiscoveryTest {
   public void testMultipleStringConfigPropertyWithStopBubbling() throws Exception {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("+a;+b"));
+      .thenReturn(Collections.singletonList("+a;+b"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("-a;+cc"));
+      .thenReturn(Collections.singletonList("-a;+cc"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("true"));
+      .thenReturn(Collections.singletonList("true"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-        .thenReturn(Collections.singletonList("+_d;"));
+      .thenReturn(Collections.singletonList("+_d;"));
 
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);

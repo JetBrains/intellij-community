@@ -100,14 +100,14 @@ public class LombokLightFieldBuilder extends LightFieldBuilder {
       final LombokLightFieldBuilder anotherLightField = (LombokLightFieldBuilder) another;
 
       boolean stillEquivalent = getName().equals(anotherLightField.getName()) &&
-          getType().equals(anotherLightField.getType());
+        getType().equals(anotherLightField.getType());
 
       if (stillEquivalent) {
         final PsiClass containingClass = getContainingClass();
         final PsiClass anotherContainingClass = anotherLightField.getContainingClass();
 
         stillEquivalent = (null == containingClass && null == anotherContainingClass) ||
-            (null != containingClass && containingClass.isEquivalentTo(anotherContainingClass));
+          (null != containingClass && containingClass.isEquivalentTo(anotherContainingClass));
       }
 
       return stillEquivalent;

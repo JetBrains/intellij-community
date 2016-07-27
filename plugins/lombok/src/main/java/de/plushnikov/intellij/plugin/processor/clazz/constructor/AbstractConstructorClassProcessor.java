@@ -249,10 +249,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties,
                                       boolean useJavaDefaults, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder constructor = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
-        .withConstructor(true)
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(modifier);
+      .withConstructor(true)
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(modifier);
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final PsiModifierList modifierList = constructor.getModifierList();
@@ -288,10 +288,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   private PsiMethod createStaticConstructor(PsiClass psiClass, String staticName, boolean useJavaDefaults, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), staticName)
-        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass))
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+      .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass))
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
     //Static method need type parameter
     for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {

@@ -85,7 +85,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private boolean validNonStatic(@NotNull PsiField psiField, @NotNull final ProblemBuilder builder) {
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       builder.addWarning("Not generating wither for this field: Withers cannot be generated for static fields.",
-          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
+        PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
       return false;
     }
     return true;
@@ -94,7 +94,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   private boolean validNonFinalInitialized(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     if (psiField.hasModifierProperty(PsiModifier.FINAL) && psiField.getInitializer() != null) {
       builder.addWarning("Not generating wither for this field: Withers cannot be generated for final, initialized fields.",
-          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+        PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       return false;
     }
     return true;
@@ -180,10 +180,10 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       final PsiType psiFieldType = psiField.getType();
 
       result = new LombokLightMethodBuilder(psiField.getManager(), getWitherName(accessorsInfo, psiFieldName, psiFieldType))
-          .withMethodReturnType(returnType)
-          .withContainingClass(psiFieldContainingClass)
-          .withNavigationElement(psiField)
-          .withModifier(methodModifier);
+        .withMethodReturnType(returnType)
+        .withContainingClass(psiFieldContainingClass)
+        .withNavigationElement(psiField)
+        .withModifier(methodModifier);
 
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Wither.class);
       addOnXAnnotations(witherAnnotation, result.getModifierList(), "onMethod");
@@ -191,7 +191,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, result, JavaLanguage.INSTANCE);
       PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
       copyAnnotations(psiField, methodParameterModifierList,
-          LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
+        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
       addOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
       result.withParameter(methodParameter);
 

@@ -25,10 +25,10 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package lombok.experimental;\npublic @interface PackagePrivate { }");
     myFixture.addClass("package lombok.experimental;\npublic @interface NonFinal { }");
     myFixture.addClass("package lombok.experimental;\n" +
-                        "public @interface FieldDefaults {\n" +
-                          "AccessLevel level() default AccessLevel.NONE;\n" +
-                          "boolean makeFinal() default false;\n" +
-                        "}");
+      "public @interface FieldDefaults {\n" +
+      "AccessLevel level() default AccessLevel.NONE;\n" +
+      "boolean makeFinal() default false;\n" +
+      "}");
   }
 
   //<editor-fold desc="Handling of makeFinal and @NonFinal">

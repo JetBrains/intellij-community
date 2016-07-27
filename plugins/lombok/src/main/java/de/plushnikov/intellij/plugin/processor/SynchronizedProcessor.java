@@ -47,7 +47,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
     if (null != psiMethod) {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.",
-            PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false)
+          PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false)
         );
       }
 
@@ -60,13 +60,13 @@ public class SynchronizedProcessor extends AbstractProcessor {
           if (null != lockField) {
             if (!lockField.hasModifierProperty(PsiModifier.FINAL)) {
               problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
-                  PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
+                PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
           } else {
             final PsiClassType javaLangObjectType = PsiType.getJavaLangObject(containingClass.getManager(), GlobalSearchScope.allScope(containingClass.getProject()));
 
             problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName),
-                PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", PsiModifier.PRIVATE, PsiModifier.FINAL));
+              PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", PsiModifier.PRIVATE, PsiModifier.FINAL));
           }
         }
       }

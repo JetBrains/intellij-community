@@ -54,7 +54,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
       builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -105,11 +105,11 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final PsiManager psiManager = psiClass.getManager();
 
     return new LombokLightMethodBuilder(psiManager, METHOD_NAME)
-        .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC)
-        .withBody(createCodeBlock(psiClass, psiFields, psiAnnotation));
+      .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(PsiModifier.PUBLIC)
+      .withBody(createCodeBlock(psiClass, psiFields, psiAnnotation));
   }
 
   @NotNull

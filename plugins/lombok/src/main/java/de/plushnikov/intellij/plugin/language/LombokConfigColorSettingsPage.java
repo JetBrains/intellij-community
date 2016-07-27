@@ -14,9 +14,9 @@ import java.util.Map;
 
 public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
-      new AttributesDescriptor("Key", LombokConfigSyntaxHighlighter.KEY),
-      new AttributesDescriptor("Separator", LombokConfigSyntaxHighlighter.SEPARATOR),
-      new AttributesDescriptor("Value", LombokConfigSyntaxHighlighter.VALUE),
+    new AttributesDescriptor("Key", LombokConfigSyntaxHighlighter.KEY),
+    new AttributesDescriptor("Separator", LombokConfigSyntaxHighlighter.SEPARATOR),
+    new AttributesDescriptor("Value", LombokConfigSyntaxHighlighter.VALUE),
   };
 
   @Nullable
@@ -35,15 +35,15 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
   @Override
   public String getDemoText() {
     return "##\n" +
-        "## Key : lombok.log.fieldName\n" +
-        "## Type: string\n" +
-        "##\n" +
-        "## Use this name for the generated logger fields (default: 'log')\n" +
-        "##\n" +
-        "## Examples:\n" +
-        "#\n" +
-        "clear lombok.log.fieldName\n" +
-        "lombok.log.fieldName = LOGGER\n";
+      "## Key : lombok.log.fieldName\n" +
+      "## Type: string\n" +
+      "##\n" +
+      "## Use this name for the generated logger fields (default: 'log')\n" +
+      "##\n" +
+      "## Examples:\n" +
+      "#\n" +
+      "clear lombok.log.fieldName\n" +
+      "lombok.log.fieldName = LOGGER\n";
   }
 
   @Nullable

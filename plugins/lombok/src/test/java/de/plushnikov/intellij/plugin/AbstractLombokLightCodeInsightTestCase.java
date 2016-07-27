@@ -57,7 +57,7 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeIn
   @Override
   public void setUp() throws Exception {
     VfsRootAccess.allowRootAccess(new File(getTestDataPath(), getBasePath()).getCanonicalPath(),
-        new File(LOMBOK_SRC_PATH).getCanonicalPath(), new File(HRISEY_SRC_PATH).getCanonicalPath());
+      new File(LOMBOK_SRC_PATH).getCanonicalPath(), new File(HRISEY_SRC_PATH).getCanonicalPath());
 
     super.setUp();
     loadFilesFrom(LOMBOK_SRC_PATH);

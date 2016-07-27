@@ -152,7 +152,7 @@ public class AccessorsInfo {
   private boolean canPrefixApply(String fieldName, String prefix) {
     final int prefixLength = prefix.length();
     return prefixLength == 0 || fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-        (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || Character.isUpperCase(fieldName.charAt(prefixLength)));
+      (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || Character.isUpperCase(fieldName.charAt(prefixLength)));
   }
 
   private String decapitalizeLikeLombok(String name) {

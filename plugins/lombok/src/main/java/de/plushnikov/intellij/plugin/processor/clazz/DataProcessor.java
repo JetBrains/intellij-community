@@ -86,7 +86,7 @@ public class DataProcessor extends AbstractClassProcessor {
     }
     // create required constructor only if there are no other constructor annotations
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class,
-        Builder.class, lombok.experimental.Builder.class)) {
+      Builder.class, lombok.experimental.Builder.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
@@ -97,7 +97,7 @@ public class DataProcessor extends AbstractClassProcessor {
 
         if (requiredArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
           target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(
-              psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+            psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
         }
       }
     }

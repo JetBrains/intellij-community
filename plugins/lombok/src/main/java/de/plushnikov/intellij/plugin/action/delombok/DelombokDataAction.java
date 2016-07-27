@@ -13,10 +13,10 @@ public class DelombokDataAction extends BaseDelombokAction {
 
   public DelombokDataAction() {
     super(new BaseDelombokHandler(
-        new DataProcessor(new GetterProcessor(new GetterFieldProcessor()),
-            new SetterProcessor(new SetterFieldProcessor()),
-            new EqualsAndHashCodeProcessor(),
-            new ToStringProcessor(),
-            new RequiredArgsConstructorProcessor())));
+      new DataProcessor(new GetterProcessor(new GetterFieldProcessor()),
+        new SetterProcessor(new SetterFieldProcessor()),
+        new EqualsAndHashCodeProcessor(),
+        new ToStringProcessor(),
+        new RequiredArgsConstructorProcessor())));
   }
 }

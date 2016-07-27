@@ -78,9 +78,9 @@ public class BuilderHandler {
 
   @SuppressWarnings("deprecation")
   private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-      Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
-      RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
-      Data.class.getSimpleName(), Value.class.getSimpleName(), lombok.experimental.Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
+    Getter.class.getSimpleName(), Setter.class.getSimpleName(), Wither.class.getSimpleName(), ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
+    RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
+    Data.class.getSimpleName(), Value.class.getSimpleName(), lombok.experimental.Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
 
 
   private final ToStringProcessor toStringProcessor;
@@ -98,8 +98,8 @@ public class BuilderHandler {
       final PsiType psiBuilderType = getBuilderType(psiClass);
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
-          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
-          validateSingular(psiClass, problemBuilder);
+        validateExistingBuilderClass(builderClassName, psiClass, problemBuilder) &&
+        validateSingular(psiClass, problemBuilder);
     }
     return result;
   }
@@ -115,7 +115,7 @@ public class BuilderHandler {
         final String qualifiedName = PsiTypeUtil.getQualifiedName(builderVariable.getType());
         if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
           problemBuilder.addError("Lombok does not know how to create the singular-form builder methods for type '%s'; " +
-              "they won't be generated.", qualifiedName != null ? qualifiedName : builderVariable.getType().getCanonicalText());
+            "they won't be generated.", qualifiedName != null ? qualifiedName : builderVariable.getType().getCanonicalText());
           result = false;
         }
 
@@ -165,7 +165,7 @@ public class BuilderHandler {
       final PsiType psiBuilderType = getBuilderType(psiClass, psiMethod);
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
       result = validateBuilderClassName(builderClassName, psiAnnotation.getProject(), problemBuilder) &&
-          validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
+        validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
     }
     return result;
   }
@@ -254,11 +254,11 @@ public class BuilderHandler {
   private LombokLightMethodBuilder createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation, String methodName) {
     final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
     final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), methodName)
-        .withMethodReturnType(psiTypeWithGenerics)
-        .withContainingClass(containingClass)
-        .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC)
-        .withBody(createBuilderMethodCodeBlock(containingClass, psiTypeWithGenerics));
+      .withMethodReturnType(psiTypeWithGenerics)
+      .withContainingClass(containingClass)
+      .withNavigationElement(psiAnnotation)
+      .withModifier(PsiModifier.PUBLIC)
+      .withBody(createBuilderMethodCodeBlock(containingClass, psiTypeWithGenerics));
 
     addTypeParameters(builderPsiClass, psiMethod, method);
     return method;
@@ -285,7 +285,7 @@ public class BuilderHandler {
     final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
 
     LombokLightClassBuilder builderClass = createBuilderClass(psiClass, psiMethod, builderClassName,
-        psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC), psiAnnotation);
+      psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC), psiAnnotation);
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
     final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
@@ -367,10 +367,10 @@ public class BuilderHandler {
 
     final Project project = psiClass.getProject();
     final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
-        .withContainingClass(psiClass)
-        .withNavigationElement(psiAnnotation)
-        .withParameterTypes(psiTypeParameterListOwner.getTypeParameterList())
-        .withModifier(PsiModifier.PUBLIC);
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withParameterTypes(psiTypeParameterListOwner.getTypeParameterList())
+      .withModifier(PsiModifier.PUBLIC);
     if (isStatic) {
       classBuilder.withModifier(PsiModifier.STATIC);
     }
@@ -461,11 +461,11 @@ public class BuilderHandler {
                                       @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
-        .withMethodReturnType(psiBuilderType)
-        .withContainingClass(builderClass)
-        .withNavigationElement(parentClass)
-        .withModifier(PsiModifier.PUBLIC)
-        .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, psiBuilderType, buildMethodPrepare, buildMethodParameters));
+      .withMethodReturnType(psiBuilderType)
+      .withContainingClass(builderClass)
+      .withNavigationElement(parentClass)
+      .withModifier(PsiModifier.PUBLIC)
+      .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, psiBuilderType, buildMethodPrepare, buildMethodParameters));
 
     if (null == psiMethod) {
       final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);

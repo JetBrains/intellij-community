@@ -23,7 +23,7 @@ public class LombokConfigSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey("SIMPLE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
 
   static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("SIMPLE_BAD_CHARACTER",
-      new TextAttributes(JBColor.RED, null, null, null, Font.BOLD));
+    new TextAttributes(JBColor.RED, null, null, null, Font.BOLD));
 
   private static final TextAttributesKey[] BAD_CHAR_KEYS = new TextAttributesKey[]{BAD_CHARACTER};
   private static final TextAttributesKey[] SEPARATOR_KEYS = new TextAttributesKey[]{SEPARATOR};

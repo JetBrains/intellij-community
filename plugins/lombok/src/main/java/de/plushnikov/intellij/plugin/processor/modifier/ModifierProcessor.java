@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
 import com.intellij.psi.PsiModifierList;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -25,8 +24,9 @@ public interface ModifierProcessor {
 
   /**
    * Compute modification of  response for {@link com.intellij.psi.augment.PsiAugmentProvider#transformModifiers(PsiModifierList, Set<String>)}.
+   *
    * @param modifierList Modifier List that will have mosifiers augmented
-   * @param modifiers Set of modifiers that is currently present for the list
+   * @param modifiers    Set of modifiers that is currently present for the list
    */
   void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers);
 }

@@ -68,7 +68,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL) && null != LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
       builder.addWarning("Not generating setter for this field: Setters cannot be generated for final fields.",
-          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+        PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }
     return result;
@@ -131,10 +131,10 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
 
     PsiType returnType = getReturnType(psiField);
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
-        .withMethodReturnType(returnType)
-        .withContainingClass(psiClass)
-        .withParameter(fieldName, psiFieldType)
-        .withNavigationElement(psiField);
+      .withMethodReturnType(returnType)
+      .withContainingClass(psiClass)
+      .withParameter(fieldName, psiFieldType)
+      .withNavigationElement(psiField);
     if (StringUtil.isNotEmpty(methodModifier)) {
       method.withModifier(methodModifier);
     }
@@ -147,7 +147,7 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
     PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
     if (null != methodParameterModifierList) {
       final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField,
-          LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN);
+        LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN);
       for (String annotationFQN : annotationsToCopy) {
         methodParameterModifierList.addAnnotation(annotationFQN);
       }

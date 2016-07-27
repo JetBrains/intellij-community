@@ -23,9 +23,9 @@ public class LombokLoggerHandler extends BaseLombokHandler {
 
   protected void processClass(@NotNull PsiClass psiClass) {
     final Collection<AbstractLogProcessor> logProcessors = Arrays.asList(
-        new CommonsLogProcessor(), new JBossLogProcessor(),
-        new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(),
-        new Slf4jProcessor(), new XSlf4jProcessor());
+      new CommonsLogProcessor(), new JBossLogProcessor(),
+      new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(),
+      new Slf4jProcessor(), new XSlf4jProcessor());
 
     final String lombokLoggerName = AbstractLogProcessor.getLoggerName(psiClass);
     final boolean lombokLoggerIsStatic = AbstractLogProcessor.isLoggerStatic(psiClass);
@@ -53,9 +53,9 @@ public class LombokLoggerHandler extends BaseLombokHandler {
   private boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     if (!isValidLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
       int result = Messages.showOkCancelDialog(
-          String.format("Logger field: \"%s\" Is not private %s final field named \"%s\". Refactor anyway?",
-              psiField.getName(), lombokLoggerIsStatic ? "static" : "", lombokLoggerName),
-          "Attention!", Messages.getQuestionIcon());
+        String.format("Logger field: \"%s\" Is not private %s final field named \"%s\". Refactor anyway?",
+          psiField.getName(), lombokLoggerIsStatic ? "static" : "", lombokLoggerName),
+        "Attention!", Messages.getQuestionIcon());
       return DialogWrapper.OK_EXIT_CODE == result;
     }
     return true;

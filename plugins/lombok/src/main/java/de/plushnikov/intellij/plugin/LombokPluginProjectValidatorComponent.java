@@ -17,15 +17,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
-
+import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.event.HyperlinkEvent;
-
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 
 /**
  * Shows notifications about project setup issues, that make the plugin not working.
@@ -62,8 +60,8 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
     // If dependency is missing and missing dependency notification setting is enabled (defaults to disabled)
     if (!hasLombokLibrary && ProjectSettings.isEnabled(project, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false)) {
       Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.missing.title"),
-          LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
-          NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
+        LombokBundle.message("config.warn.dependency.missing.message", project.getName()),
+        NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
 
       Notifications.Bus.notify(notification, project);
     }
@@ -76,8 +74,8 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
 
         if (null != lombokVersion && compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
           Notification notification = group.createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
-              LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
-              NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
+            LombokBundle.message("config.warn.dependency.outdated.message", project.getName(), module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
+            NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
 
           Notifications.Bus.notify(notification, project);
         }
@@ -91,9 +89,9 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
       String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(project).getDisplayName();
 
       Notification notification = group.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-          LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
-          NotificationType.ERROR,
-          new SettingsOpeningListener(project, annotationProcessorsConfigName));
+        LombokBundle.message("config.warn.annotation-processing.disabled.message", project.getName()),
+        NotificationType.ERROR,
+        new SettingsOpeningListener(project, annotationProcessorsConfigName));
 
       Notifications.Bus.notify(notification, project);
     }
@@ -150,9 +148,9 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
     int length = Math.max(firstVersionParts.length, secondVersionParts.length);
     for (int i = 0; i < length; i++) {
       int firstPart = i < firstVersionParts.length && !firstVersionParts[i].isEmpty() ?
-          Integer.parseInt(firstVersionParts[i]) : 0;
+        Integer.parseInt(firstVersionParts[i]) : 0;
       int secondPart = i < secondVersionParts.length && !secondVersionParts[i].isEmpty() ?
-          Integer.parseInt(secondVersionParts[i]) : 0;
+        Integer.parseInt(secondVersionParts[i]) : 0;
       if (firstPart < secondPart) {
         return -1;
       }

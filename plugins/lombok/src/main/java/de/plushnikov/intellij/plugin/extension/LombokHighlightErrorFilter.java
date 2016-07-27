@@ -29,8 +29,8 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
       //Handling onX parameters
       if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
-          || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
-          || LOMBOK_ANYANNOTATIONREQUIRED.matcher(description).matches()) {
+        || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
+        || LOMBOK_ANYANNOTATIONREQUIRED.matcher(description).matches()) {
         return false;
       }
     }

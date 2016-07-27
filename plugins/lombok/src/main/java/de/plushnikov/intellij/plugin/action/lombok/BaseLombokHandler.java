@@ -59,7 +59,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     final PsiMethod firstPropertyMethod = fieldMethodMap.values().iterator().next();
 
     final boolean useAnnotationOnClass = haveAllMethodsSameAccessLevel(fieldMethodMap.values()) &&
-        isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod, annotationClass);
+      isNotAnnotatedWithOrSameAccessLevelAs(psiClass, firstPropertyMethod, annotationClass);
 
     if (useAnnotationOnClass) {
       addAnnotation(psiClass, firstPropertyMethod, annotationClass);
@@ -88,7 +88,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       final String currentAccessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(firstPropertyMethod.getModifierList()));
 
       return (presentAccessModifier == null && currentAccessModifier == null) ||
-          (presentAccessModifier != null && presentAccessModifier.equals(currentAccessModifier));
+        (presentAccessModifier != null && presentAccessModifier.equals(currentAccessModifier));
     }
     return true;
   }
@@ -129,7 +129,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       }
     } else {
       presentAnnotation.setDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME,
-          newPsiAnnotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+        newPsiAnnotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
     }
   }
 
@@ -157,8 +157,8 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     final PsiMethod[] toStringMethods = psiClass.findMethodsByName(methodName, false);
     for (PsiMethod method : toStringMethods) {
       if (method.hasModifierProperty(PsiModifier.PUBLIC) &&
-          !method.hasModifierProperty(PsiModifier.STATIC) &&
-          returnType.equals(method.getReturnType())) {
+        !method.hasModifierProperty(PsiModifier.STATIC) &&
+        returnType.equals(method.getReturnType())) {
 
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] psiParameters = parameterList.getParameters();

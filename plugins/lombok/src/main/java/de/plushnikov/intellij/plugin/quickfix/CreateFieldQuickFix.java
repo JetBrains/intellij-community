@@ -94,7 +94,7 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
           }
 
           final List<PsiGenerationInfo<PsiField>> generationInfos = GenerateMembersUtil.insertMembersAtOffset(myClass.getContainingFile(), editor.getCaretModel().getOffset(),
-              Collections.singletonList(new PsiGenerationInfo<PsiField>(psiField)));
+            Collections.singletonList(new PsiGenerationInfo<PsiField>(psiField)));
           if (!generationInfos.isEmpty()) {
             PsiField psiMember = generationInfos.iterator().next().getPsiMember();
             editor.getCaretModel().moveToOffset(psiMember.getTextRange().getEndOffset());

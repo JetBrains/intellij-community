@@ -111,7 +111,7 @@ public class PsiClassUtil {
   public static boolean hasSuperClass(@NotNull final PsiClass psiClass) {
     final PsiClass superClass = psiClass.getSuperClass();
     return (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())
-        || !superTypesIsEmptyOrObjectOnly(psiClass));
+      || !superTypesIsEmptyOrObjectOnly(psiClass));
   }
 
   private static boolean superTypesIsEmptyOrObjectOnly(@NotNull final PsiClass psiClass) {

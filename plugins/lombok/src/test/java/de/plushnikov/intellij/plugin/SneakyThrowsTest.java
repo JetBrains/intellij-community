@@ -49,12 +49,12 @@ public class SneakyThrowsTest extends LightCodeInsightTestCase {
 
   private static PsiMethodCallExpression createCall(@NonNls final String body) throws Exception {
     final PsiFile file = createFile("test.java", "class Test { " + body +
-        "void throwsMyException() throws MyException {}" +
-        "void throwsSomeException() throws SomeException {}" +
-        "static class MyException extends Exception {}" +
-        "static class SomeException extends Exception {}" +
-        "static class Exception {}" +
-        "}");
+      "void throwsMyException() throws MyException {}" +
+      "void throwsSomeException() throws SomeException {}" +
+      "static class MyException extends Exception {}" +
+      "static class SomeException extends Exception {}" +
+      "static class Exception {}" +
+      "}");
     PsiMethodCallExpression methodCall = findMethodCall(file);
     assertNotNull(methodCall);
     return methodCall;

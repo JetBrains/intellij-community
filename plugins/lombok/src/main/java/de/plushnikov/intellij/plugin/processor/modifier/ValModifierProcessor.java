@@ -4,12 +4,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-
+import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-
-import de.plushnikov.intellij.plugin.processor.ValProcessor;
 
 /**
  * @author Alexej Kubarev

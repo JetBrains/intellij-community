@@ -7,15 +7,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
-
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Florian Böhm

@@ -25,7 +25,7 @@ public class LombokLightParameter extends LightParameter {
     PsiManager manager = declarationScope.getManager();
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
-        new LombokLightModifierList(manager, language));
+      new LombokLightModifierList(manager, language));
   }
 
   @NotNull

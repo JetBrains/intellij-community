@@ -1,8 +1,8 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import java.io.IOException;
-
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+
+import java.io.IOException;
 
 public class UtilityClassTest extends AbstractLombokParsingTestCase {
 

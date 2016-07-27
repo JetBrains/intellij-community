@@ -96,7 +96,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
     }
@@ -109,12 +109,12 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
             builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
-                PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
       }

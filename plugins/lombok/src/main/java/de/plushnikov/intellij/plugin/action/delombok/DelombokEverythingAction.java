@@ -55,21 +55,21 @@ public class DelombokEverythingAction extends BaseDelombokAction {
     final BuilderHandler builderHandler = new BuilderHandler(toStringProcessor, noArgsConstructorProcessor);
 
     return new BaseDelombokHandler(true,
-        requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
-        new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor),
-        getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor),
-        new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
-        setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
-        new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
-        getterFieldProcessor, setterFieldProcessor,
-        new WitherFieldProcessor(requiredArgsConstructorProcessor),
-        new DelegateFieldProcessor(delegateHandler),
-        new DelegateMethodProcessor(delegateHandler),
+      requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
+      new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor),
+      getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor),
+      new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
+      setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
+      new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
+      getterFieldProcessor, setterFieldProcessor,
+      new WitherFieldProcessor(requiredArgsConstructorProcessor),
+      new DelegateFieldProcessor(delegateHandler),
+      new DelegateMethodProcessor(delegateHandler),
 
-        new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
-        new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
-        new BuilderClassProcessor(builderHandler), new BuilderClassMethodProcessor(builderHandler),
-        new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
+      new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
+      new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
+      new BuilderClassProcessor(builderHandler), new BuilderClassMethodProcessor(builderHandler),
+      new BuilderMethodProcessor(builderHandler), new BuilderProcessor(allArgsConstructorProcessor, builderHandler));
   }
 
 }
