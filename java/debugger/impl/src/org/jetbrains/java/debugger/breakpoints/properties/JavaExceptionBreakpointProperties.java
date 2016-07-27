@@ -61,6 +61,10 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
     NOTIFY_UNCAUGHT = state.NOTIFY_UNCAUGHT;
     myQualifiedName = state.myQualifiedName;
     myPackageName = state.myPackageName;
+
+    setCatchFiltersEnabled(state.isCatchFiltersEnabled());
+    myCatchClassFilters = state.getCatchClassFilters();
+    myCatchClassExclusionFilters = state.getCatchClassExclusionFilters();
   }
 
   @OptionTag("catch-filters-enabled")
