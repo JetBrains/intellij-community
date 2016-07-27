@@ -11,6 +11,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="ant" />
-    <orderEntry type="module" module-name="android" scope="TEST" />
+    <orderEntry type="module" module-name="uitest-framework" scope="TEST" />
   </component>
 </module>
