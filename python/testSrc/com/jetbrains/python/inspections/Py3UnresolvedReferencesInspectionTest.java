@@ -41,7 +41,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
       myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
       myFixture.checkHighlighting(true, false, false);
@@ -49,7 +49,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doMultiFileTest(@NotNull final String filename) {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
       final String testName = getTestName(false);
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
       myFixture.configureFromTempProjectFile(filename);
@@ -144,6 +144,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-19085
   public void testReAndRegexFullmatch() {
+    doTest();
+  }
+
+  // PY-19775
+  public void testAsyncInitMethod() {
     doTest();
   }
 }
