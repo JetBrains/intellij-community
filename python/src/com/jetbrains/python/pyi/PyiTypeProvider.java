@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author vlan
@@ -196,18 +198,10 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite, @NotNull PsiElement resolved,
+  private static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                  @NotNull PyFunction function,
                                                                   @NotNull TypeEvalContext context) {
-    if (resolved instanceof PyCallable) {
-      final PyCallable callable = (PyCallable)resolved;
-      final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, resolved);
-      final List<PyParameter> parameters = Arrays.asList(callable.getParameterList().getParameters());
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
-      return PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
-    }
-    else {
-      return Collections.emptyMap();
-    }
+    final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
+    return PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
   }
 }
