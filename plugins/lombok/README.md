@@ -37,11 +37,16 @@ Features / Supports
 - [@Accessors](https://projectlombok.org/features/experimental/Accessors.html)
 - [@Wither](https://projectlombok.org/features/experimental/Wither.html)
 - [@SneakyThrows](https://projectlombok.org/features/SneakyThrows.html)
-- [@val](https://projectlombok.org/features/val.html) with IntelliJ 14.1
+- [@val](https://projectlombok.org/features/val.html) with IntelliJ 14.1 (improved in 2016.2)
 - [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) with IntelliJ 2016.2
 - [lombok config files syntax highlighting](https://projectlombok.org/features/configuration.html)
 - code inspections
 - refactoring actions (lombok and delombok)
+- project configuration inspection (missing/out-of-date Lombok dependency, annotation processing disabled)
+
+Many features of the plugin (including warnings) could be disabled through per-project settings.
+
+__Note:__ To make use of plugin features like `@UtilityClass` and for _better_ `val` support while using IntelliJ 14.1 - 2016.1, you need to enable "Runtime patching" in Plugin settings. This is __not__ needed with 2016.2 and higher.
 
 Installation
 ------------
@@ -70,7 +75,7 @@ In your `build.gradle`:
 ```groovy
 //'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.16.8"
+compile "org.projectlombok:lombok:1.16.10"
 ```
 
 ##### Maven
@@ -80,7 +85,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.16.8</version>
+		<version>1.16.10</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -89,7 +94,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.16.8" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.16.10" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
