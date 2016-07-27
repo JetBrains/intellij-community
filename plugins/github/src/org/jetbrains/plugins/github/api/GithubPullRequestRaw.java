@@ -15,21 +15,25 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.Date;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubPullRequestRaw {
-  private Long number;
-  private String state;
-  private String title;
+  @Mandatory private Long number;
+  @Mandatory private String state;
+  @Mandatory private String title;
   private String body;
-  private String bodyHtml;
+  @Mandatory private String bodyHtml;
 
   private String url;
-  private String htmlUrl;
-  private String diffUrl;
-  private String patchUrl;
-  private String issueUrl;
+  @Mandatory private String htmlUrl;
+  @Mandatory private String diffUrl;
+  @Mandatory private String patchUrl;
+  @Mandatory private String issueUrl;
 
   private Boolean merged;
   private Boolean mergeable;
@@ -40,22 +44,22 @@ class GithubPullRequestRaw {
   private Integer deletions;
   private Integer changedFiles;
 
-  private Date createdAt;
-  private Date updatedAt;
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
   private Date closedAt;
   private Date mergedAt;
 
-  private GithubUserRaw user;
+  @Mandatory private GithubUserRaw user;
 
-  private LinkRaw head;
-  private LinkRaw base;
+  @Mandatory private LinkRaw head;
+  @Mandatory private LinkRaw base;
 
   public static class LinkRaw {
-    private String label;
-    private String ref;
-    private String sha;
+    @Mandatory private String label;
+    @Mandatory private String ref;
+    @Mandatory private String sha;
 
-    private GithubRepoRaw repo;
-    private GithubUserRaw user;
+    @Mandatory private GithubRepoRaw repo;
+    @Mandatory private GithubUserRaw user;
   }
 }

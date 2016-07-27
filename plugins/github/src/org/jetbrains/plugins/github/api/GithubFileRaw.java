@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubFileRaw {
-  private String filename;
+  @Mandatory private String filename;
 
-  private Integer additions;
-  private Integer deletions;
-  private Integer changes;
-  private String status;
-  private String rawUrl;
+  @Mandatory private Integer additions;
+  @Mandatory private Integer deletions;
+  @Mandatory private Integer changes;
+  @Mandatory private String status;
+  @Mandatory private String rawUrl;
   private String blobUrl;
-  private String patch;
+  @Mandatory private String patch;
 }

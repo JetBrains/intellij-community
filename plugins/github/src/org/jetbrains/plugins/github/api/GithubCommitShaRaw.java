@@ -15,8 +15,12 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommitShaRaw {
-  private String url;
-  private String sha;
+  @Mandatory private String url;
+  @Mandatory private String sha;
 }

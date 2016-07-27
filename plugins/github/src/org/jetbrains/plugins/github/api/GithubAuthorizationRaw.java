@@ -15,14 +15,18 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.List;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubAuthorizationRaw {
-  private Long id;
+  @Mandatory private Long id;
   private String url;
-  private String token;
+  @Mandatory private String token;
   private String note;
   private String noteUrl;
-  private List<String> scopes;
+  @Mandatory private List<String> scopes;
 }

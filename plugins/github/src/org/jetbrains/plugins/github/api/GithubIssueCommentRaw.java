@@ -15,19 +15,23 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.Date;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubIssueCommentRaw {
-  private Long id;
+  @Mandatory private Long id;
 
   private String url;
-  private String htmlUrl;
+  @Mandatory private String htmlUrl;
   private String body;
-  private String bodyHtml;
+  @Mandatory private String bodyHtml;
 
-  private Date createdAt;
-  private Date updatedAt;
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
 
-  private GithubUserRaw user;
+  @Mandatory private GithubUserRaw user;
 }

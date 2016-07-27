@@ -16,24 +16,27 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
 
 import java.util.Date;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubRepoRaw {
   private Long id;
-  private String name;
+  @Mandatory private String name;
   private String fullName;
-  private String description;
+  @Mandatory private String description;
 
   @SerializedName("private")
-  private Boolean isPrivate;
+  @Mandatory private Boolean isPrivate;
   @SerializedName("fork")
-  private Boolean isFork;
+  @Mandatory private Boolean isFork;
 
   private String url;
-  private String htmlUrl;
-  private String cloneUrl;
+  @Mandatory private String htmlUrl;
+  @Mandatory private String cloneUrl;
   private String gitUrl;
   private String sshUrl;
   private String svnUrl;
@@ -57,7 +60,7 @@ class GithubRepoRaw {
   private Boolean hasWiki;
   private Boolean hasDownloads;
 
-  private GithubUserRaw owner;
+  @Mandatory private GithubUserRaw owner;
   private GithubUserRaw organization;
 
   private Date pushedAt;

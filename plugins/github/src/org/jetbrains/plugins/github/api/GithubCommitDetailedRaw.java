@@ -15,16 +15,20 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.List;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubCommitDetailedRaw extends GithubCommitRaw {
-  private CommitStatsRaw stats;
-  private List<GithubFileRaw> files;
+  @Mandatory private CommitStatsRaw stats;
+  @Mandatory private List<GithubFileRaw> files;
 
   public static class CommitStatsRaw {
-    private Integer additions;
-    private Integer deletions;
-    private Integer total;
+    @Mandatory private Integer additions;
+    @Mandatory private Integer deletions;
+    @Mandatory private Integer total;
   }
 }

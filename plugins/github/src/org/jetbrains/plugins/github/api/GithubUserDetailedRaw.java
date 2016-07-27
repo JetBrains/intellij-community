@@ -15,6 +15,10 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubUserDetailedRaw extends GithubUserRaw {
   private String name;
@@ -33,9 +37,9 @@ class GithubUserDetailedRaw extends GithubUserRaw {
   private UserPlanRaw plan;
 
   public static class UserPlanRaw {
-    private String name;
+    @Mandatory private String name;
     private Long space;
     private Long collaborators;
-    private Long privateRepos;
+    @Mandatory private Long privateRepos;
   }
 }

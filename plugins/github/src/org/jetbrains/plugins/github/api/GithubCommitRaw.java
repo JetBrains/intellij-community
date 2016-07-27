@@ -15,29 +15,33 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.Date;
 import java.util.List;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubCommitRaw extends GithubCommitShaRaw {
   private GithubUserRaw author;
   private GithubUserRaw committer;
 
-  private GitCommitRaw commit;
+  @Mandatory private GitCommitRaw commit;
 
-  private List<GithubCommitRaw> parents;
+  @Mandatory private List<GithubCommitRaw> parents;
 
   public static class GitCommitRaw {
     private String url;
-    private String message;
+    @Mandatory private String message;
 
-    private GitUserRaw author;
-    private GitUserRaw committer;
+    @Mandatory private GitUserRaw author;
+    @Mandatory private GitUserRaw committer;
   }
 
   public static class GitUserRaw {
-    private String name;
-    private String email;
-    private Date date;
+    @Mandatory private String name;
+    @Mandatory private String email;
+    @Mandatory private Date date;
   }
 }

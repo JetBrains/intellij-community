@@ -16,24 +16,27 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
 
 import java.util.Date;
 import java.util.Map;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubGistRaw {
-  private String id;
-  private String description;
+  @Mandatory private String id;
+  @Mandatory private String description;
 
   @SerializedName("public")
-  private Boolean isPublic;
+  @Mandatory private Boolean isPublic;
 
   private String url;
-  private String htmlUrl;
+  @Mandatory private String htmlUrl;
   private String gitPullUrl;
   private String gitPushUrl;
 
-  private Map<String, GistFileRaw> files;
+  @Mandatory private Map<String, GistFileRaw> files;
 
   private GithubUserRaw owner;
 
@@ -41,10 +44,10 @@ class GithubGistRaw {
 
   public static class GistFileRaw {
     private Long size;
-    private String filename;
-    private String content;
+    @Mandatory private String filename;
+    @Mandatory private String content;
 
-    private String raw_url;
+    @Mandatory private String raw_url;
 
     private String type;
     private String language;

@@ -15,21 +15,25 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.Date;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubIssueRaw {
   private String url;
-  private String htmlUrl;
-  private Long number;
-  private String state;
-  private String title;
-  private String body;
+  @Mandatory private String htmlUrl;
+  @Mandatory private Long number;
+  @Mandatory private String state;
+  @Mandatory private String title;
+  @Mandatory private String body;
 
-  private GithubUserRaw user;
+  @Mandatory private GithubUserRaw user;
   private GithubUserRaw assignee;
 
   private Date closedAt;
-  private Date createdAt;
-  private Date updatedAt;
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
 }

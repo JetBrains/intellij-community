@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.Date;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubUserRaw {
-  private String login;
+  @Mandatory private String login;
   private Long id;
 
   private String url;
-  private String htmlUrl;
+  @Mandatory private String htmlUrl;
 
   private Integer followers;
   private Integer following;

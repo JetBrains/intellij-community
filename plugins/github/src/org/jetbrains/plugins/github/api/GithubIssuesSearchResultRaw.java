@@ -15,9 +15,13 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.Mandatory;
+import com.intellij.tasks.impl.gson.RestModel;
+
 import java.util.List;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubIssuesSearchResultRaw {
-  private List<GithubIssueRaw> items;
+  @Mandatory private List<GithubIssueRaw> items;
 }
