@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,45 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+import java.util.List;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubUser {
-  @Mandatory private String login;
-  private Long id;
-
+public class GithubAuthorization {
+  @Mandatory private Long id;
   private String url;
-  @Mandatory private String htmlUrl;
-
-  private Integer followers;
-  private Integer following;
-  private String avatarUrl;
-  private String gravatarId;
-  private Integer collaborators;
-  private String blog;
-
-  private Date createdAt;
+  @Mandatory private String token;
+  private String note;
+  private String noteUrl;
+  @Mandatory private List<String> scopes;
 
   @NotNull
-  public String getLogin() {
-    return login;
+  public String getToken() {
+    return token;
   }
 
   @NotNull
-  public String getHtmlUrl() {
-    return htmlUrl;
+  public List<String> getScopes() {
+    return scopes;
   }
 
   @Nullable
-  public String getAvatarUrl() {
-    return avatarUrl;
+  public String getNote() {
+    return note;
+  }
+
+  public long getId() {
+    return id;
   }
 }

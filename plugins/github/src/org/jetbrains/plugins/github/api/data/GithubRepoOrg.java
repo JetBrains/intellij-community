@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubIssuesSearchResult {
-  @Mandatory private List<GithubIssue> items;
+public class GithubRepoOrg extends GithubRepo {
+  @Mandatory private Permissions permissions;
+
+  public static class Permissions {
+    @Mandatory private Boolean admin;
+    @Mandatory private Boolean pull;
+    @Mandatory private Boolean push;
+
+    public boolean isAdmin() {
+      return admin;
+    }
+
+    public boolean isPull() {
+      return pull;
+    }
+
+    public boolean isPush() {
+      return push;
+    }
+  }
 
   @NotNull
-  public List<GithubIssue> getIssues() {
-    return items;
+  public Permissions getPermissions() {
+    return permissions;
   }
 }

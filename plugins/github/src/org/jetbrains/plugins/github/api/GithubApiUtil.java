@@ -27,6 +27,7 @@ import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubConnection.PagedRequest;
+import org.jetbrains.plugins.github.api.data.*;
 import org.jetbrains.plugins.github.api.requests.*;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,54 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubFile {
-  @Mandatory private String filename;
+public class GithubUser {
+  @Mandatory private String login;
+  private Long id;
 
-  @Mandatory private Integer additions;
-  @Mandatory private Integer deletions;
-  @Mandatory private Integer changes;
-  @Mandatory private String status;
-  @Mandatory private String rawUrl;
-  private String blobUrl;
-  @Mandatory private String patch;
+  private String url;
+  @Mandatory private String htmlUrl;
+
+  private Integer followers;
+  private Integer following;
+  private String avatarUrl;
+  private String gravatarId;
+  private Integer collaborators;
+  private String blog;
+
+  private Date createdAt;
 
   @NotNull
-  public String getFilename() {
-    return filename;
-  }
-
-  public int getAdditions() {
-    return additions;
-  }
-
-  public int getDeletions() {
-    return deletions;
-  }
-
-  public int getChanges() {
-    return changes;
+  public String getLogin() {
+    return login;
   }
 
   @NotNull
-  public String getStatus() {
-    return status;
+  public String getHtmlUrl() {
+    return htmlUrl;
   }
 
-  @NotNull
-  public String getRawUrl() {
-    return rawUrl;
-  }
-
-  @NotNull
-  public String getPatch() {
-    return patch;
+  @Nullable
+  public String getAvatarUrl() {
+    return avatarUrl;
   }
 }

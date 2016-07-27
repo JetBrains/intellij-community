@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
-import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubBranch {
-  @Mandatory private String name;
+public class GithubRepoDetailed extends GithubRepo {
+  private GithubRepo parent;
+  private GithubRepo source;
 
-  @NotNull
-  public String getName() {
-    return name;
+  @Nullable
+  public GithubRepo getParent() {
+    return parent;
+  }
+
+  @Nullable
+  public GithubRepo getSource() {
+    return source;
   }
 }

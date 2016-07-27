@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
+import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubRepoDetailed extends GithubRepo {
-  private GithubRepo parent;
-  private GithubRepo source;
+public class GithubOrg {
+  @Mandatory private String login;
+  private Long id;
+  private String url;
 
-  @Nullable
-  public GithubRepo getParent() {
-    return parent;
-  }
-
-  @Nullable
-  public GithubRepo getSource() {
-    return source;
+  @NotNull
+  public String getLogin() {
+    return login;
   }
 }

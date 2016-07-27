@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,55 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
-
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubIssueComment {
-  @Mandatory private Long id;
+public class GithubFile {
+  @Mandatory private String filename;
 
-  private String url;
-  @Mandatory private String htmlUrl;
-  private String body;
-  @Mandatory private String bodyHtml;
+  @Mandatory private Integer additions;
+  @Mandatory private Integer deletions;
+  @Mandatory private Integer changes;
+  @Mandatory private String status;
+  @Mandatory private String rawUrl;
+  private String blobUrl;
+  @Mandatory private String patch;
 
-  @Mandatory private Date createdAt;
-  @Mandatory private Date updatedAt;
+  @NotNull
+  public String getFilename() {
+    return filename;
+  }
 
-  @Mandatory private GithubUser user;
+  public int getAdditions() {
+    return additions;
+  }
 
-  public long getId() {
-    return id;
+  public int getDeletions() {
+    return deletions;
+  }
+
+  public int getChanges() {
+    return changes;
   }
 
   @NotNull
-  public String getHtmlUrl() {
-    return htmlUrl;
+  public String getStatus() {
+    return status;
   }
 
   @NotNull
-  public String getBodyHtml() {
-    return bodyHtml;
+  public String getRawUrl() {
+    return rawUrl;
   }
 
   @NotNull
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  @NotNull
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  @NotNull
-  public GithubUser getUser() {
-    return user;
+  public String getPatch() {
+    return patch;
   }
 }

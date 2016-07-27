@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubAuthorization {
+public class GithubIssueComment {
   @Mandatory private Long id;
+
   private String url;
-  @Mandatory private String token;
-  private String note;
-  private String noteUrl;
-  @Mandatory private List<String> scopes;
+  @Mandatory private String htmlUrl;
+  private String body;
+  @Mandatory private String bodyHtml;
 
-  @NotNull
-  public String getToken() {
-    return token;
-  }
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
 
-  @NotNull
-  public List<String> getScopes() {
-    return scopes;
-  }
-
-  @Nullable
-  public String getNote() {
-    return note;
-  }
+  @Mandatory private GithubUser user;
 
   public long getId() {
     return id;
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @NotNull
+  public String getBodyHtml() {
+    return bodyHtml;
+  }
+
+  @NotNull
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+
+  @NotNull
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  @NotNull
+  public GithubUser getUser() {
+    return user;
   }
 }

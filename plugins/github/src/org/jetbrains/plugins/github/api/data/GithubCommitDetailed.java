@@ -13,25 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubCommitSha {
-  @Mandatory private String url;
-  @Mandatory private String sha;
+public class GithubCommitDetailed extends GithubCommit {
+  @Mandatory private CommitStats stats;
+  @Mandatory private List<GithubFile> files;
 
-  @NotNull
-  public String getUrl() {
-    return url;
+  public static class CommitStats {
+    @Mandatory private Integer additions;
+    @Mandatory private Integer deletions;
+    @Mandatory private Integer total;
+
+    public int getAdditions() {
+      return additions;
+    }
+
+    public int getDeletions() {
+      return deletions;
+    }
+
+    public int getTotal() {
+      return total;
+    }
   }
 
   @NotNull
-  public String getSha() {
-    return sha;
+  public CommitStats getStats() {
+    return stats;
+  }
+
+  @NotNull
+  public List<GithubFile> getFiles() {
+    return files;
   }
 }
