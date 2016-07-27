@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -61,5 +63,104 @@ class GithubPullRequestRaw {
 
     @Mandatory private GithubRepoRaw repo;
     @Mandatory private GithubUserRaw user;
+
+    @NotNull
+    public String getLabel() {
+      return label;
+    }
+
+    @NotNull
+    public String getRef() {
+      return ref;
+    }
+
+    @NotNull
+    public String getSha() {
+      return sha;
+    }
+
+    @NotNull
+    public GithubRepoRaw getRepo() {
+      return repo;
+    }
+
+    @NotNull
+    public GithubUserRaw getUser() {
+      return user;
+    }
+  }
+
+  public long getNumber() {
+    return number;
+  }
+
+  @NotNull
+  public String getState() {
+    return state;
+  }
+
+  @NotNull
+  public String getTitle() {
+    return title;
+  }
+
+  @NotNull
+  public String getBodyHtml() {
+    return bodyHtml;
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @NotNull
+  public String getDiffUrl() {
+    return diffUrl;
+  }
+
+  @NotNull
+  public String getPatchUrl() {
+    return patchUrl;
+  }
+
+  @NotNull
+  public String getIssueUrl() {
+    return issueUrl;
+  }
+
+  @NotNull
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+
+  @NotNull
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  @Nullable
+  public Date getClosedAt() {
+    return closedAt;
+  }
+
+  @Nullable
+  public Date getMergedAt() {
+    return mergedAt;
+  }
+
+  @NotNull
+  public GithubUserRaw getUser() {
+    return user;
+  }
+
+  @NotNull
+  public LinkRaw getHead() {
+    return head;
+  }
+
+  @NotNull
+  public LinkRaw getBase() {
+    return base;
   }
 }

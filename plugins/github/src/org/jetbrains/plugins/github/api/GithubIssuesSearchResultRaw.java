@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -24,4 +25,9 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 class GithubIssuesSearchResultRaw {
   @Mandatory private List<GithubIssueRaw> items;
+
+  @NotNull
+  public List<GithubIssueRaw> getIssues() {
+    return items;
+  }
 }

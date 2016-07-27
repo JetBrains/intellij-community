@@ -16,10 +16,21 @@
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.Nullable;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubRepoDetailedRaw extends GithubRepoRaw {
   private GithubRepoRaw parent;
   private GithubRepoRaw source;
+
+  @Nullable
+  public GithubRepoRaw getParent() {
+    return parent;
+  }
+
+  @Nullable
+  public GithubRepoRaw getSource() {
+    return source;
+  }
 }

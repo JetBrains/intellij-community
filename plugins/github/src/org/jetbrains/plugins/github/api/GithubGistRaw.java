@@ -18,8 +18,12 @@ package org.jetbrains.plugins.github.api;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @RestModel
@@ -51,5 +55,49 @@ class GithubGistRaw {
 
     private String type;
     private String language;
+
+    @NotNull
+    public String getFilename() {
+      return filename;
+    }
+
+    @NotNull
+    public String getContent() {
+      return content;
+    }
+
+    @NotNull
+    public String getRawUrl() {
+      return raw_url;
+    }
+  }
+
+  @NotNull
+  public String getId() {
+    return id;
+  }
+
+  @NotNull
+  public String getDescription() {
+    return description;
+  }
+
+  public boolean isPublic() {
+    return isPublic;
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @NotNull
+  public List<GistFileRaw> getFiles() {
+    return new ArrayList<>(files.values());
+  }
+
+  @Nullable
+  public GithubUserRaw getUser() {
+    return owner;
   }
 }

@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -37,4 +39,19 @@ class GithubUserRaw {
   private String blog;
 
   private Date createdAt;
+
+  @NotNull
+  public String getLogin() {
+    return login;
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @Nullable
+  public String getAvatarUrl() {
+    return avatarUrl;
+  }
 }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,5 +31,27 @@ class GithubCommitDetailedRaw extends GithubCommitRaw {
     @Mandatory private Integer additions;
     @Mandatory private Integer deletions;
     @Mandatory private Integer total;
+
+    public int getAdditions() {
+      return additions;
+    }
+
+    public int getDeletions() {
+      return deletions;
+    }
+
+    public int getTotal() {
+      return total;
+    }
+  }
+
+  @NotNull
+  public CommitStatsRaw getStats() {
+    return stats;
+  }
+
+  @NotNull
+  public List<GithubFileRaw> getFiles() {
+    return files;
   }
 }

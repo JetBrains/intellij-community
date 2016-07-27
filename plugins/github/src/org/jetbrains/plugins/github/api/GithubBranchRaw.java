@@ -17,9 +17,15 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
 class GithubBranchRaw {
   @Mandatory private String name;
+
+  @NotNull
+  public String getName() {
+    return name;
+  }
 }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -24,4 +25,9 @@ class GithubOrgRaw {
   @Mandatory private String login;
   private Long id;
   private String url;
+
+  @NotNull
+  public String getLogin() {
+    return login;
+  }
 }

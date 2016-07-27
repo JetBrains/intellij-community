@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -30,4 +31,36 @@ class GithubFileRaw {
   @Mandatory private String rawUrl;
   private String blobUrl;
   @Mandatory private String patch;
+
+  @NotNull
+  public String getFilename() {
+    return filename;
+  }
+
+  public int getAdditions() {
+    return additions;
+  }
+
+  public int getDeletions() {
+    return deletions;
+  }
+
+  public int getChanges() {
+    return changes;
+  }
+
+  @NotNull
+  public String getStatus() {
+    return status;
+  }
+
+  @NotNull
+  public String getRawUrl() {
+    return rawUrl;
+  }
+
+  @NotNull
+  public String getPatch() {
+    return patch;
+  }
 }

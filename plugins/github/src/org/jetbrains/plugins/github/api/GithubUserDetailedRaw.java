@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -41,5 +43,43 @@ class GithubUserDetailedRaw extends GithubUserRaw {
     private Long space;
     private Long collaborators;
     @Mandatory private Long privateRepos;
+
+    @NotNull
+    public String getName() {
+      return name;
+    }
+
+    public long getPrivateRepos() {
+      return privateRepos;
+    }
+  }
+
+  @Nullable
+  public String getName() {
+    return name;
+  }
+
+  @Nullable
+  public String getEmail() {
+    return email;
+  }
+
+  @Nullable
+  public String getType() {
+    return type;
+  }
+
+  @Nullable
+  public Integer getOwnedPrivateRepos() {
+    return ownedPrivateRepos;
+  }
+
+  @Nullable
+  public UserPlanRaw getPlan() {
+    return plan;
+  }
+
+  public boolean canCreatePrivateRepo() {
+    return getPlan() == null || getOwnedPrivateRepos() == null || getPlan().getPrivateRepos() > getOwnedPrivateRepos();
   }
 }

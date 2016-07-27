@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
@@ -38,4 +39,47 @@ class GithubCommitCommentRaw {
 
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  public long getId() {
+    return id;
+  }
+
+  @NotNull
+  public String getSha() {
+    return commitId;
+  }
+
+  @NotNull
+  public String getPath() {
+    return path;
+  }
+
+  public long getPosition() {
+    return position;
+  }
+
+  @NotNull
+  public String getBodyHtml() {
+    return bodyHtml;
+  }
+
+  @NotNull
+  public GithubUserRaw getUser() {
+    return user;
+  }
+
+  @NotNull
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+
+  @NotNull
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
 }

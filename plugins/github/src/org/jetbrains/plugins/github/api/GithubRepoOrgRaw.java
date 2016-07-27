@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
@@ -27,5 +28,22 @@ class GithubRepoOrgRaw extends GithubRepoRaw {
     @Mandatory private Boolean admin;
     @Mandatory private Boolean pull;
     @Mandatory private Boolean push;
+
+    public boolean isAdmin() {
+      return admin;
+    }
+
+    public boolean isPull() {
+      return pull;
+    }
+
+    public boolean isPush() {
+      return push;
+    }
+  }
+
+  @NotNull
+  public Permissions getPermissions() {
+    return permissions;
   }
 }

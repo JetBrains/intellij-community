@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -29,4 +31,23 @@ class GithubAuthorizationRaw {
   private String note;
   private String noteUrl;
   @Mandatory private List<String> scopes;
+
+  @NotNull
+  public String getToken() {
+    return token;
+  }
+
+  @NotNull
+  public List<String> getScopes() {
+    return scopes;
+  }
+
+  @Nullable
+  public String getNote() {
+    return note;
+  }
+
+  public long getId() {
+    return id;
+  }
 }

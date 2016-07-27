@@ -18,6 +18,8 @@ package org.jetbrains.plugins.github.api;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -66,4 +68,59 @@ class GithubRepoRaw {
   private Date pushedAt;
   private Date createdAt;
   private Date updatedAt;
+
+  @NotNull
+  public String getName() {
+    return name;
+  }
+
+  @NotNull
+  public String getDescription() {
+    return description;
+  }
+
+  public boolean isPrivate() {
+    return isPrivate;
+  }
+
+  public boolean isFork() {
+    return isFork;
+  }
+
+  @NotNull
+  public String getHtmlUrl() {
+    return htmlUrl;
+  }
+
+  @NotNull
+  public String getCloneUrl() {
+    return cloneUrl;
+  }
+
+  @Nullable
+  public String getDefaultBranch() {
+    return defaultBranch;
+  }
+
+  @NotNull
+  public GithubUserRaw getOwner() {
+    return owner;
+  }
+
+
+  @NotNull
+  public String getUserName() {
+    return getOwner().getLogin();
+  }
+
+  @NotNull
+  public String getFullName() {
+    return getUserName() + "/" + getName();
+  }
+
+  @NotNull
+  public GithubFullPath getFullPath() {
+    return new GithubFullPath(getUserName(), getName());
+  }
+
 }

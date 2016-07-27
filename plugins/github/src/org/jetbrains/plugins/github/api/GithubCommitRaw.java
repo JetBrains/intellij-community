@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.List;
@@ -29,7 +31,7 @@ class GithubCommitRaw extends GithubCommitShaRaw {
 
   @Mandatory private GitCommitRaw commit;
 
-  @Mandatory private List<GithubCommitRaw> parents;
+  @Mandatory private List<GithubCommitShaRaw> parents;
 
   public static class GitCommitRaw {
     private String url;
@@ -37,11 +39,61 @@ class GithubCommitRaw extends GithubCommitShaRaw {
 
     @Mandatory private GitUserRaw author;
     @Mandatory private GitUserRaw committer;
+
+    @NotNull
+    public String getMessage() {
+      return message;
+    }
+
+    @NotNull
+    public GitUserRaw getAuthor() {
+      return author;
+    }
+
+    @NotNull
+    public GitUserRaw getCommitter() {
+      return committer;
+    }
   }
 
   public static class GitUserRaw {
     @Mandatory private String name;
     @Mandatory private String email;
     @Mandatory private Date date;
+
+    @NotNull
+    public String getName() {
+      return name;
+    }
+
+    @NotNull
+    public String getEmail() {
+      return email;
+    }
+
+    @NotNull
+    public Date getDate() {
+      return date;
+    }
+  }
+
+  @Nullable
+  public GithubUserRaw getAuthor() {
+    return author;
+  }
+
+  @Nullable
+  public GithubUserRaw getCommitter() {
+    return committer;
+  }
+
+  @NotNull
+  public List<GithubCommitShaRaw> getParents() {
+    return parents;
+  }
+
+  @NotNull
+  public GitCommitRaw getCommit() {
+    return commit;
   }
 }
