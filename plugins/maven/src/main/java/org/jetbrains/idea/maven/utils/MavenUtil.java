@@ -933,8 +933,8 @@ public class MavenUtil {
     return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
 
-  public static String getEjbClientArtifactName(Module module) {
-    return module.getName() + ":ejb-client";
+  public static String getEjbClientArtifactName(Module module, boolean exploded) {
+    return module.getName() + ":ejb-client" + (exploded ? " exploded" : "");
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {

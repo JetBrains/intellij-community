@@ -395,8 +395,6 @@ public class MavenResourceCompilerConfigurationGenerator {
       return;
     }
 
-    String ejbClientArtifactName = MavenUtil.getEjbClientArtifactName(module);
-
     MavenEjbClientConfiguration ejbClientCfg = new MavenEjbClientConfiguration();
 
     Element includes = pluginCfg.getChild("clientIncludes");
@@ -420,7 +418,7 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
 
     if (!ejbClientCfg.isEmpty()) {
-      projectCfg.ejbClientArtifactConfigs.put(ejbClientArtifactName, ejbClientCfg);
+      projectCfg.ejbClientArtifactConfigs.put(MavenUtil.getEjbClientArtifactName(module, true), ejbClientCfg);
     }
   }
 
