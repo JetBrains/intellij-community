@@ -4,20 +4,15 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-
+import de.plushnikov.intellij.plugin.Version;
+import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-
-import de.plushnikov.intellij.plugin.Version;
-import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 
 public class ProjectSettingsPage implements SearchableConfigurable, Configurable.NoScroll {
 
@@ -135,7 +130,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_RUNTIME_PATCH_ENABLED, myEnableRuntimePatches.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
-    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, myMissingLombokWarning.isSelected());
     LombokSettings.getInstance().setEnableRuntimePatch(myEnableRuntimePatches.isSelected());
 
     myLombokProcessorProvider.initProcessors();
