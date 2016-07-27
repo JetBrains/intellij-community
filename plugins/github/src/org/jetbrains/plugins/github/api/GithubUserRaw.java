@@ -25,19 +25,6 @@ class GithubUserRaw {
   private String url;
   private String htmlUrl;
 
-  private String name;
-  private String email;
-  private String company;
-  private String location;
-  private String type;
-
-  private Integer publicRepos;
-  private Integer publicGists;
-  private Integer totalPrivateRepos;
-  private Integer ownedPrivateRepos;
-  private Integer privateGists;
-  private Long diskUsage;
-
   private Integer followers;
   private Integer following;
   private String avatarUrl;
@@ -45,14 +32,5 @@ class GithubUserRaw {
   private Integer collaborators;
   private String blog;
 
-  private UserPlanRaw plan;
-
   private Date createdAt;
-
-  public static class UserPlanRaw {
-    private String name;
-    private Long space;
-    private Long collaborators;
-    private Long privateRepos;
-  }
 }

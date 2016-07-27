@@ -57,21 +57,10 @@ class GithubRepoRaw {
   private Boolean hasWiki;
   private Boolean hasDownloads;
 
-  private GithubRepoRaw parent;
-  private GithubRepoRaw source;
-
   private GithubUserRaw owner;
   private GithubUserRaw organization;
 
   private Date pushedAt;
   private Date createdAt;
   private Date updatedAt;
-
-  private Permissions permissions;
-
-  public static class Permissions {
-    private Boolean admin;
-    private Boolean pull;
-    private Boolean push;
-  }
 }

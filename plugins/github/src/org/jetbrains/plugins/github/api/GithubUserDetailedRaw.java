@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,27 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import java.util.Date;
-import java.util.List;
-
 @SuppressWarnings("UnusedDeclaration")
-class GithubCommitRaw extends GithubCommitShaRaw {
-  private GithubUserRaw author;
-  private GithubUserRaw committer;
+class GithubUserDetailedRaw extends GithubUserRaw {
+  private String name;
+  private String email;
+  private String company;
+  private String location;
+  private String type;
 
-  private GitCommitRaw commit;
+  private Integer publicRepos;
+  private Integer publicGists;
+  private Integer totalPrivateRepos;
+  private Integer ownedPrivateRepos;
+  private Integer privateGists;
+  private Long diskUsage;
 
-  private List<GithubCommitRaw> parents;
+  private UserPlanRaw plan;
 
-  public static class GitCommitRaw {
-    private String url;
-    private String message;
-
-    private GitUserRaw author;
-    private GitUserRaw committer;
-  }
-
-  public static class GitUserRaw {
+  public static class UserPlanRaw {
     private String name;
-    private String email;
-    private Date date;
+    private Long space;
+    private Long collaborators;
+    private Long privateRepos;
   }
 }
