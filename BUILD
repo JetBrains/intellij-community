@@ -94,12 +94,12 @@ java_test(
     ]),
   runtime_deps = [
       ":smRunner_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=smRunner_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -128,6 +128,27 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "jps-model-tests_testlib.res",
+  srcs = glob([
+      "jps/model-impl/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "jps/model-impl/testSrc": "jps-model-tests_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.9",
   jars = [
@@ -150,12 +171,12 @@ java_test(
     ]),
   runtime_deps = [
       ":properties_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=properties_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -165,6 +186,10 @@ groovy_library(
   srcs = [
       "plugins/maven/maven2-server-impl/test",
       "plugins/maven/src/test/java",
+    ],
+  resource_strip_prefix = "tools/idea/MM_maven2-server-impl_testlib.resources",
+  resources = [
+      "//tools/idea:MM_maven2-server-impl_testlib.res",
     ],
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -522,12 +547,12 @@ java_test(
     ]),
   runtime_deps = [
       ":testng_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=testng_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -562,12 +587,12 @@ java_test(
     ]),
   runtime_deps = [
       ":ant_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=ant_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -654,6 +679,27 @@ fileset(
     ],
 )
 
+fileset(
+  name = "junit_testlib.res",
+  srcs = glob([
+      "plugins/junit/test/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/junit/test": "junit_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01",
   jars = [
@@ -697,12 +743,12 @@ java_test(
     ]),
   runtime_deps = [
       ":ant-jps-plugin_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=ant-jps-plugin_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -1451,6 +1497,27 @@ groovy_library(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "util-tests_testlib.res",
+  srcs = glob([
+      "platform/util/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "platform/util/testSrc": "util-tests_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_library(
   name = "maven-jps-plugin",
   srcs = glob([
@@ -1537,6 +1604,27 @@ java_import(
       "plugins/maven/lib/plexus-archiver-2.4.4.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "eclipse_testlib.res",
+  srcs = glob([
+      "plugins/eclipse/testSources/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/eclipse/testSources": "eclipse_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 java_import(
@@ -1666,6 +1754,10 @@ java_library(
   srcs = glob([
       "platform/extensions/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/extensions_testlib.resources",
+  resources = [
+      "//tools/idea:extensions_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:extensions",
@@ -1702,6 +1794,10 @@ java_library(
   srcs = glob([
       "plugins/maven/jps-plugin/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/maven-jps-plugin_testlib.resources",
+  resources = [
+      "//tools/idea:maven-jps-plugin_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:maven-jps-plugin",
@@ -1903,10 +1999,35 @@ fileset(
     ],
 )
 
+fileset(
+  name = "forms-compiler_testlib.res",
+  srcs = glob([
+      "java/compiler/forms-compiler/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "java/compiler/forms-compiler/testSrc": "forms-compiler_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 kotlin_library(
   name = "jps-builders_testlib",
   srcs = [
       "jps/jps-builders/testSrc",
+    ],
+  resource_strip_prefix = "tools/idea/jps-builders_testlib.resources",
+  resources = [
+      "//tools/idea:jps-builders_testlib.res",
     ],
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -2058,12 +2179,12 @@ java_test(
     ]),
   runtime_deps = [
       ":gradle-tooling-extension-tests_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=gradle-tooling-extension-tests_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -2412,6 +2533,27 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "jps-serialization-tests_testlib.res",
+  srcs = glob([
+      "jps/model-serialization/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "jps/model-serialization/testSrc": "jps-serialization-tests_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "lib/dev/easymockclassextension",
   jars = [
@@ -2593,6 +2735,10 @@ java_library(
   srcs = glob([
       "plugins/java-i18n/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/java-i18n_testlib.resources",
+  resources = [
+      "//tools/idea:java-i18n_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:java-i18n",
@@ -2733,6 +2879,10 @@ java_library(
   srcs = glob([
       "plugins/eclipse/testSources/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/eclipse_testlib.resources",
+  resources = [
+      "//tools/idea:eclipse_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:eclipse",
@@ -2820,6 +2970,29 @@ java_library(
     ],
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "gradle-tests_testlib.res",
+  srcs = glob([
+      "plugins/gradle/testData/**/*",
+      "plugins/gradle/testSources/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/gradle/testData": "gradle-tests_testlib.resources",
+      "plugins/gradle/testSources": "gradle-tests_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 fileset(
@@ -3014,6 +3187,10 @@ groovy_library(
   name = "jetgroovy_testlib",
   srcs = [
       "plugins/groovy/test",
+    ],
+  resource_strip_prefix = "tools/idea/jetgroovy_testlib.resources",
+  resources = [
+      "//tools/idea:jetgroovy_testlib.res",
     ],
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -3651,6 +3828,10 @@ groovy_library(
   srcs = [
       "platform/external-system-impl/testSrc",
       "java/compiler/impl/testSrc",
+    ],
+  resource_strip_prefix = "tools/idea/MM_idea-ui_testlib.resources",
+  resources = [
+      "//tools/idea:MM_idea-ui_testlib.res",
     ],
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -4496,12 +4677,87 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "MM_RegExpSupport_testlib.res",
+  srcs = glob([
+      "RegExpSupport/test/**/*",
+      "platform/vcs-impl/testSrc/**/*",
+      "spellchecker/testSrc/**/*",
+      "xml/relaxng/test/**/*",
+      "platform/xdebugger-impl/testSrc/**/*",
+      "platform/testFramework/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "platform/testFramework/testSrc": "MM_RegExpSupport_testlib.resources",
+      "platform/vcs-impl/testSrc": "MM_RegExpSupport_testlib.resources",
+      "xml/relaxng/test": "MM_RegExpSupport_testlib.resources",
+      "platform/xdebugger-impl/testSrc": "MM_RegExpSupport_testlib.resources",
+      "RegExpSupport/test": "MM_RegExpSupport_testlib.resources",
+      "spellchecker/testSrc": "MM_RegExpSupport_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
+fileset(
+  name = "maven-jps-plugin_testlib.res",
+  srcs = glob([
+      "plugins/maven/jps-plugin/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/maven/jps-plugin/testSrc": "maven-jps-plugin_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "plugins/gradle/lib/gradle-resources-2.9",
   jars = [
       "plugins/gradle/lib/gradle-resources-2.9.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "MM_maven2-server-impl_testlib.res",
+  srcs = glob([
+      "plugins/maven/maven2-server-impl/test/**/*",
+      "plugins/maven/src/test/java/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/maven/maven2-server-impl/test": "MM_maven2-server-impl_testlib.resources",
+      "plugins/maven/src/test/java": "MM_maven2-server-impl_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 java_import(
@@ -4517,6 +4773,10 @@ java_library(
   srcs = glob([
       "plugins/testng/testSources/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/testng_testlib.resources",
+  resources = [
+      "//tools/idea:testng_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:testng",
@@ -4642,6 +4902,29 @@ fileset(
 )
 
 fileset(
+  name = "gradle-tooling-extension-tests_testlib.res",
+  srcs = glob([
+      "plugins/gradle/tooling-extension-impl/testSources/**/*",
+      "plugins/gradle/tooling-extension-impl/testData/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/gradle/tooling-extension-impl/testData": "gradle-tooling-extension-tests_testlib.resources",
+      "plugins/gradle/tooling-extension-impl/testSources": "gradle-tooling-extension-tests_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
+fileset(
   name = "gradle-tooling-extension-impl.res",
   srcs = glob([
       "plugins/gradle/tooling-extension-impl/src/**/*",
@@ -4667,6 +4950,10 @@ java_library(
   srcs = glob([
       "jps/model-impl/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/jps-model-tests_testlib.resources",
+  resources = [
+      "//tools/idea:jps-model-tests_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:jps-model-tests",
@@ -5517,12 +5804,12 @@ java_test(
     ]),
   runtime_deps = [
       ":eclipse_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=eclipse_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -5691,6 +5978,27 @@ fileset(
     ],
 )
 
+fileset(
+  name = "smRunner_testlib.res",
+  srcs = glob([
+      "platform/smRunner/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "platform/smRunner/testSrc": "smRunner_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "lib/ant/lib/ant-jdepend",
   jars = [
@@ -5778,6 +6086,10 @@ java_library(
   srcs = glob([
       "plugins/junit/test/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/junit_testlib.resources",
+  resources = [
+      "//tools/idea:junit_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:junit",
@@ -5874,6 +6186,10 @@ java_library(
   srcs = glob([
       "plugins/properties/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/properties_testlib.resources",
+  resources = [
+      "//tools/idea:properties_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:properties",
@@ -6045,6 +6361,29 @@ java_library(
     ],
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "MM_idea-ui_testlib.res",
+  srcs = glob([
+      "platform/external-system-impl/testSrc/**/*",
+      "java/compiler/impl/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "java/compiler/impl/testSrc": "MM_idea-ui_testlib.resources",
+      "platform/external-system-impl/testSrc": "MM_idea-ui_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 java_import(
@@ -6406,6 +6745,10 @@ groovy_library(
       "plugins/gradle/testData",
       "plugins/gradle/testSources",
     ],
+  resource_strip_prefix = "tools/idea/gradle-tests_testlib.resources",
+  resources = [
+      "//tools/idea:gradle-tests_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:gradle-tests",
@@ -6558,6 +6901,27 @@ fileset(
 )
 
 fileset(
+  name = "ant_testlib.res",
+  srcs = glob([
+      "plugins/ant/tests/src/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/ant/tests/src": "ant_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
+fileset(
   name = "groovy-jps-plugin.res",
   srcs = glob([
       "plugins/groovy/jps-plugin/src/**/*",
@@ -6584,6 +6948,27 @@ java_import(
       "lib/cli-parser-1.1.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "java-i18n_testlib.res",
+  srcs = glob([
+      "plugins/java-i18n/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/java-i18n/testSrc": "java-i18n_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 java_library(
@@ -6621,6 +7006,10 @@ java_library(
   srcs = glob([
       "platform/lang-api/testSources/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/lang-api_testlib.resources",
+  resources = [
+      "//tools/idea:lang-api_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:lang-api",
@@ -6728,6 +7117,27 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "jetgroovy_testlib.res",
+  srcs = glob([
+      "plugins/groovy/test/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/groovy/test": "jetgroovy_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "lib/xmlgraphics-commons-1.5",
   jars = [
@@ -6777,6 +7187,27 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "jps-builders_testlib.res",
+  srcs = glob([
+      "jps/jps-builders/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "jps/jps-builders/testSrc": "jps-builders_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_library(
   name = "xslt-rt",
   srcs = glob([
@@ -6807,12 +7238,12 @@ java_test(
     ]),
   runtime_deps = [
       ":jps-model-tests_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=jps-model-tests_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -7133,6 +7564,10 @@ java_library(
   srcs = glob([
       "plugins/gradle/tooling-extension-impl/testSources/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/gradle-tooling-extension-tests_testlib.resources",
+  resources = [
+      "//tools/idea:gradle-tooling-extension-tests_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:gradle-tooling-extension-tests",
@@ -7315,6 +7750,27 @@ java_import(
       "plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "ant-jps-plugin_testlib.res",
+  srcs = glob([
+      "plugins/ant/jps-plugin/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/ant/jps-plugin/testSrc": "ant-jps-plugin_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 fileset(
@@ -7609,12 +8065,12 @@ java_test(
     ]),
   runtime_deps = [
       ":maven-jps-plugin_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=maven-jps-plugin_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -7625,12 +8081,12 @@ java_test(
     ]),
   runtime_deps = [
       ":extensions_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=extensions_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -8036,12 +8492,12 @@ java_test(
     ]),
   runtime_deps = [
       ":junit_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=junit_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -8085,12 +8541,12 @@ java_test(
     ]),
   runtime_deps = [
       ":java-i18n_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=java-i18n_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -8364,6 +8820,27 @@ fileset(
     ],
 )
 
+fileset(
+  name = "properties_testlib.res",
+  srcs = glob([
+      "plugins/properties/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/properties/testSrc": "properties_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_library(
   name = "gradle-tooling-extension-tests",
   srcs = glob([
@@ -8562,6 +9039,10 @@ kotlin_library(
   name = "util-tests_testlib",
   srcs = [
       "platform/util/testSrc",
+    ],
+  resource_strip_prefix = "tools/idea/util-tests_testlib.resources",
+  resources = [
+      "//tools/idea:util-tests_testlib.res",
     ],
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -8930,6 +9411,10 @@ java_library(
   srcs = glob([
       "platform/smRunner/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/smRunner_testlib.resources",
+  resources = [
+      "//tools/idea:smRunner_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:smRunner",
@@ -9277,6 +9762,10 @@ java_library(
   srcs = glob([
       "jps/model-serialization/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/jps-serialization-tests_testlib.resources",
+  resources = [
+      "//tools/idea:jps-serialization-tests_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:jps-serialization-tests",
@@ -9559,6 +10048,10 @@ java_library(
   srcs = glob([
       "plugins/ant/jps-plugin/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/ant-jps-plugin_testlib.resources",
+  resources = [
+      "//tools/idea:ant-jps-plugin_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:ant-jps-plugin",
@@ -9770,6 +10263,10 @@ java_library(
   srcs = glob([
       "java/compiler/forms-compiler/testSrc/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/forms-compiler_testlib.resources",
+  resources = [
+      "//tools/idea:forms-compiler_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:forms-compiler",
@@ -9811,12 +10308,12 @@ java_test(
     ]),
   runtime_deps = [
       ":lang-api_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=lang-api_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -9842,6 +10339,10 @@ java_library(
   srcs = glob([
       "plugins/ant/tests/src/**/*.java",
     ]),
+  resource_strip_prefix = "tools/idea/ant_testlib.resources",
+  resources = [
+      "//tools/idea:ant_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:ant",
@@ -10059,12 +10560,12 @@ java_test(
     ]),
   runtime_deps = [
       ":forms-compiler_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=forms-compiler_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
@@ -10092,6 +10593,27 @@ fileset(
     ]),
   mappings = {
       "platform/analysis-api/src": "analysis-api.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
+fileset(
+  name = "lang-api_testlib.res",
+  srcs = glob([
+      "platform/lang-api/testSources/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "platform/lang-api/testSources": "lang-api_testlib.resources",
     },
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -10278,6 +10800,10 @@ groovy_library(
   srcs = [
       "java/typeMigration/test",
     ],
+  resource_strip_prefix = "tools/idea/typeMigration_testlib.resources",
+  resources = [
+      "//tools/idea:typeMigration_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:typeMigration",
@@ -10374,6 +10900,27 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+fileset(
+  name = "extensions_testlib.res",
+  srcs = glob([
+      "platform/extensions/testSrc/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "platform/extensions/testSrc": "extensions_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
 java_import(
   name = "lib/nekohtml-1.9.14",
   jars = [
@@ -10445,6 +10992,27 @@ fileset(
     ]),
   mappings = {
       "plugins/ant/jps-plugin/src": "ant-jps-plugin.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
+)
+
+fileset(
+  name = "typeMigration_testlib.res",
+  srcs = glob([
+      "java/typeMigration/test/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "java/typeMigration/test": "typeMigration_testlib.resources",
     },
   deps = [
       "@local_jdk//:langtools-neverlink",
@@ -10671,6 +11239,27 @@ java_import(
       "lib/ant/lib/ant-commons-logging.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+fileset(
+  name = "testng_testlib.res",
+  srcs = glob([
+      "plugins/testng/testSources/**/*",
+    ],
+    exclude = [
+      "**/* *",
+      "**/*.java",
+      "**/*.kt",
+      "**/*.groovy",
+      "**/*$*",
+      "**/.DS_Store",
+    ]),
+  mappings = {
+      "plugins/testng/testSources": "testng_testlib.resources",
+    },
+  deps = [
+      "@local_jdk//:langtools-neverlink",
+    ],
 )
 
 fileset(
@@ -11140,6 +11729,10 @@ kotlin_library(
       "platform/xdebugger-impl/testSrc",
       "platform/testFramework/testSrc",
     ],
+  resource_strip_prefix = "tools/idea/MM_RegExpSupport_testlib.resources",
+  resources = [
+      "//tools/idea:MM_RegExpSupport_testlib.res",
+    ],
   deps = [
       "@local_jdk//:langtools-neverlink",
       "//tools/idea:MM_RegExpSupport",
@@ -11417,12 +12010,12 @@ java_test(
     ]),
   runtime_deps = [
       ":jps-serialization-tests_testlib",
-      "//tools/base/bazel:test_runner",
+      "//tools/base/testutils:testutils",
     ],
   jvm_flags = [
       "-Dtest.suite.jar=jps-serialization-tests_testlib.jar",
     ],
-  test_class = "com.android.tools.BazelTestSuite",
+  test_class = "com.android.testutils.JarTestSuite",
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
