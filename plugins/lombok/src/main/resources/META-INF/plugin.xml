@@ -258,6 +258,8 @@
             <li>Fixed #226: @Setter(AccessLevel.NONE) triggers error and not just warning on final fields</li>
             <li>Fixed #254: Properties from lombok.config does not involve on suggestion list</li>
             <li>Fixed #259: Support JBoss Logging (new in Lombok 1.16.10)</li>
+            <li>Fixed #262: When lombok.accessors.chain=true setters show void return value</li>
+            <li>Fixed #268: Lombok Dependency is possible outdated' message even when 'Enable lombok version warning' is unchecked.</li>
 				</ol>
 			</li>
 		<li>0.12

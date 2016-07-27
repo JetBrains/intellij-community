@@ -7,9 +7,9 @@ lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.12) released on 23.07.2016**
+**Last version (0.13) released on 27.07.2016**
 
-Nineteenth version of plugin released. Bugfixes, performance optimization and new features support!
+Twentieth version of plugin released. Bugfixes, performance optimization and new features support!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
@@ -28,7 +28,7 @@ Features / Supports
 - [@ToString](http://projectlombok.org/features/ToString.html)
 - [@EqualsAndHashCode](http://projectlombok.org/features/EqualsAndHashCode.html)
 - [@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor](http://projectlombok.org/features/Constructor.html)
-- [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog](http://projectlombok.org/features/Log.html)
+- [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog, @JBossLog](http://projectlombok.org/features/Log.html)
 - [@Data](https://projectlombok.org/features/Data.html)
 - [@Builder](https://projectlombok.org/features/Builder.html)
 - [@Singular](https://projectlombok.org/features/Builder.html#singular)
@@ -46,7 +46,7 @@ Features / Supports
 
 Many features of the plugin (including warnings) could be disabled through per-project settings.
 
-__Note:__ To make use of plugin features like `@UtilityClass` and for _better_ `val` support while using IntelliJ 14.1 - 2016.1, you need to enable "Runtime patching" in Plugin settings. This is __not__ needed with 2016.2 and higher.
+__Note:__ To make use of plugin features like `@UtilityClass` and for _better_ `val` and `Value` support while using IntelliJ 14.1 - 2016.1, you need to enable "Runtime patching" in Plugin settings. This is __not__ needed with 2016.2 and higher.
 
 Installation
 ------------
