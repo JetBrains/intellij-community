@@ -18,6 +18,7 @@ public class ProjectSettings {
 
   public static final String IS_RUNTIME_PATCH_ENABLED = PREFIX + "IS_RUNTIME_PATCH_Enabled";
   public static final String IS_LOMBOK_VERSION_CHECK_ENABLED = PREFIX + "IS_LOMBOK_VERSION_CHECK_Enabled";
+  public static final String IS_MISSING_LOMBOK_CHECK_ENABLED = PREFIX + "IS_MISSING_LOMBOK_CHECK_Enabled";
 
   public static boolean isLombokEnabledInProject(@NotNull final Project project) {
     return isEnabled(project, LOMBOK_ENABLED_IN_PROJECT);
