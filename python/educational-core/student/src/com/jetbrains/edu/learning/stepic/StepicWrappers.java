@@ -327,6 +327,7 @@ public class StepicWrappers {
     }
 
     public static class Submission {
+      public int id;
       public int attempt;
       public final Reply reply;
 
@@ -414,12 +415,12 @@ public class StepicWrappers {
   }
 
   public static class ResultSubmissionWrapper {
-    ResultSubmission[] submissions;
+    public ResultSubmission[] submissions;
 
     public static class ResultSubmission {
-      int id;
-      String status;
-      String hint;
+      public int id;
+      public String status;
+      public String hint;
     }
   }
 

@@ -327,6 +327,17 @@ public class StepicConnectorGet {
     return null;
   }
 
+  public static StepicWrappers.ResultSubmissionWrapper getStatus(int submissionID) {
+    final String url = EduStepicNames.SUBMISSIONS + "/" + submissionID;
+    try {
+      return getFromStepic(url, StepicWrappers.ResultSubmissionWrapper.class);
+    }
+    catch (IOException e) {
+      LOG.warn("Couldn't get Submission");
+      return null;
+    }
+  }
+
   private static String getIdQuery(List<Integer> list) {
     StringBuilder sb = new StringBuilder();
     sb.append("?");
