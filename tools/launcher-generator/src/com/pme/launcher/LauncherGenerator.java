@@ -135,12 +135,13 @@ public class LauncherGenerator {
 
   public void injectIcon(int id, final InputStream iconStream) throws IOException {
     File f = File.createTempFile("launcher", "ico");
-    Files.copy(new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return iconStream;
-      }
-    }, f);
+
+    try {
+      Files.asByteSink(f).writeFrom(iconStream);
+    }
+    finally {
+      iconStream.close();
+    }
     IconResourceInjector iconInjector = new IconResourceInjector();
     iconInjector.injectIcon(f, myRoot, "IRD" + id);
   }
