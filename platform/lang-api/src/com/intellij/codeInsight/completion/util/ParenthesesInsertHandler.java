@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -94,7 +95,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();
     context.commitDocument();
-    PsiElement element = findNextToken(context);
+    PsiElement lParen = findExistingLeftParenthesis(context);
 
     final char completionChar = context.getCompletionChar();
     final boolean putCaretInside = completionChar == '(' || placeCaretInsideParentheses(context, item);
@@ -103,8 +104,8 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       context.setAddCompletionChar(false);
     }
 
-    if (isToken(element, "(")) {
-      int lparenthOffset = element.getTextRange().getStartOffset();
+    if (lParen != null) {
+      int lparenthOffset = lParen.getTextRange().getStartOffset();
       if (mySpaceBeforeParentheses && lparenthOffset == context.getTailOffset()) {
         document.insertString(context.getTailOffset(), " ");
         lparenthOffset++;
@@ -118,7 +119,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
 
       context.setTailOffset(lparenthOffset + 1);
 
-      PsiElement list = element.getParent();
+      PsiElement list = lParen.getParent();
       PsiElement last = list.getLastChild();
       if (isToken(last, ")")) {
         int rparenthOffset = last.getTextRange().getStartOffset();
@@ -163,7 +164,13 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
   }
 
   @Nullable
-  protected PsiElement findNextToken(final InsertionContext context) {
+  protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
+    PsiElement element = findNextToken(context);
+    return isToken(element, "(") ? element : null;
+  }
+
+  @Nullable
+  protected PsiElement findNextToken(@NotNull InsertionContext context) {
     final PsiFile file = context.getFile();
     PsiElement element = file.findElementAt(context.getTailOffset());
     if (element instanceof PsiWhiteSpace) {
