@@ -186,7 +186,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = getReturnType(context);
-    return isAsync() ? createCoroutineType(type) : type;
+    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
   }
 
   @Nullable
