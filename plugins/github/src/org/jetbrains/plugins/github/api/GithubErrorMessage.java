@@ -15,24 +15,23 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Aleksey Pivovarov
- */
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubErrorMessage {
-  @Nullable public String message;
-  @Nullable public List<Error> errors;
+  private String message;
+  private List<Error> errors;
 
   public static class Error {
-    @Nullable public String resource;
-    @Nullable public String field;
-    @Nullable public String code;
-    @Nullable public String message;
+    private String resource;
+    private String field;
+    private String code;
+    private String message;
   }
 
   @Nullable
