@@ -4,7 +4,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +26,4 @@ public interface CCLanguageManager {
   default boolean isTestFile(VirtualFile file) {
     return false;
   }
-
-  default void createTestsForNewStep(@NotNull Project project, @NotNull Task task) {}
 }

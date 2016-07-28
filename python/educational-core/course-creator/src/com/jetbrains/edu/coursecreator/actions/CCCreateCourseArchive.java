@@ -128,7 +128,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
               if (answerFile == null) {
                 continue;
               }
-              EduUtils.createStudentFile(this, project, answerFile, -1, studentFileDir, task);
+              EduUtils.createStudentFile(this, project, answerFile, studentFileDir, task);
             }
         }
       }
