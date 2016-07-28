@@ -37,8 +37,8 @@ import java.awt.Rectangle;
  * @see Component#getAlignmentX
  * @see Component#getAlignmentY
  */
-public class SingleComponentLayout implements LayoutManager2 {
-  public static final SingleComponentLayout INSTANCE = new SingleComponentLayout();
+public class StatelessCardLayout implements LayoutManager2 {
+  public static final StatelessCardLayout INSTANCE = new StatelessCardLayout();
 
   /**
    * Creates a simple panel with this layout manager and the specified component.
@@ -55,11 +55,28 @@ public class SingleComponentLayout implements LayoutManager2 {
     return panel;
   }
 
+  /**
+   * Shows the specified component if necessary and
+   * hides other components in the same container.
+   *
+   * @param visible a component to show
+   */
+  public static void show(Component visible) {
+    if (visible != null && !visible.isVisible()) {
+      Container container = visible.getParent();
+      if (container != null) {
+        synchronized (container.getTreeLock()) {
+          for (Component component : container.getComponents()) {
+            component.setVisible(component == visible);
+          }
+        }
+      }
+    }
+  }
+
   private static Component getComponent(Container container) {
     synchronized (container.getTreeLock()) {
-      int count = container.getComponentCount();
-      for (int i = 0; i < count; i++) {
-        Component component = container.getComponent(i);
+      for (Component component : container.getComponents()) {
         if (component.isVisible()) return component;
       }
     }
@@ -79,12 +96,14 @@ public class SingleComponentLayout implements LayoutManager2 {
 
   @Override
   public void addLayoutComponent(String name, Component component) {
-    if (name != null) throw new IllegalArgumentException("unsupported name : " + name);
+    addLayoutComponent(component, name);
   }
 
   @Override
   public void addLayoutComponent(Component component, Object constraints) {
     if (constraints != null) throw new IllegalArgumentException("unsupported constraints: " + constraints);
+    Container container = component.getParent();
+    component.setVisible(container != null && 0 < container.getComponentCount());
   }
 
   @Override
@@ -130,9 +149,7 @@ public class SingleComponentLayout implements LayoutManager2 {
     synchronized (container.getTreeLock()) {
       boolean logged = false;
       boolean updated = false;
-      int count = container.getComponentCount();
-      for (int i = 0; i < count; i++) {
-        Component component = container.getComponent(i);
+      for (Component component : container.getComponents()) {
         if (component.isVisible()) {
           if (!updated) {
             updated = true;
@@ -167,7 +184,7 @@ public class SingleComponentLayout implements LayoutManager2 {
             component.setVisible(false);
             if (!logged) {
               logged = true;
-              Logger.getInstance(SingleComponentLayout.class).warn("too many visible components");
+              Logger.getInstance(StatelessCardLayout.class).warn("too many visible components");
             }
           }
         }
