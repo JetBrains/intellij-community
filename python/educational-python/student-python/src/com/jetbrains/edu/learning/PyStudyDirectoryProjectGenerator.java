@@ -227,8 +227,8 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     }
   }
 
-  private String getBaseSdk(@NotNull final Project project) {
-    final Course course = myGenerator.getCourse(project);
+  private static String getBaseSdk(@NotNull final Project project) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
     LanguageLevel baseLevel = LanguageLevel.PYTHON30;
     if (course != null) {
       final String version = course.getLanguageVersion();
