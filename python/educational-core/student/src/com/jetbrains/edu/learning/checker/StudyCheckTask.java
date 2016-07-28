@@ -130,7 +130,12 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
     if (testOutput != null) {
-      if (testOutput.isSuccess()) {
+      // As tests in adaptive courses are created from
+      // samples and stored in task, to disable it we should ignore local testing results
+      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+        onTaskFailed(testOutput.getMessage());
+      }
+      else {
         final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
         if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
           if (pair.getFirst()) {
@@ -151,9 +156,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
         }
-      }
-      else {
-        onTaskFailed(testOutput.getMessage());
       }
     }
   }
