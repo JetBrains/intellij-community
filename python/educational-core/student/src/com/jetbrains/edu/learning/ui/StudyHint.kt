@@ -152,7 +152,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
   }
 
-  private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.Actions.Cancel) {
+  private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.General.Remove) {
 
     override fun actionPerformed(e: AnActionEvent) {
       myPlaceholder!!.hints.removeAt(myShownHintNumber)
