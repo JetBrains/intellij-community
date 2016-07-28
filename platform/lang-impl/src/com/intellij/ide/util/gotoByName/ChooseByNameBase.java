@@ -1679,7 +1679,7 @@ public abstract class ChooseByNameBase {
       presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(patternToLowerCase(prefixPattern)));
       final Object[][] elements = getElements();
       final List<PsiElement> targets = new ArrayList<PsiElement>();
-      final List<Usage> usages = new ArrayList<Usage>();
+      final Set<Usage> usages = new LinkedHashSet<>();
       fillUsages(Arrays.asList(elements[0]), usages, targets, false);
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
@@ -1747,19 +1747,14 @@ public abstract class ChooseByNameBase {
     }
 
     private void fillUsages(Collection<Object> matchElementsArray,
-                            List<Usage> usages,
+                            Collection<Usage> usages,
                             List<PsiElement> targets,
                             final boolean separateGroup) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement) {
           PsiElement element = (PsiElement)o;
           if (element.getTextRange() != null) {
-            usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element) {
-              @Override
-              public boolean isDynamicUsage() {
-                return separateGroup || super.isDynamicUsage();
-              }
-            }));
+            usages.add(new MyUsageInfo2UsageAdapter(element, separateGroup));
           }
           else {
             targets.add(element);
@@ -1769,7 +1764,7 @@ public abstract class ChooseByNameBase {
     }
 
     private void showUsageView(@NotNull List<PsiElement> targets,
-                               @NotNull List<Usage> usages,
+                               @NotNull Collection<Usage> usages,
                                @NotNull UsageViewPresentation presentation) {
       UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
                                    PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
@@ -1787,6 +1782,42 @@ public abstract class ChooseByNameBase {
     }
 
     public abstract Object[][] getElements();
+  }
+
+  private static class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {
+    private final PsiElement myElement;
+    private final boolean mySeparateGroup;
+
+    MyUsageInfo2UsageAdapter(@NotNull PsiElement element, boolean separateGroup) {
+      super(new UsageInfo(element) {
+        @Override
+        public boolean isDynamicUsage() {
+          return separateGroup || super.isDynamicUsage();
+        }
+      });
+      myElement = element;
+      mySeparateGroup = separateGroup;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof MyUsageInfo2UsageAdapter)) return false;
+
+      MyUsageInfo2UsageAdapter adapter = (MyUsageInfo2UsageAdapter)o;
+
+      if (mySeparateGroup != adapter.mySeparateGroup) return false;
+      if (!myElement.equals(adapter.myElement)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myElement.hashCode();
+      result = 31 * result + (mySeparateGroup ? 1 : 0);
+      return result;
+    }
   }
 
   public JTextField getTextField() {
