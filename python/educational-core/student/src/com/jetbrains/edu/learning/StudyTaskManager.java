@@ -46,6 +46,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
+  private boolean myEnableTestingFromSamples = true;
 
   @Transient private final Project myProject;
 
@@ -201,5 +202,13 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public void setUser(@NotNull final StepicUser user) {
     myUser = user;
+  }
+
+  public boolean isEnableTestingFromSamples() {
+    return myEnableTestingFromSamples;
+  }
+
+  public void setEnableTestingFromSamples(boolean enableTestingFromSamples) {
+    myEnableTestingFromSamples = enableTestingFromSamples;
   }
 }
