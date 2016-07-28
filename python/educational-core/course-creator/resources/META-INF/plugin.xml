@@ -54,7 +54,7 @@
 
     <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo"/>
 
-    <group id="CCProjectViewGroup" popup="true" text="Course Creator">
+    <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Make Visible to Student"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
@@ -68,7 +68,7 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
     </group>
     
-    <group id="CCFileGroup" popup="true" text="Course Creator">
+    <group id="CCFileGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCFileActionGroup">
       <reference id="ChangeCourseInfo"/>
       <reference id="PackCourse"/>
       <reference id="PushLesson"/>
