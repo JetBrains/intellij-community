@@ -1,7 +1,7 @@
 class A extends Base{
-  void foo(){
-    B x = null;
-    switch(x){
+  void foo(B b){
+    switch(b) {
+        case FOO:
         case GOO:<caret>
     }
   }

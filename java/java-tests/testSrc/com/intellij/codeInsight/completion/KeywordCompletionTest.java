@@ -126,6 +126,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
+  public void testNoCaseInsideWhileInSwitch() { doTest(0, "case", "default"); }
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInTryWithResources() throws Exception { doTest(1, "final", "float", "class"); }

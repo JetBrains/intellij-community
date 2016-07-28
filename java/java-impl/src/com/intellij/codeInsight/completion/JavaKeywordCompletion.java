@@ -36,6 +36,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -303,7 +304,11 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiSwitchStatement getSwitchFromLabelPosition(PsiElement position) {
-    return PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class, false, PsiMember.class, PsiSwitchLabelStatement.class);
+    PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class, false, PsiMember.class);
+    if (statement != null && !(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock) {
+      return ObjectUtils.tryCast(statement.getParent().getParent(), PsiSwitchStatement.class);
+    }
+    return null;
   }
 
   static void addEnumCases(CompletionResultSet result, PsiElement position) {
@@ -315,12 +320,18 @@ public class JavaKeywordCompletion {
     Set<PsiField> used = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(switchStatement);
     for (PsiField field : switchType.getAllFields()) {
       String name = field.getName();
-      if (!(field instanceof PsiEnumConstant) || used.contains(field) || name == null) {
+      if (!(field instanceof PsiEnumConstant) || used.contains(CompletionUtil.getOriginalOrSelf(field)) || name == null) {
         continue;
       }
       String prefix = "case ";
       String suffix = name + ":";
-      result.addElement(LookupElementBuilder.create(field, prefix + suffix).bold().withPresentableText(prefix).withTailText(suffix).withLookupString(name));
+      LookupElementBuilder caseConst = LookupElementBuilder
+        .create(field, prefix + suffix)
+        .bold()
+        .withPresentableText(prefix)
+        .withTailText(suffix)
+        .withLookupString(name);
+      result.addElement(new JavaCompletionContributor.IndentingDecorator(caseConst));
     }
   }
 
