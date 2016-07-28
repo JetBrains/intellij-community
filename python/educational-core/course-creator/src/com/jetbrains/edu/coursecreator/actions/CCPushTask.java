@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -34,6 +35,7 @@ public class CCPushTask extends DumbAwareAction {
     if (course == null) {
       return;
     }
+    if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
     PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
     if (taskDir == null || !taskDir.getName().contains("task")) {
       return;
