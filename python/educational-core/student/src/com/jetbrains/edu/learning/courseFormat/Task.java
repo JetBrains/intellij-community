@@ -11,10 +11,12 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +40,7 @@ public class Task implements StudyItem {
   private Map<String, String> testsText = new HashMap<String, String>();
 
   @Transient private Lesson myLesson;
+  private Date myUpdateDate;
 
   public Task() {}
 
@@ -230,5 +233,21 @@ public class Task implements StudyItem {
     }
     copy.initTask(null, true);
     return copy;
+  }
+
+  public void setUpdateDate(Date date) {
+    myUpdateDate = date;
+  }
+
+  public Date getUpdateDate() {
+    return myUpdateDate;
+  }
+
+  public boolean isUpToDate() {
+    if (getStepicId() == 0) return true;
+    final Date date = EduStepicConnector.getTaskUpdateDate(getStepicId());
+    if (date == null) return true;
+    if (myUpdateDate == null) return false;
+    return !date.after(myUpdateDate);
   }
 }

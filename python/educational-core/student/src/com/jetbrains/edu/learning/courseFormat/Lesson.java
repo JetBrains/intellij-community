@@ -5,9 +5,11 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Lesson implements StudyItem {
@@ -15,6 +17,7 @@ public class Lesson implements StudyItem {
   @Transient public List<Integer> steps;
   @Transient public List<String> tags;
   @Transient boolean is_public;
+  @SerializedName("update_date") private Date myUpdateDate;
 
   @Expose
   @SerializedName("title")
@@ -103,5 +106,24 @@ public class Lesson implements StudyItem {
 
   public void setId(int id) {
     this.myId = id;
+  }
+
+  public Date getUpdateDate() {
+    return myUpdateDate;
+  }
+
+  public void setUpdateDate(Date updateDate) {
+    myUpdateDate = updateDate;
+  }
+
+  public boolean isUpToDate() {
+    if (myId == 0) return true;
+    final Date date = EduStepicConnector.getLessonUpdateDate(myId);
+    if (date == null) return true;
+    if (myUpdateDate == null) return false;
+    for (Task task : taskList) {
+      if (!task.isUpToDate()) return false;
+    }
+    return !date.after(myUpdateDate);
   }
 }

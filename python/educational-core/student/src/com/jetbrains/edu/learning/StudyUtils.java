@@ -492,6 +492,7 @@ public class StudyUtils {
 
   @Nullable
   private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    taskDirectory.refresh(false, true);
     VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
