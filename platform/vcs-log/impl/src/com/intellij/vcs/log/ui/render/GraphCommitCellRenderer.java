@@ -151,8 +151,16 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     }
     VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
     refs = ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
-    List<VcsRef> branches = getBranches(refs);
-    Collection<VcsRef> tags = ContainerUtil.subtract(refs, branches);
+    List<VcsRef> branches = ContainerUtil.newArrayList();
+    List<VcsRef> tags = ContainerUtil.newArrayList();
+    refs.forEach(ref -> {
+      if (ref.getType().isBranch()) {
+        branches.add(ref);
+      }
+      else {
+        tags.add(ref);
+      }
+    });
     return getLabelsForRefs(branches, tags);
   }
 
@@ -184,10 +192,6 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       }
     }
     return labels;
-  }
-
-  private static List<VcsRef> getBranches(Collection<VcsRef> refs) {
-    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
   }
 
   private static class PaintInfo {
