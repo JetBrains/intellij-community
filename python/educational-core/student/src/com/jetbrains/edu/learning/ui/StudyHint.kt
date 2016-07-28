@@ -62,7 +62,8 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
   }
 
-  private inner class GoForward : AnAction(AllIcons.Actions.Forward) {
+  private inner class GoForward : AnAction("Next Hint", "Next Hint", AllIcons.Actions.Forward) {
+
 
     override fun actionPerformed(e: AnActionEvent) {
       studyToolWindow.setText(myPlaceholder!!.hints[++myShownHintNumber])
@@ -73,7 +74,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
   }
 
-  private inner class GoBackward : AnAction(AllIcons.Actions.Back) {
+  private inner class GoBackward : AnAction("Previous Hint", "Previous Hint", AllIcons.Actions.Back) {
 
     override fun actionPerformed(e: AnActionEvent) {
       studyToolWindow.setText(myPlaceholder!!.hints[--myShownHintNumber])
@@ -138,7 +139,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
   }
 
-  private inner class AddHint : AnAction(AllIcons.General.Add) {
+  private inner class AddHint : AnAction("Add Hint", "Add Hint", AllIcons.General.Add) {
 
     override fun actionPerformed(e: AnActionEvent) {
       myPlaceholder!!.hints.add(newHintDefaultText)
@@ -151,7 +152,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
   }
 
-  private inner class RemoveHint : AnAction(AllIcons.Actions.Cancel) {
+  private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.Actions.Cancel) {
 
     override fun actionPerformed(e: AnActionEvent) {
       myPlaceholder!!.hints.removeAt(myShownHintNumber)
