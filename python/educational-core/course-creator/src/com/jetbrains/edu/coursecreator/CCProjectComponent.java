@@ -60,17 +60,23 @@ public class CCProjectComponent extends AbstractProjectComponent {
     for (VirtualFile answerFile : files) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         String answerName = answerFile.getName();
-        String name = FileUtil.getNameWithoutExtension(FileUtil.getNameWithoutExtension(answerName)) + "." + FileUtilRt.getExtension(answerName);
-          VirtualFile file = answerFile.getParent().findChild(name);
-            try {
-              if (file != null) {
-                file.delete(CCProjectComponent.class);
-              }
-              answerFile.rename(CCProjectComponent.class, name);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
+        String nameWithoutExtension = FileUtil.getNameWithoutExtension(answerName);
+        String name = FileUtil.getNameWithoutExtension(nameWithoutExtension) + "." + FileUtilRt.getExtension(answerName);
+        VirtualFile parent = answerFile.getParent();
+        VirtualFile file = parent.findChild(name);
+        try {
+          if (file != null) {
+            file.delete(CCProjectComponent.class);
+          }
+          VirtualFile windowsDescrFile = parent.findChild(FileUtil.getNameWithoutExtension(name) + EduNames.WINDOWS_POSTFIX);
+          if (windowsDescrFile != null) {
+            windowsDescrFile.delete(CCProjectComponent.class);
+          }
+          answerFile.rename(CCProjectComponent.class, name);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       });
     }
   }
@@ -88,7 +94,7 @@ public class CCProjectComponent extends AbstractProjectComponent {
           if (taskFile == null) {
             taskFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.join(taskPath, EduNames.SRC, answerName));
           }
-          if (taskFile!= null) {
+          if (taskFile != null) {
             result.add(taskFile);
           }
         }
