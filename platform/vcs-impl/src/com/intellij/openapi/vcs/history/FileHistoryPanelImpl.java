@@ -266,7 +266,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   private static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
-    // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
     sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision, true)).append(" ");
     sb.append(revision.getAuthor());

@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -285,7 +284,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (log == null) return;
     List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
     if (details.isEmpty()) return;
-    String text = StringUtil.join(details, commit -> getPresentableText(commit, true), "\n");
+    String text = StringUtil.join(details, VcsLogGraphTable::getTextForClipboard, "\n");
     CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 
@@ -295,20 +294,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @NotNull
-  private static String getPresentableText(@NotNull VcsFullCommitDetails commit, boolean withMessage) {
-    // implementation reflected by com.intellij.openapi.vcs.history.FileHistoryPanelImpl.getPresentableText()
-    StringBuilder sb = new StringBuilder();
-    sb.append(commit.getId().toShortString()).append(" ");
-    sb.append(commit.getAuthor().getName());
-    long time = commit.getAuthorTime();
-    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
-    if (!Comparing.equal(commit.getAuthor(), commit.getCommitter())) {
-      sb.append(" (committed by ").append(commit.getCommitter().getName()).append(")");
-    }
-    if (withMessage) {
-      sb.append(" ").append(commit.getSubject());
-    }
-    return sb.toString();
+  private static String getTextForClipboard(@NotNull VcsFullCommitDetails commit) {
+    return commit.getId().toShortString() + " " + commit.getSubject();
   }
 
   @Override
