@@ -111,6 +111,10 @@ public class EduUtils {
 
 
   public static VirtualFile copyFile(Object requestor, VirtualFile toDir, VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) {
+      FileDocumentManager.getInstance().saveDocument(document);
+    }
     String name = file.getName();
     try {
       VirtualFile userFile = toDir.findChild(name);
