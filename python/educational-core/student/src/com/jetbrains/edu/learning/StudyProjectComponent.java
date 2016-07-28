@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -9,10 +10,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -42,12 +45,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.edu.learning.StudyUtils.execCancelable;
 import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.flushCourse;
 
 
@@ -69,8 +74,27 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     if (course != null && !course.isUpToDate()) {
-      updateCourse();
-      course.setUpdated();
+      final Notification notification =
+        new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
+                         new NotificationListener() {
+                           @Override
+                           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                             FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
+
+                             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+                               ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                               return execCancelable(() -> {
+                                 updateCourse();
+                                 return true;
+                               });
+                             }, "Updating Course", true, myProject);
+                             EduUtils.synchronize();
+                             course.setUpdated();
+
+                           }
+                         });
+      notification.notify(myProject);
+
     }
 
     registerStudyToolWindow(course);
@@ -142,7 +166,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final CourseInfo info = CourseInfo.fromCourse(currentCourse);
     if (info == null) return;
 
-    final File resourceDirectory = new File(currentCourse.getCourseDirectory());
+    final File resourceDirectory = StudyUtils.getCourseDirectory(myProject, currentCourse);
     if (resourceDirectory.exists()) {
       FileUtil.delete(resourceDirectory);
     }
@@ -151,39 +175,34 @@ public class StudyProjectComponent implements ProjectComponent {
 
     if (course == null) return;
     flushCourse(myProject, course);
-    course.initCourse(true);
+    course.initCourse(false);
 
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
     if (manager == null) {
       LOG.info("Study Language Manager is null for " + course.getLanguageById().getDisplayName());
       return;
     }
-    final File[] files = resourceDirectory.listFiles();
-    if (files == null) return;
-    for (File lessonDir : files) {
-      final String testHelper = manager.getTestHelperFileName();
-      final String testFileName = manager.getTestFileName();
-      if (lessonDir.getName().equals(testHelper)) {
-        copyFile(lessonDir, new File(myProject.getBasePath(), testHelper));
-      }
-      if (lessonDir.getName().startsWith(EduNames.LESSON)) {
-        final Lesson lesson = currentCourse.getLesson(lessonDir.getName());
-        final File[] tasks = lessonDir.listFiles();
-        if (tasks == null) continue;
-        for (File taskDir : tasks) {
-          final Task task = lesson.getTask(taskDir.getName());
-          if (task.getStatus().equals(StudyStatus.Solved)) continue;
-          final File taskDescrFrom = StudyUtils.getTaskDescriptionFile(taskDir);
-          if (taskDescrFrom != null) {
-            final File taskTests = new File(taskDir, testFileName);
-            final File taskDescrTo = StudyUtils.getTaskDescriptionFile(new File(new File(myProject.getBasePath(), lessonDir.getName()),
-                                                                                taskDir.getName()));
-            if (taskDescrTo != null) {
-              copyFile(taskDescrFrom, taskDescrTo);
-              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), lessonDir.getName()), taskDir.getName()),
-                                           testFileName));
-            }
-          }
+
+    for (Lesson lesson : course.getLessons()) {
+      final Lesson studentLesson = currentCourse.getLesson(lesson.getName());
+      final File lessonDir = new File(myProject.getBasePath(), lesson.getName());
+
+      for (Task task : lesson.getTaskList()) {
+        final Task studentTask = studentLesson.getTask(task.getName());
+        if (studentTask == null || StudyStatus.Solved.equals(studentTask.getStatus())) continue;
+        task.initTask(studentLesson, false);
+        task.setIndex(studentTask.getIndex());
+        studentLesson.updateTask(studentTask, task);
+
+        final File toTask = new File(lessonDir, task.getName());
+
+        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lesson.getName(), task.getName());
+        final File taskDir = new File(taskPath);
+        if (!taskDir.exists()) return;
+        final File[] taskFiles = taskDir.listFiles();
+        if (taskFiles == null) continue;
+        for (File fromFile : taskFiles) {
+          copyFile(fromFile, new File(toTask, fromFile.getName()));
         }
       }
     }
