@@ -19,9 +19,44 @@ package org.jetbrains.intellij.build
 /**
  * @author nik
  */
+
+/**
+ * The necessary software for MacBuilder:
+ *    OS X 10.9
+ *    FTP server (it is part of OS X installation).
+ *    Perl 5.16 (it is part of OS X installation).
+ *    DSStore perl module
+ *    Private key and digital certificate for signing apps.
+ *
+ *  How to setup MacBuilder:
+ *  1. Install OS X 10.9.
+ *     The dmg image can be taken from file://///msdc.labs.intellij.net/Distrib/System/Mac/
+ *  2. Import private key and signing certificate
+ *     https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html
+ *  3. Enable FTP Server. Run the command in terminal:
+ *     sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist
+ *  5. Create user which will be used for ftp connection
+ *  6. Install DSStore perl module. Run the command in terminal:
+ *     sudo cpan Mac::Finder::DSStore
+ *     During the cpan and the module installation process will be need to allow install the command line pkg which is part of cpan installation and required for successful result.
+ *  7. Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true"
+ *     http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules
+ */
 public class MacHostProperties {
+  /**
+   * MacBuilder host name.
+   */
   String host
+
+  /**
+   * userName and password for access to MacBuilder via FTP
+   */
   String userName
   String password
+
+  /**
+   * Full name of a keychain identity (Applications > Utilities > Keychain Access).
+   * More info in SIGNING IDENTITIES (https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html)
+   */
   String codesignString
 }
