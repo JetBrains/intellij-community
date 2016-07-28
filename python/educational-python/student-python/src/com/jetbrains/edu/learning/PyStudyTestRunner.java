@@ -7,10 +7,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -37,10 +35,6 @@ public class PyStudyTestRunner extends StudyTestRunner {
     }
 
     String testsFileName = manager.getTestFileName();
-    int activeStepIndex = myTask.getActiveStepIndex();
-    if (activeStepIndex != -1) {
-      testsFileName = FileUtil.getNameWithoutExtension(testsFileName) + EduNames.STEP_MARKER + activeStepIndex + "." + FileUtilRt.getExtension(testsFileName);
-    }
     final File testRunner = new File(myTaskDir.getPath(), testsFileName);
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withWorkDirectory(myTaskDir.getPath());

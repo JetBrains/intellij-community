@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -342,13 +341,7 @@ public class StudyUtils {
   }
 
   public static void drawAllWindows(Editor editor, TaskFile taskFile) {
-    drawAllWindows(editor, taskFile, true);
-  }
-
-  public static void drawAllWindows(Editor editor, TaskFile taskFile, boolean removePrevHighlighters) {
-    if (removePrevHighlighters) {
-      editor.getMarkupModel().removeAllHighlighters();
-    }
+    editor.getMarkupModel().removeAllHighlighters();
     final Project project = editor.getProject();
     if (project == null) return;
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
@@ -481,33 +474,19 @@ public class StudyUtils {
       return null;
     }
 
-    String text = getFromTask(task);
+    String text = task.getText();
     if (text != null && !text.isEmpty()) {
       return text;
     }
     if (taskDirectory != null) {
-      String fileNameWithoutExtension  = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
-      int activeStepIndex = task.getActiveStepIndex();
-      if (activeStepIndex != -1) {
-        fileNameWithoutExtension += EduNames.STEP_MARKER + activeStepIndex;
-      }
       final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
-      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_HTML));
+      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
       
-      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_MD));
+      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
       if (taskTextFileMd != null) return prefix + convertToHtml(taskTextFileMd) + ourPostfix;      
     }
     return null;
-  }
-
-  @Nullable
-  private static String getFromTask(Task task) {
-    int index = task.getActiveStepIndex();
-    if (index == -1) {
-      return task.getText();
-    }
-    return task.getAdditionalSteps().get(index).getText();
   }
 
   @Nullable
@@ -704,25 +683,12 @@ public class StudyUtils {
   }
   
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
-    if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
-      return true;
-    }
-    return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.STEP_MARKER);
+    return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
   }
   
   @Nullable
-  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
-    Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
-    if (task == null) {
-      return null;
-    }
-    String fileNameWithoutExtension  = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
-    int activeStepIndex = task.getActiveStepIndex();
-    if (activeStepIndex != -1) {
-      fileNameWithoutExtension += EduNames.STEP_MARKER + activeStepIndex;
-    }
-    return ObjectUtils.chooseNotNull(taskDir.findChild(fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_HTML)),
-                                     taskDir.findChild(fileNameWithoutExtension + "." + FileUtilRt.getExtension(EduNames.TASK_MD)));
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull VirtualFile taskDir) {
+    return ObjectUtils.chooseNotNull(taskDir.findChild(EduNames.TASK_HTML), taskDir.findChild(EduNames.TASK_MD));
   }
   
   @NotNull
@@ -757,35 +723,5 @@ public class StudyUtils {
     final Balloon balloon =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
     showCheckPopUp(project, balloon);
-  }
-
-  public static void drawPlaceholdersFromOtherSteps(Editor editor, TaskFile taskFile, Task task) {
-    for (int i = -1; i < task.getAdditionalSteps().size(); i++) {
-      if (i == task.getActiveStepIndex()) {
-        continue;
-      }
-      List<AnswerPlaceholder> placeholders = getPlaceholders(i, task, taskFile);
-      for (AnswerPlaceholder placeholder : placeholders) {
-        EduAnswerPlaceholderPainter.drawAnswerPlaceholderFromPrevStep(editor, placeholder);
-      }
-    }
-  }
-
-  private static List<AnswerPlaceholder> getPlaceholders(int index, Task task, TaskFile taskFile) {
-    TaskFile prevTaskFile = index == -1 ? taskFile.getTask().getTaskFile(taskFile.name)
-                                        : task.getAdditionalSteps().get(index).getTaskFiles().get(taskFile.name);
-    if (prevTaskFile == null) {
-      return Collections.emptyList();
-    }
-    return prevTaskFile.getAnswerPlaceholders();
-  }
-
-
-  public static Map<String, TaskFile> getTaskFiles(@NotNull Task task) {
-    int activeStepIndex = task.getActiveStepIndex();
-    if (activeStepIndex == -1) {
-      return task.getTaskFiles();
-    }
-    return task.getAdditionalSteps().get(activeStepIndex).getTaskFiles();
   }
 }

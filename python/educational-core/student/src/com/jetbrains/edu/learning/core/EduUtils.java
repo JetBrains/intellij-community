@@ -129,7 +129,6 @@ public class EduUtils {
   public static Pair<VirtualFile, TaskFile> createStudentFile(Object requestor,
                                                               Project project,
                                                               VirtualFile answerFile,
-                                                              int stepIndex,
                                                               VirtualFile parentDir,
                                                               @Nullable Task task) {
 
@@ -148,42 +147,18 @@ public class EduUtils {
       }
       task = task.copy();
     }
-    Map<Integer, TaskFile> taskFileSteps = getTaskFileSteps(task, answerFile.getName());
-    TaskFile initialTaskFile = taskFileSteps.get(-1);
-    if (initialTaskFile == null) {
+    TaskFile taskFile = task.getTaskFile(answerFile.getName());
+    if (taskFile == null) {
       return null;
     }
-    EduDocumentListener listener = new EduDocumentListener(initialTaskFile, false);
+    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     studentDocument.addDocumentListener(listener);
 
-    Pair<VirtualFile, TaskFile> result = null;
-    for (Map.Entry<Integer, TaskFile> entry : taskFileSteps.entrySet()) {
-      Integer index = entry.getKey();
-      if (index < stepIndex) {
-        continue;
-      }
-      TaskFile stepTaskFile = entry.getValue();
-      if (index == stepIndex) {
-        result = Pair.createNonNull(studentFile, stepTaskFile);
-      }
-      for (AnswerPlaceholder placeholder : stepTaskFile.getAnswerPlaceholders()) {
-        replaceAnswerPlaceholder(project, studentDocument, placeholder);
-      }
+    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      replaceAnswerPlaceholder(project, studentDocument, placeholder);
     }
     studentDocument.removeDocumentListener(listener);
-    return result;
-  }
-
-  public static Map<Integer, TaskFile> getTaskFileSteps(Task task, String name) {
-    Map<Integer, TaskFile> files = new HashMap<>();
-    files.put( -1, task.getTaskFile(name));
-    List<Step> additionalSteps = task.getAdditionalSteps();
-    if (!additionalSteps.isEmpty()) {
-      for (int i = 0; i < additionalSteps.size(); i++) {
-        files.put(i, additionalSteps.get(i).getTaskFiles().get(name));
-      }
-    }
-    return files;
+    return Pair.create(studentFile, taskFile);
   }
 
   private static void replaceAnswerPlaceholder(@NotNull final Project project,
@@ -198,7 +173,7 @@ public class EduUtils {
   }
 
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       VirtualFile virtualFile = taskDir.findChild(name);
       if (virtualFile == null) {

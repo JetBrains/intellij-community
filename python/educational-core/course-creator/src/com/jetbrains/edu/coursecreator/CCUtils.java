@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -235,15 +234,14 @@ public class CCUtils {
     if (studentDir == null) {
       return;
     }
-    Map<String, TaskFile> files = StudyUtils.getTaskFiles(task);
-    for (Map.Entry<String, TaskFile> entry : files.entrySet()) {
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       VirtualFile answerFile = taskDir.findChild(name);
       if (answerFile == null) {
         continue;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        EduUtils.createStudentFile(CCUtils.class, project, answerFile, task.getActiveStepIndex(), studentDir, null);
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null);
       });
     }
   }

@@ -20,7 +20,6 @@ import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
@@ -87,10 +86,6 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
           if (isStudyProject) {
             editor.addEditorMouseListener(new WindowSelectionListener(taskFile));
           }
-        }
-        Task task = taskFile.getTask();
-        if (!task.getAdditionalSteps().isEmpty()) {
-          StudyUtils.drawPlaceholdersFromOtherSteps(editor, taskFile, task);
         }
       }
     }

@@ -122,7 +122,7 @@ public class CCShowPreview extends DumbAwareAction {
       @Override
       public void run() {
         Pair<VirtualFile, TaskFile> pair =
-          EduUtils.createStudentFile(this, project, virtualFile, taskFile.getTask().getActiveStepIndex(), generatedFilesFolder, null);
+          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null);
         if (pair != null) {
           showPreviewDialog(project, pair.getFirst(), pair.getSecond());
         }

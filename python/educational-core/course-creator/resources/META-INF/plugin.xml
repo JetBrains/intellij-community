@@ -25,8 +25,6 @@
     <renameHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonRenameHandler" order="first"/>
     <applicationService serviceInterface="com.jetbrains.edu.coursecreator.settings.CCSettings"
                         serviceImplementation="com.jetbrains.edu.coursecreator.settings.CCSettings"/>
-    <editorTabTitleProvider implementation="com.jetbrains.edu.coursecreator.CCTestsTabTitleProvider"/>
-    <editorNotificationProvider implementation="com.jetbrains.edu.coursecreator.CCStepEditorNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
@@ -87,9 +85,6 @@
     </group>
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
-    <action class="com.jetbrains.edu.coursecreator.actions.CCNewStepAction" id="CC.NewStep">
-      <add-to-group group-id="AnswerPlaceholderGroup" relative-to-action="DeleteAllPlaceholders" anchor="after"/>
-    </action>
   </actions>
 
 
