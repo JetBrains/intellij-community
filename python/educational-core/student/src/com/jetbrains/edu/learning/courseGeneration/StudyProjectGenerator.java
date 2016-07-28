@@ -108,7 +108,11 @@ public class StudyProjectGenerator {
 
     final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
     if (courseFile.exists()) {
-      return readCourseFromCache(courseFile, false);
+      final Course course = readCourseFromCache(courseFile, false);
+      if (course != null && course.isUpToDate()) {
+        return course;
+      }
+      return getCourseFromStepic(project);
     }
     else if (myUser != null) {
       final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
@@ -118,10 +122,13 @@ public class StudyProjectGenerator {
         return readCourseFromCache(adaptiveCourseFile, true);
       }
     }
+    return getCourseFromStepic(project);
+  }
+
+  private Course getCourseFromStepic(@NotNull Project project) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
       return execCancelable(() -> {
-
         final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
         if (course != null) {
           flushCourse(project, course);
