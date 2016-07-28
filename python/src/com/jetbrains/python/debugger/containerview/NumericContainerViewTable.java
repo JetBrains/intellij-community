@@ -227,7 +227,8 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
                        myValue.isErrorOnEval(), myValue.isReturnedVal(),
                        myValue.getParent(), myValue.getFrameAccessor());
 
-    return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, getFormat());
+    final String format = getFormat().isEmpty() ? "%" : getFormat();
+    return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, format);
   }
 
   public abstract boolean isNumeric();
