@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +55,7 @@ public class EduUtils {
     }
     try {
       return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
-    }
-    catch (NumberFormatException e) {
+    } catch (NumberFormatException e) {
       return -1;
     }
   }
@@ -109,7 +109,6 @@ public class EduUtils {
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
 
-
   public static VirtualFile copyFile(Object requestor, VirtualFile toDir, VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
@@ -133,6 +132,7 @@ public class EduUtils {
   public static Pair<VirtualFile, TaskFile> createStudentFile(Object requestor,
                                                               Project project,
                                                               VirtualFile answerFile,
+                                                              int stepIndex,
                                                               VirtualFile parentDir,
                                                               @Nullable Task task) {
 
@@ -151,33 +151,92 @@ public class EduUtils {
       }
       task = task.copy();
     }
-    TaskFile taskFile = task.getTaskFile(answerFile.getName());
-    if (taskFile == null) {
+    Map<Integer, TaskFile> taskFileSteps = getTaskFileSteps(task, answerFile.getName());
+    TaskFile initialTaskFile = taskFileSteps.get(-1);
+    if (initialTaskFile == null) {
       return null;
     }
-    EduDocumentListener listener = new EduDocumentListener(taskFile, false);
+    EduDocumentListener listener = new EduDocumentListener(initialTaskFile, false);
     studentDocument.addDocumentListener(listener);
 
-    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      replaceAnswerPlaceholder(project, studentDocument, placeholder);
+    Pair<VirtualFile, TaskFile> result = null;
+    for (Map.Entry<Integer, TaskFile> entry : taskFileSteps.entrySet()) {
+      Integer index = entry.getKey();
+      if (index < stepIndex) {
+        continue;
+      }
+      TaskFile stepTaskFile = entry.getValue();
+      if (index == stepIndex) {
+        result = Pair.createNonNull(studentFile, stepTaskFile);
+      }
+      for (AnswerPlaceholder placeholder : stepTaskFile.getAnswerPlaceholders()) {
+        if (placeholder.isVisibleAtPrevStep()) {
+          AnswerPlaceholder lastPlaceholderOnThatPlace = null;
+          for (int i = stepIndex - 1; i >= -1; i--) {
+            AnswerPlaceholder p = taskFileSteps.get(i).getAnswerPlaceholder(placeholder.getOffset());
+            if (p != null) {
+              lastPlaceholderOnThatPlace = p;
+              break;
+            }
+          }
+          if (lastPlaceholderOnThatPlace != null) {
+            replaceAnswerPlaceholder(project, studentDocument, placeholder, lastPlaceholderOnThatPlace.getPossibleAnswer());
+            placeholder.setPossibleAnswer(lastPlaceholderOnThatPlace.getPossibleAnswer());
+            placeholder.setLength(lastPlaceholderOnThatPlace.getPossibleAnswer().length());
+          }
+          else {
+            TaskFile currentStepTaskFile = taskFileSteps.get(stepIndex);
+            boolean overridesPlaceholder =
+              placeholder.getTaskFile() != currentStepTaskFile && currentStepTaskFile.getAnswerPlaceholder(placeholder.getOffset()) != null;
+            if (!overridesPlaceholder) {
+              replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getTaskText());
+            }
+          }
+        }
+        else {
+          if (task.getActiveStepIndex() >= index) {
+            replaceAnswerPlaceholder(project, studentDocument, placeholder, stepIndex < index ? "" : placeholder.getTaskText());
+          }
+        }
+      }
     }
     studentDocument.removeDocumentListener(listener);
-    return Pair.create(studentFile, taskFile);
+    return result;
   }
 
-  private static void replaceAnswerPlaceholder(@NotNull final Project project,
-                                               @NotNull final Document document,
-                                               @NotNull final AnswerPlaceholder answerPlaceholder) {
-    final String taskText = answerPlaceholder.getTaskText();
-    final int offset = answerPlaceholder.getOffset();
+  public static Map<Integer, TaskFile> getTaskFileSteps(Task task, String name) {
+    Map<Integer, TaskFile> files = new HashMap<>();
+    files.put(-1, task.getTaskFile(name));
+    List<Step> additionalSteps = task.getAdditionalSteps();
+    if (!additionalSteps.isEmpty()) {
+      for (int i = 0; i < additionalSteps.size(); i++) {
+        files.put(i, additionalSteps.get(i).getTaskFiles().get(name));
+      }
+    }
+    return files;
+  }
+
+  public static void replaceAnswerPlaceholder(@NotNull Project project,
+                                              @NotNull Document document,
+                                              int start,
+                                              int end,
+                                              @NotNull String text) {
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      document.replaceString(offset, offset + answerPlaceholder.getRealLength(), taskText);
+      document.replaceString(start, end, text);
       FileDocumentManager.getInstance().saveDocument(document);
     }), "Replace Answer Placeholders", "Replace Answer Placeholders");
   }
 
+  public static void replaceAnswerPlaceholder(@NotNull Project project,
+                                              @NotNull Document document,
+                                              @NotNull AnswerPlaceholder answerPlaceholder,
+                                              @NotNull String text) {
+    final int offset = answerPlaceholder.getOffset();
+    replaceAnswerPlaceholder(project, document, offset, offset + answerPlaceholder.getRealLength(), text);
+  }
+
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+    for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
       String name = entry.getKey();
       VirtualFile virtualFile = taskDir.findChild(name);
       if (virtualFile == null) {

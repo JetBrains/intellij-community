@@ -25,14 +25,19 @@ public class AnswerPlaceholder {
   @Expose
   private int myOffset = -1;
 
-  @Expose private int length = -1;
+  @Expose private int length = 0;
 
   private int myIndex = -1;
+
+  @Expose
   private String myTaskText;
   private MyInitialState myInitialState;
   private StudyStatus myStatus = StudyStatus.Unchecked;
   private boolean mySelected = false;
   private boolean myUseLength = true;
+  //TODO: rename to smth more meaningful
+  @Expose private boolean myVisibleAtPrevStep = true;
+  private String mySavedText = "";
 
 
   @Transient
@@ -168,6 +173,26 @@ public class AnswerPlaceholder {
 
   public void setOffset(int offset) {
     myOffset = offset;
+  }
+
+  public boolean isVisibleAtPrevStep() {
+    return myVisibleAtPrevStep;
+  }
+
+  public void setVisibleAtPrevStep(boolean visibleAtPrevStep) {
+    myVisibleAtPrevStep = visibleAtPrevStep;
+  }
+
+  public String getSavedText() {
+    return mySavedText;
+  }
+
+  public void setSavedText(String savedText) {
+    mySavedText = savedText;
+  }
+
+  public int getEndOffset() {
+    return myOffset + getRealLength();
   }
 
   public static class MyInitialState {

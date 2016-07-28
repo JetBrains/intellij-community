@@ -108,24 +108,38 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   protected void setStudyAttributes(Task task, PresentationData data, String name) {
     StudyStatus taskStatus = task.getStatus();
+    String additionalInfo = task.getAdditionalSteps().isEmpty() ? null : getStepInfo(task);
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, name, JBColor.BLACK, InteractiveLearningIcons.Task);
+        updatePresentation(data, name, JBColor.BLACK, InteractiveLearningIcons.Task, additionalInfo);
         break;
       }
       case Solved: {
-        updatePresentation(data, name, LIGHT_GREEN, InteractiveLearningIcons.TaskCompl);
+        updatePresentation(data, name, LIGHT_GREEN, InteractiveLearningIcons.TaskCompl, additionalInfo);
         break;
       }
       case Failed: {
-        updatePresentation(data, name, JBColor.RED, InteractiveLearningIcons.TaskProbl);
+        updatePresentation(data, name, JBColor.RED, InteractiveLearningIcons.TaskProbl, additionalInfo);
       }
     }
   }
 
+  private static String getStepInfo(Task task) {
+    int index = task.getActiveStepIndex() + 2;
+    int number = task.getAdditionalSteps().size() + 1;
+    return "step " + index + "/" + number;
+  }
+
   protected static void updatePresentation(PresentationData data, String name, JBColor color, Icon icon) {
+    updatePresentation(data, name, color, icon, null);
+  }
+
+  protected static void updatePresentation(PresentationData data, String name, JBColor color, Icon icon, String additionalInfo) {
     data.clearText();
     data.addText(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
+    if (additionalInfo != null) {
+      data.addText(" (" + additionalInfo + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
     data.setIcon(icon);
   }
 
@@ -160,7 +174,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           FileEditorManager.getInstance(myProject).closeFile(openFile);
         }
         VirtualFile child = null;
-        for (Map.Entry<String, TaskFile> entry: task.getTaskFiles().entrySet()) {
+        Map<String, TaskFile> taskFiles = StudyUtils.getTaskFiles(task);
+        for (Map.Entry<String, TaskFile> entry: taskFiles.entrySet()) {
           VirtualFile file = taskDir.findChild(entry.getKey());
           if (file != null) {
             FileEditorManager.getInstance(myProject).openFile(file, true);
