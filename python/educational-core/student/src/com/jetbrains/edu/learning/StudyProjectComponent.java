@@ -36,6 +36,8 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
@@ -48,6 +50,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.flushCourse;
 
 
 public class StudyProjectComponent implements ProjectComponent {
@@ -68,8 +72,8 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     if (course != null && !course.isUpToDate()) {
-      course.setUpToDate(true);
       updateCourse();
+      course.setUpdated();
     }
 
     registerStudyToolWindow(course);
@@ -80,8 +84,11 @@ public class StudyProjectComponent implements ProjectComponent {
           @Override
           public void run() {
             if (course != null) {
-              UISettings.getInstance().HIDE_TOOL_STRIPES = false;
-              UISettings.getInstance().fireUISettingsChanged();
+              final UISettings instance = UISettings.getInstance();
+              if (instance != null) {
+                instance.HIDE_TOOL_STRIPES = false;
+                instance.fireUISettingsChanged();
+              }
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
             }
@@ -134,14 +141,21 @@ public class StudyProjectComponent implements ProjectComponent {
   }
 
   private void updateCourse() {
-    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
-    if (course == null) {
-      return;
+    final Course currentCourse = StudyTaskManager.getInstance(myProject).getCourse();
+    final CourseInfo info = CourseInfo.fromCourse(currentCourse);
+    if (info == null) return;
+
+    final File resourceDirectory = new File(currentCourse.getCourseDirectory());
+    if (resourceDirectory.exists()) {
+      FileUtil.delete(resourceDirectory);
     }
-    final File resourceDirectory = new File(course.getCourseDirectory());
-    if (!resourceDirectory.exists()) {
-      return;
-    }
+
+    final Course course = EduStepicConnector.getCourse(myProject, info);
+
+    if (course == null) return;
+    flushCourse(myProject, course);
+    course.initCourse(true);
+
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
     if (manager == null) {
       LOG.info("Study Language Manager is null for " + course.getLanguageById().getDisplayName());

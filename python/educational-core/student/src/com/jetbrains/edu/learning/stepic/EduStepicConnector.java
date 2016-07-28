@@ -237,6 +237,7 @@ public class EduStepicConnector {
     }
     Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+      setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").
       setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }
@@ -285,6 +286,51 @@ public class EduStepicConnector {
     return Collections.singletonList(CourseInfo.INVALID_COURSE);
   }
 
+  public static Date getCourseUpdateDate(final int courseId) {
+    final String url = EduStepicNames.COURSES + "/" + courseId;
+    try {
+      final List<CourseInfo> courses = getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
+      if (!courses.isEmpty()) {
+        return courses.get(0).getUpdateDate();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + courseId);
+    }
+
+    return null;
+  }
+
+  public static Date getLessonUpdateDate(final int lessonId) {
+    final String url = EduStepicNames.LESSONS + "/" + lessonId;
+    try {
+      List<Lesson> lessons = getFromStepic(url, StepicWrappers.LessonContainer.class).lessons;
+      if (!lessons.isEmpty()) {
+        return lessons.get(0).getUpdateDate();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + lessonId);
+    }
+
+    return null;
+  }
+
+  public static Date getTaskUpdateDate(final int taskId) {
+    final String url = EduStepicNames.STEPS + "/" + String.valueOf(taskId);
+    try {
+      List<StepicWrappers.StepSource> steps = getFromStepic(url, StepicWrappers.StepContainer.class).steps;
+      if (!steps.isEmpty()) {
+        return steps.get(0).update_date;
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + taskId);
+    }
+
+    return null;
+  }
+
   private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
     final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
     final StepicWrappers.CoursesContainer coursesContainer = getFromStepic(url, StepicWrappers.CoursesContainer.class);
@@ -315,7 +361,7 @@ public class EduStepicConnector {
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
-    course.setUpToDate(true);  // TODO: get from stepic
+    course.setUpdateDate(info.getUpdateDate());
     
     if (!course.isAdaptive()) {
       String courseType = info.getType();
@@ -359,41 +405,43 @@ public class EduStepicConnector {
         unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lesson = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
-      Lesson realLesson = lesson.lessons.get(0);
-      realLesson.taskList = new ArrayList<Task>();
-      for (Integer s : realLesson.steps) {
-        createTask(realLesson, s);
+        lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
+      Lesson lesson = lessonContainer.lessons.get(0);
+      lesson.taskList = new ArrayList<Task>();
+      for (Integer s : lesson.steps) {
+        createTask(lesson, s);
       }
-      if (!realLesson.taskList.isEmpty())
-        lessons.add(realLesson);
+      if (!lesson.taskList.isEmpty())
+        lessons.add(lesson);
     }
 
     return lessons;
   }
 
   private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
-    final StepicWrappers.Step step = getStep(stepicId);
-    if (!step.name.equals(PYCHARM_PREFIX)) return;
+    final StepicWrappers.StepSource step = getStep(stepicId);
+    final StepicWrappers.Step block = step.block;
+    if (!block.name.equals(PYCHARM_PREFIX)) return;
     final Task task = new Task();
     task.setStepicId(stepicId);
-    task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
-    task.setText(step.text);
-    for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+    task.setUpdateDate(step.update_date);
+    task.setName(block.options != null ? block.options.title : PYCHARM_PREFIX);
+    task.setText(block.text);
+    for (StepicWrappers.TestFileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
     task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-    if (step.options.files != null) {
-      for (TaskFile taskFile : step.options.files) {
+    if (block.options.files != null) {
+      for (TaskFile taskFile : block.options.files) {
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
     lesson.taskList.add(task);
   }
 
-  public static StepicWrappers.Step getStep(Integer step) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0).block;
+  public static StepicWrappers.StepSource getStep(Integer step) throws IOException {
+    return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0);
   }
 
 
@@ -504,7 +552,7 @@ public class EduStepicConnector {
         return;
       }
       final CourseInfo postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
-
+      course.setId(postedCourse.id);
       final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
