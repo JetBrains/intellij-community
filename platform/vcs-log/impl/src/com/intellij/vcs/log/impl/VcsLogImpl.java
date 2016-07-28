@@ -25,6 +25,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
@@ -47,41 +49,13 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public List<CommitId> getSelectedCommits() {
-    final int[] rows = myUi.getTable().getSelectedRows();
-    return new AbstractList<CommitId>() {
-      @Nullable
-      @Override
-      public CommitId get(int index) {
-        return getTable().getModel().getCommitIdAtRow(rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
-      }
-    };
-  }
-
-  private VcsLogGraphTable getTable() {
-    return myUi.getTable();
+    return getSelectedDataFromTable(GraphTableModel::getCommitIdAtRow);
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    final int[] rows = myUi.getTable().getSelectedRows();
-    return new AbstractList<VcsFullCommitDetails>() {
-      @NotNull
-      @Override
-      public VcsFullCommitDetails get(int index) {
-        return getTable().getModel().getFullDetails(rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
-      }
-    };
+    return getSelectedDataFromTable(GraphTableModel::getFullDetails);
   }
 
   @Override
@@ -121,5 +95,27 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public Collection<VcsLogProvider> getLogProviders() {
     return myLogData.getLogProviders();
+  }
+
+  @NotNull
+  private VcsLogGraphTable getTable() {
+    return myUi.getTable();
+  }
+
+  @NotNull
+  private <T> List<T> getSelectedDataFromTable(@NotNull BiFunction<GraphTableModel, Integer, T> dataGetter) {
+    final int[] rows = myUi.getTable().getSelectedRows();
+    return new AbstractList<T>() {
+      @NotNull
+      @Override
+      public T get(int index) {
+        return dataGetter.apply(getTable().getModel(), rows[index]);
+      }
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 }

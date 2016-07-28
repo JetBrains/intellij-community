@@ -266,6 +266,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myFilterer;
   }
 
+  @NotNull
   public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
   }
