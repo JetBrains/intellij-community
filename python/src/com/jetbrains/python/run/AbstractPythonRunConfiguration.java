@@ -30,6 +30,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -301,6 +302,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     mySdkHome = sdkHome;
   }
 
+  @Nullable
   public Module getModule() {
     return getConfigurationModule().getModule();
   }
@@ -447,16 +449,34 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   /**
-   * @return working directory to run, never null, does its best to return project dir if empty.
+   * Note to inheritors: Always check {@link #getWorkingDirectory()} first. You should return it, if it is not empty since
+   * user should be able to set dir explicitly. Then, do your guess and return super as last resort.
+   *
+   * @return working directory to run, never null, does its best to guess which dir to use.
    * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
    */
   @NotNull
   public String getWorkingDirectorySafe() {
     final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
-    if (result == null) {
-      return new File(".").getAbsolutePath();
+    if (result != null) {
+      return result;
     }
-    return result;
+
+    final String firstModuleRoot = getFirstModuleRoot();
+    if (firstModuleRoot != null) {
+      return firstModuleRoot;
+    }
+    return new File(".").getAbsolutePath();
+  }
+
+  @Nullable
+  private String getFirstModuleRoot() {
+    final Module module = getModule();
+    if (module == null) {
+      return null;
+    }
+    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    return roots.length > 0 ? roots[0].getPath() : null;
   }
 
   @Override
