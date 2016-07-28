@@ -4,6 +4,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -244,5 +246,11 @@ public class CCUtils {
         EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null);
       });
     }
+  }
+
+  public static void updateActionGroup(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
+    presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
   }
 }
