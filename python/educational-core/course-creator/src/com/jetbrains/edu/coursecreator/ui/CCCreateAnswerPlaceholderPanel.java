@@ -130,7 +130,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class ShowNext extends AnAction {
 
     public ShowNext() {
-      super("Next", "Next", AllIcons.Actions.Forward);
+      super("Next Hint", "Next Hint", AllIcons.Actions.Forward);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class ShowPrevious extends AnAction {
 
     public ShowPrevious() {
-      super("Previous", "Previous", AllIcons.Actions.Back);
+      super("Previous Hint", "Previous Hint", AllIcons.Actions.Back);
     }
 
     @Override
