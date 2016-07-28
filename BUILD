@@ -80,14 +80,6 @@ fileset(
     ],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-cli-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-cli-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 java_test(
   name = "smRunner_tests",
   srcs = glob([
@@ -108,6 +100,14 @@ java_import(
   name = "xml/relaxng/lib/rngom-20051226-patched",
   jars = [
       "xml/relaxng/lib/rngom-20051226-patched.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-base-services-groovy-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -147,14 +147,6 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -730,9 +722,9 @@ fileset(
 )
 
 java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.9",
+  name = "plugins/gradle/lib/gradle-model-core-2.14.1",
   jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.9.jar",
+      "plugins/gradle/lib/gradle-model-core-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -788,6 +780,14 @@ kotlin_library(
               "//tools/idea:editor-ui-api",
     ],
   javacopts = ["-extra_checks:off"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-model-groovy-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-model-groovy-2.14.1.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
@@ -923,22 +923,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-model-groovy-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-model-groovy-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-tooling-api-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-tooling-api-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 fileset(
   name = "editor-ui-api.res",
   srcs = glob([
@@ -1068,6 +1052,14 @@ java_library(
 )
 
 java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-scala-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-scala-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
   name = "lib/jna-platform",
   jars = [
       "lib/jna-platform.jar",
@@ -1092,29 +1084,33 @@ groovy_library(
       "//tools/idea:gradle-tooling-extension-api",
           "//tools/idea:lib/slf4j-api-1.7.10",
           "//tools/idea:lib/slf4j-log4j12-1.7.10",
-          "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.9",
+          "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
       "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
       "//tools/idea:lib/groovy-all-2.4.6",
       "//tools/idea:lib/gson-2.5",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-ide-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-scala-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.9",
-      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.9",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-scala-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
+      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
     ],
   javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
@@ -1349,6 +1345,14 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1628,6 +1632,14 @@ fileset(
 )
 
 java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
   name = "plugins/gradle/lib/jna-3.2.7",
   jars = [
       "plugins/gradle/lib/jna-3.2.7.jar",
@@ -1652,9 +1664,9 @@ java_import(
 )
 
 java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.9",
+  name = "plugins/gradle/lib/gradle-cli-2.14.1",
   jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.9.jar",
+      "plugins/gradle/lib/gradle-cli-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -2386,14 +2398,6 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-messaging-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-messaging-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 fileset(
   name = "icons.res",
   srcs = glob([
@@ -2438,14 +2442,6 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
 )
 
 java_library(
@@ -3494,13 +3490,15 @@ java_library(
       "//tools/idea:gradle-tooling-extension-api",
           "//tools/idea:lib/slf4j-api-1.7.10",
           "//tools/idea:lib/slf4j-log4j12-1.7.10",
-          "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
+          "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
       "//tools/idea:gradle-tooling-extension-impl",
       "//tools/idea:gradle-jps-plugin",
           "//tools/idea:lib/ant/lib/ant-commons-net",
@@ -3531,10 +3529,10 @@ java_library(
           "//tools/idea:smRunner",
               "//tools/idea:lib/serviceMessages",
       "//tools/idea:lib/swingx-core-1.6.2",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-resources-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-cli-2.9",
+      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
       "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
       "//tools/idea:plugins/gradle/lib/jsr305-1.3.9",
       "//tools/idea:plugins/gradle/lib/commons-io-1.4",
@@ -3727,6 +3725,14 @@ java_import(
   name = "plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
   jars = [
       "plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -3980,14 +3986,6 @@ fileset(
 )
 
 java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
   name = "lib/ant/lib/ant-apache-resolver",
   jars = [
       "lib/ant/lib/ant-apache-resolver.jar",
@@ -4014,6 +4012,14 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_library(
@@ -4729,14 +4735,6 @@ fileset(
     ],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-resources-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-resources-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 fileset(
   name = "MM_maven2-server-impl_testlib.res",
   srcs = glob([
@@ -4880,6 +4878,14 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
 fileset(
   name = "editor-ui-ex.res",
   srcs = glob([
@@ -5019,14 +5025,6 @@ java_library(
           "//tools/idea:lang-api_testlib",
     ],
   javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-native-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-native-2.9.jar",
-    ],
   visibility = ["//visibility:public"],
 )
 
@@ -5250,9 +5248,9 @@ java_import(
 )
 
 java_import(
-  name = "plugins/gradle/lib/gradle-core-2.9",
+  name = "plugins/gradle/lib/gradle-messaging-2.14.1",
   jars = [
-      "plugins/gradle/lib/gradle-core-2.9.jar",
+      "plugins/gradle/lib/gradle-messaging-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -6403,14 +6401,6 @@ java_import(
 )
 
 java_import(
-  name = "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
   name = "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
   jars = [
       "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5.jar",
@@ -6836,17 +6826,19 @@ groovy_library(
           "//tools/idea:gradle-tooling-extension-api",
               "//tools/idea:lib/slf4j-api-1.7.10",
               "//tools/idea:lib/slf4j-log4j12-1.7.10",
-              "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-model-core-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-resources-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-cli-2.9",
+              "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
           "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
           "//tools/idea:plugins/gradle/lib/commons-io-1.4",
       "//tools/idea:gradle-tooling-extension-tests",
@@ -6900,6 +6892,14 @@ fileset(
     ],
 )
 
+java_import(
+  name = "plugins/gradle/lib/gradle-native-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-native-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
 fileset(
   name = "ant_testlib.res",
   srcs = glob([
@@ -6919,6 +6919,14 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-base-services-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-base-services-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 fileset(
@@ -7001,6 +7009,14 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
 java_library(
   name = "lang-api_testlib",
   srcs = glob([
@@ -7057,6 +7073,22 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+java_import(
+  name = "plugins/gradle/lib/gradle-resources-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-resources-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
 java_library(
   name = "gradle-jps-plugin",
   srcs = glob([
@@ -7082,16 +7114,16 @@ java_library(
       "//tools/idea:jps-model-api",
       "//tools/idea:jps-model-serialization",
           "//tools/idea:lib/jdom",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-resources-2.9",
+      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
       "//tools/idea:lib/ant/lib/ant-commons-net",
       "//tools/idea:lib/ant/lib/ant-jmf",
       "//tools/idea:lib/ant/lib/ant-apache-resolver",
@@ -7425,6 +7457,14 @@ java_library(
 )
 
 java_import(
+  name = "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
   name = "lib/reflectasm-1.07",
   jars = [
       "lib/reflectasm-1.07.jar",
@@ -7653,17 +7693,19 @@ java_library(
           "//tools/idea:gradle-tooling-extension-api",
               "//tools/idea:lib/slf4j-api-1.7.10",
               "//tools/idea:lib/slf4j-log4j12-1.7.10",
-              "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-              "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-model-core-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-resources-2.9",
-          "//tools/idea:plugins/gradle/lib/gradle-cli-2.9",
+              "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+              "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+          "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
           "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
           "//tools/idea:plugins/gradle/lib/commons-io-1.4",
       "//tools/idea:MM_idea-ui_testlib",
@@ -7723,6 +7765,14 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_library(
@@ -8389,14 +8439,6 @@ fileset(
     ],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-model-core-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-model-core-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 fileset(
   name = "xml-openapi.res",
   srcs = glob([
@@ -8788,14 +8830,6 @@ java_library(
       "//tools/idea:editor-ui-ex",
     ],
   javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.9.jar",
-    ],
   visibility = ["//visibility:public"],
 )
 
@@ -9295,9 +9329,25 @@ groovy_library(
 )
 
 java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
   name = "lib/imgscalr-lib-4.2",
   jars = [
       "lib/imgscalr-lib-4.2.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -9622,6 +9672,14 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-wrapper-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-wrapper-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -10245,13 +10303,15 @@ java_library(
           "//tools/idea:compiler-openapi",
       "//tools/idea:lib/slf4j-api-1.7.10",
       "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.9",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.9",
+      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+      "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
       "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
     ],
   javacopts = ["-extra_checks:off"],
@@ -10322,14 +10382,6 @@ java_import(
   name = "jps/lib/optimizedFileManager",
   jars = [
       "jps/lib/optimizedFileManager.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.9.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -10516,14 +10568,6 @@ java_import(
   name = "lib/coverage-agent",
   jars = [
       "lib/coverage-agent.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.9.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -10734,6 +10778,14 @@ java_library(
                   "//tools/idea:lib/groovy-all-2.4.6",
     ],
   javacopts = ["-extra_checks:off"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-logging-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-logging-2.14.1.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
@@ -11027,14 +11079,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_import(
-  name = "plugins/gradle/lib/gradle-base-services-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-base-services-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
 java_library(
   name = "testRunner",
   srcs = glob([
@@ -11106,6 +11150,14 @@ java_library(
       "//tools/idea:xdebugger-api",
     ],
   javacopts = ["-extra_checks:off"],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-tooling-api-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-tooling-api-2.14.1.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
@@ -11221,14 +11273,6 @@ java_import(
   name = "lib/ant/lib/ant-junit",
   jars = [
       "lib/ant/lib/ant-junit.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-wrapper-2.9",
-  jars = [
-      "plugins/gradle/lib/gradle-wrapper-2.9.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -11358,14 +11402,6 @@ fileset(
   deps = [
       "@local_jdk//:langtools-neverlink",
     ],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.9",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.9.jar",
-    ],
-  visibility = ["//visibility:public"],
 )
 
 fileset(
@@ -11629,6 +11665,14 @@ java_library(
   visibility = ["//visibility:public"],
 )
 
+java_import(
+  name = "plugins/gradle/lib/gradle-process-services-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-process-services-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
 java_library(
   name = "IntelliLang",
   srcs = glob([
@@ -11704,9 +11748,9 @@ java_library(
 )
 
 java_import(
-  name = "plugins/gradle/lib/gradle-base-services-groovy-2.9",
+  name = "plugins/gradle/lib/gradle-core-2.14.1",
   jars = [
-      "plugins/gradle/lib/gradle-base-services-groovy-2.9.jar",
+      "plugins/gradle/lib/gradle-core-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -11862,9 +11906,9 @@ java_import(
 )
 
 java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-scala-2.9",
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.14.1",
   jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-scala-2.9.jar",
+      "plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
