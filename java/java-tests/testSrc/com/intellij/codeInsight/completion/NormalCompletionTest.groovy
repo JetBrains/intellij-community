@@ -291,6 +291,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSwitchCaseWithEnumConstant() { doTest() }
+  public void testSecondSwitchCaseWithEnumConstant() { doTest() }
 
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");

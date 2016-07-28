@@ -211,12 +211,12 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
         LOG.info("Failed to enter editing mode for StudyToolWindow");
         return;
       }
-      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDirectory);
+      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(taskDirectory);
       enterEditingMode(taskTextFile, project);
       StudyTaskManager.getInstance(project).setTurnEditingMode(false);
     }
     if (taskDirectory != null && StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
-      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDirectory);
+      VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(taskDirectory);
       enterEditingMode(taskTextFile, project);
     }
     else {

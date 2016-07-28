@@ -68,7 +68,7 @@ public class StepicWrappers {
           assert ideaDir != null;
           String name = entry.getKey();
           VirtualFile answerFile = taskDir.findChild(name);
-          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, -1, ideaDir, null);
+          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, ideaDir, null);
           if (pair == null) {
             return;
           }

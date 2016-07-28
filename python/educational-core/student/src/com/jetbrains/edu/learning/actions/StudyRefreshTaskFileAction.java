@@ -20,10 +20,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyActionListener;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import icons.InteractiveLearningIcons;
@@ -31,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "RefreshTaskAction";
@@ -77,16 +82,11 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
                                        @NotNull final Project project,
                                        TaskFile taskFile,
                                        String name) {
-    Task task = taskFile.getTask();
-    List<Step> additionalSteps = task.getAdditionalSteps();
-    if (!additionalSteps.isEmpty() && task.getActiveStepIndex() != -1) {
-      StudyStepManager.switchStep(project, task, -1);
-    }
     if (!resetDocument(document, taskFile, name)) {
       return false;
     }
-    task.setStatus(StudyStatus.Unchecked);
-    resetAnswerPlaceholders(taskFile);
+    taskFile.getTask().setStatus(StudyStatus.Unchecked);
+    resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();
     StudyUtils.updateToolWindows(project);
     return true;
@@ -102,23 +102,11 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     Disposer.register(project, balloon);
   }
 
-  private static void resetAnswerPlaceholders(TaskFile selectedTaskFile) {
+  private static void resetAnswerPlaceholders(TaskFile selectedTaskFile, Project project) {
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
       answerPlaceholder.reset();
-      answerPlaceholder.setStatus(StudyStatus.Unchecked);
-    }
-    List<Step> additionalSteps = selectedTaskFile.getTask().getAdditionalSteps();
-    if (!additionalSteps.isEmpty()) {
-      for (Step step : additionalSteps) {
-        TaskFile stepTaskFile = step.getTaskFiles().get(selectedTaskFile.name);
-        if (stepTaskFile == null) {
-          continue;
-        }
-        for (AnswerPlaceholder placeholder : stepTaskFile.getAnswerPlaceholders()) {
-          placeholder.reset();
-          placeholder.setStatus(StudyStatus.Unchecked);
-        }
-      }
+      taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }
   }
 

@@ -54,7 +54,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -845,7 +844,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  private static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
+  static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
     public IndentingDecorator(LookupElement delegate) {
       super(delegate);
     }

@@ -96,6 +96,7 @@ public class PyCharmEduInitialConfigurator {
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
+  @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -142,6 +143,11 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
     final UISettings uiSettings = UISettings.getInstance();
+    if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
+      EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+      editorSettings.setEnsureNewLineAtEOF(true);
+      propertiesComponent.setValue(CONFIGURED_V2, true);
+    }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
@@ -268,7 +274,7 @@ public class PyCharmEduInitialConfigurator {
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
-    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Window", "Run");
     hideActions(schema, root, mainMenu, menuItems);
   }
 

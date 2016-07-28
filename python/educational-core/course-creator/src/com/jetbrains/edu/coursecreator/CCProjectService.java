@@ -73,11 +73,11 @@ public class CCProjectService implements PersistentStateComponent<Element> {
   public void loadState(Element state) {
     try {
       Element courseElement = getChildWithName(state, COURSE).getChild(COURSE_TITLED);
-      for (Element lesson : getChildList(courseElement, LESSONS)) {
+      for (Element lesson : getChildList(courseElement, LESSONS, true)) {
         int lessonIndex = getAsInt(lesson, INDEX);
-        for (Element task : getChildList(lesson, TASK_LIST)) {
+        for (Element task : getChildList(lesson, TASK_LIST, true)) {
           int taskIndex = getAsInt(task, INDEX);
-          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES);
+          Map<String, Element> taskFiles = getChildMap(task, TASK_FILES, true);
           for (Map.Entry<String, Element> entry : taskFiles.entrySet()) {
             Element taskFileElement = entry.getValue();
             String name = entry.getKey();
@@ -86,10 +86,10 @@ public class CCProjectService implements PersistentStateComponent<Element> {
             if (document == null) {
               continue;
             }
-            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
-              Element lineElement = getChildWithName(placeholder, LINE);
+            for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS, true)) {
+              Element lineElement = getChildWithName(placeholder, LINE, true);
               int line = lineElement != null ? Integer.valueOf(lineElement.getAttributeValue(VALUE)) : 0;
-              Element startElement = getChildWithName(placeholder, START);
+              Element startElement = getChildWithName(placeholder, START, true);
               int start = startElement != null ? Integer.valueOf(startElement.getAttributeValue(VALUE)) : 0;
               int offset = document.getLineStartOffset(line) + start;
               addChildWithName(placeholder, OFFSET, offset);

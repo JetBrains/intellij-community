@@ -28,7 +28,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
-import com.intellij.ui.components.panels.SingleComponentLayout;
+import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -85,7 +85,7 @@ public class InspectionNodeInfo extends JPanel {
     pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
     pane.setAlignmentX(0);
 
-    add(SingleComponentLayout.wrap(pane),
+    add(StatelessCardLayout.wrap(pane),
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
     JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");

@@ -51,23 +51,15 @@ public class StudyCheckUtils {
   public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
+      TaskFile taskFile = entry.getValue();
       VirtualFile virtualFile = taskDir.findChild(name);
       if (virtualFile == null) {
         continue;
       }
-      if (FileEditorManager.getInstance(project).isFileOpen(virtualFile)) {
-        FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-        if (fileEditor instanceof StudyEditor) {
-          Editor editor = ((StudyEditor)fileEditor).getEditor();
-          editor.getMarkupModel().removeAllHighlighters();
-          for (TaskFile taskFile : task.getTaskFiles().values()) {
-            StudyUtils.drawPlaceholdersFromOtherSteps(editor, taskFile, task);
-          }
-          TaskFile currentTaskFile = StudyUtils.getTaskFile(project, virtualFile);
-          if (currentTaskFile != null) {
-            StudyUtils.drawAllWindows(editor, currentTaskFile, false);
-          }
-        }
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+      if (fileEditor instanceof StudyEditor) {
+        StudyEditor studyEditor = (StudyEditor)fileEditor;
+        StudyUtils.drawAllWindows(studyEditor.getEditor(), taskFile);
       }
     }
   }
@@ -82,7 +74,7 @@ public class StudyCheckUtils {
     VirtualFile fileToNavigate = studyState.getVirtualFile();
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
     if (!taskManager.hasFailedAnswerPlaceholders(selectedTaskFile)) {
-      for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
+      for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
         String name = entry.getKey();
         TaskFile taskFile = entry.getValue();
         if (taskManager.hasFailedAnswerPlaceholders(taskFile)) {
@@ -186,7 +178,7 @@ public class StudyCheckUtils {
 
 
   public static void flushWindows(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
-    for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
       VirtualFile virtualFile = taskDir.findChild(name);
