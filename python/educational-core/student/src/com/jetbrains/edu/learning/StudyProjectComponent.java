@@ -30,10 +30,7 @@ import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
 import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditorFactoryListener;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
@@ -163,24 +160,27 @@ public class StudyProjectComponent implements ProjectComponent {
     }
     final File[] files = resourceDirectory.listFiles();
     if (files == null) return;
-    for (File file : files) {
-      String testHelper = manager.getTestHelperFileName();
-      if (file.getName().equals(testHelper)) {
-        copyFile(file, new File(myProject.getBasePath(), testHelper));
+    for (File lessonDir : files) {
+      final String testHelper = manager.getTestHelperFileName();
+      final String testFileName = manager.getTestFileName();
+      if (lessonDir.getName().equals(testHelper)) {
+        copyFile(lessonDir, new File(myProject.getBasePath(), testHelper));
       }
-      if (file.getName().startsWith(EduNames.LESSON)) {
-        final File[] tasks = file.listFiles();
+      if (lessonDir.getName().startsWith(EduNames.LESSON)) {
+        final Lesson lesson = currentCourse.getLesson(lessonDir.getName());
+        final File[] tasks = lessonDir.listFiles();
         if (tasks == null) continue;
-        for (File task : tasks) {
-          final File taskDescrFrom = StudyUtils.createTaskDescriptionFile(task);
+        for (File taskDir : tasks) {
+          final Task task = lesson.getTask(taskDir.getName());
+          if (task.getStatus().equals(StudyStatus.Solved)) continue;
+          final File taskDescrFrom = StudyUtils.getTaskDescriptionFile(taskDir);
           if (taskDescrFrom != null) {
-            String testFileName = manager.getTestFileName();
-            final File taskTests = new File(task, testFileName);
-            final File taskDescrTo =
-              StudyUtils.createTaskDescriptionFile(new File(new File(myProject.getBasePath(), file.getName()), task.getName()));
+            final File taskTests = new File(taskDir, testFileName);
+            final File taskDescrTo = StudyUtils.getTaskDescriptionFile(new File(new File(myProject.getBasePath(), lessonDir.getName()),
+                                                                                taskDir.getName()));
             if (taskDescrTo != null) {
               copyFile(taskDescrFrom, taskDescrTo);
-              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), file.getName()), task.getName()),
+              copyFile(taskTests, new File(new File(new File(myProject.getBasePath(), lessonDir.getName()), taskDir.getName()),
                                            testFileName));
             }
           }

@@ -700,8 +700,8 @@ public class StudyUtils {
   }
   
   @Nullable
-  public static File createTaskDescriptionFile(@NotNull final File parent) {
-    if(new File(parent, EduNames.TASK_HTML).exists()) {
+  public static File getTaskDescriptionFile(@NotNull final File parent) {
+    if (new File(parent, EduNames.TASK_HTML).exists()) {
       return new File(parent, EduNames.TASK_HTML);
     }
     else {
