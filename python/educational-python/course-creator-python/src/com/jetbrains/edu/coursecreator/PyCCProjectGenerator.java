@@ -6,7 +6,6 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -34,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
@@ -102,8 +103,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     course.setLanguage(language);
     course.setCourseMode(CCUtils.COURSE_MODE);
 
-    File coursesDir = new File(PathManager.getConfigPath(), "courses");
-    File courseDir = new File(coursesDir, name + "-" + project.getName());
+    File courseDir = new File(OUR_COURSES_DIR, name + "-" + project.getName());
     course.setCourseDirectory(courseDir.getPath());
 
     StudyTaskManager.getInstance(project).setCourse(course);
