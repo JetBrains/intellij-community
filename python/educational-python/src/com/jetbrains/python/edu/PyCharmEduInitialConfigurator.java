@@ -274,7 +274,7 @@ public class PyCharmEduInitialConfigurator {
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
-    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Window", "Run");
     hideActions(schema, root, mainMenu, menuItems);
   }
 
