@@ -48,7 +48,8 @@ public class StudySerializationUtils {
   private StudySerializationUtils() {
   }
 
-  public static class StudyUnrecognizedFormatException extends Exception {}
+  public static class StudyUnrecognizedFormatException extends Exception {
+  }
 
   public static class Xml {
     public final static String COURSE_ELEMENT = "courseElement";
@@ -139,7 +140,6 @@ public class StudySerializationUtils {
               addChildWithName(initialState, MY_LENGTH, getChildWithName(placeholder, MY_INITIAL_LENGTH).getAttributeValue(VALUE));
             }
           }
-
         }
       }
       element.removeContent();
@@ -233,7 +233,11 @@ public class StudySerializationUtils {
     }
 
     public static void addHints(@NotNull Element placeholder) throws StudyUnrecognizedFormatException {
-      final String hint = getChildWithName(placeholder, HINT).getAttribute(VALUE).getValue();
+      Element element = getChildWithName(placeholder, HINT, true);
+      if (element == null) {
+        return;
+      }
+      final String hint = element.getAttribute(VALUE).getValue();
       Element listElement = new Element(LIST);
       final Element hintElement = new Element(OPTION);
       hintElement.setAttribute(VALUE, hint);
@@ -284,7 +288,11 @@ public class StudySerializationUtils {
     }
 
     public static List<Element> getChildList(Element parent, String name) throws StudyUnrecognizedFormatException {
-      Element listParent = getChildWithName(parent, name);
+      return getChildList(parent, name, false);
+    }
+
+    public static List<Element> getChildList(Element parent, String name, boolean optional) throws StudyUnrecognizedFormatException {
+      Element listParent = getChildWithName(parent, name, optional);
       if (listParent != null) {
         Element list = listParent.getChild(LIST);
         if (list != null) {
@@ -295,6 +303,10 @@ public class StudySerializationUtils {
     }
 
     public static Element getChildWithName(Element parent, String name) throws StudyUnrecognizedFormatException {
+      return getChildWithName(parent, name, false);
+    }
+
+    public static Element getChildWithName(Element parent, String name, boolean optional) throws StudyUnrecognizedFormatException {
       for (Element child : parent.getChildren()) {
         Attribute attribute = child.getAttribute(NAME);
         if (attribute == null) {
@@ -304,11 +316,18 @@ public class StudySerializationUtils {
           return child;
         }
       }
+      if (optional) {
+        return null;
+      }
       throw new StudyUnrecognizedFormatException();
     }
 
     public static <K, V> Map<K, V> getChildMap(Element element, String name) throws StudyUnrecognizedFormatException {
-      Element mapParent = getChildWithName(element, name);
+      return getChildMap(element, name, false);
+    }
+
+    public static <K, V> Map<K, V> getChildMap(Element element, String name, boolean optional) throws StudyUnrecognizedFormatException {
+      Element mapParent = getChildWithName(element, name, optional);
       if (mapParent != null) {
         Element map = mapParent.getChild(MAP);
         if (map != null) {
@@ -393,7 +412,8 @@ public class StudySerializationUtils {
           int start = placeholderObject.getAsJsonPrimitive(START).getAsInt();
           if (line == -1) {
             placeholderObject.addProperty(OFFSET, start);
-          } else {
+          }
+          else {
             Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
             placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
           }
@@ -401,7 +421,8 @@ public class StudySerializationUtils {
           final JsonArray hintsArray = new JsonArray();
 
           try {
-            final Type listType = new TypeToken<List<String>>() {}.getType();
+            final Type listType = new TypeToken<List<String>>() {
+            }.getType();
             final List<String> hints = gson.fromJson(hintString, listType);
             for (String hint : hints) {
               hintsArray.add(hint);
