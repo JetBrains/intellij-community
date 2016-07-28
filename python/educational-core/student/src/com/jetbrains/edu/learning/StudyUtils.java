@@ -698,16 +698,6 @@ public class StudyUtils {
   public static String getTaskDescriptionFileName(final boolean useHtml) {
     return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
   }
-  
-  @Nullable
-  public static File getTaskDescriptionFile(@NotNull final File parent) {
-    if (new File(parent, EduNames.TASK_HTML).exists()) {
-      return new File(parent, EduNames.TASK_HTML);
-    }
-    else {
-      return new File(parent, EduNames.TASK_MD);
-    }
-  }
 
   @Nullable
   public static Document getDocument(String basePath, int lessonIndex, int taskIndex, String fileName) {

@@ -91,6 +91,11 @@ public class Lesson implements StudyItem {
     return null;
   }
 
+  public void updateTask(@NotNull final Task oldTask, Task newTask) {
+    final int index = taskList.indexOf(oldTask);
+    taskList.set(index, newTask);
+  }
+
   public StudyStatus getStatus() {
     for (Task task : taskList) {
       if (task.getStatus() != StudyStatus.Solved) {
