@@ -678,4 +678,9 @@ public class VcsUtil {
       .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
       .orElse(null);
   }
+
+  @NotNull
+  public static <T> Stream<T> toStream(@Nullable T... items) {
+    return items == null ? Stream.empty() : Stream.of(items);
+  }
 }
