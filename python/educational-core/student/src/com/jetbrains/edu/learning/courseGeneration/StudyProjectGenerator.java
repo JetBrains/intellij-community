@@ -58,7 +58,7 @@ public class StudyProjectGenerator {
   private static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   @Nullable public StepicUser myUser;
-  private List<CourseInfo> myCourses = new ArrayList<>();
+  protected List<CourseInfo> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
 
@@ -109,18 +109,18 @@ public class StudyProjectGenerator {
   @Nullable
   protected Course getCourse(@NotNull final Project project) {
 
-//    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
-//    if (courseFile.exists()) {
-      //return readCourseFromCache(courseFile, false);
-//    }
-//    else if (myUser != null) {
-//      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
-//                                                                         mySelectedCourseInfo.getName() + "_" +
-//                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
-//      if (adaptiveCourseFile.exists()) {
-        //return readCourseFromCache(adaptiveCourseFile, true);
-//      }
-//    }
+    //    final File courseFile = new File(new File(OUR_COURSES_DIR, mySelectedCourseInfo.getName()), EduNames.COURSE_META_FILE);
+    //    if (courseFile.exists()) {
+    //return readCourseFromCache(courseFile, false);
+    //    }
+    //    else if (myUser != null) {
+    //      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+    //                                                                         mySelectedCourseInfo.getName() + "_" +
+    //                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
+    //      if (adaptiveCourseFile.exists()) {
+    //return readCourseFromCache(adaptiveCourseFile, true);
+    //      }
+    //    }
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Course, RuntimeException>() {
       @Override
       public Course compute() throws RuntimeException {
@@ -143,7 +143,8 @@ public class StudyProjectGenerator {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-      Gson gson = new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
+      Gson gson =
+        new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;
@@ -381,7 +382,7 @@ public class StudyProjectGenerator {
     return myCourses;
   }
 
- @NotNull
+  @NotNull
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()

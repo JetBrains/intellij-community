@@ -229,6 +229,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       myValidationManager.validate();
     }
   }
+
   public void registerValidators(final FacetValidatorsManager manager) {
     myValidationManager = manager;
   }

@@ -29,14 +29,19 @@ import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,13 +81,34 @@ public class StepicConnectorGet {
     return GSON.fromJson(responseString, container);
   }
 
+  private static <T> T getFromStepic2(String link, final Class<T> container, CloseableHttpClient client, List<NameValuePair> nvps) throws IOException {
+    URI uri;
+    try {
+      uri = new URIBuilder(EduStepicNames.STEPIC_API_URL + link).addParameters(nvps).build();
+    }
+    catch (URISyntaxException e) {
+      LOG.warn(e.getMessage());
+      return null;
+    }
+    final HttpGet request = new HttpGet(uri);
+
+    final CloseableHttpResponse response = client.execute(request);
+    final StatusLine statusLine = response.getStatusLine();
+    final HttpEntity responseEntity = response.getEntity();
+    final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+      throw new IOException("Stepic returned non 200 status code " + responseString);
+    }
+    return GSON.fromJson(responseString, container);
+  }
+
   @NotNull
   // un login
   public static List<CourseInfo> getCourses() {
     try {
       List<CourseInfo> result = new ArrayList<CourseInfo>();
       int pageNumber = 1;
-      while (addCoursesFromStepic(result, pageNumber)) {
+      while (addInformaticsCourses(result, pageNumber)) {
         pageNumber += 1;
       }
       return result;
@@ -126,6 +152,34 @@ public class StepicConnectorGet {
 
         result.add(info);
       }
+    }
+    return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
+  }
+
+
+  public static boolean addInformaticsCourses(List<CourseInfo> result, int pageNumber) throws IOException {
+    final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
+    List<NameValuePair> nvps = new ArrayList<>();
+    nvps.add( new BasicNameValuePair("tag","22872"));
+    final StepicWrappers.CoursesContainer coursesContainer = getFromStepic2(url, StepicWrappers.CoursesContainer.class,StepicConnectorLogin.getHttpClient(), nvps);
+    final List<CourseInfo> courseInfos = coursesContainer.courses;
+    for (CourseInfo info : courseInfos) {
+      final String courseType = info.getType();
+      //if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) continue;
+      final List<String> typeLanguage = StringUtil.split(courseType, " ");
+      // TODO: should adaptive course be of PyCharmType ?
+      //if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
+      for (Integer instructor : info.instructors) {
+        final StepicUser author =
+                getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
+        info.addAuthor(author);
+      }
+
+      String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
+      info.setName(name.trim());
+
+      result.add(info);
+      //}
     }
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
