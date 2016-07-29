@@ -24,12 +24,15 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.inspections.*;
+import com.intellij.lang.properties.editor.inspections.InspectedPropertyNodeInfo;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,6 +41,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,6 +97,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       final List<PropertiesFile> files = myEditor.getResourceBundle().getPropertiesFiles();
       final Project project = myEditor.getResourceBundle().getProject();
 
+      final List<ResourceBundlePropertyStructureViewElement> nodesToProcess = new ArrayList<>();
       final TreeVisitor<TreeElementWrapper> nodeVisitor =
         new TreeVisitor<TreeElementWrapper>() {
           @Override
@@ -100,33 +105,45 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
             final TreeElement treeElement = wrapper.getValue();
             if (!(treeElement instanceof ResourceBundlePropertyStructureViewElement)) return false;
             ResourceBundlePropertyStructureViewElement node = (ResourceBundlePropertyStructureViewElement) treeElement;
-            final String key = node.getProperty().getKey();
-            LOG.assertTrue(key != null);
-            SortedSet<HighlightInfoType> highlightTypes = new TreeSet<>(Comparator.comparing(t -> t.getSeverity(null)));
-            List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
-              new SmartList<>();
-            final IProperty[] properties =
-              files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
-            for (InspectionVisitorWrapper v : visitors) {
-              final ResourceBundleEditorProblemDescriptor[] problemDescriptors = v.getProblemVisitor().apply(properties);
-              if (!ArrayUtil.isEmpty(problemDescriptors)) {
-                final HighlightSeverity severity = v.getSeverity();
-                for (ResourceBundleEditorProblemDescriptor descriptor : problemDescriptors) {
-                  allDescriptors.add(Pair.create(descriptor, v.getKey()));
-                  final HighlightInfoType infoType =
-                    ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
-                                                               severity,
-                                                               SeverityRegistrar.getSeverityRegistrar(project));
-                  highlightTypes.add(infoType);
-                }
-              }
-            }
-            node.setInspectedPropertyNodeInfo(allDescriptors.isEmpty() ? null : new InspectedPropertyNodeInfo(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes));
+            nodesToProcess.add(node);
             return false;
           }
         };
       myEditor.getStructureViewComponent().getTreeBuilder().accept(TreeElementWrapper.class,
                                                                    nodeVisitor);
+
+      final Processor<ResourceBundlePropertyStructureViewElement> analyzingProcessor = node -> {
+        final String key = node.getProperty().getKey();
+        LOG.assertTrue(key != null);
+        SortedSet<HighlightInfoType>
+          highlightTypes = new TreeSet<>(Comparator.comparing(t -> t.getSeverity(null)));
+        List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
+          new SmartList<>();
+        final IProperty[] properties =
+          files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
+        for (InspectionVisitorWrapper v : visitors) {
+          final ResourceBundleEditorProblemDescriptor[] problemDescriptors = v.getProblemVisitor().apply(properties);
+          if (!ArrayUtil.isEmpty(problemDescriptors)) {
+            final HighlightSeverity severity = v.getSeverity();
+            for (ResourceBundleEditorProblemDescriptor descriptor : problemDescriptors) {
+              allDescriptors.add(Pair.create(descriptor, v.getKey()));
+              final HighlightInfoType infoType =
+                ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
+                                                           severity,
+                                                           SeverityRegistrar
+                                                             .getSeverityRegistrar(project));
+              highlightTypes.add(infoType);
+            }
+          }
+        }
+        node.setInspectedPropertyNodeInfo(allDescriptors.isEmpty()
+                                          ? null
+                                          : new InspectedPropertyNodeInfo(allDescriptors.toArray(new Pair[allDescriptors.size()]),
+                                                                          highlightTypes));
+
+        return true;
+      };
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(nodesToProcess, progress, true, analyzingProcessor);
     }
 
     @Override
