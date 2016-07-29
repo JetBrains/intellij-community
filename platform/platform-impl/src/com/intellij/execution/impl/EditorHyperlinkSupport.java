@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
@@ -339,13 +338,18 @@ public class EditorHyperlinkSupport {
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
-      if (editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) == null) {
-        return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
-          public void navigate(final boolean requestFocus) {
-            action.consume(next);
-            linkFollowed(editor, ranges, next);
-          }
-        }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+      HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(next);
+      assert info != null;
+      if (info.includeInOccurenceNavigation()) {
+        boolean inCollapsedRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) != null;
+        if (!inCollapsedRegion) {
+          return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
+            public void navigate(final boolean requestFocus) {
+              action.consume(next);
+              linkFollowed(editor, ranges, next);
+            }
+          }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+        }
       }
       if (newIndex == i) {
         break; // cycled through everything, found no next/prev hyperlink
