@@ -95,9 +95,15 @@ public class Course {
   public void setAuthors(String[] authors) {
     this.authors = new ArrayList<StepicUser>();
     for (String name : authors) {
-      final List<String> pair = StringUtil.split(name, " ");
-      if (!pair.isEmpty())
-        this.authors.add(new StepicUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+      final List<String> firstLast = StringUtil.split(name, " ");
+      if (!firstLast.isEmpty()) {
+        final StepicUser stepicUser = new StepicUser();
+        stepicUser.setFirstName(firstLast.remove(0));
+        if (firstLast.size() > 0) {
+          stepicUser.setLastName(StringUtil.join(firstLast, " "));
+        }
+        this.authors.add(stepicUser);
+      }
     }
   }
 
