@@ -916,7 +916,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testReturnValues() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
       @Override
@@ -936,10 +935,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        eval(PyDebugValue.RETURN_VALUES_PREFIX + "bar[0]").hasValue("1");
+        eval(PyDebugValue.RETURN_VALUES_PREFIX + "['bar'][0]").hasValue("1");
         resume();
         waitForPause();
-        eval(PyDebugValue.RETURN_VALUES_PREFIX + "foo").hasValue("33");
+        eval(PyDebugValue.RETURN_VALUES_PREFIX + "['foo']").hasValue("33");
         resume();
       }
     });
