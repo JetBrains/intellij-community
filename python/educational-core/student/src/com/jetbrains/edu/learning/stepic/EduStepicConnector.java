@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -45,6 +46,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -140,6 +143,13 @@ public class EduStepicConnector {
       HttpClientBuilder builder =
         HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
           setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
+
+      final HttpConfigurable proxyConfigurable = HttpConfigurable.getInstance();
+      final List<Proxy> proxies = proxyConfigurable.getOnlyBySettingsSelector().select(URI.create(EduStepicNames.STEPIC_URL));
+      final InetSocketAddress address = proxies.size() > 0 ? (InetSocketAddress)proxies.get(0).address() : null;
+      if (address != null) {
+        builder.setProxy(new HttpHost(address.getHostName(), address.getPort()));
+      }
       ourCookieStore = new BasicCookieStore();
 
       try {
