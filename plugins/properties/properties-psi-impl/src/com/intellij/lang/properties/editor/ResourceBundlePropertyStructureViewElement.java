@@ -23,7 +23,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspectionPass;
+import com.intellij.lang.properties.editor.inspections.InspectedPropertyNodeInfo;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.navigation.ItemPresentation;
@@ -57,7 +57,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
 
-  private ResourceBundleEditorInspectionPass.InspectionPassInfo myInspectionPassInfo;
+  private volatile InspectedPropertyNodeInfo myInspectedPropertyNodeInfo;
 
   public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
     myAnchor = anchor;
@@ -96,7 +96,11 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @NotNull
   public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getProblemDescriptors() {
-    return myInspectionPassInfo == null ? new Pair[0] : myInspectionPassInfo.getDescriptors();
+    return myInspectedPropertyNodeInfo == null ? new Pair[0] : myInspectedPropertyNodeInfo.getDescriptors();
+  }
+
+  public void setInspectedPropertyNodeInfo(InspectedPropertyNodeInfo inspectedPropertyNodeInfo) {
+    myInspectedPropertyNodeInfo = inspectedPropertyNodeInfo;
   }
 
   @Override
@@ -125,10 +129,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
           (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getProperty().getPsiElement().isValid()) {
-          myInspectionPassInfo =
-            ResourceBundleEditorInspectionPass.inspect(getProperty().getKey(), getProperty().getPropertiesFile().getResourceBundle());
-          if (myInspectionPassInfo != null) {
-            TextAttributes highlightingAttributes = myInspectionPassInfo.getTextAttributes(colorsScheme);
+          if (myInspectedPropertyNodeInfo != null) {
+            TextAttributes highlightingAttributes = myInspectedPropertyNodeInfo.getTextAttributes(colorsScheme);
             if (highlightingAttributes != null) {
               return TextAttributes.merge(baseAttrs, highlightingAttributes);
             }

@@ -679,6 +679,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     return myDataProviderPanel;
   }
 
+  public StructureViewComponent getStructureViewComponent() {
+    return myStructureViewComponent;
+  }
+
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       return new SelectInContext(){
@@ -816,7 +820,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
+    return new ResourceBundleEditorHighlighter(this);
   }
 
   @Override

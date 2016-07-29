@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
  */
 package com.intellij.lang.properties.editor.inspections;
 
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.ResourceBundle;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.SmartList;
 
-import java.util.function.Function;
+import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
-public interface ResourceBundleEditorInspection {
-  @NotNull
-  Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle);
+public class ResourceBundleProblemsHolder {
+
+  private final List<ResourceBundleEditorProblemDescriptor> myProblemDescriptors = new SmartList<>();
+
+  public void registerProblem(ResourceBundleEditorProblemDescriptor descriptor) {
+    myProblemDescriptors.add(descriptor);
+  }
+
+  public List<ResourceBundleEditorProblemDescriptor> getProblemDescriptors() {
+    return myProblemDescriptors;
+  }
 }
