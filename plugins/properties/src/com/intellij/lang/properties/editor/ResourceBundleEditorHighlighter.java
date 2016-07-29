@@ -77,7 +77,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     public void collectInformation(@NotNull ProgressIndicator progress) {
       InspectionProfile profileToUse = InspectionProfileManager.getInstance().getCurrentProfile();
       final PsiFile containingFile = myEditor.getResourceBundle().getDefaultPropertiesFile().getContainingFile();
-      final Stream<InspectionVisitorWrapper> visitors =
+      final InspectionVisitorWrapper[] visitors =
         Arrays.stream(profileToUse.getInspectionTools(containingFile))
           .filter(t -> profileToUse.isToolEnabled(HighlightDisplayKey.find(t.getShortName()), containingFile))
           .map(InspectionToolWrapper::getTool)
@@ -88,7 +88,8 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
             return new InspectionVisitorWrapper(i.buildPropertyGroupVisitor(myEditor.getResourceBundle()),
                                                 profileToUse.getErrorLevel(key, containingFile).getSeverity(),
                                                 key);
-          });
+          })
+          .toArray(InspectionVisitorWrapper[]::new);
 
       final List<PropertiesFile> files = myEditor.getResourceBundle().getPropertiesFiles();
       final Project project = myEditor.getResourceBundle().getProject();
@@ -107,7 +108,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
               new SmartList<>();
             final IProperty[] properties =
               files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
-            visitors.forEach(v -> {
+            for (InspectionVisitorWrapper v : visitors) {
               final ResourceBundleEditorProblemDescriptor[] problemDescriptors = v.getProblemVisitor().apply(properties);
               if (!ArrayUtil.isEmpty(problemDescriptors)) {
                 final HighlightSeverity severity = v.getSeverity();
@@ -120,9 +121,9 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                   highlightTypes.add(infoType);
                 }
               }
-            });
+            }
             node.setInspectedPropertyNodeInfo(allDescriptors.isEmpty() ? null : new InspectedPropertyNodeInfo(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes));
-            return true;
+            return false;
           }
         };
       myEditor.getStructureViewComponent().getTreeBuilder().accept(TreeElementWrapper.class,
