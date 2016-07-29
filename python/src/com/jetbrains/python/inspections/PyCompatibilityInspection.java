@@ -62,6 +62,7 @@ import java.util.List;
 public class PyCompatibilityInspection extends PyInspection {
   public static List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
     .add("enum")
+    .add("typing")
     .build();
 
   public static final int LATEST_INSPECTION_VERSION = 1;
