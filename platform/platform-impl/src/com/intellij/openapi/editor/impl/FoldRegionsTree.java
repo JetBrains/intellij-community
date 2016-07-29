@@ -322,6 +322,13 @@ abstract class FoldRegionsTree {
     return snapshot.foldedLines[idx];
   }
 
+  int getTotalNumberOfFoldedLines() {
+    CachedData snapshot = myCachedData;
+    int[] foldedLines = snapshot.foldedLines;
+    if (snapshot.isUnavailable() || foldedLines == null || foldedLines.length == 0) return 0;
+    return foldedLines[foldedLines.length - 1];
+  }
+
   public int getLastTopLevelIndexBefore(int offset) {
     return getLastTopLevelIndexBefore(myCachedData, offset);
   }

@@ -3932,7 +3932,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @return number of visible logical lines. Generally, that is a total logical lines number minus number of folded lines
    */
   private int getVisibleLogicalLinesCount() {
-    return getDocument().getLineCount() - myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
+    return getDocument().getLineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
   }
 
   @Override
