@@ -166,7 +166,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final CourseInfo info = CourseInfo.fromCourse(currentCourse);
     if (info == null) return;
 
-    final File resourceDirectory = StudyUtils.getCourseDirectory(myProject, currentCourse);
+    final File resourceDirectory = new File(currentCourse.getCourseDirectory());
     if (resourceDirectory.exists()) {
       FileUtil.delete(resourceDirectory);
     }

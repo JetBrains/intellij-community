@@ -806,6 +806,12 @@ public class EduStepicConnector {
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
+    if (ourClient == null) {
+      if (!login(project)) {
+        LOG.error("Failed to update task");
+      }
+    }
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     setHeaders(request, CONTENT_TYPE_APPL_JSON);
     //TODO: register type adapter for task files here?
