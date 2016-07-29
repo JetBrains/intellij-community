@@ -9,11 +9,14 @@ import org.jetbrains.annotations.NotNull;
 public class StepicUser {
   private static final String STEPIC_SETTINGS_PASSWORD_KEY = "STEPIC_SETTINGS_PASSWORD_KEY";
   private int id = -1;
-  private String myFirstName = "";
-  private String myLastName = "";
-  private String myEmail = "";
+  private String myFirstName;
+  private String myLastName;
+  private String myEmail;
 
   public StepicUser() {
+    myFirstName = "";
+    myLastName = "";
+    myEmail = "";
   }
   
   public StepicUser(@NotNull final String email, @NotNull final String password) {
@@ -29,25 +32,22 @@ public class StepicUser {
     this.id = id;
   }
 
-  @NotNull
   public String getFirstName() {
     return myFirstName;
   }
 
-  public void setFirstName(@NotNull final String firstName) {
-    this.myFirstName = firstName;
+  public void setFirstName(final String firstName) {
+    myFirstName = firstName;
   }
 
-  @NotNull
   public String getLastName() {
     return myLastName;
   }
 
-  public void setLastName(@NotNull final String last_name) {
-    this.myLastName = last_name;
+  public void setLastName(final String lastName) {
+    myLastName = lastName;
   }
 
-  @NotNull
   public String getEmail() {
     return myEmail;
   }
