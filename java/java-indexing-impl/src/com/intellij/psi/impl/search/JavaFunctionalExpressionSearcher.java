@@ -33,6 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.CallLocation;
+import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.Location;
 import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -64,7 +65,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
    * The least number of candidate files with functional expressions that directly scanning them becomes expensive
    * and more advanced ways of searching become necessary: e.g. first searching for methods where the functional interface class is used
    * and then for their usages,
-    */
+   */
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
@@ -88,25 +89,22 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
 
     for (PsiClass funInterface : funInterfaces) {
-      final GlobalSearchScope useScope;
-      final int samParamCount;
-      final PsiType samType;
-      try (AccessToken ignored = ReadAction.start()) {
-        if (!funInterface.isValid()) continue;
-
-        useScope = convertToGlobalScope(funInterface.getProject(), funInterface.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope()));
+      SamDescriptor descriptor = ReadAction.compute(() -> {
+        if (!funInterface.isValid()) return null;
 
         final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(funInterface);
         LOG.assertTrue(functionalInterfaceMethod != null);
-        samParamCount = functionalInterfaceMethod.getParameterList().getParameters().length;
-        samType = functionalInterfaceMethod.getReturnType();
-        if (samType == null) continue;
-      }
+        final PsiType samType = functionalInterfaceMethod.getReturnType();
+        if (samType == null) return null;
 
-      MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries =
-        collectQueryKeys(useScope, funInterface, samParamCount, samType, highLevelModules);
+        return new SamDescriptor(funInterface, functionalInterfaceMethod, samType,
+                                 convertToGlobalScope(funInterface.getProject(),
+                                                      funInterface.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope())));
+      });
+      if (descriptor == null) return;
 
-      for (PsiFunctionalExpression expression : getCandidates(useScope, funInterface.getProject(), queries)) {
+      MultiMap<Location, GlobalSearchScope> queries = collectQueryKeys(descriptor, highLevelModules);
+      for (PsiFunctionalExpression expression : getCandidates(descriptor, queries)) {
         if (!processExpression(consumer, funInterface, expression)) {
           return;
         }
@@ -130,23 +128,22 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Collection<? extends PsiFunctionalExpression> getCandidates(GlobalSearchScope useScope,
-                                                                             Project project,
-                                                                             MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries) {
+  private static Collection<? extends PsiFunctionalExpression> getCandidates(SamDescriptor descriptor, MultiMap<Location, GlobalSearchScope> queries) {
     MultiMap<PsiFile, PsiFunctionalExpression> exprs = MultiMap.createLinked();
-    for (Map.Entry<FunctionalExpressionKey, Collection<GlobalSearchScope>> entry : queries.entrySet()) {
+    for (Map.Entry<Location, Collection<GlobalSearchScope>> entry : queries.entrySet()) {
       ReadAction.run(() -> {
         ProgressManager.checkCanceled();
-        GlobalSearchScope combinedScope = useScope.intersectWith(
+        GlobalSearchScope combinedScope = descriptor.useScope.intersectWith(
           GlobalSearchScope.union(entry.getValue().toArray(new GlobalSearchScope[0])));
-        StubIndex.getInstance().processElements(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS,
-                                                entry.getKey(),
-                                                project, combinedScope, null,
-                                                PsiFunctionalExpression.class,
-                                                expression -> {
-                                                  exprs.putValue(expression.getContainingFile(), expression);
-                                                  return true;
-                                                });
+        for (FunctionalExpressionKey key : descriptor.generateKeys(entry.getKey())) {
+          StubIndex.getInstance().processElements(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key,
+                                                  descriptor.samClass.getProject(), combinedScope, null,
+                                                  PsiFunctionalExpression.class,
+                                                  expression -> {
+                                                    exprs.putValue(expression.getContainingFile(), expression);
+                                                    return true;
+                                                  });
+        }
       });
     }
 
@@ -156,34 +153,19 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static MultiMap<FunctionalExpressionKey, GlobalSearchScope> collectQueryKeys(GlobalSearchScope useScope,
-                                                                                       PsiClass aClass,
-                                                                                       int samParamCount,
-                                                                                       @NotNull PsiType samType,
-                                                                                       Set<Module> candidateModules) {
-    MultiMap<FunctionalExpressionKey, GlobalSearchScope> queries = MultiMap.createSet();
-
-    ReadAction.run(() -> {
-      if (!samType.isValid()) return;
-
-      for (FunctionalExpressionKey key : generateKeys(samParamCount, samType, FunctionalExpressionKey.Location.UNKNOWN)) {
-        queries.putValue(key, useScope); // check all fun-exprs that aren't inside calls or variables
-      }
-
-      for (FunctionalExpressionKey key : generateKeys(samParamCount, samType,
-                                                      new FunctionalExpressionKey.VariableLocation(assertNotNull(aClass.getName())))) {
-        queries.putValue(key, useScope);
-      }
-    });
+  private static MultiMap<Location, GlobalSearchScope> collectQueryKeys(SamDescriptor descriptor, Set<Module> candidateModules) {
+    MultiMap<Location, GlobalSearchScope> queries = MultiMap.createSet();
+    queries.putValue(Location.UNKNOWN, descriptor.useScope);
+    queries.putValue(new FunctionalExpressionKey.TypedLocation(assertNotNull(descriptor.samClass.getName())), descriptor.useScope);
 
     //collect all methods with parameter of functional interface or free type parameter type
-    for (final PsiMethod psiMethod : getCandidateMethodsWithSuitableParams(aClass, useScope, candidateModules, samParamCount, samType)) {
+    for (final PsiMethod psiMethod : getCandidateMethodsWithSuitableParams(descriptor, candidateModules)) {
       ReadAction.run(() -> {
-        if (!psiMethod.isValid() || !samType.isValid()) return;
+        if (!psiMethod.isValid()) return;
 
         final GlobalSearchScope methodUseScope = convertToGlobalScope(psiMethod.getProject(), psiMethod.getUseScope());
-        for (FunctionalExpressionKey key : getQueryKeys(aClass, samParamCount, samType, psiMethod)) {
-          queries.putValue(key, methodUseScope);
+        for (Location location : getPossibleCallLocations(descriptor.samClass, psiMethod)) {
+          queries.putValue(location, methodUseScope);
         }
       });
     }
@@ -191,11 +173,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<FunctionalExpressionKey> getQueryKeys(PsiClass samClass,
-                                                           int samParamCount,
-                                                           PsiType samType,
-                                                           PsiMethod calledMethod) {
-    Set<FunctionalExpressionKey> keys = new HashSet<>();
+  private static Set<Location> getPossibleCallLocations(PsiClass samClass, PsiMethod calledMethod) {
+    Set<Location> keys = new HashSet<>();
 
     String methodName = calledMethod.getName();
     PsiParameter[] parameters = calledMethod.getParameterList().getParameters();
@@ -204,31 +183,13 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       if (canPassFunctionalExpression(samClass, parameter)) {
         for (int argCount : getPossibleArgCounts(parameters, paramIndex)) {
           for (int argIndex : getPossibleArgIndices(parameter, paramIndex, argCount)) {
-            keys.addAll(generateKeys(samParamCount, samType, new CallLocation(methodName, argCount, argIndex)));
+            keys.add(new CallLocation(methodName, argCount, argIndex));
           }
         }
       }
     }
 
     return keys;
-  }
-
-  private static List<FunctionalExpressionKey> generateKeys(int samMethodParamsCount,
-                                                            PsiType samType,
-                                                            FunctionalExpressionKey.Location location) {
-    List<FunctionalExpressionKey> result = new ArrayList<>();
-    for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samMethodParamsCount}) {
-      result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, location));
-      if (PsiType.VOID.equals(samType)) {
-        result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.VOID, location));
-      } else {
-        if (FunctionalExpressionKey.isBooleanCompatible(samType)) {
-          result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.BOOLEAN, location));
-        }
-        result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.NON_VOID, location));
-      }
-    }
-    return result;
   }
 
   private static int[] getPossibleArgCounts(PsiParameter[] parameters, int paramIndex) {
@@ -268,20 +229,16 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return highLevelModules;
   }
 
-  private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(final PsiClass samClass,
-                                                                             final GlobalSearchScope useScope,
-                                                                             final Set<Module> candidateModules,
-                                                                             int expectedFunExprParamsCount,
-                                                                             PsiType samType) {
+  private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(SamDescriptor descriptor, Set<Module> candidateModules) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
-        if (!samClass.isValid()) return Collections.emptyList();
+        if (!descriptor.samClass.isValid()) return Collections.emptyList();
 
-        GlobalSearchScope visibleFromCandidates = combineResolveScopes(candidateModules, samClass);
+        GlobalSearchScope visibleFromCandidates = combineResolveScopes(candidateModules, descriptor.samClass);
         if (visibleFromCandidates == null) return Collections.emptyList();
 
-        Set<String> usedMethodNames = collectMethodNamesCalledWithFunExpressions(samType, expectedFunExprParamsCount, useScope);
+        Set<String> usedMethodNames = collectMethodNamesCalledWithFunExpressions(descriptor);
 
         Set<PsiMethod> methods = ContainerUtil.newLinkedHashSet();
         Processor<PsiMethod> methodProcessor = method -> {
@@ -293,8 +250,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
         StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
         StubIndex index = StubIndex.getInstance();
-        Project project = samClass.getProject();
-        index.processElements(key, assertNotNull(samClass.getName()), project, useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
+        Project project = descriptor.samClass.getProject();
+        index.processElements(key, assertNotNull(descriptor.samClass.getName()), project, descriptor.useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
         index.processElements(key, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates, PsiMethod.class, methodProcessor);
         LOG.info("#methods: " + methods.size());
         return methods;
@@ -303,18 +260,16 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<String> collectMethodNamesCalledWithFunExpressions(PsiType samType, int samParamCount, GlobalSearchScope useScope) {
-    boolean booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
-    boolean isVoid = PsiType.VOID.equals(samType);
-
+  private static Set<String> collectMethodNamesCalledWithFunExpressions(SamDescriptor descriptor) {
     Set<String> usedMethodNames = new HashSet<>();
     StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key -> {
       ProgressManager.checkCanceled();
-      if (key.canRepresent(samParamCount, booleanCompatible, isVoid) && key.location instanceof CallLocation) {
+      if (key.canRepresent(descriptor.samParamCount, descriptor.booleanCompatible, descriptor.isVoid) &&
+          key.location instanceof CallLocation) {
         usedMethodNames.add(((CallLocation)key.location).methodName);
       }
       return true;
-    }, useScope, null);
+    }, descriptor.useScope, null);
     return usedMethodNames;
   }
 
@@ -377,5 +332,37 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static boolean isFunctionalCompatible(PsiClass candidate) {
     return LambdaUtil.isFunctionalClass(candidate) ||
            Arrays.stream(candidate.getAllMethods()).filter(m -> !m.hasModifierProperty(PsiModifier.DEFAULT)).count() == 0;
+  }
+
+  private static class SamDescriptor {
+    final PsiClass samClass;
+    final GlobalSearchScope useScope;
+    final int samParamCount;
+    final boolean booleanCompatible;
+    final boolean isVoid;
+
+    SamDescriptor(PsiClass samClass, PsiMethod samMethod, PsiType samType, GlobalSearchScope useScope) {
+      this.samClass = samClass;
+      this.useScope = useScope;
+      this.samParamCount = samMethod.getParameterList().getParametersCount();
+      this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
+      this.isVoid = PsiType.VOID.equals(samType);
+    }
+
+    List<FunctionalExpressionKey> generateKeys(Location location) {
+      List<FunctionalExpressionKey> result = new ArrayList<>();
+      for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samParamCount}) {
+        result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, location));
+        if (isVoid) {
+          result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.VOID, location));
+        } else {
+          if (booleanCompatible) {
+            result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.BOOLEAN, location));
+          }
+          result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.NON_VOID, location));
+        }
+      }
+      return result;
+    }
   }
 }

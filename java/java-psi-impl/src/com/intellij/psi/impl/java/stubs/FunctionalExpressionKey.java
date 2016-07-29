@@ -57,7 +57,7 @@ public class FunctionalExpressionKey {
     byte locationType = dataStream.readByte();
     if (locationType == 0) return Location.UNKNOWN;
     if (locationType == 1) return CallLocation.deserializeCall(dataStream);
-    if (locationType == 2) return VariableLocation.deserializeField(dataStream);
+    if (locationType == 2) return TypedLocation.deserializeField(dataStream);
     throw new AssertionError(locationType);
   }
 
@@ -69,9 +69,9 @@ public class FunctionalExpressionKey {
       dataStream.writeByte(1);
       ((CallLocation)location).serializeCall(dataStream);
     }
-    else if (location instanceof VariableLocation) {
+    else if (location instanceof TypedLocation) {
       dataStream.writeByte(2);
-      ((VariableLocation)location).serializeVariable(dataStream);
+      ((TypedLocation)location).serializeVariable(dataStream);
     }
   }
 
@@ -194,19 +194,19 @@ public class FunctionalExpressionKey {
 
   }
 
-  public static class VariableLocation implements Location {
+  public static class TypedLocation implements Location {
     @NotNull public final String varType;
 
-    public VariableLocation(@NotNull String varType) {
+    public TypedLocation(@NotNull String varType) {
       this.varType = varType;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof VariableLocation)) return false;
+      if (!(o instanceof TypedLocation)) return false;
 
-      VariableLocation location = (VariableLocation)o;
+      TypedLocation location = (TypedLocation)o;
 
       if (!varType.equals(location.varType)) return false;
 
@@ -225,8 +225,8 @@ public class FunctionalExpressionKey {
         .toString();
     }
 
-    public static VariableLocation deserializeField(DataInput dataStream) throws IOException {
-      return new VariableLocation(IOUtil.readUTF(dataStream));
+    public static TypedLocation deserializeField(DataInput dataStream) throws IOException {
+      return new TypedLocation(IOUtil.readUTF(dataStream));
     }
 
     public void serializeVariable(DataOutput dataStream) throws IOException {

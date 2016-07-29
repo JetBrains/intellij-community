@@ -19,6 +19,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.CoarseType;
@@ -78,18 +79,24 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     int argIndex = args == null ? -1 : getArgIndex(args, funExpr);
     String methodName = call == null ? null : getCalledMethodName(tree, call);
     return methodName == null || argIndex < 0
-           ? createVarLocation(tree, funExpr)
+           ? createTypedLocation(tree, funExpr)
            : new FunctionalExpressionKey.CallLocation(methodName, args.size(), argIndex);
   }
 
   @NotNull
-  private static FunctionalExpressionKey.Location createVarLocation(LighterAST tree, LighterASTNode funExpr) {
-    LighterASTNode var = findParent(tree, funExpr, TokenSet.create(LOCAL_VARIABLE, FIELD));
-    if (var != null) {
-      LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, var, TYPE);
+  private static FunctionalExpressionKey.Location createTypedLocation(LighterAST tree, LighterASTNode funExpr) {
+    LighterASTNode scope = skipExpressionsUp(tree, funExpr, TokenSet.create(LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT));
+    if (scope != null) {
+      if (scope.getTokenType() == RETURN_STATEMENT) {
+        scope = LightTreeUtil.getParentOfType(tree, scope,
+                                              TokenSet.create(METHOD),
+                                              TokenSet.orSet(ElementType.MEMBER_BIT_SET, TokenSet.create(LAMBDA_EXPRESSION)));
+      }
+
+      LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, scope, TYPE);
       String typeText = getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, typeElement, JAVA_CODE_REFERENCE));
       if (typeText != null) {
-        return new FunctionalExpressionKey.VariableLocation(typeText);
+        return new FunctionalExpressionKey.TypedLocation(typeText);
       }
     }
     return FunctionalExpressionKey.Location.UNKNOWN;
@@ -115,7 +122,10 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     if (funExpr.getTokenType() == METHOD_REF_EXPRESSION) return CoarseType.UNKNOWN;
 
     LighterASTNode block = LightTreeUtil.firstChildOfType(tree, funExpr, CODE_BLOCK);
-    if (block == null) return CoarseType.UNKNOWN;
+    if (block == null) {
+      LighterASTNode expr = findExpressionChild(funExpr, tree);
+      return isBooleanExpression(tree, expr) ? CoarseType.BOOLEAN : CoarseType.UNKNOWN;
+    }
 
     final Ref<Boolean> returnsSomething = Ref.create(null);
     final AtomicBoolean isBoolean = new AtomicBoolean();
@@ -124,20 +134,20 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
       @Override
       public void visitNode(@NotNull LighterASTNode element) {
         IElementType type = element.getTokenType();
-        if (type == LAMBDA_EXPRESSION || ElementType.MEMBER_BIT_SET.contains(type) || !returnsSomething.isNull()) {
+        if (type == LAMBDA_EXPRESSION || ElementType.MEMBER_BIT_SET.contains(type)) {
           return;
         }
 
         if (type == RETURN_STATEMENT) {
-          LighterASTNode expr = LightTreeUtil.firstChildOfType(tree, element, ElementType.EXPRESSION_BIT_SET);
+          LighterASTNode expr = findExpressionChild(element, tree);
           returnsSomething.set(expr != null);
-          if (isBooleanLiteral(tree, expr)) {
+          if (isBooleanExpression(tree, expr)) {
             isBoolean.set(true);
           }
           return;
         }
 
-        if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type) && type != THROW_STATEMENT) {
+        if (type == EXPRESSION_STATEMENT) {
           hasStatements.set(true);
         }
 
@@ -156,10 +166,30 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     return returnsSomething.get() ? CoarseType.NON_VOID : CoarseType.VOID;
   }
 
-  private static boolean isBooleanLiteral(LighterAST tree, LighterASTNode expr) {
-    if (expr != null && expr.getTokenType() == LITERAL_EXPRESSION) {
-      IElementType type = tree.getChildren(expr).get(0).getTokenType();
-      return type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD;
+  private static LighterASTNode findExpressionChild(@NotNull LighterASTNode element, LighterAST tree) {
+    return LightTreeUtil.firstChildOfType(tree, element, ElementType.EXPRESSION_BIT_SET);
+  }
+
+  private static boolean isBooleanExpression(LighterAST tree, @Nullable LighterASTNode expr) {
+    if (expr == null) return false;
+
+    IElementType type = expr.getTokenType();
+    if (type == LITERAL_EXPRESSION) {
+      IElementType child = tree.getChildren(expr).get(0).getTokenType();
+      return child == JavaTokenType.TRUE_KEYWORD || child == JavaTokenType.FALSE_KEYWORD;
+    }
+    if (type == POLYADIC_EXPRESSION || type == BINARY_EXPRESSION) {
+      return LightTreeUtil.firstChildOfType(tree, expr, PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS) != null;
+    }
+    if (type == PREFIX_EXPRESSION) {
+      return tree.getChildren(expr).get(0).getTokenType() == JavaTokenType.EXCL;
+    }
+    if (type == PARENTH_EXPRESSION) {
+      return isBooleanExpression(tree, findExpressionChild(expr, tree));
+    }
+    if (type == CONDITIONAL_EXPRESSION) {
+      List<LighterASTNode> children = LightTreeUtil.getChildrenOfType(tree, expr, ElementType.EXPRESSION_BIT_SET);
+      return children.size() == 3 && (isBooleanExpression(tree, children.get(1)) || isBooleanExpression(tree, children.get(2)));
     }
     return false;
   }
@@ -208,7 +238,7 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
 
   @Nullable
   private static LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
-    LighterASTNode expressionList = findParent(tree, node, TokenSet.create(EXPRESSION_LIST));
+    LighterASTNode expressionList = skipExpressionsUp(tree, node, TokenSet.create(EXPRESSION_LIST));
     if (expressionList != null) {
       LighterASTNode parent = tree.getParent(expressionList);
       if (parent != null && parent.getTokenType() == ANONYMOUS_CLASS) {
@@ -221,13 +251,12 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     return null;
   }
 
-  private static LighterASTNode findParent(LighterAST tree, LighterASTNode node, TokenSet elementType) {
+  private static LighterASTNode skipExpressionsUp(LighterAST tree, @NotNull LighterASTNode node, TokenSet types) {
+    node = tree.getParent(node);
     while (node != null) {
       final IElementType type = node.getTokenType();
-      if (elementType.contains(type)) return node;
-      if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type) ||
-          ElementType.MEMBER_BIT_SET.contains(type) ||
-          ARRAY_INITIALIZER_EXPRESSION == type) return null;
+      if (types.contains(type)) return node;
+      if (type != PARENTH_EXPRESSION && type != CONDITIONAL_EXPRESSION) return null;
       node = tree.getParent(node);
     }
     return null;
