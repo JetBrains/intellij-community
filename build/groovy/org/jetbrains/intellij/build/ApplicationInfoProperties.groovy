@@ -48,12 +48,17 @@ class ApplicationInfoProperties {
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
-    shortCompanyName = StringUtil.trimEnd(companyName, "s.r.o.").trim()
+    shortCompanyName = root.company.first().@shortName ?: shortenCompanyName(companyName)
   }
 
   public String getUpperCaseProductName() { shortProductName.toUpperCase() }
 
   public String getFullVersion() {
     MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
+  }
+
+  //copy of ApplicationInfoImpl.shortenCompanyName
+  private static String shortenCompanyName(String name) {
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
   }
 }
