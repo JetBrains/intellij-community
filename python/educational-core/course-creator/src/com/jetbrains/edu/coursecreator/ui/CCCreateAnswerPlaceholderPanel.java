@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class CCCreateAnswerPlaceholderPanel {
 
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
     myHintTextArea.setFont(myPlaceholderTextArea.getFont());
     myHintTextArea.addFocusListener(createFocusListenerToSetDefaultHintText());
