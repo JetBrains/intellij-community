@@ -19,7 +19,6 @@ public class InteractiveLearningIcons {
   public static final Icon InterpreterGear = load("/icons/com/jetbrains/edu/learning/interpreterGear.png"); // 16x16
   public static final Icon Lesson = load("/icons/com/jetbrains/edu/learning/Lesson.png"); // 16x16
   public static final Icon LessonCompl = load("/icons/com/jetbrains/edu/learning/LessonCompl.png"); // 16x16
-  public static final Icon Prev = load("/icons/com/jetbrains/edu/learning/prev.png"); // 16x16
   public static final Icon ResetTaskFile = load("/icons/com/jetbrains/edu/learning/ResetTaskFile.png"); // 16x16
   public static final Icon Sandbox = load("/icons/com/jetbrains/edu/learning/Sandbox.png"); // 16x16
   public static final Icon ShowHint = load("/icons/com/jetbrains/edu/learning/showHint.png"); // 16x16
