@@ -431,6 +431,58 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Perform calculation over this iterable.
+   */
+  public final <T> T reduce(@Nullable T first, @NotNull PairFunction<T, E, T> function) {
+    T cur = first;
+    for (E e : this) {
+      cur = function.fun(cur, e);
+    }
+    return cur;
+  }
+
+  /**
+   * Returns the index of the first matching element.
+   */
+  public final E find(@NotNull Condition<E> condition) {
+    return filter(condition).first();
+  }
+
+  /**
+   * Returns the index of the matching element.
+   */
+  public final int indexOf(@NotNull Condition<E> condition) {
+    int index = 0;
+    for (E e : this) {
+      if (condition.value(e)) {
+        return index;
+      }
+      index ++;
+    }
+    return -1;
+  }
+
+  /**
+   * Synonym for transform()
+   *
+   * @see JBIterable#transform(Function)
+   */
+  @NotNull
+  public final <T> JBIterable<T> map(@NotNull Function<? super E, T> function) {
+    return transform(function);
+  }
+
+  /**
+   * "Maps" and "flattens" this iterable.
+   *
+   * @see JBIterable#transform(Function)
+   */
+  @NotNull
+  public final <T> JBIterable<T> flatMap(Function<? super E, ? extends Iterable<? extends T>> function) {
+    return map(function).flatten(Function.ID);
+  }
+
+  /**
    * Determines whether this iterable is empty.
    */
   public final boolean isEmpty() {
