@@ -44,7 +44,7 @@ public class CCPushTask extends DumbAwareAction {
     final PsiDirectory lessonDir = taskDir.getParentDirectory();
     if (lessonDir == null) return;
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.getId() > 0) {
+    if (lesson != null && lesson.getId() > 0 && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
       final com.jetbrains.edu.learning.courseFormat.Task task = lesson.getTask(taskDir.getName());
       if (task.getStepicId() <= 0) {

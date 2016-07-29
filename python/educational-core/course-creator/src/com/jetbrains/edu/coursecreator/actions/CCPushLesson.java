@@ -15,8 +15,11 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class CCPushLesson extends DumbAwareAction {
   public CCPushLesson() {
@@ -41,8 +44,11 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson != null && lesson.getId() > 0) {
+    if (lesson != null && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
+      if (lesson.getId() <= 0) {
+        e.getPresentation().setText("Upload Lesson to Stepic");
+      }
     }
   }
 
@@ -69,7 +75,16 @@ public class CCPushLesson extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Uploading lesson to http://stepic.org");
-        EduStepicConnector.updateLesson(project, lesson, indicator);
+        if (lesson.getId() > 0) {
+          EduStepicConnector.updateLesson(project, lesson, indicator);
+        }
+        else {
+          final CourseInfo info = CourseInfo.fromCourse(course);
+          final int lessonId = EduStepicConnector.postLesson(project, lesson, indicator);
+          final List<Integer> sections = info.getSections();
+          final Integer sectionId = sections.get(sections.size()-1);
+          EduStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
+        }
       }});
   }
 

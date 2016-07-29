@@ -183,9 +183,34 @@ public class StudyProjectComponent implements ProjectComponent {
       return;
     }
 
+    final ArrayList<Lesson> updatedLessons = new ArrayList<>();
+
+    int lessonIndex = 0;
     for (Lesson lesson : course.getLessons()) {
-      final Lesson studentLesson = currentCourse.getLesson(lesson.getName());
-      final File lessonDir = new File(myProject.getBasePath(), lesson.getName());
+      lessonIndex += 1;
+      Lesson studentLesson = currentCourse.getLesson(lesson.getId());
+      final String lessonDirName = EduNames.LESSON + String.valueOf(lessonIndex);
+
+      final File lessonDir = new File(myProject.getBasePath(), lessonDirName);
+      if (!lessonDir.exists()){
+        final File fromLesson = new File(resourceDirectory, lessonDirName);
+        try {
+          FileUtil.copyDir(fromLesson, lessonDir);
+        }
+        catch (IOException e) {
+          LOG.warn("Failed to copy lesson " + fromLesson.getPath());
+        }
+        lesson.setIndex(lessonIndex);
+        lesson.initLesson(currentCourse, false);
+        for (int i = 1; i <= lesson.getTaskList().size(); i++) {
+          Task task = lesson.getTaskList().get(i - 1);
+          task.setIndex(i);
+        }
+        updatedLessons.add(lesson);
+        continue;
+      }
+      studentLesson.setIndex(lessonIndex);
+      updatedLessons.add(studentLesson);
 
       int index = 0;
       final ArrayList<Task> tasks = new ArrayList<>();
@@ -203,7 +228,7 @@ public class StudyProjectComponent implements ProjectComponent {
         final String taskDirName = EduNames.TASK + String.valueOf(index);
         final File toTask = new File(lessonDir, taskDirName);
 
-        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lesson.getName(), taskDirName);
+        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lessonDirName, taskDirName);
         final File taskDir = new File(taskPath);
         if (!taskDir.exists()) return;
         final File[] taskFiles = taskDir.listFiles();
@@ -215,6 +240,7 @@ public class StudyProjectComponent implements ProjectComponent {
       }
       studentLesson.updateTaskList(tasks);
     }
+    currentCourse.setLessons(updatedLessons);
 
     final Notification notification =
       new Notification("Update.course", "Course update", "Current course is synchronized", NotificationType.INFORMATION);
