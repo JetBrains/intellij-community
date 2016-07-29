@@ -113,6 +113,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   public void documentChanged(DocumentEvent event) {
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
+    assertValidState();
   }
   
   @Override
@@ -137,6 +138,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       onTextLayoutPerformed(range.getStartOffset(), range.getEndOffset());
     }
     myDeferredRanges.clear();
+    assertValidState();
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
@@ -236,11 +238,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   private int calculatePreferredWidth() {
     if (checkDirty()) return 1;
-    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
-      LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
-      reset();
-    }
-    assert myLineWidths.size() == myEditor.getVisibleLineCount();
+    assertValidState();
     VisualLinesIterator iterator = new VisualLinesIterator(myView, 0);
     int maxWidth = 0;
     while (!iterator.atEnd()) {
@@ -396,9 +394,17 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
            ", line widths: " + myLineWidths + "]";
   }
 
+  private void assertValidState() {
+    if (myDocument.isInBulkUpdate() || myDirty) return;
+    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
+      LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
+      reset();
+    }
+    assert myLineWidths.size() == myEditor.getVisibleLineCount();
+  }
+
   @TestOnly
   public void validateState() {
-    if (myDocument.isInBulkUpdate() || myDirty) return;
-    LOG.assertTrue(myLineWidths.size() == myEditor.getVisibleLineCount());
+    assertValidState();
   }
 }
