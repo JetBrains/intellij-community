@@ -28,6 +28,7 @@ public class Task implements StudyItem {
   private int myIndex;
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
+  @SerializedName("stepic_id")
   @Expose private int myStepicId;
   
   @SerializedName("task_files")
