@@ -70,6 +70,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,7 +131,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     final JPanel splitPanel = new JPanel();
     myValuesPanel = new JPanel();
     myStructureViewPanel = new JPanel();
-    JBSplitter splitter = new JBSplitter(false);
+    JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setFirstComponent(myStructureViewPanel);
     splitter.setSecondComponent(myValuesPanel);
     splitter.setShowDividerControls(true);
@@ -465,7 +466,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
-      comp.setBorder(IdeBorderFactory.createTitledBorder(title, true));
+      comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
       myTitledPanels.put(propertiesFile.getVirtualFile(), (JPanel)comp);
 
       valuesPanelComponent.add(comp, gc);

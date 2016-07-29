@@ -94,9 +94,9 @@ public class EduAdaptiveStepicConnector {
             viewAllSteps(client, realLesson.getId());
 
             for (int stepId : realLesson.steps) {
-              final StepicWrappers.Step step = getStep(stepId);
-              if (step.name.equals("code")) {
-                return getTaskFromStep(project, stepId, step, realLesson.getName());
+              final StepicWrappers.StepSource step = getStep(stepId);
+              if (step.block.name.equals("code")) {
+                return getTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
             }
 
@@ -325,9 +325,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(Project project,
-                                      int lessonID,
-                                      @NotNull final StepicWrappers.Step step, @NotNull String name) {
+  private static Task getTaskFromStep(Project project, int lessonID, @NotNull final StepicWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
     task.setStepicId(lessonID);

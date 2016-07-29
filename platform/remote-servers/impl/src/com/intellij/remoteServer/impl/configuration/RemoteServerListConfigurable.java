@@ -190,7 +190,14 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @Override
   public String getHelpTopic() {
-    return ObjectUtils.notNull(super.getHelpTopic(), "reference.settings.clouds");
+    String result = super.getHelpTopic();
+    if (result == null) {
+      ServerType<?> singleServerType = getSingleServerType();
+      if (singleServerType != null) {
+        return singleServerType.getHelpTopic();
+      }
+    }
+    return "reference.settings.clouds";
   }
 
   @Override

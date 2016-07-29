@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe;
+package com.intellij.ide.passwordSafe
 
-/**
- * This exception is thrown when master password is not available (process of entering password is cancelled, or IDEA is running headless mode)
- */
-public class MasterPasswordUnavailableException extends RuntimeException {
-  public MasterPasswordUnavailableException(String message) {
-    super(message);
-  }
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
+
+interface PasswordSafeSettingsListener {
+  fun typeChanged(oldValue: PasswordSafeSettings.ProviderType, newValue: PasswordSafeSettings.ProviderType)
 }

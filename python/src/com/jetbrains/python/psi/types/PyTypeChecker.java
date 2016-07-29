@@ -449,11 +449,8 @@ public class PyTypeChecker {
       final List<AnalyzeCallResults> results = new ArrayList<AnalyzeCallResults>();
       for (PyCallable callable : resolveCallee(callSite, context)) {
         final PyExpression receiver = getReceiver(callSite, callable);
-        final List<PyExpression> arguments = getArguments(callSite, callable);
         for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-          final List<PyParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
-          final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(arguments, explicitParameters);
+          final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, callable, parameters, context);
           results.add(new AnalyzeCallResults(callable, receiver, mapping));
         }
       }

@@ -107,7 +107,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @NotNull
   private String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
+    final String passwordText = String.valueOf(myPasswordField.getPassword());
+    return passwordText.equals(DEFAULT_PASSWORD_TEXT) ? "" : passwordText;
   }
 
   private void setPassword(@NotNull final String password) {
@@ -142,11 +143,12 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       if (project != null) {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         taskManager.setEnableTestingFromSamples(myEnableTestingFromSamples.isSelected());
-        final StepicUser user = taskManager.getUser();
-        user.setEmail(getLogin());
-        user.setPassword(getPassword());
-        if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-          EduStepicConnector.login(getLogin(), getPassword());
+        final String login = getLogin();
+        final String password = getPassword();
+        if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
+          final StepicUser user = taskManager.getUser();
+          user.setEmail(login);
+          user.setPassword(password);
         }
       }
       else {

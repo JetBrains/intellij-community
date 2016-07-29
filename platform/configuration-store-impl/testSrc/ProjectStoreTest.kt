@@ -71,10 +71,11 @@ internal class ProjectStoreTest {
     val projectRule = ProjectRule()
   }
 
-  val tempDirManager = TemporaryDirectory()
+  private val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager)
-  @Rule fun getChain() = ruleChain
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(tempDirManager)
 
   @Language("XML")
   private val iprFileContent =

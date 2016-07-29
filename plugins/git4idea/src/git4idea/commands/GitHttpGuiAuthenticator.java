@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package git4idea.commands;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -172,18 +169,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
     // save password
     if (myPasswordKey != null && myPassword != null) {
-      PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-      try {
-        passwordSafe.getMemoryProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        if (mySaveOnDisk) {
-          passwordSafe.getMasterKeyProvider().storePassword(myProject, PASS_REQUESTER, myPasswordKey, myPassword);
-        }
-      }
-      catch (MasterPasswordUnavailableException ignored) {
-      }
-      catch (PasswordSafeException e) {
-        LOG.error("Couldn't remember password for " + myPasswordKey, e);
-      }
+      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, myPasswordKey, myPassword, !mySaveOnDisk);
     }
   }
 
@@ -295,14 +281,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String userName = getUsername(url);
       String key = makeKey(url, userName);
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      try {
-        String password = passwordSafe.getPassword(myProject, PASS_REQUESTER, key);
-        return new AuthData(StringUtil.notNullize(userName), password);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't get the password for key [" + key + "]", e);
-        return null;
-      }
+      String password = passwordSafe.getPassword(PASS_REQUESTER, key);
+      return new AuthData(StringUtil.notNullize(userName), password);
     }
 
     @Nullable
@@ -314,13 +294,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     public void forgetPassword(@NotNull String url) {
       String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
       LOG.debug("forgetPassword. key=" + key);
-      try {
-        PasswordSafe.getInstance().removePassword(myProject, PASS_REQUESTER, key);
-      }
-      catch (PasswordSafeException e) {
-        LOG.info("Couldn't forget the password for " + myPasswordKey);
-      }
+      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, key, null);
     }
   }
-
 }

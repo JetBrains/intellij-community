@@ -453,3 +453,17 @@ class CompoundAssign {
     System.out.println(i);
   }
 }
+
+class BreakAndFinally {
+  void f() {
+    final int i;
+    t:
+    try {
+      break t;
+    }
+    finally {
+      i = 1;
+    }
+    System.out.println(i);
+  }
+}

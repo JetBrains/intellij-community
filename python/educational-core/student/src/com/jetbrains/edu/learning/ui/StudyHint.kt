@@ -128,7 +128,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
       }
       else {
         isEditingMode = false
-        myPlaceholder!!.hints[myShownHintNumber] = currentDocument!!.text
+        myPlaceholder!!.setHintByIndex(myShownHintNumber, currentDocument!!.text)
         studyToolWindow.setText(myPlaceholder.hints[myShownHintNumber])
         studyToolWindow.setDefaultTopComponent()
       }
@@ -142,7 +142,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
   private inner class AddHint : AnAction("Add Hint", "Add Hint", AllIcons.General.Add) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.hints.add(newHintDefaultText)
+      myPlaceholder!!.addHint(newHintDefaultText)
       myShownHintNumber++
       studyToolWindow.setText(newHintDefaultText)
     }
@@ -155,7 +155,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
   private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.General.Remove) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.hints.removeAt(myShownHintNumber)
+      myPlaceholder!!.removeHint(myShownHintNumber)
       myShownHintNumber = if (myPlaceholder.hints.size == 1) 0 else if (myShownHintNumber + 1 < myPlaceholder.hints.size) myShownHintNumber + 1 else myShownHintNumber - 1
       studyToolWindow.setText(myPlaceholder.hints[myShownHintNumber])
     }

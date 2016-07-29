@@ -13,12 +13,8 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -33,9 +29,6 @@ import org.zmlx.hg4idea.HgVcsMessages;
  * Base class for any command interacting with a remote repository and which needs authentication.
  */
 class HgCommandAuthenticator {
-
-  private static final Logger LOG = Logger.getInstance(HgCommandAuthenticator.class.getName());
-  
   private GetPasswordRunnable myGetPassword;
   private final Project myProject;
   private boolean myForceAuthorization;
@@ -51,25 +44,12 @@ class HgCommandAuthenticator {
   public void saveCredentials() {
     if (myGetPassword == null) return;
 
-    // if checkbox is selected, save on disk. Otherwise in memory. Don't read password safe settings.
-
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     final String url = VirtualFileManager.extractPath(myGetPassword.getURL());
     final String key = keyForUrlAndLogin(url, myGetPassword.getUserName());
-    try {
-      if (myGetPassword.isRememberPassword()) {
-        PasswordSafe.getInstance().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
-      }
-      else if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.DO_NOT_STORE) {
-        passwordSafe.getMemoryProvider().storePassword(myProject, HgCommandAuthenticator.class, key, myGetPassword.getPassword());
-      }
-      final HgVcs vcs = HgVcs.getInstance(myProject);
-      if (vcs != null) {
-        vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
-      }
-    }
-    catch (PasswordSafeException e) {
-      LOG.info("Couldn't store the password for key [" + key + "]", e);
+    PasswordSafe.getInstance().setPassword(HgCommandAuthenticator.class, key, myGetPassword.getPassword(), !myGetPassword.isRememberPassword());
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs != null) {
+      vcs.getGlobalSettings().addRememberedUrl(url, myGetPassword.getUserName());
     }
   }
 
@@ -89,8 +69,6 @@ class HgCommandAuthenticator {
   }
 
   private static class GetPasswordRunnable implements Runnable {
-    private static final Logger LOG = Logger.getInstance(GetPasswordRunnable.class.getName());
-
     private String myUserName;
     private String myPassword;
     private Project myProject;
@@ -136,19 +114,7 @@ class HgCommandAuthenticator {
       String password = null;
       if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
         // if we've logged in with this login, search for password
-        final String key = keyForUrlAndLogin(myURL, login);
-        try {
-          final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-          if (mySilent) {
-            password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
-          }
-          else {
-            password = passwordSafe.getPassword(myProject, HgCommandAuthenticator.class, key);
-          }
-        }
-        catch (PasswordSafeException e) {
-          LOG.info("Couldn't get password for key [" + key + "]", e);
-        }
+        password = PasswordSafe.getInstance().getPassword(HgCommandAuthenticator.class, keyForUrlAndLogin(myURL, login));
       }
 
       // don't show dialog if we don't have to (both fields are known) except force authorization required

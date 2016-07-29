@@ -65,7 +65,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -474,12 +476,12 @@ public class StudyUtils {
       return null;
     }
 
+    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
     String text = task.getText();
     if (text != null && !text.isEmpty()) {
-      return text;
+      return prefix + text + ourPostfix;
     }
     if (taskDirectory != null) {
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
       final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
       
@@ -491,6 +493,7 @@ public class StudyUtils {
 
   @Nullable
   private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    taskDirectory.refresh(false, true);
     VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
@@ -694,16 +697,6 @@ public class StudyUtils {
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
     return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
-  }
-  
-  @Nullable
-  public static File createTaskDescriptionFile(@NotNull final File parent) {
-    if(new File(parent, EduNames.TASK_HTML).exists()) {
-      return new File(parent, EduNames.TASK_HTML);
-    }
-    else {
-      return new File(parent, EduNames.TASK_MD);
-    }
   }
 
   @Nullable

@@ -15,6 +15,7 @@
  */
 package com.intellij.util
 
+import com.intellij.ide.passwordSafe.masterKey.LOG
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,6 +27,7 @@ import java.io.OutputStream
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.util.*
 
 fun Path.exists() = Files.exists(this)
 
@@ -91,8 +93,21 @@ fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePat
 
 fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
 
-fun Path.write(data: ByteArray, offset: Int = 0, length: Int = data.size): Path {
-  outputStream().use { it.write(data, offset, length) }
+fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
+  outputStream().use { it.write(data, offset, size) }
+  return this
+}
+
+fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
+  val tempFile = parent.resolve("${fileName}.${UUID.randomUUID()}.tmp")
+  tempFile.write(data, offset, size)
+  try {
+    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+  }
+  catch (e: IOException) {
+    LOG.warn(e)
+    FileUtil.rename(tempFile.toFile(), this.toFile())
+  }
   return this
 }
 

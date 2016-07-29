@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StepicWrappers {
   private static final Logger LOG = Logger.getInstance(StepOptions.class);
@@ -166,6 +163,7 @@ public class StepicWrappers {
     @Expose Step block;
     @Expose int position = 0;
     @Expose int lesson = 0;
+    Date update_date;
 
     public StepSource(Project project, Task task, int lesson) {
       this.lesson = lesson;

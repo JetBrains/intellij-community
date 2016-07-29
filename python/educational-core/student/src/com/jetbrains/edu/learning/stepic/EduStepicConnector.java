@@ -53,9 +53,10 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.CONTENT_TYPE_APPL_JSON;
+
 public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
-  private static final String stepicUrl = "https://stepic.org/";
   private static String ourCSRFToken = "";
   private static CloseableHttpClient ourClient;
 
@@ -111,7 +112,7 @@ public class EduStepicConnector {
   public static boolean createUser(@NotNull final String user, @NotNull final String password) {
     final HttpPost userRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.USERS);
     initializeClient();
-    setHeaders(userRequest, "application/json");
+    setHeaders(userRequest, CONTENT_TYPE_APPL_JSON);
     String requestBody = new Gson().toJson(new StepicWrappers.UserWrapper(user, password));
     userRequest.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -134,9 +135,7 @@ public class EduStepicConnector {
   public static void initializeClient() {
     if (ourClient == null) {
       final HttpGet request = new HttpGet(EduStepicNames.STEPIC_URL);
-      request.addHeader(new BasicHeader("referer", EduStepicNames.STEPIC_URL));
-      request.addHeader(new BasicHeader("content-type", EduStepicNames.CONTENT_TYPE_APPL_JSON));
-
+      setHeaders(request, CONTENT_TYPE_APPL_JSON);
 
       HttpClientBuilder builder =
         HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).setMaxConnPerRoute(100000).
@@ -226,7 +225,7 @@ public class EduStepicConnector {
     if (ourClient == null) {
       initializeClient();
     }
-    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
 
     final CloseableHttpResponse response = ourClient.execute(request);
     final StatusLine statusLine = response.getStatusLine();
@@ -237,6 +236,7 @@ public class EduStepicConnector {
     }
     Gson gson = new GsonBuilder().registerTypeAdapter(TaskFile.class, new StudySerializationUtils.Json.StepicTaskFileAdapter()).
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).
+      setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").
       setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     return gson.fromJson(responseString, container);
   }
@@ -255,7 +255,7 @@ public class EduStepicConnector {
     try {
       final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
       post.setEntity(new StringEntity(new GsonBuilder().create().toJson(enrollment)));
-      setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+      setHeaders(post, CONTENT_TYPE_APPL_JSON);
       if (ourClient == null) {
         initializeClient();
       }
@@ -283,6 +283,51 @@ public class EduStepicConnector {
       LOG.error("Cannot load course list " + e.getMessage());
     }
     return Collections.singletonList(CourseInfo.INVALID_COURSE);
+  }
+
+  public static Date getCourseUpdateDate(final int courseId) {
+    final String url = EduStepicNames.COURSES + "/" + courseId;
+    try {
+      final List<CourseInfo> courses = getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
+      if (!courses.isEmpty()) {
+        return courses.get(0).getUpdateDate();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + courseId);
+    }
+
+    return null;
+  }
+
+  public static Date getLessonUpdateDate(final int lessonId) {
+    final String url = EduStepicNames.LESSONS + "/" + lessonId;
+    try {
+      List<Lesson> lessons = getFromStepic(url, StepicWrappers.LessonContainer.class).lessons;
+      if (!lessons.isEmpty()) {
+        return lessons.get(0).getUpdateDate();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + lessonId);
+    }
+
+    return null;
+  }
+
+  public static Date getTaskUpdateDate(final int taskId) {
+    final String url = EduStepicNames.STEPS + "/" + String.valueOf(taskId);
+    try {
+      List<StepicWrappers.StepSource> steps = getFromStepic(url, StepicWrappers.StepContainer.class).steps;
+      if (!steps.isEmpty()) {
+        return steps.get(0).update_date;
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Could not retrieve course with id=" + taskId);
+    }
+
+    return null;
   }
 
   private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
@@ -315,7 +360,7 @@ public class EduStepicConnector {
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
     course.setId(info.id);
-    course.setUpToDate(true);  // TODO: get from stepic
+    course.setUpdateDate(info.getUpdateDate());
     
     if (!course.isAdaptive()) {
       String courseType = info.getType();
@@ -359,41 +404,43 @@ public class EduStepicConnector {
         unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lesson = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
-      Lesson realLesson = lesson.lessons.get(0);
-      realLesson.taskList = new ArrayList<Task>();
-      for (Integer s : realLesson.steps) {
-        createTask(realLesson, s);
+        lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
+      Lesson lesson = lessonContainer.lessons.get(0);
+      lesson.taskList = new ArrayList<Task>();
+      for (Integer s : lesson.steps) {
+        createTask(lesson, s);
       }
-      if (!realLesson.taskList.isEmpty())
-        lessons.add(realLesson);
+      if (!lesson.taskList.isEmpty())
+        lessons.add(lesson);
     }
 
     return lessons;
   }
 
   private static void createTask(Lesson lesson, Integer stepicId) throws IOException {
-    final StepicWrappers.Step step = getStep(stepicId);
-    if (!step.name.equals(PYCHARM_PREFIX)) return;
+    final StepicWrappers.StepSource step = getStep(stepicId);
+    final StepicWrappers.Step block = step.block;
+    if (!block.name.equals(PYCHARM_PREFIX)) return;
     final Task task = new Task();
     task.setStepicId(stepicId);
-    task.setName(step.options != null ? step.options.title : PYCHARM_PREFIX);
-    task.setText(step.text);
-    for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+    task.setUpdateDate(step.update_date);
+    task.setName(block.options != null ? block.options.title : PYCHARM_PREFIX);
+    task.setText(block.text);
+    for (StepicWrappers.TestFileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
     task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
-    if (step.options.files != null) {
-      for (TaskFile taskFile : step.options.files) {
+    if (block.options.files != null) {
+      for (TaskFile taskFile : block.options.files) {
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
     lesson.taskList.add(task);
   }
 
-  public static StepicWrappers.Step getStep(Integer step) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0).block;
+  public static StepicWrappers.StepSource getStep(Integer step) throws IOException {
+    return getFromStepic(EduStepicNames.STEPS + "/" + String.valueOf(step), StepicWrappers.StepContainer.class).steps.get(0);
   }
 
 
@@ -421,7 +468,7 @@ public class EduStepicConnector {
     }
 
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
-    setHeaders(attemptRequest, "application/json");
+    setHeaders(attemptRequest, CONTENT_TYPE_APPL_JSON);
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(task.getStepicId()));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));
 
@@ -449,7 +496,7 @@ public class EduStepicConnector {
 
   private static void postSubmission(boolean passed, StepicWrappers.AttemptWrapper.Attempt attempt, ArrayList<StepicWrappers.SolutionFile> files) throws IOException {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
-    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
 
     String requestBody = new Gson().toJson(new StepicWrappers.SubmissionWrapper(attempt.id, passed ? "1" : "0", files));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -476,7 +523,7 @@ public class EduStepicConnector {
   }
 
   private static void postCourse(final Project project, @NotNull Course course, boolean relogin, @NotNull final ProgressIndicator indicator) {
-    indicator.setText("Uploading course to " + stepicUrl);
+    indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
     if (ourClient == null || !relogin) {
       if (!login(project)) return;
@@ -486,7 +533,7 @@ public class EduStepicConnector {
       course.setAuthors(user.users);
     }
 
-    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     String requestBody = new Gson().toJson(new StepicWrappers.CourseWrapper(course));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -504,7 +551,7 @@ public class EduStepicConnector {
         return;
       }
       final CourseInfo postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
-
+      course.setId(postedCourse.id);
       final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
@@ -576,9 +623,9 @@ public class EduStepicConnector {
     }
   }
 
-  private static void postUnit(int lessonId, int position, int sectionId) {
+  public static void postUnit(int lessonId, int position, int sectionId) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
-    setHeaders(request, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
     unitWrapper.unit = new StepicWrappers.Unit();
     unitWrapper.unit.lesson = lessonId;
@@ -604,7 +651,7 @@ public class EduStepicConnector {
 
   private static int postModule(int courseId, int position, @NotNull final String title) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/sections");
-    setHeaders(request, "application/json");
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     final StepicWrappers.Section section = new StepicWrappers.Section();
     section.course = courseId;
     section.title = title;
@@ -636,15 +683,15 @@ public class EduStepicConnector {
     final Lesson lesson = task.getLesson();
     final int lessonId = lesson.getId();
 
-    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepicId()));
-    setHeaders(request, "application/json");
     if (ourClient == null) {
       if (!login(project)) {
         LOG.error("Failed to update task");
-        return 0;
+        return -1;
       }
     }
 
+    final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepicId()));
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -672,11 +719,11 @@ public class EduStepicConnector {
     if (ourClient == null) {
       if (!login(project)) {
         LOG.error("Failed to push lesson");
-        return 0;
+        return -1;
       }
     }
 
-    setHeaders(request, "application/json");
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -687,7 +734,7 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != HttpStatus.SC_OK) {
         LOG.error("Failed to push " + responseString);
-        return 0;
+        return -1;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
@@ -712,7 +759,7 @@ public class EduStepicConnector {
       login(project);
     }
 
-    setHeaders(request, "application/json");
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -741,7 +788,7 @@ public class EduStepicConnector {
 
   public static void deleteTask(@NotNull final Integer task) {
     final HttpDelete request = new HttpDelete(EduStepicNames.STEPIC_API_URL + EduStepicNames.STEP_SOURCES + task);
-    setHeaders(request, "application/json");
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
@@ -759,8 +806,14 @@ public class EduStepicConnector {
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
+    if (ourClient == null) {
+      if (!login(project)) {
+        LOG.error("Failed to update task");
+      }
+    }
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
-    setHeaders(request, "application/json");
+    setHeaders(request, CONTENT_TYPE_APPL_JSON);
     //TODO: register type adapter for task files here?
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
@@ -788,7 +841,7 @@ public class EduStepicConnector {
   }
 
   static void setHeaders(@NotNull final HttpRequestBase request, String contentType) {
-    request.addHeader(new BasicHeader("referer", stepicUrl));
+    request.addHeader(new BasicHeader("referer", EduStepicNames.STEPIC_URL));
     request.addHeader(new BasicHeader("X-CSRFToken", ourCSRFToken));
     request.addHeader(new BasicHeader("content-type", contentType));
   }

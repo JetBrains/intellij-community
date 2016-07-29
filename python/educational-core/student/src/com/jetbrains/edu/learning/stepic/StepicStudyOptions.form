@@ -10,7 +10,7 @@
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
       <html.disable class="java.lang.Boolean" value="false"/>
     </clientProperties>
-    <border type="etched" title="Stepic">
+    <border type="etched" title="Stepik">
       <font/>
     </border>
     <children>
