@@ -341,7 +341,6 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
                                                                                                myLoginPanel.getPassword()));
         if (stepicUser != null) {
-          ApplicationManager.getApplication().invokeLater(() -> super.doJustOkAction());
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
           myGenerator.myUser = stepicUser;
@@ -351,6 +350,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
           }
+          ApplicationManager.getApplication().invokeLater(() -> super.doJustOkAction());
           setOK();
         }
         else {
