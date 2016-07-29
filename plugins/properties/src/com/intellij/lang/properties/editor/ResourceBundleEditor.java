@@ -37,6 +37,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -124,6 +125,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
+  private ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -216,6 +218,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         onSelectionChanged(event);
       }
     });
+    myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
   }
 
   public ResourceBundle getResourceBundle() {
@@ -820,7 +823,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return new ResourceBundleEditorHighlighter(this);
+    return myHighlighter;
   }
 
   @Override
