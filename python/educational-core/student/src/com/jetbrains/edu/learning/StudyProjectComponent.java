@@ -187,16 +187,23 @@ public class StudyProjectComponent implements ProjectComponent {
       final Lesson studentLesson = currentCourse.getLesson(lesson.getName());
       final File lessonDir = new File(myProject.getBasePath(), lesson.getName());
 
+      int index = 0;
+      final ArrayList<Task> tasks = new ArrayList<>();
       for (Task task : lesson.getTaskList()) {
-        final Task studentTask = studentLesson.getTask(task.getName());
-        if (studentTask == null || StudyStatus.Solved.equals(studentTask.getStatus())) continue;
+        index += 1;
+        final Task studentTask = studentLesson.getTask(task.getStepicId());
+        if (studentTask != null && StudyStatus.Solved.equals(studentTask.getStatus())) {
+          studentTask.setIndex(index);
+          tasks.add(studentTask);
+          continue;
+        }
         task.initTask(studentLesson, false);
-        task.setIndex(studentTask.getIndex());
-        studentLesson.updateTask(studentTask, task);
+        task.setIndex(index);
 
-        final File toTask = new File(lessonDir, task.getName());
+        final String taskDirName = EduNames.TASK + String.valueOf(index);
+        final File toTask = new File(lessonDir, taskDirName);
 
-        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lesson.getName(), task.getName());
+        final String taskPath = FileUtil.join(resourceDirectory.getPath(), lesson.getName(), taskDirName);
         final File taskDir = new File(taskPath);
         if (!taskDir.exists()) return;
         final File[] taskFiles = taskDir.listFiles();
@@ -204,7 +211,9 @@ public class StudyProjectComponent implements ProjectComponent {
         for (File fromFile : taskFiles) {
           copyFile(fromFile, new File(toTask, fromFile.getName()));
         }
+        tasks.add(task);
       }
+      studentLesson.updateTaskList(tasks);
     }
 
     final Notification notification =

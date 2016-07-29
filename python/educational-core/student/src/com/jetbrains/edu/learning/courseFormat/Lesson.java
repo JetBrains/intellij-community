@@ -91,9 +91,17 @@ public class Lesson implements StudyItem {
     return null;
   }
 
-  public void updateTask(@NotNull final Task oldTask, Task newTask) {
-    final int index = taskList.indexOf(oldTask);
-    taskList.set(index, newTask);
+  public Task getTask(int id) {
+    for (Task task : taskList) {
+      if (task.getStepicId() == id) {
+        return task;
+      }
+    }
+    return null;
+  }
+
+  public void updateTaskList(List<Task> taskList) {
+    this.taskList = taskList;
   }
 
   public StudyStatus getStatus() {
