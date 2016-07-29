@@ -93,7 +93,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public List<RepoPackage> getAllPackages() throws IOException {
     final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
     final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
-    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
+    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
     return packages;
   }
 
@@ -241,7 +241,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       @Override
       public void consume(List<String> releases) {
         if (releases != null) {
-          PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
           consumer.consume(releases);
         }
       }
