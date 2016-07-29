@@ -54,6 +54,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
+import static com.intellij.vcsUtil.VcsUtil.toStream;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -231,11 +232,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NotNull
   private Stream<Object> getSelectionObjectsStream() {
     return getSelectionNodesStream().map(ChangesBrowserNode::getUserObject);
-  }
-
-  @NotNull
-  static Stream<TreePath> toStream(@Nullable TreePath[] paths) {
-    return paths == null ? Stream.empty() : Stream.of(paths);
   }
 
   @NotNull
