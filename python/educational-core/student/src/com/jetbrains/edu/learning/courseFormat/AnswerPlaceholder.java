@@ -22,8 +22,7 @@ public class AnswerPlaceholder {
   @Expose private String possibleAnswer = "";
 
   @SerializedName("offset")
-  @Expose
-  private int myOffset = -1;
+  @Expose private int myOffset = -1;
 
   @Expose private int length = -1;
 
@@ -35,8 +34,7 @@ public class AnswerPlaceholder {
   private boolean myUseLength = true;
 
 
-  @Transient
-  private TaskFile myTaskFile;
+  @Transient private TaskFile myTaskFile;
 
   public AnswerPlaceholder() {
   }
