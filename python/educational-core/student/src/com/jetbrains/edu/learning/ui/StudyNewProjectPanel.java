@@ -61,8 +61,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private static final String INVALID_COURSE = "Selected course is invalid";
   private FacetValidatorsManager myValidationManager;
   private boolean isComboboxInitialized;
-  private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepic</u> to open the adaptive course </html>";
-  private static final String LOGIN_TO_STEPIC = "Login to Stepic";
+  private static final String LOGIN_TO_STEPIC_MESSAGE = "<html><u>Login to Stepik</u> to open the adaptive course </html>";
+  private static final String LOGIN_TO_STEPIC = "Login to Stepik";
 
   public StudyNewProjectPanel(@NotNull final StudyProjectGenerator generator) {
     super(new VerticalFlowLayout(true, true));
@@ -185,7 +185,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                showLoginDialog(true, "Signing In And Getting Stepic Course List");
+                showLoginDialog(true, "Signing In And Getting Stepik Course List");
               }
             });
           }

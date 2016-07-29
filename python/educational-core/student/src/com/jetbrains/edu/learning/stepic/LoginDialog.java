@@ -13,7 +13,7 @@ public class LoginDialog extends DialogWrapper {
   public LoginDialog() {
     super(false);
     myLoginPanel = new LoginPanel(this);
-    setTitle("Login to Stepic");
+    setTitle("Login to Stepik");
     setOKButtonText("Login");
     init();
   }

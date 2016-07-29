@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CCPushCourse extends DumbAwareAction {
   public CCPushCourse() {
-    super("Upload Course to Stepic", "Upload Course to Stepic", null);
+    super("Upload Course to Stepik", "Upload Course to Stepik", null);
   }
 
   @Override
