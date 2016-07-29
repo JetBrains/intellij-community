@@ -18,6 +18,12 @@ import com.jetbrains.edu.learning.core.EduNames
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
 
 class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) {
+  
+  companion object {
+    private val OUR_WARNING_MESSAGE = "Put the caret in the answer placeholder to get hint"
+    private val HINTS_NOT_AVAILABLE = "There is no hint for this answer placeholder"
+  }
+  
   val studyToolWindow: StudyToolWindow
   private var myShownHintNumber = 0
   private var isEditingMode = false
@@ -56,7 +62,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
           studyToolWindow.setText(hints[myShownHintNumber])
         }
         else {
-          studyToolWindow.setText("No hints are provided")
+          studyToolWindow.setText(HINTS_NOT_AVAILABLE)
         }
       }
     }
@@ -163,9 +169,5 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = myPlaceholder != null && myPlaceholder.hints.size > 1 && !isEditingMode
     }
-  }
-
-  companion object {
-    private val OUR_WARNING_MESSAGE = "Put the caret in the answer placeholder to get hint"
   }
 }
