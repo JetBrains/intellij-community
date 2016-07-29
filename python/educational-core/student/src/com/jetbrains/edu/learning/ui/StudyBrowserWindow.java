@@ -99,6 +99,7 @@ public class StudyBrowserWindow extends JFrame {
     Platform.runLater(() -> {
       myPane = new StackPane();
       myWebComponent = new WebView();
+      myWebComponent.setOnDragDetected(event -> {});
       myEngine = myWebComponent.getEngine();
 
 
