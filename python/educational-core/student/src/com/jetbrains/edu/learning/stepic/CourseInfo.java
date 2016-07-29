@@ -147,4 +147,8 @@ public class CourseInfo {
     if (infos.isEmpty()) return null;
     return infos.get(0);
   }
+
+  public List<Integer> getSections() {
+    return sections;
+  }
 }

@@ -74,6 +74,15 @@ public class Course {
     return null;
   }
 
+  public Lesson getLesson(int stepicId) {
+    for (Lesson lesson : lessons) {
+      if (lesson.getId() == stepicId) {
+        return lesson;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public List<StepicUser> getAuthors() {
     return authors;

@@ -623,7 +623,7 @@ public class EduStepicConnector {
     }
   }
 
-  private static void postUnit(int lessonId, int position, int sectionId) {
+  public static void postUnit(int lessonId, int position, int sectionId) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
     setHeaders(request, CONTENT_TYPE_APPL_JSON);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
@@ -686,7 +686,7 @@ public class EduStepicConnector {
     if (ourClient == null) {
       if (!login(project)) {
         LOG.error("Failed to update task");
-        return 0;
+        return -1;
       }
     }
 
@@ -719,7 +719,7 @@ public class EduStepicConnector {
     if (ourClient == null) {
       if (!login(project)) {
         LOG.error("Failed to push lesson");
-        return 0;
+        return -1;
       }
     }
 
@@ -734,7 +734,7 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != HttpStatus.SC_OK) {
         LOG.error("Failed to push " + responseString);
-        return 0;
+        return -1;
       }
       final Lesson postedLesson = new Gson().fromJson(responseString, Course.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
