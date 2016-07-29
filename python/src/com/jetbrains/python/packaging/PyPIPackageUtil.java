@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -63,13 +64,34 @@ public class PyPIPackageUtil {
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
   public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
-  public static final Map<String, String> PACKAGES_TOPLEVEL = new HashMap<>();
-
-  private static final Map<String, List<String>> ourPackageToReleases = new HashMap<>();
-  private static final Set<RepoPackage> ourAdditionalPackageNames = new TreeSet<>();
+  public static final Map<String, String> PACKAGES_TOPLEVEL = Maps.newConcurrentMap();
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
-  private final Map<String, PackageDetails> myPackageToDetails = new HashMap<>();
+
+  /**
+   * Contains cached versions of packages from additional repositories.
+   *
+   * @see #getPackageVersionsFromAdditionalRepositories(String)
+   */
+  private final Map<String, List<String>> myAdditionalPackagesReleases = Maps.newConcurrentMap();
+
+  /**
+   * Contains cached packages taken from additional repositories.
+   * 
+   * @see #getAdditionalPackages() 
+   */
+  private volatile Set<RepoPackage> myAdditionalPackages = null;
+  
+  /**
+   * Contains cached package information retrieved through PyPI's JSON API.
+   * 
+   * @see #refreshAndGetPackageDetailsFromPyPI(String, boolean) 
+   */
+  private final Map<String, PackageDetails> myPackageToDetails = Maps.newConcurrentMap();
+  
+  /**
+   * Lowercased package names for fast check that some package is available in PyPI.
+   */
   @Nullable private volatile Set<String> myPackageNames = null;
 
 
@@ -126,14 +148,28 @@ public class PyPIPackageUtil {
     return repository != null && repository.startsWith(PYPI_HOST);
   }
 
-  private static void fillAdditionalPackages(@NotNull String url) throws IOException {
+  @NotNull
+  public Set<RepoPackage> getAdditionalPackages() throws IOException {
+    if (myAdditionalPackages == null) {
+      final Set<RepoPackage> packages = new TreeSet<>();
+      for (String url : PyPackageService.getInstance().additionalRepositories) {
+        packages.addAll(getPackagesFromAdditionalRepository(url));
+      }
+      myAdditionalPackages = packages;
+    }
+    return Collections.unmodifiableSet(myAdditionalPackages);
+  }
+
+  @NotNull
+  private static List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
+    final List<RepoPackage> result = new ArrayList<>();
     final boolean simpleIndex = url.endsWith("simple/");
     final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
 
     for (String pyPackage : packagesList) {
       if (simpleIndex) {
         final Pair<String, String> nameVersion = splitNameVersion(StringUtil.trimTrailing(pyPackage, '/'));
-        ourAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
+        result.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
       }
       else {
         try {
@@ -142,8 +178,9 @@ public class PyPIPackageUtil {
           if (matcher.find()) {
             final String packageName = matcher.group(1);
             final String packageVersion = matcher.group(2);
-            if (!packageName.contains(" "))
-              ourAdditionalPackageNames.add(new RepoPackage(packageName, url, packageVersion));
+            if (!packageName.contains(" ")) {
+              result.add(new RepoPackage(packageName, url, packageVersion));
+            }
           }
         }
         catch (UnsupportedEncodingException e) {
@@ -151,21 +188,12 @@ public class PyPIPackageUtil {
         }
       }
     }
-  }
-
-  @NotNull
-  public Set<RepoPackage> getAdditionalPackageNames() throws IOException {
-    if (ourAdditionalPackageNames.isEmpty()) {
-      for (String url : PyPackageService.getInstance().additionalRepositories) {
-        fillAdditionalPackages(url);
-      }
-    }
-    return ourAdditionalPackageNames;
+    return result;
   }
 
   public void clearPackagesCache() {
     PyPackageService.getInstance().PY_PACKAGES.clear();
-    ourAdditionalPackageNames.clear();
+    myAdditionalPackages = null;
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -190,10 +218,6 @@ public class PyPIPackageUtil {
       myPackageToDetails.put(packageName, details);
     }
     return details;
-  }
-
-  public void addPackageReleases(@NotNull String packageName, @NotNull List<String> releases) {
-    ourPackageToReleases.put(packageName, releases);
   }
 
   public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<List<String>, Exception> callback) {
@@ -240,23 +264,22 @@ public class PyPIPackageUtil {
    * It's primarily used for additional repositories since, e.g. devpi doesn't provide another way to get this information.
    */
   @Nullable
-  private static List<String> getPackageVersionsFromAdditionalRepositories(@NotNull @NonNls String packageName) throws IOException {
-    if (ourPackageToReleases.containsKey(packageName)) {
-      return ourPackageToReleases.get(packageName);
-    }
-    final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
-    for (String repository : repositories) {
-      final List<String> versions = parsePackageVersionsFromArchives(composeSimpleUrl(packageName, repository));
-      if (!versions.isEmpty()) {
-        ourPackageToReleases.put(packageName, versions);
-        return versions;
+  private List<String> getPackageVersionsFromAdditionalRepositories(@NotNull @NonNls String packageName) throws IOException {
+    List<String> versions = myAdditionalPackagesReleases.get(packageName);
+    if (versions == null) {
+      final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
+      for (String repository : repositories) {
+        versions = parsePackageVersionsFromArchives(composeSimpleUrl(packageName, repository));
+        if (!versions.isEmpty()) {
+          myAdditionalPackagesReleases.put(packageName, versions);
+        }
       }
     }
-    return null;
+    return versions;
   }
 
   @Nullable
-  private static String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) throws IOException {
+  private String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
     return ContainerUtil.getFirstItem(versions);
   }
