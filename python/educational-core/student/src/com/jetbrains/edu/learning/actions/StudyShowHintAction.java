@@ -87,6 +87,15 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    if (project != null) {
+      final Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (course != null && course.isAdaptive()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+    }
+    
     StudyUtils.updateAction(e);
   }
 
