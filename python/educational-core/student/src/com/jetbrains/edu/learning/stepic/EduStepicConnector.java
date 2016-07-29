@@ -668,6 +668,7 @@ public class EduStepicConnector {
       final StatusLine line = response.getStatusLine();
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
+        return -1;
       }
       final StepicWrappers.Section
         postedSection = new Gson().fromJson(responseString, StepicWrappers.SectionContainer.class).sections.get(0);
@@ -701,6 +702,12 @@ public class EduStepicConnector {
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
         final StatusLine line = response.getStatusLine();
+        if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+          if (login(project)) {
+            updateTask(project, task);
+            return;
+          }
+        }
         if (line.getStatusCode() != HttpStatus.SC_OK) {
           final HttpEntity responseEntity = response.getEntity();
           final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
@@ -732,6 +739,11 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        if (login(project)) {
+          return updateLesson(project, lesson, indicator);
+        }
+      }
       if (line.getStatusCode() != HttpStatus.SC_OK) {
         LOG.error("Failed to push " + responseString);
         return -1;
@@ -768,6 +780,11 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        if (login(project)) {
+          return postLesson(project, lesson, indicator);
+        }
+      }
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
         return 0;
@@ -826,8 +843,15 @@ public class EduStepicConnector {
         final StatusLine line = response.getStatusLine();
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+          if (login(project)) {
+            postTask(project, task, lessonId);
+            return;
+          }
+        }
         if (line.getStatusCode() != HttpStatus.SC_CREATED) {
           LOG.error("Failed to push " + responseString);
+          return;
         }
 
         final JsonObject postedTask = new Gson().fromJson(responseString, JsonObject.class);
