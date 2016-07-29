@@ -163,4 +163,17 @@ class TryIdenticalCatches {
 
   void foo() throws IOException {}
   private static final IOException INSTANCE = new IOException();
+
+  public boolean returning() {
+    try {
+      // work
+    }
+    catch(NumberFormatException e) {
+      return true;
+    }
+    <warning descr="'catch' branch identical to 'NumberFormatException' branch">catch(RuntimeException e)</warning> {
+      return true;
+    }
+    return false;
+  }
 }

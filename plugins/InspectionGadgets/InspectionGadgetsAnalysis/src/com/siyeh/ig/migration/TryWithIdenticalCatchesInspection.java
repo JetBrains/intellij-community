@@ -24,6 +24,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.ReturnStatementReturnValue;
+import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -110,7 +112,11 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
             continue;
           }
           final Match match = finder.isDuplicate(otherCatchBlock, true);
-          if (match == null || match.getReturnValue() != null) {
+          if (match == null) {
+            continue;
+          }
+          final ReturnValue returnValue = match.getReturnValue();
+          if (returnValue != null && !(returnValue instanceof ReturnStatementReturnValue)) {
             continue;
           }
           final List<PsiElement> parameterValues = match.getParameterValues(parameter);
