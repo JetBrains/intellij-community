@@ -17,13 +17,14 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class CCPushLesson extends DumbAwareAction {
   public CCPushLesson() {
-    super("Update Lesson on Stepic", "Update Lesson on Stepic", null);
+    super("Update Lesson on Stepik", "Update Lesson on Stepik", null);
   }
 
   @Override
@@ -47,7 +48,7 @@ public class CCPushLesson extends DumbAwareAction {
     if (lesson != null && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
       if (lesson.getId() <= 0) {
-        e.getPresentation().setText("Upload Lesson to Stepic");
+        e.getPresentation().setText("Upload Lesson to Stepik");
       }
     }
   }
@@ -74,7 +75,7 @@ public class CCPushLesson extends DumbAwareAction {
     ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Lesson", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Uploading lesson to http://stepic.org");
+        indicator.setText("Uploading lesson to " + EduStepicNames.STEPIC_URL);
         if (lesson.getId() > 0) {
           EduStepicConnector.updateLesson(project, lesson, indicator);
         }
