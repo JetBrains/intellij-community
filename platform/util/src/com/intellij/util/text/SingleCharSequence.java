@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SingleCharSequence implements CharSequence {
   private final char myCh;
 
@@ -37,6 +39,16 @@ public class SingleCharSequence implements CharSequence {
 
   @Override
   public CharSequence subSequence(int start, int end) {
-    throw new RuntimeException("Method subSequence not implemented");
+    if (start == 0 && end == 1) return this;
+    if (start < 0) throw new IndexOutOfBoundsException("Start index out of range:" + start);
+    if (end > 1 || end < 0) throw new IndexOutOfBoundsException("End index out of range:" + end);
+    if (start > end) throw new IndexOutOfBoundsException("Start index should be less or equal to end index:" + start + " - " + end);
+    return "";
+  }
+
+  @Override
+  @NotNull
+  public String toString() {
+    return String.valueOf(myCh);
   }
 }
