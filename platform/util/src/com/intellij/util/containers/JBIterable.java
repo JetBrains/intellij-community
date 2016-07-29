@@ -483,6 +483,85 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Returns a {@code JBIterable} that groups this iterable into lists of the specified size.
+   * If 'strict' flag is true only groups of size 'n' are returned.
+   */
+  @NotNull
+  public final JBIterable<List<E>> partition(final int n, final boolean strict) {
+    if (n <= 0) throw new IllegalArgumentException(n + " <= 0");
+    return intercept(new Function<Iterator<E>, Iterator<List<E>>>() {
+      @Override
+      public Iterator<List<E>> fun(Iterator<E> iterator) {
+        final Iterator<E> orig = iterator;
+        return new JBIterator<List<E>>() {
+          @Override
+          protected List<E> nextImpl() {
+            ArrayList<E> next = ContainerUtil.newArrayListWithCapacity(n);
+            for (E e : once(orig).take(n)) {
+              next.add(e);
+            }
+            return next.isEmpty() || strict && next.size() < n ? stop() : next;
+          }
+        };
+      }
+    });
+  }
+
+  public enum SeparatorOption {HEAD, TAIL, EXTRACT, SKIP}
+
+  /**
+   * Returns a {@code JBIterable} that groups this iterable by the specified condition
+   * without additional memory allocation.
+   */
+  @NotNull
+  public final JBIterable<JBIterable<E>> partition(final SeparatorOption option, final Condition<E> condition) {
+    return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
+      @Override
+      public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
+        final Iterator<E> orig = iterator;
+        return new JBIterator<JBIterable<E>>() {
+          List<E> stored;
+          JBIterator<E> it;
+
+          @Override
+          protected JBIterable<E> nextImpl() {
+            // iterate through the previous result fully before proceeding
+            if (it != null && it.hasNext()) once(it).size();
+            it = null;
+            List<E> sep = stored;
+            stored = null;
+            if (option == SeparatorOption.EXTRACT && sep != null) return JBIterable.from(sep);
+            if (!orig.hasNext()) {
+              return option == SeparatorOption.TAIL && sep != null ? JBIterable.from(sep) : stop();
+            }
+            it = JBIterator.wrap(orig);
+            JBIterable<E> next = once(it.takeWhile(new Condition<E>() {
+              @Override
+              public boolean value(E e) {
+                if (!condition.value(e)) return true;
+                stored = Collections.singletonList(e);
+                return false;
+              }
+            }));
+            switch (option) {
+              case HEAD: return next.append(new JBIterable<E>() {
+                @Override
+                public Iterator<E> iterator() {
+                  return stored != null ? stored.iterator() : JBIterable.<E>empty().iterator();
+                }
+              });
+              case TAIL: return sep != null ? JBIterable.from(sep).append(next) : next;
+              case EXTRACT:
+              case SKIP: return next;
+              default: throw new AssertionError(option);
+            }
+          }
+        };
+      }
+    });
+  }
+
+  /**
    * Determines whether this iterable is empty.
    */
   public final boolean isEmpty() {
