@@ -376,6 +376,8 @@ public class IdeEventQueue extends EventQueue {
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
     if (myIsInInputEvent) {
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    } else {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
