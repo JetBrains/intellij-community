@@ -149,12 +149,6 @@ public class PyCharmEduInitialConfigurator {
       EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
       editorSettings.setEnsureNewLineAtEOF(true);
 
-      final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
-
-      for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
-        point.unregisterExtension(attachProcessor);
-      }
-
       propertiesComponent.setValue(CONFIGURED_V2, true);
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
@@ -338,6 +332,11 @@ public class PyCharmEduInitialConfigurator {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
       }
+    }
+
+    final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
+    for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+      point.unregisterExtension(attachProcessor);
     }
   }
 
