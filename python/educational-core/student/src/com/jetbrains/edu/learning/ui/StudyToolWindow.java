@@ -161,7 +161,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
   //used in checkiO plugin.
   @SuppressWarnings("unused")
-  public void setTopComponentPrefferedSize(@NotNull final Dimension dimension) {
+  public void setTopComponentPreferredSize(@NotNull final Dimension dimension) {
     myContentPanel.setPreferredSize(dimension);
   }
 
