@@ -181,6 +181,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-18880
+  public void testBackportedTyping() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
