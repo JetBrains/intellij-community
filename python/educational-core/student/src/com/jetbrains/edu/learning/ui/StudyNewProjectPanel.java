@@ -334,7 +334,6 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     @Override
     protected void doOKAction() {
       if (!validateLoginAndPasswordFields()) return;
-      super.doJustOkAction();
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
@@ -342,6 +341,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
                                                                                                myLoginPanel.getPassword()));
         if (stepicUser != null) {
+          ApplicationManager.getApplication().invokeLater(() -> super.doJustOkAction());
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
           myGenerator.myUser = stepicUser;
@@ -354,7 +354,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           setOK();
         }
         else {
-          setError("Failed to login");
+          this.setErrorText("Failed to login");
         }
       }, myProgressTitle, true, new DefaultProjectFactoryImpl().getDefaultProject());
     }
