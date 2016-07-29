@@ -17,10 +17,15 @@ package com.intellij.ide.passwordSafe;
 
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PasswordSafe implements PasswordStorage {
   @NotNull
   public static PasswordSafe getInstance() {
     return ServiceManager.getService(PasswordSafe.class);
   }
+
+  public abstract void setPassword(@Nullable Class<?> requestor, @NotNull String key, @Nullable String value, boolean memoryOnly);
+
+  public abstract boolean isMemoryOnly();
 }

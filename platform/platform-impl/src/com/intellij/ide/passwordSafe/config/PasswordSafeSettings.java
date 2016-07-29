@@ -15,71 +15,52 @@
  */
 package com.intellij.ide.passwordSafe.config;
 
+import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * The password safe settings
- */
-@State(
-  name = "PasswordSafe",
-  storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED)
-)
+@State(name = "PasswordSafe", storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED))
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
-  /**
-   * The selected provider type
-   */
+  public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
+
   private ProviderType myProviderType = ProviderType.MASTER_PASSWORD;
 
-  /**
-   * @return get provider type
-   */
+  @NotNull
   public ProviderType getProviderType() {
     return myProviderType;
   }
 
-  /**
-   * Set provider type
-   *
-   * @param providerType a new value
-   */
-  public void setProviderType(ProviderType providerType) {
-    myProviderType = providerType;
+  public void setProviderType(@NotNull ProviderType value) {
+    ProviderType oldValue = myProviderType;
+    if (value != oldValue) {
+      myProviderType = value;
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).typeChanged(oldValue, value);
+    }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @NotNull
   public State getState() {
     State s = new State();
     s.PROVIDER = myProviderType;
     return s;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public void loadState(State state) {
-    myProviderType = state.PROVIDER;
+  public void loadState(@NotNull State state) {
+    setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, ProviderType.MASTER_PASSWORD));
   }
 
-
-  /**
-   * The settings state
-   */
   public static class State {
     public ProviderType PROVIDER = ProviderType.MASTER_PASSWORD;
   }
 
-  /**
-   * The provider type for the password safe
-   */
   public enum ProviderType {
-    /**
-     * The passwords are not stored
-     */
+    @Deprecated
     DO_NOT_STORE,
     /**
      * The passwords are stored only in the memory

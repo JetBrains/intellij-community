@@ -15,9 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,51 +39,12 @@ public class MasterPasswordDialog extends DialogWrapper {
   private final DialogWrapperAction myCardAction;
   private int myRetriesCount;
 
-  /**
-   * Ask password from user and set it to password safe instance
-   *
-   * @param project   the current project
-   * @param safe      the password safe
-   * @param requestor
-   * @throws PasswordSafeException if the master password is not provided.
-   */
-  public static void askPassword(@Nullable Project project, @NotNull MasterKeyPasswordSafe safe, @NotNull Class<?> requestor)
-    throws PasswordSafeException {
-    // trying empty password: people who have set up empty password, don't want to get disturbed by the prompt.
-    if (safe.setMasterPassword("")) {
-      return;
-    }
-
-    if (!enterMasterPasswordDialog(project, safe, requestor).showAndGet()) {
-      throw new MasterPasswordUnavailableException(PasswordComponentBase.getRequestorTitle(requestor) + ": Cancelled by user");
-    }
-  }
-
-  public static MasterPasswordDialog resetMasterPasswordDialog(@Nullable Project project,
-                                                               @NotNull MasterKeyPasswordSafe safe) {
-    return new MasterPasswordDialog(project, new ResetPasswordComponent(safe, true));
-  }
-
-  public static MasterPasswordDialog changeMasterPasswordDialog(@Nullable Project project,
-                                                                @NotNull MasterKeyPasswordSafe safe) {
-    return new MasterPasswordDialog(project, new ChangePasswordComponent(safe), new ResetPasswordComponent(safe, false));
-  }
-
-  public static MasterPasswordDialog enterMasterPasswordDialog(@Nullable Project project,
-                                                               @NotNull MasterKeyPasswordSafe safe,
-                                                               @NotNull Class<?> requestor) {
-    return new MasterPasswordDialog(project, new EnterPasswordComponent(safe, requestor), new ResetPasswordComponent(safe, false));
-  }
-
-  protected MasterPasswordDialog(@Nullable Project project, PasswordComponentBase... components) {
-    super(project, false);
+  public MasterPasswordDialog(@NotNull PasswordComponentBase component) {
+    super(false);
 
     setResizable(false);
-    assert components.length > 0;
-    myComponents.addAll(Arrays.asList(components));
-    for (PasswordComponentBase component : myComponents) {
-      myRootPanel.add(component.getComponent(), component.getTitle());
-    }
+    myComponents.add(component);
+    myRootPanel.add(component.getComponent(), component.getTitle());
     myCardAction = new DialogWrapperAction("") {
       @Override
       protected void doAction(ActionEvent e) {
@@ -160,21 +117,19 @@ public class MasterPasswordDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doOKAction() {
+  public void doOKAction() {
     PasswordComponentBase component = getSelectedComponent();
-    if (component.apply()) {
+    ValidationInfo info = component.apply();
+    if (info == null) {
       super.doOKAction();
     }
     else {
-      ValidationInfo info = component.validatePassword();
-      if (info != null) {
-        setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount));
-        if (info.component != null) {
-          info.component.requestFocus();
-        }
-        if (++myRetriesCount > NUMBER_OF_RETRIES) {
-          super.doCancelAction();
-        }
+      setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount));
+      if (info.component != null) {
+        info.component.requestFocus();
+      }
+      if (++myRetriesCount > NUMBER_OF_RETRIES) {
+        super.doCancelAction();
       }
     }
   }

@@ -27,10 +27,6 @@ public abstract class PasswordSafeProvider implements PasswordStorage {
   public boolean isSupported() {
     return true;
   }
-  /**
-   * @return the description of the provider
-   */
-  public abstract String getDescription();
 
   /**
    * @return the name of provider
