@@ -94,7 +94,6 @@ public class CCProjectService implements PersistentStateComponent<Element> {
               int offset = document.getLineStartOffset(line) + start;
               addChildWithName(placeholder, OFFSET, offset);
               addChildWithName(placeholder, "useLength", "false");
-              addHints(placeholder);
             }
           }
         }

@@ -18,7 +18,6 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -190,7 +189,6 @@ public class StudySerializationUtils {
               taskStatus = addStatus(outputter, placeholderTextToStatus, taskStatus, placeholder);
               addOffset(document, placeholder);
               addInitialState(document, placeholder);
-              addHints(placeholder);
             }
           }
           if (taskStatus != null) {
@@ -230,19 +228,6 @@ public class StudySerializationUtils {
       int start = getAsInt(placeholder, START);
       int offset = document.getLineStartOffset(line) + start;
       addChildWithName(placeholder, OFFSET, offset);
-    }
-
-    public static void addHints(@NotNull Element placeholder) throws StudyUnrecognizedFormatException {
-      Element element = getChildWithName(placeholder, HINT, true);
-      if (element == null) {
-        return;
-      }
-      final String hint = element.getAttribute(VALUE).getValue();
-      Element listElement = new Element(LIST);
-      final Element hintElement = new Element(OPTION);
-      hintElement.setAttribute(VALUE, hint);
-      listElement.setContent(hintElement);
-      addChildWithName(placeholder, HINTS, listElement);
     }
 
     public static int getAsInt(Element element, String name) throws StudyUnrecognizedFormatException {
