@@ -289,6 +289,16 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 1, 2, 3, 5, 8, 13, 21), it.toList());
   }
 
+  public void testFindIndexReduceMap() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4, 5);
+    assertEquals(15, (int)it.reduce(0, (Integer v, Integer o) -> v + o));
+    assertEquals(3, (int)it.find((o)-> o.intValue() == 3));
+    assertEquals(2, it.indexOf((o)-> o.intValue() == 3));
+    assertEquals(-1, it.indexOf((o)-> o.intValue() == 33));
+    assertEquals(Arrays.asList(1, 4, 9, 16, 25), it.map(o -> o * o).toList());
+    assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
+  }
+
   // TreeTraversal ----------------------------------------------
 
   @NotNull
