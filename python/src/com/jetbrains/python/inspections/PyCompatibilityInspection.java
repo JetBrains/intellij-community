@@ -60,6 +60,10 @@ import java.util.List;
  * Inspection to detect code incompatibility with python versions
  */
 public class PyCompatibilityInspection extends PyInspection {
+  public static List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
+    .add("enum")
+    .build();
+
   public static final int LATEST_INSPECTION_VERSION = 1;
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
@@ -244,7 +248,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final QualifiedName qName = importElement.getImportedQName();
         if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
           moduleName = qName.toString();
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName)) {
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
         }
@@ -263,7 +267,8 @@ public class PyCompatibilityInspection extends PyInspection {
       if (name != null) {
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
           LanguageLevel languageLevel = myVersionsToProcess.get(i);
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name.toString())) {
+          final String moduleName = name.toString();
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
         }

@@ -176,6 +176,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19486
+  public void testBackportedEnum() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
