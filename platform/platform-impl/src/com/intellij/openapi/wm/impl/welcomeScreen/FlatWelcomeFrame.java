@@ -815,11 +815,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
        }
 
        @Override
+       protected Color getBackground() {
+         return getProjectsBackground();
+       }
+
+       @Override
        protected void customizeComponent(JList list, Object value, boolean isSelected) {
          if (myTextLabel != null) {
            myTextLabel.setText(getActionText(((AnAction)value)));
            myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
-           myTextLabel.setBackground(isSelected ? UIUtil.getListBackground(true) : getProjectsBackground());
          }
        }
      }
