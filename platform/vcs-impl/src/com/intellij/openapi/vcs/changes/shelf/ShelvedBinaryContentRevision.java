@@ -19,26 +19,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/17/12
- * Time: 3:59 PM
- */
-public class ShelvedBinaryContentRevision implements BinaryContentRevision {
-  private final FilePath myPath;
+public class ShelvedBinaryContentRevision extends SimpleBinaryContentRevision {
   private final String myShelvedContentPath;
 
   public ShelvedBinaryContentRevision(FilePath path, final String shelvedContentPath) {
-    myPath = path;
+    super(path, VcsBundle.message("shelved.version.name"));
     myShelvedContentPath = shelvedContentPath;
   }
 
@@ -51,33 +41,5 @@ public class ShelvedBinaryContentRevision implements BinaryContentRevision {
     catch (IOException e) {
       throw new VcsException(e);
     }
-  }
-
-  @Nullable
-  @Override
-  public String getContent() throws VcsException {
-    throw new IllegalStateException();
-  }
-
-  @NotNull
-  @Override
-  public FilePath getFile() {
-    return myPath;
-  }
-
-  @NotNull
-  @Override
-  public VcsRevisionNumber getRevisionNumber() {
-    return new VcsRevisionNumber() {
-      @Override
-      public String asString() {
-        return VcsBundle.message("shelved.version.name");
-      }
-
-      @Override
-      public int compareTo(VcsRevisionNumber o) {
-        return -1;
-      }
-    };
   }
 }

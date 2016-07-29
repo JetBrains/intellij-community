@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BinaryFilePatch extends FilePatch {
@@ -42,5 +43,13 @@ public class BinaryFilePatch extends FilePatch {
   @Nullable
   public byte[] getAfterContent() {
     return myAfterContent;
+  }
+
+  @NotNull
+  public BinaryFilePatch copy() {
+    BinaryFilePatch copied = new BinaryFilePatch(this.getBeforeContent(), this.getAfterContent());
+    copied.setBeforeName(this.getBeforeName());
+    copied.setAfterName(this.getAfterName());
+    return copied;
   }
 }
