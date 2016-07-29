@@ -59,6 +59,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
 public class EduAdaptiveStepicConnector {
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
+  public static final String PYCHARM_COMMENT = "# Posted from PyCharm Edu\n";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
 
@@ -437,7 +438,7 @@ public class EduAdaptiveStepicConnector {
     final CloseableHttpResponse response;
     try {
       final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, text);
+        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, PYCHARM_COMMENT + text);
       final HttpPost httpPost = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
       setHeaders(httpPost, EduStepicNames.CONTENT_TYPE_APPL_JSON);
       setTimeout(httpPost);
