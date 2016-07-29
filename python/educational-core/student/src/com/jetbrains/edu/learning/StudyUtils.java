@@ -474,12 +474,12 @@ public class StudyUtils {
       return null;
     }
 
+    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
     String text = task.getText();
     if (text != null && !text.isEmpty()) {
-      return text;
+      return prefix + text + ourPostfix;
     }
     if (taskDirectory != null) {
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
       final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
       
