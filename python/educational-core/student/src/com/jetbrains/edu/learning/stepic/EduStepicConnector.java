@@ -538,9 +538,19 @@ public class EduStepicConnector {
     if (ourClient == null || !relogin) {
       if (!login(project)) return;
     }
-    final StepicWrappers.AuthorWrapper user = getCurrentUser();
-    if (user != null) {
-      course.setAuthors(user.users);
+    final StepicWrappers.AuthorWrapper authors = getCurrentUser();
+    if (authors != null) {
+      final List<StepicUser> courseAuthors = course.getAuthors();
+      for (int i = 0; i < courseAuthors.size(); i++) {
+        final StepicUser user = authors.users.get(i);
+        if (courseAuthors.size() > i) {
+          final StepicUser courseAuthor = courseAuthors.get(i);
+          user.setFirstName(courseAuthor.getFirstName());
+          user.setLastName(courseAuthor.getLastName());
+        }
+      }
+
+      course.setAuthors(authors.users);
     }
 
     setHeaders(request, CONTENT_TYPE_APPL_JSON);
