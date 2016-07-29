@@ -1,5 +1,7 @@
 package com.siyeh.igtest.bitwise.pointless_bitwise_expression;
 
+import java.util.*;
+
 public class PointlessBitwiseExpression {
     private static final int ZERO = 0;
 
@@ -58,6 +60,11 @@ public class PointlessBitwiseExpression {
         j = 6;
         k = <warning descr="'0xffffffff ^ j' can be replaced with '~j'">0xffffffff ^ j</warning>;
         System.out.println(k);
+    }
+
+    public static void main5(String[] args) {
+        Random in = new Random();
+        System.out.println(in.nextInt() & in.nextInt());
     }
 
     void longExpressions(int i, int j) {
