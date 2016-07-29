@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -90,6 +91,8 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
       .map(file -> ChangesUtil.getVcsForFile(file, context.getProject()))
       .filter(Objects::nonNull)
       .map(AbstractVcs::getName)
+      .distinct()
+      .limit(ProjectLevelVcsManager.getInstance(context.getProject()).getAllActiveVcss().length)
       .collect(toSet());
   }
 
