@@ -137,4 +137,8 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     return mySettingsPanel.getMainPanel();
   }
 
+  @Override
+  public void locationChanged(@NotNull String newLocation) {
+    mySettingsPanel.getNameField().setText(newLocation);
+  }
 }
