@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,11 +227,6 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
            ApplicationNamesInfo.getInstance().getProductName() +
            " has a lot of tools enabled by default. You can set only ones you need or leave them all." +
            "</body></html>";
-  }
-
-  @Override
-  public String getHTMLFooter() {
-    return null;
   }
 
   @Override
