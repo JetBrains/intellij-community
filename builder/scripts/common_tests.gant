@@ -157,6 +157,8 @@ target("coverage_report": "Generate coverage report") {
         fileset(dir: "${home}/../vendor/google/android-ndk/src/")
       }
     }
+    csv(destfile: "${out}/coverage/report.csv")
+    xml(destfile: "${out}/coverage/report.xml")
     html(destdir: "${out}/coverage/report")
   }
 }
