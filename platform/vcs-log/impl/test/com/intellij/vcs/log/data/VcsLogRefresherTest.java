@@ -55,7 +55,6 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   };
   private TestVcsLogProvider myLogProvider;
   private VcsLogData myLogData;
-  private ConcurrentIntObjectMap<VcsCommitMetadata> myTopDetailsCache;
   private Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   private DataWaiter myDataWaiter;
@@ -70,7 +69,6 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     myLogProvider = new TestVcsLogProvider(myProjectRoot);
     myLogProviders = Collections.singletonMap(myProjectRoot, myLogProvider);
-    myTopDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
 
     myCommits = Arrays.asList("3|-a2|-a1", "2|-a1|-a", "1|-a|-");
     myLogProvider.appendHistory(log(myCommits));
@@ -211,7 +209,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     });
     Disposer.register(myProject, myLogData);
     return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(),
-                                   myTopDetailsCache, dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
+                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
