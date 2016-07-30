@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -42,13 +41,13 @@ class VisiblePackBuilder {
   private static final Logger LOG = Logger.getInstance(VisiblePackBuilder.class);
 
   @NotNull private final VcsLogStorage myHashMap;
-  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogStorage hashMap,
-                     @NotNull ConcurrentIntObjectMap<VcsCommitMetadata> topCommitsDetailsCache,
+                     @NotNull TopCommitsCache topCommitsDetailsCache,
                      @NotNull DataGetter<VcsFullCommitDetails> detailsGetter) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;

@@ -64,7 +64,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.createConcurrentIntObjectMap();
+  @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
@@ -83,6 +83,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
     myHashMap = createLogHashMap();
+    myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
 
@@ -283,5 +284,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public VcsLogProgress getProgress() {
     return myRefresher.getProgress();
+  }
+
+  @NotNull
+  public TopCommitsCache getTopCommitsCache() {
+    return myTopCommitsDetailsCache;
   }
 }
