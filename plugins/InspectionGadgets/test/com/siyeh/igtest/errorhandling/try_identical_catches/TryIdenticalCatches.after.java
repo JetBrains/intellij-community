@@ -173,4 +173,16 @@ class TryIdenticalCatches {
     }
     return false;
   }
+
+  public void suppress() {
+    try {
+      // ...
+    }
+    catch (NumberFormatException e) {
+      System.out.println(e);
+    }
+    catch (@SuppressWarnings("TryWithIdenticalCatches") RuntimeException e) {
+      System.out.println(e);
+    }
+  }
 }
