@@ -546,8 +546,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
-      for (PyThreadInfo suspendedThread : Lists.newArrayList(mySuspendedThreads)) {
-        myDebugger.resumeOrStep(suspendedThread.getId(), mode);
+      for (PyThreadInfo thread : myDebugger.getThreads()) {
+        myDebugger.resumeOrStep(thread.getId(), mode);
       }
     }
   }

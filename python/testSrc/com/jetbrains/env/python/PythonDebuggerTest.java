@@ -966,6 +966,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   @Staging
+  public void testSuspendAllThreadsResume() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_two_threads_resume.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getFilePath(getScriptName()), 9);
+        setBreakpointSuspendPolicy(getProject(), 9, SuspendPolicy.ALL);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("12");
+        resume();
+        waitForPause();
+        eval("x").hasValue("12");
+        resume();
+      }
+    });
+  }
+
+  @Test
+  @Staging
   public void testSuspendOneThreadPolicy() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
