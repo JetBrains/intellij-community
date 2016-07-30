@@ -136,14 +136,13 @@ class VisiblePackBuilderTest {
     fun build(filters: VcsLogFilterCollection): VisiblePack {
       val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys).mapValues { CompressedRefs(it.value, hashMap) }, providers, hashMap, true)
       val detailsCache = TopCommitsCache(hashMap)
-      data.entries.forEach {
+      detailsCache.storeDetails(ArrayList(data.entries.mapNotNull {
         val hash = hashMap.getCommitId(it.key.id)!!.hash
-        val metadata = if (it.value.user == null)
+        if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
             it.value.user!!, it.value.subject, it.value.user!!, 1L)
-        if (metadata != null) detailsCache.putDetails(it.key.id, metadata)
-      }
+      }))
 
       val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
         override fun getCommitData(row: Int, neighbourHashes: MutableIterable<Int>): VcsFullCommitDetails {

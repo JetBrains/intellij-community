@@ -179,7 +179,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId(), root), parents, commit.getTimestamp());
   }
 
-  private void storeUsersAndDetails(@NotNull Collection<? extends VcsCommitMetadata> metadatas) {
+  private void storeUsersAndDetails(@NotNull List<? extends VcsCommitMetadata> metadatas) {
     for (VcsCommitMetadata detail : metadatas) {
       myUserRegistry.addUser(detail.getAuthor());
       myUserRegistry.addUser(detail.getCommitter());

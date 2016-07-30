@@ -15,32 +15,49 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogStorage;
-import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 public class TopCommitsCache {
-  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
+  @NotNull private List<VcsCommitMetadata> mySortedDetails = ContainerUtil.newArrayList();
 
   public TopCommitsCache(@NotNull VcsLogStorage hashMap) {
     myHashMap = hashMap;
   }
 
-  public void storeDetails(@NotNull Collection<? extends VcsCommitMetadata> metadatas) {
-    for (VcsCommitMetadata detail : metadatas) {
-      myCache.put(myHashMap.getCommitIndex(detail.getId(), detail.getRoot()), detail);
-    }
+  private int getIndex(@NotNull VcsCommitMetadata metadata) {
+    return myHashMap.getCommitIndex(metadata.getId(), metadata.getRoot());
   }
 
-  public void putDetails(int id, @NotNull VcsCommitMetadataImpl metadata) {
-    myCache.put(id, metadata);
+  public void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {
+    List<VcsCommitMetadata> newDetails = ContainerUtil.filter(sortedDetails, metadata -> !myCache.containsValue(metadata));
+    if (newDetails.isEmpty()) return;
+    Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
+
+    List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    while (it.hasNext()) {
+      VcsCommitMetadata detail = it.next();
+      if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
+        result.add(detail);
+        myCache.put(getIndex(detail), detail);
+      }
+      else {
+        myCache.remove(getIndex(detail));
+      }
+    }
+    assert result.size() == myCache.size();
+    mySortedDetails = result;
   }
 
   @Nullable
@@ -50,5 +67,33 @@ public class TopCommitsCache {
 
   public void clear() {
     myCache.clear();
+    mySortedDetails.clear();
+  }
+
+  private static class MergingIterator implements Iterator<VcsCommitMetadata> {
+    private final PeekingIterator<VcsCommitMetadata> myFirst;
+    private final PeekingIterator<VcsCommitMetadata> mySecond;
+
+    private MergingIterator(@NotNull List<VcsCommitMetadata> first, @NotNull List<VcsCommitMetadata> second) {
+      myFirst = Iterators.peekingIterator(first.iterator());
+      mySecond = Iterators.peekingIterator(second.iterator());
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myFirst.hasNext() || mySecond.hasNext();
+    }
+
+    @Override
+    public VcsCommitMetadata next() {
+      if (!myFirst.hasNext()) return mySecond.next();
+      if (!mySecond.hasNext()) return myFirst.next();
+      VcsCommitMetadata data1 = myFirst.peek();
+      VcsCommitMetadata data2 = mySecond.peek();
+      // more recent commits (with bigger timestamp) should go first
+      // if timestamp is the same, commit from the second list is chosen
+      if (data1.getTimestamp() > data2.getTimestamp()) return myFirst.next();
+      return mySecond.next();
+    }
   }
 }

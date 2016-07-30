@@ -44,7 +44,7 @@ import java.util.Set;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
-  private static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
