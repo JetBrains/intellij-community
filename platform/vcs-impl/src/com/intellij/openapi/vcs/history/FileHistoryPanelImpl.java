@@ -498,7 +498,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       result.add(new MyShowDetailsAction());
     }
 
-    if (!popup && supportsTree()) {
+    if (!popup && myHistorySession != null && myHistorySession.getHistoryAsTreeProvider() != null) {
       result.add(new MyShowAsTreeAction());
     }
 
@@ -523,10 +523,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull
   public AsynchConsumer<VcsHistorySession> getHistoryPanelRefresh() {
     return myHistoryPanelRefresh;
-  }
-
-  private boolean supportsTree() {
-    return myHistorySession != null && myHistorySession.getHistoryAsTreeProvider() != null;
   }
 
   public Object getData(String dataId) {
