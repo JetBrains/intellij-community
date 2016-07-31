@@ -156,16 +156,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
-    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
     myDetails = new DetailsPanel(myProject);
 
     refreshRevisionsOrder();
 
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
 
-    final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
-
+    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
+    final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
     if (treeHistoryProvider != null) {
       myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())),
                                 columns, storageKey, myVcs.getProject());
