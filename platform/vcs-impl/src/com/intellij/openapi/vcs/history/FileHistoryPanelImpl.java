@@ -492,7 +492,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     result.add(new RefreshFileHistoryAction());
     if (!myIsStaticAndEmbedded) {
-      result.add(new MyToggleAction());
+      result.add(new MyShowDetailsAction());
     }
 
     if (!popup && supportsTree()) {
@@ -1645,9 +1645,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private class MyToggleAction extends ToggleAction implements DumbAware {
+  private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
-    public MyToggleAction() {
+    public MyShowDetailsAction() {
       super("Show Details", "Display details panel", AllIcons.Actions.Preview);
     }
 
