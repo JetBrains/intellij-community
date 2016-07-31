@@ -96,7 +96,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
   @NotNull private final Project myProject;
   @NotNull private final DetailsPanel myDetails;
-  @NotNull private final DefaultActionGroup myPopupActions;
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   @NotNull private final FilePath myFilePath;
@@ -179,9 +178,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     listener.installOn(myDualView.getTreeView());
     setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
-    myPopupActions = createPopupActions();
-
-    createDualView();
+    setupDualView(addToGroup(true, new DefaultActionGroup(null, false)));
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
@@ -369,10 +366,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     addToGroup(false, group);
   }
 
-  private void createDualView() {
+  private void setupDualView(@NotNull DefaultActionGroup group) {
     myDualView.setShowGrid(true);
-    PopupHandler.installPopupHandler(myDualView.getTreeView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(myDualView.getFlatView(), myPopupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
     myDualView.requestFocus();
 
     myDualView.addListSelectionListener(e -> updateMessage());
@@ -448,11 +445,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private VcsConfiguration getConfiguration() {
     return VcsConfiguration.getInstance(myVcs.getProject());
-  }
-
-  @NotNull
-  private DefaultActionGroup createPopupActions() {
-    return addToGroup(true, new DefaultActionGroup(null, false));
   }
 
   @NotNull
