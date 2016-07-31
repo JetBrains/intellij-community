@@ -44,7 +44,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -115,8 +118,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   };
   @NotNull private final DetailsPanel myDetails;
   @NotNull private final DualView myDualView;
-  private JComponent myAdditionalDetails;
-  private Consumer<VcsFileRevision> myListener;
+  @Nullable private final JComponent myAdditionalDetails;
+  @Nullable private final Consumer<VcsFileRevision> myRevisionSelectionListener;
   private VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private volatile boolean myInRefresh;
@@ -161,7 +164,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     refreshRevisionsOrder();
 
-    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
+    final VcsDependentHistoryComponents components = provider.getUICustomization(session, this);
+    myAdditionalDetails = components.getDetailsComponent();
+    myRevisionSelectionListener = components.getRevisionListener();
+
+    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, components.getColumns());
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
     if (treeHistoryProvider != null) {
@@ -288,25 +295,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myStartingRevision;
   }
 
-  private DualViewColumnInfo[] createColumnList(Project project, VcsHistoryProvider provider, final VcsHistorySession session) {
-    final VcsDependentHistoryComponents components = provider.getUICustomization(session, this);
-    myAdditionalDetails = components.getDetailsComponent();
-    myListener = components.getRevisionListener();
-
+  @NotNull
+  private DualViewColumnInfo[] createColumnList(@NotNull Project project,
+                                                @NotNull VcsHistoryProvider provider,
+                                                @Nullable ColumnInfo[] additionalColumns) {
     ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
     columns.add(new RevisionColumnInfo(myRevisionsInOrderComparator));
     if (!provider.isDateOmittable()) columns.add(new DateColumnInfo());
     columns.add(new AuthorColumnInfo());
-    columns.addAll(wrapAdditionalColumns(components.getColumns()));
-    columns.add(new MessageColumnInfo(project));
-    return columns.toArray(new DualViewColumnInfo[columns.size()]);
-  }
-
-  private Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColumns) {
-    ArrayList<DualViewColumnInfo> result = new ArrayList<>();
+    ArrayList<DualViewColumnInfo> additionalColumnInfo = new ArrayList<>();
     if (additionalColumns != null) {
       for (ColumnInfo additionalColumn : additionalColumns) {
-        result.add(new FileHistoryColumnWrapper(additionalColumn) {
+        additionalColumnInfo.add(new FileHistoryColumnWrapper(additionalColumn) {
           @Override
           protected DualView getDualView() {
             return myDualView;
@@ -314,7 +314,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         });
       }
     }
-    return result;
+    columns.addAll(additionalColumnInfo);
+    columns.add(new MessageColumnInfo(project));
+    return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
   private void refresh(final VcsHistorySession session) {
@@ -398,8 +400,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (selection.isEmpty()) {
       return;
     }
-    if (myListener != null) {
-      myListener.consume(selection.get(0).getRevision());
+    if (myRevisionSelectionListener != null) {
+      myRevisionSelectionListener.consume(selection.get(0).getRevision());
     }
   }
 
