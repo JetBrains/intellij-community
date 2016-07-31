@@ -144,8 +144,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return true;
   }
 
-  protected abstract boolean filterRootsBeforeAction();
-
   @NotNull
   protected static FilePath[] getAllContentRoots(@NotNull VcsContext context) {
     return Stream.of(ProjectLevelVcsManager.getInstance(context.getProject()).getAllVersionedRoots())

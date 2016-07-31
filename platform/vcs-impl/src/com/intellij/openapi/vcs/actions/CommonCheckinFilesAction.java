@@ -99,11 +99,6 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     return context.getSelectedFilePaths();
   }
 
-  @Override
-  protected boolean filterRootsBeforeAction() {
-    return true;
-  }
-
   private static boolean containsAnyChange(@NotNull LocalChangeList changeList, @NotNull Collection<Change> changes) {
     return changes.stream().anyMatch(changeList.getChanges()::contains);
   }
