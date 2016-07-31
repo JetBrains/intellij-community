@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -93,7 +94,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
+public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
@@ -105,7 +106,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final DiffFromHistoryHandler myDiffHandler;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final Alarm myUpdateAlarm;
   @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
   @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
   @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
@@ -161,8 +161,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     refreshRevisionsOrder();
 
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
-
     final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
@@ -209,8 +207,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
 
+    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     // todo react to event?
-    myUpdateAlarm.addRequest(new Runnable() {
+    updateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myVcs.getProject().isDisposed()) {
           return;
@@ -219,9 +218,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                           && !myInRefresh
                           && myHistorySession.shouldBeRefreshed();
 
-        myUpdateAlarm.cancelAllRequests();
-        if (myUpdateAlarm.isDisposed()) return;
-        myUpdateAlarm.addRequest(this, 20000);
+        updateAlarm.cancelAllRequests();
+        if (updateAlarm.isDisposed()) return;
+        updateAlarm.addRequest(this, 20000);
 
         if (refresh) {
           refreshImpl(true);
@@ -621,7 +620,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public void dispose() {
     super.dispose();
     myDualView.dispose();
-    Disposer.dispose(myUpdateAlarm);
   }
 
   @NotNull
