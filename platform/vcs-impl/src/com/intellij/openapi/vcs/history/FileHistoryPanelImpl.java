@@ -77,9 +77,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
@@ -317,7 +315,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     ArrayList<DualViewColumnInfo> result = new ArrayList<>();
     if (additionalColumns != null) {
       for (ColumnInfo additionalColumn : additionalColumns) {
-        result.add(new MyColumnWrapper(additionalColumn));
+        result.add(new FileHistoryColumnWrapper(additionalColumn) {
+          @Override
+          protected DualView getDualView() {
+            return myDualView;
+          }
+        });
       }
     }
     return result;
@@ -671,37 +674,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private VirtualFile getVirtualParent() {
     return myFilePath.getVirtualFileParent();
-  }
-
-  @Nullable
-  private String getMaxValue(@NotNull String name) {
-    TableView table = myDualView.getFlatView();
-    if (table.getRowCount() == 0) return null;
-    final Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
-    int idx = 0;
-    while (columns.hasMoreElements()) {
-      TableColumn column = columns.nextElement();
-      if (name.equals(column.getHeaderValue())) {
-        break;
-      }
-      ++idx;
-    }
-    if (idx >= table.getColumnModel().getColumnCount() - 1) return null;
-    final FontMetrics fm = table.getFontMetrics(table.getFont().deriveFont(Font.BOLD));
-    final Object header = table.getColumnModel().getColumn(idx).getHeaderValue();
-    double maxValue = fm.stringWidth((String)header);
-    String value = (String)header;
-    for (int i = 0; i < table.getRowCount(); i++) {
-      final Object at = table.getValueAt(i, idx);
-      if (at instanceof String) {
-        final int newWidth = fm.stringWidth((String)at);
-        if (newWidth > maxValue) {
-          maxValue = newWidth;
-          value = (String)at;
-        }
-      }
-    }
-    return value + "ww";
   }
 
   private void refreshRevisionsOrder() {
@@ -1507,84 +1479,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       if (!myHistorySession.isContentAvailable(revision)) return null;
 
       return revision;
-    }
-  }
-
-  private class MyColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
-    private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
-
-    public MyColumnWrapper(ColumnInfo<VcsFileRevision, T> additionalColumn) {
-      super(additionalColumn.getName());
-      myBaseColumn = additionalColumn;
-    }
-
-    public Comparator<TreeNodeOnVcsRevision> getComparator() {
-      final Comparator<VcsFileRevision> comparator = myBaseColumn.getComparator();
-      if (comparator == null) return null;
-      return (o1, o2) -> {
-        if (o1 == null) return -1;
-        if (o2 == null) return 1;
-        VcsFileRevision revision1 = o1.myRevision;
-        VcsFileRevision revision2 = o2.myRevision;
-        if (revision1 == null) return -1;
-        if (revision2 == null) return 1;
-        return comparator.compare(revision1, revision2);
-      };
-    }
-
-    public String getName() {
-      return myBaseColumn.getName();
-    }
-
-    public void setName(String s) {
-      myBaseColumn.setName(s);
-    }
-
-    public Class getColumnClass() {
-      return myBaseColumn.getColumnClass();
-    }
-
-    public boolean isCellEditable(TreeNodeOnVcsRevision o) {
-      return myBaseColumn.isCellEditable(o.myRevision);
-    }
-
-    public void setValue(TreeNodeOnVcsRevision o, Object aValue) {
-      //noinspection unchecked
-      myBaseColumn.setValue(o.myRevision, (T)aValue);
-    }
-
-    public TableCellRenderer getRenderer(TreeNodeOnVcsRevision p0) {
-      return myBaseColumn.getRenderer(p0.myRevision);
-    }
-
-    public TableCellEditor getEditor(TreeNodeOnVcsRevision item) {
-      return myBaseColumn.getEditor(item.myRevision);
-    }
-
-    public String getMaxStringValue() {
-      final String superValue = myBaseColumn.getMaxStringValue();
-      if (superValue != null) return superValue;
-      return getMaxValue(myBaseColumn.getName());
-    }
-
-    public int getAdditionalWidth() {
-      return myBaseColumn.getAdditionalWidth();
-    }
-
-    public int getWidth(JTable table) {
-      return myBaseColumn.getWidth(table);
-    }
-
-    public boolean shouldBeShownIsTheTree() {
-      return true;
-    }
-
-    public boolean shouldBeShownIsTheTable() {
-      return true;
-    }
-
-    public Object valueOf(TreeNodeOnVcsRevision o) {
-      return myBaseColumn.valueOf(o.myRevision);
     }
   }
 
