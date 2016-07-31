@@ -427,16 +427,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private void chooseView() {
-    if (showTree()) {
+    if (getConfiguration().SHOW_FILE_HISTORY_AS_TREE) {
       myDualView.switchToTheTreeMode();
     }
     else {
       myDualView.switchToTheFlatMode();
     }
-  }
-
-  private boolean showTree() {
-    return getConfiguration().SHOW_FILE_HISTORY_AS_TREE;
   }
 
   private VcsConfiguration getConfiguration() {
