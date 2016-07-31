@@ -97,15 +97,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
+
   @NotNull private final Project myProject;
-  @NotNull private final DetailsPanel myDetails;
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
+  @NotNull private final FileHistoryRefresherI myRefresherI;
+  @NotNull private final DiffFromHistoryHandler myDiffHandler;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final FileHistoryRefresherI myRefresherI;
-  @NotNull private final DualView myDualView;
-  @NotNull private final DiffFromHistoryHandler myDiffHandler;
   @NotNull private final Alarm myUpdateAlarm;
   @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
   @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
@@ -114,6 +113,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     // descending
     return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
   };
+  @NotNull private final DetailsPanel myDetails;
+  @NotNull private final DualView myDualView;
   private JComponent myAdditionalDetails;
   private Consumer<VcsFileRevision> myListener;
   private VcsHistorySession myHistorySession;
