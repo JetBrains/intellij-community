@@ -51,9 +51,4 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   protected String getMnemonicsFreeActionName(@NotNull VcsContext context) {
     return VcsBundle.message("vcs.command.name.checkin.no.mnemonics");
   }
-
-  @Override
-  protected boolean filterRootsBeforeAction() {
-    return false;
-  }
 }

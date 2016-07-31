@@ -47,11 +47,6 @@ public abstract class AbstractCommitChangesAction extends AbstractCommonCheckinA
   }
 
   @Override
-  protected boolean filterRootsBeforeAction() {
-    return false;
-  }
-
-  @Override
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     super.update(vcsContext, presentation);
 
