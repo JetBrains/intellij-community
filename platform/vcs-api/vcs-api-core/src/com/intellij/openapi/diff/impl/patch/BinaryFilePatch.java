@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-/**
- * @author yole
- */
+import org.jetbrains.annotations.Nullable;
+
 public class BinaryFilePatch extends FilePatch {
   private final byte[] myBeforeContent;
   private final byte[] myAfterContent;
@@ -35,6 +34,12 @@ public class BinaryFilePatch extends FilePatch {
     return myAfterContent == null;
   }
 
+  @Nullable
+  public byte[] getBeforeContent() {
+    return myBeforeContent;
+  }
+
+  @Nullable
   public byte[] getAfterContent() {
     return myAfterContent;
   }
