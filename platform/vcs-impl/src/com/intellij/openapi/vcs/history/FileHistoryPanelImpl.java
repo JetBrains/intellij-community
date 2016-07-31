@@ -68,7 +68,10 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.TableViewModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,25 +98,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
   @NotNull private final Project myProject;
-  private final DetailsPanel myDetails;
-  private final DefaultActionGroup myPopupActions;
-  private final AbstractVcs myVcs;
+  @NotNull private final DetailsPanel myDetails;
+  @NotNull private final DefaultActionGroup myPopupActions;
+  @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
   @NotNull private final FileHistoryRefresherI myRefresherI;
-  private final DualView myDualView;
+  @NotNull private final DualView myDualView;
   @NotNull private final DiffFromHistoryHandler myDiffHandler;
-  private final Alarm myUpdateAlarm;
-  private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
-  private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
-  private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<>();
-  private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
-    @Override
-    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      // descending
-      return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
-    }
+  @NotNull private final Alarm myUpdateAlarm;
+  @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
+  @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
+  @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
+  @NotNull private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = (o1, o2) -> {
+    // descending
+    return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
   };
   private JComponent myAdditionalDetails;
   private Consumer<VcsFileRevision> myListener;
@@ -125,7 +125,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private Splitter myDetailsSplitter;
   private Splitter mySplitter;
 
-  public FileHistoryPanelImpl(AbstractVcs vcs,
+  public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
                               @NotNull FilePath filePath,
                               VcsHistorySession session,
                               VcsHistoryProvider provider,
@@ -135,7 +135,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
   }
 
-  public FileHistoryPanelImpl(AbstractVcs vcs,
+  public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
                               @NotNull FilePath filePath,
                               @Nullable VcsRevisionNumber startingRevision,
                               VcsHistorySession session,
@@ -160,7 +160,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
     myDetails = new DetailsPanel(myProject);
 
-    myRevisionsOrder = new HashMap<>();
     refreshRevisionsOrder();
 
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
@@ -462,10 +461,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return VcsConfiguration.getInstance(myVcs.getProject());
   }
 
+  @NotNull
   private DefaultActionGroup createPopupActions() {
     return addToGroup(true, new DefaultActionGroup(null, false));
   }
 
+  @NotNull
   private DefaultActionGroup addToGroup(boolean popup, DefaultActionGroup result) {
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
@@ -517,6 +518,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }.callMe();
   }
 
+  @NotNull
   public AsynchConsumer<VcsHistorySession> getHistoryPanelRefresh() {
     return myHistoryPanelRefresh;
   }
@@ -671,8 +673,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myFilePath.getVirtualFileParent();
   }
 
-  private String getMaxValue(String name) {
-    if (myDualView == null) return null;
+  @Nullable
+  private String getMaxValue(@NotNull String name) {
     TableView table = myDualView.getFlatView();
     if (table.getRowCount() == 0) return null;
     final Enumeration<TableColumn> columns = table.getColumnModel().getColumns();
