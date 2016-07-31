@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.vcsUtil.VcsUtil.toStream;
@@ -148,14 +146,20 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull
   @Override
   public FilePath[] getSelectedFilePaths() {
-    Set<FilePath> result = ContainerUtil.newTroveSet();
+    return getSelectedFilePathsStream().toArray(FilePath[]::new);
+  }
 
-    ContainerUtil.addIfNotNull(result, VcsDataKeys.FILE_PATH.getData(myContext));
-    toStream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)).forEach(result::add);
-    toStream(getSelectedFiles()).map(VcsUtil::getFilePath).forEach(result::add);
-    toStream(getSelectedIOFiles()).map(VcsUtil::getFilePath).forEach(result::add);
+  @NotNull
+  @Override
+  public Stream<FilePath> getSelectedFilePathsStream() {
+    FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
 
-    return ArrayUtil.toObjectArray(result, FilePath.class);
+    return VcsUtil.concat(
+      path != null ? Stream.of(path) : Stream.empty(),
+      toStream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
+      getSelectedFilesStream().map(VcsUtil::getFilePath),
+      toStream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
+    );
   }
 
   @Nullable

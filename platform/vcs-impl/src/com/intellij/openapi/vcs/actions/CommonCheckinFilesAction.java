@@ -83,7 +83,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected boolean approximatelyHasRoots(@NotNull VcsContext dataContext) {
     FileStatusManager manager = FileStatusManager.getInstance(dataContext.getProject());
 
-    return Stream.of(dataContext.getSelectedFilePaths())
+    return getRootsStream(dataContext)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull)
       .anyMatch(file -> isApplicableRoot(file, manager.getStatus(file), dataContext));
@@ -97,6 +97,11 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
   protected FilePath[] getRoots(@NotNull VcsContext context) {
     return context.getSelectedFilePaths();
+  }
+
+  @NotNull
+  protected Stream<FilePath> getRootsStream(@NotNull VcsContext context) {
+    return context.getSelectedFilePathsStream();
   }
 
   private static boolean containsAnyChange(@NotNull LocalChangeList changeList, @NotNull Collection<Change> changes) {
