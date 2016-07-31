@@ -87,9 +87,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
-import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
-
 /**
  * author: lesya
  */
@@ -98,7 +95,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
   @NotNull private final Project myProject;
-  private final MyCommentsPane myComments;
+  private final DetailsPanel myDetails;
   private final DefaultActionGroup myPopupActions;
   private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
@@ -160,8 +157,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
-    final DualViewColumnInfo[] columns = createColumnList(myVcs.getProject(), provider, session);
-    myComments = new MyCommentsPane();
+    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, session);
+    myDetails = new DetailsPanel(myProject);
 
     myRevisionsOrder = new HashMap<>();
     refreshRevisionsOrder();
@@ -265,7 +262,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   @NotNull
-  private static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
+  public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
     sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision, true)).append(" ");
@@ -404,7 +401,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private void updateMessage() {
     List<TreeNodeOnVcsRevision> selection = getSelection();
-    myComments.update(selection);
+    myDetails.update(selection);
     if (selection.isEmpty()) {
       return;
     }
@@ -423,7 +420,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     });
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComments);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDetails);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     myDetailsSplitter = new OnePixelSplitter(false, 0.5f);
@@ -1663,95 +1660,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void setSelected(AnActionEvent e, boolean state) {
       getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
       setupDetails();
-    }
-  }
-
-  private class MyCommentsPane extends HtmlPanel implements DataProvider, CopyProvider {
-    @NotNull private final StatusText myStatusText;
-    @NotNull private String myText = "";
-
-    public MyCommentsPane() {
-      myStatusText = new StatusText() {
-        @Override
-        protected boolean isStatusVisible() {
-          return StringUtil.isEmpty(myText);
-        }
-      };
-      myStatusText.setText("Commit message");
-      myStatusText.attachTo(this);
-
-      setPreferredSize(new Dimension(150, 100));
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      myStatusText.paint(this, g);
-    }
-
-    public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
-      if (selection.isEmpty()) {
-        setText("");
-        return;
-      }
-      boolean addRevisionInfo = selection.size() > 1;
-      StringBuilder html = new StringBuilder();
-      for (TreeNodeOnVcsRevision revision : selection) {
-        String message = revision.getCommitMessage();
-        if (StringUtil.isEmpty(message)) continue;
-        if (html.length() > 0) {
-          html.append("<br/><br/>");
-        }
-        if (addRevisionInfo) {
-          String revisionInfo = getPresentableText(revision.getRevision(), false);
-          html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
-            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
-        }
-        html.append(getHtmlWithFonts(formatTextWithLinks(myVcs.getProject(), message)));
-      }
-      myText = html.toString();
-      if (myText.isEmpty()) {
-        setText("");
-      }
-      else {
-        setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
-                "</head><body>" +
-                myText +
-                "</body></html>");
-        setCaretPosition(0);
-      }
-    }
-
-    @Override
-    public Color getBackground() {
-      return UIUtil.getEditorPaneBackground();
-    }
-
-    @Override
-    public void performCopy(@NotNull DataContext dataContext) {
-      String selectedText = getSelectedText();
-      if (selectedText == null || selectedText.isEmpty()) selectedText = StringUtil.removeHtmlTags(getText());
-      CopyPasteManager.getInstance().setContents(new StringSelection(selectedText));
-    }
-
-    @Override
-    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-      return true;
-    }
-
-    @Override
-    public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return this;
-      }
-      return null;
     }
   }
 }
