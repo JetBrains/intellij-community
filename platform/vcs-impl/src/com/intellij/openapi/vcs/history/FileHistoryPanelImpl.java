@@ -63,7 +63,10 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.dualView.*;
+import com.intellij.ui.dualView.CellWrapper;
+import com.intellij.ui.dualView.DualView;
+import com.intellij.ui.dualView.DualViewColumnInfo;
+import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -168,8 +171,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                 columns, storageKey, myVcs.getProject());
     }
     else {
-      myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())), columns,
-                                storageKey, myVcs.getProject());
+      myDualView =
+        new DualView(new TreeNodeOnVcsRevision(null, ContainerUtil.map(myHistorySession.getRevisionList(), TreeItem::new)), columns,
+                     storageKey, myVcs.getProject());
       myDualView.switchToTheFlatMode();
     }
     new TableSpeedSearch(myDualView.getFlatView()).setComparator(new SpeedSearchComparator(false));
@@ -228,14 +232,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     init();
 
     chooseView();
-  }
-
-  private static List<TreeItem<VcsFileRevision>> wrapWithTreeElements(List<VcsFileRevision> revisions) {
-    ArrayList<TreeItem<VcsFileRevision>> result = new ArrayList<>();
-    for (final VcsFileRevision revision : revisions) {
-      result.add(new TreeItem<>(revision));
-    }
-    return result;
   }
 
   private static void makeBold(Component component) {
@@ -337,8 +333,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                          myTargetSelection);
     }
     else {
-      myDualView.setRoot(new TreeNodeOnVcsRevision(null,
-                                                   wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
+      myDualView.setRoot(new TreeNodeOnVcsRevision(null, ContainerUtil.map(myHistorySession.getRevisionList(), TreeItem::new)),
+                         myTargetSelection);
     }
 
     myDualView.expandAll();
