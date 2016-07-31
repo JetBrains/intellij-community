@@ -672,10 +672,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myFilePath.getVirtualFile();
   }
 
-  private VirtualFile getVirtualParent() {
-    return myFilePath.getVirtualFileParent();
-  }
-
   private void refreshRevisionsOrder() {
     final List<VcsFileRevision> list = myHistorySession.getRevisionList();
     myRevisionsOrder.clear();
@@ -1220,7 +1216,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     @Override
     public boolean isEnabled() {
-      return super.isEnabled() && getVirtualParent() != null &&
+      return super.isEnabled() && myFilePath.getVirtualFileParent() != null &&
              myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
     }
 
@@ -1244,7 +1240,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       final VirtualFile vf = getVirtualFile();
       if (vf == null) {
         final LocalHistoryAction action = startLocalHistoryAction(revision);
-        final VirtualFile vp = getVirtualParent();
+        final VirtualFile vp = myFilePath.getVirtualFileParent();
         if (vp != null) {
           refresh = () -> vp.refresh(false, true, action::finish);
         }
