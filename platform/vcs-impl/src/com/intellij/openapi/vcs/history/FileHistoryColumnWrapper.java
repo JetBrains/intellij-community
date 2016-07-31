@@ -30,7 +30,7 @@ import java.awt.*;
 import java.util.Comparator;
 import java.util.Enumeration;
 
-abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<FileHistoryPanelImpl.TreeNodeOnVcsRevision, Object> {
+abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
   @NotNull private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
   public FileHistoryColumnWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
@@ -38,7 +38,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<FileHistor
     myBaseColumn = additionalColumn;
   }
 
-  public Comparator<FileHistoryPanelImpl.TreeNodeOnVcsRevision> getComparator() {
+  public Comparator<TreeNodeOnVcsRevision> getComparator() {
     final Comparator<VcsFileRevision> comparator = myBaseColumn.getComparator();
     if (comparator == null) return null;
     return (o1, o2) -> {
@@ -64,20 +64,20 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<FileHistor
     return myBaseColumn.getColumnClass();
   }
 
-  public boolean isCellEditable(FileHistoryPanelImpl.TreeNodeOnVcsRevision o) {
+  public boolean isCellEditable(TreeNodeOnVcsRevision o) {
     return myBaseColumn.isCellEditable(o.getRevision());
   }
 
-  public void setValue(FileHistoryPanelImpl.TreeNodeOnVcsRevision o, Object aValue) {
+  public void setValue(TreeNodeOnVcsRevision o, Object aValue) {
     //noinspection unchecked
     myBaseColumn.setValue(o.getRevision(), (T)aValue);
   }
 
-  public TableCellRenderer getRenderer(FileHistoryPanelImpl.TreeNodeOnVcsRevision p0) {
+  public TableCellRenderer getRenderer(TreeNodeOnVcsRevision p0) {
     return myBaseColumn.getRenderer(p0.getRevision());
   }
 
-  public TableCellEditor getEditor(FileHistoryPanelImpl.TreeNodeOnVcsRevision item) {
+  public TableCellEditor getEditor(TreeNodeOnVcsRevision item) {
     return myBaseColumn.getEditor(item.getRevision());
   }
 
@@ -134,7 +134,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<FileHistor
     return true;
   }
 
-  public Object valueOf(FileHistoryPanelImpl.TreeNodeOnVcsRevision o) {
+  public Object valueOf(TreeNodeOnVcsRevision o) {
     return myBaseColumn.valueOf(o.getRevision());
   }
 

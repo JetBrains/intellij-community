@@ -62,14 +62,14 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     myStatusText.paint(this, g);
   }
 
-  public void update(@NotNull List<FileHistoryPanelImpl.TreeNodeOnVcsRevision> selection) {
+  public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
     if (selection.isEmpty()) {
       setText("");
       return;
     }
     boolean addRevisionInfo = selection.size() > 1;
     StringBuilder html = new StringBuilder();
-    for (FileHistoryPanelImpl.TreeNodeOnVcsRevision revision : selection) {
+    for (TreeNodeOnVcsRevision revision : selection) {
       String message = revision.getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {

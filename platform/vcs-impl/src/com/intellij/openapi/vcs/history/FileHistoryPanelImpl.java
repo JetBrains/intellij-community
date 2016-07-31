@@ -79,7 +79,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -639,14 +638,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private VcsFileRevision getFirstSelectedRevision() {
     List<TreeNodeOnVcsRevision> selection = getSelection();
     if (selection.isEmpty()) return null;
-    return selection.get(0).myRevision;
+    return selection.get(0).getRevision();
   }
 
+  @NotNull
   public VcsFileRevision[] getSelectedRevisions() {
     List<TreeNodeOnVcsRevision> selection = getSelection();
     VcsFileRevision[] result = new VcsFileRevision[selection.size()];
     for (int i = 0; i < selection.size(); i++) {
-      result[i] = selection.get(i).myRevision;
+      result[i] = selection.get(i).getRevision();
     }
     return result;
   }
@@ -962,83 +962,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevision.getRevisionNumber();
-    }
-  }
-
-  // TODO this class should not implements VcsFileRevision (this is too confusing)
-  static class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRevision, DualTreeElement {
-    private final VcsFileRevision myRevision;
-
-    public TreeNodeOnVcsRevision(VcsFileRevision revision, List<TreeItem<VcsFileRevision>> roots) {
-      myRevision = revision == null ? VcsFileRevision.NULL : revision;
-      for (final TreeItem<VcsFileRevision> root : roots) {
-        add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));
-      }
-    }
-
-    @Nullable
-    @Override
-    public RepositoryLocation getChangedRepositoryPath() {
-      return myRevision.getChangedRepositoryPath();
-    }
-
-    public VcsFileRevision getRevision() {
-      return myRevision;
-    }
-
-    public String getAuthor() {
-      return myRevision.getAuthor();
-    }
-
-    public String getCommitMessage() {
-      return myRevision.getCommitMessage();
-    }
-
-    public byte[] loadContent() throws IOException, VcsException {
-      return myRevision.loadContent();
-    }
-
-    public VcsRevisionNumber getRevisionNumber() {
-      return myRevision.getRevisionNumber();
-    }
-
-    public Date getRevisionDate() {
-      return myRevision.getRevisionDate();
-    }
-
-    public String getBranchName() {
-      return myRevision.getBranchName();
-    }
-
-    public byte[] getContent() throws IOException, VcsException {
-      return myRevision.getContent();
-    }
-
-    public String toString() {
-      return getRevisionNumber().asString();
-    }
-
-    public boolean shouldBeInTheFlatView() {
-      return myRevision != VcsFileRevision.NULL;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TreeNodeOnVcsRevision that = (TreeNodeOnVcsRevision)o;
-
-      if (myRevision != null ? !myRevision.getRevisionNumber().equals(that.myRevision.getRevisionNumber()) : that.myRevision != null) {
-        return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myRevision != null ? myRevision.getRevisionNumber().hashCode() : 0;
     }
   }
 
