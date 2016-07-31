@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,6 +37,7 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
+  @Nullable private ListSelectionEvent myLastEvent;
   @Nullable private ProgressIndicator myLastRequest;
 
   protected CommitSelectionListener(@NotNull VcsLogData data, @NotNull VcsLogGraphTable table, @NotNull JBLoadingPanel panel) {
@@ -48,9 +50,14 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
   public void valueChanged(@Nullable ListSelectionEvent event) {
     if (event != null && event.getValueIsAdjusting()) return;
 
+    myLastEvent = event;
     if (myLastRequest != null) myLastRequest.cancel();
     myLastRequest = null;
 
+    ApplicationManager.getApplication().invokeLater(this::processEvent, o -> myLastEvent != event);
+  }
+
+  public void processEvent() {
     int rows = myGraphTable.getSelectedRowCount();
     if (rows < 1) {
       myLoadingPanel.stopLoading();
@@ -66,14 +73,14 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
       List<Integer> selectionToLoad = getSelectionToLoad();
       myLogData.getCommitDetailsGetter()
         .loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
-        if (myLastRequest == indicator && !(indicator.isCanceled())) {
-          LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
-                         "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
-          myLastRequest = null;
-          onDetailsLoaded(detailsList);
-          myLoadingPanel.stopLoading();
-        }
-      }, indicator);
+          if (myLastRequest == indicator && !(indicator.isCanceled())) {
+            LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
+                           "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+            myLastRequest = null;
+            onDetailsLoaded(detailsList);
+            myLoadingPanel.stopLoading();
+          }
+        }, indicator);
     }
   }
 
