@@ -411,20 +411,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
+  @NotNull
   protected JComponent createCenterPanel() {
-    mySplitter = new OnePixelSplitter(true, getSplitterProportion());
+    mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(myDualView);
-
-    mySplitter.addPropertyChangeListener(evt -> {
-      if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
-        setSplitterProportionTo((Float)evt.getNewValue());
-      }
-    });
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDetails);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
-    myDetailsSplitter = new OnePixelSplitter(false, 0.5f);
+    myDetailsSplitter = new OnePixelSplitter(false, "vcs.history.details.splitter.proportion", 0.5f);
     myDetailsSplitter.setFirstComponent(scrollPane);
     myDetailsSplitter.setSecondComponent(myAdditionalDetails);
 
@@ -449,14 +444,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private boolean showTree() {
     return getConfiguration().SHOW_FILE_HISTORY_AS_TREE;
-  }
-
-  private void setSplitterProportionTo(Float newProportion) {
-    getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION = newProportion.floatValue();
-  }
-
-  protected float getSplitterProportion() {
-    return getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION;
   }
 
   private VcsConfiguration getConfiguration() {
