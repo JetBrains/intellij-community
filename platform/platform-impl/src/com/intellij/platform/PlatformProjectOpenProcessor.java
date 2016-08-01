@@ -130,31 +130,35 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     final File projectDir = new File(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER);
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (!forceOpenInNewFrame && openProjects.length > 0 && !ApplicationManager.getApplication().isOnAir()) {
+    if (!forceOpenInNewFrame && openProjects.length > 0) {
       if (projectToClose == null) {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject()) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
-        dialog.show();
-        if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
-          return null;
+      if (ApplicationManager.getApplication().isOnAir()) {
+        if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+      } else {
+        if (ProjectAttachProcessor.canAttachToProject()) {
+          final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
+          dialog.show();
+          if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+            return null;
+          }
+          if (dialog.isReplace()) {
+            if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+          }
+          else if (dialog.isAttach()) {
+            if (attachToProject(projectToClose, projectDir, callback)) return null;
+          }
         }
-        if (dialog.isReplace()) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
-        }
-        else if (dialog.isAttach()) {
-          if (attachToProject(projectToClose, projectDir, callback)) return null;
-        }
-      }
-      else {
-        int exitCode = ProjectUtil.confirmOpenNewProject(false);
-        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
-        }
-        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) { // not in a new window
-          return null;
+        else {
+          int exitCode = ProjectUtil.confirmOpenNewProject(false);
+          if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+            if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+          }
+          else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) { // not in a new window
+            return null;
+          }
         }
       }
     }
