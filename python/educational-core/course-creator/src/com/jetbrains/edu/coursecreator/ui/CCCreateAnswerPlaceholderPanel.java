@@ -5,96 +5,140 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CCCreateAnswerPlaceholderPanel extends JPanel {
+public class CCCreateAnswerPlaceholderPanel {
+  private static String ourFirstHintText = "Type here to add hint";
 
   private JPanel myPanel;
-  private JTextArea myHintTextField;
-  private JTextField myAnswerPlaceholderText;
+  private JTextArea myHintTextArea;
+  private JPanel myHintsPanel;
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
-  private JPanel myHintsPanel;
-
-  private List<String> myHints = new ArrayList<String>() {{
-    add("");
-  }};
+  private JTextArea myPlaceholderTextArea;
+  private List<String> myHints = new ArrayList<String>() {
+  };
   private int myShownHintNumber = 0;
 
-  public CCCreateAnswerPlaceholderPanel() {
-    super(new BorderLayout());
-    add(myPanel, BorderLayout.CENTER);
+  public CCCreateAnswerPlaceholderPanel(@NotNull final AnswerPlaceholder answerPlaceholder) {
+    if (answerPlaceholder.getHints().isEmpty()) {
+      myHints.add(ourFirstHintText);
+    }
+    else {
+      myHints.addAll(answerPlaceholder.getHints());
+    }
 
-    myHintTextField.setLineWrap(true);
-    myHintTextField.setWrapStyleWord(true);
-    myHintTextField.setBorder(BorderFactory.createLineBorder(JBColor.border()));
-    myHintTextField.setFont(myAnswerPlaceholderText.getFont());
-    myHintTextField.setText(myHints.get(myShownHintNumber));
-    myAnswerPlaceholderText.grabFocus();
-    updateHintNumberLabel();
-    
+    myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
+    myHintTextArea.setFont(myPlaceholderTextArea.getFont());
+    myHintTextArea.addFocusListener(createFocusListenerToSetDefaultHintText());
+
+    actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
+    showHint(myHints.get(myShownHintNumber));
+  }
+
+  @NotNull
+  private FocusAdapter createFocusListenerToSetDefaultHintText() {
+    return new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (myHintTextArea.getText().equals(ourFirstHintText)) {
+          myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+          myHintTextArea.setText("");
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        if (myShownHintNumber == 0 && myHintTextArea.getText().isEmpty()) {
+          myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
+          myHintTextArea.setText(ourFirstHintText);
+        }
+      }
+    };
+  }
+
+  private JComponent createHintToolbarComponent() {
     final DefaultActionGroup addRemoveGroup = new DefaultActionGroup();
-    addRemoveGroup.addAll(new AddHint(), new RemoveHint(), new GoBackward(), new GoForward());
-    final JComponent addRemoveComponent = ActionManager.getInstance().createActionToolbar("Hint", addRemoveGroup, false).getComponent();
-    actionsPanel.add(addRemoveComponent, BorderLayout.WEST);
+    addRemoveGroup.addAll(new AddHint(), new RemoveHint(), new ShowNext(), new ShowPrevious());
+    return ActionManager.getInstance().createActionToolbar("Hint", addRemoveGroup, false).getComponent();
   }
 
   private void updateHintNumberLabel() {
-    myHintLabel.setText("Hints" + "(" + (myShownHintNumber + 1) + "/" + myHints.size() + "):");
+    if (myHints.size() > 1) {
+      final String color = String.valueOf(ColorUtil.toHex(UIUtil.getHeaderInactiveColor()));
+      myHintLabel.setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
+    }
+    else {
+      myHintLabel.setText("Hint: ");
+    }
   }
 
-  public void setAnswerPlaceholderText(String answerPlaceholderText) {
-    myAnswerPlaceholderText.setText(answerPlaceholderText);
+  public void showAnswerPlaceholderText(String answerPlaceholderText) {
+    myPlaceholderTextArea.setText(answerPlaceholderText);
   }
 
-  public void setHintText(String hintTextField) {
-    myHintTextField.setText(hintTextField);
+  public void showHint(String hintText) {
+    if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
+      myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
+    }
+    else {
+      myHintTextArea.setForeground(UIUtil.getActiveTextColor());
+    }
+
+    myHintTextArea.setText(hintText);
+    updateHintNumberLabel();
   }
 
   public String getAnswerPlaceholderText() {
-    return myAnswerPlaceholderText.getText();
+    return myPlaceholderTextArea.getText();
   }
 
   public List<String> getHints() {
-    if (myShownHintNumber == 0 && !myHintTextField.getText().isEmpty()) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
+    final String hintText = myHintTextArea.getText();
+    if (myShownHintNumber == 0 && hintText.equals(ourFirstHintText)) {
+      myHints.set(myShownHintNumber, "");
     }
+    else {
+      myHints.set(myShownHintNumber, hintText);
+    }
+
     return myHints;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myAnswerPlaceholderText;
+    return myPlaceholderTextArea;
   }
 
-  public void setHints(List<String> hints) {
-    myHints = hints;
-    updateHintNumberLabel();
+  public JPanel getMailPanel() {
+    return myPanel;
   }
 
-  private void createUIComponents() {
-    // TODO: place custom component creation code here 
-  }
+  private class ShowNext extends AnAction {
 
-  private class GoForward extends AnAction {
-
-    public GoForward() {
-      super(AllIcons.Actions.Forward);
+    public ShowNext() {
+      super("Next Hint", "Next Hint", AllIcons.Actions.Forward);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
-      myHintTextField.setText(myHints.get(++myShownHintNumber));
-      updateHintNumberLabel();
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
+      showHint(myHints.get(++myShownHintNumber));
     }
 
     @Override
@@ -103,17 +147,16 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
     }
   }
 
-  private class GoBackward extends AnAction {
+  private class ShowPrevious extends AnAction {
 
-    public GoBackward() {
-      super(AllIcons.Actions.Back);
+    public ShowPrevious() {
+      super("Previous Hint", "Previous Hint", AllIcons.Actions.Back);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.set(myShownHintNumber, myHintTextField.getText());
-      myHintTextField.setText(myHints.get(--myShownHintNumber));
-      updateHintNumberLabel();
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
+      showHint(myHints.get(--myShownHintNumber));
     }
 
     @Override
@@ -125,36 +168,28 @@ public class CCCreateAnswerPlaceholderPanel extends JPanel {
   private class AddHint extends AnAction {
 
     public AddHint() {
-      super(AllIcons.General.Add);
+      super("Add Hint", "Add Hint", AllIcons.General.Add);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String hint = "This is the new hint";
-      myHints.add(hint);
-      myHintTextField.setText(hint);
+      myHints.add("");
       myShownHintNumber++;
-      updateHintNumberLabel();
+      showHint("");
     }
   }
 
   private class RemoveHint extends AnAction {
 
     public RemoveHint() {
-      super(AllIcons.General.Remove);
+      super("Remove Hint", "Remove Hint", AllIcons.General.Remove);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.remove(myShownHintNumber);
-      if (myHints.size() == 1) {
-        myShownHintNumber = 0;
-      }
-      else {
-        myShownHintNumber += myShownHintNumber + 1 < myHints.size() ? 1 : -1;
-      }
-      myHintTextField.setText(myHints.get(myShownHintNumber));
-      updateHintNumberLabel();
+      myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
+      showHint(myHints.get(myShownHintNumber));
     }
 
     @Override

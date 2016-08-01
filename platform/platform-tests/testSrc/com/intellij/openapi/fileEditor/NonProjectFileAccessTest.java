@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     super.setUp();
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
-    NonProjectFileWritingAccessProvider.enableChecksInTests(myTestRootDisposable);
+    NonProjectFileWritingAccessProvider.enableChecksInTests(getTestRootDisposable());
     ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
   }
 
@@ -322,7 +322,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
         return true;
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
     return requested;
   }
 
@@ -339,7 +339,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
                                            return filesToDeny.contains(file);
                                          }
                                        },
-                                       myTestRootDisposable);
+                                       getTestRootDisposable());
   }
 
   @NotNull

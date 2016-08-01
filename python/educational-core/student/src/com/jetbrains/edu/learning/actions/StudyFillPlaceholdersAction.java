@@ -26,10 +26,11 @@ public class StudyFillPlaceholdersAction extends AnAction {
       if (!studyState.isValid()) {
         return;
       }
-      final TaskFile taskFile = studyState.getTaskFile();
+      TaskFile taskFile = studyState.getTaskFile();
       final Document document = studyState.getEditor().getDocument();
+      final TaskFile realTaskFile = taskFile;
       CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+        for (AnswerPlaceholder placeholder : realTaskFile.getAnswerPlaceholders()) {
           String answer = placeholder.getPossibleAnswer();
           if (answer == null) {
             continue;

@@ -34,7 +34,9 @@ public class ServiceManager {
   private ServiceManager() { }
 
   public static <T> T getService(@NotNull Class<T> serviceClass) {
-    return doGetService(ApplicationManager.getApplication(), serviceClass);
+    final Application application = ApplicationManager.getApplication();
+    assert application != null : "Unable to get the Application when requested service " + serviceClass.getSimpleName();
+    return doGetService(application, serviceClass);
   }
 
   public static <T> T getService(@NotNull Project project, @NotNull Class<T> serviceClass) {

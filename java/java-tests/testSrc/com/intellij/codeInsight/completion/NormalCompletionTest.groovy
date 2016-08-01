@@ -290,6 +290,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(3, myItems.length);
   }
 
+  public void testSwitchCaseWithEnumConstant() { doTest() }
+  public void testSecondSwitchCaseWithEnumConstant() { doTest() }
+
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");
     checkResultByFile("Annotation_after.java");
@@ -1410,6 +1413,13 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testStrikeOutDeprecatedSuperMethods() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'void foo1', 'void foo2'
+    assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
+    assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
+  }
+
   public void testAccessorViaCompletion() {
     configure()
 
@@ -1578,5 +1588,13 @@ class Bar {
   public void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+  }
+
+  public void testShowVarInitializers() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
+    assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
   }
 }

@@ -102,7 +102,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
         g2.setColor(ignoredBackgroundColor ? myDiffType.getIgnoredColor(editor) : color);
         g2.fillRect(x1, y1, x2 - x1, y2 - y1);
       } else {
-        DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1 - 1, color, false, myResolved);
+        DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1, color, false, myResolved);
         DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y2 - 1, color, false, myResolved);
       }
     }

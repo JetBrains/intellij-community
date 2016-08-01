@@ -20,11 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1056,12 +1058,13 @@ public class ControlFlowUtil {
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
-  private static void internalDepthFirstSearch(final List<Instruction> instructions, final InstructionClientVisitor clientVisitor, int offset, int endOffset) {
-    final IntArrayList oldOffsets = new IntArrayList(instructions.size() / 2);
-    final IntArrayList newOffsets = new IntArrayList(instructions.size() / 2);
+  private static void internalDepthFirstSearch(final List<Instruction> instructions,
+                                               final InstructionClientVisitor clientVisitor,
+                                               int startOffset,
+                                               int endOffset) {
 
-    oldOffsets.add(offset);
-    newOffsets.add(-1);
+    final WalkThroughStack walkThroughStack = new WalkThroughStack(instructions.size() / 2);
+    walkThroughStack.push(startOffset);
 
     // we can change instruction internal state here (e.g. CallInstruction.stack)
     synchronized (instructions) {
@@ -1078,11 +1081,8 @@ public class ControlFlowUtil {
             clientVisitor.processedInstructions[i] = false;
           }
           clientVisitor.procedureEntered(instruction.procBegin, i);
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
 
           currentProcedureReturnOffsets.add(offset + 1);
         }
@@ -1091,54 +1091,38 @@ public class ControlFlowUtil {
         public void visitReturnInstruction(ReturnInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.execute(false);
           if (newOffset != -1) {
-            oldOffsets.add(offset);
-            newOffsets.add(newOffset);
-
-            oldOffsets.add(newOffset);
-            newOffsets.add(-1);
+            walkThroughStack.push(offset, newOffset);
+            walkThroughStack.push(newOffset);
           }
         }
 
         @Override
         public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.offset;
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
         }
 
         @Override
         public void visitConditionalBranchingInstruction(ConditionalBranchingInstruction instruction, int offset, int nextOffset) {
           int newOffset = instruction.offset;
 
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(offset);
-          newOffsets.add(offset + 1);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
-
-          oldOffsets.add(offset + 1);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(offset, offset + 1);
+          walkThroughStack.push(newOffset);
+          walkThroughStack.push(offset + 1);
         }
 
         @Override
         public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
           int newOffset = offset + 1;
-          oldOffsets.add(offset);
-          newOffsets.add(newOffset);
-
-          oldOffsets.add(newOffset);
-          newOffsets.add(-1);
+          walkThroughStack.push(offset, newOffset);
+          walkThroughStack.push(newOffset);
         }
       };
-      while (!oldOffsets.isEmpty()) {
-        offset = oldOffsets.remove(oldOffsets.size() - 1);
-        int newOffset = newOffsets.remove(newOffsets.size() - 1);
+      while (!walkThroughStack.isEmpty()) {
+        final int offset = walkThroughStack.peekOldOffset();
+        final int newOffset = walkThroughStack.popNewOffset();
 
         if (offset >= endOffset) {
           continue;
@@ -1171,6 +1155,54 @@ public class ControlFlowUtil {
         clientVisitor.processedInstructions[offset] = true;
         instruction.accept(getNextOffsetVisitor, offset, newOffset);
       }
+    }
+  }
+
+  private static class WalkThroughStack {
+    private int[] oldOffsets;
+    private int[] newOffsets;
+    private int size;
+
+    WalkThroughStack(int initialSize) {
+      if (initialSize < 2) initialSize = 2;
+      oldOffsets = new int[initialSize];
+      newOffsets = new int[initialSize];
+    }
+
+    void push(int oldOffset, int newOffset) {
+      if (size >= newOffsets.length) {
+        oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
+        newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);
+      }
+      oldOffsets[size] = oldOffset;
+      newOffsets[size] = newOffset;
+      size++;
+    }
+
+    void push(int oldOffset) {
+      push(oldOffset, -1);
+    }
+
+    int peekOldOffset() {
+      return oldOffsets[size - 1];
+    }
+
+    int popNewOffset() {
+      return newOffsets[--size];
+    }
+
+    boolean isEmpty() {
+      return size == 0;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder s = new StringBuilder();
+      for (int i = 0; i < size; i++) {
+        if (s.length() != 0) s.append(' ');
+        s.append('(').append(oldOffsets[i]).append("->").append(newOffsets[i]).append(')');
+      }
+      return s.toString();
     }
   }
 
@@ -1506,9 +1538,66 @@ public class ControlFlowUtil {
       }
     }
 
+    if (startOffset != 0 && hasCalls(flow)) {
+      return isInstructionReachableConsideringCalls(flow, instructionOffset, startOffset);
+    }
     MyVisitor visitor = new MyVisitor();
     depthFirstSearch(flow, visitor, startOffset, flow.getSize());
 
+    return visitor.getResult().booleanValue();
+  }
+
+  private static boolean hasCalls(ControlFlow flow) {
+    for (Instruction instruction : flow.getInstructions()) {
+      if (instruction instanceof CallInstruction) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isInstructionReachableConsideringCalls(final ControlFlow flow, final int instructionOffset, final int startOffset) {
+    class MyVisitor extends InstructionClientVisitor<Boolean> {
+      final int size = flow.getInstructions().size();
+      final TIntHashSet[] transitions = new TIntHashSet[size];
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        if (nextOffset > size) nextOffset = size;
+        if (transitions[offset] == null) {
+          transitions[offset] = new TIntHashSet(2);
+        }
+        transitions[offset].add(nextOffset);
+      }
+
+      @Override
+      public Boolean getResult() {
+        Arrays.fill(processedInstructions, false);
+        WalkThroughStack walkThroughStack = new WalkThroughStack(size / 2);
+        walkThroughStack.push(startOffset);
+        while (!walkThroughStack.isEmpty()) {
+          int oldOffset = walkThroughStack.peekOldOffset();
+          int newOffset = walkThroughStack.popNewOffset();
+          if (oldOffset < size && !processedInstructions[oldOffset] && newOffset < 0) {
+            processedInstructions[oldOffset] = true;
+            if (transitions[oldOffset] != null) {
+              for (TIntIterator it = transitions[oldOffset].iterator(); it.hasNext(); ) {
+                int nextOffset = it.next();
+                if (nextOffset == instructionOffset) {
+                  return true;
+                }
+                walkThroughStack.push(oldOffset, nextOffset);
+                walkThroughStack.push(nextOffset);
+              }
+            }
+          }
+        }
+        return false;
+      }
+    }
+
+    MyVisitor visitor = new MyVisitor();
+    depthFirstSearch(flow, visitor, 0, flow.getSize());
     return visitor.getResult().booleanValue();
   }
 

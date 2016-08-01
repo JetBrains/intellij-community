@@ -20,12 +20,13 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -36,11 +37,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -54,6 +56,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -70,8 +73,6 @@ import java.util.*;
 import java.util.List;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
-  private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
-
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
 
   private Map<String, MyColorScheme> mySchemes;
@@ -132,7 +133,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private MyColorScheme getScheme(String name) {
     return mySchemes.get(name);
   }
-  
+
   @NotNull
   public String getUniqueName(@NotNull String preferredName) {
     String name;
@@ -240,7 +241,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     try {
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
-      SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
+      SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
 
       List<EditorColorsScheme> result = new ArrayList<EditorColorsScheme>(mySchemes.values().size());
       boolean activeSchemeModified = false;
@@ -263,20 +264,60 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         EditorColorsManagerImpl.schemeChangedOrSwitched();
       }
 
-      if (DarculaLaf.NAME.equals(activeOriginalScheme.getName()) && !UIUtil.isUnderDarcula()) {
-        if (Messages.showYesNoDialog(
-          "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
-          "Darcula Look and Feel",
-          Messages.getQuestionIcon()) == Messages.YES) {
-          LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
-          DarculaInstaller.install();
-        }
-      }
+      final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
+      changeLafIfNecessary(isEditorThemeDark);
 
       reset();
     }
     finally {
       myApplyCompleted = true;
+    }
+  }
+
+  private static void changeLafIfNecessary(boolean isDarkEditorTheme) {
+    String propKey = "change.laf.on.editor.theme.change";
+    String value = PropertiesComponent.getInstance().getValue(propKey);
+    if ("false".equals(value)) return;
+    boolean applyAlways = "true".equals(value);
+    DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
+      @Override
+      public void rememberChoice(boolean isSelected, int exitCode) {
+        if (isSelected) {
+          PropertiesComponent.getInstance().setValue(propKey, Boolean.toString(exitCode == Messages.YES));
+        }
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return true;
+      }
+    };
+
+    final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+    final LafManager lafManager = LafManager.getInstance();
+    if (isDarkEditorTheme && !UIUtil.isUnderDarcula()) {
+      if (applyAlways || Messages.showYesNoDialog(
+        "Looks like you have set a dark editor theme. Would you like to set dark theme for entire " + productName,
+        "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
+        Messages.getQuestionIcon(), doNotAskOption) == Messages.YES) {
+        lafManager.setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
+        lafManager.updateUI();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(DarculaInstaller::install);
+      }
+    } else if (!isDarkEditorTheme && UIUtil.isUnderDarcula()) {
+
+      if (lafManager instanceof LafManagerImpl
+          &&
+          (applyAlways || Messages.showYesNoDialog(
+            "Looks like you have set a bright editor theme. Would you like to set bright theme for entire " + productName,
+            "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
+            Messages.getQuestionIcon(), doNotAskOption) == Messages.YES)) {
+        lafManager.setCurrentLookAndFeel(((LafManagerImpl)lafManager).getDefaultLaf());
+        lafManager.updateUI();
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(DarculaInstaller::uninstall);
+      }
     }
   }
 
@@ -689,15 +730,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  public boolean currentSchemeIsReadOnly() {
-    return isReadOnly(mySelectedScheme);
-  }
-
-  public boolean currentSchemeIsShared() {
-    return ColorSettingsUtil.isSharedScheme(mySelectedScheme);
-  }
-
-
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
     @NotNull private final TextAttributes myInitialAttributes;
     @NotNull private final TextAttributesKey key;
@@ -786,13 +818,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static class GetSetColor {
     private final ColorKey myKey;
     private final EditorColorsScheme myScheme;
-    private boolean isModified = false;
+    private final Color myInitialColor;
     private Color myColor;
 
     private GetSetColor(ColorKey key, EditorColorsScheme scheme) {
       myKey = key;
       myScheme = scheme;
       myColor = myScheme.getColor(myKey);
+      myInitialColor = myColor;
     }
 
     public Color getColor() {
@@ -801,7 +834,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public void setColor(Color col) {
       if (getColor() == null || !getColor().equals(col)) {
-        isModified = true;
         myColor = col;
       }
     }
@@ -812,7 +844,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public boolean isModified() {
-      return isModified;
+      return !Comparing.equal(myColor, myInitialColor);
     }
   }
 
@@ -1034,7 +1066,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
       }
-      
+
       if (scheme instanceof AbstractColorsScheme) {
         ((AbstractColorsScheme)scheme).setSaveNeeded(true);
       }

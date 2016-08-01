@@ -43,6 +43,16 @@ public class InterfaceMethodClashesWithObjectInspectionTest extends LightInspect
            "}");
   }
 
+  public void testAnnotated() {
+    doTest("interface A {" +
+           "    @Deprecated" +
+           "    void finalize();" +
+           "}" +
+           "class B implements A {" +
+           "    public @Deprecated void finalize() {}" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -49,7 +49,7 @@ public final class LightDirectoryIndex<T> {
     myInitializer = initializer;
     resetIndex();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
-    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
+    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
         resetIndex();

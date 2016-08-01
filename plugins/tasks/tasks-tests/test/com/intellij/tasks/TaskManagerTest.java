@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         count.set(count.get() + 1);
       }
     };
-    myTaskManager.addTaskListener(listener, myTestRootDisposable);
+    myTaskManager.addTaskListener(listener, getTestRootDisposable());
     LocalTask localTask = myTaskManager.createLocalTask("foo");
     myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());

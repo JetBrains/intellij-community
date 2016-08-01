@@ -17,11 +17,9 @@ package com.intellij.ide.util;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.FindSuperElementsHelper;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -36,11 +34,6 @@ public class JavaSuperMethodTest extends LightDaemonAnalyzerTestCase {
 
   private static String getBasePath() {
     return "/codeInsight/gotosuper/";
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testDoNotGoToSiblingInheritanceIfInLibrary() throws Throwable {

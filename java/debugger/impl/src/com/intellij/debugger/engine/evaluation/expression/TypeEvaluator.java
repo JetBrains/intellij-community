@@ -43,10 +43,6 @@ public class TypeEvaluator implements Evaluator {
     myTypeName = typeName;
   }
 
-  public Modifier getModifier() {
-    return null;
-  }
-
   /**
    * @return ReferenceType in the target VM, with the given fully qualified name
    */

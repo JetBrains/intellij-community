@@ -107,7 +107,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
   }
 
   @NonNls
-  private static final String COPYRIGHT = "copyright";
+  static final String COPYRIGHT = "copyright";
   @NonNls
   private static final String MODULE2COPYRIGHT = "module2copyright";
   @NonNls
@@ -136,7 +136,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
       if (!myCopyrights.isEmpty()) {
         for (CopyrightProfile copyright : myCopyrights.values()) {
           Element copyrightElement = new Element(COPYRIGHT);
-          copyright.writeExternal(copyrightElement);
+          copyright.serializeInto(copyrightElement, true);
           if (!JDOMUtil.isEmpty(copyrightElement)) {
             state.addContent(copyrightElement);
           }
@@ -291,7 +291,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
     @NotNull
     @Override
     protected String getSubStateTagName() {
-      return "copyright";
+      return COPYRIGHT;
     }
   }
 }

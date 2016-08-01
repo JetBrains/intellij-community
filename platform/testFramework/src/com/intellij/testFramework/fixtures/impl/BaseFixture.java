@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,7 @@ public class BaseFixture implements IdeaTestFixture {
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
-    EdtTestUtil.runInEdtAndWait(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(myTestRootDisposable);
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myTestRootDisposable));
     myDisposed = true;
     resetClassFields(getClass());
   }

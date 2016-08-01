@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -130,8 +131,15 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   public boolean process(T member) {
     ProgressManager.checkCanceled();
     if (JavaCompletionUtil.isInExcludedPackage(member, false) || !member.hasModifierProperty(PsiModifier.STATIC)) return true;
-    PsiFile file = member.getContainingFile();
     final PsiClass containingClass = member.getContainingClass();
+    if (containingClass != null) {
+      final String qualifiedName = containingClass.getQualifiedName();
+      final PsiFile containingFile = myPlace.getContainingFile();
+      if (qualifiedName != null && containingFile != null && !ImportFilter.shouldImport(containingFile, qualifiedName)) {
+        return true;
+      }
+    }
+    PsiFile file = member.getContainingFile();
     if (file instanceof PsiJavaFile
         //do not show methods from default package
         && !((PsiJavaFile)file).getPackageName().isEmpty()) {

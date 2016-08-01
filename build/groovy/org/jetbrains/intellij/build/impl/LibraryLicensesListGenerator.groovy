@@ -133,7 +133,7 @@ class LibraryLicensesListGenerator {
       errorMessage << "Licenses aren't specified for ${withoutLicenses.size()} libraries:"
       withoutLicenses.sort(true, String.CASE_INSENSITIVE_ORDER)
       withoutLicenses.each { errorMessage << it }
-      errorMessage << "If a library is packaged into IDEA installation information about its license must be added to libLicenses.gant file"
+      errorMessage << "If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files"
       errorMessage << "If a library is used in tests only change its scope to 'Test'"
       errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
       projectBuilder.error(errorMessage.join("\n"))

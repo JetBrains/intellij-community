@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -34,10 +35,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Bas Leijdekkers
  */
 public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
+  public boolean checkNotNull;
+
+  @NotNull
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("equals.replaceable.by.objects.check.not.null.option"), this, "checkNotNull");
+  }
 
   @Nls
   @NotNull
@@ -86,10 +96,10 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression || element instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+      final PsiExpression expression = (PsiExpression)element;
       if (myEquals) {
         PsiReplacementUtil.replaceExpressionAndShorten(expression, "java.util.Objects.equals(" + myName1 + "," + myName2 + ")");
       }
@@ -109,41 +119,62 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     return new EqualsReplaceableByObjectsCallVisitor();
   }
 
-  private static class EqualsReplaceableByObjectsCallVisitor extends BaseInspectionVisitor {
+  private class EqualsReplaceableByObjectsCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      final PsiElement maybeBinary = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+      if (maybeBinary instanceof PsiBinaryExpression) {
+        if (processNotNullCheck((PsiBinaryExpression)maybeBinary)) {
+          return;
+        }
+      }
+      if (!checkNotNull) {
+        final PsiVariable variable = ExpressionUtils.getVariable(expression.getMethodExpression().getQualifierExpression());
+        if (variable == null) {
+          return;
+        }
+        final PsiVariable otherVariable = getArgumentFromEqualsCallOn(expression, variable);
+        if (otherVariable == null) {
+          return;
+        }
+        registerError(expression, variable.getName(), otherVariable.getName(), true);
+      }
+    }
+
+    private boolean processNotNullCheck(PsiBinaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {
         final PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(expression.getLOperand(), false);
         if (variable == null) {
-          return;
+          return false;
         }
         final PsiVariable otherVariable = getArgumentFromEqualsCallOn(expression.getROperand(), variable);
         if (otherVariable == null) {
-          return;
+          return false;
         }
         checkEqualityBefore(expression, true, variable, otherVariable);
       }
       else if (JavaTokenType.OROR.equals(tokenType)) {
         final PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(expression.getLOperand(), true);
         if (variable == null) {
-          return;
+          return false;
         }
         final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
         if (!(rhs instanceof PsiPrefixExpression)) {
-          return;
+          return false;
         }
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)rhs;
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
-          return;
+          return false;
         }
         final PsiVariable otherVariable = getArgumentFromEqualsCallOn(prefixExpression.getOperand(), variable);
         if (otherVariable == null) {
-          return;
+          return false;
         }
         checkEqualityBefore(expression, false, variable, otherVariable);
       }
+      return true;
     }
 
     private void checkEqualityBefore(PsiExpression expression, boolean equals, PsiVariable variable1, PsiVariable variable2) {
@@ -161,7 +192,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       registerError(expression, variable1.getName(), variable2.getName(), Boolean.valueOf(equals));
     }
 
-    private static boolean isEquality(PsiExpression expression, boolean equals, PsiVariable variable1, PsiVariable variable2) {
+    private boolean isEquality(PsiExpression expression, boolean equals, PsiVariable variable1, PsiVariable variable2) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (!(expression instanceof PsiBinaryExpression)) {
         return false;
@@ -183,7 +214,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
              (VariableAccessUtils.evaluatesToVariable(lhs, variable2) && VariableAccessUtils.evaluatesToVariable(rhs, variable1));
     }
 
-    private static PsiVariable getArgumentFromEqualsCallOn(PsiExpression expression, @NotNull PsiVariable variable) {
+    private PsiVariable getArgumentFromEqualsCallOn(PsiExpression expression, PsiVariable variable) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (!(expression instanceof PsiMethodCallExpression)) {
         return null;

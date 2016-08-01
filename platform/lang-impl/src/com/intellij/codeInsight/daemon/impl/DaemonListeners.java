@@ -235,8 +235,11 @@ public class DaemonListeners implements Disposable {
         Project editorProject = editor.getProject();
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
         PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
-        if (!editor.getComponent().isShowing() || !worthBothering(document, editorProject)) {
-          LOG.debug("Not worth: " + file);
+        boolean showing = editor.getComponent().isShowing();
+        boolean worthBothering = worthBothering(document, editorProject);
+        if (!showing || !worthBothering) {
+          LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +
+                    showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
         repaintErrorStripeRenderer(editor, myProject);
@@ -282,7 +285,7 @@ public class DaemonListeners implements Disposable {
     application.addApplicationListener(new MyApplicationListener(), this);
     editorColorsManager.addEditorColorsListener(new MyEditorColorsListener(), this);
     inspectionProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
-    inspectionProjectProfileManager.addProfilesListener(new MyProfileChangeListener(), this);
+    inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
     actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
@@ -340,7 +343,7 @@ public class DaemonListeners implements Disposable {
       });
     }
   }
-  
+
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
            action == DocumentRunnable.IgnoreDocumentRunnable.class ||
@@ -420,7 +423,7 @@ public class DaemonListeners implements Disposable {
   }
 
   private class MyCommandListener extends CommandAdapter {
-    private final Object myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override
     public void commandStarted(CommandEvent event) {
@@ -489,14 +492,14 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyProfileChangeListener extends ProfileChangeAdapter {
+  private class MyProfileChangeListener implements ProfileChangeAdapter {
     @Override
     public void profileChanged(Profile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
     }
 
     @Override
-    public void profileActivated(Profile oldProfile, Profile profile) {
+    public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
       stopDaemonAndRestartAllFiles("Profile activated");
     }
 

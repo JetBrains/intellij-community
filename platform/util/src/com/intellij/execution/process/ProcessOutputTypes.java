@@ -16,9 +16,18 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.Set;
 
 public interface ProcessOutputTypes {
-  Key SYSTEM = new Key("system");
-  Key STDOUT = new Key("stdout");
-  Key STDERR = new Key("stderr");
+  String SYSTEM_STRING = "system";
+  String STDOUT_STRING = "stdout";
+  String STDERR_STRING = "stderr";
+  
+  Key SYSTEM = new Key(SYSTEM_STRING);
+  Key STDOUT = new Key(STDOUT_STRING);
+  Key STDERR = new Key(STDERR_STRING);
+
+  Set<Key> TYPES = ContainerUtil.newHashSet(SYSTEM, STDOUT, STDERR);
 }

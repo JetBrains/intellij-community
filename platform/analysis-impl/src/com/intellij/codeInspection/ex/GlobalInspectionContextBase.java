@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,16 +69,16 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private AnalysisScope myCurrentScope;
   @NotNull
   private final Project myProject;
-  private final List<JobDescriptor> myJobDescriptors = new ArrayList<JobDescriptor>();
+  private final List<JobDescriptor> myJobDescriptors = new ArrayList<>();
 
   private final StdJobDescriptors myStdJobDescriptors = new StdJobDescriptors();
   protected ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
 
   private InspectionProfile myExternalProfile;
 
-  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<Key, GlobalInspectionContextExtension>();
+  protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
-  protected final Map<String, Tools> myTools = new THashMap<String, Tools>();
+  protected final Map<String, Tools> myTools = new THashMap<>();
 
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
@@ -109,8 +109,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
-    InspectionManagerBase managerEx = (InspectionManagerBase)InspectionManager.getInstance(myProject);
-    String currentProfile = managerEx.getCurrentProfile();
+    String currentProfile = ((InspectionManagerBase)InspectionManager.getInstance(myProject)).getCurrentProfile();
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     Profile profile = inspectionProfileManager.getProfile(currentProfile, false);
     if (profile == null) {
@@ -209,7 +208,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
-    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
   public boolean isToCheckFile(PsiFile file, @NotNull InspectionProfileEntry tool) {
@@ -329,7 +328,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected List<Tools> getUsedTools() {
     InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
     List<Tools> tools = profile.getAllEnabledInspectionTools(myProject);
-    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<InspectionToolWrapper>();
+    Set<InspectionToolWrapper> dependentTools = new LinkedHashSet<>();
     for (Tools tool : tools) {
       profile.collectDependentInspections(tool.getTool(), dependentTools, getProject());
     }
@@ -337,9 +336,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (dependentTools.isEmpty()) {
       return tools;
     }
-    Set<Tools> set = new THashSet<Tools>(tools, TOOLS_HASHING_STRATEGY);
+    Set<Tools> set = new THashSet<>(tools, TOOLS_HASHING_STRATEGY);
     set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
-    return new ArrayList<Tools>(set);
+    return new ArrayList<>(set);
   }
 
   private static void classifyTool(@NotNull List<Tools> outGlobalTools,
@@ -386,12 +385,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     globalContext.codeCleanup(scope, profile, null, runnable, false);
   }
 
   public static void cleanupElements(@NotNull final Project project, @Nullable final Runnable runnable, @NotNull PsiElement... scope) {
-    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
+    final List<SmartPsiElementPointer<PsiElement>> elements = new ArrayList<>();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
     for (PsiElement element : scope) {
       elements.add(manager.createSmartPsiElementPointer(element));
@@ -404,7 +403,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                      @Nullable final Runnable runnable,
                                      final List<SmartPsiElementPointer<PsiElement>> elements) {
     Runnable cleanupRunnable = () -> {
-      final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+      final List<PsiElement> psiElements = new ArrayList<>();
       for (SmartPsiElementPointer<PsiElement> element : elements) {
         PsiElement psiElement = element.getElement();
         if (psiElement != null && psiElement.isPhysical()) {
@@ -415,7 +414,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
         return;
       }
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
@@ -447,20 +446,25 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     int old = job.getDoneAmount();
     job.setDoneAmount(old + 1);
 
-    float totalProgress = getTotalProgress();
+    float totalProgress = getTotalProgress(job);
 
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
   }
 
-  private float getTotalProgress() {
-    float totalDone = 0;
+  private float getTotalProgress(@NotNull JobDescriptor currentJob) {
+    int totalDone = 0;
     int totalTotal = 0;
     for (JobDescriptor jobDescriptor : myJobDescriptors) {
       totalDone += jobDescriptor.getDoneAmount();
       totalTotal += jobDescriptor.getTotalAmount();
     }
-    return totalTotal == 0 ? 1 : totalDone / totalTotal;
+    // if we run e.g. just "Annotator" simple global tool then myJobDescriptors are empty
+    if (myJobDescriptors.isEmpty()) {
+      totalDone += currentJob.getDoneAmount();
+      totalTotal += currentJob.getTotalAmount();
+    }
+    return totalTotal == 0 ? 1 : 1.0f * totalDone / totalTotal;
   }
 
   public void setExternalProfile(InspectionProfile profile) {

@@ -54,20 +54,21 @@
 
     <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
 
-    <group id="CCProjectViewGroup" popup="true" text="Course Creator">
+    <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Make Visible to Student"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent" text="Hide from Student"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
       </action>
       <action id="PackCourse" class="com.jetbrains.edu.coursecreator.actions.CCCreateCourseArchive"/>
+      <action id="PushTask" class="com.jetbrains.edu.coursecreator.actions.CCPushTask"/>
       <action id="PushLesson" class="com.jetbrains.edu.coursecreator.actions.CCPushLesson"/>
       <action id="PushCourse" class="com.jetbrains.edu.coursecreator.actions.CCPushCourse"/>
       <reference id="ChangeCourseInfo"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
     </group>
     
-    <group id="CCFileGroup" popup="true" text="Course Creator">
+    <group id="CCFileGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCFileActionGroup">
       <reference id="ChangeCourseInfo"/>
       <reference id="PackCourse"/>
       <reference id="PushLesson"/>
@@ -85,5 +86,6 @@
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
   </actions>
+
 
 </idea-plugin>

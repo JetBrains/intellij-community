@@ -16,7 +16,7 @@ public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTe
 
   // just check for action availability
   @Override
-  protected void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception {
+  protected void doAction(@NotNull String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception {
     IntentionAction action = findActionWithText(text);
     if (action == null && actionShouldBeAvailable) {
       fail("Action with text '" + text + "' is not available in test " + testFullPath);

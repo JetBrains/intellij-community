@@ -66,10 +66,8 @@ class SerializedUnit {
     }
   }
 
-  /**
-   * @see NameEnvironment#readQualifiedName(DataInput)
-   */
-  static void writeQualifiedName(DataOutput out, @QNameHash int[] array) throws IOException {
+  private static void writeNameComponents(DataOutput out, String qName) throws IOException {
+    int[] array = NameEnvironment.hashQualifiedName(qName);
     DataInputOutputUtil.writeINT(out, array.length);
     for (int i : array) {
       out.writeInt(i);
@@ -90,15 +88,16 @@ class SerializedUnit {
   // unit
 
   private static void writeUnit(@NotNull DataOutput out, IndexTree.Unit value) throws IOException {
-    writeQualifiedName(out, value.myPackageName);
+    writeNameComponents(out, value.myPackageName);
     out.writeByte(value.myUnitType);
-    if (value.myUnitType != IndexTree.BYTECODE) {
+    boolean compiled = value.myUnitType == IndexTree.BYTECODE;
+    if (!compiled) {
       Imports.writeImports(out, value);
     }
     // class Declaration
     DataInputOutputUtil.writeINT(out, value.myDecls.length);
     for (IndexTree.ClassDecl def : value.myDecls) {
-      saveClassDecl(out, def);
+      saveClassDecl(out, def, compiled);
     }
   }
 
@@ -116,12 +115,12 @@ class SerializedUnit {
 
   // class
 
-  private static void saveClassDecl(@NotNull DataOutput out, IndexTree.ClassDecl value) throws IOException {
+  private static void saveClassDecl(@NotNull DataOutput out, IndexTree.ClassDecl value, boolean compiled) throws IOException {
     DataInputOutputUtil.writeINT(out, value.myStubId);
     DataInputOutputUtil.writeINT(out, value.myMods);
-    out.writeInt(value.myName);
-    writeSupers(out, value);
-    writeMembers(out, value.myDecls);
+    out.writeInt(NameEnvironment.hashIdentifier(value.myName));
+    writeSupers(out, value, compiled);
+    writeMembers(out, value.myDecls, compiled);
   }
 
   private static ClassSymbol readClassDecl(UnitInputStream in, UnitInfo info, Symbol owner, @QNameHash int ownerName) throws IOException {
@@ -130,7 +129,7 @@ class SerializedUnit {
     @ShortName int name = in.readInt();
     @CompactArray(QualifiedName.class) Object superNames = readSupers(in, info.isCompiled());
 
-    @QNameHash int qname = in.names.memberQualifiedName(ownerName, name);
+    @QNameHash int qname = NameEnvironment.memberQualifiedName(ownerName, name);
     ClassSymbol symbol = in.stubEnter.classEnter(info, owner, stubId, mods, name, superNames, qname, in.fileId);
 
     readMembers(in, info, qname, symbol);
@@ -139,10 +138,10 @@ class SerializedUnit {
 
   // supers
 
-  private static void writeSupers(@NotNull DataOutput out, IndexTree.ClassDecl value) throws IOException {
+  private static void writeSupers(@NotNull DataOutput out, IndexTree.ClassDecl value, boolean interned) throws IOException {
     DataInputOutputUtil.writeINT(out, value.mySupers.length);
-    for (int[] aSuper : value.mySupers) {
-      writeQualifiedName(out, aSuper);
+    for (String aSuper : value.mySupers) {
+      writeSuperName(out, interned, aSuper);
     }
   }
 
@@ -158,16 +157,24 @@ class SerializedUnit {
     return superNames;
   }
 
+  private static void writeSuperName(@NotNull DataOutput out, boolean interned, String aSuper) throws IOException {
+    if (interned) {
+      out.writeInt(NameEnvironment.fromString(aSuper));
+    } else {
+      writeNameComponents(out, aSuper);
+    }
+  }
+
   private static QualifiedName readSuperName(UnitInputStream in, boolean intern) throws IOException {
-    return intern ? new QualifiedName.Interned(in.names.readQualifiedName(in)) : readNameComponents(in);
+    return intern ? new QualifiedName.Interned(in.readInt()) : readNameComponents(in);
   }
 
   // members
 
-  private static void writeMembers(@NotNull DataOutput out, IndexTree.Decl[] decls) throws IOException {
+  private static void writeMembers(@NotNull DataOutput out, IndexTree.Decl[] decls, boolean compiled) throws IOException {
     DataInputOutputUtil.writeINT(out, decls.length);
     for (IndexTree.Decl def : decls) {
-      saveDecl(out, def);
+      saveDecl(out, def, compiled);
     }
   }
 
@@ -187,13 +194,13 @@ class SerializedUnit {
 
   // decl: class or member
 
-  private static void saveDecl(@NotNull DataOutput out, IndexTree.Decl value) throws IOException {
+  private static void saveDecl(@NotNull DataOutput out, IndexTree.Decl value, boolean compiled) throws IOException {
     if (value instanceof IndexTree.ClassDecl) {
       out.writeBoolean(true);
-      saveClassDecl(out, (IndexTree.ClassDecl)value);
+      saveClassDecl(out, (IndexTree.ClassDecl)value, compiled);
     } else if (value instanceof IndexTree.MemberDecl) {
       out.writeBoolean(false);
-      writeMembers(out, ((IndexTree.MemberDecl)value).myDecls);
+      writeMembers(out, ((IndexTree.MemberDecl)value).myDecls, compiled);
     }
   }
 
@@ -225,12 +232,10 @@ class SerializedUnit {
 class UnitInputStream extends DataInputStream {
   final int fileId;
   final StubEnter stubEnter;
-  final NameEnvironment names;
 
   UnitInputStream(InputStream in, int fileId, StubEnter stubEnter) {
     super(in);
     this.fileId = fileId;
     this.stubEnter = stubEnter;
-    this.names = stubEnter.myNameEnvironment;
   }
 }

@@ -42,6 +42,7 @@ public class MergingCharSequence implements CharSequence {
 
   @Override
   public CharSequence subSequence(int start, int end) {
+    if (start == 0 && end == length()) return this;
     if (start < s1.length() && end < s1.length()) return s1.subSequence(start, end);
     if (start >= s1.length() && end >= s1.length()) return s2.subSequence(start - s1.length(), end - s1.length());
     return new MergingCharSequence(s1.subSequence(start, s1.length()), s2.subSequence(0, end - s1.length()));
@@ -50,6 +51,6 @@ public class MergingCharSequence implements CharSequence {
   @Override
   @NotNull
   public String toString() {
-    return s1.toString() + s2.toString();
+    return s1 + s2.toString();
   }
 }

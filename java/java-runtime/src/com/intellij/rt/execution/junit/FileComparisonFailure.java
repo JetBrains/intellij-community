@@ -25,12 +25,14 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
   private final String myFilePath;
   private final String myActualFilePath;
 
-  public FileComparisonFailure(String message, String expected, String actual, String filePath) {
-    this(message, expected, actual, filePath, null);
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath) {
+    this(message, expected, actual, expectedFilePath, null);
   }
 
-  public FileComparisonFailure(String message, String expected, String actual, String expectedFilePath, String actualFilePath) {
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath, String actualFilePath) {
     super(message, expected, actual);
+    if (expected == null) throw new NullPointerException("'expected' must not be null");
+    if (actual == null) throw new NullPointerException("'actual' must not be null");
     myExpected = expected;
     myActual = actual;
     myFilePath = expectedFilePath;
@@ -60,7 +62,7 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
   private static class MyPacketFactory extends ComparisonDetailsExtractor {
     private final String myFilePath;
 
-    public MyPacketFactory(ComparisonFailure assertion, String expected, String actual, String filePath) {
+    MyPacketFactory(ComparisonFailure assertion, String expected, String actual, String filePath) {
       super(assertion, expected, actual);
       myFilePath = filePath;
     }

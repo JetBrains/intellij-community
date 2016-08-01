@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,21 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class ProjectInspectionToolsConfigurableProvider extends ErrorsConfigurableProvider {
-  private final InspectionProfileManager myProfileManager;
-  private final InspectionProjectProfileManager myProjectProfileManager;
+  private final ProjectInspectionProfileManager myProjectProfileManager;
 
-  public ProjectInspectionToolsConfigurableProvider(InspectionProfileManager profileManager,
-                                                    InspectionProjectProfileManager projectProfileManager) {
-    myProfileManager = profileManager;
+  public ProjectInspectionToolsConfigurableProvider(@NotNull ProjectInspectionProfileManager projectProfileManager) {
     myProjectProfileManager = projectProfileManager;
   }
 
   @Override
   public ErrorsConfigurable createConfigurable() {
-    return new ProjectInspectionToolsConfigurable(myProfileManager, myProjectProfileManager);
+    return new ProjectInspectionToolsConfigurable(myProjectProfileManager);
   }
 }

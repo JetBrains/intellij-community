@@ -749,12 +749,26 @@ public class JavaCompletionUtil {
     final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
     final PsiElement elementAt = file.findElementAt(context.getStartOffset());
     if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
-      ParenthesesInsertHandler.getInstance(hasParams,
-                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           needRightParenth,
-                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-      ).handleInsert(context, item);
+      final boolean hasParameters = hasParams;
+      final boolean spaceBetweenParentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams;
+      new ParenthesesInsertHandler<LookupElement>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
+                                                  needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
+        @Override
+        protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
+          return hasParameters;
+        }
+
+        @Override
+        protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
+          PsiElement token = super.findExistingLeftParenthesis(context);
+          return isPartOfLambda(token) ? null : token;
+        }
+
+        private boolean isPartOfLambda(PsiElement token) {
+          return token != null && token.getParent() instanceof PsiExpressionList &&
+                 PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.getParent())) == JavaTokenType.ARROW;
+        }
+      }.handleInsert(context, item);
     }
 
     if (hasParams) {

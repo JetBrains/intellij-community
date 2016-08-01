@@ -251,7 +251,8 @@ public class EditorTestUtil {
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(Document document) {
+  @NotNull
+  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
     return extractCaretAndSelectionMarkers(document, true);
   }
 
@@ -261,7 +262,8 @@ public class EditorTestUtil {
    *
    * @param processBlockSelection if <code>true</code>, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(final Document document, final boolean processBlockSelection) {
+  @NotNull
+  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
     return new WriteCommandAction<CaretAndSelectionState>(null) {
       @Override
       public void run(@NotNull Result<CaretAndSelectionState> actionResult) {
@@ -271,9 +273,8 @@ public class EditorTestUtil {
   }
 
   @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(Document document, boolean processBlockSelection) {
+  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
     List<CaretInfo> carets = ContainerUtil.newArrayList();
-    TextRange blockSelection = null;
     String fileText = document.getText();
 
     RangeMarker blockSelectionStartMarker = null;
@@ -354,6 +355,7 @@ public class EditorTestUtil {
     if (carets.isEmpty()) {
       carets.add(new CaretInfo(null, null));
     }
+    TextRange blockSelection = null;
     if (blockSelectionStartMarker != null) {
       blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
     }

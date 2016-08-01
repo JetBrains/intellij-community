@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.NavigatablePsiElement
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
@@ -65,6 +61,7 @@ import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 /**
  * @author peter
  */
@@ -158,7 +155,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
+    runInEdtAndWait { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
     assert lookup.currentItem.lookupString == 'iterable2'
 
     type "r"
@@ -180,7 +177,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    edt { lookup.currentItem = lookup.items[1] }
+    runInEdtAndWait { lookup.currentItem = lookup.items[1] }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
@@ -227,7 +224,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     assertContains 'abcd', 'abce'
     assertEquals 'abcd', lookup.currentItem.lookupString
-    edt { lookup.currentItem = lookup.items[1] }
+    runInEdtAndWait { lookup.currentItem = lookup.items[1] }
     assertEquals 'abce', lookup.currentItem.lookupString
 
     type '\t'
@@ -340,7 +337,7 @@ class Foo {
     }
     """)
     type 'ite'
-    edt {
+    runInEdtAndWait {
       myFixture.type 'r'
       lookup.markReused()
       lookup.currentItem = lookup.items[0]
@@ -361,7 +358,7 @@ class Foo {
     }
     """)
     type 'ite'
-    edt {
+    runInEdtAndWait {
       myFixture.type 'r'
       lookup.markReused()
       myFixture.type '\b\b'
@@ -382,7 +379,7 @@ class Foo {
     }
     """)
     type 'th'
-    edt { myFixture.type 'r\t'}
+    runInEdtAndWait { myFixture.type 'r\t'}
     myFixture.checkResult """
     class A {
       { throw new <caret> }
@@ -397,10 +394,10 @@ class Foo {
         { <caret> }
       }
       """)
-      edt { myFixture.type 'A' }
+      runInEdtAndWait { myFixture.type 'A' }
       joinAutopopup() // completion started
       boolean tooQuick = false
-      edt {
+      runInEdtAndWait {
         tooQuick = lookup == null
         myFixture.type 'IO'
       }
@@ -412,7 +409,7 @@ class Foo {
       if (!tooQuick) {
         return
       }
-      edt {
+      runInEdtAndWait {
         LookupManager.getInstance(project).hideActiveLookup()
         CompletionProgressIndicator.cleanupForNextTest()
       }
@@ -427,7 +424,7 @@ class Foo {
     }
     """)
     myFixture.complete CompletionType.SMART
-    edt { myFixture.type 'Thr' }
+    runInEdtAndWait { myFixture.type 'Thr' }
     joinCompletion()
     assert lookup
     assert 'Thread' in myFixture.lookupElementStrings
@@ -492,12 +489,12 @@ class Foo {
       assert lookup
       lookup.focusDegree = focusDegree
 
-      edt { myFixture.performEditorAction(action) }
+      runInEdtAndWait { myFixture.performEditorAction(action) }
       if (lookup) {
         assert lookup.focused
         assert expectedIndex >= 0
         assert lookup.items[expectedIndex] == lookup.currentItem
-        edt { lookup.hide() }
+        runInEdtAndWait { lookup.hide() }
       } else {
         assert expectedIndex == -1
       }
@@ -594,11 +591,11 @@ class Aaaaaaa {}
 public interface Test {
   <caret>
 }"""
-    edt { myFixture.type 'A' }
+    runInEdtAndWait { myFixture.type 'A' }
     joinAutopopup()
     def first = lookup
     assert first
-    edt {
+    runInEdtAndWait {
       assert first == lookup
       lookup.hide()
       myFixture.type 'a'
@@ -630,14 +627,14 @@ public interface Test {
   public void testDuringCompletionMustFinish() {
     registerContributor(LongReplacementOffsetContributor)
 
-    edt { myFixture.addFileToProject 'directory/foo.txt', '' }
+    runInEdtAndWait { myFixture.addFileToProject 'directory/foo.txt', '' }
     myFixture.configureByText "a.java", 'public interface Test { RuntiExce<caret>xxx }'
     myFixture.completeBasic()
     while (!lookup.items) {
       Thread.sleep(10)
-      edt { lookup.refreshUi(false, false) }
+      runInEdtAndWait { lookup.refreshUi(false, false) }
     }
-    edt { myFixture.type '\t' }
+    runInEdtAndWait { myFixture.type '\t' }
     myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
  }
 
@@ -663,7 +660,7 @@ public interface Test {
     def offset = myFixture.editor.caretModel.offset
     assertContains "iterable", "if", "int"
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
     joinAutopopup()
     joinCompletion()
@@ -671,7 +668,7 @@ public interface Test {
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     assert myFixture.editor.caretModel.offset == offset
     joinAutopopup()
     joinCompletion()
@@ -679,14 +676,14 @@ public interface Test {
     assertContains "iterable", "if", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     joinAutopopup()
     joinCompletion()
     assert !lookup.calculating
     assert lookup.items.size() > 3
 
     for (i in 0.."iter".size()) {
-      edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+      runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     }
     assert !lookup
   }
@@ -703,7 +700,7 @@ public interface Test {
     type('i')
     assert lookup
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     myFixture.checkResult """
       class Foo {
         void foo(String iterable) {
@@ -717,7 +714,7 @@ public interface Test {
     assert lookup
     assert !lookup.calculating
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     myFixture.checkResult """
       class Foo {
         void foo(String iterable) {
@@ -740,7 +737,7 @@ public interface Test {
         }
       }
     <caret>""")
-    edt {
+    runInEdtAndWait {
       int primaryCaretOffset = myFixture.editor.document.text.indexOf("ter   x");
       myFixture.editor.caretModel.addCaret(myFixture.editor.offsetToVisualPosition(primaryCaretOffset))
     }
@@ -748,7 +745,7 @@ public interface Test {
     type('i')
     assert lookup
 
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     myFixture.checkResult """
       class Foo {
         void foo(String iterable) {
@@ -772,7 +769,7 @@ public interface Test {
     }
 
     try {
-      edt {
+      runInEdtAndWait {
         assert !lookup.calculating
         lookup.hide()
         def file = myFixture.addFileToProject("b.java", "")
@@ -796,7 +793,7 @@ public interface Test {
       assert lookup
     }
     finally {
-      edt { EditorFactory.instance.releaseEditor(another) }
+      runInEdtAndWait { EditorFactory.instance.releaseEditor(another) }
     }
 
   }
@@ -865,7 +862,7 @@ class Foo {
 
   public void testNoAutopopupAfterSpace() {
     myFixture.configureByText("a.java", """ class Foo { { int newa; <caret> } } """)
-    edt { myFixture.type('new ') }
+    runInEdtAndWait { myFixture.type('new ') }
     joinAutopopup()
     joinCompletion()
     assert !lookup
@@ -923,7 +920,7 @@ class Foo {
     myFixture.type 'a'
     joinAutopopup()
     assert lookup
-    edt { myFixture.type 'bc' }
+    runInEdtAndWait { myFixture.type 'bc' }
     joinAutopopup()
     joinAutopopup()
     joinCompletion()
@@ -940,7 +937,7 @@ class Foo {
       Thread.sleep(1)
     }
     def l = lookup
-    edt {
+    runInEdtAndWait {
       if (!lookup.calculating) println "testRestartWithVisibleLookup couldn't be faster than LongContributor"
       myFixture.type 'c'
     }
@@ -960,7 +957,7 @@ class Foo {
     if (degree == 1) return
     joinCommit()
     if (degree == 2) return
-    edt {}
+    runInEdtAndWait {}
     if (degree == 3) return
     joinCompletion()
   }
@@ -1003,7 +1000,7 @@ class Foo {
 
     for (a1 in 0..actions) {
       myFixture.configureByText("$a1 if .java", src)
-      edt { myFixture.type 'if' }
+      runInEdtAndWait { myFixture.type 'if' }
       joinSomething(a1)
 
       myFixture.type ' '
@@ -1025,7 +1022,7 @@ class Foo {
       myFixture.type 'i'
       joinSomething(a1)
 
-      edt { myFixture.type 'f ' }
+      runInEdtAndWait { myFixture.type 'f ' }
 
       joinAutopopup()
       joinCompletion()
@@ -1138,7 +1135,7 @@ class Foo {
     def goo = methods[2]
     type('x')
     assertContains 'x__foo', 'x__goo'
-    edt {
+    runInEdtAndWait {
       assert foo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
       assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
@@ -1146,7 +1143,7 @@ class Foo {
 
     type('_')
     myFixture.assertPreferredCompletionItems 1, 'x__foo', 'x__goo'
-    edt {
+    runInEdtAndWait {
       assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
       assert foo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
@@ -1158,7 +1155,7 @@ class Foo {
     type 'ext'
 
     CompletionAutoPopupHandler.ourTestingAutopopup = false
-    edt {
+    runInEdtAndWait {
       myFixture.completeBasic()
     }
     assert !lookup : myFixture.lookupElementStrings
@@ -1170,7 +1167,7 @@ class Foo {
     type 'pr'
 
     CompletionAutoPopupHandler.ourTestingAutopopup = false
-    edt {
+    runInEdtAndWait {
       myFixture.completeBasic()
     }
     myFixture.checkResult 'class Foo {pr<caret>}'
@@ -1273,7 +1270,7 @@ public class Test {
 
   private FileEditor openEditorForUndo() {
     FileEditor editor;
-    edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
+    runInEdtAndWait { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
     def manager = (UndoManagerImpl) UndoManager.getInstance(project)
     def old = manager.editorProvider
     manager.editorProvider = new CurrentEditorProvider() {
@@ -1290,7 +1287,7 @@ public class Test {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     def editor = openEditorForUndo();
     type 'aioobeeee'
-    edt { UndoManager.getInstance(project).undo(editor) }
+    runInEdtAndWait { UndoManager.getInstance(project).undo(editor) }
     assert !myFixture.editor.document.text.contains('aioo')
   }
 
@@ -1365,7 +1362,7 @@ class Foo {{
     myFixture.configureByText 'a.java', 'class Foo extends <caret>'
     type 'Abcde'
     assert lookup.items.size() == 2
-    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    runInEdtAndWait { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type ' '
     myFixture.checkResult '''import foo.Abcdefg;
 
@@ -1389,7 +1386,7 @@ class Foo extends Abcdefg <caret>'''
     assert myFixture.lookupElementStrings.size() >= 2
     type '.'
     assert lookup
-    edt { myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf('lang')) }
+    runInEdtAndWait { myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf('lang')) }
     assert !lookup
     type 'i'
     assert 'io' in myFixture.lookupElementStrings
@@ -1430,7 +1427,7 @@ class Foo {{
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
     LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
-    assert p.tailText == ' (foo)'
+    assert p.tailText == ' = 2 (foo)'
     assert p.typeText == 'int'
 
     type 'fo\n'
@@ -1606,7 +1603,7 @@ class Foo {
 '''
     type 'sette'
     myFixture.assertPreferredCompletionItems 1, 'setHorizontalText', 'setText'
-    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_UP }
+    runInEdtAndWait { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_UP }
     myFixture.assertPreferredCompletionItems 0, 'setHorizontalText', 'setText'
   }
 
@@ -1634,7 +1631,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     myFixture.type('a')
     joinAutopopup()
-    edt { ApplicationManager.application.runWriteAction {} }
+    runInEdtAndWait { ApplicationManager.application.runWriteAction {} }
     joinCompletion()
     assert lookup
   }
@@ -1662,7 +1659,7 @@ class Foo {
     final Template template = manager.createTemplate("m", "user", 'void foo(String $V1$) {}');
     template.addVariable("V1", "", '"s"', true);
 
-    edt {
+    runInEdtAndWait {
       CommandProcessor.instance.executeCommand project, {manager.startTemplate(myFixture.editor, template)}, null, null
     }
 
@@ -1770,7 +1767,7 @@ class Foo {
 class Foo {{
   <caret>
 }}"""
-    edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
+    runInEdtAndWait { ((EditorEx)myFixture.editor).setColumnMode(true) }
     type 'toStr'
     assert lookup
   }

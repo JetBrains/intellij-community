@@ -110,6 +110,10 @@ public class TreeState implements JDOMExternalizable {
     this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
   }
 
+  public boolean isEmpty() {
+    return myExpandedPaths.isEmpty() && mySelectedPaths.isEmpty();
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, PATH);
@@ -168,37 +172,27 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static List<List<PathElement>> createPaths(final JTree tree) {
-    final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
     final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
-    for (final TreePath expandedPath : expandedPaths) {
-      final List<PathElement> path = createPath(expandedPath);
-      if (path != null) {
-        result.add(path);
-      }
-    }
-    return result;
+    return createPaths(tree, expandedPaths);
   }
 
   private static List<List<PathElement>> createExpandedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
-    final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
     final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()));
-    for (final TreePath expandedPath : expandedPaths) {
-      final List<PathElement> path = createPath(expandedPath);
-      if (path != null) {
-        result.add(path);
-      }
-    }
-    return result;
+    return createPaths(tree, expandedPaths);
   }
 
   private static List<List<PathElement>> createSelectedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
-    final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
     final List<TreePath> selectedPaths
       = TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()));
-    for (final TreePath expandedPath : selectedPaths) {
-      final List<PathElement> path = createPath(expandedPath);
-      if (path != null) {
-        result.add(path);
+    return createPaths(tree, selectedPaths);
+  }
+
+  private static List<List<PathElement>> createPaths(JTree tree, List<TreePath> paths) {
+    ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
+    for (TreePath path : paths) {
+      if (tree.isRootVisible() || path.getPathCount() > 1) {
+        List<PathElement> list = createPath(path);
+        if (list != null) result.add(list);
       }
     }
     return result;
@@ -491,6 +485,40 @@ public class TreeState implements JDOMExternalizable {
 
   public void setScrollToSelection(boolean scrollToSelection) {
     myScrollToSelection = scrollToSelection;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("TreeState(").append(myScrollToSelection).append(")");
+    append(sb, " expanded:", myExpandedPaths);
+    append(sb, " selected:", mySelectedPaths);
+    return sb.toString();
+  }
+
+  private static void append(StringBuilder sb, String prefix, Object object) {
+    if (prefix != null) {
+      sb.append(prefix);
+    }
+    if (object instanceof List) {
+      appendList(sb, (List)object);
+    }
+    else {
+      sb.append(object);
+    }
+  }
+
+  private static void appendList(StringBuilder sb, List list) {
+    if (list.isEmpty()) {
+      sb.append("{}");
+    }
+    else {
+      String prefix = "{";
+      for (Object object : list) {
+        append(sb, prefix, object);
+        prefix = ", ";
+      }
+      sb.append("}");
+    }
   }
 }
 

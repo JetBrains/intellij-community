@@ -18,8 +18,8 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
@@ -37,11 +37,14 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -153,34 +156,66 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       }
     }
 
-    Set<String> methodTypeParams = null;
+    Set<String> methodTypeParams = getVisibleTypeParameters(stub);
     for (StubElement stubElement : stub.getChildrenStubs()) {
-      if (stubElement instanceof PsiTypeParameterListStub) {
-        for (Object tStub : stubElement.getChildrenStubs()) {
-          if (tStub instanceof PsiTypeParameterStub) {
-            if (methodTypeParams == null) {
-              methodTypeParams = new HashSet<String>();
-            }
-            methodTypeParams.add(((PsiTypeParameterStub)tStub).getName());
-          }
-        }
-      }
-      else if (stubElement instanceof PsiParameterListStub) {
+      if (stubElement instanceof PsiParameterListStub) {
         for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
             TypeInfo type = ((PsiParameterStub)paramStub).getType(false);
-            if (type.arrayCount > 0) continue;
-            String typeName = type.getShortTypeText();
+            String typeName = PsiNameHelper.getShortClassName(type.text);
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
-            if (methodTypeParams != null && methodTypeParams.contains(typeName)) {
+            if (typeName.equals(type.text) &&
+                (type.arrayCount == 0 || type.arrayCount == 1 && type.isEllipsis) &&
+                methodTypeParams.contains(typeName)) {
               sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, TYPE_PARAMETER_PSEUDO_NAME);
-              methodTypeParams = null;
             }
           }
         }
         break;
       }
     }
+  }
+
+  @NotNull
+  private static Set<String> getVisibleTypeParameters(@NotNull StubElement<?> stub) {
+    Set<String> result = null;
+    while (stub != null) {
+      Set<String> names = getOwnTypeParameterNames(stub);
+      if (!names.isEmpty()) {
+        if (result == null) result = ContainerUtil.newHashSet();
+        result.addAll(names);
+      }
+
+      if (isStatic(stub)) break;
+
+      stub = stub.getParentStub();
+    }
+    return result == null ? Collections.<String>emptySet() : result;
+  }
+
+  private static boolean isStatic(@NotNull StubElement<?> stub) {
+    if (stub instanceof PsiMemberStub) {
+      StubElement<PsiModifierList> modList = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+      if (modList instanceof PsiModifierListStub) {
+        return BitUtil.isSet(((PsiModifierListStub)modList).getModifiersMask(),
+                             ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.get(PsiModifier.STATIC));
+      }
+    }
+    return false;
+  }
+
+  private static Set<String> getOwnTypeParameterNames(StubElement<?> stubElement) {
+    StubElement<PsiTypeParameterList> typeParamList = stubElement.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+    if (typeParamList == null) return Collections.emptySet();
+
+    Set<String> methodTypeParams = null;
+    for (Object tStub : typeParamList.getChildrenStubs()) {
+      if (tStub instanceof PsiTypeParameterStub) {
+        if (methodTypeParams == null) methodTypeParams = new HashSet<String>();
+        methodTypeParams.add(((PsiTypeParameterStub)tStub).getName());
+      }
+    }
+    return methodTypeParams == null ? Collections.<String>emptySet() : methodTypeParams;
   }
 }

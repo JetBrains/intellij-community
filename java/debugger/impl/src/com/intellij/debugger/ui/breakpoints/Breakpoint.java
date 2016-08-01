@@ -335,9 +335,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
     }
 
-    if (isClassFiltersEnabled()) {
-      String typeName = calculateEventClass(context, event);
-      if (!typeMatchesClassFilters(typeName)) return false;
+    if (isClassFiltersEnabled() &&
+        !typeMatchesClassFilters(calculateEventClass(context, event), getClassFilters(), getClassExclusionFilters())) {
+      return false;
     }
 
     if (!isConditionEnabled() || getCondition().getText().isEmpty()) {
@@ -394,12 +394,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return event.location().declaringType().name();
   }
 
-  private boolean typeMatchesClassFilters(@Nullable String typeName) {
+  protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {
     if (typeName == null) {
       return true;
     }
     boolean matches = false, hasEnabled = false;
-    for (ClassFilter classFilter : getClassFilters()) {
+    for (ClassFilter classFilter : includeFilters) {
       if (classFilter.isEnabled()) {
         hasEnabled = true;
         if (classFilter.matches(typeName)) {
@@ -408,10 +408,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
       }
     }
-    if(hasEnabled && !matches) {
+    if (hasEnabled && !matches) {
       return false;
     }
-    for (ClassFilter classFilter : getClassExclusionFilters()) {
+    for (ClassFilter classFilter : exludeFilters) {
       if (classFilter.isEnabled() && classFilter.matches(typeName)) {
         return false;
       }
@@ -558,7 +558,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return getProperties().getClassExclusionFilters();
   }
 
-  protected void setClassExclusionFilters(ClassFilter[] filters) {
+  public void setClassExclusionFilters(ClassFilter[] filters) {
     if (getProperties().setClassExclusionFilters(filters)) {
       fireBreakpointChanged();
     }

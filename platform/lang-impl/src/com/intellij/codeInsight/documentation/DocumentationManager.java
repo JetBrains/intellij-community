@@ -282,9 +282,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myCloseOnSneeze = closeOnSneeze;
     showJavaDocInfo(element, original, closeCallback);
   }
-  
+
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
+                              @Nullable Runnable closeCallback) {
+    showJavaDocInfo(element, original, false, closeCallback);
+  }
+
+  public void showJavaDocInfo(@NotNull final PsiElement element,
+                              final PsiElement original,
+                              final boolean requestFocus,
                               @Nullable Runnable closeCallback) {
     if (!element.isValid()) {
       return;
@@ -294,12 +301,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       @Override
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, false, this, original, null);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, requestFocus, this, original, null);
         }
       }
     };
 
-    doShowJavaDocInfo(element, false, updateProcessor, original, closeCallback);
+    doShowJavaDocInfo(element, requestFocus, updateProcessor, original, closeCallback);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {

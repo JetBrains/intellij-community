@@ -38,6 +38,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiQualifiedNamedElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
@@ -159,9 +160,17 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-      if (positionComparing != 0) {
-        return positionComparing;
+      final SmartPsiElementPointer p1 = ((RefElement)entity1).getPointer();
+      final SmartPsiElementPointer p2 = ((RefElement)entity2).getPointer();
+      if (p1 != null && p2 != null) {
+        final VirtualFile file1 = p1.getVirtualFile();
+        final VirtualFile file2 = p2.getVirtualFile();
+        if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
+          final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+          if (positionComparing != 0) {
+            return positionComparing;
+          }
+        }
       }
     }
     if (entity1 instanceof RefFile && entity2 instanceof RefFile) {

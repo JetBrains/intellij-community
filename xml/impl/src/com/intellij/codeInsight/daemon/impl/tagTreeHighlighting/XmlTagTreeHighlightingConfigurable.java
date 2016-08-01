@@ -106,7 +106,7 @@ public class XmlTagTreeHighlightingConfigurable implements UnnamedConfigurable {
 
           final BreadcrumbsXmlWrapper breadcrumbsXmlWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
           if (breadcrumbsXmlWrapper != null) {
-            breadcrumbsXmlWrapper.queueUpdate(editor);
+            breadcrumbsXmlWrapper.queueUpdate();
           }
         }
       }

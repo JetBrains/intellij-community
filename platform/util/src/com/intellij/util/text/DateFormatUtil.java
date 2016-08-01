@@ -338,7 +338,7 @@ public class DateFormatUtil {
       }
     }
     catch (Throwable t) {
-      LOG.error(t);
+      LOG.info(t);
     }
 
     if (!loaded) {

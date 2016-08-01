@@ -61,24 +61,12 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   @Nullable
   private QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
-    final QuickFix exactResult = getWorkingQuickFix(fixes, true);
-    return exactResult != null ? exactResult : getWorkingQuickFix(fixes, false);
-  }
-  
-  @Nullable
-  private QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes, boolean exact) {
     for (QuickFix fix : fixes) {
-      if (!checkFix(exact, myFix, fix)) continue;
-      if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper) {
-        if (!checkFix(exact, ((IntentionWrapper)myFix).getAction(), ((IntentionWrapper)fix).getAction())) continue;
+      if (fix.getFamilyName().equals(myFix.getFamilyName())) {
+        return fix;
       }
-      return fix;
     }
     return null;
-  }
-
-  private static <T> boolean checkFix(boolean exact, T thisFix, T fix) {
-    return exact ? thisFix.getClass() == fix.getClass() : thisFix.getClass().isInstance(fix);
   }
 
   @Override

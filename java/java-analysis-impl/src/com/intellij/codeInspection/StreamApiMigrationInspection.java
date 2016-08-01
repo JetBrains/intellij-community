@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -129,10 +128,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                     }
                     else if (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter())) {
                       final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-                      fixes.add(new ReplaceWithForeachFix());
+                      fixes.add(new ReplaceWithForeachCallFix("forEach"));
                       if (extractIfStatement(body) != null) {
                         //for .stream() 
-                        fixes.add(new ReplaceWithForeachOrderedFix());
+                        fixes.add(new ReplaceWithForeachCallFix("forEachOrdered"));
                       }
                       holder.registerProblem(iteratedValue, "Can be replaced with foreach call",
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -285,22 +284,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == parameter;
   }
 
-  private static class ReplaceWithForeachFix extends ReplaceWithForeachCallFix {
-    @Override
-    protected String getForEachMethodName() {
-      return "forEach";
-    }
-  }
+  private static class ReplaceWithForeachCallFix implements LocalQuickFix {
+    private final String myForEachMethodName;
 
-  private static class ReplaceWithForeachOrderedFix extends ReplaceWithForeachCallFix {
-    @Override
-    protected String getForEachMethodName() {
-      return "forEachOrdered";
+    protected ReplaceWithForeachCallFix(String forEachMethodName) {
+      myForEachMethodName = forEachMethodName;
     }
-  }
-
-  private static abstract class ReplaceWithForeachCallFix implements LocalQuickFix {
-    protected abstract String getForEachMethodName();
 
     @NotNull
     @Override
@@ -311,7 +300,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with " + getForEachMethodName();
+      return "Replace with " + myForEachMethodName;
     }
 
     @Override
@@ -336,7 +325,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             body = thenBranch;
           }
 
-          buffer.append(".").append(getForEachMethodName()).append("(");
+          buffer.append(".").append(myForEachMethodName).append("(");
 
           final String functionalExpressionText = createForEachFunctionalExpressionText(project, body, parameter);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

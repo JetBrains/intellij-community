@@ -15,16 +15,19 @@
  */
 package com.intellij.util;
 
-import gnu.trove.TIntArrayList;
+import com.intellij.util.containers.UnsignedShortArrayList;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class PausesStat {
-  private static final int N_MAX = 200000;
-  // stores pairs of (timestamp of the event start), (timestamp of the event end). Timestamps are stored as diffs between System.currentTimeMillis() and epochStart.
-  private final TIntArrayList pauses = new TIntArrayList();
-  private final long epochStart;
+  private static final int N_MAX = 100000;
+  // stores durations of the event: (timestamp of the event end) - (timestamp of the event start) in milliseconds.
+  private final UnsignedShortArrayList durations = new UnsignedShortArrayList();
   @NotNull private final String myName;
-  private volatile boolean started;
+  private final Thread myEdtThread;
+  private boolean started;
+  private long startTimeStamp;
   private int maxDuration;
   private Object maxDurationDescription;
   private int totalNumberRecorded;
@@ -32,50 +35,53 @@ public class PausesStat {
 
   public PausesStat(@NotNull String name) {
     myName = name;
-    epochStart = System.currentTimeMillis();
+    assert EventQueue.isDispatchThread() : Thread.currentThread();
+    myEdtThread = Thread.currentThread();
   }
 
-  private int register() {
-    int stamp = (int)(System.currentTimeMillis() - epochStart);
-    if (pauses.size()/2 == N_MAX) {
-      pauses.set(indexToOverwrite, stamp);
+  private int register(int duration) {
+    if (durations.size() == N_MAX) {
+      durations.set(indexToOverwrite, duration);
       indexToOverwrite = (indexToOverwrite + 1) % N_MAX;
     }
     else {
-      pauses.add(stamp);
+      durations.add(duration);
     }
-    return stamp;
+    return duration;
   }
 
   public void started() {
+    assertEdt();
     assert !started;
-    register();
     started = true;
+    startTimeStamp = System.currentTimeMillis();
+  }
+
+  private void assertEdt() {
+    assert Thread.currentThread() == myEdtThread : Thread.currentThread();
   }
 
   public void finished(@NotNull String description) {
+    assertEdt();
     assert started;
-    int startStamp = pauses.get(pauses.size()/2 == N_MAX ? indexToOverwrite-1 : pauses.size() - 1);
-    int finishStamp = register();
-    int duration = finishStamp - startStamp;
+    long finishStamp = System.currentTimeMillis();
+    int duration = (int)(finishStamp - startTimeStamp);
     started = false;
+    duration = Math.min(duration, (1 << 16) - 1);
     if (duration > maxDuration) {
       maxDuration = duration;
       maxDurationDescription = description;
     }
     totalNumberRecorded++;
+    register(duration);
   }
 
   public String statistics() {
+    int number = durations.size();
+    int[] duration = durations.toArray();
     int total = 0;
-    int number = pauses.size() / 2;
-    int[] duration = new int[number];
-    for (int i = 0; i < number*2; i+=2) {
-      int start = pauses.get(i);
-      int finish = pauses.get(i+1);
-      int thisDuration = finish - start;
-      total += thisDuration;
-      duration[i / 2] = thisDuration;
+    for (int d : duration) {
+      total += d;
     }
 
     return myName + " Statistics" + (totalNumberRecorded == number ? "" : " ("+totalNumberRecorded+" events was recorded in total, but only last "+number+" are reported here)")+":"+
@@ -83,6 +89,6 @@ public class PausesStat {
            "\nTotal time spent: " + total + "ms" +
            "\nAverage duration: " + (number == 0 ? 0 : total / number) + "ms" +
            "\nMedian  duration: " + ArrayUtil.averageAmongMedians(duration, 3) + "ms" +
-           "\nMax  duration:    " + maxDuration + "ms (it was '"+maxDurationDescription+"')";
+           "\nMax  duration:    " + (maxDuration == 65535 ? ">" : "") + maxDuration+ "ms (it was '"+maxDurationDescription+"')";
   }
 }

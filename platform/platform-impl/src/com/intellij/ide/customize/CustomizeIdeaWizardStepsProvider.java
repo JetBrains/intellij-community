@@ -28,9 +28,6 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
     if (SystemInfo.isMac) {
       steps.add(new CustomizeMacKeyboardLayoutStep());
     }
-    else {
-      CustomizeMacKeyboardLayoutStep.applySharedKeymap();
-    }
 
     if (CustomizeDesktopEntryStep.isAvailable()) {
       steps.add(new CustomizeDesktopEntryStep("/UbuntuDesktopEntry.png"));

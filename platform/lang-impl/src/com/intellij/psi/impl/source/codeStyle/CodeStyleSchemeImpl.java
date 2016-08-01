@@ -15,9 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
-import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -26,23 +27,23 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
+public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private SchemeDataHolder myDataHolder;
+  private SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
-    myName = name;
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
+    setName(name);
     myDataHolder = dataHolder;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
 
-  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme){
-    myName = name;
+  public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, CodeStyleScheme parentScheme) {
+    setName(name);
     myIsDefault = isDefault;
     init(parentScheme, null);
   }
@@ -71,10 +72,12 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
 
   @Override
   public CodeStyleSettings getCodeStyleSettings() {
-    if (myDataHolder != null) {
-      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myDataHolder.read());
-      myParentSchemeName = null;
+    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
+    if (dataHolder != null) {
       myDataHolder = null;
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      dataHolder.updateDigest(this);
+      myParentSchemeName = null;
     }
     return myCodeStyleSettings;
   }

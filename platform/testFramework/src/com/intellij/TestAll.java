@@ -61,7 +61,7 @@ public class TestAll implements Test {
   private static final int CHECK_MEMORY = 8;
   private static final int FILTER_CLASSES = 16;
 
-  public static int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
+  private static final int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
 
   private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
   private static final boolean INCLUDE_PERFORMANCE_TESTS = System.getProperty(TestCaseLoader.INCLUDE_PERFORMANCE_TESTS_FLAG) != null;
@@ -106,7 +106,7 @@ public class TestAll implements Test {
   private int myLastTestTestMethodCount;
   private TestRecorder myTestRecorder;
   
-  private static List<Throwable> outClassLoadingProblems = new ArrayList<Throwable>();
+  private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
 
   public TestAll(String packageRoot) throws Throwable {
     this(packageRoot, getClassRoots());
@@ -176,7 +176,7 @@ public class TestAll implements Test {
   }
 
   private static Set<String> normalizePaths(String[] array) {
-    Set<String> answer = new LinkedHashSet<String>(array.length);
+    Set<String> answer = new LinkedHashSet<>(array.length);
     for (String path : array) {
       answer.add(path.replace('\\', '/'));
     }
@@ -326,7 +326,7 @@ public class TestAll implements Test {
     tryGc(10);
   }
 
-  private TestListener loadDiscoveryListener() {
+  private static TestListener loadDiscoveryListener() {
     final String discoveryListener = System.getProperty("test.discovery.listener");
     if (discoveryListener != null) {
       try {
@@ -434,7 +434,7 @@ public class TestAll implements Test {
   private static boolean possibleOutOfMemory(int neededMemory) {
     Runtime runtime = Runtime.getRuntime();
     long maxMemory = runtime.maxMemory();
-    long realFreeMemory = runtime.freeMemory() + (maxMemory - runtime.totalMemory());
+    long realFreeMemory = runtime.freeMemory() + maxMemory - runtime.totalMemory();
     long meg = 1024 * 1024;
     long needed = neededMemory * meg;
     return realFreeMemory < needed;
@@ -466,7 +466,7 @@ public class TestAll implements Test {
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        boolean runEverything = isIncludingPerformanceTestsRun() || (isPerformanceTest(testCaseClass) && isPerformanceTestsRun());
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest(testCaseClass) && isPerformanceTestsRun();
         if (!runEverything) {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
@@ -573,7 +573,7 @@ public class TestAll implements Test {
   private static class ExplodedBomb extends TestCase {
     private final Bombed myBombed;
 
-    public ExplodedBomb(String testName, Bombed bombed) {
+    public ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
       super(testName);
       myBombed = bombed;
     }

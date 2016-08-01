@@ -58,12 +58,13 @@ class Null:
 # BaseStdIn
 #=======================================================================================================================
 class BaseStdIn:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, original_stdin=sys.stdin, *args, **kwargs):
         try:
             self.encoding = sys.stdin.encoding
         except:
             #Not sure if it's available in all Python versions...
             pass
+        self.original_stdin = original_stdin
 
     def readline(self, *args, **kwargs):
         #sys.stderr.write('Cannot readline out of the console evaluation\n') -- don't show anything
@@ -87,6 +88,12 @@ class BaseStdIn:
     def close(self, *args, **kwargs):
         pass #expected in StdIn
 
+    def __getattr__(self, item):
+        # it's called if the attribute wasn't found
+        if hasattr(self.original_stdin, item):
+            return getattr(self.original_stdin, item)
+        raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
+
 
 #=======================================================================================================================
 # StdIn
@@ -96,8 +103,8 @@ class StdIn(BaseStdIn):
         Object to be added to stdin (to emulate it as non-blocking while the next line arrives)
     '''
 
-    def __init__(self, interpreter, host, client_port):
-        BaseStdIn.__init__(self)
+    def __init__(self, interpreter, host, client_port, original_stdin=sys.stdin):
+        BaseStdIn.__init__(self, original_stdin)
         self.interpreter = interpreter
         self.client_port = client_port
         self.host = host
@@ -123,9 +130,8 @@ class DebugConsoleStdIn(BaseStdIn):
     '''
 
     def __init__(self, dbg, original_stdin):
-        BaseStdIn.__init__(self)
+        BaseStdIn.__init__(self, original_stdin)
         self.debugger = dbg
-        self.original_stdin = original_stdin
 
     def readline(self, *args, **kwargs):
         # Notify Java side about input and call original function
@@ -191,7 +197,7 @@ class BaseInterpreterInterface:
 
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
-            return StdIn(self, self.host, self.client_port)
+            return StdIn(self, self.host, self.client_port, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 

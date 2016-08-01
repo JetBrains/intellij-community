@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
@@ -9,22 +10,34 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
+import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +47,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -175,5 +189,73 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
       }
       return true;
     };
+  }
+
+  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {
+    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
+    final String baseSdk = getBaseSdk(project);
+
+    if (baseSdk != null) {
+      final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
+      try {
+        final String path = packageManager.createVirtualEnv(project.getBasePath() + "/.idea/VirtualEnvironment", false);
+        AbstractCreateVirtualEnvDialog.setupVirtualEnvSdk(path, true, new AbstractCreateVirtualEnvDialog.VirtualEnvCallback() {
+          @Override
+          public void virtualEnvCreated(Sdk createdSdk, boolean associateWithProject) {
+            settings.setSdk(createdSdk);
+            model.addSdk(createdSdk);
+            try {
+              model.apply();
+            }
+            catch (ConfigurationException exception) {
+              LOG.error("Error adding created virtual env " + exception.getMessage());
+            }
+            if (associateWithProject) {
+              SdkAdditionalData additionalData = createdSdk.getSdkAdditionalData();
+              if (additionalData == null) {
+                additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(createdSdk.getHomePath()));
+                ((ProjectJdkImpl)createdSdk).setSdkAdditionalData(additionalData);
+              }
+              ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
+            }
+          }
+        });
+      }
+      catch (ExecutionException e) {
+        LOG.warn("Failed to create virtual env " + e.getMessage());
+      }
+    }
+  }
+
+  private static String getBaseSdk(@NotNull final Project project) {
+    final Course course = StudyTaskManager.getInstance(project).getCourse();
+    LanguageLevel baseLevel = LanguageLevel.PYTHON30;
+    if (course != null) {
+      final String version = course.getLanguageVersion();
+      if (PyStudyLanguageManager.PYTHON_2.equals(version)) {
+        baseLevel = LanguageLevel.PYTHON27;
+      }
+      else if (PyStudyLanguageManager.PYTHON_3.equals(version)) {
+        baseLevel = LanguageLevel.PYTHON31;
+      }
+      else if (version != null) {
+        baseLevel = LanguageLevel.fromPythonVersion(version);
+      }
+    }
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);
+    String baseSdk = null;
+    final Collection<String> baseSdks = flavor.suggestHomePaths();
+    for (String sdk : baseSdks) {
+      final String versionString = flavor.getVersionString(sdk);
+      final String prefix = flavor.getName() + " ";
+      if (versionString != null && versionString.startsWith(prefix)) {
+        final LanguageLevel level = LanguageLevel.fromPythonVersion(versionString.substring(prefix.length()));
+        if (level.isAtLeast(baseLevel)) {
+          baseSdk = sdk;
+          break;
+        }
+      }
+    }
+    return baseSdk != null ? baseSdk : baseSdks.iterator().next();
   }
 }

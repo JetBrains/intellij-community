@@ -5,10 +5,7 @@ import com.google.common.collect.Iterators;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLogHashMap;
-import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +15,7 @@ import java.util.stream.Collectors;
 public class RefsModel implements VcsLogRefs {
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
+  @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToHashes;
   @NotNull private final TIntObjectHashMap<VirtualFile> myRootsToHeadIndices;
 
@@ -25,6 +23,7 @@ public class RefsModel implements VcsLogRefs {
                    @NotNull final Set<Integer> heads,
                    @NotNull final VcsLogHashMap hashMap) {
     myRefs = refsByRoot;
+    myHashMap = hashMap;
 
     Iterable<VcsRef> allRefs = Iterables.concat(refsByRoot.values());
 
@@ -67,7 +66,7 @@ public class RefsModel implements VcsLogRefs {
   @NotNull
   public Collection<VcsRef> branchesToCommit(int index) {
     Collection<VcsRef> refs = refsToCommit(index);
-    return refs.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
+    return ContainerUtil.filter(refs, ref -> ref.getType().isBranch());
   }
 
   @NotNull
@@ -82,6 +81,10 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull
   @Override
+  public Collection<VcsRef> refsToCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
+    return refsToCommit(myHashMap.getCommitIndex(hash, root));
+  }
+
   public Collection<VcsRef> refsToCommit(int index) {
     if (myRefsToHashes.containsKey(index)) {
       return myRefsToHashes.get(index);
@@ -102,7 +105,7 @@ public class RefsModel implements VcsLogRefs {
       @Override
       public Iterator<VcsRef> iterator() {
         List<Iterator<VcsRef>> iterators = myRefs.values().stream().map(Set::iterator).collect(Collectors.toList());
-        return Iterators.concat(iterators.toArray(new Iterator[iterators.size()]));
+        return Iterators.concat(iterators.iterator());
       }
 
       @Override

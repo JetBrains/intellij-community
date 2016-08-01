@@ -32,6 +32,8 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyFileType
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author peter
  */
@@ -55,7 +57,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
                                          "#com.intellij.debugger.engine.DebugProcessImpl",
                                          "#com.intellij.debugger.engine.DebugProcessEvents",
                                          "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest");
@@ -232,7 +234,7 @@ def getFoo() { 13 }
 
   public void testClassOutOfSourceRoots() {
     def tempDir = new TempDirTestFixtureImpl()
-    edt {
+    runInEdtAndWait {
       tempDir.setUp()
       disposeOnTearDown({ tempDir.tearDown() } as Disposable)
       PsiTestUtil.addContentRoot(myModule, tempDir.getFile(''))
@@ -251,7 +253,7 @@ static def foo(def a) {
 """
 
 
-    edt {
+    runInEdtAndWait {
       myClass = tempDir.createFile("MyClass.groovy", mcText)
     }
 
@@ -271,7 +273,7 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
 
   public void "test groovy source named java in lib source"() {
     def tempDir = new TempDirTestFixtureImpl()
-    edt {
+    runInEdtAndWait {
       tempDir.setUp()
       disposeOnTearDown({ tempDir.tearDown() } as Disposable)
       tempDir.createFile("pkg/java.groovy", "class java {}")
@@ -345,7 +347,7 @@ println "hello"
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
     addGroovyLibrary(module2)
-    edt {
+    runInEdtAndWait {
       ModuleRootModificationUtil.addDependency(myModule, module1)
     }
 
@@ -515,7 +517,7 @@ public class Main {
 
   void addBreakpoint(String fileName, int line) {
     VirtualFile file = null
-    edt {
+    runInEdtAndWait {
       file = myFixture.tempDirFixture.getFile(fileName)
     }
     addBreakpoint(file, line)

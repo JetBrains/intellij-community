@@ -73,11 +73,6 @@ public class MethodEvaluator implements Evaluator {
   }
 
   @Override
-  public Modifier getModifier() {
-    return null;
-  }
-
-  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if(!context.getDebugProcess().isAttached()) return null;
     DebugProcessImpl debugProcess = context.getDebugProcess();

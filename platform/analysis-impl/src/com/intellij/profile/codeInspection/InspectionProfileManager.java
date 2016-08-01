@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,78 +15,45 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.profile.ApplicationProfileManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.ProfileEx;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.util.List;
+public interface InspectionProfileManager extends ProfileManager, SeverityProvider {
+  String INSPECTION_DIR = "inspection";
 
-/**
- * User: anna
- * Date: 29-Nov-2005
- */
-public abstract class InspectionProfileManager extends ApplicationProfileManager implements SeverityProvider {
-  @NonNls public static final String INSPECTION_DIR = "inspection";
-
-  private final List<ProfileChangeAdapter> myProfileChangeAdapters = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
-
-  public static InspectionProfileManager getInstance() {
+  @NotNull
+  static InspectionProfileManager getInstance() {
     return ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  public InspectionProfileManager() {
+  @NotNull
+  static InspectionProfileManager getInstance(@NotNull Project project) {
+    return InspectionProjectProfileManager.getInstance(project);
   }
 
-  protected abstract void initProfiles();
+  @Deprecated
+  @SuppressWarnings("unused")
+  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
-  public abstract Profile loadProfile(@NotNull String path) throws IOException, JDOMException;
+  @Deprecated
+  @SuppressWarnings("unused")
+  void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
-  @Override
-  public void addProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
-    myProfileChangeAdapters.add(listener);
-  }
+  void fireProfileChanged(@Nullable Profile profile);
 
-  @Override
-  public void addProfileChangeListener(@NotNull ProfileChangeAdapter listener, @NotNull Disposable parentDisposable) {
-    ContainerUtil.add(listener, myProfileChangeAdapters, parentDisposable);
-  }
+  void fireProfileChanged(@Nullable Profile oldProfile, @NotNull Profile profile);
 
-  @Override
-  public void removeProfileChangeListener(@NotNull final ProfileChangeAdapter listener) {
-    myProfileChangeAdapters.remove(listener);
-  }
+  void setRootProfile(@Nullable String name);
 
-  @Override
-  public void fireProfileChanged(final Profile profile) {
-    if (profile instanceof ProfileEx) {
-      ((ProfileEx)profile).profileChanged();
-    }
-    for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
-      adapter.profileChanged(profile);
-    }
-  }
-
-  @Override
-  public void fireProfileChanged(final Profile oldProfile, final Profile profile, final NamedScope scope) {
-    for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
-      adapter.profileActivated(oldProfile, profile);
-    }
-  }
-
-  @Override
-  public Profile getProfile(@NotNull final String name) {
-    return getProfile(name, true);
+  @SuppressWarnings("unused")
+  @NotNull
+  @Deprecated
+  default Profile getRootProfile() {
+    return getCurrentProfile();
   }
 }

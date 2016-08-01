@@ -1,8 +1,8 @@
 package com.jetbrains.edu.learning.actions;
 
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.StudyUtils;
-import icons.InteractiveLearningIcons;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,8 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
   public static final String SHORTCUT = "ctrl shift pressed COMMA";
 
   public StudyPrevWindowAction() {
-    super("Navigate to the Previous Answer Placeholder", "Navigate to the previous answer placeholder", InteractiveLearningIcons.Prev);
+    super("Navigate to the Previous Answer Placeholder", "Navigate to the previous answer placeholder",
+          AllIcons.Actions.Back);
   }
 
 

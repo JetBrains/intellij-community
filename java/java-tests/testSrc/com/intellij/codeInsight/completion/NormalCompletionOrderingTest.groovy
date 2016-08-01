@@ -781,4 +781,8 @@ class ContainerUtil extends ContainerUtilRt {
     assert (myFixture.lookupElements[0].psiElement as PsiMethod).containingClass.name == 'ContainerUtil'
   }
 
+  public void testPreferCatchAndFinallyAfterTry() {
+    checkPreferredItems 0, 'catch', 'finally'
+  }
+
 }

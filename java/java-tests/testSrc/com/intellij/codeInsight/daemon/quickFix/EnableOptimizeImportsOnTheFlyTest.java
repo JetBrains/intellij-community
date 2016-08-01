@@ -17,7 +17,7 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
   public void test() throws Exception { doAllTests(); }
 
   @Override
-  protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+  protected void doAction(@NotNull final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
     boolean old = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
 

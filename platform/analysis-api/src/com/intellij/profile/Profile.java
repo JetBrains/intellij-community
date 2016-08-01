@@ -16,6 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.options.Scheme;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Profile extends Comparable, Scheme {
   void copyFrom(@NotNull Profile profile);
 
-  void setLocal(boolean isLocal);
-
-  /**
-   * @deprecated Use !{@link #isProjectLevel()}
-   */
-  @Deprecated
-  boolean isLocal();
-
+  @Transient
   boolean isProjectLevel();
 
   void setProjectLevel(boolean isProjectLevel);

@@ -23,7 +23,7 @@ public class InlineSameParameterValueTest extends LightQuickFixParameterizedTest
   }
 
   @Override
-  protected void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+  protected void doAction(@NotNull final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
     throws Exception {
     final LocalQuickFix fix = (LocalQuickFix)new SameParameterValueInspection().getQuickFix(text);
     assert fix != null;

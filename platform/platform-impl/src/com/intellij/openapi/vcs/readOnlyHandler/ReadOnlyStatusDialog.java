@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
@@ -43,9 +44,9 @@ import java.util.List;
  */
 public class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground());
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
   private static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListSelectionForeground());
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(UIUtil::getListSelectionForeground));
 
   private JPanel myTopPanel;
   private JList myFileList;

@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,9 @@ public class JavaSharedImplUtil {
     if (modifierList != null) {
       PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length > 0) {
-        TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations);
+        TypeAnnotationProvider original =
+          modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
+        TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
         if (type instanceof PsiArrayType) {
           Stack<PsiArrayType> types = new Stack<PsiArrayType>();
           do {
@@ -196,10 +199,12 @@ public class JavaSharedImplUtil {
 
   private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
     private final PsiAnnotation[] myCandidates;
+    private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates) {
+    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates, TypeAnnotationProvider originalProvider) {
       myCandidates = candidates;
+      myOriginalProvider = originalProvider;
     }
 
     @NotNull
@@ -207,12 +212,15 @@ public class JavaSharedImplUtil {
     public PsiAnnotation[] getAnnotations() {
       PsiAnnotation[] result = myCache;
       if (result == null) {
-        List<PsiAnnotation> filtered = ContainerUtil.filter(myCandidates, new Condition<PsiAnnotation>() {
-          @Override
-          public boolean value(PsiAnnotation annotation) {
-            return AnnotationTargetUtil.isTypeAnnotation(annotation);
-          }
-        });
+        List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
+          .filter(new Condition<PsiAnnotation>() {
+            @Override
+            public boolean value(PsiAnnotation annotation) {
+              return AnnotationTargetUtil.isTypeAnnotation(annotation);
+            }
+          })
+          .append(myOriginalProvider.getAnnotations())
+          .toList();
         myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(new PsiAnnotation[filtered.size()]);
       }
       return result;

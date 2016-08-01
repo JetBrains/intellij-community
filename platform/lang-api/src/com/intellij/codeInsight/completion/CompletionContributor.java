@@ -18,13 +18,13 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -33,13 +33,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Completion FAQ:<p>
@@ -242,33 +240,15 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
-    return MyExtensionPointManager.INSTANCE.forKey(language);
+    return INSTANCE.forKey(language);
   }
 
-  private static class MyExtensionPointManager extends KeyedExtensionCollector<CompletionContributor, Language> {
-    public static final MyExtensionPointManager INSTANCE = new MyExtensionPointManager();
-
-    MyExtensionPointManager() {
-      super("com.intellij.completion.contributor");
-    }
-
+  private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtension<CompletionContributor>("com.intellij.completion.contributor") {
     @NotNull
     @Override
     protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      Set<String> allowed = new THashSet<String>();
-      while (key != null) {
-        allowed.add(keyToString(key));
-        key = key.getBaseLanguage();
-      }
-      allowed.add("any");
-      return buildExtensions(allowed);
+      return buildExtensions(getAllBaseLanguageIdsWithAny(key));
     }
-
-    @NotNull
-    @Override
-    protected String keyToString(@NotNull Language key) {
-      return key.getID();
-    }
-  }
+  };
 
 }

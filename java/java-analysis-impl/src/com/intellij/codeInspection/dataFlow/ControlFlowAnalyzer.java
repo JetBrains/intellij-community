@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1041,9 +1042,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         ((PsiResourceExpression)resource).getExpression().accept(this);
       }
 
-      PsiMethod closer = PsiUtil.getResourceCloserMethod(resource);
-      if (closer != null) {
-        addMethodThrows(closer, null);
+      final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
+      if (!closerExceptions.isEmpty()) {
+        addThrows(null, findNextCatch(false), closerExceptions.toArray(new PsiClassType[closerExceptions.size()]));
       }
     }
   }
@@ -1411,15 +1412,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     CatchDescriptor cd = findNextCatch(false);
     if (method != null) {
       PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
-      for (PsiClassType ref : refs) {
-        pushUnknown();
-        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
-        addInstruction(cond);
-        addInstruction(new EmptyStackInstruction());
-        initException(ref, cd);
-        addThrowCode(cd, explicitCall);
-        cond.setOffset(myCurrentFlow.getInstructionCount());
-      }
+      addThrows(explicitCall, cd, refs);
+    }
+  }
+
+  private void addThrows(@Nullable PsiElement explicitCall, CatchDescriptor cd, PsiClassType[] refs) {
+    for (PsiClassType ref : refs) {
+      pushUnknown();
+      ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
+      addInstruction(cond);
+      addInstruction(new EmptyStackInstruction());
+      initException(ref, cd);
+      addThrowCode(cd, explicitCall);
+      cond.setOffset(myCurrentFlow.getInstructionCount());
     }
   }
 

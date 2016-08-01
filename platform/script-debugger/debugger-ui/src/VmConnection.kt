@@ -39,7 +39,7 @@ abstract class VmConnection<T : Vm> : Disposable {
   private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
   private val connectionDispatcher = ContainerUtil.createLockFreeCopyOnWriteList<(ConnectionState) -> Unit>()
 
-  @Volatile final var vm: T? = null
+  @Volatile var vm: T? = null
     protected set
 
   private val opened = AsyncPromise<Any?>()

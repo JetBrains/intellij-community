@@ -36,6 +36,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class DefaultXmlExtension extends XmlExtension {
+  public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
   @Override
   public boolean isAvailable(final PsiFile file) {

@@ -60,9 +60,9 @@
     <action id="NextWindow" class="com.jetbrains.edu.learning.actions.StudyNextWindowAction" text="Next Answer Placeholder"
             description="Navigate to the next answer holder">
     </action>
-    <action id="PreviousTaskAction" class="com.jetbrains.edu.learning.actions.StudyPreviousStudyTaskAction" text="Previous Task"
+    <action id="PreviousTaskAction" class="com.jetbrains.edu.learning.actions.StudyPreviousTaskAction" text="Previous Task"
             description="Navigate to the previous task"/>
-    <action id="NextTaskAction" class="com.jetbrains.edu.learning.actions.StudyNextStudyTaskAction" text="Next Task"
+    <action id="NextTaskAction" class="com.jetbrains.edu.learning.actions.StudyNextTaskAction" text="Next Task"
             description="Navigate to the next task"/>
     <action id="RefreshTaskAction" class="com.jetbrains.edu.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
             description="Refresh current task"/>

@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
+import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
@@ -53,9 +54,13 @@ abstract class BuildTasks {
    */
   abstract void buildDistributions()
 
+  abstract void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins)
+
   abstract void cleanOutput()
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
+
+  abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
 
   public static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)

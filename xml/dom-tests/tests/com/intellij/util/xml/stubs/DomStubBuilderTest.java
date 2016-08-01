@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class DomStubBuilderTest extends DomStubTest {
     DomExtenderEP ep = new DomExtenderEP();
     ep.domClassName = Bar.class.getName();
     ep.extenderClassName = TestExtender.class.getName();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, ep, myTestRootDisposable);
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, ep, getTestRootDisposable());
 
     doBuilderTest("extender.xml", "File:foo\n" +
                                   "  Element:foo\n" +

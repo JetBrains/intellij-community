@@ -21,10 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -410,6 +412,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiStatement exitedStatement = statement.findExitedStatement();
     if (exitedStatement != null) {
+      callFinallyBlocksOnExit(exitedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, exitedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -426,6 +430,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addElementOffsetLater(exitedStatement, false);
     }
     finishElement(statement);
+  }
+
+  private void callFinallyBlocksOnExit(PsiStatement exitedStatement) {
+    for (final ListIterator<PsiElement> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
+      final PsiElement finallyBlock = it.previous();
+      final PsiElement enclosingTryStatement = finallyBlock.getParent();
+      if (enclosingTryStatement == null || !PsiTreeUtil.isAncestor(exitedStatement, enclosingTryStatement, false)) {
+        break;
+      }
+      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      addElementOffsetLater(finallyBlock, true);
+    }
   }
 
   private PsiElement findEnclosingFinallyBlockElement(@NotNull PsiElement sourceElement, @Nullable PsiElement jumpElement) {
@@ -449,21 +465,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement != null) {
       PsiElement body = null;
-      if (continuedStatement instanceof PsiForStatement) {
-        body = ((PsiForStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        body = ((PsiWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        body = ((PsiDoWhileStatement)continuedStatement).getBody();
-      }
-      else if (continuedStatement instanceof PsiForeachStatement) {
-        body = ((PsiForeachStatement)continuedStatement).getBody();
+      if (continuedStatement instanceof PsiLoopStatement) {
+        body = ((PsiLoopStatement)continuedStatement).getBody();
       }
       if (body == null) {
         body = myCodeFragment;
       }
+      callFinallyBlocksOnExit(continuedStatement);
+
       final Instruction instruction;
       final PsiElement finallyBlock = findEnclosingFinallyBlockElement(statement, continuedStatement);
       final int finallyStartOffset = finallyBlock == null ? -1 : myCurrentFlow.getStartOffset(finallyBlock);
@@ -971,7 +980,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       PsiType catchType = parameter.getType();
-      if (catchType.isAssignableFrom(throwType) || throwType.isAssignableFrom(catchType)) {
+      if (catchType.isAssignableFrom(throwType) || mightBeAssignableFromSubclass(throwType, catchType)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }
@@ -982,9 +991,27 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return blocks;
   }
 
+  private static boolean mightBeAssignableFromSubclass(@NotNull final PsiClassType throwType, @NotNull PsiType catchType) {
+    if (catchType instanceof PsiDisjunctionType) {
+      return ContainerUtil.exists(((PsiDisjunctionType)catchType).getDisjunctions(), new Condition<PsiType>() {
+        @Override
+        public boolean value(PsiType catchDisjunction) {
+          return throwType.isAssignableFrom(catchDisjunction);
+        }
+      });
+    }
+    return throwType.isAssignableFrom(catchType);
+  }
+
   @Override
   public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
+
+    myStartStatementStack.pushStatement(statement, false);
+    myEndStatementStack.pushStatement(statement, false);
+    Instruction passByWhenAssertionsDisabled = new ConditionalGoToInstruction(0, BranchingInstruction.Role.END, null);
+    myCurrentFlow.addInstruction(passByWhenAssertionsDisabled);
+    addElementOffsetLater(statement, false);
 
     // should not try to compute constant expression within assert
     // since assertions can be disabled/enabled at any moment via JVM flags
@@ -1013,6 +1040,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     Instruction instruction = new ConditionalThrowToInstruction(0, statement.getAssertCondition());
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(myCodeFragment, false);
+
+    myStartStatementStack.popStatement();
+    myEndStatementStack.popStatement();
 
     finishElement(statement);
   }
@@ -1298,9 +1328,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
-      if (rExpr != null) {
-        rExpr.accept(this);
-      }
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
       if (variable != null) {
         if (myAssignmentTargetsAreElements) {
@@ -1315,11 +1342,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if (expression.getOperationTokenType() != JavaTokenType.EQ) {
           generateReadInstruction(variable);
         }
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         generateWriteInstruction(variable);
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
       else {
+        if (rExpr != null) {
+          rExpr.accept(this);
+        }
         lExpr.accept(this); //?
       }
     }

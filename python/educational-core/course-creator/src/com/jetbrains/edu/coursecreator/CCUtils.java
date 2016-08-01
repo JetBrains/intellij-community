@@ -4,10 +4,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -17,14 +17,16 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,7 @@ public class CCUtils {
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
-    Language language = Language.findLanguageByID(course.getLanguage());
+    Language language = Language.findLanguageByID(course.getLanguageID());
     return language == null ? null : CCLanguageManager.INSTANCE.forLanguage(language);
   }
 
@@ -213,30 +215,42 @@ public class CCUtils {
   }
 
 
-  public static void createResources(Project project, Task task, VirtualFile taskDir) {
-    Map<String, TaskFile> files = task.getTaskFiles();
-    for (Map.Entry<String, TaskFile> entry : files.entrySet()) {
-      String name = entry.getKey();
-      VirtualFile child = taskDir.findChild(name);
-      if (child == null) {
-        continue;
-      }
-      Document patternDocument = StudyUtils.getPatternDocument(entry.getValue(), name);
-      Document document = FileDocumentManager.getInstance().getDocument(child);
-      if (document == null || patternDocument == null) {
-        LOG.info("pattern file for " +  child.getPath() + " not found");
-        continue;
-      }
-      DocumentUtil.writeInRunUndoTransparentAction(() -> {
-        patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
-        FileDocumentManager.getInstance().saveDocument(patternDocument);
-      });
-      TaskFile target = new TaskFile();
-      TaskFile.copy(entry.getValue(), target);
-      for (AnswerPlaceholder placeholder : target.getAnswerPlaceholders()) {
-        placeholder.setUseLength(false);
-      }
-      EduUtils.createStudentDocument(project, target, child, patternDocument);
+  public static void updateResources(Project project, Task task, VirtualFile taskDir) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
     }
+    VirtualFile lessonVF = taskDir.getParent();
+    if (lessonVF == null) {
+      return;
+    }
+
+    String taskResourcesPath = FileUtil.join(course.getCourseDirectory(), lessonVF.getName(), taskDir.getName());
+    File taskResourceFile = new File(taskResourcesPath);
+    if (!taskResourceFile.exists()) {
+      if (!taskResourceFile.mkdirs()) {
+        LOG.info("Failed to create resources for task " + taskResourcesPath);
+      }
+    }
+    VirtualFile studentDir = LocalFileSystem.getInstance().findFileByIoFile(taskResourceFile);
+    if (studentDir == null) {
+      return;
+    }
+    for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
+      String name = entry.getKey();
+      VirtualFile answerFile = taskDir.findChild(name);
+      if (answerFile == null) {
+        continue;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null);
+      });
+    }
+  }
+
+  public static void updateActionGroup(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
+    presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
   }
 }

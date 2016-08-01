@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -180,25 +179,22 @@ public class CompilerTester {
     semaphore.down();
 
     final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        refreshVfs(getProject().getProjectFilePath());
-        for (Module module : myModules) {
-          refreshVfs(module.getModuleFilePath());
-        }
-
-        PlatformTestUtil.saveProject(getProject());
-        CompilerTestUtil.saveApplicationSettings();
-        for (Module module : myModules) {
-          File ioFile = new File(module.getModuleFilePath());
-          if (!ioFile.exists()) {
-            getProject().save();
-            assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
-          }
-        }
-        runnable.consume(callback);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      refreshVfs(getProject().getProjectFilePath());
+      for (Module module : myModules) {
+        refreshVfs(module.getModuleFilePath());
       }
+
+      PlatformTestUtil.saveProject(getProject());
+      CompilerTestUtil.saveApplicationSettings();
+      for (Module module : myModules) {
+        File ioFile = new File(module.getModuleFilePath());
+        if (!ioFile.exists()) {
+          getProject().save();
+          assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
+        }
+      }
+      runnable.consume(callback);
     });
 
     //tests run in awt
@@ -223,7 +219,7 @@ public class CompilerTester {
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
-    private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
+    private final List<CompilerMessage> myMessages = new ArrayList<>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;

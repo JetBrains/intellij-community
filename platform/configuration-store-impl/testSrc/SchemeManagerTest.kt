@@ -17,7 +17,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -26,9 +26,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
-import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.serialize
 import com.intellij.util.xmlb.toByteArray
 import gnu.trove.THashMap
@@ -70,7 +68,7 @@ internal class SchemeManagerTest {
 
   @Test fun deleteScheme() {
     val manager = createAndLoad("options1")
-    manager.removeScheme(TestScheme("first"))
+    manager.removeScheme("first")
     manager.save()
 
     checkSchemes("2->second")
@@ -153,10 +151,10 @@ internal class SchemeManagerTest {
     scheme.save(dir.resolve("1.icls"))
     TestScheme("local", "false").save(dir.resolve("1.xml"))
 
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, object: TestSchemesProcessor() {
-      override fun isUpgradeNeeded() = true
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, object: TestSchemesProcessor() {
+      override val isUpgradeNeeded = true
 
-      override fun getSchemeExtension() = ".icls"
+      override val schemeExtension = ".icls"
     }, null, dir)
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(scheme)
@@ -203,9 +201,8 @@ internal class SchemeManagerTest {
     val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/bundledSchemes/default"
     schemeManager.loadBundledScheme(bundledPath, this, converter)
-    var schemes = schemeManager.allSchemes
     val customScheme = TestScheme("default")
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
     schemeManager.save()
     assertThat(dir).doesNotExist()
@@ -214,8 +211,7 @@ internal class SchemeManagerTest {
     schemeManager.setSchemes(listOf(customScheme))
     assertThat(dir).doesNotExist()
 
-    schemes = schemeManager.allSchemes
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
     customScheme.data = "foo"
     schemeManager.save()
@@ -225,8 +221,7 @@ internal class SchemeManagerTest {
     schemeManager.loadBundledScheme(bundledPath, this, converter)
     schemeManager.loadSchemes()
 
-    schemes = schemeManager.allSchemes
-    assertThat(schemes).containsOnly(customScheme)
+    assertThat(schemeManager.allSchemes).containsOnly(customScheme)
   }
 
   @Test fun `don't remove dir if no schemes but at least one non-hidden file exists`() {
@@ -297,14 +292,14 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy({ SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
-    assertThatThrownBy({SchemesManagerFactory.getInstance().create<TestScheme, TestScheme>("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -324,7 +319,7 @@ internal class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl<TestScheme, TestScheme>(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!.toFile()), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
@@ -368,16 +363,16 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:Attribute private var name: String = "", @field:Attribute var data: String? = null) : ExternalizableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
   override fun getName() = name
 
-  override @Transient fun setName(newName: String) {
-    name = newName
+  override fun setName(value: String) {
+    name = value
   }
 }
 
-open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme>() {
-  override fun readScheme(element: Element) = XmlSerializer.deserialize(element, TestScheme::class.java)
+open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme, TestScheme>() {
+  override fun readScheme(element: Element, duringLoad: Boolean) = XmlSerializer.deserialize(element, TestScheme::class.java)
 
   override fun writeScheme(scheme: TestScheme) = scheme.serialize()
 }

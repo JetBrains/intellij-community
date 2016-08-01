@@ -69,7 +69,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     AbstractCustomizeWizardStep.applyHeaderFooterStyle(myHeaderLabel);
     AbstractCustomizeWizardStep.applyHeaderFooterStyle(myFooterLabel);
     init();
-    skipFirstShowing();
     initCurrentStep(true);
     setSize(400, 300);
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
@@ -174,16 +173,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       }
     }
     super.doOKAction();
-  }
-
-  private void skipFirstShowing() {
-    myIndex = 0;
-    for (AbstractCustomizeWizardStep step : mySteps) {
-      if (!step.skipFirstShowing()) {
-        myIndex = mySteps.indexOf(step);
-        return;
-      }
-    }
   }
 
   private void initCurrentStep(boolean forward) {

@@ -29,12 +29,9 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -50,8 +47,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode {
   public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
@@ -165,9 +164,11 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
 
     toAddInResourceBundle.addAll(resourceBundle.getPropertiesFiles());
     final String baseName = resourceBundle.getBaseName();
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(getProject());
+    fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
     resourceBundleManager.dissociateResourceBundle(resourceBundle);
-    resourceBundleManager.combineToResourceBundle(toAddInResourceBundle, baseName);
-
+    final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
+    FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
     ProjectView.getInstance(myProject).refresh();
   }
 

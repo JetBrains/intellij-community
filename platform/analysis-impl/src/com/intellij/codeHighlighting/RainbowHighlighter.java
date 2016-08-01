@@ -18,70 +18,96 @@ package com.intellij.codeHighlighting;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class RainbowHighlighter {
-  private final float[] myFloats;
+  private final static int[] RAINBOW_COLORS_DEFAULT = {0x9b3b6a, 0x114d77, 0xbc8650, 0x005910, 0xbc5150};
+  private final static int[] RAINBOW_COLORS_DARK = {0x529d52, 0xbe7070, 0x3d7676, 0xbe9970, 0x9d527c};
+  private final static int RAINBOW_COLORS_BETWEEN = 4;
+  private final static List<TextAttributesKey> RAINBOW_COLOR_KEYS = new ArrayList<TextAttributesKey>(RAINBOW_COLORS_DEFAULT.length);
+  private final static String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
+
   @NotNull private final TextAttributesScheme myColorsScheme;
+  @NotNull private final List<Color> myRainbowColors;
 
   public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = myColorsScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT);
-    Color foregroundColor = attributes.getForegroundColor();
-    float[] components = foregroundColor.getRGBColorComponents(null);
-    myFloats = Color.RGBtoHSB((int)(255 * components[0]), (int)(255 * components[0]), (int)(255 * components[0]), null);
+    myRainbowColors = generateColorSequence(myColorsScheme);
   }
 
-  public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
+  public static final HighlightInfoType RAINBOW_ELEMENT =
+    new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
 
   public static boolean isRainbowEnabled() {
     return Registry.is("editor.rainbow.identifiers", false);
   }
 
   @NotNull
-  public TextAttributes getAttributes(@NotNull String name, @NotNull TextAttributes origin) {
-    final Color fg = calculateForeground(name);
-    return TextAttributes.fromFlyweight(origin.getFlyweight().withForeground(fg));
+  public Color calculateForeground(int colorIndex) {
+    return myRainbowColors.get(Math.abs(colorIndex) % myRainbowColors.size());
   }
 
-  @NotNull
-  protected Color calculateForeground(@NotNull String name) {
-    int hash = StringHash.murmur(name, 0);
-    final List<String> registryColors = StringUtil.split(Registry.get("rainbow.highlighter.colors").asString(), ",");
+  public int getColorsCount() {
+    return myRainbowColors.size();
+  }
+
+  private static List<Color> generateColorSequence(@NotNull TextAttributesScheme colorsScheme) {
+    String colorDump = ApplicationManager.getApplication().isUnitTestMode()
+                       ? UNIT_TEST_COLORS
+                       : Registry.get("rainbow.highlighter.colors").asString();
+
+    final List<String> registryColors = StringUtil.split(colorDump, ",");
     if (!registryColors.isEmpty()) {
-      final List<Color> colors = registryColors.stream().map((s -> ColorUtil.fromHex(s.trim()))).collect(Collectors.toList());
-      if (!colors.isEmpty()) {
-        return colors.get(hash % colors.size());
-      }
+      return registryColors.stream().map(s -> ColorUtil.fromHex(s.trim())).collect(Collectors.toList());
     }
 
-    final float colors = 36.0f;
-    final float v = Math.round(Math.abs(colors * hash) / Integer.MAX_VALUE) / colors;
-    return Color.getHSBColor(v, 0.7f, myFloats[2] + .3f);
+    if (RAINBOW_COLOR_KEYS.isEmpty()) {
+      for (int i = 0; i < RAINBOW_COLORS_DEFAULT.length; ++i) {
+        RAINBOW_COLOR_KEYS.add(TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i,
+                                                                         new TextAttributes(
+                                                                           new JBColor(RAINBOW_COLORS_DEFAULT[i],
+                                                                                       RAINBOW_COLORS_DARK[i]),
+                                                                           null, null, null, Font.PLAIN)));
+      }
+    }
+    return ColorGenerator.generateLinearColorSequence(RAINBOW_COLOR_KEYS
+                                                        .stream()
+                                                        .map(key -> colorsScheme.getAttributes(key).getForegroundColor())
+                                                        .collect(Collectors.toList()),
+                                                      RAINBOW_COLORS_BETWEEN);
   }
 
-  public HighlightInfo getInfo(@Nullable String nameKey, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
-    if (id == null || nameKey == null || StringUtil.isEmpty(nameKey)) return null;
-    if (colorKey == null) colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
-    final TextAttributes attributes = getAttributes(nameKey, myColorsScheme.getAttributes(colorKey));
+  public HighlightInfo getInfo(int colorIndex, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
+    if (id == null) {
+      return null;
+    }
+    if (colorKey == null) {
+      colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
+    }
     return HighlightInfo
       .newHighlightInfo(RAINBOW_ELEMENT)
-      .textAttributes(attributes)
+      .textAttributes(TextAttributes
+                        .fromFlyweight(myColorsScheme
+                                         .getAttributes(colorKey)
+                                         .getFlyweight()
+                                         .withForeground(calculateForeground(colorIndex))))
       .range(id)
       .create();
   }

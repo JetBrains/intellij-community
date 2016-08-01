@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.sun.jdi.*;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,36 +43,14 @@ public class BoxingEvaluator implements Evaluator{
       return result;
     }
 
-    if (result instanceof BooleanValue) {
-      return convertToWrapper(context, (BooleanValue)result, CommonClassNames.JAVA_LANG_BOOLEAN);
-    }
-    if (result instanceof ByteValue) {
-      return convertToWrapper(context, (ByteValue)result, CommonClassNames.JAVA_LANG_BYTE);
-    }
-    if (result instanceof CharValue) {
-      return convertToWrapper(context, (CharValue)result, CommonClassNames.JAVA_LANG_CHARACTER);
-    }
-    if (result instanceof ShortValue) {
-      return convertToWrapper(context, (ShortValue)result, CommonClassNames.JAVA_LANG_SHORT);
-    }
-    if (result instanceof IntegerValue) {
-      return convertToWrapper(context, (IntegerValue)result, CommonClassNames.JAVA_LANG_INTEGER);
-    }
-    if (result instanceof LongValue) {
-      return convertToWrapper(context, (LongValue)result, CommonClassNames.JAVA_LANG_LONG);
-    }
-    if (result instanceof FloatValue) {
-      return convertToWrapper(context, (FloatValue)result, CommonClassNames.JAVA_LANG_FLOAT);
-    }
-    if (result instanceof DoubleValue) {
-      return convertToWrapper(context, (DoubleValue)result, CommonClassNames.JAVA_LANG_DOUBLE);
+    if (result instanceof PrimitiveValue) {
+      PrimitiveValue primitiveValue = (PrimitiveValue)result;
+      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
+      if (primitiveType != null) {
+        return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());
+      }
     }
     throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
-  }
-
-  @Nullable
-  public Modifier getModifier() {
-    return null;
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws

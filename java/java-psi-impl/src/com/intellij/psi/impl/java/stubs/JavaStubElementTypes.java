@@ -30,6 +30,8 @@ public interface JavaStubElementTypes {
   JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
   JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
   JavaLiteralExpressionElementType LITERAL_EXPRESSION = new JavaLiteralExpressionElementType();
+  LambdaExpressionElementType LAMBDA_EXPRESSION = new LambdaExpressionElementType();
+  MethodReferenceElementType METHOD_REFERENCE = new MethodReferenceElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();

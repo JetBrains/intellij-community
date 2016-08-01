@@ -16,7 +16,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -36,8 +35,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
-  private static final Logger LOG = Logger.getInstance(ContainerUtil.class);
-
   private static final int INSERTION_SORT_THRESHOLD = 10;
   private static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(16, Runtime.getRuntime().availableProcessors());
 
@@ -384,12 +381,14 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newConcurrentSet() {
+    //noinspection deprecation
     return new ConcurrentHashSet<T>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newConcurrentSet(@NotNull TObjectHashingStrategy<T> hashStrategy) {
+    //noinspection deprecation
     return new ConcurrentHashSet<T>(hashStrategy);
   }
 
@@ -1065,6 +1064,9 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> T[] findAllAsArray(@NotNull T[] collection, @NotNull Condition<? super T> instanceOf) {
     List<T> list = findAll(collection, instanceOf);
+    if (list.size() == collection.length) {
+      return collection;
+    }
     @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(collection.getClass().getComponentType(), list.size());
     return list.toArray(array);
   }
@@ -1314,8 +1316,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
     //noinspection unchecked
-    U u = (U)find(iterator, FilteringIterator.instanceOf(aClass));
-    return u;
+    return (U)find(iterator, FilteringIterator.instanceOf(aClass));
   }
 
   @Nullable
@@ -2211,7 +2212,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> singleton(final T o, @NotNull final TObjectHashingStrategy<T> strategy) {
-    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<T>(o) : SingletonSet.<T>withCustomStrategy(o, strategy);
+    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<T>(o) : SingletonSet.withCustomStrategy(o, strategy);
   }
 
   /**
@@ -2284,7 +2285,6 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<K,V> fun) {
     if (to.length < from.length) {
       @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
@@ -2603,7 +2603,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @see {@link #createLockFreeCopyOnWriteList()}
+   * @see #createLockFreeCopyOnWriteList()
    */
   @NotNull
   @Contract(pure=true)
@@ -2757,30 +2757,35 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap() {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>();
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(@NotNull TObjectHashingStrategy<T> hashStrategy) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(hashStrategy);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity, loadFactor, concurrencyLevel);
     }
 
     @Override
     @NotNull
     public <T, V> ConcurrentMap<T, V> createMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<T> hashingStrategy) {
+      //noinspection deprecation
       return new ConcurrentHashMap<T,V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
     }
   };

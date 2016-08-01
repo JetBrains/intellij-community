@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -91,8 +92,12 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   @NotNull
-  protected final Disposable myTestRootDisposable = new Disposable() {
+  private final Disposable myTestRootDisposable = new Disposable() {
     @Override
     public void dispose() { }
 
@@ -152,7 +157,7 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(myTestRootDisposable);
+      Disposer.dispose(getTestRootDisposable());
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
@@ -323,17 +328,21 @@ public abstract class UsefulTestCase extends TestCase {
 
     Runnable runnable = () -> {
       try {
-        UsefulTestCase.super.runTest();
+        super.runTest();
+        TestLoggerFactory.onTestFinished(true);
       }
       catch (InvocationTargetException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e.getTargetException();
       }
       catch (IllegalAccessException e) {
+        TestLoggerFactory.onTestFinished(false);
         e.fillInStackTrace();
         throwables[0] = e;
       }
       catch (Throwable e) {
+        TestLoggerFactory.onTestFinished(false);
         throwables[0] = e;
       }
     };
@@ -349,12 +358,11 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(@NotNull Runnable r) {
-    EdtTestUtil.runInEdtAndWait(r);
-  }
-
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    EdtTestUtil.runInEdtAndWait(runnable);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -420,7 +428,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (runInDispatchThread()) {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
     }
     else {
       defaultRunBare();
@@ -570,12 +578,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @NotNull
   public static String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.map2List(collection, new Function<Object, String>() {
-      @Override
-      public String fun(final Object o) {
-        return String.valueOf(o);
-      }
-    });
+    List<String> list = ContainerUtil.map2List(collection, String::valueOf);
     Collections.sort(list);
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
@@ -724,7 +727,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
-    Disposer.register(myTestRootDisposable, disposable);
+    Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
 

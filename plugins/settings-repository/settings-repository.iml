@@ -36,15 +36,15 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jackson-annotations-2.7.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/jackson-core-2.7.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/jackson-databind-2.7.1-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-annotations-2.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-core-2.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-databind-2.8.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jackson-annotations-2.7.1-sources.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/jackson-core-2.7.1-sources.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/jackson-databind-2.7.1-1-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-annotations-2.8.1-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-core-2.8.1-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jackson-databind-2.8.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

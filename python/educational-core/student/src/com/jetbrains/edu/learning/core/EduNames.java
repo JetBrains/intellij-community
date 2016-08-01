@@ -47,8 +47,8 @@ public class EduNames {
   public static final String ADAPTIVE = "Adaptive";
 
   public static final String ANSWER_PLACEHOLDER = "Answer Placeholder";
-  public static final String PLACEHOLDER = "placeholder";
   public static final String SRC = "src";
+
   private EduNames() {
   }
 

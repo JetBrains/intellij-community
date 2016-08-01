@@ -2,6 +2,7 @@ package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -9,11 +10,13 @@ import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
+import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +31,60 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
+  }
+
+  // Import error should lead to test failure
+  @Test
+  public void testFailInCaseOfError() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/failTest", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(".", 0);
+      }
+
+
+      @Override
+      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all) {
+        Assert.assertThat("Import error is not marked as error", runner.getFailedTestsCount(), Matchers.equalTo(1));
+      }
+    });
+  }
+
+  /**
+   * Ensure project dir is used as curdir even if not set explicitly
+   */
+  @Test
+  public void testCurrentDir() throws Exception {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyTestRunConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setWorkingDirectory(null);
+            final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
+            assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
+            configuration.setTestToRun(fullFilePath.getPath());
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("No directory found in output", stdout,
+                          Matchers.containsString(String.format("Directory %s", myFixture.getTempDirPath())));
+      }
+    });
   }
 
   @Test

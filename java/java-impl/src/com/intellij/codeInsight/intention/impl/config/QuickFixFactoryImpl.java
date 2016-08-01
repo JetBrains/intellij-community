@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -654,7 +654,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
     Project myProject = parameter.getProject();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     UnusedParametersInspection unusedParametersInspection =
       (UnusedParametersInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
@@ -778,8 +778,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return WrapObjectWithOptionalOfNullableFix.createFix(type, expression);
   }
 
+  @Nullable
   @Override
-  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
+  public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiForeachStatement) {
       final PsiType type = expression.getType();
@@ -788,6 +789,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+    return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +77,12 @@ public abstract class DiffContentFactory {
 
   @Nullable
   public abstract FileContent createFile(@Nullable Project project, @NotNull VirtualFile file);
+
+  @NotNull
+  public abstract DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range);
+
+  @NotNull
+  public abstract DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range);
 
   @NotNull
   public abstract DiffContent createClipboardContent();

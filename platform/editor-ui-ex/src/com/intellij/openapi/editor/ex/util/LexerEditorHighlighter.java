@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -39,7 +38,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import com.intellij.util.text.ImmutableText;
+import com.intellij.util.text.MergingCharSequence;
+import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -368,6 +368,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return myHighlighter;
   }
 
+  @NotNull
   private TextAttributes getAttributes(IElementType tokenType) {
     TextAttributes attrs = myAttributesMap.get(tokenType);
     if (attrs == null) {
@@ -380,7 +381,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   // Called to determine visual attributes of inserted character prior to starting a write action.
   // TODO Should be removed when we implement typing without starting write actions.
-  public TextAttributes getAttributes(DocumentImpl document, int offset, char c) {
+  @NotNull
+  public TextAttributes getAttributesForTypedChar(@NotNull Document document, int offset, char c) {
     int startOffset = 0;
 
     if (mySegments.getSegmentCount() > 0) {
@@ -404,7 +406,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       startOffset = mySegments.getSegmentStart(startIndex);
     }
 
-    ImmutableText newText = document.getImmutableText().insert(offset, Character.toString(c));
+    CharSequence text = document.getImmutableCharSequence();
+    CharSequence newText = new MergingCharSequence(new MergingCharSequence(text.subSequence(0, offset), new SingleCharSequence(c)), text.subSequence(offset, text.length()));
 
     myLexer.start(newText, startOffset, newText.length(), myInitialState);
 
@@ -420,7 +423,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return getAttributes(tokenType);
   }
 
-  protected TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
+  @NotNull
+  TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
     TextAttributes attrs = new TextAttributes();
     for (TextAttributesKey key : keys) {
       TextAttributes attrs2 = myScheme.getAttributes(key);

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
 
-import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
@@ -167,8 +166,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
-                                                                                  APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
+    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END));
   }
 
   public boolean isQuickFixAppliedFromView() {

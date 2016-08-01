@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,10 +175,9 @@ public abstract class InspectionManagerBase extends InspectionManager {
 
   public String getCurrentProfile() {
     if (myCurrentProfileName == null) {
-      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
-      myCurrentProfileName = profileManager.getProjectProfile();
+      myCurrentProfileName = ProjectInspectionProfileManager.getInstanceImpl(getProject()).getProjectProfile();
       if (myCurrentProfileName == null) {
-        myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
+        myCurrentProfileName = InspectionProfileManager.getInstance().getCurrentProfile().getName();
       }
     }
     return myCurrentProfileName;

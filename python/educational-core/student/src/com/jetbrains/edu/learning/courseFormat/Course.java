@@ -4,12 +4,18 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Course {
@@ -19,7 +25,7 @@ public class Course {
   @Expose private String name;
   private String myCourseDirectory = "";
   @Expose private int id;
-  private boolean myUpToDate;
+  @SerializedName("update_date") private Date myUpdateDate;
   @Expose private boolean isAdaptive = false;
   @Expose @SerializedName("language") private String myLanguage = "Python";
 
@@ -69,6 +75,15 @@ public class Course {
     return null;
   }
 
+  public Lesson getLesson(int stepicId) {
+    for (Lesson lesson : lessons) {
+      if (lesson.getId() == stepicId) {
+        return lesson;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public List<StepicUser> getAuthors() {
     return authors;
@@ -78,12 +93,19 @@ public class Course {
     return StringUtil.join(authors, StepicUser::getName, ", ");
   }
 
-  public void setAuthors(String[] authors) {
+  @Transient
+  public void setAuthorsAsString(String[] authors) {
     this.authors = new ArrayList<StepicUser>();
     for (String name : authors) {
-      final List<String> pair = StringUtil.split(name, " ");
-      if (!pair.isEmpty())
-        this.authors.add(new StepicUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+      final List<String> firstLast = StringUtil.split(name, " ");
+      if (!firstLast.isEmpty()) {
+        final StepicUser stepicUser = new StepicUser();
+        stepicUser.setFirstName(firstLast.remove(0));
+        if (firstLast.size() > 0) {
+          stepicUser.setLastName(StringUtil.join(firstLast, " "));
+        }
+        this.authors.add(stepicUser);
+      }
     }
   }
 
@@ -112,23 +134,63 @@ public class Course {
   }
 
   public boolean isUpToDate() {
-    return myUpToDate;
+    if (id == 0) return true;
+    if (!EduNames.STUDY.equals(courseMode)) return true;
+    final Date date = EduStepicConnector.getCourseUpdateDate(id);
+    if (date == null) return true;
+    if (myUpdateDate == null) return false;
+    for (Lesson lesson : lessons) {
+      if (!lesson.isUpToDate()) return false;
+    }
+    return !date.after(myUpdateDate);
   }
 
-  public void setUpToDate(boolean upToDate) {
-    myUpToDate = upToDate;
+  public void setUpdated() {
+    setUpdateDate(EduStepicConnector.getCourseUpdateDate(id));
+    for (Lesson lesson : lessons) {
+      lesson.setUpdateDate(EduStepicConnector.getLessonUpdateDate(lesson.getId()));
+      for (Task task : lesson.getTaskList()) {
+        task.setUpdateDate(EduStepicConnector.getTaskUpdateDate(task.getStepicId()));
+      }
+    }
+  }
+
+  public void setUpdateDate(Date date) {
+    myUpdateDate = date;
+  }
+
+  public Date getUpdateDate() {
+    return myUpdateDate;
   }
 
   public Language getLanguageById() {
-    return Language.findLanguageByID(myLanguage);
+    return Language.findLanguageByID(getLanguageID());
   }
 
+  /**
+   * This method should be used by serialized only
+   * Use {@link #getLanguageID()} and {@link #getLanguageVersion()} methods instead
+   */
+  @Deprecated
   public String getLanguage() {
     return myLanguage;
   }
 
   public void setLanguage(@NotNull final String language) {
     myLanguage = language;
+  }
+
+  public String getLanguageID() {
+    return myLanguage.split(" ")[0];
+  }
+
+  @Nullable
+  public String getLanguageVersion() {
+    String[] split = myLanguage.split(" ");
+    if (split.length <= 1) {
+      return null;
+    }
+    return split[1];
   }
 
   public void setAuthors(List<StepicUser> authors) {
@@ -166,5 +228,15 @@ public class Course {
 
   public void setCourseMode(String courseMode) {
     this.courseMode = courseMode;
+  }
+
+  public Course copy() {
+    Element element = XmlSerializer.serialize(this);
+    Course copy = XmlSerializer.deserialize(element, Course.class);
+    if (copy == null) {
+      return null;
+    }
+    copy.initCourse(true);
+    return copy;
   }
 }

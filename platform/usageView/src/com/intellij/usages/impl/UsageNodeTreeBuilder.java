@@ -54,7 +54,7 @@ class UsageNodeTreeBuilder {
     myGroupingRules = rules;
   }
 
-  public void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
+  void setFilteringRules(@NotNull UsageFilteringRule[] rules) {
     myFilteringRules = rules;
   }
 

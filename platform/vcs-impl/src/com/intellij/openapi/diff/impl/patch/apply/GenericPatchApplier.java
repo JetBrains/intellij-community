@@ -43,6 +43,7 @@ public class GenericPatchApplier {
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
   private final List<PatchHunk> myHunks;
+  private final boolean myBaseFileEndsWithNewLine;
   private boolean myHadAlreadyAppliedMet;
 
   private final ArrayList<SplitHunk> myNotBound;
@@ -61,6 +62,7 @@ public class GenericPatchApplier {
     debug("GenericPatchApplier created, hunks: " + hunks.size());
     myLines = new ArrayList<String>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
+    myBaseFileEndsWithNewLine = StringUtil.endsWithLineBreak(text);
     myHunks = hunks;
     final Comparator<TextRange> textRangeComparator =
       (o1, o2) -> new Integer(o1.getStartOffset()).compareTo(new Integer(o2.getStartOffset()));
@@ -509,11 +511,16 @@ public class GenericPatchApplier {
                                         @NotNull IntPair contextOffsetInPatchSteps) {
     // cut last lines but not the very first
     final List<String> list = value.getList();
+    //last line should be taken from includeConsumer even it seems to be equal with base context line( they can differ with line separator)
+    boolean eofHunkAndLastLineShouldBeChanged =
+      containsLastLine(range) && splitHunk != null && splitHunk.getContextAfter().isEmpty() && !splitHunk.getAfterAll().isEmpty();
     int cnt = list.size() - 1;
     int i = range.getEndOffset();
-    for (; i > range.getStartOffset() && cnt >= 0; i--, cnt--) {
-      if (! list.get(cnt).equals(myLines.get(i))) {
-        break;
+    if (!eofHunkAndLastLineShouldBeChanged) {
+      for (; i > range.getStartOffset() && cnt >= 0; i--, cnt--) {
+        if (!list.get(cnt).equals(myLines.get(i))) {
+          break;
+        }
       }
     }
     int endSize = list.size();
@@ -524,8 +531,9 @@ public class GenericPatchApplier {
     int j = range.getStartOffset();
 
     if (endSize > 0) {
-      for (; j < range.getEndOffset() && cntStart < list.size(); j++, cntStart++) {
-        if (! list.get(cntStart).equals(myLines.get(j))) {
+      int lastProcessedIndex = eofHunkAndLastLineShouldBeChanged ? list.size() - 1 : list.size();
+      for (; j < range.getEndOffset() && cntStart < lastProcessedIndex; j++, cntStart++) {
+        if (!list.get(cntStart).equals(myLines.get(j))) {
           break;
         }
       }
@@ -1039,23 +1047,30 @@ public class GenericPatchApplier {
     final StringBuilder sb = new StringBuilder();
     // put not bind into the beginning
     for (SplitHunk hunk : myNotBound) {
-      linesToSb(sb, hunk.getAfterAll());
+      linesToSb(sb, hunk.getAfterAll(), true);
     }
-    iterateTransformations(range -> linesToSb(sb, myLines.subList(range.getStartOffset(), range.getEndOffset() + 1)), range -> {
+    iterateTransformations(range -> {
+      List<String> baseLineslist = myLines.subList(range.getStartOffset(), range.getEndOffset() + 1);
+      boolean withLineBreak = !containsLastLine(range) || myBaseFileEndsWithNewLine;
+      linesToSb(sb, baseLineslist, withLineBreak);
+    }, range -> {
       final MyAppliedData appliedData = myTransformations.get(range);
-      linesToSb(sb, appliedData.getList());
+      List<String> list = appliedData.getList();
+      boolean withLineBreak = !containsLastLine(range) || !mySuppressNewLineInEnd;
+      linesToSb(sb, list, withLineBreak);
     });
-    if (! mySuppressNewLineInEnd) {
-      sb.append('\n');
-    }
     return sb.toString();
   }
 
-  private static void linesToSb(final StringBuilder sb, final List<String> list) {
-    if (sb.length() > 0 && !list.isEmpty()) {
-      sb.append("\n");
-    }
+  private boolean containsLastLine(@NotNull TextRange range) {
+    return range.getEndOffset() == myLines.size() - 1;
+  }
+
+  private static void linesToSb(final StringBuilder sb, final List<String> list, boolean withEndLineBreak) {
     StringUtil.join(list, "\n", sb);
+    if (!list.isEmpty() && withEndLineBreak) {
+      sb.append('\n');
+    }
   }
 
   // indexes are passed inclusive

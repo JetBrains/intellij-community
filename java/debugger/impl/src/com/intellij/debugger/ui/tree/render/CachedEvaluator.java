@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Nullable;
@@ -65,14 +66,27 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      PsiClass contextClass = DebuggerUtils.findClass(getClassName(), project, GlobalSearchScope.allScope(project));
-      if (contextClass instanceof PsiCompiledElement) {
-        contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+      String className = getClassName();
+      PsiClass contextClass;
+      PsiType contextType;
+      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
+      if (primitiveType != null) {
+        contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
+        contextType = primitiveType;
       }
-      if(contextClass == null) {
-        throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
+      else {
+        contextClass = DebuggerUtils.findClass(className, project, GlobalSearchScope.allScope(project));
+        if (contextClass != null) {
+          contextClass = (PsiClass)contextClass.getNavigationElement();
+        }
+        if (contextClass instanceof PsiCompiledElement) {
+          contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+        }
+        if (contextClass == null) {
+          throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
+        }
+        contextType = DebuggerUtils.getType(className, project);
       }
-      final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
       JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, contextClass, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));

@@ -761,10 +761,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
-  public void projectOpened(Project project) {
-  }
-
-  @Override
   public boolean canCloseProject(Project project) {
     if (!myUnsavedDocuments.isEmpty()) {
       myOnClose = true;
@@ -776,14 +772,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       }
     }
     return myUnsavedDocuments.isEmpty();
-  }
-
-  @Override
-  public void projectClosed(Project project) {
-  }
-
-  @Override
-  public void projectClosing(Project project) {
   }
 
   private void fireUnsavedDocumentsDropped() {

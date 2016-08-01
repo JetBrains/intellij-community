@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Base64Converter;
+import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +109,38 @@ public class URLUtil {
         zipFile.close();
       }
     };
+  }
+
+  /**
+   * Checks whether local resource specified by {@code url} exists. Returns {@link ThreeState#UNSURE} if {@code url} point to a remote resource.
+   */
+  @NotNull
+  public static ThreeState resourceExists(@NotNull URL url) {
+    if (url.getProtocol().equals(FILE_PROTOCOL)) {
+      return ThreeState.fromBoolean(urlToFile(url).exists());
+    }
+    if (url.getProtocol().equals(JAR_PROTOCOL)) {
+      Pair<String, String> paths = splitJarUrl(url.getFile());
+      if (paths == null) {
+        return ThreeState.NO;
+      }
+      if (!new File(paths.first).isFile()) {
+        return ThreeState.NO;
+      }
+      try {
+        ZipFile file = new ZipFile(paths.first);
+        try {
+          return ThreeState.fromBoolean(file.getEntry(paths.second) != null);
+        }
+        finally {
+          file.close();
+        }
+      }
+      catch (IOException e) {
+        return ThreeState.NO;
+      }
+    }
+    return ThreeState.UNSURE;
   }
 
   /**
@@ -263,5 +296,11 @@ public class URLUtil {
       }
     }
     return host;
+  }
+
+  @NotNull
+  public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
+    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
 }

@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Coverage" level="project" />
-    <orderEntry type="library" name="JUnit3" level="project" />
   </component>
   <component name="copyright">
     <Base>

@@ -222,6 +222,7 @@ public class DiffDrawUtil {
   @NotNull
   private static LineSeparatorRenderer createDiffLineRenderer(@NotNull final Editor editor,
                                                               @NotNull final TextDiffType type,
+                                                              @NotNull SeparatorPlacement placement,
                                                               final boolean doubleLine,
                                                               final boolean resolved) {
     return new LineSeparatorRenderer() {
@@ -230,6 +231,7 @@ public class DiffDrawUtil {
         // TODO: change LineSeparatorRenderer interface ?
         Rectangle clip = g.getClipBounds();
         x2 = clip.x + clip.width;
+        if (placement == SeparatorPlacement.TOP) y++;
         drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, resolved);
       }
     };
@@ -504,7 +506,7 @@ public class DiffDrawUtil {
     @NotNull
     public LineMarkerBuilder withDefaultRenderer(boolean doubleLine) {
       assert type != null;
-      this.renderer = createDiffLineRenderer(editor, type, doubleLine, resolved);
+      this.renderer = createDiffLineRenderer(editor, type, placement, doubleLine, resolved);
       return this;
     }
 

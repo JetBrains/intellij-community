@@ -430,6 +430,9 @@ public abstract class MergeRequestProcessor implements Disposable {
           return "procedures.vcWithIDEA.commonVcsOps.integrateDiffs.resolveConflict";
         }
       }
+      else if (DiffDataKeys.MERGE_VIEWER.is(dataId)) {
+        return myViewer;
+      }
 
       DataProvider requestProvider = myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);
       if (requestProvider != null) {

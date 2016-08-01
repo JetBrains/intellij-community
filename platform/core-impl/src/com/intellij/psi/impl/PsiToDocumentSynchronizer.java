@@ -31,7 +31,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.text.ImmutableText;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -48,7 +49,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private volatile Document mySyncDocument;
 
-  public PsiToDocumentSynchronizer(PsiDocumentManagerBase psiDocumentManager, MessageBus bus) {
+  PsiToDocumentSynchronizer(PsiDocumentManagerBase psiDocumentManager, MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
     myBus = bus;
   }
@@ -317,13 +318,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
     });
     private final PsiFile myChangeScope;
-    private final ImmutableText myDocText;
-    private ImmutableText myPsiText;
+    private ImmutableCharSequence myPsiText;
 
-    public DocumentChangeTransaction(@NotNull Document doc, @NotNull PsiFile scope) {
+    DocumentChangeTransaction(@NotNull Document doc, @NotNull PsiFile scope) {
       myChangeScope = scope;
-      myDocText = ImmutableText.valueOf(doc.getImmutableCharSequence());
-      myPsiText = myDocText;
+      myPsiText = CharArrayUtil.createImmutableCharSequence(doc.getImmutableCharSequence());
     }
 
     @NotNull

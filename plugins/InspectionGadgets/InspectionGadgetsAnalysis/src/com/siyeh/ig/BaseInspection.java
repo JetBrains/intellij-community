@@ -20,7 +20,6 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,8 +45,6 @@ import java.text.ParseException;
 import java.util.List;
 
 public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
-
   private String m_shortName = null;
 
   @Override
@@ -214,8 +211,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   public static boolean isInspectionEnabled(@NonNls String shortName, PsiElement context) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getInspectionProfile();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    return profile.isToolEnabled(key, context);
+    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getCurrentProfile();
+    return profile.isToolEnabled(HighlightDisplayKey.find(shortName), context);
   }
 }

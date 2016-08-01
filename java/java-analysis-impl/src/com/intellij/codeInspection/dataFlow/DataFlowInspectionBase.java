@@ -38,7 +38,6 @@ import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +48,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -149,7 +151,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         return super.shouldCheckTimeLimit();
       }
     };
-    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
+    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
   }
 
   private static boolean isInsideConstructorOrInitializer(PsiElement element) {
@@ -301,6 +303,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
+    reportConstantPushes(runner, holder, visitor);
+
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
@@ -314,6 +318,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
+    }
+  }
+
+  private void reportConstantPushes(StandardDataFlowRunner runner,
+                                    ProblemsHolder holder,
+                                    DataFlowInstructionVisitor visitor) {
+    for (Instruction instruction : runner.getInstructions()) {
+      if (instruction instanceof PushInstruction) {
+        PsiExpression place = ((PushInstruction)instruction).getPlace();
+        DfaValue value = ((PushInstruction)instruction).getValue();
+        Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
+        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean) {
+          reportConstantCondition(holder, visitor, place, (Boolean)constant);
+        }
+      }
     }
   }
 
@@ -466,7 +485,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                           Set<Instruction> trueSet,
                                           Set<Instruction> falseSet, HashSet<PsiElement> reportedAnchors, BranchingInstruction instruction, final boolean onTheFly) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
-    boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
     if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
       if (visitor.canBeNull((BinopInstruction)instruction)) {
         holder.registerProblem(psiAnchor,
@@ -476,7 +494,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       else {
         final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
         holder.registerProblem(psiAnchor,
-                               InspectionsBundle.message(underBinary ? "dataflow.message.constant.condition.when.reached" : "dataflow.message.constant.condition", Boolean.toString(true)),
+                               InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor)
+                                                         ? "dataflow.message.constant.condition.when.reached" : "dataflow.message.constant.condition", Boolean.toString(true)),
                                localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
       }
     }
@@ -496,14 +515,23 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, onTheFly)
         );
       }
-      else if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
-        final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-        String message = InspectionsBundle.message(underBinary ?
-                                                   "dataflow.message.constant.condition.when.reached" :
-                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-        holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      else {
+        reportConstantCondition(holder, visitor, psiAnchor, evaluatesToTrue);
       }
       reportedAnchors.add(psiAnchor);
+    }
+  }
+
+  private void reportConstantCondition(ProblemsHolder holder,
+                                       StandardInstructionVisitor visitor,
+                                       PsiElement psiAnchor,
+                                       boolean evaluatesToTrue) {
+    if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
+      final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                 "dataflow.message.constant.condition.when.reached" :
+                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+      holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
     }
   }
 
@@ -649,7 +677,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (isCompileTimeFlagReference(condition)) return true;
 
     Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(condition, PsiReferenceExpression.class);
-    return ContainerUtil.or(refs, ref -> isCompileTimeFlagReference(ref));
+    return ContainerUtil.or(refs, DataFlowInspectionBase::isCompileTimeFlagReference);
   }
 
   private static boolean isCompileTimeFlagReference(PsiElement element) {

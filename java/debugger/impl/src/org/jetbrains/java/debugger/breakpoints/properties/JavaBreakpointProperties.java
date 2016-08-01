@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     return changed;
   }
 
-  private static boolean filtersEqual(Object[] a, Object[] b) {
+  protected static boolean filtersEqual(Object[] a, Object[] b) {
     if ((a == null || a.length == 0) && (b == null || b.length == 0)) {
       return true;
     }

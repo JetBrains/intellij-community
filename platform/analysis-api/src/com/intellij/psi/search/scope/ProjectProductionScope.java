@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -44,9 +45,9 @@ public class ProjectProductionScope extends NamedScope {
         final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
         return file != null
                && index.isInSource(file)
-               && !index.isInTestSourceContent(file)
                && !index.isInLibraryClasses(file)
-               && !index.isInLibrarySource(file);
+               && !index.isInLibrarySource(file)
+               && !TestSourcesFilter.isTestSources(file, project);
       }
     });
   }

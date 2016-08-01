@@ -57,6 +57,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myBuildNumber;
   private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
+  private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
   private Color myCopyrightForeground = JBColor.BLACK;
@@ -318,6 +319,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+  }
+
+  @Override
+  public String getShortCompanyName() {
+    return myShortCompanyName;
   }
 
   @Override
@@ -635,6 +641,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
     if (companyElement != null) {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
+      myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
     }
 
@@ -922,6 +929,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
     }
+  }
+
+  //copy of ApplicationInfoProperties.shortenCompanyName
+  private static String shortenCompanyName(String name) {
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {

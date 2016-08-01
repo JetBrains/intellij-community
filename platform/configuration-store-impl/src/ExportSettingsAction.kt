@@ -31,13 +31,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ex.ComponentManagerEx
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
-import com.intellij.openapi.options.SchemesManagerFactory
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
@@ -167,7 +168,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   }
 
   @Suppress("DEPRECATION")
-  ApplicationManager.getApplication().getComponents(ExportableApplicationComponent::class.java).forEach(processor)
+  (ApplicationManager.getApplication() as ComponentManagerEx).getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
   val configPath = storageManager.expandMacros(ROOT_CONFIG)
@@ -239,7 +240,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
   })
 
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
-  (SchemesManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (it.roamingType != RoamingType.DISABLED && it.presentableName != null && it.fileSpec.getOrNull(0) != '$') {
       val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
       if (!result.containsKey(file) && !isSkipFile(file)) {

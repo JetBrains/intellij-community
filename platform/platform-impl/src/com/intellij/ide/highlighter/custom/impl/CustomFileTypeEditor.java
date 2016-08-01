@@ -92,18 +92,10 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       mySupportParens.setSelected(table.isHasParens());
       mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      for (String s : table.getKeywords1()) {
-        myKeywordModels[0].addElement(s);
-      }
-      for (String s : table.getKeywords2()) {
-        myKeywordModels[1].addElement(s);
-      }
-      for (String s : table.getKeywords3()) {
-        myKeywordModels[2].addElement(s);
-      }
-      for (String s : table.getKeywords4()) {
-        myKeywordModels[3].addElement(s);
-      }
+      table.getKeywords1().stream().sorted().forEach(s -> myKeywordModels[0].addElement(s));
+      table.getKeywords2().stream().sorted().forEach(s -> myKeywordModels[1].addElement(s));
+      table.getKeywords3().stream().sorted().forEach(s -> myKeywordModels[2].addElement(s));
+      table.getKeywords4().stream().sorted().forEach(s -> myKeywordModels[3].addElement(s));
     }
   }
 

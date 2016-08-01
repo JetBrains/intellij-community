@@ -29,21 +29,21 @@ import org.jetbrains.settingsRepository.git.commit
 import org.junit.ClassRule
 import org.junit.Test
 
+private val dirName = "keymaps"
+
 class LoadTest : IcsTestCase() {
   companion object {
     @JvmField
     @ClassRule val projectRule = ProjectRule()
   }
 
-  private val dirPath = "\$ROOT_CONFIG$/keymaps"
-
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl<TestScheme, TestScheme>(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
+  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
-    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirName/local.xml", localScheme.serialize().toByteArray())
 
-    val schemesManager = createSchemeManager(dirPath)
+    val schemesManager = createSchemeManager(dirName)
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(localScheme)
   }
@@ -51,10 +51,10 @@ class LoadTest : IcsTestCase() {
   @Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
     val data = localScheme.serialize().toByteArray()
-    provider.write("$dirPath/local.xml", data)
-    provider.write("$dirPath/local2.xml", data)
+    provider.write("$dirName/local.xml", data)
+    provider.write("$dirName/local2.xml", data)
 
-    val schemesManager = createSchemeManager(dirPath)
+    val schemesManager = createSchemeManager(dirName)
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(localScheme)
   }
@@ -62,16 +62,16 @@ class LoadTest : IcsTestCase() {
   @Test fun `load scheme from repo and read-only repo`() {
     val localScheme = TestScheme("local")
 
-    provider.write("$dirPath/local.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirName/local.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme("remote")
     val remoteRepository = tempDirManager.createRepository()
     remoteRepository
-      .add("$dirPath/Mac OS X from RubyMine.xml", remoteScheme.serialize().toByteArray())
+      .add("$dirName/Mac OS X from RubyMine.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
-      val schemesManager = createSchemeManager(dirPath)
+      val schemesManager = createSchemeManager(dirName)
       schemesManager.loadSchemes()
       assertThat(schemesManager.allSchemes).containsOnly(remoteScheme, localScheme)
       assertThat(schemesManager.isMetadataEditable(localScheme)).isTrue()
@@ -83,19 +83,19 @@ class LoadTest : IcsTestCase() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 
-    provider.write("$dirPath/$schemeName.xml", localScheme.serialize().toByteArray())
+    provider.write("$dirName/$schemeName.xml", localScheme.serialize().toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
     val remoteRepository = tempDirManager.createRepository("remote")
     remoteRepository
-      .add("$dirPath/$schemeName.xml", remoteScheme.serialize().toByteArray())
+      .add("$dirName/$schemeName.xml", remoteScheme.serialize().toByteArray())
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
-      val schemesManager = createSchemeManager(dirPath)
-      schemesManager.loadSchemes()
-      assertThat(schemesManager.allSchemes).containsOnly(localScheme)
-      assertThat(schemesManager.isMetadataEditable(localScheme)).isFalse()
+      val schemeManager = createSchemeManager(dirName)
+      schemeManager.loadSchemes()
+      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+      assertThat(schemeManager.isMetadataEditable(localScheme)).isFalse()
     }
   }
 

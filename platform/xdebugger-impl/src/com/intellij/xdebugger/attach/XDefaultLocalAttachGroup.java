@@ -18,6 +18,7 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,18 +37,18 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
-  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info) {
+  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull
   @Override
-  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info) {
+  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();
   }
 
   @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b) {
+  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
     return a.getPid() - b.getPid();
   }
 }

@@ -23,6 +23,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIFunctionMapper;
 import com.sun.jna.win32.W32APITypeMapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +52,8 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  public static byte[] protect(byte[] data) {
+  @NotNull
+  public static byte[] protect(@NotNull byte[] data) {
     if(data.length == 0) {
       return data;
     }
@@ -74,6 +76,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
+  @NotNull
   public static byte[] unprotect(byte[] data) {
     if(data.length == 0) {
       return data;

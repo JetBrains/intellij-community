@@ -40,18 +40,18 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ExternalResourceManagerEx m = ExternalResourceManagerEx.getInstanceEx();
       ExternalResourceManagerExImpl
-        .addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), myTestRootDisposable);
+        .addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), getTestRootDisposable());
       ExternalResourceManagerExImpl.addTestResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
-                                                    myTestRootDisposable);
+                                                    getTestRootDisposable());
       //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
       ExternalResourceManagerExImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
-                                                    myTestRootDisposable);
+                                                    getTestRootDisposable());
       ExternalResourceManagerExImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
-                                                    myTestRootDisposable);
+                                                    getTestRootDisposable());
       ExternalResourceManagerExImpl.addTestResource("urn:intelliForm:AttachmentFilter",
-                                                    toAbsolutePath("highlighting/attachment-filter.rng"), myTestRootDisposable);
+                                                    toAbsolutePath("highlighting/attachment-filter.rng"), getTestRootDisposable());
       ExternalResourceManagerExImpl
-        .addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), myTestRootDisposable);
+        .addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), getTestRootDisposable());
 
       m.addIgnoredResource("urn:intelliForm:Spaces");
       m.addIgnoredResource("http://www.w3.org/1999/xlink");

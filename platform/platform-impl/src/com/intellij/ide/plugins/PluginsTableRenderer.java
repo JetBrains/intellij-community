@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
@@ -33,6 +34,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -73,9 +75,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     if (SystemInfo.isMac) {
       smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
     } else {
-      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UIUtil.getLabelFont().getSize() - 2, 10f));
+      smallFont = UIUtil.getLabelFont().deriveFont(Math.max(UISettings.getInstance().FONT_SIZE - JBUI.scale(3), JBUI.scaleFontSize(10)));
     }
-    myName.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 1.0f));
+    myName.setFont(UIUtil.getLabelFont().deriveFont(UISettings.getInstance().FONT_SIZE));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);

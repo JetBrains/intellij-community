@@ -36,6 +36,28 @@ public class ThrowableInstanceNeverThrown {
         final RuntimeException e = <warning descr="Runtime exception instance 'new RuntimeException(\"throw me\")' is not thrown">new RuntimeException("throw me")</warning>;
     }
 
+    void saving() {
+      try {
+
+      } catch (Exception e) {
+        String message = e.getMessage();
+        if (message != null && message.length() > 1024) {
+          Exception truncated = new RuntimeException(message.substring(0, 1024) + "...");
+          truncated.setStackTrace(e.getStackTrace());
+          e = truncated;
+        }
+        System.out.println(e);
+      }
+    }
+
+    Throwable[] array() {
+      return new Throwable[] { new RuntimeException() };
+    }
+
+    void poorMansDebug() {
+      new Throwable().printStackTrace(System.out);
+    }
+
     void exceptionIsCollected() {
         List<IOException> exs = new ArrayList<IOException>();
         exs.add(new IOException());
@@ -45,6 +67,27 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void methodCall(IOException e){}
+
+    void iterating() {
+        StackTraceElement[] stackTrace = new X().getStackTrace2();
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            System.out.println(stackTraceElement);
+        }
+    }
+
+    private void print(String text, java.io.PrintStream ps) {
+        X asdf = new X();
+        StackTraceElement[] element = asdf.getStackTrace2();
+        StackTraceElement dumper = element[2];
+        ps.println(text + " at " + dumper.toString());
+    }
+
+    class X extends Throwable {
+      public StackTraceElement[] getStackTrace2() {
+        return null;
+      }
+    }
+    class StackTraceElement {}
 }
 
 interface I {

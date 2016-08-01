@@ -416,6 +416,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   }
 
+  @TestOnly
   private boolean waitInOtherThread(int millis, boolean canChangeDocument) throws Throwable {
     Disposable disposable = Disposer.newDisposable();
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
@@ -461,6 +462,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   }
 
+  @TestOnly
   void waitForTermination() {
     myPassExecutorService.cancelAll(true);
   }
@@ -624,9 +626,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myUpdateRunnableFuture.cancel(false);
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
     if (restart) {
-      if (LOG.isDebugEnabled()) {
-        myFrequentEventDetector.eventHappened(reason);
-      }
       myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
     }
   }
@@ -895,6 +894,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
       }
     };
+    progress.setModalityProgress(null);
     progress.start();
     myUpdateProgress = progress;
     return progress;
@@ -960,6 +960,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return myEditorTracker.getActiveEditors();
   }
 
+  @TestOnly
   private static void wrap(@NotNull ThrowableRunnable runnable) {
     try {
       runnable.run();

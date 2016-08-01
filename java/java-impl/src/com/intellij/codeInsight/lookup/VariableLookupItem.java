@@ -22,15 +22,18 @@ import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
@@ -47,12 +50,14 @@ import java.util.Collection;
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   @Nullable private final MemberLookupHelper myHelper;
   private final Color myColor;
+  private final String myTailText;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public VariableLookupItem(PsiVariable var) {
     super(var, var.getName());
     myHelper = null;
     myColor = getInitializerColor(var);
+    myTailText = getInitializerText(var);
   }
 
   public VariableLookupItem(PsiField field, boolean shouldImport) {
@@ -64,27 +69,39 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       }
     }
     myColor = getInitializerColor(field);
+    myTailText = getInitializerText(field);
   }
 
   @Nullable
-  private static Color getInitializerColor(@NotNull PsiVariable var) {
-    if (!JavaColorProvider.isColorType(var.getType())) {
-      return null;
-    }
+  private String getInitializerText(PsiVariable var) {
+    if (myColor != null || !var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
 
+    PsiElement initializer = var instanceof PsiEnumConstant ? ((PsiEnumConstant)var).getArgumentList() : getInitializer(var);
+    String initText = initializer == null ? null : initializer.getText();
+    if (StringUtil.isEmpty(initText)) return null;
+
+    String prefix = var instanceof PsiEnumConstant ? "" : " = ";
+    String suffix = var instanceof PsiEnumConstant && ((PsiEnumConstant)var).getInitializingClass() != null ? " {...}" : "";
+    return StringUtil.trimLog(prefix + initText + suffix, 30);
+  }
+
+  private static PsiExpression getInitializer(@NotNull PsiVariable var) {
     PsiElement navigationElement = var.getNavigationElement();
     if (navigationElement instanceof PsiVariable) {
       var = (PsiVariable)navigationElement;
     }
-    return getExpressionColor(var.getInitializer());
+    return var instanceof PsiFieldImpl ? ((PsiFieldImpl)var).getDetachedInitializer() : var.getInitializer();
   }
 
   @Nullable
-  private static Color getExpressionColor(@Nullable PsiExpression expression) {
+  private static Color getInitializerColor(@NotNull PsiVariable var) {
+    if (!JavaColorProvider.isColorType(var.getType())) return null;
+
+    PsiExpression expression = getInitializer(var);
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiVariable) {
-        return RecursionManager.doPreventingRecursion(expression, true, () -> getExpressionColor(((PsiVariable)target).getInitializer()));
+        return RecursionManager.doPreventingRecursion(expression, true, () -> getInitializerColor((PsiVariable)target));
       }
     }
     return JavaColorProvider.getJavaColorFromExpression(expression);
@@ -143,6 +160,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       presentation.setTypeText("", new ColorIcon(12, myColor));
     } else {
       presentation.setTypeText(getType().getPresentableText());
+    }
+    if (myTailText != null && StringUtil.isEmpty(presentation.getTailText())) {
+      presentation.setTailText(myTailText, true);
     }
   }
 

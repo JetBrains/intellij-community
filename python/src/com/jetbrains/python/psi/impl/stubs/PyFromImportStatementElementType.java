@@ -21,12 +21,13 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -39,10 +40,11 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     this("FROM_IMPORT_STATEMENT");
   }
 
-  public PyFromImportStatementElementType(String debugName) {
+  public PyFromImportStatementElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyFromImportStatementImpl(node);
@@ -53,6 +55,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     return new PyFromImportStatementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
     return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,

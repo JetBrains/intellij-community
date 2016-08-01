@@ -1,0 +1,31 @@
+<component name="libraryTable">
+  <library name="Gradle">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-tooling-api-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-core-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-messaging-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-core-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-groovy-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-groovy-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-native-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-resources-2.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-cli-2.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/tooling-api/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/core/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/model-core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/model-groovy/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/messaging/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/wrapper/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/base-services/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/base-services-groovy/src/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/native/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/resources/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/cli/src/main/java" />
+    </SOURCES>
+  </library>
+</component>

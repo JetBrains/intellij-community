@@ -17,7 +17,9 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ControlFlowStatementWithoutBracesInspection
   extends BaseInspection {
@@ -138,6 +141,19 @@ public class ControlFlowStatementWithoutBracesInspection
     @Override
     protected boolean isApplicable(PsiStatement body) {
       return body != null && !(body instanceof PsiBlockStatement);
+    }
+
+    @Nullable
+    @Override
+    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+      if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
+        final PsiElement lastChild = body.getLastChild();
+        return Pair.create(PsiTreeUtil.skipSiblingsBackward(body, PsiWhiteSpace.class, PsiComment.class),
+                           lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON
+                           ? lastChild
+                           : null);
+      }
+      return null;
     }
   }
 }

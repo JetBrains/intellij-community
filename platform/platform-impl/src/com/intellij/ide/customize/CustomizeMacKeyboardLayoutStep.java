@@ -17,12 +17,9 @@ package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.cloudConfiguration.CloudConfigurationManager;
-import com.intellij.ide.cloudConfiguration.CloudConfigurationProvider;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.util.ParameterizedRunnable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,40 +62,7 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
     ButtonGroup group = new ButtonGroup();
     group.add(macRadioButton);
     group.add(defaultRadioButton);
-
-    String sharedKeymap = CloudConfigurationManager.getCustomizeProvider().getSharedKeymap();
-
-    if (sharedKeymap == null || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(sharedKeymap)) {
-      macRadioButton.setSelected(true);
-    }
-    else if (KeymapManager.MAC_OS_X_KEYMAP.equals(sharedKeymap)) {
-      defaultRadioButton.setSelected(true);
-    }
-    else {
-      JRadioButton button = new JRadioButton("Shared Keymap");
-      button.setOpaque(false);
-      JPanel panel = createBigButtonPanel(new VerticalFlowLayout(), button, CustomizeMacKeyboardLayoutStep::applySharedKeymap);
-      panel.add(button);
-      panel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + sharedKeymap + " keymap</h3></body></html>"));
-      add(panel);
-      group.add(button);
-      button.setSelected(true);
-    }
-    mySkipFirstShowing = sharedKeymap != null;
-  }
-
-  public static void applySharedKeymap() {
-    CloudConfigurationProvider provider = CloudConfigurationManager.getCustomizeProvider();
-    String keymap = provider.getSharedKeymap();
-    if (keymap != null) {
-      ParameterizedRunnable<KeymapManager> runnable = provider.createSharedKeymap();
-      if (runnable == null) {
-        WelcomeWizardUtil.setWizardKeymap(keymap);
-      }
-      else {
-        WelcomeWizardUtil.setWizardKeymap(runnable);
-      }
-    }
+    macRadioButton.setSelected(true);
   }
 
   @Override

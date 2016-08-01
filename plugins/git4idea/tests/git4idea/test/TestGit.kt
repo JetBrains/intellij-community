@@ -40,6 +40,7 @@ class TestGitImpl : GitImpl() {
 
   @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile private var myBranchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var myInteractiveRebaseEditor: ((String) -> String)? = null
 
   override fun push(repository: GitRepository,
@@ -51,6 +52,13 @@ class TestGitImpl : GitImpl() {
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     return myPushHandler(repository) ?:
         super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
+  }
+
+  override fun branchDelete(repository: GitRepository,
+                            branchName: String,
+                            force: Boolean,
+                            vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    return myBranchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
   }
 
   override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitCommandResult {
@@ -105,6 +113,10 @@ class TestGitImpl : GitImpl() {
 
   fun onPush(pushHandler: (GitRepository) -> GitCommandResult?) {
     myPushHandler = pushHandler;
+  }
+
+  fun onBranchDelete(branchDeleteHandler: (GitRepository) -> GitCommandResult?) {
+    myBranchDeleteHandler = branchDeleteHandler
   }
 
   fun setInteractiveRebaseEditor(editor: (String) -> String) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ import java.util.List;
  * Inspection to detect code incompatibility with python versions
  */
 public class PyCompatibilityInspection extends PyInspection {
+  public static List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
+    .add("enum")
+    .add("typing")
+    .build();
+
   public static final int LATEST_INSPECTION_VERSION = 1;
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
@@ -77,7 +82,7 @@ public class PyCompatibilityInspection extends PyInspection {
   
   @Nullable
   public static PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyCompatibilityInspection.class.getSimpleName();
     return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
@@ -244,7 +249,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final QualifiedName qName = importElement.getImportedQName();
         if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
           moduleName = qName.toString();
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName)) {
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
         }
@@ -263,7 +268,8 @@ public class PyCompatibilityInspection extends PyInspection {
       if (name != null) {
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
           LanguageLevel languageLevel = myVersionsToProcess.get(i);
-          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(name.toString())) {
+          final String moduleName = name.toString();
+          if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName)) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    return editor.getUserData(TEMPLATE_STATE_KEY);
+    TemplateState templateState = editor.getUserData(TEMPLATE_STATE_KEY);
+    if (templateState != null && templateState.isDisposed()) {
+      editor.putUserData(TEMPLATE_STATE_KEY, null);
+      return null;
+    }
+    return templateState;
   }
 
   static void clearTemplateState(@NotNull Editor editor) {

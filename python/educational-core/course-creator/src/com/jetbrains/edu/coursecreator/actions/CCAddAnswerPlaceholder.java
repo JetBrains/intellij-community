@@ -16,7 +16,6 @@ import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     if (document == null) {
       return;
     }
-
+    FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
@@ -60,7 +59,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     answerPlaceholder.setOffset(offset);
     answerPlaceholder.setUseLength(false);
 
-    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : EduNames.PLACEHOLDER);
+    String defaultPlaceholderText = "type here";
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
 
     CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder);
     dlg.show();
@@ -69,7 +69,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
 
     if (!model.hasSelection()) {
-      DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, EduNames.PLACEHOLDER));
+      DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, defaultPlaceholderText));
     }
 
     TaskFile taskFile = state.getTaskFile();
@@ -79,34 +79,9 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     answerPlaceholder.setTaskFile(taskFile);
     taskFile.sortAnswerPlaceholders();
 
-
-    computeInitialState(project, file, taskFile, document);
-
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, JBColor.BLUE);
     EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
-  }
-
-  private static void computeInitialState(Project project, PsiFile file, TaskFile taskFile, Document document) {
-    Document patternDocument = StudyUtils.getPatternDocument(taskFile, file.getName());
-    if (patternDocument == null) {
-      return;
-    }
-    DocumentUtil.writeInRunUndoTransparentAction(() -> {
-      patternDocument.replaceString(0, patternDocument.getTextLength(), document.getCharsSequence());
-      FileDocumentManager.getInstance().saveDocument(patternDocument);
-    });
-    TaskFile target = new TaskFile();
-    TaskFile.copy(taskFile, target);
-    List<AnswerPlaceholder> placeholders = target.getAnswerPlaceholders();
-    for (AnswerPlaceholder placeholder : placeholders) {
-      placeholder.setUseLength(false);
-    }
-    EduUtils.createStudentDocument(project, target, file.getVirtualFile(), patternDocument);
-
-    for (int i = 0; i < placeholders.size(); i++) {
-      AnswerPlaceholder fromPlaceholder = placeholders.get(i);
-      taskFile.getAnswerPlaceholders().get(i).setInitialState(new AnswerPlaceholder.MyInitialState(fromPlaceholder.getOffset(), fromPlaceholder.getLength()));
-    }
   }
 
   @Override

@@ -182,6 +182,10 @@ class EdtRule : TestRule {
   }
 }
 
+class InitInspectionRule : TestRule {
+  override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
+}
+
 private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
   override fun evaluate() {
     runnable()

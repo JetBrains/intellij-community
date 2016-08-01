@@ -169,4 +169,33 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "    }\n" +
                "}");
   }
+  
+  public void testEnter_AfterLastChainedCall() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaCommon.ALIGN_MULTILINE_CHAINED_METHODS = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest("java",
+               "class T {\n" +
+               "    public void main() {\n" +
+               "        ActionBarPullToRefresh.from(getActivity())\n" +
+               "                              .theseChildrenArePullable(eventsListView)\n" +
+               "                              .listener(this)\n" +
+               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())<caret>\n" +
+               "    }\n" +
+               "}",
+               "class T {\n" +
+               "    public void main() {\n" +
+               "        ActionBarPullToRefresh.from(getActivity())\n" +
+               "                              .theseChildrenArePullable(eventsListView)\n" +
+               "                              .listener(this)\n" +
+               "                              .useViewDelegate(StickyListHeadersListView.class, new AbsListViewDelegate())\n" +
+               "                              <caret>\n" +
+               "    }\n" +
+               "}");
+  }
+  
+  
+  
 }

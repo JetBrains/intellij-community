@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -22,13 +23,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -216,6 +217,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
 
 
   public void dissociateResourceBundle(final @NotNull ResourceBundle resourceBundle) {
+    closeResourceBundleEditors(resourceBundle);
     if (resourceBundle instanceof CustomResourceBundle) {
       final CustomResourceBundleState state =
         getCustomResourceBundleState(resourceBundle.getDefaultPropertiesFile().getVirtualFile());
@@ -235,6 +237,11 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   public void combineToResourceBundle(final @NotNull List<PropertiesFile> propertiesFiles, final String baseName) {
     myState.getCustomResourceBundles()
       .add(new CustomResourceBundleState().addAll(ContainerUtil.map(propertiesFiles, file -> file.getVirtualFile().getUrl())).setBaseName(baseName));
+  }
+
+  public ResourceBundle combineToResourceBundleAndGet(final @NotNull List<PropertiesFile> propertiesFiles, final String baseName) {
+    combineToResourceBundle(propertiesFiles, baseName);
+    return propertiesFiles.get(0).getResourceBundle();
   }
 
   @Nullable
@@ -278,5 +285,13 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   @Override
   public void loadState(ResourceBundleManagerState state) {
     myState = state.removeNonExistentFiles();
+  }
+
+  private static void closeResourceBundleEditors(@NotNull ResourceBundle resourceBundle) {
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(resourceBundle.getProject());
+    fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
+    for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+      fileEditorManager.closeFile(propertiesFile.getVirtualFile());
+    }
   }
 }

@@ -167,7 +167,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
     final DumbModePermission schedulerPermission = getExplicitPermission();
-    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
+    if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -293,7 +293,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void queueUpdateFinished(boolean modal) {
     if (myUpdateFinishedQueued) return;
     myUpdateFinishedQueued = true;
-    TransactionGuard.submitTransaction(myProject, () -> WriteAction.run(() -> updateFinished(modal)));
+    TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () -> WriteAction.run(() -> updateFinished(modal)));
   }
 
   private void updateFinished(boolean modal) {
@@ -516,7 +516,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return result.get();
   }
 
-  private void invokeAndWaitIfNeeded(Runnable runnable) {
+  private static void invokeAndWaitIfNeeded(Runnable runnable) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       runnable.run();
@@ -525,16 +525,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    //todo remove invokeLater when transactions are executed in "any" modality state
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(
-      () -> TransactionGuard.getInstance().submitTransaction(app, myDumbStartTransaction, () -> {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
-      }));
+    app.invokeLater(() -> {
+      try {
+        runnable.run();
+      } finally {
+        semaphore.up();
+      }
+    }, ModalityState.any());
     try {
       semaphore.waitFor();
     }

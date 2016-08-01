@@ -227,7 +227,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         updateFilters();
       }
       catch (ProcessCanceledException e) {
-        DumbService.getInstance(myProject).smartInvokeLater(() -> _updateFilters(), ModalityState.NON_MODAL);
+        DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters, ModalityState.NON_MODAL);
       }
     }
 
@@ -238,7 +238,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
   }
 
-  private final class MyFileTypeListener extends FileTypeListener.Adapter {
+  private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
       // this invokeLater guaranties that this code will be invoked after

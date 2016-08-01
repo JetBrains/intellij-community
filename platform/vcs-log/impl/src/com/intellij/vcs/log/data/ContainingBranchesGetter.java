@@ -134,11 +134,11 @@ public class ContainingBranchesGetter {
     PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
     VcsLogRefs refs = dataPack.getRefsModel();
 
-    VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
-                                          vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
-    if (branchRef == null) return Conditions.alwaysFalse();
     ContainedInBranchCondition condition = myConditions.get(root);
     if (condition == null || !condition.getBranch().equals(branchName)) {
+      VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
+                                            vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
+      if (branchRef == null) return Conditions.alwaysFalse();
       condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
         Collections.singleton(myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
       myConditions.put(root, condition);

@@ -88,6 +88,14 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return ContainerUtil.concat(myChildren, children);
   }
 
+  /**
+   * @deprecated use {@link #getWatchChildren()} instead
+   */
+  @NotNull
+  public List<? extends WatchNode> getAllChildren() {
+    return getWatchChildren();
+  }
+
   @NotNull
   public List<? extends WatchNode> getWatchChildren() {
     return myChildren;

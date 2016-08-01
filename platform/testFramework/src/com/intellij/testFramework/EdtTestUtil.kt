@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,7 @@ import javax.swing.SwingUtilities
 
 class EdtTestUtil {
   companion object {
-    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
-      runInEdtAndWait { runnable.run() }
-    }
-
-    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
+    @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
       runInEdtAndWait { runnable.run() }
     }
   }

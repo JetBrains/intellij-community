@@ -60,7 +60,6 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       return;
     }
 
-
     final Document document = editor.getDocument();
     final VirtualFile openedFile = FileDocumentManager.getInstance().getFile(document);
     if (openedFile != null) {

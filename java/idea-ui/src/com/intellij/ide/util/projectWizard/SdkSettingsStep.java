@@ -85,7 +85,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
       sdkFilter = JdkComboBox.getSdkFilter(sdkTypeIdFilter);
     }
 
-    myJdkComboBox = new JdkComboBox(myModel, sdkFilter, sdkTypeIdFilter, true);
+    myJdkComboBox = new JdkComboBox(myModel, sdkTypeIdFilter, sdkFilter, sdkTypeIdFilter, true);
     myJdkPanel = new JPanel(new GridBagLayout());
 
     final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);

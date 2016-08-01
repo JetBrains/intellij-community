@@ -29,8 +29,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -50,7 +48,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -64,7 +61,7 @@ import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,7 +79,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
@@ -94,8 +90,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
 
-    CodeInsightTestFixtureImpl.configureInspections(tools, getProject(), Collections.<String>emptyList(),
-                                                    getTestRootDisposable());
+    InspectionsKt.configureInspections(tools, getProject(), getTestRootDisposable());
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     daemonCodeAnalyzer.prepareForTest();
@@ -138,14 +133,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
-    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
-    LightPlatformTestCase.enableInspectionTool(getProject(), toolWrapper);
+    InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
-    for (InspectionProfileEntry tool : tools) {
-      enableInspectionTool(tool);
-    }
+    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
   protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
@@ -160,7 +152,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void disableInspectionTool(@NotNull String shortName){
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(getProject()).getInspectionProfile();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
       ((InspectionProfileImpl)profile).disableTool(shortName, getProject());
     }
@@ -171,7 +163,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected static LocalInspectionTool[] createLocalInspectionTools(final InspectionToolProvider... provider) {
-    final ArrayList<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
+    final ArrayList<LocalInspectionTool> result = new ArrayList<>();
     for (InspectionToolProvider toolProvider : provider) {
       for (Class aClass : toolProvider.getInspectionClasses()) {
         try {
@@ -250,7 +242,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myVirtualFileFilter, getTestRootDisposable());
 
     try {
       Collection<HighlightInfo> infos = doHighlighting();
@@ -261,7 +253,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       return infos;
     }
     finally {
-      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     }
   }
 
@@ -343,7 +335,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   @NotNull
   public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
-    ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    ArrayList<HighlightInfo> result = new ArrayList<>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
     }
@@ -377,7 +369,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+      final List<IntentionAction> availableActions = new ArrayList<>();
 
       for (HighlightInfo info :infos) {
         if (info.quickFixActionRanges != null) {

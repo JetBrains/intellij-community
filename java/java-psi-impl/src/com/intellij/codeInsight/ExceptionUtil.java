@@ -38,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.Pair.pair;
-
 /**
  * @author mike
  */
@@ -533,38 +531,66 @@ public class ExceptionUtil {
       if (psiType instanceof PsiClassType) {
         ex.add((PsiClassType)psiType);
       }
+      else if (psiType instanceof PsiCapturedWildcardType) {
+        final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)psiType;
+        final PsiType upperBound = capturedWildcardType.getUpperBound();
+        if (upperBound instanceof PsiClassType) {
+          ex.add((PsiClassType)upperBound);
+        }
+      }
     }
     return ex;
   }
 
   @NotNull
   public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceListElement resource) {
-    Pair<PsiMethod, PsiSubstitutor> closer = resolveCloser(resource);
-    return closer != null ? getExceptionsByMethod(closer.first, closer.second, resource) : Collections.<PsiClassType>emptyList();
+    List<PsiClassType> ex = getExceptionsFromClose(resource);
+    return ex != null ? ex : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(@NotNull PsiResourceListElement resource, @Nullable PsiElement topElement) {
-    Pair<PsiMethod, PsiSubstitutor> closer = resolveCloser(resource);
-    return closer != null ? getUnhandledExceptions(closer.first, resource, topElement, closer.second) : Collections.<PsiClassType>emptyList();
+    final PsiType type = resource.getType();
+    return getUnhandledCloserExceptions(resource, topElement, type);
   }
 
-  private static Pair<PsiMethod, PsiSubstitutor> resolveCloser(PsiResourceListElement resource) {
-    PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
-    if (method != null) {
-      PsiClass closerClass = method.getContainingClass();
-      if (closerClass != null) {
-        PsiClassType.ClassResolveResult resourceType = PsiUtil.resolveGenericsClassInType(resource.getType());
-        if (resourceType != null) {
-          PsiClass resourceClass = resourceType.getElement();
-          if (resourceClass != null) {
-            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, resourceClass, resourceType.getSubstitutor());
-            if (substitutor != null) {
-              return pair(method, substitutor);
+  @NotNull
+  public static List<PsiClassType> getUnhandledCloserExceptions(PsiElement place, @Nullable PsiElement topElement, PsiType type) {
+    List<PsiClassType> ex = type instanceof PsiClassType ? getExceptionsFromClose(type, place.getResolveScope()) : null;
+    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.<PsiClassType>emptyList();
+  }
+
+  private static List<PsiClassType> getExceptionsFromClose(PsiResourceListElement resource) {
+    final PsiType type = resource.getType();
+    return type instanceof PsiClassType ? getExceptionsFromClose(type, resource.getResolveScope()) : null;
+  }
+
+  private static List<PsiClassType> getExceptionsFromClose(PsiType type, GlobalSearchScope scope) {
+    PsiClassType.ClassResolveResult resourceType = PsiUtil.resolveGenericsClassInType(type);
+    PsiClass resourceClass = resourceType.getElement();
+    if (resourceClass == null) return null;
+
+    PsiMethod[] methods = PsiUtil.getResourceCloserMethodsForType((PsiClassType)type);
+    if (methods != null) {
+      List<PsiClassType> ex = null;
+      for (PsiMethod method : methods) {
+        PsiClass closerClass = method.getContainingClass();
+        if (closerClass != null) {
+          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, resourceClass, resourceType.getSubstitutor());
+          if (substitutor != null) {
+            final PsiClassType[] exceptionTypes = method.getThrowsList().getReferencedTypes();
+            if (exceptionTypes.length == 0) return Collections.emptyList();
+
+            if (ex == null) {
+              ex = collectSubstituted(substitutor, exceptionTypes, scope);
+            }
+            else {
+              retainExceptions(ex, collectSubstituted(substitutor, exceptionTypes, scope));
             }
           }
         }
       }
+      return ex;
     }
 
     return null;

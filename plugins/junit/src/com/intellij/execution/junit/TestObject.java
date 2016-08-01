@@ -168,9 +168,19 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     final Project project = getConfiguration().getProject();
-    if (JUnitUtil.isJUnit5(GlobalSearchScope.allScope(project), project)) {
+    final SourceScope sourceScope = getSourceScope();
+    final GlobalSearchScope scope = sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
+    if (JUnitUtil.isJUnit5(scope, project)) {
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
+
+      boolean excludeVintage = false;
+      try {
+        JUnitUtil.getTestCaseClass(sourceScope);
+      }
+      catch (JUnitUtil.NoJUnitException e) {
+        excludeVintage = true;
+      }
 
       final PathsList classPath = javaParameters.getClassPath();
       final List<String> paths = classPath.getPathList();
@@ -180,6 +190,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (libJars != null) {
         for (File jarFile : libJars) {
           final String filePath = jarFile.getAbsolutePath();
+          if (excludeVintage && filePath.contains("vintage")) continue;
+
           if (!paths.contains(filePath)) {
             classPath.add(filePath);
           }

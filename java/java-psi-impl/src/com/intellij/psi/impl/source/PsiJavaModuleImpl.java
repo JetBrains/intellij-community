@@ -35,8 +35,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @NotNull
   @Override
-  public PsiJavaModuleReference getNameElement() {
-    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReference.class);
+  public PsiJavaModuleReferenceElement getNameElement() {
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReferenceElement.class);
   }
 
   @NotNull

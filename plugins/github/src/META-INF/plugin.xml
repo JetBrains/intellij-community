@@ -46,8 +46,6 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
-    </action>
-    <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserAction">
       <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
       <add-to-group group-id="VcsHistoryActionsGroup"/>

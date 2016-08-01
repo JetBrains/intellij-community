@@ -18,7 +18,8 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,\
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
+    STATE_RUN
 import pydevd_file_utils
 
 
@@ -103,9 +104,9 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_THREAD_RUN:
                 t = pydevd_find_thread_by_id(text)
                 if t:
-                    thread_id = get_thread_id(t)
-                    int_cmd = InternalRunThread(thread_id)
-                    py_db.post_internal_command(int_cmd, thread_id)
+                    t.additional_info.pydev_step_cmd = -1
+                    t.additional_info.pydev_step_stop = None
+                    t.additional_info.pydev_state = STATE_RUN
 
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't make tasklet run: %s\n" % (text,))

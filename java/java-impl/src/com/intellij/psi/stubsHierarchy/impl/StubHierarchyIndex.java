@@ -96,7 +96,7 @@ public class StubHierarchyIndex extends FileBasedIndexExtension<Integer, Seriali
 
   @Override
   public int getVersion() {
-    return IndexTree.STUB_HIERARCHY_ENABLED ? 7 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
+    return IndexTree.STUB_HIERARCHY_ENABLED ? 8 + Arrays.stream(ourIndexers).mapToInt(StubHierarchyIndexer::getVersion).sum() : 0;
   }
 
   @NotNull

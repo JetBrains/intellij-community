@@ -369,7 +369,6 @@
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
-    <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionIndex"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -833,6 +832,10 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
@@ -880,10 +883,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <category>Java/Control Flow</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertEqualsMethodToStaticIntention</className>
       <category>Java/Control Flow</category>
     </intentionAction>
 
@@ -1542,6 +1541,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFunctionalExpressionIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1583,6 +1583,7 @@
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
 
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
 
@@ -1610,6 +1611,7 @@
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
+    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.engine.JavaAttachDebuggerProvider"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>

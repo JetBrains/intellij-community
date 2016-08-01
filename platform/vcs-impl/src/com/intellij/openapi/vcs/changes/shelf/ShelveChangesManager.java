@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 22.11.2006
- * Time: 19:59:36
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
@@ -36,9 +30,9 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.NonLazySchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -87,7 +81,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
   @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
-  @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
+  @NotNull private final SchemeManager<ShelvedChangeList> mySchemeManager;
   private ScheduledFuture<?> myCleaningFuture;
   private boolean myRemoveFilesFromShelf;
 
@@ -109,13 +103,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     myPathMacroSubstitutor = PathMacroManager.getInstance(myProject).createTrackingSubstitutor();
     myBus = bus;
     mySchemeManager =
-      SchemesManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new SchemeProcessor<ShelvedChangeList>() {
+      SchemeManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new NonLazySchemeProcessor<ShelvedChangeList, ShelvedChangeList>() {
         @Nullable
         @Override
-        public ShelvedChangeList readScheme(@NotNull Element element) throws InvalidDataException {
+        public ShelvedChangeList readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
           return readOneShelvedChangeList(element);
         }
 
+        @NotNull
         @Override
         public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
           Element child = new Element(ELEMENT_CHANGELIST);

@@ -80,7 +80,7 @@ public class ProjectLevelVcsManagerSerialization {
     final Map<String, VcsShowConfirmationOptionImpl> confirmations = optionsAndConfirmations.getConfirmations();
     
     for (VcsShowOptionsSettingImpl setting : options.values()) {
-      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || !setting.getValue()) {
+      if (!Registry.is("saving.state.in.new.format.is.allowed", true) || !setting.getValue()) {
         Element settingElement = new Element(OPTIONS_SETTING);
         element.addContent(settingElement);
         settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
@@ -89,7 +89,7 @@ public class ProjectLevelVcsManagerSerialization {
     }
 
     for (VcsShowConfirmationOptionImpl setting : confirmations.values()) {
-      if (!Registry.is("saving.state.in.new.format.is.allowed", false) || setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      if (!Registry.is("saving.state.in.new.format.is.allowed", true) || setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
         final Element settingElement = new Element(CONFIRMATIONS_SETTING);
         element.addContent(settingElement);
         settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());

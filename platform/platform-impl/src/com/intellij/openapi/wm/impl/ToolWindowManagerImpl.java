@@ -1017,7 +1017,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void showToolWindowImpl(@NotNull String id, final boolean dirtyMode, @NotNull List<FinalizableCommand> commandsList) {
     final WindowInfoImpl toBeShownInfo = getInfo(id);
-    if (toBeShownInfo.isVisible() || !getToolWindow(id).isAvailable()) {
+    ToolWindow window = getToolWindow(id);
+    if (window != null && toBeShownInfo.isWindowed()) {
+      UIUtil.toFront(UIUtil.getWindow(window.getComponent()));
+    }
+    if (toBeShownInfo.isVisible() || window == null || !window.isAvailable()) {
       return;
     }
 

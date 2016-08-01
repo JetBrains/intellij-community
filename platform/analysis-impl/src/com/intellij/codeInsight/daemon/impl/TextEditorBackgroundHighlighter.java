@@ -30,6 +30,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,7 +78,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
-    LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
+    Document[] uncommitted = PsiDocumentManager.getInstance(myProject).getUncommittedDocuments();
+    LOG.assertTrue(uncommitted.length == 0, "Uncommitted documents: " + Arrays.asList(uncommitted));
     renewFile();
     if (myFile == null) return Collections.emptyList();
     if (myCompiled) {

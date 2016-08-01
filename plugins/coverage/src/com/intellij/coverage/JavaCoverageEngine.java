@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -23,7 +38,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -32,8 +47,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,7 +60,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
@@ -160,7 +175,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
       @Nullable
       public Module compute() {
-        return ModuleUtil.findModuleForPsiElement(psiFile);
+        return ModuleUtilCore.findModuleForPsiElement(psiFile);
       }
     });
     return module != null;
@@ -170,8 +185,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
     final Project project = psiFile.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (!suite.isTrackTestFolders() && fileIndex.isInTestSourceContent(virtualFile)) {
+    if (!suite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return false;
     }
 
@@ -605,7 +619,7 @@ public class JavaCoverageEngine extends CoverageEngine {
               final Collection<ClassInfo> classes = super.getClasses();
               if (!currentSuite.isTrackTestFolders()) {
                 final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-                final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
+                final GlobalSearchScope productionScope = GlobalSearchScopesCore.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
                   final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {

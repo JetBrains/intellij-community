@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -112,7 +111,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     myProject = project;
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
       @Override
-      public void profileActivated(Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
         dropAnnotationsCache();
       }
 
@@ -122,14 +121,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
     };
 
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    inspectionProfileManager.addProfileChangeListener(profileChangeAdapter, project);
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        inspectionProfileManager.removeProfileChangeListener(profileChangeAdapter);
-      }
-    });
+    InspectionProfileManager.getInstance().addProfileChangeListener(profileChangeAdapter, project);
   }
 
   @Override
@@ -158,7 +150,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       holder = new DomElementsProblemsHolderImpl(element);
       rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(
-        () -> new CachedValueProvider.Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, DomElementAnnotationsManagerImpl.this, ProjectRootManager.getInstance(myProject)), false);
+        () -> new CachedValueProvider.Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT,
+                                                      this, ProjectRootManager.getInstance(myProject)), false);
       cachedValue.getValue();
       element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
     }
@@ -266,7 +259,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
-    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getInspectionProfile();
+    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getCurrentProfile();
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -78,7 +81,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
-      boolean includeTests = projectFileIndex.isInTestSourceContent(vFile);
+      boolean includeTests = TestSourcesFilter.isTestSources(vFile, myProject);
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
 
@@ -182,7 +185,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return containingFile == null || virtualFile.isDirectory() || result.contains(virtualFile)
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }
-    boolean isTest = projectFileIndex.isInTestSourceContent(vDirectory);
+    boolean isTest = TestSourcesFilter.isTestSources(vDirectory, myProject);
     GlobalSearchScope scope = isTest
                               ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
                               : GlobalSearchScope.moduleWithDependentsScope(module);

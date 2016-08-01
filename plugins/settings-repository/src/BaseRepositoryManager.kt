@@ -26,9 +26,11 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.*
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -37,28 +39,35 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   protected val lock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
   override fun processChildren(path: String, filter: (name: String) -> Boolean, processor: (name: String, inputStream: InputStream) -> Boolean) {
-    dir.resolve(path).directoryStreamIfExists {
+    dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) {
       for (file in it) {
-        if (file.isDirectory() || file.isHidden()) {
-          continue;
+        val attributes: BasicFileAttributes?
+        try {
+          attributes = file.basicAttributesIfExists()
+        }
+        catch (e: IOException) {
+          LOG.warn(e)
+          continue
+        }
+
+        if (attributes == null || attributes.isDirectory || file.isHidden()) {
+          continue
         }
 
         // we ignore empty files as well - delete if corrupted
-        if (file.size() == 0L) {
-          if (file.exists()) {
-            try {
-              LOG.warn("File $path is empty (length 0), will be removed")
-              delete(file, path)
-            }
-            catch (e: Exception) {
-              LOG.error(e)
-            }
+        if (attributes.size() == 0L) {
+          try {
+            LOG.warn("File $path is empty (length 0), will be removed")
+            delete(file, path)
           }
-          continue;
+          catch (e: Exception) {
+            LOG.error(e)
+          }
+          continue
         }
 
-        if (!processor(file.fileName.toString(), file.inputStream())) {
-          break;
+        if (!file.inputStream().use { processor(file.fileName.toString(), it) }) {
+          break
         }
       }
     }

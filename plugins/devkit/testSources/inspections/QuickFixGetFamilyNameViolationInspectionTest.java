@@ -39,17 +39,19 @@ public class QuickFixGetFamilyNameViolationInspectionTest extends JavaCodeInsigh
                        "  String getName();" +
                        "  String getFamilyName();" +
                        "}");
+    myFixture.addClass("package com.intellij.psi;" +
+                       "public interface PsiElement {}");
   }
 
-  public void testViolationByField() {
+  public void testNotViolatedByField() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testViolationByGetName() {
+  public void testNotViolatedByGetName() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testViolationByExternalParameter() {
+  public void testNotViolatedByExternalParameter() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
@@ -62,6 +64,10 @@ public class QuickFixGetFamilyNameViolationInspectionTest extends JavaCodeInsigh
   }
 
   public void testNotViolatedGetNameMethod() {
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testViolationByPsiElementFieldUsage() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 }

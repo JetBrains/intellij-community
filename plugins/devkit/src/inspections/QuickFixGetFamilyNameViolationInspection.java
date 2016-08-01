@@ -17,9 +17,13 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +36,11 @@ import java.util.Set;
  */
 public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBase {
   private final static Logger LOG = Logger.getInstance(QuickFixGetFamilyNameViolationInspection.class);
+
+  private final static Set<String> BASE_CONTEXT_AWARE_CLASSES = ContainerUtil.newHashSet(PsiElement.class.getName(),
+                                                                                         Navigatable.class.getName(),
+                                                                                         AreaInstance.class.getName(),
+                                                                                         VirtualFile.class.getName());
 
   @Nullable
   @Override
@@ -55,33 +64,52 @@ public class QuickFixGetFamilyNameViolationInspection extends DevKitInspectionBa
     if (!processed.add(method) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiCodeBlock body = method.getBody();
     if (body == null) return false;
+    if (isContextDependentType(method.getReturnType())) {
+      return true;
+    }
     final Collection<PsiJavaCodeReferenceElement> referenceIterator =
       PsiTreeUtil.findChildrenOfType(body, PsiJavaCodeReferenceElement.class);
     for (PsiJavaCodeReferenceElement reference : referenceIterator) {
 
       final PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiVariable) {
-        if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !PsiTreeUtil.isAncestor(body, resolved, false)) {
-          return true;
-        }
-        if (resolved instanceof PsiField && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+        if (!(resolved instanceof PsiField && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) && isContextDependentType(((PsiVariable)resolved).getType())) {
           return true;
         }
       }
 
-      if (resolved instanceof PsiMethod && !((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiClass resolvedContainingClass = ((PsiMethod)resolved).getContainingClass();
+      if (resolved instanceof PsiMethod) {
+        final PsiMethod resolvedMethod = (PsiMethod)resolved;
+        final PsiClass resolvedContainingClass = resolvedMethod.getContainingClass();
+        //if (resolvedMethod.getName().equals("getName") &&
+        //    resolvedMethod.getParameterList().getParametersCount() == 0 &&
+        //    !resolvedMethod.hasModifierProperty(PsiModifier.STATIC) &&
+        //    InheritanceUtil.isInheritor(resolvedContainingClass, QuickFix.class.getName())) {
+        //  return true;
+        //}
         final PsiClass methodContainingClass = method.getContainingClass();
         if (resolvedContainingClass != null &&
             methodContainingClass != null &&
             (methodContainingClass == resolvedContainingClass ||
              methodContainingClass.isInheritor(resolvedContainingClass, true))) {
-          if (doesMethodViolate((PsiMethod)resolved, processed)) {
+          if (doesMethodViolate(resolvedMethod, processed)) {
             return true;
           }
         }
       }
     }
+    return false;
+  }
+
+  private static boolean isContextDependentType(@Nullable PsiType type) {
+    if (type == null) return false;
+
+    for (String aClass : BASE_CONTEXT_AWARE_CLASSES) {
+      if (InheritanceUtil.isInheritor(type, aClass)) {
+        return true;
+      }
+    }
+
     return false;
   }
 }

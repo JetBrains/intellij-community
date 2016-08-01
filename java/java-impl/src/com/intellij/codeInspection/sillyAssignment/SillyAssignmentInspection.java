@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,15 @@
  */
 package com.intellij.codeInspection.sillyAssignment;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.RemoveAssignmentFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -25,7 +32,66 @@ import com.intellij.codeInspection.RemoveAssignmentFix;
 public class SillyAssignmentInspection extends SillyAssignmentInspectionBase {
 
   @Override
-  protected LocalQuickFix createRemoveAssignmentFix() {
-    return new RemoveAssignmentFix();
+  protected LocalQuickFix createRemoveAssignmentFix(PsiReferenceExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiVariable) {
+      final PsiVariable variable = (PsiVariable)parent;
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        return null;
+      }
+    }
+    return new RemoveSillyAssignmentFix();
+  }
+
+  private static class RemoveSillyAssignmentFix implements LocalQuickFix {
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionsBundle.message("assignment.to.itself.quickfix.name");
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+      if (parent instanceof PsiVariable) {
+        element.delete();
+      }
+      if (!(parent instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      final PsiExpression lhs = assignmentExpression.getLExpression();
+      final PsiExpression rhs = assignmentExpression.getRExpression();
+      if (PsiTreeUtil.isAncestor(lhs, element, false)) {
+        if (rhs != null) {
+          assignmentExpression.replace(rhs);
+        }
+        else {
+          assignmentExpression.delete();
+        }
+      }
+      else {
+        final PsiElement grandParent = assignmentExpression.getParent();
+        if (grandParent instanceof PsiExpressionStatement) {
+          grandParent.delete();
+        }
+        else {
+          assignmentExpression.replace(element);
+        }
+      }
+    }
   }
 }

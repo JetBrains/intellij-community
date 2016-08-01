@@ -70,7 +70,7 @@ class IcsManager(dir: Path) {
     }
   }
 
-  val settingsFile = dir.resolve("config.json")
+  val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
@@ -165,7 +165,7 @@ class IcsManager(dir: Path) {
 
     autoSyncManager.registerListeners(application)
 
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return
@@ -190,10 +190,10 @@ class IcsManager(dir: Path) {
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
-        repository.processChildren(fullPath, filter, { name, input -> processor(name, input, true) })
+        repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
-      repositoryManager.processChildren(fullPath, filter, { name, input -> processor(name, input, false) })
+      repositoryManager.processChildren(fullPath, filter) { name, input -> processor(name, input, false) }
     }
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -208,11 +208,9 @@ class IcsManager(dir: Path) {
 
     fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      return repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
-    }
+    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }

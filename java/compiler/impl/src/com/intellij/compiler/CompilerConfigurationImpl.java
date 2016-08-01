@@ -70,14 +70,13 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 import java.io.File;
 import java.util.*;
 
+import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
+
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
-
-  private static final List<String> DEFAULT_WILDCARD_PATTERNS =
-    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   private BackendCompiler myDefaultJavaCompiler;
   private State myState = new State();
@@ -139,7 +138,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
-    final boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", false);
+    final boolean savingStateInNewFormatAllowed = Registry.is("saving.state.in.new.format.is.allowed", true);
 
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {

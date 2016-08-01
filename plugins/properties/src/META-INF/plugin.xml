@@ -113,6 +113,11 @@
     <internalFileTemplate name="XML Properties File.xml"/>
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler"/>
     <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
+
+    <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
+    <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
+
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
   </extensions>
 
   <project-components>

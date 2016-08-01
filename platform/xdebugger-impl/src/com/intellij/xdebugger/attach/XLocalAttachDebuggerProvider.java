@@ -29,22 +29,24 @@ public interface XLocalAttachDebuggerProvider {
   /**
    * @return a group in which the supported processes should be visually organized.
    *         Return XLocalAttachGroup.DEFAULT for a common group.
-   * 
+   *
    */
   @NotNull
-  XLocalAttachGroup getAttachGroup();
+  default XLocalAttachGroup getAttachGroup() {
+    return XLocalAttachGroup.DEFAULT;
+  }
 
   /**
    *  Attach to Local Process action invokes {@link #getAvailableDebuggers} method for every running process.
    *  {@link XLocalAttachDebuggerProvider} should return a list of the debuggers that can attach and debug a given process.
-   *  
-   *  If there are several debuggers that can attach to a process, the user will have a choice between them.  
-   *   
-   * @param contextHolder use this data holder if you need to store temporary data during debuggers collection. 
-   *                      Lifetime of the data is restricted by a single Attach to Local Process action invocation.   
+   *
+   *  If there are several debuggers that can attach to a process, the user will have a choice between them.
+   *
+   * @param contextHolder use this data holder if you need to store temporary data during debuggers collection.
+   *                      Lifetime of the data is restricted by a single Attach to Local Process action invocation.
    */
   @NotNull
-  List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project, 
-                                                   @NotNull ProcessInfo processInfo, 
+  List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                   @NotNull ProcessInfo processInfo,
                                                    @NotNull UserDataHolder contextHolder);
 }

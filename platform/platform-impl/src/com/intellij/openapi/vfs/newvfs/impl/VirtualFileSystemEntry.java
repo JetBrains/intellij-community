@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -254,7 +253,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName));
+    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, this, newParent, copyName));
   }
 
   @Override
@@ -264,8 +263,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
-      return VirtualFileSystemEntry.this;
+      ourPersistence.moveFile(requestor, this, newParent);
+      return this;
     });
   }
 

@@ -23,9 +23,11 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -68,7 +70,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   @Override
   public ASTNode parseContents(ASTNode chameleon) {
     final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-    final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)chameleon);
     final PsiFile file = (PsiFile)fileElement.getPsi();
     PsiFile originalFile = file.getOriginalFile();
@@ -92,28 +93,20 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       lexer.start(chars);
       insertOuters(parsed, lexer, table);
 
-      final TreeElement element = parsed.getFirstChildNode();
-      if (element != null) {
-        parsed.rawRemoveAllChildren();
-        treeElement.rawAddChildren(element);
+      TreeElement childNode = parsed.getFirstChildNode();
+
+      DebugUtil.checkTreeStructure(parsed);
+      DebugUtil.checkTreeStructure(chameleon);
+      if (fileElement != chameleon) {
+        DebugUtil.checkTreeStructure(file.getNode());
+        DebugUtil.checkTreeStructure(originalFile.getNode());
       }
+
+      return childNode;
     }
     finally {
       DebugUtil.finishPsiModification();
     }
-
-    treeElement.subtreeChanged();
-    TreeElement childNode = treeElement.getFirstChildNode();
-
-    DebugUtil.checkTreeStructure(parsed);
-    DebugUtil.checkTreeStructure(treeElement);
-    DebugUtil.checkTreeStructure(chameleon);
-    if (fileElement != chameleon) {
-      DebugUtil.checkTreeStructure(file.getNode());
-      DebugUtil.checkTreeStructure(originalFile.getNode());
-    }
-
-    return childNode;
   }
 
   protected void prepareParsedTemplateFile(@NotNull FileElement root) {

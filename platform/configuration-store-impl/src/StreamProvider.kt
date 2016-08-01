@@ -20,10 +20,10 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import java.io.InputStream
 
 interface StreamProvider {
-  open val enabled: Boolean
+  val enabled: Boolean
     get() = true
 
-  open fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
+  fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
   /**
    * @param fileSpec
@@ -34,9 +34,6 @@ interface StreamProvider {
 
   fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): InputStream?
 
-  /**
-   * You must close passed input stream.
-   */
   fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean)
 
   /**

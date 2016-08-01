@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -39,6 +42,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPanel myPane;
+  private JBCheckBox myEnableTestingFromSamples;
 
   private boolean myCredentialsModified;
 
@@ -72,6 +76,13 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       public void focusLost(FocusEvent e) {
       }
     });
+
+    myEnableTestingFromSamples.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myCredentialsModified = true;
+      }
+    });
     reset();
   }
 
@@ -96,7 +107,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @NotNull
   private String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
+    final String passwordText = String.valueOf(myPasswordField.getPassword());
+    return passwordText.equals(DEFAULT_PASSWORD_TEXT) ? "" : passwordText;
   }
 
   private void setPassword(@NotNull final String password) {
@@ -107,11 +119,11 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   public void reset() {
     Project project = StudyUtils.getStudyProject();
     if (project != null) {
-      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-      if (user != null) {
-        setLogin(user.getEmail());
-        setPassword(DEFAULT_PASSWORD_TEXT);
-      }
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+      final StepicUser user = taskManager.getUser();
+      setLogin(user.getEmail());
+      setPassword(DEFAULT_PASSWORD_TEXT);
+      myEnableTestingFromSamples.setSelected(taskManager.isEnableTestingFromSamples());
       resetCredentialsModification();
     }
     else {
@@ -129,11 +141,14 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     if (myCredentialsModified) {
       final Project project = StudyUtils.getStudyProject();
       if (project != null) {
-        final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-        user.setEmail(getLogin());
-        user.setPassword(getPassword());
-        if (!StringUtil.isEmptyOrSpaces(getLogin()) && !StringUtil.isEmptyOrSpaces(getPassword())) {
-          EduStepicConnector.login(getLogin(), getPassword());
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+        taskManager.setEnableTestingFromSamples(myEnableTestingFromSamples.isSelected());
+        final String login = getLogin();
+        final String password = getPassword();
+        if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
+          final StepicUser user = taskManager.getUser();
+          user.setEmail(login);
+          user.setPassword(password);
         }
       }
       else {

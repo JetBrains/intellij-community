@@ -11,6 +11,11 @@ public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightInspe
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ThrowableResultOfMethodCallIgnoredInspection();
+    return new ThrowableNotThrownInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/throwable_result_of_method_call_ignored";
   }
 }

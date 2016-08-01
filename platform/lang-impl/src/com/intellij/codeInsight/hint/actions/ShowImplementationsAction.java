@@ -155,8 +155,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     String text = "";
     PsiElement[] impls = PsiElement.EMPTY_ARRAY;
     if (element != null) {
-      //if (element instanceof PsiPackage) return;
-
       impls = getSelfAndImplementations(editor, element, createImplementationsSearcher());
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
@@ -176,7 +174,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
 
       if (!implsList.isEmpty()) {
-        implsList.toArray( impls = new PsiElement[implsList.size()] );
+        impls = implsList.toArray(new PsiElement[implsList.size()]);
       }
     }
 
@@ -455,7 +453,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         };
       if (!myIncludeSelf) {
         myElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher, false);
-      } else {
+      }
+      else {
         myElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
       }
     }

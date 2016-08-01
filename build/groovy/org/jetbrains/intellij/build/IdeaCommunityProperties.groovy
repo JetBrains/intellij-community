@@ -26,11 +26,7 @@ class IdeaCommunityProperties extends ProductProperties {
     applicationInfoModule = "community-resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
     toolsJarRequired = true
-  }
-
-  @Override
-  String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) {
-    "IntelliJ IDEA Community Edition"
+    buildCrossPlatformDistribution = true
   }
 
   @Override
@@ -38,6 +34,9 @@ class IdeaCommunityProperties extends ProductProperties {
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
+    }
+    buildContext.ant.copy(todir: "$targetDirectory/bin") {
+      fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
     }
   }
 
@@ -52,6 +51,12 @@ class IdeaCommunityProperties extends ProductProperties {
 
       @Override
       String rootDirectoryName(String buildNumber) { "" }
+
+      @Override
+      String fullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+
+      @Override
+      String fullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
 
       @Override
       String uninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
@@ -78,6 +83,7 @@ class IdeaCommunityProperties extends ProductProperties {
       {
         helpId = "IJ"
         urlSchemes = ["idea"]
+        associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
@@ -85,8 +91,8 @@ class IdeaCommunityProperties extends ProductProperties {
 
       @Override
       String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app/Contents"
-                              : "IntelliJ IDEA CE.app/Contents"
+        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app"
+                              : "IntelliJ IDEA CE.app"
       }
     }
   }

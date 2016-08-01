@@ -115,6 +115,7 @@ public class StudyUtils {
     return fileName.contains(".zip");
   }
 
+  @Nullable
   public static <T> T getFirst(@NotNull final Iterable<T> container) {
     Iterator<T> iterator = container.iterator();
     if (!iterator.hasNext()) {
@@ -474,12 +475,13 @@ public class StudyUtils {
     if (task == null) {
       return null;
     }
+
+    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
     String text = task.getText();
-    if (text != null) {
-      return text;
+    if (text != null && !text.isEmpty()) {
+      return prefix + text + ourPostfix;
     }
     if (taskDirectory != null) {
-      final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
       final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
       if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
       
@@ -491,6 +493,7 @@ public class StudyUtils {
 
   @Nullable
   private static String getTaskTextFromTaskName(@NotNull VirtualFile taskDirectory, @NotNull String taskTextFilename) {
+    taskDirectory.refresh(false, true);
     VirtualFile taskTextFile = taskDirectory.findChild(taskTextFilename);
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
@@ -635,6 +638,15 @@ public class StudyUtils {
     return null;
   }
 
+  @Nullable
+  public static Task getTaskForFile(@NotNull Project project, @NotNull VirtualFile taskFile) {
+    VirtualFile taskDir = getTaskDir(taskFile);
+    if (taskDir == null) {
+      return null;
+    }
+    return getTask(project, taskDir);
+  }
+
   // supposed to be called under progress
   @Nullable
   public static <T> T execCancelable(@NotNull final Callable<T> callable) {
@@ -678,23 +690,13 @@ public class StudyUtils {
   }
   
   @Nullable
-  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull final VirtualFile parent) {
-    return ObjectUtils.chooseNotNull(parent.findChild(EduNames.TASK_HTML), parent.findChild(EduNames.TASK_MD));
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull VirtualFile taskDir) {
+    return ObjectUtils.chooseNotNull(taskDir.findChild(EduNames.TASK_HTML), taskDir.findChild(EduNames.TASK_MD));
   }
   
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
     return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
-  }
-  
-  @Nullable
-  public static File createTaskDescriptionFile(@NotNull final File parent) {
-    if(new File(parent, EduNames.TASK_HTML).exists()) {
-      return new File(parent, EduNames.TASK_HTML);
-    }
-    else {
-      return new File(parent, EduNames.TASK_MD);
-    }
   }
 
   @Nullable

@@ -24,11 +24,15 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.io.File;
+import java.net.URL;
 import java.util.regex.Matcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +72,29 @@ public class UrlUtilTest {
     assertNotNull(pair);
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
+  }
+
+  @Test
+  public void resourceExistsForLocalFile() throws Exception {
+    File dir = FileUtil.createTempDirectory("UrlUtilTest", "");
+    File existingFile = new File(dir, "a.txt");
+    assertTrue(existingFile.createNewFile());
+    assertEquals(ThreeState.YES, URLUtil.resourceExists(existingFile.toURI().toURL()));
+    File nonExistingFile = new File(dir, "b.txt");
+    assertEquals(ThreeState.NO, URLUtil.resourceExists(nonExistingFile.toURI().toURL()));
+  }
+
+  @Test
+  public void resourceExistsForRemoteUrl() throws Exception {
+    assertEquals(ThreeState.UNSURE, URLUtil.resourceExists(new URL("http://jetbrains.com")));
+  }
+
+  @Test
+  public void resourceExistsForFileInJar() throws Exception {
+    URL stringUrl = String.class.getResource("String.class");
+    assertEquals(ThreeState.YES, URLUtil.resourceExists(stringUrl));
+    URL xxxUrl = new URL(stringUrl.getProtocol(), "", -1, stringUrl.getPath() + "/xxx");
+    assertEquals(ThreeState.NO, URLUtil.resourceExists(xxxUrl));
   }
 
   @Test

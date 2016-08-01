@@ -72,7 +72,7 @@ public class JUnitStarter {
 
     String agentName = processParameters(argList, listeners, name);
 
-    if (!canWorkWithJUnitVersion(System.err, agentName)) {
+    if (!JUNIT5_RUNNER_NAME.equals(agentName) && !canWorkWithJUnitVersion(System.err, agentName)) {
       System.exit(-3);
     }
     if (!checkVersion(args, System.err)) {
@@ -172,6 +172,15 @@ public class JUnitStarter {
       }
     }
 
+    if (JUNIT4_RUNNER_NAME.equals(agentName)) {
+      try {
+        Class.forName("org.junit.Test");
+      }
+      catch (ClassNotFoundException e) {
+        return JUNIT3_RUNNER_NAME;
+      }
+    }
+
     try {
       final String forceJUnit3 = System.getProperty("idea.force.junit3");
       if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return JUNIT3_RUNNER_NAME;
@@ -221,7 +230,7 @@ public class JUnitStarter {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass(agentName);
     //noinspection UnnecessaryFullyQualifiedName
-    new junit.textui.TestRunner().setPrinter(new com.intellij.junit3.JUnit3IdeaTestRunner.MockResultPrinter());
+    new junit.textui.TestRunner().setPrinter(null); //
   }
 
   private static int prepareStreamsAndStart(String[] args,

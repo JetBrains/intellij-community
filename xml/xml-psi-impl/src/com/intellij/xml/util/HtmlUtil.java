@@ -328,7 +328,7 @@ public class HtmlUtil {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile().getOriginalFile();
 
-    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
     XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(inspectionName, containingFile);
     if (inspection != null) {
       return inspection.getAdditionalEntries();

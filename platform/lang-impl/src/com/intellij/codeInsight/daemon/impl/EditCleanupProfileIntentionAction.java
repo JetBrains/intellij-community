@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -54,9 +53,9 @@ class EditCleanupProfileIntentionAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    final ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstanceImpl(project);
     final ProjectInspectionToolsConfigurable configurable =
-      new ProjectInspectionToolsConfigurable(InspectionProfileManager.getInstance(), profileManager) {
+      new ProjectInspectionToolsConfigurable(profileManager) {
         @Override
         protected boolean acceptTool(InspectionToolWrapper entry) {
           return super.acceptTool(entry) && entry.isCleanupTool();

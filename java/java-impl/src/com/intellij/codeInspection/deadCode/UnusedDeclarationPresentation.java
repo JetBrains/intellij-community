@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -188,7 +189,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class PermanentDeleteAction extends QuickFixAction {
     PermanentDeleteAction(@NotNull InspectionToolWrapper toolWrapper) {
-      super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), toolWrapper);
+      super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, null, toolWrapper);
+      copyShortcutFrom(ActionManager.getInstance().getAction("SafeDelete"));
     }
 
     @Override

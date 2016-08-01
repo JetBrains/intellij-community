@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,16 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -160,14 +163,13 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     }
     else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
-      if (virtualFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
+      if (virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, myProject)) {
         return false;
       }
     }
     else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
-
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
-      if (virtualFile != null && !ProjectRootManager.getInstance(myProject).getFileIndex().isInTestSourceContent(virtualFile)) {
+      if (virtualFile != null && !TestSourcesFilter.isTestSources(virtualFile, myProject)) {
         return false;
       }
     } else if (!HierarchyBrowserBaseEx.SCOPE_ALL.equals(scopeType)) {

@@ -34,6 +34,6 @@ public class CCStudyActionListener implements StudyActionListener {
     if (taskDir == null) {
       return;
     }
-    CCUtils.createResources(project, task, taskDir);
+    CCUtils.updateResources(project, task, taskDir);
   }
 }

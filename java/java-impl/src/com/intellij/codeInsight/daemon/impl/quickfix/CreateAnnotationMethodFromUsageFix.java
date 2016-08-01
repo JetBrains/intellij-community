@@ -88,7 +88,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Nullable
-  private static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
+  public static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
     PsiType type = null;
     if (value instanceof PsiExpression) {
       type = ((PsiExpression)value).getType();

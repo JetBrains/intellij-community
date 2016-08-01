@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,6 +103,8 @@ public class MavenUtil {
   public static final String M2_CONF_FILE = "m2.conf";
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
+  public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
+  public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -933,8 +934,8 @@ public class MavenUtil {
     return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
 
-  public static String getEjbClientArtifactName(Module module) {
-    return module.getName() + ":ejb-client";
+  public static String getEjbClientArtifactName(Module module, boolean exploded) {
+    return module.getName() + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {

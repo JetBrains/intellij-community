@@ -1314,6 +1314,26 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitModule(PsiJavaModule module) {
+    if (myType2 == JavaTokenType.RBRACE || ElementType.JAVA_MODULE_STATEMENT_BIT_SET.contains(myType2)) {
+      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else if (myType1 == JavaElementType.MODULE_REFERENCE || myType2 == JavaElementType.MODULE_REFERENCE) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
+  public void visitModuleStatement(PsiElement statement) {
+    if (myType1 == JavaElementType.MODULE_REFERENCE) {
+      createSpaceInCode(myType2 != JavaTokenType.SEMICOLON && myType2 != JavaTokenType.COMMA);
+    }
+    if (myType2 == JavaElementType.MODULE_REFERENCE) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     if ((myRole1 == ChildRole.DOUBLE_COLON && myRole2 == ChildRole.REFERENCE_NAME) ||
         (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON)) {
@@ -1768,25 +1788,36 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     Pair<IElementType, IElementType> pair = Pair.create(type1, type2);
     Boolean res = myCanStickJavaTokensMatrix.get(pair);
     if (res == null) {
-      if (!checkToken(token1) || !checkToken(token2)) return true;
-      String text = token1.getText() + token2.getText();
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-      lexer.start(text);
-      boolean canMerge = lexer.getTokenType() == type1;
-      lexer.advance();
-      canMerge &= lexer.getTokenType() == type2;
-      res = canMerge;
+
+      TokenCheckResult res1 = checkToken(token1, lexer), res2 = checkToken(token2, lexer);
+      if (res1 == TokenCheckResult.INCORRECT || res2 == TokenCheckResult.INCORRECT) return true;
+
+      if (res1 == TokenCheckResult.RESTRICTED_KEYWORD || type1 == JavaTokenType.IDENTIFIER && res2 == TokenCheckResult.RESTRICTED_KEYWORD) {
+        res = false;
+      }
+      else {
+        lexer.start(token1.getText() + token2.getText());
+        boolean canMerge = lexer.getTokenType() == type1;
+        lexer.advance();
+        canMerge &= lexer.getTokenType() == type2;
+        res = canMerge;
+      }
+
       myCanStickJavaTokensMatrix.put(pair, res);
     }
     return res.booleanValue();
   }
 
-  private static boolean checkToken(final ASTNode token1) {
-    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-    final String text = token1.getText();
-    lexer.start(text);
-    if (lexer.getTokenType() != token1.getElementType()) return false;
+  private enum TokenCheckResult {OK, INCORRECT, RESTRICTED_KEYWORD}
+
+  private static TokenCheckResult checkToken(ASTNode token, Lexer lexer) {
+    lexer.start(token.getText());
+    if (lexer.getTokenType() != token.getElementType()) {
+      boolean kw = lexer.getTokenType() == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(token.getElementType());
+      return kw ? TokenCheckResult.RESTRICTED_KEYWORD : TokenCheckResult.INCORRECT;
+    }
     lexer.advance();
-    return lexer.getTokenType() == null;
+    return lexer.getTokenType() == null ? TokenCheckResult.OK : TokenCheckResult.INCORRECT;
   }
 }

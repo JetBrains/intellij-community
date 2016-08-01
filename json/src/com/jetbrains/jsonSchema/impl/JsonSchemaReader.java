@@ -93,6 +93,7 @@ public class JsonSchemaReader {
         };
 
       final HashMap<String, JsonSchemaObject> map = new HashMap<>();
+      map.put("", object);
       final Map<String, JsonSchemaObject> definitions = object.getDefinitions();
       if (definitions != null && !definitions.isEmpty()) {
         map.putAll(convertor.convert("#/definitions/", definitions));
@@ -160,11 +161,17 @@ public class JsonSchemaReader {
                                                          @NotNull String ref,
                                                          @Nullable JsonSchemaExportedDefinitions definitions) {
     if (!ref.startsWith("#/")) {
-      int idx = ref.indexOf("#/");
-      if (idx == -1) throw new RuntimeException("Non-relative or erroneous reference: " + ref);
       if (definitions == null || key == null) return null;
-      final String url = ref.substring(0, idx);
-      final String relative = ref.substring(idx);
+      int idx = ref.indexOf("#/");
+      final String url;
+      final String relative;
+      if (idx == -1) {
+        url = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
+        relative = "";
+      } else {
+        url = ref.substring(0, idx);
+        relative = ref.substring(idx);
+      }
       return definitions.findDefinition(key, url, relative);
     }
     return null;

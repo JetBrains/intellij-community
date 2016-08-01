@@ -221,7 +221,8 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     final StringBuilder imports = new StringBuilder();
     final StringBuilder usages = new StringBuilder();
     int v = 0;
-    List<PsiClass> aclasses = new ArrayList<>();
+    List<PsiClass> aClasses = new ArrayList<>();
+    outer:
     for (String name : names) {
       PsiClass[] classes = cache.getClassesByName(name, GlobalSearchScope.allScope(getProject()));
       if (classes.length == 0) continue;
@@ -229,12 +230,17 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (aClass.getSuperClass() == null) continue;
       PsiClassType[] superTypes = aClass.getSuperTypes();
-      if (superTypes.length == 0 || superTypes[0].resolve() == null) continue;
+      if (superTypes.length == 0) continue;
+      for (PsiClassType superType : superTypes) {
+        PsiClass superClass = superType.resolve();
+        if (superClass == null || !superClass.hasModifierProperty(PsiModifier.PUBLIC)) continue outer;
+      }
       String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName.startsWith("java.lang.invoke")) continue; // java.lang.invoke.MethodHandle has weird access attributes in recent rt.jar which causes spurious highlighting errors
+      if (qualifiedName.contains(".Sink")) continue; // Sink has weird access in class files
       imports.append("import " + qualifiedName + ";\n");
       usages.append("/**/ "+aClass.getName() + " var" + v + " = null; var" + v + ".toString();\n");
-      aclasses.add(aClass);
+      aClasses.add(aClass);
       v++;
       if (v>100) break;
     }
@@ -242,7 +248,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> getEditor().getDocument().setText(text));
 
     List<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
-    assertEmpty(errors);
+    assertEmpty(text, errors);
     Random random = new Random();
     int unused = 0;
     for (int i = 0; i < 100; i++) {
@@ -278,7 +284,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
         }
       });
 
-      System.out.println("i = " + i + " " + next + " at "+offset);
+      //System.out.println("i = " + i + " " + next + " at "+offset);
 
       List<HighlightInfo> infos = doHighlighting();
       errors = DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
@@ -290,6 +296,4 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     }
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
   }
-
-
 }

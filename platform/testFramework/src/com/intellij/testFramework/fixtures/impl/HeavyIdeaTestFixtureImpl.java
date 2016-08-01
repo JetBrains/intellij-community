@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,9 +71,9 @@ import java.util.Set;
 @SuppressWarnings("TestOnlyProblems")
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
-  private final Set<File> myFilesToDelete = new HashSet<File>();
+  private final Set<File> myFilesToDelete = new HashSet<>();
   private IdeaTestApplication myApplication;
-  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<ModuleFixtureBuilder>();
+  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
@@ -103,7 +102,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   @Override
   public void tearDown() throws Exception {
     final Project project = getProject();
-    final List<Throwable> exceptions = new SmartList<Throwable>();
+    final List<Throwable> exceptions = new SmartList<>();
     try {
       LightPlatformTestCase.doTearDown(project, myApplication, false, exceptions);
 
@@ -111,12 +110,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         moduleFixtureBuilder.getFixture().tearDown();
       }
 
-      EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-        @Override
-        public void run() throws Throwable {
-          PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions);
-        }
-      });
+      EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions));
       myProject = null;
 
       for (File fileToDelete : myFilesToDelete) {
@@ -158,19 +152,15 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
     myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
 
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @SuppressWarnings("TestOnlyProblems")
-      @Override
-      public void run() throws Throwable {
-        ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
-        for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
-          moduleFixtureBuilder.getFixture().setUp();
-        }
-
-        LightPlatformTestCase.clearUncommittedDocuments(myProject);
-        ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+        moduleFixtureBuilder.getFixture().setUp();
       }
+
+      LightPlatformTestCase.clearUncommittedDocuments(myProject);
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
   }
 

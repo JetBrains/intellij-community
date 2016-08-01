@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.NonLazySchemeProcessor;
+import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ThrowableConvertor;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -39,25 +38,25 @@ public class QuickListsManager implements ExportableApplicationComponent {
   private static final String LIST_TAG = "list";
 
   private final ActionManager myActionManager;
-  private final SchemesManager<QuickList, QuickList> mySchemeManager;
+  private final SchemeManager<QuickList> mySchemeManager;
 
-  public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
+  public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
     myActionManager = actionManager;
-    mySchemeManager = schemesManagerFactory.create("quicklists",
-                                                   new SchemeProcessor<QuickList>() {
-                                                     @NotNull
-                                                     @Override
-                                                     public QuickList readScheme(@NotNull Element element) {
-                                                       return createItem(element);
-                                                     }
+    mySchemeManager = schemeManagerFactory.create("quicklists", new NonLazySchemeProcessor<QuickList, QuickList>() {
+      @NotNull
+      @Override
+      public QuickList readScheme(@NotNull Element element, boolean duringLoad) {
+        return createItem(element);
+      }
 
-                                                     @Override
-                                                     public Element writeScheme(@NotNull QuickList scheme) {
-                                                       Element element = new Element(LIST_TAG);
-                                                       scheme.writeExternal(element);
-                                                       return element;
-                                                     }
-                                                   });
+      @NotNull
+      @Override
+      public Element writeScheme(@NotNull QuickList scheme) {
+        Element element = new Element(LIST_TAG);
+        scheme.writeExternal(element);
+        return element;
+      }
+    });
   }
 
   @NotNull
@@ -94,7 +93,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   public void initComponent() {
     for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
       for (final String path : provider.getBundledListsRelativePaths()) {
-        mySchemeManager.loadBundledScheme(path, provider, element -> createItem(element));
+        mySchemeManager.loadBundledScheme(path, provider, QuickListsManager::createItem);
       }
     }
     mySchemeManager.loadSchemes();
@@ -106,7 +105,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   }
 
   @NotNull
-  public SchemesManager<QuickList, QuickList> getSchemeManager() {
+  public SchemeManager<QuickList> getSchemeManager() {
     return mySchemeManager;
   }
 

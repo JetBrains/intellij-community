@@ -52,6 +52,12 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
     doTest(true);    
   }
 
+  public void testAnonymousClassWithThrownClause() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testAnnotationDescription() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);

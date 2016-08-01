@@ -37,9 +37,7 @@ import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Executes the logic of git branch operations.
@@ -109,11 +107,7 @@ public final class GitBranchWorker {
   public void merge(@NotNull final String branchName, @NotNull final GitBrancher.DeleteOnMergeOption deleteOnMerge,
                     @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
-    Map<GitRepository, String> revisions = new HashMap<GitRepository, String>();
-    for (GitRepository repository : repositories) {
-      revisions.put(repository, repository.getCurrentRevision());
-    }
-    new GitMergeOperation(myProject, myGit, myUiHandler, repositories, branchName, deleteOnMerge, revisions).execute();
+    new GitMergeOperation(myProject, myGit, myUiHandler, repositories, branchName, deleteOnMerge).execute();
   }
 
   public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {

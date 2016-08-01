@@ -16,10 +16,8 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -31,7 +29,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
@@ -49,7 +46,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,31 +176,7 @@ public class HighlightInfo implements Segment {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
     }
 
-    TextAttributes attributes = getAttributesByType(element, type, colorsScheme);
-    if (element != null &&
-        RainbowHighlighter.isRainbowEnabled() &&
-        !isByPass(element) &&
-        isLikeVariable(type.getAttributesKey())) {
-      String text = element.getContainingFile().getText();
-      String name = text.substring(startOffset, endOffset);
-      attributes = new RainbowHighlighter(colorsScheme).getAttributes(name, attributes);
-    }
-    return attributes;
-  }
-
-  @Contract("null -> false")
-  public static boolean isByPass(@Nullable PsiElement element) {
-    return element != null
-           && RainbowVisitor.existsPassSuitableForFile(element.getContainingFile());
-  }
-
-  @Contract("null -> false")
-  private static boolean isLikeVariable(TextAttributesKey key) {
-    if (key == null) return false;
-    TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
-    if (fallbackAttributeKey == null) return false;
-    if (fallbackAttributeKey == DefaultLanguageHighlighterColors.LOCAL_VARIABLE || fallbackAttributeKey == DefaultLanguageHighlighterColors.PARAMETER) return true;
-    return isLikeVariable(fallbackAttributeKey);
+    return getAttributesByType(element, type, colorsScheme);
   }
 
   public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
@@ -775,7 +747,7 @@ public class HighlightInfo implements Segment {
     
     boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
-        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
         final HighlightDisplayKey key = myKey;
         if (key == null) {
           myCanCleanup = false;
@@ -806,7 +778,7 @@ public class HighlightInfo implements Segment {
       }
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
       InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
       if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
         HighlightDisplayKey idkey = HighlightDisplayKey.findById(key.toString());

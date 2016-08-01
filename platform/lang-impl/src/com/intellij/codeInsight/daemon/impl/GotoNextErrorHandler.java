@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
@@ -57,6 +56,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     for (int idx = maxSeverity; idx >= 0; idx--) {
       final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
+      if (minSeverity != null && minSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) continue;
       HighlightInfo infoToGo = findInfo(project, editor, caretOffset, minSeverity);
       if (infoToGo != null) {
         navigateToError(project, editor, infoToGo);

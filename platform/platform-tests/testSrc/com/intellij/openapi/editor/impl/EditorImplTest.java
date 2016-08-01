@@ -375,7 +375,7 @@ public class EditorImplTest extends AbstractEditorTest {
         }
       }
     };
-    getProject().getMessageBus().connect(myTestRootDisposable).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
     initText("abcdef");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
     new WriteCommandAction.Simple(getProject()) {

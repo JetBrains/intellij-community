@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,32 +20,31 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileManagerImpl;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
-  public ProjectInspectionToolsConfigurable(InspectionProfileManager profileManager, InspectionProjectProfileManager projectProfileManager) {
-    super(projectProfileManager, profileManager);
+  public ProjectInspectionToolsConfigurable(@NotNull ProjectInspectionProfileManager projectProfileManager) {
+    super(projectProfileManager);
   }
 
   @Override
   protected InspectionProfileImpl getCurrentProfile() {
-    return (InspectionProfileImpl)myProjectProfileManager.getProjectProfileImpl();
+    return (InspectionProfileImpl)myProjectProfileManager.getCurrentProfile();
   }
 
   @Override
   protected void applyRootProfile(@NotNull String name, boolean isProjectLevel) {
     if (isProjectLevel) {
-      myProjectProfileManager.setProjectProfile(name);
+      myProjectProfileManager.setRootProfile(name);
     }
     else {
       myApplicationProfileManager.setRootProfile(name);
-      myProjectProfileManager.setProjectProfile(null);
+      myProjectProfileManager.setRootProfile(null);
     }
-    InspectionProfileManagerImpl.onProfilesChanged();
+    ApplicationInspectionProfileManager.onProfilesChanged();
   }
 }

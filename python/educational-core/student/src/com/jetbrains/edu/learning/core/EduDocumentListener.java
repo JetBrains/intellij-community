@@ -31,8 +31,6 @@ public class EduDocumentListener extends DocumentAdapter {
     myTrackLength = trackLength;
   }
 
-  //remembering old end before document change because of problems
-  // with fragments containing "\n"
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
     if (!myTaskFile.isTrackChanges()) {
@@ -71,11 +69,12 @@ public class EduDocumentListener extends DocumentAdapter {
         AnswerPlaceholder answerPlaceholder = answerPlaceholderWrapper.getAnswerPlaceholder();
         int length = twEnd - twStart;
         answerPlaceholder.setOffset(twStart);
-        if (!answerPlaceholder.getUseLength()) {
-          answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
-        }
-        else if (myTrackLength) {
-          answerPlaceholder.setLength(length);
+        if (myTrackLength) {
+          if (answerPlaceholder.getUseLength()) {
+            answerPlaceholder.setLength(length);
+          } else {
+            answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
+          }
         }
       }
     }

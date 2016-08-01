@@ -43,10 +43,10 @@ public abstract class HttpRequestHandler {
     return false;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   /**
    * Write request from browser without Origin will be always blocked regardles of your implementation.
    */
+  @SuppressWarnings("SpellCheckingInspection")
   public boolean isAccessible(@NotNull HttpRequest request) {
     String host = NettyKt.getHost(request);
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly — no Origin or Referer headers.

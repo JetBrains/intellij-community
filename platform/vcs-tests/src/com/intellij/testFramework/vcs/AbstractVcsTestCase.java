@@ -31,8 +31,8 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -44,7 +44,10 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -79,7 +82,7 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void refreshVfs() {
-    UsefulTestCase.edt(() -> myWorkingCopyDir.refresh(false, true));
+    EdtTestUtil.runInEdtAndWait(() -> myWorkingCopyDir.refresh(false, true));
   }
 
   protected void initProject(final File clientRoot, String testName) throws Exception {

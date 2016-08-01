@@ -784,23 +784,23 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   private static Function<String, String> createMapping(Object classSource) {
-    Function<String, String> mapping = null;
-
-    if (classSource instanceof Pair) {
-      Object second = ((Pair)classSource).second;
-      if (second instanceof byte[]) {
-        mapping = createMapping((byte[])second);
-      }
+    byte[] bytes = null;
+    if (classSource instanceof ClsFileImpl.FileContentPair) {
+      bytes = ((ClsFileImpl.FileContentPair)classSource).getContent();
     }
     else if (classSource instanceof VirtualFile) {
-      try {
-        byte[] bytes = ((VirtualFile)classSource).contentsToByteArray(false);
-        mapping = createMapping(bytes);
-      }
+      try { bytes = ((VirtualFile)classSource).contentsToByteArray(false); }
       catch (IOException ignored) { }
     }
 
-    return mapping != null ? mapping : GUESSING_MAPPER;
+    if (bytes != null) {
+      Function<String, String> mapping = createMapping(bytes);
+      if (mapping != null) {
+        return mapping;
+      }
+    }
+
+    return GUESSING_MAPPER;
   }
 
   private static Function<String, String> createMapping(byte[] classBytes) {

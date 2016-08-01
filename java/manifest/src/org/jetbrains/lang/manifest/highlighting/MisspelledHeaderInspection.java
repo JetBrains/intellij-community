@@ -184,7 +184,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       myHeaders.add(myHeaderName);
 
-      InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
   }

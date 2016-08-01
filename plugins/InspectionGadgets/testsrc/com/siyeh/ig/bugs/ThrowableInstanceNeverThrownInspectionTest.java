@@ -13,6 +13,11 @@ public class ThrowableInstanceNeverThrownInspectionTest extends LightInspectionT
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ThrowableInstanceNeverThrownInspection();
+    return new ThrowableNotThrownInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/throwable_instance_never_thrown";
   }
 }

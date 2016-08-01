@@ -83,8 +83,4 @@ class NewClassInstanceEvaluator implements Evaluator {
     }
     return objRef;
   }
-
-  public Modifier getModifier() {
-    return null;
-  }
 }

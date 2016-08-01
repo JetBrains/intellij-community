@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -58,6 +59,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
 public class EduAdaptiveStepicConnector {
   public static final String PYTHON27 = "python27";
   public static final String PYTHON3 = "python3";
+  public static final String PYCHARM_COMMENT = "# Posted from PyCharm Edu\n";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
 
@@ -93,9 +95,9 @@ public class EduAdaptiveStepicConnector {
             viewAllSteps(client, realLesson.getId());
 
             for (int stepId : realLesson.steps) {
-              final StepicWrappers.Step step = getStep(stepId);
-              if (step.name.equals("code")) {
-                return getTaskFromStep(project, stepId, step, realLesson.getName());
+              final StepicWrappers.StepSource step = getStep(stepId);
+              if (step.block.name.equals("code")) {
+                return getTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
             }
 
@@ -122,7 +124,6 @@ public class EduAdaptiveStepicConnector {
           StudyUtils.showCheckPopUp(project, balloon);
         }
       });
-      
     }
     catch (URISyntaxException e) {
       LOG.warn(e.getMessage());
@@ -212,8 +213,8 @@ public class EduAdaptiveStepicConnector {
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
-        user != null && postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
-                                                   String.valueOf(user.getId()), reaction);
+        postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
+                                   String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         final Task task = getNextRecommendation(project, course);
 
@@ -234,13 +235,12 @@ public class EduAdaptiveStepicConnector {
             if (taskFiles.size() == 1) {
               final TaskFile taskFile = editor.getTaskFile();
               taskFile.text = ((TaskFile)taskFiles.values().toArray()[0]).text;
-              ApplicationManager.getApplication().invokeLater(() ->
-                                                                ApplicationManager.getApplication().runWriteAction(() ->
-                                                                                                                     editor.getEditor()
-                                                                                                                       .getDocument()
-                                                                                                                       .setText(
-                                                                                                                         taskFiles.get(
-                                                                                                                           EduStepicNames.DEFAULT_TASKFILE_NAME).text)));
+
+              ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+                final Document document = editor.getEditor().getDocument();
+                final String taskFileText = taskFiles.get(EduStepicNames.DEFAULT_TASKFILE_NAME).text;
+                document.setText(taskFileText);
+              }));
             }
             else {
               LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
@@ -289,7 +289,7 @@ public class EduAdaptiveStepicConnector {
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
-        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));        
+        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));
       }
     }
   }
@@ -326,9 +326,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getTaskFromStep(Project project,
-                                      int lessonID,
-                                      @NotNull final StepicWrappers.Step step, @NotNull String name) {
+  private static Task getTaskFromStep(Project project, int lessonID, @NotNull final StepicWrappers.Step step, @NotNull String name) {
     final Task task = new Task();
     task.setName(name);
     task.setStepicId(lessonID);
@@ -388,7 +386,6 @@ public class EduAdaptiveStepicConnector {
 
   private static String getCodeTemplateForTask(@Nullable StepicWrappers.CodeTemplatesWrapper codeTemplates,
                                                @NotNull final Task task, @NotNull final Project project) {
-
     if (codeTemplates != null) {
       final String languageString = getLanguageString(task, project);
       if (languageString != null) {
@@ -416,19 +413,14 @@ public class EduAdaptiveStepicConnector {
         StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, attemptId, language, editor.getDocument().getText());
 
         final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-        if (user != null) {
-          final int id = user.getId();
-          wrapper = getCheckResults(attemptId, id, client, wrapper);
-          if (wrapper.submissions.length == 1) {
-            final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
-            return Pair.create(isSolved, wrapper.submissions[0].hint);
-          }
-          else {
-            LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
-          }
+        final int id = user.getId();
+        wrapper = getCheckResults(attemptId, id, client, wrapper);
+        if (wrapper.submissions.length == 1) {
+          final boolean isSolved = !wrapper.submissions[0].status.equals("wrong");
+          return Pair.create(isSolved, wrapper.submissions[0].hint);
         }
         else {
-          LOG.warn("User is null");
+          LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
         }
       }
     }
@@ -446,7 +438,7 @@ public class EduAdaptiveStepicConnector {
     final CloseableHttpResponse response;
     try {
       final StepicWrappers.SubmissionToPostWrapper submissionToPostWrapper =
-        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, text);
+        new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, PYCHARM_COMMENT + text);
       final HttpPost httpPost = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.SUBMISSIONS);
       setHeaders(httpPost, EduStepicNames.CONTENT_TYPE_APPL_JSON);
       setTimeout(httpPost);

@@ -89,7 +89,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
-    
+
     if (testsOutput != null) {
       if (testsOutput.isSuccess()) {
         onTaskSolved(testsOutput.getMessage());
@@ -130,7 +130,12 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private void checkForAdaptiveCourse(ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
     if (testOutput != null) {
-      if (testOutput.isSuccess()) {
+      // As tests in adaptive courses are created from
+      // samples and stored in task, to disable it we should ignore local testing results
+      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+        onTaskFailed(testOutput.getMessage());
+      }
+      else {
         final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
         if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
           if (pair.getFirst()) {
@@ -151,9 +156,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
                                                                                                       .getPopupBackground(),
                                                                                                     myProject));
         }
-      }
-      else {
-        onTaskFailed(testOutput.getMessage());
       }
     }
   }
@@ -212,7 +214,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
     final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
     final StepicUser user = studySettings.getUser();
-    if (user == null) return;
     final String login = user.getEmail();
     final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
     EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);

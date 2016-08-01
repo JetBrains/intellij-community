@@ -34,7 +34,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -210,7 +209,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       new IdeaApplication(args);
     }
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
-    writePauses = gatherStatistics ? new PausesStat("Write action") : null;
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
       AppExecutorUtil.getAppScheduledExecutorService(); // instantiate AppDelayQueue which marks "Periodic task thread" busy to prevent this EDT to die
@@ -382,7 +380,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     load(null);
   }
 
@@ -402,7 +400,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+        ApplicationLoadListener[] applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensions();
+        for (ApplicationLoadListener listener : applicationLoadListeners) {
           try {
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
@@ -413,6 +412,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
+
+        for (ApplicationLoadListener listener : applicationLoadListeners) {
+          try {
+            listener.beforeComponentsCreated();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
       });
       LOG.info(getComponentConfigCount() + " application components initialized in " + (System.currentTimeMillis() - start) + "ms");
     }
@@ -435,14 +443,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       task.run();
     }
     else {
-      ProgressManager progressManager = ServiceManager.getService(ProgressManager.class);
-      if (progressManager == null) {
-        // https://youtrack.jetbrains.com/issue/IDEA-134164
-        task.run();
-      }
-      else {
-        progressManager.runProcess(task, indicator);
-      }
+      ProgressManager.getInstance().runProcess(task, indicator);
     }
   }
 
@@ -488,7 +489,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (gatherStatistics) {
       //noinspection TestOnlyProblems
       LOG.info(writeActionStatistics());
-      LOG.info(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+      LOG.info(ActionUtil.ActionPauses.STAT.statistics());
       //noinspection TestOnlyProblems
       LOG.info(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics()
                + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
@@ -497,8 +498,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @TestOnly
+  @NotNull
   public String writeActionStatistics() {
-    return writePauses.statistics();
+    return ActionPauses.WRITE.statistics();
   }
 
   @Override
@@ -1026,18 +1028,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    boolean mustAcquire = !isReadAccessAllowed();
-
-    if (mustAcquire) {
-      assertNoPsiLock();
-      if (!myLock.tryReadLock()) return false;
-    }
-
-    try {
+    if (isReadAccessAllowed()) {
       action.run();
     }
-    finally {
-      if (mustAcquire) {
+    else {
+      assertNoPsiLock();
+      if (!myLock.tryReadLock()) return false;
+      try {
+        action.run();
+      }
+      finally {
         endRead();
       }
     }
@@ -1073,14 +1073,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private final boolean gatherStatistics;
-  private final PausesStat writePauses;
+  private static class ActionPauses {
+    private static final PausesStat WRITE = new PausesStat("Write action");
+  }
 
   private void startWrite(@NotNull Class clazz) {
     assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      writePauses.started();
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {
@@ -1119,7 +1121,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     finally {
       myWriteActionsStack.pop();
       if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
-        writePauses.finished("write action ("+clazz+")");
+        ActionPauses.WRITE.finished("write action ("+clazz+")");
       }
       if (myWriteActionsStack.isEmpty()) {
         myLock.writeUnlock();

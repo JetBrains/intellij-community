@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -627,8 +626,15 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
     return QuickFixes.EMPTY_FIX;
   }
 
+  @Nullable
   @Override
-  public IntentionAction createNotIterableForEachLoopFix(PsiExpression expression) {
+  public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+    return Collections.emptyList();
   }
 }

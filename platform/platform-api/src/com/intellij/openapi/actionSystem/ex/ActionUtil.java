@@ -88,7 +88,6 @@ public class ActionUtil {
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
 
-  public static final PausesStat ACTION_UPDATE_PAUSES = new PausesStat("AnAction.update()");
   private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
@@ -113,7 +112,7 @@ public class ActionUtil {
     final boolean notAllowed = dumbMode && !action.isDumbAware();
 
     if (insidePerformDumbAwareUpdate++ == 0) {
-      ACTION_UPDATE_PAUSES.started();
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {
@@ -133,7 +132,7 @@ public class ActionUtil {
     }
     finally {
       if (--insidePerformDumbAwareUpdate == 0) {
-        ACTION_UPDATE_PAUSES.finished(presentation.getText()+" action update ("+action.getClass()+")");
+        ActionPauses.STAT.finished(presentation.getText() + " action update (" + action.getClass() + ")");
       }
       if (notAllowed) {
         if (wasEnabledBefore == null) {
@@ -144,6 +143,9 @@ public class ActionUtil {
     }
     
     return false;
+  }
+  public static class ActionPauses {
+    public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
   /**

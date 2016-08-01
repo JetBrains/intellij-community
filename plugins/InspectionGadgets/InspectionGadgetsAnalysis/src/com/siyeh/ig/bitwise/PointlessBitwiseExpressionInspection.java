@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -241,8 +242,8 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     private boolean booleanExpressionIsPointless(PsiExpression[] operands) {
       PsiExpression previousExpression = null;
       for (PsiExpression operand : operands) {
-        if (isZero(operand) || isAllOnes(operand) || EquivalenceChecker.getCanonicalPsiEquivalence()
-          .expressionsAreEquivalent(previousExpression, operand)) {
+        if (isZero(operand) || isAllOnes(operand) || (EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(previousExpression, operand) && !SideEffectChecker.mayHaveSideEffects(operand))) {
           return true;
         }
         previousExpression = operand;

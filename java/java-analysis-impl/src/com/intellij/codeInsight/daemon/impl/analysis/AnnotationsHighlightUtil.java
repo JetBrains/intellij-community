@@ -33,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -72,7 +73,12 @@ public class AnnotationsHighlightUtil {
       else {
         String description = JavaErrorMessages.message("annotation.missing.method", ref.getCanonicalText());
         PsiElement element = ref.getElement();
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        final HighlightInfo highlightInfo =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, action);
+        }
+        return highlightInfo;
       }
     }
     else {
@@ -152,7 +158,7 @@ public class AnnotationsHighlightUtil {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass != null && psiClass.isEnum() && !(expr instanceof PsiReferenceExpression && ((PsiReferenceExpression)expr).resolve() instanceof PsiEnumConstant)) {
         String description = JavaErrorMessages.message("annotation.non.enum.constant.attribute.value");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create(); 
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
       }
 
       if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
@@ -749,7 +755,7 @@ public class AnnotationsHighlightUtil {
 
   private static boolean isStatic(PsiModifierListOwner owner) {
     if (owner == null) return false;
-    if (owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() == null) return true;
+    if (owner instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)owner)) return true;
     PsiModifierList modifierList = owner.getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC);
   }

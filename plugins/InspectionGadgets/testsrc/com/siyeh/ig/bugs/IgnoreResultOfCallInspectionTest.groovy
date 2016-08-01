@@ -82,6 +82,18 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "}");
   }
 
+  public void testRandomGetter() {
+    doTest("class A {" +
+           "  private String name;" +
+           "  public String getName() {" +
+           "    return name;" +
+           "  }" +
+           "  void m() {" +
+           "    /*Result of 'A.getName()' is ignored*/getName/**/();" +
+           "  }" +
+           "}")
+  }
+
   public void testJSR305Annotation2() {
     doTest("import javax.annotation.CheckReturnValue;" +
            "@CheckReturnValue " +

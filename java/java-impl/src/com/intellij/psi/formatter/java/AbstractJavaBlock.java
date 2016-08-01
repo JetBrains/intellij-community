@@ -185,7 +185,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new PartialWhitespaceBlock(child, range, wrap, alignment, actualIndent, settings, javaSettings);
     }
 
-    if (childPsi instanceof PsiClass) {
+    if (childPsi instanceof PsiClass || childPsi instanceof PsiJavaModule) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
     if (child.getElementType() == JavaElementType.METHOD) {
@@ -203,28 +203,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings);
     }
-    if (child instanceof LeafElement) {
+    if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
       return block;
     }
-    else if (isLikeExtendsList(elementType)) {
+    if (isLikeExtendsList(elementType)) {
       return new ExtendsListBlock(child, wrap, alignmentStrategy, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.CODE_BLOCK) {
+    if (elementType == JavaElementType.CODE_BLOCK) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaElementType.LABELED_STATEMENT) {
+    if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else if (elementType == JavaDocElementType.DOC_COMMENT) {
+    if (elementType == JavaDocElementType.DOC_COMMENT) {
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
-    else {
-      final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
-      simpleJavaBlock.setStartOffset(startOffset);
-      return simpleJavaBlock;
-    }
+
+    final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignmentStrategy, actualIndent, settings, javaSettings);
+    simpleJavaBlock.setStartOffset(startOffset);
+    return simpleJavaBlock;
   }
 
   @NotNull
@@ -302,9 +301,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
       if (defaultChildIndent != null) return defaultChildIndent;
-    }
-    if (child.getTreeParent() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
-      return Indent.getNoneIndent();
+      if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
+        return Indent.getNoneIndent();
+      }
     }
 
     return null;

@@ -379,7 +379,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
     if (element != null) {
       for (EntryPoint extension : myExtensions) {
-        if (extension.isEntryPoint(owner, element)) {
+        if (extension.isSelected() && extension.isEntryPoint(owner, element)) {
           return true;
         }
       }
@@ -416,7 +416,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (entryPointsManager.isEntryPoint(element)) return true;
     }
     for (EntryPoint extension : myExtensions) {
-      if (extension.isEntryPoint(element)) {
+      if (extension.isSelected() && extension.isEntryPoint(element)) {
         return true;
       }
     }

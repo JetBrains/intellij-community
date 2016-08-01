@@ -18,10 +18,12 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -41,10 +43,12 @@ import java.util.stream.Collectors;
 class ResourceBundleEditorFileListener extends VirtualFileAdapter {
   private final ResourceBundleEditor myEditor;
   private final MyVfsEventsProcessor myEventsProcessor;
+  private final Project myProject;
 
   public ResourceBundleEditorFileListener(ResourceBundleEditor editor) {
     myEditor = editor;
     myEventsProcessor = new MyVfsEventsProcessor();
+    myProject = myEditor.getResourceBundle().getProject();
   }
 
   @Override
@@ -93,7 +97,21 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                 if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED &&
                                                               ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME))) {
                   if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
-                    toDo = myEditor::recreateEditorsPanel;
+                    int validFilesCount = 0;
+                    for (PropertiesFile file : myEditor.getResourceBundle().getPropertiesFiles()) {
+                      if (file.getContainingFile().isValid()) {
+                        validFilesCount ++;
+                      }
+                      if (validFilesCount == 2) {
+                        break;
+                      }
+                    }
+                    if (validFilesCount > 1) {
+                      toDo = myEditor::recreateEditorsPanel;
+                    } else {
+                      toDo = () -> FileEditorManager.getInstance(myProject)
+                        .closeFile(new ResourceBundleAsVirtualFile(myEditor.getResourceBundle()));
+                    }
                     break;
                   }
                 }

@@ -88,13 +88,13 @@ public class ClassRepr extends Proto {
   }
 
   public abstract static class Diff extends Difference {
-    public abstract Specifier<TypeRepr.AbstractType> interfaces();
+    public abstract Specifier<TypeRepr.AbstractType, Difference> interfaces();
 
-    public abstract Specifier<FieldRepr> fields();
+    public abstract Specifier<FieldRepr, FieldRepr.Diff> fields();
 
-    public abstract Specifier<MethodRepr> methods();
+    public abstract Specifier<MethodRepr, MethodRepr.Diff> methods();
 
-    public abstract Specifier<ElemType> targets();
+    public abstract Specifier<ElemType, Difference> targets();
 
     public abstract boolean retentionChanged();
 
@@ -150,22 +150,22 @@ public class ClassRepr extends Proto {
       }
 
       @Override
-      public Difference.Specifier<TypeRepr.AbstractType> interfaces() {
+      public Difference.Specifier<TypeRepr.AbstractType, Difference> interfaces() {
         return Difference.make(pastClass.myInterfaces, myInterfaces);
       }
 
       @Override
-      public Difference.Specifier<FieldRepr> fields() {
+      public Difference.Specifier<FieldRepr, FieldRepr.Diff> fields() {
         return Difference.make(pastClass.myFields, myFields);
       }
 
       @Override
-      public Difference.Specifier<MethodRepr> methods() {
+      public Difference.Specifier<MethodRepr, MethodRepr.Diff> methods() {
         return Difference.make(pastClass.myMethods, myMethods);
       }
 
       @Override
-      public Specifier<ElemType> targets() {
+      public Specifier<ElemType, Difference> targets() {
         return Difference.make(pastClass.myAnnotationTargets, myAnnotationTargets);
       }
 

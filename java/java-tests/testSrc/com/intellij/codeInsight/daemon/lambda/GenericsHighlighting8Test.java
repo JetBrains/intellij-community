@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testReferenceTypeParams() {
@@ -803,7 +798,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
    private void doTest(boolean warnings) {
      LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), myTestRootDisposable);
+     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
    }
 

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -561,5 +562,17 @@ public class AnnotationUtil {
     AnnotationInvocationHandler handler = new AnnotationInvocationHandler(annotationClass, annotation);
     @SuppressWarnings("unchecked") T t = (T)Proxy.newProxyInstance(annotationClass.getClassLoader(), new Class<?>[]{annotationClass}, handler);
     return t;
+  }
+
+  @Nullable
+  public static PsiNameValuePair findDeclaredAttribute(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
+    if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attributeName)) attributeName = null;
+    for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
+      @NonNls final String name = attribute.getName();
+      if (Comparing.equal(name, attributeName) || attributeName == null && PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
+        return attribute;
+      }
+    }
+    return null;
   }
 }

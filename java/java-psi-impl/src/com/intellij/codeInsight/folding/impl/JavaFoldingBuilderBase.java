@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -522,6 +523,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
+      ProgressManager.checkCanceled();
       ProgressIndicatorProvider.checkCanceled();
       addElementsToFold(descriptors, aClass, document, true, quick);
     }

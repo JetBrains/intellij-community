@@ -76,11 +76,11 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       }
 
       @Override
-      public void profileActivated(Profile oldProfile, Profile profile) {
+      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
         myFileToolsCache.clear();
       }
     };
-    myProfileManager.addProfilesListener(myProfilesListener, myProject);
+    myProfileManager.addProfileChangeListener(myProfilesListener, myProject);
     Disposer.register(myProject, myFileToolsCache::clear);
   }
 
@@ -92,8 +92,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null; //optimization
     }
 
-    if (!InspectionProjectProfileManager.getInstance(file.getProject()).isProfileLoaded() ||
-        myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
+    if (myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
       return null;
     }
 

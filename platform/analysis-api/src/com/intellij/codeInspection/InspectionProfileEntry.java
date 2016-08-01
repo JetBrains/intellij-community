@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,6 +82,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return true;
       }
     }
+
+    final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
+    if (merger != null) {
+      for (String sourceToolId : merger.getSourceToolNames()) {
+        for (InspectionSuppressor suppressor : suppressors) {
+          if (isSuppressed(sourceToolId, suppressor, element)) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 
@@ -114,7 +127,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return o1.getName().equals(o2.getName());
       }
     });
-    
+
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
     final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
     if (injectionHost != null) {
@@ -176,11 +189,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
     return elementLanguageSuppressor != null
            ? Collections.singleton(elementLanguageSuppressor)
-           : Collections.<InspectionSuppressor>emptySet();
+           : Collections.emptySet();
   }
 
   public void cleanup(@NotNull Project project) {
-
   }
 
   interface DefaultNameProvider {
@@ -387,24 +399,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   protected SerializationFilter getSerializationFilter() {
     return DEFAULT_FILTER;
-  }
-
-  /**
-   * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation.
-   *
-   * @param project to be associated with this entry
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
-   */
-  public void projectOpened(@NotNull Project project) {
-  }
-
-  /**
-   * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion.
-   *
-   * @param project to be disassociated from this entry
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
-   */
-  public void projectClosed(@NotNull Project project) {
   }
 
   /**

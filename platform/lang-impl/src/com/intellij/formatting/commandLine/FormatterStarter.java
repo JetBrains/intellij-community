@@ -20,8 +20,15 @@ import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -31,6 +38,7 @@ import java.io.PrintWriter;
 public class FormatterStarter extends ApplicationStarterEx {
 
   public static final String FORMAT_COMMAND_NAME = "format";
+  private static final Logger LOG = Logger.getInstance("#" + FormatterStarter.class.getName());
 
   @Override
   public boolean isHeadless() {
@@ -53,27 +61,59 @@ public class FormatterStarter extends ApplicationStarterEx {
       new PrintWriter(System.out),
       new PrintWriter(System.err));
     messageOutput.info(getAppInfo() + " Formatter\n");
+    CodeStyleSettings settings = null;
+    logArgs(args);
+    if (args.length < 2) {
+      showUsageInfo(messageOutput);
+    }
     for (int i = 1; i < args.length; i ++) {
       if (args[i].startsWith("-")) {
         if (checkOption(args[i], "-h", "--help")) {
           showUsageInfo(messageOutput);
         }
+        if (checkOption(args[i], "-s", "--settings")) {
+          //noinspection AssignmentToForLoopParameter
+          i ++;
+          if (i >= args.length) {
+            fatalError(messageOutput, "Mising settings file path.");
+          }
+          try {
+            settings = readSettings(args[i]);
+          }
+          catch (SchemeImportException e) {
+            fatalError(messageOutput, e.getLocalizedMessage() + "\n");
+          }
+        }
         else {
-          messageOutput.error("Unknown option " + args[i]);
+          fatalError(messageOutput, "Unknown option " + args[i]);
         }
       }
       else {
-        FileSetFormatter fileSetFormatter = new FileSetFormatter(args[i], messageOutput);
+        FileSetFormatter fileSetFormatter = new FileSetFormatter(args[i], settings, messageOutput);
         try {
           fileSetFormatter.processFiles();
+          messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " files formatted.\n");
         }
         catch (IOException e) {
-          messageOutput.error("FAILED: " + e.getLocalizedMessage() + "\n");
-          System.exit(1);
+          fatalError(messageOutput, e.getLocalizedMessage());
         }
       }
     }
     ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
+  }
+
+  private static void fatalError(@NotNull MessageOutput messageOutput, @NotNull String message) {
+    messageOutput.error("ERROR: " + message + "\n");
+    System.exit(1);
+  }
+
+  private static CodeStyleSettings readSettings(@NotNull String settingsPath) throws SchemeImportException {
+    VirtualFile vFile = VfsUtil.findFileByIoFile(new File(settingsPath), true);
+    CodeStyleSettingsLoader loader = new CodeStyleSettingsLoader();
+    if (vFile == null) {
+      throw new SchemeImportException("Cannot find file " + settingsPath);
+    }
+    return loader.loadSettings(vFile);
   }
 
   private static boolean checkOption(@NotNull String arg, String... variants) {
@@ -90,6 +130,17 @@ public class FormatterStarter extends ApplicationStarterEx {
 
 
   private static void showUsageInfo(@NotNull MessageOutput messageOutput) {
-    messageOutput.info("Usage: format fileSpec...");
+    messageOutput.info("Usage: format [-s|--settings settingsPath] fileSpec...\n");
+    messageOutput.info("  -s|--settings  A path to Intellij IDEA code style settings .xml file.\n");
+    messageOutput.info("  fileSpec       A file specification, may contain wildcards.\n");
+  }
+
+  private static void logArgs(@NotNull String[] args) {
+    StringBuilder sb = new StringBuilder();
+    for (String arg : args) {
+      if (sb.length() > 0) sb.append(",");
+      sb.append(arg);
+    }
+    LOG.info("Arguments: " + sb);
   }
 }

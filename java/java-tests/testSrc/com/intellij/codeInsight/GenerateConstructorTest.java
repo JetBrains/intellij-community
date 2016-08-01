@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.TYPE_USE) public @interface TestNotNull { }");
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
     manager.setNotNulls("foo.TestNotNull");
-    Disposer.register(myTestRootDisposable, manager::setNotNulls);
+    Disposer.register(getTestRootDisposable(), manager::setNotNulls);
     doTest();
   }
 

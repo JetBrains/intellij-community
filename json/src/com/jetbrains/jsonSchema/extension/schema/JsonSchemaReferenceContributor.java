@@ -17,17 +17,14 @@ package com.jetbrains.jsonSchema.extension.schema;
 
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
-import com.intellij.openapi.project.Project;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +44,7 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (element instanceof JsonValue) {
-          if (!isSchemaFile((PsiElement)element)) return false;
+          if (!JsonSchemaFileType.INSTANCE.equals(((PsiElement)element).getContainingFile().getFileType())) return false;
           if (((JsonValue)element).getParent() instanceof JsonProperty &&
               ((JsonProperty)((JsonValue)element).getParent()).getValue() == element) {
             return propertyName.equals(((JsonProperty)((JsonValue)element).getParent()).getName());
@@ -61,13 +58,5 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
         return true;
       }
     }));
-  }
-
-  private static boolean isSchemaFile(@NotNull final PsiElement element) {
-    final Project project = element.getProject();
-    final PsiFile file = element.getContainingFile();
-    if (!JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
-    return file.getVirtualFile() != null &&
-           JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file.getVirtualFile());
   }
 }

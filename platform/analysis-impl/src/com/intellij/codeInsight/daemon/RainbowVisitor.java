@@ -19,13 +19,24 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.text.StringHash;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class RainbowVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private RainbowHighlighter myRainbowHighlighter;
+
+  protected static final NotNullLazyKey<HashMap<String, Integer>, PsiElement> USED_COLORS =
+    NotNullLazyKey.create("USED_COLORS", psiElement -> new HashMap<String, Integer>());
 
   @NotNull
   @Override
@@ -69,5 +80,36 @@ public abstract class RainbowVisitor implements HighlightVisitor {
       }
     }
     return false;
+  }
+
+  protected HighlightInfo getInfo(@NotNull PsiElement context,
+                                  @NotNull PsiElement rainbowElement,
+                                  @NotNull String id,
+                                  @Nullable TextAttributesKey colorKey) {
+    HashMap<String, Integer> id2index = USED_COLORS.getValue(context);
+    Integer colorIndex = id2index.get(id);
+    if (colorIndex == null) {
+      colorIndex = Math.abs(StringHash.murmur(id, 0x55AA));
+
+      Map<Integer, Integer> index2usage = new HashMap<Integer, Integer>();
+      id2index.values().forEach(i -> {
+        Integer useCount = index2usage.get(i);
+        index2usage.put(i, useCount == null ? 1 : ++useCount);
+      });
+
+      int colorsCount = getHighlighter().getColorsCount();
+      out:
+      for (int cutoff = 0; ; ++cutoff) {
+        for (int i = 0; i < colorsCount; ++i) {
+          colorIndex %= colorsCount;
+          Integer useCount = index2usage.get(colorIndex % colorsCount);
+          if (useCount == null) useCount = 0;
+          if (useCount == cutoff) break out;
+          ++colorIndex;
+        }
+      }
+      id2index.put(id, colorIndex);
+    }
+    return getHighlighter().getInfo(colorIndex, rainbowElement, colorKey);
   }
 }

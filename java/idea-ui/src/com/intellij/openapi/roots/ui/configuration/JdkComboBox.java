@@ -66,14 +66,15 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<SdkTypeId> filter) {
-    this(jdkModel, getSdkFilter(filter), filter, false);
+    this(jdkModel, filter, getSdkFilter(filter), filter, false);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
+                     @Nullable Condition<SdkTypeId> sdkTypeFilter,
                      @Nullable Condition<Sdk> filter,
                      @Nullable Condition<SdkTypeId> creationFilter,
                      boolean addSuggestedItems) {
-    super(new JdkComboBoxModel(jdkModel, filter, addSuggestedItems));
+    super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
     myFilter = filter;
     myCreationFilter = creationFilter;
     setRenderer(new ProjectJdkListRenderer() {
@@ -289,7 +290,8 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    public JdkComboBoxModel(final ProjectSdksModel jdksModel, @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
+    public JdkComboBoxModel(final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
+                            @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       Sdk[] jdks = jdksModel.getSdks();
       Arrays.sort(jdks, (s1, s2) -> s1.getName().compareToIgnoreCase(s2.getName()));
       for (Sdk jdk : jdks) {
@@ -298,14 +300,14 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
       if (addSuggested) {
-        addSuggestedItems(sdkFilter, jdks);
+        addSuggestedItems(sdkTypeFilter, jdks);
       }
     }
 
-    protected void addSuggestedItems(@Nullable Condition<Sdk> sdkFilter, Sdk[] jdks) {
+    protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {
       SdkType[] types = SdkType.getAllTypes();
       for (SdkType type : types) {
-        if (sdkFilter == null || ContainerUtil.find(jdks, sdkFilter) == null) {
+        if (sdkTypeFilter == null || sdkTypeFilter.value(type) && ContainerUtil.find(jdks, sdk -> sdk.getSdkType() == type) == null) {
           String homePath = type.suggestHomePath();
           if (homePath != null && type.isValidSdkHome(homePath)) {
             addElement(new SuggestedJdkItem(type, homePath));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
@@ -63,7 +64,7 @@ class CompletionAutoPopupTester {
   private static void waitPhase(Closure condition) {
     for (j in 1..1000) {
       def phase = null
-      UsefulTestCase.edt { phase = CompletionServiceImpl.completionPhase }
+      EdtTestUtil.runInEdtAndWait { phase = CompletionServiceImpl.completionPhase }
       if (condition(phase)) {
         return
       }
@@ -108,7 +109,7 @@ class CompletionAutoPopupTester {
         return "Closure "+closureSeq;
       }
     };
-    UsefulTestCase.edt {
+    EdtTestUtil.runInEdtAndWait {
       executed = PsiDocumentManager.getInstance(myFixture.project).performWhenAllCommitted(r);
     }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed()

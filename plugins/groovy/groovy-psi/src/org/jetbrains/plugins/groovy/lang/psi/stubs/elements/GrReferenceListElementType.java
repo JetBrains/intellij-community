@@ -42,6 +42,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
     super(debugName);
   }
 
+  @NotNull
   @Override
   public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
     List<String> refNames = new ArrayList<String>();

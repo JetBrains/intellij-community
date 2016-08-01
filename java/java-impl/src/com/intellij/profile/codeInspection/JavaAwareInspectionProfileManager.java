@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.JavaAwareInspectionProfileCoverter;
-import com.intellij.codeInspection.ex.InspectionProfileManagerImpl;
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.util.messages.MessageBus;
 
-public class JavaAwareInspectionProfileManager extends InspectionProfileManagerImpl {
+public class JavaAwareInspectionProfileManager extends ApplicationInspectionProfileManager {
   public JavaAwareInspectionProfileManager(InspectionToolRegistrar registrar,
-                                           SchemesManagerFactory schemesManagerFactory,
+                                           SchemeManagerFactory schemeManagerFactory,
                                            MessageBus messageBus) {
-    super(registrar, schemesManagerFactory, messageBus);
+    super(registrar, schemeManagerFactory, messageBus);
   }
 
   @Override

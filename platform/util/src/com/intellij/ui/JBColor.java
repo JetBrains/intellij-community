@@ -218,12 +218,7 @@ public class JBColor extends Color {
   };
   public static final JBColor WHITE = white;
 
-  public static final JBColor black = new JBColor(Color.black, UIUtil.getListForeground()) {
-    @Override
-    Color getDarkVariant() {
-      return UIUtil.getListForeground();
-    }
-  };
+  public static final JBColor black = new JBColor(Color.black, foreground());
   public static final JBColor BLACK = black;
 
   public static final JBColor gray = new JBColor(Gray._128, Gray._128);

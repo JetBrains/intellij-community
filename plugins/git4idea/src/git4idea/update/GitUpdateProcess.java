@@ -40,6 +40,7 @@ import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
@@ -317,11 +318,14 @@ public class GitUpdateProcess {
       if (trackInfo == null) {
         final String branchName = branch.getName();
         LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
+        String recommendedCommand = String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion()) ?
+                                                  "git branch --set-upstream-to origin/%1$s %1$s" :
+                                                  "git branch --set-upstream %1$s origin/%1$s", branchName);
         notifyImportantError(myProject, "Can't update: no tracked branch",
                              "No tracked branch configured for branch " + code(branchName) +
                              rootStringIfNeeded(root) +
                              "To make your branch track a remote branch call, for example,<br/>" +
-                             "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+                             "<code>" + recommendedCommand + "</code>");
         return false;
       }
       myTrackedBranches.put(root, new GitBranchPair(branch, trackInfo.getRemoteBranch()));

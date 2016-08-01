@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
@@ -69,7 +70,7 @@ object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
 
   @JvmField
-  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
+  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private val DISABLED_UPDATE = "disabled_update.txt"
   private val NO_PLATFORM_UPDATE = "ide.no.platform.update"
@@ -486,9 +487,10 @@ object UpdateChecker {
   @JvmStatic
   @Throws(IOException::class)
   fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously( {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<Boolean, IOException> {
       val indicator = ProgressManager.getInstance().progressIndicator
       downloadAndInstallPatch(patch, toBuild, forceHttps, indicator)
+      true
     }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)
   }
 

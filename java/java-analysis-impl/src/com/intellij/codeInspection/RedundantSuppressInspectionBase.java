@@ -19,11 +19,13 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -88,7 +90,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitClass(@NotNull RefClass refClass) {
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspectionBase.this)) return;
-        CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
+        CommonProblemDescriptor[] descriptors = checkElement(refClass, manager);
         if (descriptors != null) {
           for (CommonProblemDescriptor descriptor : descriptors) {
             if (descriptor instanceof ProblemDescriptor) {
@@ -108,13 +110,13 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   @Nullable
-  private CommonProblemDescriptor[] checkElement(@NotNull RefClass refEntity, @NotNull InspectionManager manager, @NotNull Project project) {
+  private CommonProblemDescriptor[] checkElement(@NotNull RefClass refEntity, @NotNull InspectionManager manager) {
     final PsiClass psiClass = refEntity.getElement();
     if (psiClass == null) return null;
-    return checkElement(psiClass, manager, project);
+    return checkElement(psiClass, manager);
   }
 
-  public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull final InspectionManager manager, @NotNull Project project) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull final InspectionManager manager) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitModifierList(PsiModifierList list) {
@@ -159,14 +161,14 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
     });
 
     if (suppressedScopes.values().isEmpty()) return null;
-    // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
+    // have to visit all file from scratch since inspections can be written in any pervasive way including checkFile() overriding
     Map<InspectionToolWrapper, String> suppressedTools = new THashMap<InspectionToolWrapper, String>();
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
         final String shortName = iterator.next().trim();
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
-          if (toolWrapper instanceof LocalInspectionToolWrapper && 
+          if (toolWrapper instanceof LocalInspectionToolWrapper &&
               (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
                shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()))) {
             if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
@@ -179,7 +181,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           }
           else if (toolWrapper.getShortName().equals(shortName)) {
             //ignore global unused as it won't be checked anyway
-            if (toolWrapper instanceof LocalInspectionToolWrapper || 
+            if (toolWrapper instanceof LocalInspectionToolWrapper ||
                 toolWrapper instanceof GlobalInspectionToolWrapper && !isGlobalInspectionRunCustomly(toolWrapper.getTool())) {
               suppressedTools.put(toolWrapper, shortName);
             }
@@ -222,29 +224,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
           descriptors = new ArrayList<CommonProblemDescriptor>();
           globalContext.getRefManager().iterate(new RefVisitor() {
             @Override public void visitElement(@NotNull RefEntity refEntity) {
-              CommonProblemDescriptor[]
-                descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {
-                @Nullable
-                @Override
-                public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-                  return CommonProblemDescriptor.EMPTY_ARRAY;
-                }
-
-                @Override
-                public void ignoreElement(@NotNull RefEntity refEntity) {
-
-                }
-
-                @Override
-                public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
-                  int i =0;
-                }
-
-                @Override
-                public RefEntity getElement(@NotNull CommonProblemDescriptor descriptor) {
-                  return null;
-                }
-              });
+              CommonProblemDescriptor[] descriptors1 = global.getTool().checkElement(refEntity, scope, manager, globalContext, new ProblemDescriptionsProcessor() {});
               if (descriptors1 != null) {
                 ContainerUtil.addAll(descriptors, descriptors1);
               }
@@ -330,13 +310,9 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
-    ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile().getModifiableModel();
-    InspectionProfileWrapper profile = new InspectionProfileWrapper((InspectionProfile)model);
-    profile.init(manager.getProject());
-
-    return profile.getInspectionTools(psiElement);
+    return InspectionProjectProfileManager.getInstance(manager.getProject()).getCurrentProfile().getModifiableModel()
+      .getInspectionTools(psiElement);
   }
-
 
   @Override
   @Nullable

@@ -574,7 +574,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return this;
     }
 
-    List<PsiAnnotation> annotations = getAnnotations();
     String text = qName;
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
@@ -589,7 +588,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
     }
 
-    ((PsiJavaCodeReferenceElementImpl)ref).setAnnotations(annotations);
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
 
     if (!preserveQualification) {

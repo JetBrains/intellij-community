@@ -57,7 +57,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
     </extensionPoint>
-    
+
     <extensionPoint name="braceMatcher"
                     beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
@@ -322,8 +322,6 @@
     </extensionPoint>
     <extensionPoint name="inspectionToolProvider"
                     interface="com.intellij.codeInspection.InspectionToolProvider"/>
-    <extensionPoint name="inspectionToolsFactory"
-                    interface="com.intellij.codeInspection.InspectionToolsFactory"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
@@ -697,6 +695,7 @@
                     interface="com.intellij.testIntegration.TestFinder"/>
     <extensionPoint name="testSrcLocator"
                     interface="com.intellij.testIntegration.TestLocationProvider"/>
+    <extensionPoint name="testSourcesFilter" interface="com.intellij.openapi.roots.TestSourcesFilter"/>
 
     <extensionPoint name="testCreator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -751,9 +750,9 @@
     </extensionPoint>
 
     <extensionPoint name="statementUpDownMover" interface="com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover"/>
-    
+
     <extensionPoint name="moveLeftRightHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" 
+      <with attribute="implementationClass"
             implements="com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler"/>
     </extensionPoint>
 

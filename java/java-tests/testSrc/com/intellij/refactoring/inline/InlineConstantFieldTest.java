@@ -2,8 +2,10 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.refactoring.LightRefactoringTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +14,11 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17(); // has to have src.zip
   }
 
   public void testQualifiedExpression() throws Exception {
@@ -39,6 +46,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   public void testFinalInitializedInConstructor() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondInitializer() throws Exception {
     doTest();
   }
 

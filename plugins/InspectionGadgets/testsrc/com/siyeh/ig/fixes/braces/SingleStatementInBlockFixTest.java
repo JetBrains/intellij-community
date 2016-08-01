@@ -29,10 +29,13 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testBetweenIfAndElse() { assertQuickfixNotAvailable(getMessagePrefix());}
   public void testIfElse() { doTest("if"); }
   public void testIfElse2() { doTest("if"); }
+  public void testIfElse3() { doTest("else"); }
   public void testWhile() { doTest("while"); }
   public void testForEach() { doTest("for"); }
   public void testForIndex() { doTest("for"); }
   public void testDoWhile() { doTest("do"); }
+  public void testIfWithLoop() { doTest("if"); }
+  public void testElseWithLoop() { doTest("else"); }
 
   @Override
   protected void setUp() throws Exception {
@@ -50,11 +53,11 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   }
 
   private static String getMessage(String keyword) {
-    return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", keyword);
+    return InspectionGadgetsBundle.message("single.statement.in.block.quickfix", keyword);
   }
 
   private static String getMessagePrefix() {
-    final String message = InspectionGadgetsBundle.message("single.statement.in.block.descriptor", "@");
+    final String message = InspectionGadgetsBundle.message("single.statement.in.block.quickfix", "@");
     final int index = message.indexOf("@");
     if (index >= 0) return message.substring(0, index);
     return message;

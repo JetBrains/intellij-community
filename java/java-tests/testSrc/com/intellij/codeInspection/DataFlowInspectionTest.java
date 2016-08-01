@@ -111,6 +111,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testSwitchOnNullable() { doTest(); }
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
   public void testReturningNullConstant() { doTest(); }
+  public void testReturningConstantExpression() { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
   // IDEA-129331

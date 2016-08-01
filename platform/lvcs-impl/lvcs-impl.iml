@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="lvcs-api" />
-    <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="diff-api" />

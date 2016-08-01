@@ -97,7 +97,7 @@ fun createBareRepository(dir: Path): Repository {
   return repository
 }
 
-fun createRepository(dir: Path): Repository {
+fun createGitRepository(dir: Path): Repository {
   val repository = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
   repository.create()
   return repository
@@ -250,8 +250,8 @@ fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)
           continue
         }
 
-        if (!processor(fileName, objectLoader.openStream())) {
-          break;
+        if (!objectLoader.openStream().use { processor(fileName, it) }) {
+          break
         }
       }
     }
@@ -317,7 +317,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
       delegate.close()
     }
     finally {
-      reader.close();
+      reader.close()
     }
   }
 }
