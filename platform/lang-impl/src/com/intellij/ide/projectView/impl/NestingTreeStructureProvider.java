@@ -70,6 +70,9 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     if (myNestingRules == null) {
       myNestingRules = new THashSet<>();
 
+      final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
+      final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
+
       final NestingRulesConsumer consumer = new NestingRulesConsumer() {
         @Override
         public void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix) {
@@ -77,6 +80,21 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
           LOG.assertTrue(!parentFileSuffix.equals(childFileSuffix), "parent and child suffixes must be different: " + parentFileSuffix);
 
           myNestingRules.add(new NestingRule(parentFileSuffix, childFileSuffix));
+          childToParentSuffix.putValue(childFileSuffix, parentFileSuffix);
+          parentToChildSuffix.putValue(parentFileSuffix, childFileSuffix);
+
+          // for all cases like A -> B -> C we also add a rule A -> C
+          for (String s : parentToChildSuffix.get(childFileSuffix)) {
+            myNestingRules.add(new NestingRule(parentFileSuffix, s));
+            parentToChildSuffix.putValue(parentFileSuffix, s);
+            childToParentSuffix.putValue(s, parentFileSuffix);
+          }
+
+          for (String s : childToParentSuffix.get(parentFileSuffix)) {
+            myNestingRules.add(new NestingRule(s, childFileSuffix));
+            parentToChildSuffix.putValue(s, childFileSuffix);
+            childToParentSuffix.putValue(childFileSuffix, s);
+          }
         }
       };
 
