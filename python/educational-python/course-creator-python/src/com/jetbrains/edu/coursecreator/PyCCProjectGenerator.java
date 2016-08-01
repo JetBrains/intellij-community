@@ -96,7 +96,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     final Course course = new Course();
     String name = settingsPanel.getName();
     course.setName(name);
-    course.setAuthors(settingsPanel.getAuthors());
+    course.setAuthorsAsString(settingsPanel.getAuthors());
     course.setDescription(settingsPanel.getDescription());
 
     String language = PythonLanguage.getInstance().getID();
