@@ -679,6 +679,10 @@ public class VcsUtil {
       .orElse(null);
   }
 
+  public static <T> boolean isEmpty(@Nullable Stream<T> items) {
+    return items == null || !items.findAny().isPresent();
+  }
+
   @NotNull
   public static <T> Stream<T> toStream(@Nullable T... items) {
     return items == null ? Stream.empty() : Stream.of(items);

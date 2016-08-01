@@ -231,7 +231,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
     }
     else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList()));
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG));
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.equals(key)) {
       sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);

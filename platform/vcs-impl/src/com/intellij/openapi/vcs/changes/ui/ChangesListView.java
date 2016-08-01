@@ -65,7 +65,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
-  @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
@@ -171,7 +171,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles().collect(toList()));
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
       sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));

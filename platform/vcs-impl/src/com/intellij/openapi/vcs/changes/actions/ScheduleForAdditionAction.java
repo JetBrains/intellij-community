@@ -38,12 +38,15 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
@@ -88,8 +91,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   private boolean thereAreUnversionedFiles(AnActionEvent e) {
-    List<VirtualFile> unversionedFiles = getFromChangesView(e);
-    if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
+    if (!VcsUtil.isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY))) {
       return true;
     }
     VirtualFile[] files = getFromSelection(e);
@@ -109,7 +111,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   private List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
-    List<VirtualFile> unversionedFiles = getFromChangesView(e);
+    Stream<VirtualFile> unversionedFilesStream = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    List<VirtualFile> unversionedFiles = unversionedFilesStream != null ? unversionedFilesStream.collect(Collectors.toList()) : null;
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return unversionedFiles;
     }
@@ -139,11 +142,6 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   protected boolean isStatusForAddition(FileStatus status) {
     return status == FileStatus.UNKNOWN;
-  }
-
-  @Nullable
-  private static List<VirtualFile> getFromChangesView(AnActionEvent e) {
-    return e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
   }
 
   @Nullable
