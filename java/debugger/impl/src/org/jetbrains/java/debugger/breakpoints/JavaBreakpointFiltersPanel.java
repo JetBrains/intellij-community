@@ -116,7 +116,11 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   public boolean isVisibleOnPopup(@NotNull B breakpoint) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
-      return properties.isCOUNT_FILTER_ENABLED() || properties.isCLASS_FILTERS_ENABLED() || properties.isINSTANCE_FILTERS_ENABLED();
+      return properties.isCOUNT_FILTER_ENABLED() ||
+             properties.isCLASS_FILTERS_ENABLED() ||
+             properties.isINSTANCE_FILTERS_ENABLED() ||
+             (properties instanceof JavaExceptionBreakpointProperties &&
+              ((JavaExceptionBreakpointProperties)properties).isCatchFiltersEnabled());
     }
     return false;
   }
