@@ -673,8 +673,8 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static <T> T getIfSingle(@NotNull Stream<T> items) {
-    return items.limit(2).map(Optional::ofNullable)
+  public static <T> T getIfSingle(@Nullable Stream<T> items) {
+    return items == null ? null : items.limit(2).map(Optional::ofNullable)
       .reduce(Optional.empty(), (a, b) -> a.isPresent() ^ b.isPresent() ? b : Optional.empty())
       .orElse(null);
   }
