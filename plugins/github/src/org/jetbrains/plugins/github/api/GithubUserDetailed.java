@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.api;
 
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @RestModel
@@ -39,15 +38,10 @@ public class GithubUserDetailed extends GithubUser {
   private UserPlan plan;
 
   public static class UserPlan {
-    @Mandatory private String name;
+    private String name;
     private Long space;
     private Long collaborators;
     @Mandatory private Long privateRepos;
-
-    @NotNull
-    public String getName() {
-      return name;
-    }
 
     public long getPrivateRepos() {
       return privateRepos;
@@ -64,22 +58,7 @@ public class GithubUserDetailed extends GithubUser {
     return email;
   }
 
-  @Nullable
-  public String getType() {
-    return type;
-  }
-
-  @Nullable
-  public Integer getOwnedPrivateRepos() {
-    return ownedPrivateRepos;
-  }
-
-  @Nullable
-  public UserPlan getPlan() {
-    return plan;
-  }
-
   public boolean canCreatePrivateRepo() {
-    return getPlan() == null || getOwnedPrivateRepos() == null || getPlan().getPrivateRepos() > getOwnedPrivateRepos();
+    return plan == null || ownedPrivateRepos == null || plan.getPrivateRepos() > ownedPrivateRepos;
   }
 }
