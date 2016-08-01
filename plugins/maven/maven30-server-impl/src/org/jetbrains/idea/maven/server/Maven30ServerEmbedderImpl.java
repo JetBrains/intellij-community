@@ -38,7 +38,6 @@ import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.profile.DefaultProfileInjector;
@@ -604,26 +603,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = getComponent(ProjectBuilder.class);
-
-          CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
-
-          String savedLocalRepository = modelInterpolator.getLocalRepository();
-          modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-          List<ProjectBuildingResult> buildingResults;
-
-          try {
-            ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
-            projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-            buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
-          }
-          catch (ProjectBuildingException e) {
-            buildingResults = e.getResults();
-          }
-          finally {
-            modelInterpolator.setLocalRepository(savedLocalRepository);
-          }
+          List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
             MavenProject project = buildingResult.getProject();
@@ -658,23 +638,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             //
 
             if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-              ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-              resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-              resolutionRequest.setArtifact(project.getArtifact());
-              resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-              resolutionRequest.setLocalRepository(myLocalRepository);
-              resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-              resolutionRequest.setListeners(listeners);
-
-              resolutionRequest.setResolveRoot(false);
-              resolutionRequest.setResolveTransitively(true);
-
-              ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-              ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-              project.setArtifacts(result.getArtifacts());
-              // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-              executionResults.add(new MavenExecutionResult(project, exceptions));
+              addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
