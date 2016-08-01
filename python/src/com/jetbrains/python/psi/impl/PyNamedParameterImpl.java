@@ -220,9 +220,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             if (init != null && init != func) {
               initType = context.getReturnType(init);
               if (init.getContainingClass() != containingClass) {
-                if (initType instanceof PyCollectionType) {
-                  final List<PyType> elementTypes = ((PyCollectionType)initType).getElementTypes(context);
-                  return new PyCollectionTypeImpl(containingClass, false, elementTypes);
+                if (initType instanceof PyClassType) {
+                  return ((PyClassType)initType).toClass(containingClass).toInstance();
                 }
               }
             }

@@ -92,6 +92,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return myClass;
   }
 
+
   /**
    * @return whether this type refers to an instance or a definition of the class.
    */
@@ -103,6 +104,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public PyClassType toInstance() {
     return myIsDefinition ? withUserDataCopy(new PyClassTypeImpl(myClass, false)) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassType toClass(@NotNull PyClass newClass) {
+    return myClass.equals(newClass) ? this : new PyClassTypeImpl(newClass, myIsDefinition);
   }
 
   /**

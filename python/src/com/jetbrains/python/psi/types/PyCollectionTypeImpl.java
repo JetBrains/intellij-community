@@ -74,10 +74,16 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     return myIsDefinition ? withUserDataCopy(new PyCollectionTypeImpl(myClass, false, myElementTypes)) : this;
   }
 
+  @NotNull
+  @Override
+  public PyClassType toClass(@NotNull PyClass newClass) {
+    return myClass.equals(newClass) ? this : new PyCollectionTypeImpl(newClass, myIsDefinition, myElementTypes);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyCollectionType)) return false;
+    if (!(o instanceof PyCollectionTypeImpl)) return false;
     if (!super.equals(o)) return false;
 
     PyCollectionType type = (PyCollectionType)o;

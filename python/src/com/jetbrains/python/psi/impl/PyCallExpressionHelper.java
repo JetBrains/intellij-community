@@ -394,6 +394,7 @@ public class PyCallExpressionHelper {
 
   /**
    * Returns argument if it exists and has appropriate type
+   *
    * @param parameter  argument
    * @param argClass   expected class
    * @param expression call expression
@@ -461,7 +462,7 @@ public class PyCallExpressionHelper {
         final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
         final List<PyType> members = new ArrayList<PyType>();
         for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
-          PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
+          PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(target));
           if (target != null) {
             final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
             if (typeRef != null) {
@@ -541,11 +542,7 @@ public class PyCallExpressionHelper {
       final PyType t = init.getCallType(context, call);
       if (cls != null) {
         if (init.getContainingClass() != cls) {
-          if (t instanceof PyCollectionType) {
-            final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes(context);
-            return Ref.create(new PyCollectionTypeImpl(cls, false, elementTypes));
-          }
-          return Ref.create(new PyClassTypeImpl(cls, false));
+          return Ref.create(t instanceof PyClassType ? ((PyClassType)t).toClass(cls).toInstance() : new PyClassTypeImpl(cls, false));
         }
       }
       if (t != null && !(t instanceof PyNoneType)) {
@@ -627,7 +624,7 @@ public class PyCallExpressionHelper {
         // imitate isinstance(second_arg, possible_class)
         PyClass secondClass = ((PyClassType)second_type).getPyClass();
         if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
-          return getSuperClassUnionType(firstClass,context);
+          return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {
           final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
