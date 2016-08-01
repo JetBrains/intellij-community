@@ -98,7 +98,7 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
       Arrays.stream(myClassFilters).filter(ClassFilter::isEnabled).map(ClassFilter::getPattern).collect(Collectors.joining(" "));
     String disabledStr =
       Arrays.stream(myClassExclusionFilters).filter(ClassFilter::isEnabled).map(f -> "-" + f.getPattern()).collect(Collectors.joining(" "));
-    if (!enabledStr.isEmpty()) {
+    if (!enabledStr.isEmpty() && !disabledStr.isEmpty()) {
       enabledStr += " ";
     }
     setText(enabledStr + disabledStr);
