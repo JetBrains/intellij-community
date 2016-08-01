@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ public class AnswerPlaceholder {
   @SerializedName("hint")
   @Expose private String myHint = "";
 
-  @SerializedName("hints")
+  @SerializedName("additional_hints")
   @Expose private List<String> myAdditionalHints = new ArrayList<String>();
 
   @SerializedName("possible_answer")
@@ -181,6 +182,7 @@ public class AnswerPlaceholder {
 
   @Transient
   public List<String> getHints() {
+    if (myHint.isEmpty() && myAdditionalHints.isEmpty()) return Collections.emptyList();
     final ArrayList<String> result = new ArrayList<>();
     result.add(myHint);
     result.addAll(myAdditionalHints);
