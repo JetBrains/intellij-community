@@ -194,13 +194,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
-        final PyType returnType = returnTypeRef.get();
-        if (returnType != null) {
-          returnType.assertValid(typeProvider.toString());
-        }
-        return returnType;
+        return derefType(returnTypeRef, typeProvider);
       }
     }
+
     if (context.allowReturnTypes(this)) {
       final Ref<? extends PyType> yieldTypeRef = getYieldStatementType(context);
       if (yieldTypeRef != null) {
@@ -208,6 +205,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return getReturnStatementType(context);
     }
+
     return null;
   }
 
@@ -215,15 +213,24 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType type = typeProvider.getCallType(this, callSite, context);
-      if (type != null) {
-        type.assertValid(typeProvider.toString());
-        return type;
+      final Ref<PyType> typeRef = typeProvider.getCallType(this, callSite, context);
+      if (typeRef != null) {
+        return derefType(typeRef, typeProvider);
       }
     }
+
     final PyExpression receiver = PyTypeChecker.getReceiver(callSite, this);
     final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
     return getCallType(receiver, mapping, context);
+  }
+
+  @Nullable
+  private static PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
+    final PyType type = typeRef.get();
+    if (type != null) {
+      type.assertValid(typeProvider.toString());
+    }
+    return type;
   }
 
   @Nullable

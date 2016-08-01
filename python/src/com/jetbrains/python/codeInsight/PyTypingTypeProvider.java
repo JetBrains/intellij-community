@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,15 +158,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if ("typing.cast".equals(function.getQualifiedName()) && callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyExpression[] args = callExpr.getArguments();
-      if (args.length > 0) {
-        final PyExpression typeExpr = args[0];
-        return getType(typeExpr, new Context(context));
-      }
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if ("typing.cast".equals(function.getQualifiedName())) {
+      return Optional
+        .ofNullable(as(callSite, PyCallExpression.class))
+        .map(PyCallExpression::getArguments)
+        .filter(args -> args.length > 0)
+        .map(args -> getType(args[0], new Context(context)))
+        .map(Ref::create)
+        .orElse(null);
     }
+
     return null;
   }
 
