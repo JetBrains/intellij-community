@@ -1837,7 +1837,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   /**
    * Gets events from FileTypeManager and updates icons on tabs
    */
-  private final class MyFileTypeListener extends FileTypeListener.Adapter {
+  private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       assertDispatchThread();

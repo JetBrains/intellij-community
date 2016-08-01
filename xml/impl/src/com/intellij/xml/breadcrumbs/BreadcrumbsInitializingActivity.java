@@ -80,7 +80,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
   }
 
-  private static class MyFileTypeListener extends FileTypeListener.Adapter {
+  private static class MyFileTypeListener implements FileTypeListener {
     private final Project myProject;
 
     public MyFileTypeListener(@NotNull Project project) {
