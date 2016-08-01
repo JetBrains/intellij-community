@@ -67,11 +67,6 @@ public class MoveChangesDialog extends DialogWrapper {
         }
         return null;
       }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(400, 200);
-      }
     };
     ArrayList<Change> changes = new ArrayList<Change>();
     for (ChangeList list : changeLists) {
@@ -90,6 +85,7 @@ public class MoveChangesDialog extends DialogWrapper {
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);
     myTreeList.expandAll();
+    myTreeList.repaint();
     return panel;
   }
 
