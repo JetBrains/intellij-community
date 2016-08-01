@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -92,7 +93,8 @@ public class Course {
     return StringUtil.join(authors, StepicUser::getName, ", ");
   }
 
-  public void setAuthors(String[] authors) {
+  @Transient
+  public void setAuthorsAsString(String[] authors) {
     this.authors = new ArrayList<StepicUser>();
     for (String name : authors) {
       final List<String> firstLast = StringUtil.split(name, " ");
