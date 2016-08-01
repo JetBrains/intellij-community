@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 /**
 * @author Mikhail Golubev
 */
-class NullCheckingFactory implements TypeAdapterFactory {
+public class NullCheckingFactory implements TypeAdapterFactory {
   public static final NullCheckingFactory INSTANCE = new NullCheckingFactory();
 
   @Override
@@ -32,12 +32,14 @@ class NullCheckingFactory implements TypeAdapterFactory {
       @Override
       public T read(JsonReader in) throws IOException {
         T stub = defaultAdapter.read(in);
+        if (stub == null) return null;
+
         for (Field field : ReflectionUtil.collectFields(type.getRawType())) {
           if (field.getAnnotation(Mandatory.class) != null) {
             try {
               field.setAccessible(true);
               if (field.get(stub) == null) {
-                throw new IllegalArgumentException(String.format("Field '%s' is mandatory, but missing in response", field.getName()));
+                throw new JsonMandatoryException(String.format("Field '%s' is mandatory, but missing in response", field.getName()));
               }
             }
             catch (IllegalAccessException e) {
