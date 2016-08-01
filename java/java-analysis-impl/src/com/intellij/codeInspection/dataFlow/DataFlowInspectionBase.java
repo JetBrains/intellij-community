@@ -303,7 +303,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
-    reportConstantPushes(runner, holder, visitor);
+    reportConstantPushes(runner, holder, visitor, reportedAnchors);
 
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
@@ -323,13 +323,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void reportConstantPushes(StandardDataFlowRunner runner,
                                     ProblemsHolder holder,
-                                    DataFlowInstructionVisitor visitor) {
+                                    DataFlowInstructionVisitor visitor,
+                                    Set<PsiElement> reportedAnchors) {
     for (Instruction instruction : runner.getInstructions()) {
       if (instruction instanceof PushInstruction) {
         PsiExpression place = ((PushInstruction)instruction).getPlace();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
-        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean) {
+        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && reportedAnchors.add(place)) {
           reportConstantCondition(holder, visitor, place, (Boolean)constant);
         }
       }
