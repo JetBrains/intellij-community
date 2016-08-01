@@ -32,6 +32,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,9 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private ClassFiltersField myClassFiltersField;
   private JCheckBox myPassCountCheckbox;
   private JTextField myPassCountField;
+  private JCheckBox myCatchCheckBox;
+  private ClassFiltersField myCatchClassFilters;
+  private JPanel myCatchFiltersPanel;
 
   private final FieldPanel myInstanceFiltersField;
 
@@ -90,6 +94,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     myPassCountCheckbox.addActionListener(updateListener);
     myInstanceFiltersCheckBox.addActionListener(updateListener);
     myClassFiltersCheckBox.addActionListener(updateListener);
+    myCatchCheckBox.addActionListener(updateListener);
 
     ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
 
@@ -98,6 +103,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myCatchCheckBox, myCatchClassFilters.getTextField());
   }
 
   @NotNull
@@ -136,11 +142,20 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     reloadInstanceFilters();
     updateInstanceFilterEditor(true);
 
-    changed = properties.setINSTANCE_FILTERS_ENABLED(!myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
+    if (properties instanceof JavaExceptionBreakpointProperties) {
+      JavaExceptionBreakpointProperties exceptionBreakpointProperties = (JavaExceptionBreakpointProperties)properties;
+      changed = exceptionBreakpointProperties.setCatchFiltersEnabled(!myCatchClassFilters.getText().isEmpty() && myCatchCheckBox.isSelected()) || changed;
+      changed = exceptionBreakpointProperties.setCatchClassFilters(myCatchClassFilters.getClassFilters()) || changed;
+      changed = exceptionBreakpointProperties.setCatchClassExclusionFilters(myCatchClassFilters.getClassExclusionFilters()) || changed;
+    }
+
     changed = properties.setCLASS_FILTERS_ENABLED(!myClassFiltersField.getText().isEmpty() && myClassFiltersCheckBox.isSelected()) || changed;
     changed = properties.setClassFilters(myClassFiltersField.getClassFilters()) || changed;
     changed = properties.setClassExclusionFilters(myClassFiltersField.getClassExclusionFilters()) || changed;
+
+    changed = properties.setINSTANCE_FILTERS_ENABLED(!myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
     changed = properties.setInstanceFilters(myInstanceFilters) || changed;
+
     if (changed) {
       ((XBreakpointBase)breakpoint).fireBreakpointChanged();
     }
@@ -153,6 +168,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
   @Override
   public void loadFrom(@NotNull B breakpoint) {
+    myCatchFiltersPanel.setVisible(false);
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
       if (properties.getCOUNT_FILTER() > 0) {
@@ -165,15 +181,19 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       myPassCountCheckbox.setSelected(properties.isCOUNT_FILTER_ENABLED());
 
       myInstanceFiltersCheckBox.setSelected(properties.isINSTANCE_FILTERS_ENABLED());
-      myInstanceFiltersField.setEnabled(properties.isINSTANCE_FILTERS_ENABLED());
-      myInstanceFiltersField.getTextField().setEditable(properties.isINSTANCE_FILTERS_ENABLED());
       myInstanceFilters = properties.getInstanceFilters();
       updateInstanceFilterEditor(true);
 
       myClassFiltersCheckBox.setSelected(properties.isCLASS_FILTERS_ENABLED());
-      myClassFiltersField.setEnabled(properties.isCLASS_FILTERS_ENABLED());
-      myClassFiltersField.setEditable(properties.isCLASS_FILTERS_ENABLED());
       myClassFiltersField.setClassFilters(properties.getClassFilters(), properties.getClassExclusionFilters());
+
+      if (properties instanceof JavaExceptionBreakpointProperties) {
+        myCatchFiltersPanel.setVisible(true);
+        JavaExceptionBreakpointProperties exceptionBreakpointProperties = (JavaExceptionBreakpointProperties)properties;
+        myCatchCheckBox.setSelected(exceptionBreakpointProperties.isCatchFiltersEnabled());
+        myCatchClassFilters.setClassFilters(exceptionBreakpointProperties.getCatchClassFilters(),
+                                            exceptionBreakpointProperties.getCatchClassExclusionFilters());
+      }
 
       XSourcePosition position = breakpoint.getSourcePosition();
       // TODO: need to calculate psi class
@@ -199,6 +219,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
   private void createUIComponents() {
     myClassFiltersField = new ClassFiltersField(myProject);
+    myCatchClassFilters = new ClassFiltersField(myProject);
   }
 
   private class MyTextField extends JTextField {
@@ -302,5 +323,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
     myClassFiltersField.setEditable(myClassFiltersCheckBox.isSelected());
+
+    myCatchClassFilters.setEnabled(myCatchCheckBox.isSelected());
+    myCatchClassFilters.setEditable(myCatchCheckBox.isSelected());
   }
 }
