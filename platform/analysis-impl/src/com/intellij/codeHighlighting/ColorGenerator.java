@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ui;
+package com.intellij.codeHighlighting;
 
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;

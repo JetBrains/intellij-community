@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ui
+package com.intellij.codeHighlighting
 
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.Gray
 import java.awt.Color
 
-class ColorGeneratorTest : UsefulTestCase () {
+class ColorGeneratorTest : UsefulTestCase() {
   fun testLineGeneration() {
     for (count in 0..5) {
       assertEquals(count + 2, generate(Color.BLACK, Color.WHITE, count).size)
