@@ -165,7 +165,7 @@ class IcsManager(dir: Path) {
 
     autoSyncManager.registerListeners(application)
 
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener.Adapter() {
+    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return

@@ -210,7 +210,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (!app.isHeadlessEnvironment()) {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
-        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
           @Override
           public void afterProjectClosed(@NotNull Project project) {
             if (project != myProject) return;
