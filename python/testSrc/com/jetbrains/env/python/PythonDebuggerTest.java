@@ -955,6 +955,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testSuspendAllThreadsPolicy() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
       public void before() throws Exception {
         toggleBreakpoint(getFilePath(getScriptName()), 12);
         setBreakpointSuspendPolicy(getProject(), 12, SuspendPolicy.ALL);
