@@ -30,7 +30,7 @@ public abstract class CredentialsType<T> {
   public static final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
   public static final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
   public static final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
-  public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
+  public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("UNKNOWN_CREDENTIALS");
 
   public static final CredentialsType<RemoteCredentialsHolder> SSH_HOST
     = new CredentialsType<RemoteCredentialsHolder>("SSH Credentials", RemoteCredentialsHolder.SSH_PREFIX) {
