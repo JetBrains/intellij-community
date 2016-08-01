@@ -558,7 +558,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return getProperties().getClassExclusionFilters();
   }
 
-  protected void setClassExclusionFilters(ClassFilter[] filters) {
+  public void setClassExclusionFilters(ClassFilter[] filters) {
     if (getProperties().setClassExclusionFilters(filters)) {
       fireBreakpointChanged();
     }
