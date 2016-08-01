@@ -52,7 +52,7 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
     </action>
 
-    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo"/>
+    <action id="ChangeCourseInfo" class="com.jetbrains.edu.coursecreator.actions.CCChangeCourseInfo"/>
 
     <group id="CCProjectViewGroup" popup="true" text="Course Creator" class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile" text="Make Visible to Student"/>
