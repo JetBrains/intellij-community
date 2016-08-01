@@ -92,7 +92,7 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
     assertIntentionNotAvailable();
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 1, user = "Pavel Dolgov")
+  @Bombed(month = Calendar.DECEMBER, day = 1, user = "Pavel Dolgov")
   public void testInChain() {
     doTest();
   }
