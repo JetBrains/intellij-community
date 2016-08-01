@@ -190,7 +190,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                         @NotNull Map<PyExpression, PyNamedParameter> parameters,
                                                         @NotNull Map<PyGenericType, PyType> substitutions,
                                                         @NotNull TypeEvalContext context) {
-    if (parameters.size() != 1 || substitutions.size() != 1) {
+    if (parameters.size() != 1 || substitutions.size() > 1) {
       return null;
     }
 
@@ -204,7 +204,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     if (PyABCUtil.isSubtype(firstArgumentType, PyNames.ABC_INTEGRAL, context)) {
-      return Ref.create(substitutions.values().iterator().next());
+      final PyType result = substitutions.isEmpty() ? null : substitutions.values().iterator().next();
+      return Ref.create(result);
     }
 
     if (PyNames.SLICE.equals(firstArgumentType.getName()) && firstArgumentType.isBuiltin()) {
