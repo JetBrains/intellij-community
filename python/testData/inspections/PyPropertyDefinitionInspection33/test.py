@@ -1,6 +1,6 @@
 class A:
     @property
-    def normal_property(self):
+    def <warning descr="Getter should return or yield something">normal_property</warning>(self):
         pass
 
     @property

@@ -18,24 +18,24 @@ class A(object):
   def boo(self):
     return self._x
 
-  @boo.setter # name mismatch
+  <warning descr="Names of function and decorator don't match; property accessor is not created">@boo.setter</warning>
   def boo1(self, x):
     self._x = x
 
-  @boo.deleter # name mismatch
+  <warning descr="Names of function and decorator don't match; property accessor is not created">@boo.deleter</warning>
   def boo2(self):
     pass
 
   @property
-  def moo(self): # should return
+  def <warning descr="Getter should return or yield something">moo</warning>(self):
     pass
 
   @moo.setter
-  def moo(self, x): # shouldn't return
+  def <warning descr="Setter should not return a value">moo</warning>(self, x):
     return 1
 
   @moo.deleter
-  def moo(self): # shouldn't return
+  def <warning descr="Deleter should not return a value">moo</warning>(self):
     return self._x
 
   @qoo.setter # unknown qoo is reported in ref inspection
@@ -83,7 +83,7 @@ class Test(object):
             return n
         self._myprop = inner_func(val)
 
-    myprop = property(get_myprop, set_myprop)  # pass
+    myprop = property(get_myprop, set_myprop)
 
 
 # all flows have exit point
@@ -93,13 +93,13 @@ class Test(object):
 
     def get_myprop(self):
         if a > b:
-            return self._myprop
+            <error descr="Python versions < 3.3 do not allow 'return' with argument inside generator.">return self._myprop</error>
         elif a < b:
             raise self._myprop
         else:
             yield self._myprop
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # some flows have not exit point
@@ -113,7 +113,7 @@ class Test(object):
         elif a < b:
             raise self._myprop
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # some flows have not exit point
@@ -125,7 +125,7 @@ class Test(object):
         if a > b:
             return self._myprop
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # non-empty for
@@ -137,7 +137,7 @@ class Test(object):
         for i in range(5):
             yield i
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # empty for
@@ -163,7 +163,7 @@ class Test(object):
             yield i
             i += 1
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # empty while
@@ -190,7 +190,7 @@ class Test(object):
             yield i
             i += 1
 
-    myprop = property(get_myprop)  # pass
+    myprop = property(get_myprop)
 
 
 # empty while with two conditions
@@ -219,7 +219,7 @@ class Test(object):
         self._myprop = val
         return 10
 
-    myprop = property(get_myprop, set_myprop)  # shouldn't pass
+    myprop = property(get_myprop, <warning descr="Setter should not return a value">set_myprop</warning>)
 
 
 # setter has exit point
@@ -234,7 +234,7 @@ class Test(object):
         self._myprop = val
         yield 10
 
-    myprop = property(get_myprop, set_myprop)  # shouldn't pass
+    myprop = property(get_myprop, <warning descr="Setter should not return a value">set_myprop</warning>)
 
 
 # setter has raise statement
@@ -249,7 +249,7 @@ class Test(object):
         self._myprop = val
         raise NotImplementedError()
 
-    myprop = property(get_myprop, set_myprop)  # pass
+    myprop = property(get_myprop, set_myprop)
 
 
 # setter has exit point in some flow
@@ -265,7 +265,7 @@ class Test(object):
         if a > b:
             return 10
 
-    myprop = property(get_myprop, set_myprop)  # shouldn't pass
+    myprop = property(get_myprop, <warning descr="Setter should not return a value">set_myprop</warning>)
 
 
 # setter has exit point in some flow
@@ -281,7 +281,7 @@ class Test(object):
         if a > b:
             yield 10
 
-    myprop = property(get_myprop, set_myprop)  # shouldn't pass
+    myprop = property(get_myprop, <warning descr="Setter should not return a value">set_myprop</warning>)
 
 
 # setter has raise statement in some flow
@@ -297,4 +297,4 @@ class Test(object):
         if a > b:
             raise NotImplementedError()
 
-    myprop = property(get_myprop, set_myprop)  # pass
+    myprop = property(get_myprop, set_myprop)
