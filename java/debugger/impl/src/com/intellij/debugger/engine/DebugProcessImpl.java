@@ -119,7 +119,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private JavaDebugProcess myXDebugProcess;
 
   private ConnectionServiceWrapper myConnectionService;
-  private Map<String, Connector.Argument> myArguments;
+  private volatile Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
@@ -301,8 +301,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void stopConnecting() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-
     Map<String, Connector.Argument> arguments = myArguments;
     try {
       if (arguments == null) {
@@ -328,9 +326,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     catch (ExecutionException e) {
       LOG.error(e);
-    }
-    finally {
-      closeProcess(true);
     }
   }
 
@@ -1449,6 +1444,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void stop(boolean forceTerminate) {
+    stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
@@ -1487,7 +1483,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
       else {
-        stopConnecting();
+        try {
+          stopConnecting();
+        }
+        finally {
+          closeProcess(true);
+        }
       }
     }
   }
