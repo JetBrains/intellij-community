@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionTool {
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return "";
-  }
 
   @Override
   @NotNull
@@ -84,8 +78,10 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
         if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression ||
             variable.hasModifierProperty(PsiModifier.STATIC)) {
           if (refExpr.isReferenceTo(variable)) {
-            holder.registerProblem(expression, InspectionsBundle.message("assignment.to.declared.variable.problem.descriptor",
-                                                                         variable.getName()), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            holder.registerProblem(refExpr,
+                                   InspectionsBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                   createRemoveAssignmentFix(refExpr));
           }
         }
       }
@@ -119,8 +115,8 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
     }
     PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return;
-    holder.registerProblem(assignment, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix());
+    holder.registerProblem(rRef, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
+                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix(rRef));
   }
 
   private static PsiExpression deparenthesizeRExpr(PsiExpression rExpression, PsiVariable variable) {
@@ -144,7 +140,7 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
     return rExpression;
   }
 
-  protected LocalQuickFix createRemoveAssignmentFix() {
+  protected LocalQuickFix createRemoveAssignmentFix(PsiReferenceExpression expression) {
     return null;
   }
 
