@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -176,7 +177,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
     if (element.getContainingFile() == currentFile) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
@@ -184,11 +185,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       // there are fake elements with custom navigation (e.g. opening URL in browser) that override getContainingFile for various reasons
       if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
         Project project = element.getProject();
-        IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-        new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-        return;
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
+        }, "", null);
+        return true;
       }
     }
+    return false;
+  }
+
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+    if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
     if (navigatable != null && navigatable.canNavigate()) {
