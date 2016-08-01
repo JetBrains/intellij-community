@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.concurrency.runAsync
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.digest
 import com.intellij.openapi.Disposable
@@ -46,8 +45,10 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.runAsync
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
 const val PROFILE = "profile"
@@ -80,7 +81,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   private var state = State()
 
-  private val initialLoadSchemesFuture: CompletableFuture<*>
+  private val initialLoadSchemesFuture: Promise<*>
 
   private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
     override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
@@ -129,7 +130,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode) {
-      initialLoadSchemesFuture = CompletableFuture.completedFuture(null)
+      initialLoadSchemesFuture = resolvedPromise()
     }
     else {
       initialLoadSchemesFuture = runAsync { schemeManager.loadSchemes() }
@@ -175,7 +176,7 @@ class ProjectInspectionProfileManager(val project: Project,
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
       getInstanceImpl(project).apply {
-        initialLoadSchemesFuture.thenRun {
+        initialLoadSchemesFuture.done {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
 
@@ -295,7 +296,7 @@ class ProjectInspectionProfileManager(val project: Project,
                                               InspectionProfileImpl.getDefaultProfile(), null)
         currentScheme.copyFrom(applicationProfileManager.currentProfile)
         currentScheme.isProjectLevel = true
-        currentScheme.setName(PROJECT_DEFAULT_PROFILE_NAME)
+        currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
         schemeManager.addScheme(currentScheme)
       }
       schemeManager.setCurrent(currentScheme, false)

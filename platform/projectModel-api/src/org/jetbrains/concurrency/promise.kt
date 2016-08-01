@@ -18,6 +18,7 @@ package org.jetbrains.concurrency
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
 
 private val rejectedPromise = Promise.reject<Any?>("rejected")
@@ -113,4 +114,13 @@ inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
   if (!isRejected) {
     setResult(result)
   }
+}
+
+inline fun runAsync(crossinline runnable: () -> Unit): Promise<*> {
+  val promise = AsyncPromise<Any?>()
+  AppExecutorUtil.getAppExecutorService().execute {
+    promise.catchError { runnable() }
+    promise.setResult(null)
+  }
+  return promise
 }
