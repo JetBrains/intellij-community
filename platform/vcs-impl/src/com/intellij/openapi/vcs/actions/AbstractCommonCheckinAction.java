@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -104,15 +103,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
 
     return result;
-  }
-
-  @Nullable
-  protected static AbstractVcs getCommonVcsFor(@NotNull FilePath[] roots, @NotNull Project project) {
-    if (roots.length == 0) return null;
-    AbstractVcs firstVcs = VcsUtil.getVcsFor(project, roots[0]);
-    boolean allVcsesEqual = Stream.of(roots).map(root -> VcsUtil.getVcsFor(project, root)).allMatch(vcs -> vcs != null && firstVcs == vcs);
-
-    return allVcsesEqual ? firstVcs : null;
   }
 
   protected abstract String getActionName(@NotNull VcsContext dataContext);
