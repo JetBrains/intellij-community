@@ -941,6 +941,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "['foo']").hasValue("33");
         resume();
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
