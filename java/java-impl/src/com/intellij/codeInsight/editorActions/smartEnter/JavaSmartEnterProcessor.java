@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
  * @author spleaner
  */
@@ -276,7 +278,9 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
       atCaret = atCaret.getParent();
-      if (!(atCaret instanceof PsiAnonymousClass || atCaret instanceof PsiArrayInitializerExpression)) {
+      if (!(atCaret instanceof PsiAnonymousClass ||
+            atCaret instanceof PsiArrayInitializerExpression ||
+            psiElement(PsiCodeBlock.class).withParent(PsiLambdaExpression.class).accepts(atCaret))) {
         return null;
       }
     }
