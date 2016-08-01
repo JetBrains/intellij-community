@@ -181,6 +181,33 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
           log(member.getName() + "  children used outside my package; ignore");
           return; // e.g. some public method is used outside my package (without importing class)
         }
+
+        // Android Studio: Certain types of Android SDK classes are required to be public
+        // https://code.google.com/p/android/issues/detail?id=218848
+        PsiClass cls = memberClass;
+        if (cls == null && member instanceof PsiClass) {
+          cls = (PsiClass) member;
+        }
+        while (cls != null) {
+          String name = cls.getQualifiedName();
+          if (name != null) {
+            // Unfortunately there isn't an authoritative list somewhere; this lists
+            // consists of the kinds of classes that the runtime wants to instantiate
+            // reflectively
+            if ("android.content.Context".equals(name) ||
+                "android.app.Fragment".equals(name) ||
+                "android.support.v4.app.Fragment".equals(name) ||
+                "android.view.View".equals(name) ||
+                "android.content.ContentProvider".equals(name) ||
+                "android.content.BroadcastReceiver".equals(name) ||
+                "android.view.ActionProvider".equals(name) ||
+                "android.os.Parcelable".equals(name)) {
+              return;
+            }
+          }
+          cls = cls.getSuperClass();
+        }
+
         PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() : ContainerUtil.find(
           memberModifierList.getChildren(),
           element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
