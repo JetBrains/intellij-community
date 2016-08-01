@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,7 +29,8 @@ import java.util.regex.Pattern;
 public class BinaryPatchContentParser {
   @NonNls private static final Pattern ourGitBinaryLineSize = Pattern.compile("literal\\s+(\\d+)\\s*");
 
-  public static FilePatch readGitBinaryFormatPatch(ListIterator<String> iterator, FileStatus parsedStatus) throws PatchSyntaxException {
+  public static FilePatch readGitBinaryFormatPatch(@NotNull ListIterator<String> iterator, @NotNull FileStatus parsedStatus)
+    throws PatchSyntaxException {
     ByteArrayOutputStream afterStream = new ByteArrayOutputStream();
     ByteArrayOutputStream beforeStream = new ByteArrayOutputStream();
     checkNotEOF(iterator);
@@ -60,15 +62,15 @@ public class BinaryPatchContentParser {
     }
   }
 
-  private static void getContent(ListIterator<String> iterator,
-                                 ByteArrayOutputStream afterStream, String lenFromLiteral)
+  private static void getContent(@NotNull ListIterator<String> iterator,
+                                 @NotNull ByteArrayOutputStream afterStream, @NotNull String lenFromLiteral)
     throws EofBinaryPatchSyntaxException, IOException, Base85.BinaryPatchException {
     long afterSize = Long.parseLong(lenFromLiteral);
     checkNotEOF(iterator);
     Base85.decode(iterator, afterSize, afterStream);
   }
 
-  private static void checkNotEOF(ListIterator<String> iterator) throws EofBinaryPatchSyntaxException {
+  private static void checkNotEOF(@NotNull ListIterator<String> iterator) throws EofBinaryPatchSyntaxException {
     if (!iterator.hasNext()) throw new EofBinaryPatchSyntaxException(iterator.previousIndex());
   }
 

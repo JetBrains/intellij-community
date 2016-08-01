@@ -51,7 +51,7 @@ public class Base85 {
     return chars_85.indexOf(charSize) - chars_85.indexOf('A') + 1;
   }
 
-  public static void encode(@NotNull InputStream input, long size, Writer writer) throws IOException {
+  public static void encode(@NotNull InputStream input, long size, @NotNull Writer writer) throws IOException {
     int maxLineSize = 52;
     byte[] deflated = new byte[maxLineSize];
     long leftByteSize = size;
@@ -107,7 +107,8 @@ public class Base85 {
     return chars_85.get(i);
   }
 
-  public static void decode(ListIterator<String> input, long size, ByteArrayOutputStream output) throws IOException, BinaryPatchException {
+  public static void decode(@NotNull ListIterator<String> input, long size, @NotNull ByteArrayOutputStream output)
+    throws BinaryPatchException {
     Inflater inflater = new Inflater();
     byte[] inflated = new byte[1024];
     try {
@@ -141,7 +142,7 @@ public class Base85 {
     }
   }
 
-  private static byte[] decodeBlockLine(String data, int len) throws BinaryPatchException {
+  private static byte[] decodeBlockLine(@NotNull String data, int len) throws BinaryPatchException {
     int leftLen = len;
     int newSize = (data.length() - 1 + 4) / 5 * 4;
     byte[] result = new byte[newSize];

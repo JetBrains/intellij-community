@@ -368,7 +368,7 @@ public class PatchReader {
     }
 
     @Nullable
-    private static Couple<String> parseNamesFromGitHeaderLine(String start) {
+    private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
       Matcher m = ourGitHeaderLinePattern.matcher(start);
       return m.matches()
              ? Couple.of(stripPatchNameIfNeeded(m.group(1), true, true), stripPatchNameIfNeeded(m.group(2), true, false))
@@ -412,7 +412,7 @@ public class PatchReader {
     }
 
     @Nullable
-    private static PatchHunk readNextHunkUnified(ListIterator<String> iterator) throws PatchSyntaxException {
+    private static PatchHunk readNextHunkUnified(@NotNull ListIterator<String> iterator) throws PatchSyntaxException {
       String curLine = null;
       int numIncrements = 0;
       while (iterator.hasNext()) {
