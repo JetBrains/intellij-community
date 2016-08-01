@@ -191,9 +191,14 @@ public class AnswerPlaceholder {
 
   @Transient
   public void setHints(@NotNull final List<String> hints) {
-    if (hints.isEmpty()) return;
-    myHint = hints.get(0);
-    myAdditionalHints = hints.subList(1, hints.size());
+    if (hints.isEmpty()) {
+      myHint = "";
+      myAdditionalHints.clear();
+    }
+    else {
+      myHint = hints.get(0);
+      myAdditionalHints = hints.subList(1, hints.size());
+    }
   }
 
   public void setHintByIndex(int i, @NotNull final String text) {
