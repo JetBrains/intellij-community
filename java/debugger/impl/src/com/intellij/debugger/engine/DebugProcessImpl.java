@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -118,7 +117,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private RemoteConnection myConnection;
   private JavaDebugProcess myXDebugProcess;
 
-  private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
@@ -315,11 +313,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         else {
           connector.stopListening(arguments);
-        }
-      }
-      else {
-        if(myConnectionService != null) {
-          myConnectionService.close();
         }
       }
     }
@@ -574,7 +567,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     finally {
       myArguments = null;
-      myConnectionService = null;
     }
   }
 
