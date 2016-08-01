@@ -135,7 +135,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-    projectBuildingRequest.setResolveDependencies(true);
+    projectBuildingRequest.setResolveDependencies(false);
     try {
       buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
     }
