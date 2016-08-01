@@ -20,25 +20,25 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
+public class DefaultPicoContainer implements AreaPicoContainer {
   private final PicoContainer parent;
-  private final Set<PicoContainer> children = new HashSet<PicoContainer>();
+  private final Set<PicoContainer> children = new THashSet<PicoContainer>();
 
   private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = ContainerUtil.newConcurrentMap();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<ComponentAdapter>();
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
 
-  public DefaultPicoContainer(PicoContainer parent) {
+  public DefaultPicoContainer(@Nullable PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
   }
 
@@ -51,10 +51,6 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
     return componentAdapters.getImmutableSet();
   }
 
-  public Map<String, ComponentAdapter> getAssignablesCache() {
-    return Collections.unmodifiableMap(classNameToAdapter);
-  }
-
   private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<ComponentAdapter> result) {
     List<ComponentAdapter> comp = new ArrayList<ComponentAdapter>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
@@ -63,8 +59,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
       }
     }
     for (int i = comp.size() - 1; i >= 0; i--) {
-      ComponentAdapter adapter = comp.get(i);
-      result.add(adapter);
+      result.add(comp.get(i));
     }
   }
 
@@ -73,7 +68,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   public final ComponentAdapter getComponentAdapter(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter == null && parent != null) {
-      adapter = parent.getComponentAdapter(componentKey);
+      return parent.getComponentAdapter(componentKey);
     }
     return adapter;
   }
@@ -81,11 +76,12 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   @Nullable
   private ComponentAdapter getFromCache(final Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
-    if (adapter != null) return adapter;
+    if (adapter != null) {
+      return adapter;
+    }
 
     if (componentKey instanceof Class) {
-      Class klass = (Class)componentKey;
-      return componentKeyToAdapterCache.get(klass.getName());
+      return componentKeyToAdapterCache.get(((Class)componentKey).getName());
     }
 
     return null;
@@ -93,7 +89,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
 
   @Override
   @Nullable
-  public ComponentAdapter getComponentAdapterOfType(Class componentType) {
+  public ComponentAdapter getComponentAdapterOfType(@NotNull Class componentType) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
     ComponentAdapter adapterByKey = getComponentAdapter(componentType);
     if (adapterByKey != null) {
@@ -101,28 +97,25 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
     }
 
     List<ComponentAdapter> found = getComponentAdaptersOfType(componentType);
-
     if (found.size() == 1) {
       return found.get(0);
     }
     if (found.isEmpty()) {
-      if (parent != null) {
-        return parent.getComponentAdapterOfType(componentType);
-      }
-      return null;
+      return parent == null ? null : parent.getComponentAdapterOfType(componentType);
     }
+
     Class[] foundClasses = new Class[found.size()];
     for (int i = 0; i < foundClasses.length; i++) {
       foundClasses[i] = found.get(i).getComponentImplementation();
     }
-
     throw new AmbiguousComponentResolutionException(componentType, foundClasses);
   }
 
   @Override
   public List<ComponentAdapter> getComponentAdaptersOfType(final Class componentType) {
-    if (componentType == null) return Collections.emptyList();
-    if (componentType == String.class) return Collections.emptyList();
+    if (componentType == null || componentType == String.class) {
+      return Collections.emptyList();
+    }
 
     List<ComponentAdapter> result = new SmartList<ComponentAdapter>();
 
@@ -184,7 +177,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   }
 
   @Override
-  public List getComponentInstances() throws PicoException {
+  public List getComponentInstances() {
     return getComponentInstancesOfType(Object.class);
   }
 
@@ -239,11 +232,10 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
     return null;
   }
 
-  private Object getLocalInstance(final ComponentAdapter componentAdapter) {
-    PicoException firstLevelException = null;
-    Object instance = null;
+  private Object getLocalInstance(@NotNull ComponentAdapter componentAdapter) {
+    PicoException firstLevelException;
     try {
-      instance = componentAdapter.getComponentInstance(this);
+      return componentAdapter.getComponentInstance(this);
     }
     catch (PicoInitializationException e) {
       firstLevelException = e;
@@ -251,28 +243,22 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
     catch (PicoIntrospectionException e) {
       firstLevelException = e;
     }
-    if (firstLevelException != null) {
-      if (parent != null) {
-        instance = parent.getComponentInstance(componentAdapter.getComponentKey());
-        if (instance != null) {
-          return instance;
-        }
-      }
 
-      throw firstLevelException;
+    if (parent != null) {
+      Object instance = parent.getComponentInstance(componentAdapter.getComponentKey());
+      if (instance != null) {
+        return instance;
+      }
     }
 
-    return instance;
+    throw firstLevelException;
   }
-
 
   @Override
   @Nullable
   public ComponentAdapter unregisterComponentByInstance(@NotNull Object componentInstance) {
-    Collection<ComponentAdapter> adapters = getComponentAdapters();
-
-    for (final ComponentAdapter adapter : adapters) {
-      final Object o = getInstance(adapter);
+    for (ComponentAdapter adapter : getComponentAdapters()) {
+      Object o = getInstance(adapter);
       if (o != null && o.equals(componentInstance)) {
         return unregisterComponent(adapter.getComponentKey());
       }
@@ -281,7 +267,7 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   }
 
   @Override
-  public void verify() throws PicoVerificationException {
+  public void verify() {
     new VerifyingVisitor().traverse(this);
   }
 
@@ -321,12 +307,11 @@ public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   @Override
   public void accept(PicoVisitor visitor) {
     visitor.visitContainer(this);
-    final List<ComponentAdapter> adapters = new ArrayList<ComponentAdapter>(getComponentAdapters());
-    for (final ComponentAdapter adapter : adapters) {
+
+    for (ComponentAdapter adapter : getComponentAdapters()) {
       adapter.accept(visitor);
     }
-    final List<PicoContainer> allChildren = new ArrayList<PicoContainer>(children);
-    for (PicoContainer child : allChildren) {
+    for (PicoContainer child : new SmartList<PicoContainer>(children)) {
       child.accept(visitor);
     }
   }
