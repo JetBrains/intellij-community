@@ -33,7 +33,7 @@ public class StudySerializationUtils {
   public static final String LENGTH = "length";
   public static final String POSSIBLE_ANSWER = "possible_answer";
   public static final String HINT = "hint";
-  public static final String HINTS = "hints";
+  public static final String ADDITIONAL_HINTS = "additional_hints";
   public static final String OFFSET = "offset";
   public static final String TEXT = "text";
   public static final String LESSONS = "lessons";
@@ -409,14 +409,23 @@ public class StudySerializationUtils {
             final Type listType = new TypeToken<List<String>>() {
             }.getType();
             final List<String> hints = gson.fromJson(hintString, listType);
-            for (String hint : hints) {
-              hintsArray.add(hint);
+            if (!hints.isEmpty()) {
+              for (int i = 0; i < hints.size(); i++) {
+                if (i == 0) {
+                  placeholderObject.addProperty(HINT, hints.get(0));
+                  continue;
+                }
+                hintsArray.add(hints.get(i));
+              }
+              placeholderObject.add(ADDITIONAL_HINTS, hintsArray);
+            }
+            else {
+              placeholderObject.addProperty(HINT, "");
             }
           }
           catch (JsonParseException e) {
             hintsArray.add(hintString);
           }
-          placeholderObject.add(HINTS, hintsArray);
         }
 
         return gson.fromJson(json, TaskFile.class);
