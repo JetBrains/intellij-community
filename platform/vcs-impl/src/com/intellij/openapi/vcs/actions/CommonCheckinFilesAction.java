@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -23,19 +24,24 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.vcsUtil.VcsUtil.getIfSingle;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
   protected String getActionName(@NotNull VcsContext dataContext) {
     String actionName = Optional.ofNullable(dataContext.getProject())
-      .map(project -> getCommonVcsFor(getRoots(dataContext), project))
+      .map(project -> getCommonVcs(getRootsStream(dataContext), project))
       .map(AbstractVcs::getCheckinEnvironment)
       .map(CheckinEnvironment::getCheckinOperationName)
       .orElse(VcsBundle.message("vcs.command.name.checkin"));
@@ -44,14 +50,15 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   }
 
   private String modifyCheckinActionName(@NotNull VcsContext dataContext, String checkinActionName) {
-    FilePath[] roots = getRoots(dataContext);
-    if (roots.length == 0) return checkinActionName;
-    if (roots.length == 1) {
-      return VcsBundle.message(roots[0].isDirectory() ? "action.name.checkin.directory" : "action.name.checkin.file", checkinActionName);
+    String result = checkinActionName;
+    List<FilePath> roots = getRootsStream(dataContext).limit(2).collect(Collectors.toList());
+
+    if (!roots.isEmpty()) {
+      String messageKey = roots.get(0).isDirectory() ? "action.name.checkin.directory" : "action.name.checkin.file";
+      result = VcsBundle.message(StringUtil.pluralize(messageKey, roots.size()), checkinActionName);
     }
-    else {
-      return VcsBundle.message(roots[0].isDirectory() ? "action.name.checkin.directories" : "action.name.checkin.files", checkinActionName);
-    }
+
+    return result;
   }
 
   @Override
@@ -106,5 +113,15 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
 
   private static boolean containsAnyChange(@NotNull LocalChangeList changeList, @NotNull Collection<Change> changes) {
     return changes.stream().anyMatch(changeList.getChanges()::contains);
+  }
+
+  @Nullable
+  private static AbstractVcs getCommonVcs(@NotNull Stream<FilePath> roots, @NotNull Project project) {
+    return getIfSingle(
+      roots.map(root -> VcsUtil.getVcsFor(project, root))
+        .filter(Objects::nonNull)
+        .distinct()
+        .limit(Math.min(2, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length))
+    );
   }
 }
