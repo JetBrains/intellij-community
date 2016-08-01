@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class GithubPullRequest {
   @Mandatory private String state;
   @Mandatory private String title;
   private String body;
-  @Mandatory private String bodyHtml;
+  private String bodyHtml;
 
   private String url;
   @Mandatory private String htmlUrl;
@@ -106,7 +107,7 @@ public class GithubPullRequest {
 
   @NotNull
   public String getBodyHtml() {
-    return bodyHtml;
+    return StringUtil.notNullize(bodyHtml);
   }
 
   @NotNull

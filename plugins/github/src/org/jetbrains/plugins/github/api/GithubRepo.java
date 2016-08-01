@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class GithubRepo {
   private Long id;
   @Mandatory private String name;
   private String fullName;
-  @Mandatory private String description;
+  private String description;
 
   @SerializedName("private")
   @Mandatory private Boolean isPrivate;
@@ -76,7 +77,7 @@ public class GithubRepo {
 
   @NotNull
   public String getDescription() {
-    return description;
+    return StringUtil.notNullize(description);
   }
 
   public boolean isPrivate() {

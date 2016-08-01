@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ public class GithubIssue {
   @Mandatory private Long number;
   @Mandatory private String state;
   @Mandatory private String title;
-  @Mandatory private String body;
+  private String body;
 
   @Mandatory private GithubUser user;
   private GithubUser assignee;
@@ -60,7 +61,7 @@ public class GithubIssue {
 
   @NotNull
   public String getBody() {
-    return body;
+    return StringUtil.notNullize(body);
   }
 
   @NotNull

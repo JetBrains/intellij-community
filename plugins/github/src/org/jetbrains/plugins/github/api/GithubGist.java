@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.Mandatory;
 import com.intellij.tasks.impl.gson.RestModel;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import java.util.Map;
 @SuppressWarnings("UnusedDeclaration")
 public class GithubGist {
   @Mandatory private String id;
-  @Mandatory private String description;
+  private String description;
 
   @SerializedName("public")
   @Mandatory private Boolean isPublic;
@@ -79,7 +80,7 @@ public class GithubGist {
 
   @NotNull
   public String getDescription() {
-    return description;
+    return StringUtil.notNullize(description);
   }
 
   public boolean isPublic() {
