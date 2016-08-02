@@ -518,7 +518,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     @Override
     public void dispose() {
       if (myFileHistoryPanel != null) {
-        myFileHistoryPanel.dispose();
+        Disposer.dispose(myFileHistoryPanel);
       }
     }
 
