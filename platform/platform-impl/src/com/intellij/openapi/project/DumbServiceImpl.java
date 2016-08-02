@@ -284,7 +284,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void queueUpdateFinished(boolean modal) {
     if (myUpdateFinishedQueued) return;
     myUpdateFinishedQueued = true;
-    TransactionGuard.submitTransaction(myProject, () -> WriteAction.run(() -> updateFinished(modal)));
+    TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () -> WriteAction.run(() -> updateFinished(modal)));
   }
 
   private void updateFinished(boolean modal) {
@@ -506,7 +506,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return result.get();
   }
 
-  private void invokeAndWaitIfNeeded(Runnable runnable) {
+  private static void invokeAndWaitIfNeeded(Runnable runnable) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       runnable.run();
@@ -515,14 +515,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    app.invokeLater(() -> {
       try {
         runnable.run();
       } finally {
         semaphore.up();
       }
-    });
+    }, ModalityState.any());
     try {
       semaphore.waitFor();
     }
