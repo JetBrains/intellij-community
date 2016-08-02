@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.IOUtil;
@@ -114,7 +114,7 @@ public class FunctionalExpressionKey {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("lambdaParameterCount", lambdaParameterCount)
       .add("type", lambdaType)
       .add("location", location)
@@ -140,11 +140,13 @@ public class FunctionalExpressionKey {
     @NotNull public final String methodName;
     public final int methodArgsLength;
     public final int callArgIndex;
+    public final boolean streamApi;
 
-    public CallLocation(@NotNull String methodName, int methodArgsLength, int callArgIndex) {
+    public CallLocation(@NotNull String methodName, int methodArgsLength, int callArgIndex, boolean streamApi) {
       this.methodName = methodName;
       this.methodArgsLength = Math.min(methodArgsLength, MAX_ARG_COUNT);
       this.callArgIndex = Math.min(callArgIndex, MAX_ARG_COUNT - 1);
+      this.streamApi = streamApi;
     }
 
     @Override
@@ -157,6 +159,7 @@ public class FunctionalExpressionKey {
       if (methodArgsLength != location.methodArgsLength) return false;
       if (callArgIndex != location.callArgIndex) return false;
       if (!methodName.equals(location.methodName)) return false;
+      if (streamApi != location.streamApi) return false;
 
       return true;
     }
@@ -166,15 +169,17 @@ public class FunctionalExpressionKey {
       int result = methodName.hashCode();
       result = 31 * result + methodArgsLength;
       result = 31 * result + callArgIndex;
+      result = 31 * result + (streamApi ? 0 : 1);
       return result;
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("methodName", methodName)
         .add("methodArgsLength", methodArgsLength)
         .add("callArgIndex", callArgIndex)
+        .add("streamApi", streamApi)
         .toString();
     }
 
@@ -183,13 +188,15 @@ public class FunctionalExpressionKey {
       String methodName = IOUtil.readUTF(dataStream);
       int methodArgsLength = dataStream.readByte();
       int argIndex = dataStream.readByte();
-      return new CallLocation(methodName, methodArgsLength, argIndex);
+      boolean streamApi = dataStream.readBoolean();
+      return new CallLocation(methodName, methodArgsLength, argIndex, streamApi);
     }
 
     private void serializeCall(@NotNull DataOutput dataStream) throws IOException {
       IOUtil.writeUTF(dataStream, methodName);
       dataStream.writeByte(methodArgsLength);
       dataStream.writeByte(callArgIndex);
+      dataStream.writeBoolean(streamApi);
     }
 
   }
@@ -220,7 +227,7 @@ public class FunctionalExpressionKey {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("fieldType", varType)
         .toString();
     }

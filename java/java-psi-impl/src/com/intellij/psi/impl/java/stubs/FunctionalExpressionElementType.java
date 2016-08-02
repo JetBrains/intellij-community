@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiFunctionalExpression;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.CoarseType;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
@@ -75,12 +75,12 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
   @NotNull
   private static FunctionalExpressionKey.Location calcLocation(LighterAST tree, LighterASTNode funExpr) {
     LighterASTNode call = getContainingCall(tree, funExpr);
-    List<LighterASTNode> args = getArgList(tree, call);
+    List<LighterASTNode> args = JavaLightTreeUtil.getArgList(tree, call);
     int argIndex = args == null ? -1 : getArgIndex(args, funExpr);
     String methodName = call == null ? null : getCalledMethodName(tree, call);
     return methodName == null || argIndex < 0
            ? createTypedLocation(tree, funExpr)
-           : new FunctionalExpressionKey.CallLocation(methodName, args.size(), argIndex);
+           : new FunctionalExpressionKey.CallLocation(methodName, args.size(), argIndex, StreamApiDetector.isStreamApiCall(tree, call));
   }
 
   @NotNull
@@ -94,7 +94,7 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
       }
 
       LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, scope, TYPE);
-      String typeText = getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, typeElement, JAVA_CODE_REFERENCE));
+      String typeText = JavaLightTreeUtil.getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, typeElement, JAVA_CODE_REFERENCE));
       if (typeText != null) {
         return new FunctionalExpressionKey.TypedLocation(typeText);
       }
@@ -109,13 +109,6 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
       }
     }
     return -1;
-  }
-
-  @Nullable
-  private static List<LighterASTNode> getArgList(LighterAST tree, LighterASTNode call) {
-    LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
-    LighterASTNode exprList = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, EXPRESSION_LIST);
-    return exprList == null ? null : LightTreeUtil.getChildrenOfType(tree, exprList, ElementType.EXPRESSION_BIT_SET);
   }
 
   private static CoarseType calcType(final LighterAST tree, LighterASTNode funExpr) {
@@ -209,7 +202,7 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     if (call.getTokenType() == NEW_EXPRESSION) {
       LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, JAVA_CODE_REFERENCE);
-      return ref == null ? null : getNameIdentifierText(tree, ref);
+      return ref == null ? null : JavaLightTreeUtil.getNameIdentifierText(tree, ref);
     }
 
     LighterASTNode methodExpr = tree.getChildren(call).get(0);
@@ -217,23 +210,17 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
       return getSuperClassName(tree, call);
     }
     if (LightTreeUtil.firstChildOfType(tree, methodExpr, JavaTokenType.THIS_KEYWORD) != null) {
-      return getNameIdentifierText(tree, findClass(tree, call));
+      return JavaLightTreeUtil.getNameIdentifierText(tree, findClass(tree, call));
     }
 
-    return getNameIdentifierText(tree, methodExpr);
+    return JavaLightTreeUtil.getNameIdentifierText(tree, methodExpr);
   }
 
   @Nullable
   private static String getSuperClassName(LighterAST tree, LighterASTNode call) {
     LighterASTNode aClass = findClass(tree, call);
     LighterASTNode extendsList = LightTreeUtil.firstChildOfType(tree, aClass, EXTENDS_LIST);
-    return getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, extendsList, JAVA_CODE_REFERENCE));
-  }
-
-  @Nullable
-  private static String getNameIdentifierText(LighterAST tree, LighterASTNode idOwner) {
-    LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
-    return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;
+    return JavaLightTreeUtil.getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, extendsList, JAVA_CODE_REFERENCE));
   }
 
   @Nullable

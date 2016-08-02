@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -103,6 +104,24 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertSize(5, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable")).findAll());
     assertSize(3, FunctionalExpressionSearch.search(findClass("DumbAwareRunnable2")).findAll());
     assertSize(6, FunctionalExpressionSearch.search(findClass("DumbAware")).findAll());
+  }
+
+  public void testArraysStreamLikeApi() {
+    configure();
+    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
+  public void testStreamOfLikeApiWithLocalVar() {
+    configure();
+    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
+  public void testStreamOfLikeApiWithField() {
+    assertFalse(JavaFunctionalExpressionSearcher.hasStreamLikeApi(getProject()));
+    myFixture.addClass("class Base { StrType Stream = null; }");
+    configure();
+    assertTrue(JavaFunctionalExpressionSearcher.hasStreamLikeApi(getProject()));
+    assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
   }
 
   private PsiClass findClass(String i) {

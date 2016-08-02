@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,8 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -64,6 +64,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
    * and then for their usages,
    */
   public static final int SMART_SEARCH_THRESHOLD = 5;
+  private static final java.util.HashSet<String> KNOWN_STREAM_CLASSES =
+    ContainerUtil.newHashSet(Stream.class.getName(),
+                             IntStream.class.getName(), DoubleStream.class.getName(), LongStream.class.getName());
 
   @Override
   public void processQuery(@NotNull FunctionalExpressionSearch.SearchParameters queryParameters,
@@ -186,6 +189,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static Set<Location> getPossibleCallLocations(PsiClass samClass, PsiMethod calledMethod) {
     Set<Location> keys = new HashSet<>();
 
+    String samName = samClass.getQualifiedName();
+    boolean includeStreamApi = samName != null && samName.startsWith("java.util.function.") ||
+                               hasStreamLikeApi(samClass.getProject());
+
     String methodName = calledMethod.getName();
     PsiParameter[] parameters = calledMethod.getParameterList().getParameters();
     for (int paramIndex = 0; paramIndex < parameters.length; paramIndex++) {
@@ -193,7 +200,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       if (canPassFunctionalExpression(samClass, parameter)) {
         for (int argCount : getPossibleArgCounts(parameters, paramIndex)) {
           for (int argIndex : getPossibleArgIndices(parameter, paramIndex, argCount)) {
-            keys.add(new CallLocation(methodName, argCount, argIndex));
+            keys.add(new CallLocation(methodName, argCount, argIndex, false));
+            if (includeStreamApi) {
+              keys.add(new CallLocation(methodName, argCount, argIndex, true));
+            }
           }
         }
       }
@@ -374,5 +384,36 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       }
       return result;
     }
+  }
+
+  @VisibleForTesting
+  public static boolean hasStreamLikeApi(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(hasStreamLikeApi(project, "Arrays", "stream") || hasStreamLikeApi(project, "Stream", "of"),
+                                        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static boolean hasStreamLikeApi(Project project, String qualifier, String methodName) {
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+    for (PsiClass candidate : cache.getClassesByName(qualifier, GlobalSearchScope.allScope(project))) {
+      if (hasMethodWithNonStreamType(methodName, candidate)) return true;
+    }
+
+    for (PsiField field : cache.getFieldsByName(qualifier, GlobalSearchScope.allScope(project))) {
+      PsiClass fieldType = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+      if (fieldType == null || fieldType instanceof PsiTypeParameter || hasMethodWithNonStreamType(methodName, fieldType)) return true;
+    }
+
+    return false;
+  }
+
+  private static boolean hasMethodWithNonStreamType(@NotNull String methodName, @NotNull PsiClass candidate) {
+    for (PsiMethod method : candidate.findMethodsByName(methodName, true)) {
+      PsiClass returnType = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
+      if (returnType == null || !KNOWN_STREAM_CLASSES.contains(returnType.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
