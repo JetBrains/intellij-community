@@ -50,7 +50,7 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <separator/>
-      <action id="Git.Revert" class="git4idea.actions.GitRevert" icon="AllIcons.Actions.Rollback" text="Revert..."/>
+      <reference id="ChangesView.Revert" />
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
     </group>
 
