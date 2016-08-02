@@ -298,9 +298,4 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   public String getId() {
     return "editor.preferences.smartKeys";
   }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
 }

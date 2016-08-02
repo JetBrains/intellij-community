@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,9 @@ public interface SearchableConfigurable extends Configurable {
    * @return an action to perform when this configurable is opened when a search filter query is entered by the user in setting dialog.
    * This action, for example, can select something in a tree or a list embedded in this setting page that matches the query. 
    */
-  @Nullable Runnable enableSearch(String option);
+  default @Nullable Runnable enableSearch(String option) {
+    return null;
+  }
 
   interface Parent extends SearchableConfigurable, Composite {
     boolean hasOwnContent();
@@ -82,11 +84,6 @@ public interface SearchableConfigurable extends Configurable {
       @Override
       public void disposeUIResources() {
         myKids = null;
-      }
-
-      @Override
-      public Runnable enableSearch(final String option) {
-        return null;
       }
 
       @Override

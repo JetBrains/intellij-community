@@ -662,10 +662,4 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   public String getId() {
     return getHelpTopic();
   }
-
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

@@ -23,93 +23,48 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * A configurable for password safe
- */
 public class PasswordSafeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  /**
-   * The settings for the password safe
-   */
   final PasswordSafeSettings mySettings;
 
-  /**
-   * The option panel to use
-   */
   PasswordSafeOptionsPanel myPanel;
 
-  /**
-   * The constructor
-   *
-   * @param settings the password safe settings
-   */
   public PasswordSafeConfigurable(@NotNull PasswordSafeSettings settings) {
     mySettings = settings;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nls
   public String getDisplayName() {
     return "Passwords";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String getHelpTopic() {
     return "reference.ide.settings.password.safe";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public JComponent createComponent() {
     myPanel = new PasswordSafeOptionsPanel();
     myPanel.reset(mySettings);
     return myPanel.getRoot();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean isModified() {
     return myPanel != null && myPanel.isModified(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void apply() throws ConfigurationException {
     myPanel.apply(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void reset() {
     myPanel.reset(mySettings);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void disposeUIResources() {
     myPanel = null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   public String getId() {
     return "application.passwordSafe";
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

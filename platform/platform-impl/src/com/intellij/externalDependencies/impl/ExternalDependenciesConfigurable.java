@@ -238,12 +238,6 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
 
   @Nullable
   @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getHelpTopic() {
     return "Required_Plugin";
   }

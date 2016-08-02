@@ -400,9 +400,4 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

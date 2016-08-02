@@ -88,12 +88,6 @@ public class JavaFxSettingsConfigurable implements SearchableConfigurable, Confi
     return getHelpTopic();
   }
 
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   public static FileChooserDescriptor createSceneBuilderDescriptor() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
     descriptor.setTitle("SceneBuilder Configuration");
