@@ -23,9 +23,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Base class for file element types having stubs.
+ *
  * @author Konstantin.Ulitin
  */
 public abstract class StubFileElementType<T extends PsiFileStub> extends IFileElementType implements StubSerializer<T> {
+
+  public static final String DEFAULT_EXTERNAL_ID = "psi.file";
+
   public StubFileElementType(@Nullable Language language) {
     super(language);
   }
@@ -33,6 +38,4 @@ public abstract class StubFileElementType<T extends PsiFileStub> extends IFileEl
   public StubFileElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
     super(debugName, language);
   }
-
-  public abstract boolean isDefault();
 }

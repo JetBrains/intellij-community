@@ -55,7 +55,8 @@ public abstract class SerializationManager {
         }
       });
       for (IElementType type : stubElementTypes) {
-        if (type instanceof StubFileElementType && ((StubFileElementType)type).isDefault()) {
+        if (type instanceof StubFileElementType &&
+            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {
           continue;
         }
         StubSerializer stubSerializer = (StubSerializer)type;
