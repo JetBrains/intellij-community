@@ -23,7 +23,7 @@ interface StreamProvider {
   val enabled: Boolean
     get() = true
 
-  fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
+  fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT) = true
 
   /**
    * @param fileSpec

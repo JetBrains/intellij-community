@@ -17,15 +17,15 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.deleteRecursively
+import com.intellij.util.delete
 import com.intellij.util.exists
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
@@ -118,7 +118,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
             indicator.checkCanceled()
             try {
               indicator.text2 = path
-              root.resolve(path).deleteRecursively()
+              root.resolve(path).delete()
             }
             catch (e: Exception) {
               LOG.error(e)
@@ -133,7 +133,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
               indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {
-                dir.deleteRecursively()
+                dir.delete()
               }
               cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
             }

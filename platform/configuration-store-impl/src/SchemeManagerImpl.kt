@@ -588,7 +588,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (deleteUsingIo) {
-      errors.catch { ioDirectory.deleteRecursively() }
+      errors.catch { ioDirectory.delete() }
     }
   }
 
@@ -634,7 +634,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var providerPath: String?
     if (provider != null && provider.enabled) {
-      providerPath = fileSpec + '/' + fileName
+      providerPath = "$fileSpec/$fileName"
       if (!provider.isApplicable(providerPath, roamingType)) {
         providerPath = null
       }

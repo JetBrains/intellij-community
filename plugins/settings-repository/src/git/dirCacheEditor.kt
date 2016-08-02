@@ -17,6 +17,7 @@ package org.jetbrains.jgit.dirCache
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.deleteWithParentsIfEmpty
 import com.intellij.util.exists
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache
@@ -26,7 +27,6 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.byteBufferToBytes
-import org.jetbrains.settingsRepository.removeWithParentsIfEmpty
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
@@ -96,7 +96,7 @@ class DirCacheEditor(edits: List<PathEdit>, private val repository: Repository, 
       }
       else if (edit is AddFile || edit is AddLoadedFile) {
         // apply to first entry and remove others
-        var firstEntry = cache.getEntry(entryIndex)
+        val firstEntry = cache.getEntry(entryIndex)
         val entry: DirCacheEntry
         if (firstEntry.isMerged) {
           entry = firstEntry
@@ -256,7 +256,7 @@ fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree:
     val workTree = workTree.toPath()
     val ioFile = workTree.resolve(path)
     if (ioFile.exists()) {
-      ioFile.removeWithParentsIfEmpty(workTree, isFile)
+      ioFile.deleteWithParentsIfEmpty(workTree, isFile)
     }
   }
 }

@@ -114,8 +114,9 @@ class IcsManager(dir: Path) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))
-      scheduleCommit()
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
     }
   }
 

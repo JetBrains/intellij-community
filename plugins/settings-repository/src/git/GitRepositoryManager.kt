@@ -268,7 +268,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       }
 
       try {
-        old.deleteRecursively()
+        old.delete()
       }
       catch (e: Throwable) {
         LOG.error(e)
