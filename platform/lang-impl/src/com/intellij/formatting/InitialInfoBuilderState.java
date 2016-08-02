@@ -27,7 +27,6 @@ class InitialInfoBuilderState {
   public final WrapImpl parentBlockWrap;
   public final CompositeBlockWrapper wrappedBlock;
   public final boolean readOnly;
-  public final boolean parentBlockIsRightBlock;
 
   public Block previousBlock;
 
@@ -36,13 +35,11 @@ class InitialInfoBuilderState {
   InitialInfoBuilderState(@NotNull Block parentBlock,
                           @NotNull CompositeBlockWrapper wrappedBlock,
                           @Nullable WrapImpl parentBlockWrap,
-                          boolean readOnly,
-                          boolean parentBlockIsRightBlock) {
+                          boolean readOnly) {
     this.parentBlock = parentBlock;
     this.wrappedBlock = wrappedBlock;
     this.parentBlockWrap = parentBlockWrap;
     this.readOnly = readOnly;
-    this.parentBlockIsRightBlock = parentBlockIsRightBlock;
   }
 
   public int getIndexOfChildBlockToProcess() {

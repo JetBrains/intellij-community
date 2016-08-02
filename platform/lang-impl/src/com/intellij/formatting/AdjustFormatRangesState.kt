@@ -64,7 +64,7 @@ class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTe
   }
 
   private fun processBlock(currentBlock: Block) {
-    if (formatRanges.isReadOnly(currentBlock.textRange, false)) {
+    if (formatRanges.isReadOnly(currentBlock.textRange)) {
       extractor.processLeafBlock(currentBlock)
     }
     else {
@@ -77,7 +77,7 @@ class AdjustFormatRangesState(var currentRoot: Block, val formatRanges: FormatTe
       extractor.processCompositeBlock(currentBlock)
 
       children
-          .filterNot { formatRanges.isReadOnly(it.textRange, false) }
+          .filterNot { formatRanges.isReadOnly(it.textRange) }
           .reversed()
           .forEach { state.push(it) }
     }
