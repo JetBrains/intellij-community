@@ -57,6 +57,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import com.petebevin.markdown.MarkdownProcessor;
@@ -66,9 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -712,5 +711,16 @@ public class StudyUtils {
     final Balloon balloon =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
     showCheckPopUp(project, balloon);
+  }
+
+  public static void sortCourses(List<CourseInfo> result) {
+    // sort courses so as to have non-adaptive courses in the beginning of the list
+    Collections.sort(result, (c1, c2) -> {
+      if ((c1.isAdaptive() && c2.isAdaptive()) || (!c1.isAdaptive() && !c2.isAdaptive())) {
+        return 0;
+      }
+
+      return c1.isAdaptive() ? 1 : -1;
+    });
   }
 }
