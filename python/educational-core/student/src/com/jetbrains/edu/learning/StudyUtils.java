@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -502,12 +503,7 @@ public class StudyUtils {
       }
     }
     if (taskTextFile != null) {
-      try {
-        return FileUtil.loadTextAndClose(taskTextFile.getInputStream());
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+      return String.valueOf(LoadTextUtil.loadText(taskTextFile));
     }
     return null;
   }
