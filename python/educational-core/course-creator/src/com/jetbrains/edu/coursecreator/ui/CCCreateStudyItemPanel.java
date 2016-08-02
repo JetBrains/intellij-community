@@ -13,7 +13,8 @@ public class CCCreateStudyItemPanel extends JPanel {
   public CCCreateStudyItemPanel(String itemName, String thresholdName, int thresholdIndex) {
     myThresholdName = thresholdName;
     myItemName = itemName;
-    myNameField.setText(itemName + thresholdIndex);
+    int newIndex = thresholdIndex + 1;
+    myNameField.setText(itemName + newIndex);
     add(myPanel, BorderLayout.CENTER);
   }
 
