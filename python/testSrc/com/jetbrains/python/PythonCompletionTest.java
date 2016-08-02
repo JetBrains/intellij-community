@@ -438,12 +438,12 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-16991
   public void testSecondSectionNameInGoogleDocstring() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doTest());
+    runWithDocStringFormat(DocStringFormat.GOOGLE, this::doTest);
   }
 
   // PY-16877
   public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doTest());
+    runWithDocStringFormat(DocStringFormat.GOOGLE, this::doTest);
   }
 
   // PY-16870
@@ -475,7 +475,7 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doTest());
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
   }
 
   // PY-17002
@@ -754,8 +754,8 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-9342
   public void testUnboundMethodSpecialAttributes() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> assertUnderscoredMethodSpecialAttributesSuggested());
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> assertUnderscoredFunctionAttributesSuggested());
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::assertUnderscoredMethodSpecialAttributesSuggested);
+    runWithLanguageLevel(LanguageLevel.PYTHON32, this::assertUnderscoredFunctionAttributesSuggested);
   }
 
   // PY-9342

@@ -187,20 +187,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         ret.poke(definition, getRate(definition, context));
       }
     }
+
     final ResolveResultList results = new ResolveResultList();
     for (RatedResolveResult r : ret) {
       final PsiElement e = r.getElement();
-      if (e == element) {
+      if (e == element || element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
-      if (element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
-        continue;
-      }
-      else {
-        results.add(r);
-      }
+      results.add(r);
     }
-
     return results;
   }
 
@@ -643,9 +638,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
-                                          (PyQualifiedExpression)originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
     // include our own names
