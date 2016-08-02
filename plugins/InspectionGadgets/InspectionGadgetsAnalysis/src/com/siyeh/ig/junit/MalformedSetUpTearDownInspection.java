@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,61 +20,47 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SetupIsPublicVoidNoArgInspection extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class MalformedSetUpTearDownInspection extends BaseInspection {
 
-  @Override
+  @Nls
   @NotNull
-  public String getID() {
-    return "SetUpWithIncorrectSignature";
-  }
-
   @Override
-  @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "setup.is.public.void.no.arg.display.name");
+    return InspectionGadgetsBundle.message("malformed.set.up.tear.down.display.name");
   }
 
-  @Override
   @NotNull
+  @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "setup.is.public.void.no.arg.problem.descriptor");
+    return InspectionGadgetsBundle.message("malformed.set.up.tear.down.problem.descriptor");
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new SetupIsPublicVoidNoArgVisitor();
+    return new MalformedSetUpTearDownVisitor();
   }
 
-  private static class SetupIsPublicVoidNoArgVisitor
-    extends BaseInspectionVisitor {
+  private static class MalformedSetUpTearDownVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super;
       @NonNls final String methodName = method.getName();
-      if (!"setUp".equals(methodName)) {
-        return;
-      }
-      final PsiType returnType = method.getReturnType();
-      if (returnType == null) {
+      if (!"setUp".equals(methodName) && !"tearDown".equals(methodName)) {
         return;
       }
       final PsiClass targetClass = method.getContainingClass();
-      if (targetClass == null) {
+      if (!InheritanceUtil.isInheritor(targetClass, "junit.framework.TestCase")) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(targetClass,
-                                       "junit.framework.TestCase")) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0 ||
-          !returnType.equals(PsiType.VOID) ||
+      if (method.getParameterList().getParametersCount() != 0 ||
+          !PsiType.VOID.equals(method.getReturnType()) ||
           !method.hasModifierProperty(PsiModifier.PUBLIC) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) {
         registerMethodError(method);
