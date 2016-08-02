@@ -432,7 +432,7 @@ public class StudyProjectGenerator {
     try {
       final FileInputStream inputStream = new FileInputStream(cacheFile);
       try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
         try {
           String line;
           while ((line = reader.readLine()) != null) {
@@ -447,6 +447,9 @@ public class StudyProjectGenerator {
         finally {
           StudyUtils.closeSilently(reader);
         }
+      }
+      catch (UnsupportedEncodingException e) {
+        LOG.error(e.getMessage());
       }
       finally {
         StudyUtils.closeSilently(inputStream);
