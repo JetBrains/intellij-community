@@ -155,10 +155,10 @@ public class NsiFiles extends MatchingTask {
         instWriter.newLine();
         instWriter.newLine();
         if (dir.length() > 0) {
-          instWriter.write("SetOutPath $INSTDIR" + "\\" + toWinPath(dir));
+          instWriter.write("SetOutPath \"$INSTDIR" + "\\" + toWinPath(dir) + "\"");
         }
         else {
-          instWriter.write("SetOutPath $INSTDIR");
+          instWriter.write("SetOutPath \"$INSTDIR\"");
         }
 
         for (String file : files) {
