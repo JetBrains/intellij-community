@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +51,10 @@ public abstract class CCRenameHandler implements RenameHandler {
     }
     rename(project, course, directory);
     ProjectView.getInstance(project).refresh();
+    FileEditorManagerEx managerEx = FileEditorManagerEx.getInstanceEx(project);
+    for (VirtualFile virtualFile : managerEx.getOpenFiles()) {
+      managerEx.updateFilePresentation(virtualFile);
+    }
   }
 
   protected abstract void rename(@NotNull Project project, @NotNull Course course, @NotNull PsiDirectory directory);

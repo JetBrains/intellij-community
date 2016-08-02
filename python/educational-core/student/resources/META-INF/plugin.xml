@@ -106,6 +106,7 @@
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>
+    <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Edu">
