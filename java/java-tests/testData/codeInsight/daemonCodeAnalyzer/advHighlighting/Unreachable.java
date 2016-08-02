@@ -468,3 +468,24 @@ class ContinueFromTry {
     }
   }
 }
+
+class ManyExitsFromTry {
+  void f() {
+    final int i;
+    outer:
+    {
+      while (true) {
+        <error descr="Variable 'i' might be assigned in loop">i</error> = 1;
+        try {
+          if (i > 1) continue;
+          if (i > 2) break;
+          if (i > 3) break outer;
+          if (i > 4) return;
+          if (i > 5) throw new RuntimeException();
+        }
+        finally {
+        }
+      }
+    }
+  }
+}
