@@ -15,35 +15,49 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import java.awt.BorderLayout
 
-class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
+internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
   override fun getSettings() = icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()
 }
 
-class IcsConfigurableUi : ConfigurableUi<IcsSettings> {
-  private val panel = IcsConfigurableForm()
-
+internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
+  val repositoryListEditor = createRepositoryListEditor()
   private val readOnlyEditor = createReadOnlySourcesEditor()
+
+  private val editors = listOf(repositoryListEditor, readOnlyEditor)
+
+  private val panel = IcsConfigurableForm(this)
 
   init {
     panel.readOnlySourcesPanel.add(readOnlyEditor.component, BorderLayout.CENTER)
   }
 
-  override fun reset(settings: IcsSettings) {
-    panel.autoSyncCheckBox.isSelected = settings.autoSync
-    readOnlyEditor.reset(settings)
+  override fun dispose() {
+    icsManager.autoSyncManager.enabled = true
   }
 
-  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected != settings.autoSync || readOnlyEditor.isModified(settings)
+  override fun reset(settings: IcsSettings) {
+    // do not set in constructor to avoid
+    icsManager.autoSyncManager.enabled = false
+
+    panel.autoSyncCheckBox.isSelected = settings.autoSync
+
+    editors.forEach { it.reset(settings) }
+  }
+
+  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected != settings.autoSync || editors.any { it.isModified(settings) }
 
   override fun apply(settings: IcsSettings) {
     settings.autoSync = panel.autoSyncCheckBox.isSelected
-    readOnlyEditor.apply(settings)
+
+    editors.forEach { it.apply(settings) }
+
     saveSettings(settings, icsManager.settingsFile)
   }
 

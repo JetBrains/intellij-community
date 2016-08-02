@@ -24,9 +24,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.AtomicNotNullLazyValue
@@ -47,7 +45,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-internal const val PLUGIN_NAME: String = "Settings Repository"
+internal const val PLUGIN_NAME = "Settings Repository"
 
 internal val LOG: Logger = Logger.getInstance(IcsManager::class.java)
 
@@ -59,11 +57,8 @@ class IcsManager(dir: Path) {
   val credentialsStore = object : AtomicNotNullLazyValue<CredentialsStore>() {
     override fun compute(): CredentialsStore {
       if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
-        try {
+        catchAndLog {
           return OsXCredentialsStore("IntelliJ Platform Settings Repository")
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
         }
       }
       return FileCredentialsStore(dir.resolve(".git_auth"))
@@ -90,16 +85,14 @@ class IcsManager(dir: Path) {
   val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(Runnable {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
+    runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
+      try {
+        repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
-    })
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    }
   }, settings.commitDelay)
 
   private @Volatile var autoCommitEnabled = true
@@ -121,8 +114,9 @@ class IcsManager(dir: Path) {
         throw IllegalStateException("Delete is prohibited now")
       }
 
-      repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))
-      scheduleCommit()
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
     }
   }
 

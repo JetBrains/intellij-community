@@ -324,9 +324,4 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   public String getId() {
     return getHelpTopic();
   }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

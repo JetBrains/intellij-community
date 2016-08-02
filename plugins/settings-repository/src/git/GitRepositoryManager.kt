@@ -93,7 +93,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
   }
 
   override fun getUpstream(): String? {
-    return StringUtil.nullize(repository.config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL))
+    return repository.config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
   }
 
   override fun setUpstream(url: String?, branch: String?) {
@@ -185,7 +185,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
               LOG.debug(refUpdate.toString())
             }
           }
-          break;
+          break
         }
         catch (e: TransportException) {
           if (e.status == TransportException.Status.NOT_PERMITTED) {
@@ -268,7 +268,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
       }
 
       try {
-        old.deleteRecursively()
+        old.delete()
       }
       catch (e: Throwable) {
         LOG.error(e)

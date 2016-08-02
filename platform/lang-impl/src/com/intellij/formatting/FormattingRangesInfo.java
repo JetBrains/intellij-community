@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public interface FormattingRangesInfo {
   boolean isWhitespaceReadOnly(@Nullable TextRange range);
 
-  boolean isReadOnly(@Nullable TextRange range, boolean rootIsRightBlock);
+  boolean isReadOnly(@Nullable TextRange range);
 
   boolean isOnInsertedLine(int offset);
 }

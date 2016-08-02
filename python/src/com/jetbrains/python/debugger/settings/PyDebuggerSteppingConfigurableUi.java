@@ -123,7 +123,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     }
   }
 
-  private class DialogEditor extends TableModelEditor.DialogItemEditor<PySteppingFilter> {
+  private class DialogEditor implements TableModelEditor.DialogItemEditor<PySteppingFilter> {
     @Override
     public PySteppingFilter clone(@NotNull PySteppingFilter item, boolean forInPlaceEditing) {
       return new PySteppingFilter(item.isEnabled(), item.getFilter());

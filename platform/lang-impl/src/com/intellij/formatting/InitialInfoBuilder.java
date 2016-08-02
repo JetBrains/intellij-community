@@ -99,7 +99,7 @@ public class InitialInfoBuilder {
   {
     InitialInfoBuilder builder = new InitialInfoBuilder(root, model, formatOptions.myAffectedRanges, settings, options, formatOptions.myInterestingOffset, progressCallback);
     builder.setCollectAlignmentsInsideFormattingRange(formatOptions.myReformatContext);
-    builder.buildFrom(root, 0, null, null, null, true);
+    builder.buildFrom(root, 0, null, null, null);
     return builder;
   }
 
@@ -142,8 +142,7 @@ public class InitialInfoBuilder {
                                          final int index,
                                          @Nullable final CompositeBlockWrapper parent,
                                          @Nullable WrapImpl currentWrapParent,
-                                         @Nullable final Block parentBlock,
-                                         boolean rootBlockIsRightBlock)
+                                         @Nullable final Block parentBlock)
   {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
@@ -162,7 +161,7 @@ public class InitialInfoBuilder {
 
     collectAlignments(rootBlock);
 
-    if (isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock) || shouldCollectAlignmentsAround(rootBlock)) {
+    if (isInsideFormattingRanges(rootBlock) || shouldCollectAlignmentsAround(rootBlock)) {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
         final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
@@ -171,7 +170,7 @@ public class InitialInfoBuilder {
         }
         return wrapper;
       }
-      return buildCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
+      return buildCompositeBlock(rootBlock, parent, index, currentWrapParent);
     }
     else {
       return buildLeafBlock(rootBlock, parent, true, index, parentBlock);
@@ -244,8 +243,7 @@ public class InitialInfoBuilder {
   private CompositeBlockWrapper buildCompositeBlock(Block rootBlock,
                                                     @Nullable CompositeBlockWrapper parent,
                                                     int index,
-                                                    @Nullable WrapImpl currentWrapParent,
-                                                    boolean rootBlockIsRightBlock) 
+                                                    @Nullable WrapImpl currentWrapParent) 
   {
     final CompositeBlockWrapper wrappedRootBlock = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
@@ -265,8 +263,7 @@ public class InitialInfoBuilder {
     
     final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
     
-    InitialInfoBuilderState state = new InitialInfoBuilderState(
-      rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);
+    InitialInfoBuilderState state = new InitialInfoBuilderState(rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly);
     
     myStates.push(state);
     return wrappedRootBlock;
@@ -281,10 +278,8 @@ public class InitialInfoBuilder {
 
     initCurrentWhiteSpace(currentRoot, state.previousBlock, currentBlock);
 
-    boolean childBlockIsRightBlock = state.parentBlockIsRightBlock && currentBlockIndex == subBlocks.size() - 1;
-    
     final AbstractBlockWrapper wrapper = buildFrom(
-      currentBlock, currentBlockIndex, state.wrappedBlock, state.parentBlockWrap, currentRoot, childBlockIsRightBlock
+      currentBlock, currentBlockIndex, state.wrappedBlock, state.parentBlockWrap, currentRoot
     );
     
     registerExpandableIndents(currentBlock, wrapper);
@@ -433,9 +428,9 @@ public class InitialInfoBuilder {
     return false;
   }
 
-  private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {
+  private boolean isInsideFormattingRanges(final Block block) {
     if (myAffectedRanges == null) return true;
-    return !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
+    return !myAffectedRanges.isReadOnly(block.getTextRange());
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {

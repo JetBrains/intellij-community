@@ -84,12 +84,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     return getHelpTopic();
   }
 
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   @Override
   public void apply() throws ConfigurationException {
     if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {

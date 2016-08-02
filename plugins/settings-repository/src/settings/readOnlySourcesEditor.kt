@@ -17,9 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -27,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.deleteRecursively
+import com.intellij.util.delete
 import com.intellij.util.exists
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
@@ -55,7 +53,7 @@ private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<Reado
     })
 
 internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
-  val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource>() {
+  val itemEditor = object : TableModelEditor.DialogItemEditor<ReadonlySource> {
     override fun clone(item: ReadonlySource, forInPlaceEditing: Boolean) = ReadonlySource(item.url, item.active)
 
     override fun getItemClass() = ReadonlySource::class.java
@@ -109,46 +107,44 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      ProgressManager.getInstance().run(object : Task.Modal(null, icsMessage("task.sync.title"), true) {
-        override fun run(indicator: ProgressIndicator) {
-          indicator.isIndeterminate = true
+      runModalTask(icsMessage("task.sync.title")) { indicator ->
+        indicator.isIndeterminate = true
 
-          val root = icsManager.readOnlySourcesManager.rootDir
+        val root = icsManager.readOnlySourcesManager.rootDir
 
-          if (toDelete.isNotEmpty()) {
-            indicator.text = "Deleting old repositories"
-            for (path in toDelete) {
-              indicator.checkCanceled()
-              try {
-                indicator.text2 = path
-                root.resolve(path).deleteRecursively()
-              }
-              catch (e: Exception) {
-                LOG.error(e)
-              }
+        if (toDelete.isNotEmpty()) {
+          indicator.text = "Deleting old repositories"
+          for (path in toDelete) {
+            indicator.checkCanceled()
+            try {
+              indicator.text2 = path
+              root.resolve(path).delete()
+            }
+            catch (e: Exception) {
+              LOG.error(e)
             }
           }
-
-          if (toCheckout.isNotEmpty()) {
-            for (source in toCheckout) {
-              indicator.checkCanceled()
-              try {
-                indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
-                val dir = root.resolve(source.path!!)
-                if (dir.exists()) {
-                  dir.deleteRecursively()
-                }
-                cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
-              }
-              catch (e: Exception) {
-                LOG.error(e)
-              }
-            }
-          }
-
-          icsManager.readOnlySourcesManager.setSources(newList)
         }
-      })
+
+        if (toCheckout.isNotEmpty()) {
+          for (source in toCheckout) {
+            indicator.checkCanceled()
+            try {
+              indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
+              val dir = root.resolve(source.path!!)
+              if (dir.exists()) {
+                dir.delete()
+              }
+              cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
+            }
+            catch (e: Exception) {
+              LOG.error(e)
+            }
+          }
+        }
+
+        icsManager.readOnlySourcesManager.setSources(newList)
+      }
     }
 
     override fun reset(settings: IcsSettings) {

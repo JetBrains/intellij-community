@@ -1121,12 +1121,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
   @Nullable
   public SearchableConfigurable findSubConfigurable(@NotNull Class pageClass) {
     if (mySubPanelFactories == null) {

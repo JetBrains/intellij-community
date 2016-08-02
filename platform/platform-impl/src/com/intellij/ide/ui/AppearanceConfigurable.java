@@ -78,12 +78,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public JComponent createComponent() {

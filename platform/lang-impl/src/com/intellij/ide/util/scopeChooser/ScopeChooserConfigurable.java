@@ -362,12 +362,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
 
     private AnAction[] myChildren;

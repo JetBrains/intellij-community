@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
@@ -28,7 +29,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.*
 import java.io.IOException
 import java.io.InputStream
-import java.io.OutputStream
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -56,12 +56,9 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
         // we ignore empty files as well - delete if corrupted
         if (attributes.size() == 0L) {
-          try {
+          LOG.catchAndLog {
             LOG.warn("File $path is empty (length 0), will be removed")
             delete(file, path)
-          }
-          catch (e: Exception) {
-            LOG.error(e)
           }
           continue
         }
@@ -74,7 +71,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   }
 
   override fun deleteRepository() {
-    dir.deleteRecursively()
+    dir.delete()
   }
 
   protected open fun isPathIgnored(path: String): Boolean = false
@@ -98,16 +95,11 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       }
     }
 
-    try {
-      lock.write {
-        if (fileToDelete!!.sizeOrNull() == 0L) {
-          LOG.warn("File $path is empty (length 0), will be removed")
-          delete(fileToDelete!!, path)
-        }
+    LOG.catchAndLog {
+      if (fileToDelete!!.sizeOrNull() == 0L) {
+        LOG.warn("File $path is empty (length 0), will be removed")
+        delete(fileToDelete!!, path)
       }
-    }
-    catch (e: Exception) {
-      LOG.error(e)
     }
     return null
   }
@@ -141,41 +133,25 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
   override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}
-
-    lock.write {
-      val file = dir.resolve(path)
-      // delete could be called for non-existent file
-      if (file.exists()) {
-        delete(file, path)
-        return true
-      }
-    }
-
-    return false
+    return delete(dir.resolve(path), path)
   }
 
-  private fun delete(file: Path, path: String) {
-    val isFile = file.isFile()
-    file.removeWithParentsIfEmpty(dir, isFile)
-    deleteFromIndex(path, isFile)
+  private fun delete(file: Path, path: String): Boolean {
+    val fileAttributes = file.basicAttributesIfExists() ?: return false
+    val isFile = fileAttributes.isRegularFile
+    if (!file.deleteWithParentsIfEmpty(dir, isFile)) {
+      return false
+    }
+
+    lock.write {
+      deleteFromIndex(path, isFile)
+    }
+    return true
   }
 
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
 
   override fun has(path: String) = lock.read { dir.resolve(path).exists() }
-}
-
-fun Path.removeWithParentsIfEmpty(root: Path, isFile: Boolean = true) {
-  delete()
-
-  if (isFile) {
-    // remove empty directories
-    var parent = this.parent
-    while (parent != null && parent != root) {
-      parent.delete()
-      parent = parent.parent
-    }
-  }
 }
 
 var conflictResolver: ((files: List<VirtualFile>, mergeProvider: MergeProvider2) -> Unit)? = null
@@ -212,11 +188,7 @@ class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUti
     this.content = content
   }
 
-  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
-    throw IllegalStateException("You must use setBinaryContent")
-  }
+  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw IllegalStateException("You must use setBinaryContent")
 
-  override fun setContent(requestor: Any?, content: CharSequence, fireEvent: Boolean) {
-    throw IllegalStateException("You must use setBinaryContent")
-  }
+  override fun setContent(requestor: Any?, content: CharSequence, fireEvent: Boolean) = throw IllegalStateException("You must use setBinaryContent")
 }

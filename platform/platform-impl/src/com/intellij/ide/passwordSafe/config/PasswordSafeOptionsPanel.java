@@ -15,30 +15,17 @@
  */
 package com.intellij.ide.passwordSafe.config;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
-/**
- * The option panel for password safe
- */
-public class PasswordSafeOptionsPanel {
-  /**
-   * The password storage policy option
-   */
+class PasswordSafeOptionsPanel {
   private JRadioButton myRememberPasswordsUntilClosingRadioButton;
-  /**
-   * The password storage policy option
-   */
   private JRadioButton mySaveOnDiskRadioButton;
 
-  /**
-   * The root panel
-   */
   private JPanel myRoot;
 
-  public PasswordSafeOptionsPanel() {
-  }
-
-  public void reset(PasswordSafeSettings settings) {
+  public void reset(@NotNull PasswordSafeSettings settings) {
     PasswordSafeSettings.ProviderType t = settings.getProviderType();
     switch (t) {
       case MEMORY_ONLY:
@@ -52,6 +39,7 @@ public class PasswordSafeOptionsPanel {
     }
   }
 
+  @NotNull
   private PasswordSafeSettings.ProviderType getProviderType() {
     if (myRememberPasswordsUntilClosingRadioButton.isSelected()) {
       return PasswordSafeSettings.ProviderType.MEMORY_ONLY;
@@ -61,28 +49,14 @@ public class PasswordSafeOptionsPanel {
     }
   }
 
-  /**
-   * Check if the option panel modified the settings
-   *
-   * @param settings the settings to compare with
-   * @return true, if values were modified
-   */
   public boolean isModified(PasswordSafeSettings settings) {
     return getProviderType() != settings.getProviderType();
   }
 
-  /**
-   * Save UI state to the settings
-   *
-   * @param settings the settings to use
-   */
   public void apply(PasswordSafeSettings settings) {
     settings.setProviderType(getProviderType());
   }
 
-  /**
-   * @return the root panel
-   */
   public JComponent getRoot() {
     return myRoot;
   }

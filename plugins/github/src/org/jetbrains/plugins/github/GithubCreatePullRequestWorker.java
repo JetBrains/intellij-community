@@ -47,7 +47,12 @@ import git4idea.update.GitFetcher;
 import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.data.GithubBranch;
+import org.jetbrains.plugins.github.api.data.GithubPullRequest;
+import org.jetbrains.plugins.github.api.data.GithubRepo;
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.*;
@@ -144,7 +149,7 @@ public class GithubCreatePullRequestWorker {
 
       GithubAuthDataHolder authHolder;
       try {
-        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
+        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, AuthLevel.LOGGED, indicator);
       }
       catch (IOException e) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);

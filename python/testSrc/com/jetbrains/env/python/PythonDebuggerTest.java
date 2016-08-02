@@ -111,12 +111,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
-  public void testDebug() { //TODO: merge it into pydev tests
-    unittests("tests_pydevd/test_egg_zip_exist.py");
-  }
-
-  @Test
   public void testConditionalBreakpoint() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override

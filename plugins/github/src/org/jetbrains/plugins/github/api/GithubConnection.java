@@ -45,6 +45,7 @@ import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.github.api.data.GithubErrorMessage;
 import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSettings;
@@ -61,7 +62,6 @@ import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.api.GithubApiUtil.createDataFromRaw;
 import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
 
 public class GithubConnection {
@@ -197,7 +197,7 @@ public class GithubConnection {
 
   @NotNull
   private static Collection<? extends Header> createHeaders(@NotNull GithubAuthData auth) {
-    List<Header> headers = new ArrayList<Header>();
+    List<Header> headers = new ArrayList<>();
     GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
     if (tokenAuth != null) {
       headers.add(new BasicHeader("Authorization", "token " + tokenAuth.getToken()));
@@ -406,19 +406,16 @@ public class GithubConnection {
   public static class PagedRequest<T> {
     @NotNull private String myPath;
     @NotNull private final Collection<Header> myHeaders;
-    @NotNull private final Class<T> myResult;
-    @NotNull private final Class<? extends DataConstructor[]> myRawArray;
+    @NotNull private final Class<? extends T[]> myTypeArray;
 
     private boolean myFirstRequest = true;
     @Nullable private String myNextPage;
 
     public PagedRequest(@NotNull String path,
-                        @NotNull Class<T> result,
-                        @NotNull Class<? extends DataConstructor[]> rawArray,
+                        @NotNull Class<? extends T[]> typeArray,
                         @NotNull Header... headers) {
       myPath = path;
-      myResult = result;
-      myRawArray = rawArray;
+      myTypeArray = typeArray;
       myHeaders = Arrays.asList(headers);
     }
 
@@ -447,11 +444,8 @@ public class GithubConnection {
 
       myNextPage = response.getNextPage();
 
-      List<T> result = new ArrayList<T>();
-      for (DataConstructor raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
-        result.add(createDataFromRaw(raw, myResult));
-      }
-      return result;
+      T[] result = fromJson(response.getJsonElement().getAsJsonArray(), myTypeArray);
+      return Arrays.asList(result);
     }
 
     public boolean hasNext() {
@@ -460,7 +454,7 @@ public class GithubConnection {
 
     @NotNull
     public List<T> getAll(@NotNull GithubConnection connection) throws IOException {
-      List<T> result = new ArrayList<T>();
+      List<T> result = new ArrayList<>();
       while (hasNext()) {
         result.addAll(next(connection));
       }

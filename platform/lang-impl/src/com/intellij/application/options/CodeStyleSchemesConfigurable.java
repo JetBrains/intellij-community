@@ -410,19 +410,12 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       else {
         revert();
       }
-
-
     }
 
     @Override
     @NotNull
     public String getId() {
       return "preferences.sourceCode." + getDisplayName();
-    }
-
-    @Override
-    public Runnable enableSearch(final String option) {
-      return null;
     }
 
     @Override

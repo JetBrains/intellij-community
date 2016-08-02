@@ -66,7 +66,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, Any>())
   private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
 
-  protected open val project: Project?
+  internal open val project: Project?
     get() = null
 
   open val loadPolicy: StateLoadPolicy

@@ -18,7 +18,10 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -30,7 +33,10 @@ import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
-import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -619,6 +625,19 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+            session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+
+            if (myWorkspaceMap != null) {
+              session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+            }
+
+            session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+            session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
+          }
+
           List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
@@ -632,19 +651,6 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
               MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
               executionResults.add(mavenExecutionResult);
               continue;
-            }
-
-            RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-            if (repositorySession instanceof DefaultRepositorySystemSession) {
-              DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-              session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
-
-              if (myWorkspaceMap != null) {
-                session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
-              }
-
-              session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-              session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();

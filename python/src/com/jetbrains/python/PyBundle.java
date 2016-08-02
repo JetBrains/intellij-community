@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -35,6 +36,12 @@ public class PyBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
+  }
+
+  @Nullable
+  public static String messageOfNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                        @NotNull Object... params) {
+    return CommonBundle.messageOfNull(getBundle(), key, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;

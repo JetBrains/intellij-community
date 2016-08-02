@@ -603,6 +603,16 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            ((DefaultRepositorySystemSession)repositorySession)
+              .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
+
+            if (myWorkspaceMap != null) {
+              ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(myWorkspaceMap));
+            }
+          }
+
           List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
@@ -616,16 +626,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
               MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
               executionResults.add(mavenExecutionResult);
               continue;
-            }
-
-            RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-            if (repositorySession instanceof DefaultRepositorySystemSession) {
-              ((DefaultRepositorySystemSession)repositorySession)
-                .setTransferListener(new Maven30TransferListenerAdapter(myCurrentIndicator));
-
-              if (myWorkspaceMap != null) {
-                ((DefaultRepositorySystemSession)repositorySession).setWorkspaceReader(new Maven30WorkspaceReader(myWorkspaceMap));
-              }
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();

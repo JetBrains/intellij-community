@@ -48,8 +48,8 @@ public class FormatTextRange {
     return myRange.getStartOffset();
   }
 
-  public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
-    if (myRange == null || myRange.getStartOffset() >= range.getEndOffset() && rootIsRightBlock) {
+  public boolean isReadOnly(TextRange range) {
+    if (myRange == null) {
       return false;
     }
 

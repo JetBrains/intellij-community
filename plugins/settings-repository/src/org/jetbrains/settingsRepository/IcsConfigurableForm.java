@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,25 @@
  */
 package org.jetbrains.settingsRepository;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public class IcsConfigurableForm {
+  private final IcsConfigurableUi ui;
+
   JPanel readOnlySourcesPanel;
   JPanel rootPanel;
   JCheckBox autoSyncCheckBox;
+
+  @SuppressWarnings("unused")
+  private JPanel repositoryListEditor;
+
+  public IcsConfigurableForm(@NotNull IcsConfigurableUi ui) {
+    this.ui = ui;
+  }
+
+  private void createUIComponents() {
+    repositoryListEditor = (JPanel)ui.getRepositoryListEditor().getComponent();
+  }
 }

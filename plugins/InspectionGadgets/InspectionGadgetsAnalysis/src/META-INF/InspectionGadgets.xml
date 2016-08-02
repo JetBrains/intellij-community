@@ -4,6 +4,7 @@
 
     <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.junit.MalformedSetUpTearDownInspectionMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -1466,6 +1467,10 @@
                      key="junit.test.class.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection"/>
+    <localInspection groupPath="Java" language="JAVA"  shortName="MalformedSetUpTearDown" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="malformed.set.up.tear.down.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.junit.MalformedSetUpTearDownInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MisorderedAssertEqualsArguments" alternativeId="MisorderedAssertEqualsArguments" shortName="MisorderedAssertEqualsParameters"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1481,10 +1486,6 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="SetUpDoesntCallSuperSetUp" shortName="SetupCallsSuperSetup" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="setup.calls.super.setup.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.junit.SetupCallsSuperSetupInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="SetUpWithIncorrectSignature" shortName="SetupIsPublicVoidNoArg" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="setup.is.public.void.no.arg.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.SetupIsPublicVoidNoArgInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableJUnitAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1507,10 +1508,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="teardown.calls.super.teardown.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.TeardownCallsSuperTeardownInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="TearDownWithIncorrectSignature" shortName="TeardownIsPublicVoidNoArg"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="teardown.is.public.void.no.arg.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.TeardownIsPublicVoidNoArgInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestMethodInProductSource" shortName="TestMethodInProductCode"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="test.method.in.product.code.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
