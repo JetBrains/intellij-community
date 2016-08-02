@@ -75,7 +75,6 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   private void layoutPanel() {
     myCoursesComboBox = new ComboBox<CourseInfo>();
 
-    final JPanel coursesPanel = new JPanel(new BorderLayout());
     final LabeledComponent<ComboBox> coursesCombo = LabeledComponent.create(myCoursesComboBox, "Courses:", BorderLayout.WEST);
 
     myRefreshButton = new FixedSizeButton(coursesCombo);
@@ -83,10 +82,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myBrowseButton = new FixedSizeButton(coursesCombo);
 
     final JPanel comboPanel = new JPanel(new BorderLayout());
-
     comboPanel.add(coursesCombo, BorderLayout.CENTER);
     comboPanel.add(myRefreshButton, BorderLayout.EAST);
 
+    final JPanel coursesPanel = new JPanel(new BorderLayout());
     coursesPanel.add(comboPanel, BorderLayout.CENTER);
     coursesPanel.add(myBrowseButton, BorderLayout.EAST);
 

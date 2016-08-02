@@ -144,7 +144,8 @@ public class StudyProjectGenerator {
     Reader reader = null;
     try {
       reader = new InputStreamReader(new FileInputStream(courseFile), "UTF-8");
-      Gson gson = new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
+      Gson gson =
+        new GsonBuilder().registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseFile)).create();
       final Course course = gson.fromJson(reader, Course.class);
       course.initCourse(isAdaptive);
       return course;
@@ -385,7 +386,7 @@ public class StudyProjectGenerator {
     return myCourses;
   }
 
- @NotNull
+  @NotNull
   public List<CourseInfo> getCoursesUnderProgress(boolean force, @NotNull final String progressTitle, @NotNull final Project project) {
     try {
       return ProgressManager.getInstance()
