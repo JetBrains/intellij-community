@@ -1,99 +1,147 @@
 # This file has been automatically generated, please do not modify directly.
-load("//tools/base/bazel:bazel.bzl", "kotlin_library", "groovy_library", "kotlin_groovy_library", "fileset")
+load("//tools/base/bazel:bazel.bzl", "iml_module")
 
-java_library(
-  name = "groovy-rt-constants",
-  srcs = glob([
-      "plugins/groovy/rt-constants/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/groovy-rt-constants.resources",
-  resources = [
-      "//tools/idea:groovy-rt-constants.res",
+iml_module(
+    name = "groovy-rt-constants",
+    srcs = ["plugins/groovy/rt-constants/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/native-platform-0.10",
+  jars = [
+      "plugins/gradle/lib/native-platform-0.10.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "resources-en.res",
-  srcs = glob([
-      "resources-en/src/**/*",
+iml_module(
+    name = "properties-psi-api",
+    srcs = [
+        "plugins/properties/properties-psi-api/src",
+        "plugins/properties/properties-psi-api/gen",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "resources-en/src": "resources-en.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    resources = ["plugins/properties/properties-psi-api/resources"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:editor-ui-api[module]",
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lang-api[module]",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "testng_rt.res",
-  srcs = glob([
-      "plugins/testng_rt/src/**/*",
+java_import(
+  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
+  jars = [
+      "plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/testng_rt/src": "testng_rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "openapi.res",
-  srcs = glob([
-      "java/openapi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/openapi/src": "openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_test(
-  name = "smRunner_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":smRunner_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=smRunner_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/automaton",
+  jars = [
+      "lib/automaton.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
+  jars = [
+      "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "annotations-common",
+    srcs = ["platform/annotations/common/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "analysis-api",
+    srcs = ["platform/analysis-api/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:editor-ui-api[module]",
+    ],
+    exports = ["//tools/idea:editor-ui-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5",
+  jars = [
+      "plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "java-impl",
+    srcs = [
+        "java/java-impl/src",
+        "java/java-impl/gen",
+        "plugins/InspectionGadgets/src",
+        "plugins/IntentionPowerPak/src",
+        "plugins/generate-tostring/src",
+    ],
+    resources = ["plugins/generate-tostring/resources"],
+    deps = [
+        "//tools/idea:boot[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:lib/oromatcher",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:jsp-spi[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:lib/asm",
+        "//tools/idea:lib/asm-commons",
+        "//tools/idea:icons[module]",
+        "//tools/idea:lib/jcip-annotations",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:java-psi-impl[module]",
+        "//tools/idea:java-indexing-impl[module]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:java-analysis-impl[module]",
+        "//tools/idea:external-system-api[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:lib/xercesImpl",
+        "//tools/idea:lib/xml-apis",
+        "//tools/idea:lib/velocity",
+        "//tools/idea:java-structure-view[module]",
+        "//tools/idea:lib/nekohtml-1.9.14",
+    ],
+    exports = [
+        "//tools/idea:MM_RegExpSupport",
+        "//tools/idea:java-psi-impl",
+        "//tools/idea:java-indexing-impl",
+        "//tools/idea:java-analysis-impl",
+        "//tools/idea:java-structure-view",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -112,41 +160,11 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "forms_rt",
-  srcs = glob([
-      "platform/forms_rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/forms_rt.resources",
-  resources = [
-      "//tools/idea:forms_rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jps-model-tests_testlib.res",
-  srcs = glob([
-      "jps/model-impl/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/model-impl/testSrc": "jps-model-tests_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+iml_module(
+    name = "forms_rt",
+    srcs = ["platform/forms_rt/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -157,216 +175,97 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "properties_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":properties_testlib",
-      "//tools/base/testutils:testutils",
+iml_module(
+    name = "java-i18n",
+    srcs = ["plugins/java-i18n/src"],
+    test_srcs = ["plugins/java-i18n/testSrc"],
+    resources = ["plugins/java-i18n/resources"],
+    deps = [
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:properties[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:jsp-base-openapi[module]",
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:properties-psi-api[module]",
+        "//tools/idea:properties-psi-impl[module]",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=properties_testlib.jar",
+    exports = [
+        "//tools/idea:properties",
+        "//tools/idea:java-impl",
     ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-groovy_library(
-  name = "MM_maven2-server-impl_testlib",
-  srcs = [
-      "plugins/maven/maven2-server-impl/test",
-      "plugins/maven/src/test/java",
+iml_module(
+    name = "jps-model-api",
+    srcs = ["jps/model-api/src"],
+    deps = [
+        "//tools/idea:annotations[module]",
+        "//tools/idea:util-rt[module]",
     ],
-  resource_strip_prefix = "tools/idea/MM_maven2-server-impl_testlib.resources",
-  resources = [
-      "//tools/idea:MM_maven2-server-impl_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_maven2-server-impl",
-      "//tools/idea:maven-server-api",
-      "//tools/idea:util",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/mercury-artifact-1.0-alpha-6",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/nexus-indexer-1.2.3",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/activation-1.1",
-      "//tools/idea:lib/commons-logging-1.2",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/commons-beanutils",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:java-impl",
-      "//tools/idea:IntelliLang-xml",
-      "//tools/idea:properties",
-      "//tools/idea:properties_testlib",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:lib/jsr173_1.0_api",
-      "//tools/idea:lib/xbean",
-      "//tools/idea:lib/resolver",
-      "//tools/idea:plugins/maven/lib/wadl-core",
-      "//tools/idea:lib/gson-2.5",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:jetgroovy",
-      "//tools/idea:jetgroovy_testlib",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:maven-jps-plugin",
-      "//tools/idea:maven-jps-plugin_testlib",
-      "//tools/idea:maven-artifact-resolver-m2",
-      "//tools/idea:maven-artifact-resolver-m3",
-      "//tools/idea:maven-artifact-resolver-m31",
-      "//tools/idea:vcs-api",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:plugins/maven/lib/plexus-archiver-2.4.4",
-      "//tools/idea:external-system-api",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:util-tests",
-      "//tools/idea:util-tests_testlib",
-    ],
-  exports = [
-      "//tools/idea:MM_maven2-server-impl",
-      "//tools/idea:maven-server-api",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:external-system-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-psi-impl.res",
-  srcs = glob([
-      "java/java-psi-impl/src/**/*",
-      "java/java-psi-impl/gen/**/*",
+iml_module(
+    name = "extensions",
+    srcs = ["platform/extensions/src"],
+    test_srcs = ["platform/extensions/testSrc"],
+    deps = [
+        "//tools/idea:lib/xstream-1.4.8",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/xercesImpl[test]",
+        "//tools/idea:lib/xml-apis[test]",
+        "//tools/idea:lib/hamcrest-library-1.3[test]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-psi-impl/src": "java-psi-impl.resources",
-      "java/java-psi-impl/gen": "java-psi-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    exports = [
+        "//tools/idea:lib/xstream-1.4.8",
+        "//tools/idea:lib/jdom",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "extensions",
-  srcs = glob([
-      "platform/extensions/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/extensions.resources",
-  resources = [
-      "//tools/idea:extensions.res",
+iml_module(
+    name = "util",
+    srcs = ["platform/util/src"],
+    resources = ["platform/util/resources"],
+    deps = [
+        "//tools/idea:lib/eawtstub",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:platform-resources-en[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:util-rt[module]",
+        "//tools/idea:lib/jna",
+        "//tools/idea:lib/jna-platform",
+        "//tools/idea:lib/oromatcher",
+        "//tools/idea:lib/jsr166e",
+        "//tools/idea:lib/snappy-in-java-0.3.1",
+        "//tools/idea:lib/imgscalr-lib-4.2",
+        "//tools/idea:lib/batik-all",
+        "//tools/idea:lib/xmlgraphics-commons-1.5",
+        "//tools/idea:lib/xml-apis-ext",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/xstream-1.4.8",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:util",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/xercesImpl",
-      "//tools/idea:lib/xml-apis",
-      "//tools/idea:lib/hamcrest-library-1.3",
+    exports = [
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:annotations",
+        "//tools/idea:util-rt",
+        "//tools/idea:lib/jsr166e",
+        "//tools/idea:lib/snappy-in-java-0.3.1",
     ],
-  exports = [
-      "//tools/idea:lib/xstream-1.4.8",
-      "//tools/idea:lib/jdom",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "util",
-  srcs = glob([
-      "platform/util/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/util.resources",
-  resources = [
-      "//tools/idea:util.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/eawtstub",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:annotations",
-      "//tools/idea:util-rt",
-      "//tools/idea:lib/jna",
-      "//tools/idea:lib/jna-platform",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:lib/jsr166e",
-      "//tools/idea:lib/snappy-in-java-0.3.1",
-      "//tools/idea:lib/imgscalr-lib-4.2",
-      "//tools/idea:lib/batik-all",
-      "//tools/idea:lib/xmlgraphics-commons-1.5",
-      "//tools/idea:lib/xml-apis-ext",
-    ],
-  exports = [
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:annotations",
-      "//tools/idea:util-rt",
-      "//tools/idea:lib/jsr166e",
-      "//tools/idea:lib/snappy-in-java-0.3.1",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "tests_bootstrap.res",
-  srcs = glob([
-      "platform/testFramework/bootstrap/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/testFramework/bootstrap/src": "tests_bootstrap.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -385,48 +284,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "platform-main.res",
-  srcs = glob([
-      "platform/platform-main/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/platform-main/src": "platform-main.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "maven-artifact-resolver-m2.res",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m2/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/artifact-resolver-m2/src": "maven-artifact-resolver-m2.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/xmlrpc-2.0",
   jars = [
@@ -435,33 +292,34 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "groovy-jps-plugin",
-  srcs = glob([
-      "plugins/groovy/jps-plugin/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/groovy-jps-plugin.resources",
-  resources = [
-      "//tools/idea:groovy-jps-plugin.res",
+iml_module(
+    name = "groovy-jps-plugin",
+    srcs = ["plugins/groovy/jps-plugin/src"],
+    deps = [
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:groovy-rt-constants[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01",
+        "//tools/idea:instrumentation-util[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-builders",
-      "//tools/idea:groovy-rt-constants",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01",
-      "//tools/idea:instrumentation-util",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
   name = "lib/kryo-2.22",
   jars = [
       "lib/kryo-2.22.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-native-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-native-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
 )
@@ -474,59 +332,33 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "testng_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":testng_testlib",
-      "//tools/base/testutils:testutils",
+java_import(
+  name = "plugins/gradle/lib/gradle-base-services-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-base-services-2.14.1.jar",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=testng_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "community-resources",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/community-resources.resources",
-  resources = [
-      "//tools/idea:community-resources.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "community-resources",
+    resources = ["community-resources/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "resources-en",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/resources-en.resources",
-  resources = [
-      "//tools/idea:resources-en.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "resources-en",
+    srcs = ["resources-en/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "ant_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":ant_testlib",
-      "//tools/base/testutils:testutils",
+java_import(
+  name = "lib/cli-parser-1.1",
+  jars = [
+      "lib/cli-parser-1.1.jar",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=ant_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
@@ -538,97 +370,60 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "xml-analysis-api",
-  srcs = glob([
-      "xml/xml-analysis-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xml-analysis-api.resources",
-  resources = [
-      "//tools/idea:xml-analysis-api.res",
+iml_module(
+    name = "xml-analysis-api",
+    srcs = ["xml/xml-analysis-api/src"],
+    deps = [
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:util[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:analysis-api",
-      "//tools/idea:annotations",
-      "//tools/idea:core-api",
-      "//tools/idea:extensions",
-      "//tools/idea:util",
+    exports = [
+        "//tools/idea:xml-psi-api",
+        "//tools/idea:analysis-api",
+        "//tools/idea:annotations",
+        "//tools/idea:core-api",
+        "//tools/idea:extensions",
+        "//tools/idea:util",
     ],
-  exports = [
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:analysis-api",
-      "//tools/idea:annotations",
-      "//tools/idea:core-api",
-      "//tools/idea:extensions",
-      "//tools/idea:util",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "forms-compiler",
+    srcs = ["java/compiler/forms-compiler/src"],
+    test_srcs = ["java/compiler/forms-compiler/testSrc"],
+    deps = [
+        "//tools/idea:lib/jdom",
+        "//tools/idea:forms_rt[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:lib/junit[test]",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:instrumentation-util[module]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = ["//tools/idea:instrumentation-util"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/hamcrest-core-1.3",
+  jars = [
+      "lib/hamcrest-core-1.3.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "execution-openapi.res",
-  srcs = glob([
-      "java/execution/openapi/src/**/*",
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/execution/openapi/src": "execution-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "jps-builders.res",
-  srcs = glob([
-      "jps/jps-builders/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/jps-builders/src": "jps-builders.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "junit_testlib.res",
-  srcs = glob([
-      "plugins/junit/test/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/junit/test": "junit_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -639,27 +434,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "built-in-server-api.res",
-  srcs = glob([
-      "platform/built-in-server-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/built-in-server-api/src": "built-in-server-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "plugins/gradle/lib/gradle-model-core-2.14.1",
   jars = [
@@ -668,40 +442,106 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "ant-jps-plugin_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":ant-jps-plugin_testlib",
-      "//tools/base/testutils:testutils",
+java_import(
+  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
+  jars = [
+      "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5.jar",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=ant-jps-plugin_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-kotlin_library(
-  name = "built-in-server-api",
-  srcs = [
-      "platform/built-in-server-api/src",
+java_import(
+  name = "plugins/gradle/lib/gradle-resources-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-resources-2.14.1.jar",
     ],
-  resource_strip_prefix = "tools/idea/built-in-server-api.resources",
-  resources = [
-      "//tools/idea:built-in-server-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:platform-api",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "gradle-jps-plugin",
+    srcs = ["plugins/gradle/jps-plugin/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
+        "//tools/idea:lib/gson-2.5",
+    ],
+    exports = [
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "built-in-server-api",
+    srcs = ["platform/built-in-server-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:platform-api[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -712,27 +552,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "xml-analysis-api.res",
-  srcs = glob([
-      "xml/xml-analysis-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "xml/xml-analysis-api/src": "xml-analysis-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/jna",
   jars = [
@@ -741,50 +560,82 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "maven-server-api",
-  srcs = glob([
-      "plugins/maven/maven-server-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-server-api.resources",
-  resources = [
-      "//tools/idea:maven-server-api.res",
+java_import(
+  name = "lib/xmlgraphics-commons-1.5",
+  jars = [
+      "lib/xmlgraphics-commons-1.5.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
-    ],
-  exports = [
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "jsp-openapi",
-  srcs = glob([
-      "java/jsp-openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jsp-openapi.resources",
-  resources = [
-      "//tools/idea:jsp-openapi.res",
+iml_module(
+    name = "java-indexing-impl",
+    srcs = ["java/java-indexing-impl/src"],
+    deps = [
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:java-psi-impl[module]",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:indexing-impl[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:lib/guava-18.0",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:util",
-      "//tools/idea:jsp-base-openapi",
+    exports = [
+        "//tools/idea:java-psi-api",
+        "//tools/idea:java-psi-impl",
+        "//tools/idea:indexing-api",
+        "//tools/idea:indexing-impl",
+        "//tools/idea:projectModel-api",
+        "//tools/idea:java-indexing-api",
     ],
-  exports = [
-      "//tools/idea:jsp-base-openapi",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "xslt-rt",
+    srcs = ["plugins/xpath/xslt-rt/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/picocontainer",
+  jars = [
+      "lib/picocontainer.jar",
     ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "maven-server-api",
+    srcs = ["plugins/maven/maven-server-api/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
+    ],
+    exports = [
+        "//tools/idea:util",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "jsp-openapi",
+    srcs = ["java/jsp-openapi/src"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:jsp-base-openapi[module]",
+    ],
+    exports = ["//tools/idea:jsp-base-openapi"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -811,72 +662,141 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "editor-ui-api.res",
-  srcs = glob([
-      "platform/editor-ui-api/src/**/*",
+java_import(
+  name = "plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
+  jars = [
+      "plugins/groovy/testdata/griffon/griffon-rt-1.1.0.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/editor-ui-api/src": "editor-ui-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "eclipse.res",
-  srcs = glob([
-      "plugins/eclipse/src/**/*",
-      "plugins/eclipse/gen/**/*",
-      "plugins/eclipse/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/eclipse/src": "eclipse.resources",
-      "plugins/eclipse/resources": "eclipse.resources",
-      "plugins/eclipse/gen": "eclipse.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "copyright",
-  srcs = glob([
-      "plugins/copyright/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/copyright.resources",
-  resources = [
-      "//tools/idea:copyright.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:lang-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:openapi",
-      "//tools/idea:lib/velocity",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "smRunner",
+    srcs = ["platform/smRunner/src"],
+    test_srcs = ["platform/smRunner/testSrc"],
+    deps = [
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:testRunner[module]",
+        "//tools/idea:xdebugger-api[module]",
+        "//tools/idea:lib/serviceMessages",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:lib/dev/easymock[test]",
+        "//tools/idea:lib/dev/easymockclassextension[test]",
+        "//tools/idea:lib/dev/jmock-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-junit4-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-legacy-2.5.1[test]",
+        "//tools/idea:lib/dev/objenesis-1.0[test]",
+        "//tools/idea:lang-api[module]",
+    ],
+    exports = [
+        "//tools/idea:testRunner",
+        "//tools/idea:lib/serviceMessages",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "platform-api",
+    srcs = ["platform/platform-api/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:bootstrap[module]",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:forms_rt[module]",
+        "//tools/idea:lib/commons-codec-1.9",
+        "//tools/idea:platform-resources-en[module]",
+        "//tools/idea:lib/oromatcher",
+        "//tools/idea:icons[module]",
+        "//tools/idea:lib/automaton",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:lib/proxy-vole_20131209",
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:editor-ui-api[module]",
+        "//tools/idea:lib/pty4j-0.6",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:lib/httpcore-4.4.1",
+        "//tools/idea:lib/httpmime-4.4.1",
+        "//tools/idea:lib/httpclient-4.4.1",
+        "//tools/idea:lib/fluent-hc-4.4.1",
+        "//tools/idea:lib/jna",
+        "//tools/idea:lib/jna-platform",
+    ],
+    exports = [
+        "//tools/idea:util",
+        "//tools/idea:extensions",
+        "//tools/idea:core-api",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:forms_rt",
+        "//tools/idea:platform-resources-en",
+        "//tools/idea:projectModel-api",
+        "//tools/idea:analysis-api",
+        "//tools/idea:editor-ui-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/reflectasm-1.07",
+  jars = [
+      "lib/reflectasm-1.07.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "util-tests",
+    test_srcs = ["platform/util/testSrc"],
+    deps = [
+        "//tools/idea:lib/groovy-all-2.4.6[test]",
+        "//tools/idea:util[module, test]",
+        "//tools/idea:lib/jdom[test]",
+        "//tools/idea:lib/dev/assertj-core-3.2.0[test]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/picocontainer[test]",
+        "//tools/idea:lib/jna[test]",
+        "//tools/idea:lib/jna-platform[test]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "compiler-openapi",
+    srcs = ["java/compiler/openapi/src"],
+    deps = ["//tools/idea:openapi[module]"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "copyright",
+    srcs = ["plugins/copyright/src"],
+    deps = [
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:lib/velocity",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -895,48 +815,63 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-groovy_library(
-  name = "gradle-tooling-extension-impl",
-  srcs = [
-      "plugins/gradle/tooling-extension-impl/src",
+iml_module(
+    name = "analysis-impl",
+    srcs = ["platform/analysis-impl/src"],
+    deps = [
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:editor-ui-ex[module]",
+        "//tools/idea:indexing-impl[module]",
     ],
-  resource_strip_prefix = "tools/idea/gradle-tooling-extension-impl.resources",
-  resources = [
-      "//tools/idea:gradle-tooling-extension-impl.res",
+    exports = [
+        "//tools/idea:analysis-api",
+        "//tools/idea:core-impl",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
-      "//tools/idea:external-system-rt",
-      "//tools/idea:gradle-tooling-extension-api",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:lib/gson-2.5",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-scala-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
-      "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "gradle-tooling-extension-impl",
+    srcs = ["plugins/gradle/tooling-extension-impl/src"],
+    deps = [
+        "//tools/idea:annotations[module]",
+        "//tools/idea:external-system-rt[module]",
+        "//tools/idea:gradle-tooling-extension-api[module]",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:lib/gson-2.5",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-build-init-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-java-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-platform-jvm-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-plugins-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-scala-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-api/lib/gradle-language-scala-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
+        "//tools/idea:plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
     ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -955,25 +890,47 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-indexing-impl.res",
-  srcs = glob([
-      "java/java-indexing-impl/src/**/*",
+iml_module(
+    name = "projectModel-api",
+    srcs = ["platform/projectModel-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:jps-model-api[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-indexing-impl/src": "java-indexing-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    exports = [
+        "//tools/idea:core-api",
+        "//tools/idea:jps-model-api",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "junit_rt",
+    srcs = ["plugins/junit_rt/src"],
+    deps = [
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:java-runtime[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
+  jars = [
+      "plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1008,27 +965,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "common-eclipse-util.res",
-  srcs = glob([
-      "plugins/eclipse/common-eclipse-util/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/eclipse/common-eclipse-util/src": "common-eclipse-util.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/asm4-all",
   jars = [
@@ -1037,69 +973,33 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "core-impl",
-  srcs = glob([
-      "platform/core-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/core-impl.resources",
-  resources = [
-      "//tools/idea:core-impl.res",
+iml_module(
+    name = "core-impl",
+    srcs = ["platform/core-impl/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:boot[module]",
+        "//tools/idea:lib/guava-18.0",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:boot",
-      "//tools/idea:lib/guava-18.0",
-    ],
-  exports = [
-      "//tools/idea:core-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = ["//tools/idea:core-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "lvcs-api.res",
-  srcs = glob([
-      "platform/lvcs-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/lvcs-api/src": "lvcs-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+iml_module(
+    name = "lvcs-api",
+    srcs = ["platform/lvcs-api/src"],
+    deps = ["//tools/idea:platform-api[module]"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "maven-jps-plugin.res",
-  srcs = glob([
-      "plugins/maven/jps-plugin/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/jps-plugin/src": "maven-jps-plugin.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+iml_module(
+    name = "jps-launcher",
+    srcs = ["jps/jps-launcher/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1110,56 +1010,52 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+iml_module(
+    name = "jps-builders",
+    srcs = ["jps/jps-builders/src"],
+    test_srcs = ["jps/jps-builders/testSrc"],
+    exclude = [
+        "jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager.java",
+        "jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
+    ],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:forms_rt[module]",
+        "//tools/idea:forms-compiler[module]",
+        "//tools/idea:instrumentation-util[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:lib/nanoxml-2.2.3",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:lib/protobuf-2.5.0",
+        "//tools/idea:jps/lib/optimizedFileManager",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lib/ecj-4.5.2[test]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:jps-serialization-tests[module, test]",
+    ],
+    exports = [
+        "//tools/idea:util",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:lib/protobuf-2.5.0",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
 java_import(
   name = "lib/resolver",
   jars = [
       "lib/resolver.jar",
     ],
   visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "maven-artifact-resolver-m31.res",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m31/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/artifact-resolver-m31/src": "maven-artifact-resolver-m31.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "java-analysis-impl.res",
-  srcs = glob([
-      "java/java-analysis-impl/src/**/*",
-      "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src": "java-analysis-impl.resources",
-      "java/java-analysis-impl/src": "java-analysis-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
 )
 
 java_import(
@@ -1186,93 +1082,60 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-groovy_library(
-  name = "jetgroovy",
-  srcs = [
-      "plugins/groovy/src",
+iml_module(
+    name = "jetgroovy",
+    srcs = ["plugins/groovy/src"],
+    test_srcs = ["plugins/groovy/test"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:debugger-openapi[module]",
+        "//tools/idea:groovy_rt[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:properties[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:copyright[module]",
+        "//tools/idea:IntelliLang[module]",
+        "//tools/idea:ant[module]",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:IntelliLang-java[module]",
+        "//tools/idea:IntelliLang-xml[module, test]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:junit[module, test]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:groovy-jps-plugin[module]",
+        "//tools/idea:ByteCodeViewer[module]",
+        "//tools/idea:properties-psi-api[module]",
+        "//tools/idea:groovy-psi[module]",
+        "//tools/idea:external-system-api[module]",
     ],
-  resource_strip_prefix = "tools/idea/jetgroovy.resources",
-  resources = [
-      "//tools/idea:jetgroovy.res",
+    exports = [
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:groovy-psi",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:groovy_rt",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:lang-api",
-      "//tools/idea:properties",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:java-impl",
-      "//tools/idea:copyright",
-      "//tools/idea:IntelliLang",
-      "//tools/idea:ant",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:IntelliLang-java",
-      "//tools/idea:IntelliLang-xml",
-      "//tools/idea:jps-builders",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:junit",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:groovy-jps-plugin",
-      "//tools/idea:ByteCodeViewer",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:groovy-psi",
-      "//tools/idea:external-system-api",
-    ],
-  exports = [
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:groovy-psi",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "util-tests_testlib.res",
-  srcs = glob([
-      "platform/util/testSrc/**/*",
+iml_module(
+    name = "maven-jps-plugin",
+    srcs = ["plugins/maven/jps-plugin/src"],
+    test_srcs = ["plugins/maven/jps-plugin/testSrc"],
+    deps = [
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:plugins/maven/lib/plexus-utils-2.0.6",
+        "//tools/idea:jps-serialization-tests[module, test]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/util/testSrc": "util-tests_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "maven-jps-plugin",
-  srcs = glob([
-      "plugins/maven/jps-plugin/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-jps-plugin.resources",
-  resources = [
-      "//tools/idea:maven-jps-plugin.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:util",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:plugins/maven/lib/plexus-utils-2.0.6",
-      "//tools/idea:jps-serialization-tests",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1283,25 +1146,190 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "eclipse_testlib.res",
-  srcs = glob([
-      "plugins/eclipse/testSources/**/*",
+iml_module(
+    name = "MM_RegExpSupport",
+    srcs = [
+        "RegExpSupport/src",
+        "RegExpSupport/gen",
+        "xml/xml-analysis-impl/src",
+        "xml/xml-psi-impl/src",
+        "xml/xml-psi-impl/gen",
+        "platform/lvcs-impl/src",
+        "platform/vcs-impl/src",
+        "xml/impl/src",
+        "spellchecker/src",
+        "xml/relaxng/src",
+        "xml/dom-openapi/src",
+        "json/src",
+        "json/gen",
+        "images/src",
+        "platform/xdebugger-impl/src",
+        "xml/dom-impl/src",
+        "platform/lang-impl/src",
+        "platform/lang-impl/gen",
+        "platform/diff-impl/src",
+        "platform/configuration-store-impl/src",
+        "platform/platform-impl/src",
+        "platform/built-in-server/src",
+        "platform/testFramework/src",
+        "xml/xml-structure-view-impl/src",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/eclipse/testSources": "eclipse_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    test_srcs = [
+        "RegExpSupport/test",
+        "platform/vcs-impl/testSrc",
+        "spellchecker/testSrc",
+        "xml/relaxng/test",
+        "platform/xdebugger-impl/testSrc",
+        "platform/testFramework/testSrc",
     ],
+    resources = [
+        "xml/xml-analysis-impl/resources",
+        "xml/xml-psi-impl/resources",
+        "xml/impl/resources",
+        "platform/platform-resources/src",
+        "json/resources",
+    ],
+    deps = [
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:lib/jaxen-1.1.3",
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:analysis-impl[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:xml-analysis-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:indexing-impl[module]",
+        "//tools/idea:lib/xercesImpl",
+        "//tools/idea:lib/xml-apis",
+        "//tools/idea:lib/jsr173_1.0_api",
+        "//tools/idea:lib/xbean",
+        "//tools/idea:lib/resolver",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:vcs-api[module]",
+        "//tools/idea:lvcs-api[module]",
+        "//tools/idea:lib/jcip-annotations",
+        "//tools/idea:diff-api[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lib/commons-codec-1.9",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:lib/gson-2.5",
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:icons[module]",
+        "//tools/idea:lib/swingx-core-1.6.2",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:xdebugger-api[module]",
+        "//tools/idea:built-in-server-api[module]",
+        "//tools/idea:xml/relaxng/lib/rngom-20051226-patched",
+        "//tools/idea:xml/relaxng/lib/isorelax",
+        "//tools/idea:xml/relaxng/lib/trang-core",
+        "//tools/idea:xml/relaxng/lib/jing",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/sanselan-0.98-snapshot",
+        "//tools/idea:lib/asm",
+        "//tools/idea:lib/asm-commons",
+        "//tools/idea:lib/cglib-2.2.2",
+        "//tools/idea:boot[module]",
+        "//tools/idea:lib/oromatcher",
+        "//tools/idea:lib/velocity",
+        "//tools/idea:usageView[module]",
+        "//tools/idea:lib/xpp3-1.1.4-min",
+        "//tools/idea:lib/cli-parser-1.1",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:lib/snappy-in-java-0.3.1",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:structure-view-impl[module]",
+        "//tools/idea:lib/commons-logging-1.2",
+        "//tools/idea:vcs-api-core[module]",
+        "//tools/idea:bootstrap[module]",
+        "//tools/idea:lib/eawtstub",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:lib/jh",
+        "//tools/idea:lib/jna",
+        "//tools/idea:lib/jna-platform",
+        "//tools/idea:lib/winp-1.23",
+        "//tools/idea:lib/miglayout-swing",
+        "//tools/idea:lib/jayatana-1.2.4",
+        "//tools/idea:editor-ui-ex[module]",
+        "//tools/idea:lib/httpcore-4.4.1",
+        "//tools/idea:lib/httpmime-4.4.1",
+        "//tools/idea:lib/httpclient-4.4.1",
+        "//tools/idea:lib/fluent-hc-4.4.1",
+        "//tools/idea:lib/imgscalr-lib-4.2",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/analytics-library:analytics-tracker[module]",
+        "//tools/analytics-library:analytics-shared[module]",
+        "//tools/analytics-library:analytics-publisher[module]",
+        "//tools/base/common:common[module]",
+        "//tools/analytics-library:analytics-protos[module]",
+        "//tools/idea:lib/xmlrpc-2.0",
+        "//tools/idea:tests_bootstrap[module]",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:lib/dev/easymock[test]",
+        "//tools/idea:lib/dev/easymockclassextension[test]",
+        "//tools/idea:lib/dev/jmock-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-junit4-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-legacy-2.5.1[test]",
+        "//tools/idea:lib/dev/objenesis-1.0[test]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:lib/dev/assertj-core-3.2.0[test]",
+        "//tools/idea:xml-structure-view-api[module]",
+    ],
+    exports = [
+        "//tools/idea:xml-analysis-api",
+        "//tools/idea:xml-psi-api",
+        "//tools/idea:vcs-api",
+        "//tools/idea:xml-openapi",
+        "//tools/idea:lib/cglib-2.2.2",
+        "//tools/idea:lang-api",
+        "//tools/idea:usageView",
+        "//tools/idea:lib/cli-parser-1.1",
+        "//tools/idea:indexing-impl",
+        "//tools/idea:projectModel-impl",
+        "//tools/idea:analysis-impl",
+        "//tools/idea:structure-view-impl",
+        "//tools/idea:diff-api",
+        "//tools/idea:platform-api",
+        "//tools/idea:lib/commons-codec-1.9",
+        "//tools/idea:lvcs-api",
+        "//tools/idea:core-impl",
+        "//tools/idea:lib/miglayout-swing",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:editor-ui-ex",
+        "//tools/idea:built-in-server-api",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:lib/dev/easymock",
+        "//tools/idea:lib/dev/easymockclassextension",
+        "//tools/idea:lib/dev/jmock-2.5.1",
+        "//tools/idea:lib/dev/jmock-junit4-2.5.1",
+        "//tools/idea:lib/dev/jmock-legacy-2.5.1",
+        "//tools/idea:lib/dev/objenesis-1.0",
+        "//tools/idea:java-runtime",
+        "//tools/idea:lib/groovy-all-2.4.6",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "debugger-openapi",
+    srcs = ["java/debugger/openapi/src"],
+    deps = [
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:resources-en[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1310,6 +1338,31 @@ java_import(
       "plugins/gradle/tooling-extension-api/lib/gradle-platform-base-2.14.1.jar",
     ],
   visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "duplicates-analysis",
+    srcs = ["platform/duplicates-analysis/src"],
+    deps = [
+        "//tools/idea:analysis-impl[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:projectModel-impl[module]",
+    ],
+    exports = [
+        "//tools/idea:analysis-impl",
+        "//tools/idea:annotations",
+        "//tools/idea:extensions",
+        "//tools/idea:util",
+        "//tools/idea:indexing-api",
+        "//tools/idea:projectModel-api",
+        "//tools/idea:projectModel-impl",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1352,48 +1405,34 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "java-indexing-api",
-  srcs = glob([
-      "java/java-indexing-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-indexing-api.resources",
-  resources = [
-      "//tools/idea:java-indexing-api.res",
+iml_module(
+    name = "java-indexing-api",
+    srcs = ["java/java-indexing-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:indexing-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:indexing-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "xml-openapi",
-  srcs = glob([
-      "xml/openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xml-openapi.resources",
-  resources = [
-      "//tools/idea:xml-openapi.res",
+iml_module(
+    name = "xml-openapi",
+    srcs = ["xml/openapi/src"],
+    deps = [
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:xml-analysis-api[module]",
+        "//tools/idea:xml-structure-view-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:xml-structure-view-api",
+    exports = [
+        "//tools/idea:xml-psi-api",
+        "//tools/idea:xml-analysis-api",
+        "//tools/idea:xml-structure-view-api",
     ],
-  exports = [
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:xml-structure-view-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1404,35 +1443,50 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "extensions_testlib",
-  srcs = glob([
-      "platform/extensions/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/extensions_testlib.resources",
-  resources = [
-      "//tools/idea:extensions_testlib.res",
+java_import(
+  name = "lib/velocity",
+  jars = [
+      "lib/velocity.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:extensions",
-      "//tools/idea:lib/xstream-1.4.8",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:util",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/xercesImpl",
-      "//tools/idea:lib/xml-apis",
-      "//tools/idea:lib/hamcrest-library-1.3",
-    ],
-  exports = [
-      "//tools/idea:extensions",
-      "//tools/idea:lib/xstream-1.4.8",
-      "//tools/idea:lib/jdom",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "xml/relaxng/lib/trang-core",
+  jars = [
+      "xml/relaxng/lib/trang-core.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "annotations",
+    srcs = ["platform/annotations/java5/src"],
+    deps = ["//tools/idea:annotations-common[module]"],
+    exports = ["//tools/idea:annotations-common"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "java-psi-impl",
+    srcs = [
+        "java/java-psi-impl/src",
+        "java/java-psi-impl/gen",
+    ],
+    deps = [
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:lib/guava-18.0",
+    ],
+    exports = [
+        "//tools/idea:java-psi-api",
+        "//tools/idea:core-impl",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1443,165 +1497,29 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "maven-jps-plugin_testlib",
-  srcs = glob([
-      "plugins/maven/jps-plugin/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-jps-plugin_testlib.resources",
-  resources = [
-      "//tools/idea:maven-jps-plugin_testlib.res",
+iml_module(
+    name = "jps-model-tests",
+    test_srcs = ["jps/model-impl/testSrc"],
+    deps = [
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:maven-jps-plugin",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:util",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-builders_testlib",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:plugins/maven/lib/plexus-utils-2.0.6",
-      "//tools/idea:jps-serialization-tests",
-      "//tools/idea:jps-serialization-tests_testlib",
-    ],
-  exports = [
-      "//tools/idea:maven-jps-plugin",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = ["//tools/idea:MM_RegExpSupport"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-indexing-api.res",
-  srcs = glob([
-      "java/java-indexing-api/src/**/*",
+iml_module(
+    name = "execution-openapi",
+    srcs = ["java/execution/openapi/src"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:resources[module]",
+        "//tools/idea:xdebugger-api[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-indexing-api/src": "java-indexing-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "execution-openapi",
-  srcs = glob([
-      "java/execution/openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/execution-openapi.resources",
-  resources = [
-      "//tools/idea:execution-openapi.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:resources",
-      "//tools/idea:xdebugger-api",
-    ],
-  exports = [
-      "//tools/idea:xdebugger-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "debugger-openapi.res",
-  srcs = glob([
-      "java/debugger/openapi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/debugger/openapi/src": "debugger-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "forms-compiler_testlib.res",
-  srcs = glob([
-      "java/compiler/forms-compiler/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/compiler/forms-compiler/testSrc": "forms-compiler_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-kotlin_library(
-  name = "jps-builders_testlib",
-  srcs = [
-      "jps/jps-builders/testSrc",
-    ],
-  resource_strip_prefix = "tools/idea/jps-builders_testlib.resources",
-  resources = [
-      "//tools/idea:jps-builders_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-builders",
-      "//tools/idea:util",
-      "//tools/idea:forms_rt",
-      "//tools/idea:forms-compiler",
-      "//tools/idea:forms-compiler_testlib",
-      "//tools/idea:instrumentation-util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:lib/protobuf-2.5.0",
-      "//tools/idea:jps/lib/optimizedFileManager",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:lib/ecj-4.5.2",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:jps-serialization-tests",
-      "//tools/idea:jps-serialization-tests_testlib",
-    ],
-  exports = [
-      "//tools/idea:jps-builders",
-      "//tools/idea:util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/protobuf-2.5.0",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = ["//tools/idea:xdebugger-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1612,62 +1530,56 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "java-structure-view",
-  srcs = glob([
-      "java/java-structure-view/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-structure-view.resources",
-  resources = [
-      "//tools/idea:java-structure-view.res",
+iml_module(
+    name = "jsp-base-openapi",
+    srcs = ["java/jsp-base-openapi/src"],
+    deps = [
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:lang-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:java-psi-impl",
-    ],
-  exports = [
-      "//tools/idea:structure-view-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = ["//tools/idea:xml-openapi"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "compiler-openapi.res",
-  srcs = glob([
-      "java/compiler/openapi/src/**/*",
+iml_module(
+    name = "java-structure-view",
+    srcs = ["java/java-structure-view/src"],
+    deps = [
+        "//tools/idea:structure-view-impl[module]",
+        "//tools/idea:java-psi-impl[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/compiler/openapi/src": "compiler-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    exports = ["//tools/idea:structure-view-impl"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "gradle-tooling-extension-tests_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":gradle-tooling-extension-tests_testlib",
-      "//tools/base/testutils:testutils",
+iml_module(
+    name = "typeMigration",
+    srcs = ["java/typeMigration/src"],
+    test_srcs = ["java/typeMigration/test"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:structuralsearch[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:structuralsearch-java[module]",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=gradle-tooling-extension-tests_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "xdebugger-api",
+    srcs = ["platform/xdebugger-api/src"],
+    deps = ["//tools/idea:lang-api[module]"],
+    exports = ["//tools/idea:lang-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1678,43 +1590,15 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "xml-psi-api.res",
-  srcs = glob([
-      "xml/xml-psi-api/src/**/*",
+iml_module(
+    name = "tests_bootstrap",
+    srcs = ["platform/testFramework/bootstrap/src"],
+    deps = [
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "xml/xml-psi-api/src": "xml-psi-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "tests_bootstrap",
-  srcs = glob([
-      "platform/testFramework/bootstrap/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/tests_bootstrap.resources",
-  resources = [
-      "//tools/idea:tests_bootstrap.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1733,48 +1617,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jps-launcher.res",
-  srcs = glob([
-      "jps/jps-launcher/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/jps-launcher/src": "jps-launcher.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "core-api.res",
-  srcs = glob([
-      "platform/core-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/core-api/src": "core-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/ant/lib/ant-swing",
   jars = [
@@ -1783,139 +1625,122 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "vcs-api-core",
-  srcs = glob([
-      "platform/vcs-api/vcs-api-core/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/vcs-api-core.resources",
-  resources = [
-      "//tools/idea:vcs-api-core.res",
+iml_module(
+    name = "vcs-api-core",
+    srcs = ["platform/vcs-api/vcs-api-core/src"],
+    deps = [
+        "//tools/idea:annotations[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:editor-ui-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
-      "//tools/idea:core-api",
-      "//tools/idea:editor-ui-api",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "usageView",
+    srcs = ["platform/usageView/src"],
+    deps = [
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:editor-ui-ex[module]",
     ],
-  javacopts = ["-extra_checks:off"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "gradle-tooling-extension-tests",
+    test_srcs = ["plugins/gradle/tooling-extension-impl/testSources"],
+    test_resources = ["plugins/gradle/tooling-extension-impl/testData"],
+    deps = [
+        "//tools/idea:gradle-tooling-extension-impl[module]",
+        "//tools/idea:gradle[module]",
+        "//tools/idea:MM_idea-ui[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/maven/lib/wadl-core",
+  jars = [
+      "plugins/maven/lib/wadl-core.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "instrumentation-util.res",
-  srcs = glob([
-      "java/compiler/instrumentation-util/src/**/*",
+java_import(
+  name = "lib/xercesImpl",
+  jars = [
+      "lib/xercesImpl.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/compiler/instrumentation-util/src": "instrumentation-util.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "groovy_rt",
-  srcs = glob([
-      "plugins/groovy/rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/groovy_rt.resources",
-  resources = [
-      "//tools/idea:groovy_rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:groovy-rt-constants",
-      "//tools/idea:plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
-      "//tools/idea:plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-    ],
-  exports = [
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "icons.res",
-  srcs = glob([
-      "platform/icons/src/**/*",
+iml_module(
+    name = "groovy_rt",
+    srcs = ["plugins/groovy/rt/src"],
+    deps = [
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:groovy-rt-constants[module]",
+        "//tools/idea:plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
+        "//tools/idea:plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/icons/src": "icons.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    exports = ["//tools/idea:lib/groovy-all-2.4.6"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "groovy-psi.res",
-  srcs = glob([
-      "plugins/groovy/groovy-psi/src/**/*",
-      "plugins/groovy/groovy-psi/gen/**/*",
-      "plugins/groovy/groovy-psi/resources/**/*",
+java_import(
+  name = "lib/jaxen-1.1.3",
+  jars = [
+      "lib/jaxen-1.1.3.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/groovy-psi/src": "groovy-psi.resources",
-      "plugins/groovy/groovy-psi/gen": "groovy-psi.resources",
-      "plugins/groovy/groovy-psi/resources": "groovy-psi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "IntelliLang-xml",
-  srcs = glob([
-      "plugins/IntelliLang/xml-support/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/IntelliLang-xml.resources",
-  resources = [
-      "//tools/idea:IntelliLang-xml.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:xpath",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/jaxen-1.1.3",
-      "//tools/idea:IntelliLang",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/junit-4.12",
+  jars = [
+      "lib/junit-4.12.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "instrumentation-util",
+    srcs = ["java/compiler/instrumentation-util/src"],
+    deps = ["//tools/idea:lib/asm-all"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-apache-bcel",
+  jars = [
+      "lib/ant/lib/ant-apache-bcel.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "IntelliLang-xml",
+    srcs = ["plugins/IntelliLang/xml-support"],
+    deps = [
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:xpath[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lib/jaxen-1.1.3",
+        "//tools/idea:IntelliLang[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -1926,27 +1751,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jps-serialization-tests_testlib.res",
-  srcs = glob([
-      "jps/model-serialization/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/model-serialization/testSrc": "jps-serialization-tests_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/dev/easymockclassextension",
   jars = [
@@ -1955,298 +1759,296 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "ant",
-  srcs = glob([
-      "plugins/ant/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/ant.resources",
-  resources = [
-      "//tools/idea:ant.res",
+iml_module(
+    name = "ant",
+    srcs = ["plugins/ant/src"],
+    test_srcs = ["plugins/ant/tests/src"],
+    resources = ["plugins/ant/resources"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:properties[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:ant-jps-plugin[module]",
+        "//tools/idea:properties-psi-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:java-runtime",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:properties",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:util",
-      "//tools/idea:ant-jps-plugin",
-      "//tools/idea:properties-psi-api",
+    exports = [
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
+        "//tools/idea:MM_RegExpSupport",
     ],
-  exports = [
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:MM_RegExpSupport",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "jps-serialization-tests",
+    test_srcs = ["jps/model-serialization/testSrc"],
+    deps = [
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:jps-model-tests[module, test]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = ["//tools/idea:jps-model-tests"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/guava-18.0",
+  jars = [
+      "lib/guava-18.0.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "community-resources.res",
-  srcs = glob([
-      "community-resources/src/**/*",
+iml_module(
+    name = "common-eclipse-util",
+    srcs = ["plugins/eclipse/common-eclipse-util/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:jps-model-serialization[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "community-resources/src": "community-resources.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "jps-serialization-tests",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/jps-serialization-tests.resources",
-  resources = [
-      "//tools/idea:jps-serialization-tests.res",
+iml_module(
+    name = "external-system-rt",
+    srcs = ["platform/external-system-rt/src"],
+    deps = ["//tools/idea:annotations[module]"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "properties",
+    srcs = ["plugins/properties/src"],
+    test_srcs = ["plugins/properties/testSrc"],
+    deps = [
+        "//tools/idea:boot[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:resources[module, test]",
+        "//tools/idea:properties-psi-api[module]",
+        "//tools/idea:properties-psi-impl[module]",
+        "//tools/idea:MM_idea-ui[module]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = [
+        "//tools/idea:properties-psi-api",
+        "//tools/idea:properties-psi-impl",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "lang-api",
+    srcs = ["platform/lang-api/src"],
+    test_srcs = ["platform/lang-api/testSources"],
+    deps = [
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lvcs-api[module]",
+        "//tools/idea:lib/nanoxml-2.2.3",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/dev/easymock[test]",
+        "//tools/idea:lib/dev/easymockclassextension[test]",
+        "//tools/idea:lib/dev/jmock-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-junit4-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-legacy-2.5.1[test]",
+        "//tools/idea:lib/dev/objenesis-1.0[test]",
+        "//tools/idea:analysis-api[module]",
+    ],
+    exports = [
+        "//tools/idea:platform-api",
+        "//tools/idea:lvcs-api",
+        "//tools/idea:lib/nanoxml-2.2.3",
+        "//tools/idea:indexing-api",
+        "//tools/idea:projectModel-api",
+        "//tools/idea:analysis-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "editor-ui-ex",
+    srcs = ["platform/editor-ui-ex/src"],
+    deps = [
+        "//tools/idea:editor-ui-api[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:indexing-impl[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:analysis-api[module]",
+    ],
+    exports = [
+        "//tools/idea:editor-ui-api",
+        "//tools/idea:util",
+        "//tools/idea:annotations",
+        "//tools/idea:core-impl",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/slf4j-log4j12-1.7.10",
+  jars = [
+      "lib/slf4j-log4j12-1.7.10.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jps-model-impl.res",
-  srcs = glob([
-      "jps/model-impl/src/**/*",
+java_import(
+  name = "lib/xstream-1.4.8",
+  jars = [
+      "lib/xstream-1.4.8.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/model-impl/src": "jps-model-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "java-i18n_testlib",
-  srcs = glob([
-      "plugins/java-i18n/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-i18n_testlib.resources",
-  resources = [
-      "//tools/idea:java-i18n_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:java-i18n",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:openapi",
-      "//tools/idea:properties",
-      "//tools/idea:properties_testlib",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:java-impl",
-      "//tools/idea:jsp-base-openapi",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-    ],
-  exports = [
-      "//tools/idea:java-i18n",
-      "//tools/idea:properties",
-      "//tools/idea:properties_testlib",
-      "//tools/idea:java-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "common-eclipse-util",
-  srcs = glob([
-      "plugins/eclipse/common-eclipse-util/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/common-eclipse-util.resources",
-  resources = [
-      "//tools/idea:common-eclipse-util.res",
+java_import(
+  name = "lib/dev/jmock-2.5.1",
+  jars = [
+      "lib/dev/jmock-2.5.1.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:jps-model-serialization",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "external-system-rt",
-  srcs = glob([
-      "platform/external-system-rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/external-system-rt.resources",
-  resources = [
-      "//tools/idea:external-system-rt.res",
+iml_module(
+    name = "groovy-psi",
+    srcs = [
+        "plugins/groovy/groovy-psi/src",
+        "plugins/groovy/groovy-psi/gen",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
+    resources = ["plugins/groovy/groovy-psi/resources"],
+    deps = [
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:junit[module, test]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:java-psi-impl[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:editor-ui-ex[module]",
+        "//tools/idea:java-analysis-impl[module]",
+        "//tools/idea:java-structure-view[module]",
+        "//tools/idea:properties-psi-impl[module]",
+        "//tools/idea:properties-psi-api[module]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = ["//tools/idea:lib/groovy-all-2.4.6"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "eclipse_testlib",
-  srcs = glob([
-      "plugins/eclipse/testSources/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/eclipse_testlib.resources",
-  resources = [
-      "//tools/idea:eclipse_testlib.res",
+java_import(
+  name = "lib/imgscalr-lib-4.2",
+  jars = [
+      "lib/imgscalr-lib-4.2.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:eclipse",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:openapi",
-      "//tools/idea:bootstrap",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:annotations",
-      "//tools/idea:java-impl",
-      "//tools/idea:eclipse-jps-plugin",
-      "//tools/idea:common-eclipse-util",
-    ],
-  exports = [
-      "//tools/idea:eclipse",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "gradle-tests_testlib.res",
-  srcs = glob([
-      "plugins/gradle/testData/**/*",
-      "plugins/gradle/testSources/**/*",
+java_import(
+  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
+  jars = [
+      "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/testData": "gradle-tests_testlib.resources",
-      "plugins/gradle/testSources": "gradle-tests_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "platform-api.res",
-  srcs = glob([
-      "platform/platform-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/platform-api/src": "platform-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "jps-model-serialization",
-  srcs = glob([
-      "jps/model-serialization/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-model-serialization.resources",
-  resources = [
-      "//tools/idea:jps-model-serialization.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:lib/jdom",
-    ],
-  exports = [
-      "//tools/idea:lib/jdom",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "jps-model-serialization",
+    srcs = ["jps/model-serialization/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:lib/jdom",
+    ],
+    exports = ["//tools/idea:lib/jdom"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-launcher",
+  jars = [
+      "lib/ant/lib/ant-launcher.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "xml-psi-api",
+    srcs = ["xml/xml-psi-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:analysis-api[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2257,42 +2059,35 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "java-runtime",
-  srcs = glob([
-      "java/java-runtime/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-runtime.resources",
-  resources = [
-      "//tools/idea:java-runtime.res",
+iml_module(
+    name = "java-runtime",
+    srcs = ["java/java-runtime/src"],
+    deps = [
+        "//tools/idea:lib/junit",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/junit",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2303,73 +2098,137 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "vcs-api",
-  srcs = glob([
-      "platform/vcs-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/vcs-api.resources",
-  resources = [
-      "//tools/idea:vcs-api.res",
+iml_module(
+    name = "structuralsearch-java",
+    srcs = ["java/structuralsearch-java/src"],
+    deps = [
+        "//tools/idea:structuralsearch[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:duplicates-analysis[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/microba",
-      "//tools/idea:vcs-api-core",
-      "//tools/idea:diff-api",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/asm",
+  jars = [
+      "lib/asm.jar",
     ],
-  exports = [
-      "//tools/idea:platform-api",
-      "//tools/idea:vcs-api-core",
-      "//tools/idea:diff-api",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "maven-artifact-resolver-m31",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m31/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-artifact-resolver-m31.resources",
-  resources = [
-      "//tools/idea:maven-artifact-resolver-m31.res",
+java_import(
+  name = "plugins/gradle/lib/gradle-wrapper-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-wrapper-2.14.1.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
-      "//tools/idea:plugins/maven/artifact-resolver-m31/lib/eclipse-aether/aether-api-0.9.0.M2",
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  exports = [
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "core-impl.res",
-  srcs = glob([
-      "platform/core-impl/src/**/*",
+java_import(
+  name = "lib/httpclient-4.4.1",
+  jars = [
+      "lib/httpclient-4.4.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/core-impl/src": "core-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/log4j",
+  jars = [
+      "lib/log4j.jar",
     ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "vcs-api",
+    srcs = ["platform/vcs-api/src"],
+    deps = [
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lib/microba",
+        "//tools/idea:vcs-api-core[module]",
+        "//tools/idea:diff-api[module]",
+    ],
+    exports = [
+        "//tools/idea:platform-api",
+        "//tools/idea:vcs-api-core",
+        "//tools/idea:diff-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-apache-regexp",
+  jars = [
+      "lib/ant/lib/ant-apache-regexp.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/cglib-2.2.2",
+  jars = [
+      "lib/cglib-2.2.2.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "xpath",
+    srcs = [
+        "plugins/xpath/xpath-lang/src",
+        "plugins/xpath/xpath-view/src",
+    ],
+    test_srcs = ["plugins/xpath/xpath-lang/test"],
+    deps = [
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:xslt-rt[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:lib/jaxen-1.1.3",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/groovy-all-2.4.6[test]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/dev/jmock-legacy-2.5.1",
+  jars = [
+      "lib/dev/jmock-legacy-2.5.1.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "maven-artifact-resolver-m31",
+    srcs = ["plugins/maven/artifact-resolver-m31/src"],
+    deps = [
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
+        "//tools/idea:plugins/maven/artifact-resolver-m31/lib/eclipse-aether/aether-api-0.9.0.M2",
+        "//tools/idea:maven-artifact-resolver-common[module]",
+    ],
+    exports = ["//tools/idea:maven-artifact-resolver-common"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/xpp3-1.1.4-min",
+  jars = [
+      "lib/xpp3-1.1.4-min.jar",
+    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2380,102 +2239,12 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-groovy_library(
-  name = "jetgroovy_testlib",
-  srcs = [
-      "plugins/groovy/test",
+java_import(
+  name = "lib/asm-commons",
+  jars = [
+      "lib/asm-commons.jar",
     ],
-  resource_strip_prefix = "tools/idea/jetgroovy_testlib.resources",
-  resources = [
-      "//tools/idea:jetgroovy_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jetgroovy",
-      "//tools/idea:openapi",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:groovy_rt",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:properties",
-      "//tools/idea:properties_testlib",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:java-impl",
-      "//tools/idea:copyright",
-      "//tools/idea:IntelliLang",
-      "//tools/idea:ant",
-      "//tools/idea:ant_testlib",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:IntelliLang-java",
-      "//tools/idea:IntelliLang-xml",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-builders_testlib",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:junit",
-      "//tools/idea:junit_testlib",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:groovy-jps-plugin",
-      "//tools/idea:ByteCodeViewer",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:groovy-psi",
-      "//tools/idea:external-system-api",
-    ],
-  exports = [
-      "//tools/idea:jetgroovy",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:groovy-psi",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "xpath.res",
-  srcs = glob([
-      "plugins/xpath/xpath-lang/src/**/*",
-      "plugins/xpath/xpath-view/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/xpath/xpath-view/src": "xpath.resources",
-      "plugins/xpath/xpath-lang/src": "xpath.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "groovy-rt-constants.res",
-  srcs = glob([
-      "plugins/groovy/rt-constants/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/rt-constants/src": "groovy-rt-constants.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
 )
 
 java_import(
@@ -2494,131 +2263,107 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "vcs-api-core.res",
-  srcs = glob([
-      "platform/vcs-api/vcs-api-core/src/**/*",
+iml_module(
+    name = "gradle",
+    srcs = ["plugins/gradle/src"],
+    resources = ["plugins/gradle/resources"],
+    deps = [
+        "//tools/idea:external-system-api[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:gradle-tooling-extension-api[module]",
+        "//tools/idea:gradle-tooling-extension-impl[module]",
+        "//tools/idea:gradle-jps-plugin[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:jetgroovy[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:MM_maven2-server-impl[module]",
+        "//tools/idea:junit[module]",
+        "//tools/idea:lib/swingx-core-1.6.2",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
+        "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
+        "//tools/idea:plugins/gradle/lib/jsr305-1.3.9",
+        "//tools/idea:plugins/gradle/lib/commons-io-1.4",
+        "//tools/idea:plugins/gradle/lib/jna-3.2.7",
+        "//tools/idea:plugins/gradle/lib/native-platform-0.10",
+        "//tools/idea:smRunner[module]",
+        "//tools/idea:lib/minlog-1.2",
+        "//tools/idea:lib/kryo-2.22",
+        "//tools/idea:lib/reflectasm-1.07",
+        "//tools/idea:lib/objenesis-1.2",
+        "//tools/idea:lib/ant/lib/ant-commons-net",
+        "//tools/idea:lib/ant/lib/ant-jmf",
+        "//tools/idea:lib/ant/lib/ant-apache-resolver",
+        "//tools/idea:lib/ant/lib/ant-jai",
+        "//tools/idea:lib/ant/lib/ant-apache-bsf",
+        "//tools/idea:lib/ant/lib/ant-commons-logging",
+        "//tools/idea:lib/ant/lib/ant-junit",
+        "//tools/idea:lib/ant/lib/ant-jsch",
+        "//tools/idea:lib/ant/lib/ant-apache-bcel",
+        "//tools/idea:lib/ant/lib/ant",
+        "//tools/idea:lib/ant/lib/ant-netrexx",
+        "//tools/idea:lib/ant/lib/ant-apache-oro",
+        "//tools/idea:lib/ant/lib/ant-antlr",
+        "//tools/idea:lib/ant/lib/ant-jdepend",
+        "//tools/idea:lib/ant/lib/ant-launcher",
+        "//tools/idea:lib/ant/lib/ant-apache-regexp",
+        "//tools/idea:lib/ant/lib/ant-apache-log4j",
+        "//tools/idea:lib/ant/lib/ant-swing",
+        "//tools/idea:lib/ant/lib/ant-javamail",
+        "//tools/idea:lib/gson-2.5",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/vcs-api/vcs-api-core/src": "vcs-api-core.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    exports = [
+        "//tools/idea:external-system-api",
+        "//tools/idea:MM_idea-ui",
+        "//tools/idea:gradle-tooling-extension-api",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
+        "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
+        "//tools/idea:plugins/gradle/lib/commons-io-1.4",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "gradle",
-  srcs = glob([
-      "plugins/gradle/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/gradle.resources",
-  resources = [
-      "//tools/idea:gradle.res",
+java_import(
+  name = "lib/ant/lib/ant-jai",
+  jars = [
+      "lib/ant/lib/ant-jai.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:external-system-api",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:gradle-tooling-extension-api",
-      "//tools/idea:gradle-tooling-extension-impl",
-      "//tools/idea:gradle-jps-plugin",
-      "//tools/idea:lang-api",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:jetgroovy",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:MM_maven2-server-impl",
-      "//tools/idea:junit",
-      "//tools/idea:lib/swingx-core-1.6.2",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
-      "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
-      "//tools/idea:plugins/gradle/lib/jsr305-1.3.9",
-      "//tools/idea:plugins/gradle/lib/commons-io-1.4",
-      "//tools/idea:plugins/gradle/lib/jna-3.2.7",
-      "//tools/idea:plugins/gradle/lib/native-platform-0.10",
-      "//tools/idea:smRunner",
-      "//tools/idea:lib/minlog-1.2",
-      "//tools/idea:lib/kryo-2.22",
-      "//tools/idea:lib/reflectasm-1.07",
-      "//tools/idea:lib/objenesis-1.2",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:lib/gson-2.5",
-    ],
-  exports = [
-      "//tools/idea:external-system-api",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:gradle-tooling-extension-api",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-cli-2.14.1",
-      "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
-      "//tools/idea:plugins/gradle/lib/commons-io-1.4",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "platform-resources-en",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/platform-resources-en.resources",
-  resources = [
-      "//tools/idea:platform-resources-en.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "platform-resources-en",
+    resources = ["platform/platform-resources-en/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2629,24 +2374,13 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "diff-api",
-  srcs = glob([
-      "platform/diff-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/diff-api.resources",
-  resources = [
-      "//tools/idea:diff-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-    ],
-  exports = [
-      "//tools/idea:platform-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "diff-api",
+    srcs = ["platform/diff-api/src"],
+    deps = ["//tools/idea:platform-api[module]"],
+    exports = ["//tools/idea:platform-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2665,79 +2399,119 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jps-serialization-tests.res",
-  srcs = glob([
+iml_module(
+    name = "testng",
+    srcs = ["plugins/testng/src"],
+    test_srcs = ["plugins/testng/testSources"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:debugger-openapi[module]",
+        "//tools/idea:lib/junit[test]",
+        "//tools/idea:testRunner[module]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:testng_rt[module]",
+        "//tools/idea:java-i18n[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:plugins/testng/lib/testng",
+        "//tools/idea:plugins/testng/lib/jcommander",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:smRunner[module]",
+        "//tools/idea:typeMigration[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    exports = ["//tools/idea:smRunner"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "java-psi-api",
-  srcs = glob([
-      "java/java-psi-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-psi-api.resources",
-  resources = [
-      "//tools/idea:java-psi-api.res",
+iml_module(
+    name = "java-psi-api",
+    srcs = ["java/java-psi-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:projectModel-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-api",
+    exports = ["//tools/idea:core-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/guava-jdk5-17.0",
+  jars = [
+      "plugins/gradle/lib/guava-jdk5-17.0.jar",
     ],
-  exports = [
-      "//tools/idea:core-api",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "structure-view-impl",
-  srcs = glob([
-      "platform/structure-view-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/structure-view-impl.resources",
-  resources = [
-      "//tools/idea:structure-view-impl.res",
+iml_module(
+    name = "gradle-tooling-extension-api",
+    srcs = ["plugins/gradle/tooling-extension-api/src"],
+    deps = [
+        "//tools/idea:external-system-rt[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
+        "//tools/idea:lib/groovy-all-2.4.6",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:bootstrap",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:icons",
-      "//tools/idea:lib/automaton",
-      "//tools/idea:projectModel-api",
+    exports = [
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
+        "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
     ],
-  exports = [
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:projectModel-api",
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "structure-view-impl",
+    srcs = ["platform/structure-view-impl/src"],
+    deps = [
+        "//tools/idea:editor-ui-api[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:bootstrap[module]",
+        "//tools/idea:platform-resources-en[module]",
+        "//tools/idea:icons[module]",
+        "//tools/idea:lib/automaton",
+        "//tools/idea:projectModel-api[module]",
     ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = [
+        "//tools/idea:editor-ui-api",
+        "//tools/idea:util",
+        "//tools/idea:extensions",
+        "//tools/idea:core-api",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:platform-resources-en",
+        "//tools/idea:projectModel-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2780,190 +2554,49 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "bootstrap.res",
-  srcs = glob([
-      "platform/bootstrap/src/**/*",
+iml_module(
+    name = "external-system-api",
+    srcs = ["platform/external-system-api/src"],
+    resources = ["platform/external-system-api/resources"],
+    deps = [
+        "//tools/idea:annotations[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:external-system-rt[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/bootstrap/src": "bootstrap.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    exports = [
+        "//tools/idea:annotations",
+        "//tools/idea:external-system-rt",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "external-system-api",
-  srcs = glob([
-      "platform/external-system-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/external-system-api.resources",
-  resources = [
-      "//tools/idea:external-system-api.res",
+java_import(
+  name = "jps/lib/optimizedFileManager",
+  jars = [
+      "jps/lib/optimizedFileManager.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
-      "//tools/idea:util",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lang-api",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:external-system-rt",
-    ],
-  exports = [
-      "//tools/idea:annotations",
-      "//tools/idea:external-system-rt",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "structuralsearch.res",
-  srcs = glob([
-      "platform/structuralsearch/source/**/*",
+java_import(
+  name = "lib/httpcore-4.4.1",
+  jars = [
+      "lib/httpcore-4.4.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/structuralsearch/source": "structuralsearch.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-groovy_library(
-  name = "MM_idea-ui_testlib",
-  srcs = [
-      "platform/external-system-impl/testSrc",
-      "java/compiler/impl/testSrc",
-    ],
-  resource_strip_prefix = "tools/idea/MM_idea-ui_testlib.resources",
-  resources = [
-      "//tools/idea:MM_idea-ui_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:openapi",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:external-system-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:vcs-api",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:testRunner",
-      "//tools/idea:smRunner",
-      "//tools/idea:smRunner_testlib",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:lib/coverage-agent",
-      "//tools/idea:lib/coverage-instrumenter",
-      "//tools/idea:lib/coverage-util",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:resources",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:diff-api",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-builders_testlib",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:instrumentation-util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:platform-api",
-      "//tools/idea:jps-launcher",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:java-analysis-impl",
-    ],
-  exports = [
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:openapi",
-      "//tools/idea:util",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:java-impl",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:testRunner",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:compiler-openapi",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-analysis-api.res",
-  srcs = glob([
-      "java/java-analysis-api/src/**/*",
+java_import(
+  name = "lib/swingx-core-1.6.2",
+  jars = [
+      "lib/swingx-core-1.6.2.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-analysis-api/src": "java-analysis-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "xslt-rt.res",
-  srcs = glob([
-      "plugins/xpath/xslt-rt/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/xpath/xslt-rt/src": "xslt-rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -2974,25 +2607,28 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "testRunner.res",
-  srcs = glob([
-      "platform/testRunner/src/**/*",
+java_import(
+  name = "lib/coverage-agent",
+  jars = [
+      "lib/coverage-agent.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/testRunner/src": "testRunner.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "util-rt",
+    srcs = ["platform/util-rt/src"],
+    deps = ["//tools/idea:annotations[module]"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/oromatcher",
+  jars = [
+      "lib/oromatcher.jar",
     ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3003,28 +2639,21 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "indexing-impl",
-  srcs = glob([
-      "platform/indexing-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/indexing-impl.resources",
-  resources = [
-      "//tools/idea:indexing-impl.res",
+iml_module(
+    name = "indexing-impl",
+    srcs = ["platform/indexing-impl/src"],
+    deps = [
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:indexing-api[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:lib/nanoxml-2.2.3",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-impl",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:lib/nanoxml-2.2.3",
+    exports = [
+        "//tools/idea:indexing-api",
+        "//tools/idea:lib/nanoxml-2.2.3",
     ],
-  exports = [
-      "//tools/idea:indexing-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3043,241 +2672,217 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "boot",
-  srcs = glob([
-      "platform/boot/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/boot.resources",
-  resources = [
-      "//tools/idea:boot.res",
+iml_module(
+    name = "boot",
+    srcs = ["platform/boot/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-apache-log4j",
+  jars = [
+      "lib/ant/lib/ant-apache-log4j.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "junit",
-  srcs = glob([
-      "plugins/junit/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/junit.resources",
-  resources = [
-      "//tools/idea:junit.res",
+iml_module(
+    name = "junit",
+    srcs = ["plugins/junit/src"],
+    test_srcs = ["plugins/junit/test"],
+    deps = [
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:testRunner[module]",
+        "//tools/idea:lib/junit",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:junit_rt[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:smRunner[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:java-runtime",
-      "//tools/idea:testRunner",
-      "//tools/idea:lib/junit",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:junit_rt",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:smRunner",
+    exports = ["//tools/idea:smRunner"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/dev/jmock-junit4-2.5.1",
+  jars = [
+      "lib/dev/jmock-junit4-2.5.1.jar",
     ],
-  exports = [
-      "//tools/idea:smRunner",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "structuralsearch-java.res",
-  srcs = glob([
-      "java/structuralsearch-java/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/structuralsearch-java/src": "structuralsearch-java.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+iml_module(
+    name = "icons",
+    srcs = ["platform/icons/src"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-i18n.res",
-  srcs = glob([
-      "plugins/java-i18n/src/**/*",
-      "plugins/java-i18n/resources/**/*",
+iml_module(
+    name = "ant-jps-plugin",
+    srcs = ["plugins/ant/jps-plugin/src"],
+    test_srcs = ["plugins/ant/jps-plugin/testSrc"],
+    deps = [
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:jps-serialization-tests[module, test]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/java-i18n/resources": "java-i18n.resources",
-      "plugins/java-i18n/src": "java-i18n.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "MM_maven2-server-impl",
-  srcs = glob([
-      "plugins/maven/maven2-server-impl/src/**/*.java",
-      "plugins/maven/src/main/java/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/MM_maven2-server-impl.resources",
-  resources = [
-      "//tools/idea:MM_maven2-server-impl.res",
+iml_module(
+    name = "MM_maven2-server-impl",
+    srcs = [
+        "plugins/maven/maven2-server-impl/src",
+        "plugins/maven/src/main/java",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:maven-server-api",
-      "//tools/idea:util",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/mercury-artifact-1.0-alpha-6",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/nexus-indexer-1.2.3",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/activation-1.1",
-      "//tools/idea:lib/commons-logging-1.2",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/commons-beanutils",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:java-impl",
-      "//tools/idea:IntelliLang-xml",
-      "//tools/idea:properties",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:lib/jsr173_1.0_api",
-      "//tools/idea:lib/xbean",
-      "//tools/idea:lib/resolver",
-      "//tools/idea:plugins/maven/lib/wadl-core",
-      "//tools/idea:lib/gson-2.5",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:jetgroovy",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:maven-jps-plugin",
-      "//tools/idea:maven-artifact-resolver-m2",
-      "//tools/idea:maven-artifact-resolver-m3",
-      "//tools/idea:maven-artifact-resolver-m31",
-      "//tools/idea:vcs-api",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:plugins/maven/lib/plexus-archiver-2.4.4",
-      "//tools/idea:external-system-api",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:util-tests",
+    test_srcs = [
+        "plugins/maven/maven2-server-impl/test",
+        "plugins/maven/src/test/java",
     ],
-  exports = [
-      "//tools/idea:maven-server-api",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:external-system-api",
+    resources = ["plugins/maven/src/main/resources"],
+    deps = [
+        "//tools/idea:maven-server-api[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/archetype-common-2.0-alpha-4-SNAPSHOT",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/mercury-artifact-1.0-alpha-6",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/nexus-indexer-1.2.3",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/activation-1.1",
+        "//tools/idea:lib/commons-logging-1.2",
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/commons-beanutils",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:IntelliLang-xml[module]",
+        "//tools/idea:properties[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:forms_rt[module]",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:lib/jsr173_1.0_api",
+        "//tools/idea:lib/xbean",
+        "//tools/idea:lib/resolver",
+        "//tools/idea:plugins/maven/lib/wadl-core",
+        "//tools/idea:lib/gson-2.5",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:jetgroovy[module]",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:maven-jps-plugin[module]",
+        "//tools/idea:maven-artifact-resolver-m2[module]",
+        "//tools/idea:maven-artifact-resolver-m3[module]",
+        "//tools/idea:maven-artifact-resolver-m31[module]",
+        "//tools/idea:vcs-api[module]",
+        "//tools/idea:properties-psi-api[module]",
+        "//tools/idea:plugins/maven/lib/plexus-archiver-2.4.4",
+        "//tools/idea:external-system-api[module]",
+        "//tools/idea:lib/slf4j-api-1.7.10",
+        "//tools/idea:lib/slf4j-log4j12-1.7.10",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:util-tests[module, test]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = [
+        "//tools/idea:maven-server-api",
+        "//tools/idea:openapi",
+        "//tools/idea:MM_RegExpSupport",
+        "//tools/idea:compiler-openapi",
+        "//tools/idea:MM_idea-ui",
+        "//tools/idea:execution-openapi",
+        "//tools/idea:forms_rt",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:external-system-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "jsp-spi",
+    srcs = ["java/jsp-spi/src"],
+    deps = [
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:jsp-base-openapi[module]",
+    ],
+    exports = [
+        "//tools/idea:jsp-openapi",
+        "//tools/idea:openapi",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "plugins/gradle/lib/gradle-logging-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-logging-2.14.1.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "jsp-spi",
-  srcs = glob([
-      "java/jsp-spi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jsp-spi.resources",
-  resources = [
-      "//tools/idea:jsp-spi.res",
+iml_module(
+    name = "jps-model-impl",
+    srcs = ["jps/model-impl/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-model-api[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:openapi",
-      "//tools/idea:jsp-base-openapi",
-    ],
-  exports = [
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:openapi",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "core-api",
-  srcs = glob([
-      "platform/core-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/core-api.resources",
-  resources = [
-      "//tools/idea:core-api.res",
+iml_module(
+    name = "core-api",
+    srcs = ["platform/core-api/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:platform-resources-en[module]",
+        "//tools/idea:lib/automaton",
+        "//tools/idea:lib/asm",
+        "//tools/idea:lib/asm-commons",
+        "//tools/idea:lib/cglib-2.2.2",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:lib/automaton",
-      "//tools/idea:lib/asm",
-      "//tools/idea:lib/asm-commons",
-      "//tools/idea:lib/cglib-2.2.2",
+    exports = [
+        "//tools/idea:util",
+        "//tools/idea:extensions",
+        "//tools/idea:lib/picocontainer",
+        "//tools/idea:platform-resources-en",
     ],
-  exports = [
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:platform-resources-en",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jps-model-tests.res",
-  srcs = glob([
+iml_module(
+    name = "java-analysis-api",
+    srcs = ["java/java-analysis-api/src"],
+    deps = [
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:projectModel-api[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3296,104 +2901,53 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "properties-psi-api.res",
-  srcs = glob([
-      "plugins/properties/properties-psi-api/src/**/*",
-      "plugins/properties/properties-psi-api/gen/**/*",
-      "plugins/properties/properties-psi-api/resources/**/*",
+iml_module(
+    name = "gradle-tests",
+    test_srcs = [
+        "plugins/gradle/testData",
+        "plugins/gradle/testSources",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/properties/properties-psi-api/gen": "properties-psi-api.resources",
-      "plugins/properties/properties-psi-api/resources": "properties-psi-api.resources",
-      "plugins/properties/properties-psi-api/src": "properties-psi-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+    deps = [
+        "//tools/idea:lib/dev/easymock[test]",
+        "//tools/idea:lib/dev/easymockclassextension[test]",
+        "//tools/idea:lib/dev/jmock-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-junit4-2.5.1[test]",
+        "//tools/idea:lib/dev/jmock-legacy-2.5.1[test]",
+        "//tools/idea:lib/dev/objenesis-1.0[test]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:gradle[module, test]",
+        "//tools/idea:gradle-tooling-extension-tests[module, test]",
+        "//tools/idea:maven-server-api[module, test]",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "gradle-tests",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/gradle-tests.resources",
-  resources = [
-      "//tools/idea:gradle-tests.res",
+java_import(
+  name = "lib/ant/lib/ant",
+  jars = [
+      "lib/ant/lib/ant.jar",
     ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "java-psi-api.res",
-  srcs = glob([
-      "java/java-psi-api/src/**/*",
+java_import(
+  name = "lib/nekohtml-1.9.14",
+  jars = [
+      "lib/nekohtml-1.9.14.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-psi-api/src": "java-psi-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "indexing-impl.res",
-  srcs = glob([
-      "platform/indexing-impl/src/**/*",
+java_import(
+  name = "lib/sanselan-0.98-snapshot",
+  jars = [
+      "lib/sanselan-0.98-snapshot.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/indexing-impl/src": "indexing-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "projectModel-api.res",
-  srcs = glob([
-      "platform/projectModel-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/projectModel-api/src": "projectModel-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3404,55 +2958,56 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "openapi",
-  srcs = glob([
-      "java/openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/openapi.resources",
-  resources = [
-      "//tools/idea:openapi.res",
+java_import(
+  name = "lib/ant/lib/ant-commons-net",
+  jars = [
+      "lib/ant/lib/ant-commons-net.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:extensions",
-      "//tools/idea:icons",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:lib/microba",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:platform-api",
-      "//tools/idea:lang-api",
-      "//tools/idea:vcs-api",
-      "//tools/idea:lib/xmlrpc-2.0",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:resources-en",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:java-analysis-api",
-    ],
-  exports = [
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:lib/microba",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:platform-api",
-      "//tools/idea:lang-api",
-      "//tools/idea:vcs-api",
-      "//tools/idea:resources-en",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:java-analysis-api",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "openapi",
+    srcs = ["java/openapi/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:forms_rt[module]",
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:extensions[module]",
+        "//tools/idea:icons[module]",
+        "//tools/idea:lib/nanoxml-2.2.3",
+        "//tools/idea:lib/microba",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:xml-openapi[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:vcs-api[module]",
+        "//tools/idea:lib/xmlrpc-2.0",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:java-analysis-api[module]",
+    ],
+    exports = [
+        "//tools/idea:util",
+        "//tools/idea:extensions",
+        "//tools/idea:lib/nanoxml-2.2.3",
+        "//tools/idea:lib/microba",
+        "//tools/idea:xml-openapi",
+        "//tools/idea:platform-api",
+        "//tools/idea:lang-api",
+        "//tools/idea:vcs-api",
+        "//tools/idea:resources-en",
+        "//tools/idea:java-psi-api",
+        "//tools/idea:java-indexing-api",
+        "//tools/idea:java-analysis-api",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3471,79 +3026,32 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "MM_RegExpSupport_testlib.res",
-  srcs = glob([
-      "RegExpSupport/test/**/*",
-      "platform/vcs-impl/testSrc/**/*",
-      "spellchecker/testSrc/**/*",
-      "xml/relaxng/test/**/*",
-      "platform/xdebugger-impl/testSrc/**/*",
-      "platform/testFramework/testSrc/**/*",
+iml_module(
+    name = "testRunner",
+    srcs = ["platform/testRunner/src"],
+    deps = [
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:xdebugger-api[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/testFramework/testSrc": "MM_RegExpSupport_testlib.resources",
-      "platform/vcs-impl/testSrc": "MM_RegExpSupport_testlib.resources",
-      "xml/relaxng/test": "MM_RegExpSupport_testlib.resources",
-      "platform/xdebugger-impl/testSrc": "MM_RegExpSupport_testlib.resources",
-      "RegExpSupport/test": "MM_RegExpSupport_testlib.resources",
-      "spellchecker/testSrc": "MM_RegExpSupport_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "maven-jps-plugin_testlib.res",
-  srcs = glob([
-      "plugins/maven/jps-plugin/testSrc/**/*",
+java_import(
+  name = "plugins/gradle/lib/gradle-tooling-api-2.14.1",
+  jars = [
+      "plugins/gradle/lib/gradle-tooling-api-2.14.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/jps-plugin/testSrc": "maven-jps-plugin_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "MM_maven2-server-impl_testlib.res",
-  srcs = glob([
-      "plugins/maven/maven2-server-impl/test/**/*",
-      "plugins/maven/src/test/java/**/*",
+java_import(
+  name = "plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
+  jars = [
+      "plugins/maven/maven-server-api/lib/lucene-core-2.4.1.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/maven2-server-impl/test": "MM_maven2-server-impl_testlib.resources",
-      "plugins/maven/src/test/java": "MM_maven2-server-impl_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3554,48 +3062,16 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "testng_testlib",
-  srcs = glob([
-      "plugins/testng/testSources/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/testng_testlib.resources",
-  resources = [
-      "//tools/idea:testng_testlib.res",
+iml_module(
+    name = "testng_rt",
+    srcs = ["plugins/testng_rt/src"],
+    deps = [
+        "//tools/idea:plugins/testng/lib/testng",
+        "//tools/idea:plugins/testng/lib/jcommander",
+        "//tools/idea:java-runtime[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:testng",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:lib/junit",
-      "//tools/idea:testRunner",
-      "//tools/idea:java-runtime",
-      "//tools/idea:testng_rt",
-      "//tools/idea:java-i18n",
-      "//tools/idea:java-i18n_testlib",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:plugins/testng/lib/testng",
-      "//tools/idea:plugins/testng/lib/jcommander",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:smRunner",
-      "//tools/idea:smRunner_testlib",
-      "//tools/idea:typeMigration",
-      "//tools/idea:typeMigration_testlib",
-    ],
-  exports = [
-      "//tools/idea:testng",
-      "//tools/idea:smRunner",
-      "//tools/idea:smRunner_testlib",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3606,135 +3082,57 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "editor-ui-ex.res",
-  srcs = glob([
-      "platform/editor-ui-ex/src/**/*",
+java_import(
+  name = "lib/xbean",
+  jars = [
+      "lib/xbean.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/editor-ui-ex/src": "editor-ui-ex.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle-tooling-extension-tests_testlib.res",
-  srcs = glob([
-      "plugins/gradle/tooling-extension-impl/testSources/**/*",
-      "plugins/gradle/tooling-extension-impl/testData/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/tooling-extension-impl/testData": "gradle-tooling-extension-tests_testlib.resources",
-      "plugins/gradle/tooling-extension-impl/testSources": "gradle-tooling-extension-tests_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle-tooling-extension-impl.res",
-  srcs = glob([
-      "plugins/gradle/tooling-extension-impl/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/tooling-extension-impl/src": "gradle-tooling-extension-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "jps-model-tests_testlib",
-  srcs = glob([
-      "jps/model-impl/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-model-tests_testlib.resources",
-  resources = [
-      "//tools/idea:jps-model-tests_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-model-tests",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-    ],
-  exports = [
-      "//tools/idea:jps-model-tests",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "forms_rt.res",
-  srcs = glob([
-      "platform/forms_rt/src/**/*",
+java_import(
+  name = "lib/jh",
+  jars = [
+      "lib/jh.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/forms_rt/src": "forms_rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+  visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "eclipse-jps-plugin",
-  srcs = glob([
-      "plugins/eclipse/jps-plugin/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/eclipse-jps-plugin.resources",
-  resources = [
-      "//tools/idea:eclipse-jps-plugin.res",
+iml_module(
+    name = "bootstrap",
+    srcs = ["platform/bootstrap/src"],
+    deps = ["//tools/idea:util[module]"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-junit",
+  jars = [
+      "lib/ant/lib/ant-junit.jar",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:common-eclipse-util",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/ant/lib/ant-commons-logging",
+  jars = [
+      "lib/ant/lib/ant-commons-logging.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "eclipse-jps-plugin",
+    srcs = ["plugins/eclipse/jps-plugin/src"],
+    deps = [
+        "//tools/idea:util[module]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:common-eclipse-util[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3745,117 +3143,91 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "analysis-impl.res",
-  srcs = glob([
-      "platform/analysis-impl/src/**/*",
+java_import(
+  name = "lib/hamcrest-library-1.3",
+  jars = [
+      "lib/hamcrest-library-1.3.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/analysis-impl/src": "analysis-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle-jps-plugin.res",
-  srcs = glob([
-      "plugins/gradle/jps-plugin/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/jps-plugin/src": "gradle-jps-plugin.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-kotlin_groovy_library(
-  name = "MM_idea-ui",
-  srcs = [
-      "java/idea-ui/src",
-      "platform/external-system-impl/src",
-      "java/testFramework/src",
-      "java/execution/impl/src",
-      "java/debugger/impl/src",
-      "java/compiler/impl/src",
-    ],
-  resource_strip_prefix = "tools/idea/MM_idea-ui.resources",
-  resources = [
-      "//tools/idea:MM_idea-ui.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:external-system-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:vcs-api",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:testRunner",
-      "//tools/idea:smRunner",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lang-api",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:lib/coverage-agent",
-      "//tools/idea:lib/coverage-instrumenter",
-      "//tools/idea:lib/coverage-util",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:resources",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:diff-api",
-      "//tools/idea:jps-builders",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:instrumentation-util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:platform-api",
-      "//tools/idea:jps-launcher",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:java-analysis-impl",
-    ],
-  exports = [
-      "//tools/idea:openapi",
-      "//tools/idea:util",
-      "//tools/idea:lang-api",
-      "//tools/idea:java-impl",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:testRunner",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:compiler-openapi",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/coverage-util",
+  jars = [
+      "lib/coverage-util.jar",
+    ],
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "MM_idea-ui",
+    srcs = [
+        "java/idea-ui/src",
+        "platform/external-system-impl/src",
+        "java/testFramework/src",
+        "java/execution/impl/src",
+        "java/debugger/impl/src",
+        "java/compiler/impl/src",
+    ],
+    test_srcs = [
+        "platform/external-system-impl/testSrc",
+        "java/compiler/impl/testSrc",
+    ],
+    resources = ["platform/external-system-impl/resources"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:lib/oromatcher",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lib/guava-18.0",
+        "//tools/idea:external-system-api[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:vcs-api[module]",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:testRunner[module]",
+        "//tools/idea:smRunner[module]",
+        "//tools/idea:lib/hamcrest-core-1.3",
+        "//tools/idea:lib/junit-4.12",
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:lib/log4j",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:java-runtime[module]",
+        "//tools/idea:lib/jgoodies-forms",
+        "//tools/idea:java-indexing-api[module]",
+        "//tools/idea:lib/coverage-agent",
+        "//tools/idea:lib/coverage-instrumenter",
+        "//tools/idea:lib/coverage-util",
+        "//tools/idea:debugger-openapi[module]",
+        "//tools/idea:resources[module]",
+        "//tools/idea:xdebugger-api[module]",
+        "//tools/idea:jsp-openapi[module]",
+        "//tools/idea:diff-api[module]",
+        "//tools/idea:jps-builders[module]",
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:instrumentation-util[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:jps-launcher[module]",
+        "//tools/idea:lib/netty-all-4.1.0.CR7",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:java-analysis-impl[module]",
+    ],
+    exports = [
+        "//tools/idea:openapi",
+        "//tools/idea:util",
+        "//tools/idea:lang-api",
+        "//tools/idea:java-impl",
+        "//tools/idea:MM_RegExpSupport",
+        "//tools/idea:execution-openapi",
+        "//tools/idea:testRunner",
+        "//tools/idea:debugger-openapi",
+        "//tools/idea:compiler-openapi",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3882,6 +3254,46 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
+iml_module(
+    name = "maven-artifact-resolver-m2",
+    srcs = ["plugins/maven/artifact-resolver-m2/src"],
+    deps = [
+        "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
+        "//tools/idea:maven-artifact-resolver-common[module]",
+    ],
+    exports = ["//tools/idea:maven-artifact-resolver-common"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "java-analysis-impl",
+    srcs = [
+        "java/java-analysis-impl/src",
+        "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src",
+    ],
+    deps = [
+        "//tools/idea:analysis-impl[module]",
+        "//tools/idea:java-indexing-impl[module]",
+        "//tools/idea:java-psi-impl[module]",
+        "//tools/idea:projectModel-impl[module]",
+        "//tools/idea:java-analysis-api[module]",
+        "//tools/idea:resources-en[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lib/asm-all",
+    ],
+    exports = [
+        "//tools/idea:analysis-impl",
+        "//tools/idea:java-indexing-impl",
+        "//tools/idea:java-psi-impl",
+        "//tools/idea:projectModel-impl",
+        "//tools/idea:java-analysis-api",
+        "//tools/idea:lib/asm-all",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
 java_import(
   name = "lib/httpmime-4.4.1",
   jars = [
@@ -3890,44 +3302,19 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "jetgroovy.res",
-  srcs = glob([
-      "plugins/groovy/src/**/*",
+iml_module(
+    name = "maven-artifact-resolver-m3",
+    srcs = ["plugins/maven/artifact-resolver-m3/src"],
+    deps = [
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/aether-api-1.13.1",
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
+        "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
+        "//tools/idea:maven-artifact-resolver-common[module]",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/src": "jetgroovy.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle-tooling-extension-tests.res",
-  srcs = glob([
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
+    exports = ["//tools/idea:maven-artifact-resolver-common"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3938,48 +3325,34 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "ByteCodeViewer",
-  srcs = glob([
-      "plugins/ByteCodeViewer/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/ByteCodeViewer.resources",
-  resources = [
-      "//tools/idea:ByteCodeViewer.res",
+iml_module(
+    name = "ByteCodeViewer",
+    srcs = ["plugins/ByteCodeViewer/src"],
+    deps = [
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:util[module]",
+        "//tools/idea:core-api[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:java-psi-api[module]",
+        "//tools/idea:execution-openapi[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_idea-ui[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:util",
-      "//tools/idea:core-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lang-api",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "platform-main",
-  srcs = glob([
-      "platform/platform-main/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/platform-main.resources",
-  resources = [
-      "//tools/idea:platform-main.res",
+iml_module(
+    name = "platform-main",
+    srcs = ["platform/platform-main/src"],
+    deps = [
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:bootstrap[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:bootstrap",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -3990,31 +3363,24 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "structuralsearch",
-  srcs = glob([
-      "platform/structuralsearch/source/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/structuralsearch.resources",
-  resources = [
-      "//tools/idea:structuralsearch.res",
+iml_module(
+    name = "structuralsearch",
+    srcs = ["platform/structuralsearch/source"],
+    deps = [
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:util[module]",
+        "//tools/idea:lib/jdom",
+        "//tools/idea:lib/trove4j",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:lib/groovy-all-2.4.6",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lang-api[module]",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:duplicates-analysis[module]",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:platform-api",
-      "//tools/idea:lang-api",
-      "//tools/idea:openapi",
-      "//tools/idea:duplicates-analysis",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -4025,27 +3391,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "indexing-api.res",
-  srcs = glob([
-      "platform/indexing-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/indexing-api/src": "indexing-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/jsr305",
   jars = [
@@ -4054,4209 +3399,77 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "eclipse",
-  srcs = glob([
-      "plugins/eclipse/src/**/*.java",
-      "plugins/eclipse/gen/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/eclipse.resources",
-  resources = [
-      "//tools/idea:eclipse.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:openapi",
-      "//tools/idea:bootstrap",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:annotations",
-      "//tools/idea:java-impl",
-      "//tools/idea:eclipse-jps-plugin",
-      "//tools/idea:common-eclipse-util",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "IntelliLang-java",
-  srcs = glob([
-      "plugins/IntelliLang/java-support/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/IntelliLang-java.resources",
-  resources = [
-      "//tools/idea:IntelliLang-java.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:platform-api",
-      "//tools/idea:java-impl",
-      "//tools/idea:IntelliLang",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_test(
-  name = "eclipse_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":eclipse_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=eclipse_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "properties-psi-impl",
-  srcs = glob([
-      "plugins/properties/properties-psi-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/properties-psi-impl.resources",
-  resources = [
-      "//tools/idea:properties-psi-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:analysis-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:analysis-impl",
-    ],
-  exports = [
-      "//tools/idea:properties-psi-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "MM_maven2-server-impl.res",
-  srcs = glob([
-      "plugins/maven/maven2-server-impl/src/**/*",
-      "plugins/maven/src/main/java/**/*",
-      "plugins/maven/src/main/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/maven2-server-impl/src": "MM_maven2-server-impl.resources",
-      "plugins/maven/src/main/resources": "MM_maven2-server-impl.resources",
-      "plugins/maven/src/main/java": "MM_maven2-server-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "util.res",
-  srcs = glob([
-      "platform/util/src/**/*",
-      "platform/util/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/util/resources": "util.resources",
-      "platform/util/src": "util.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "jps-model-api.res",
-  srcs = glob([
-      "jps/model-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/model-api/src": "jps-model-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "java-runtime.res",
-  srcs = glob([
-      "java/java-runtime/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-runtime/src": "java-runtime.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "smRunner_testlib.res",
-  srcs = glob([
-      "platform/smRunner/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/smRunner/testSrc": "smRunner_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-jdepend",
-  jars = [
-      "lib/ant/lib/ant-jdepend.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "editor-ui-api",
-  srcs = glob([
-      "platform/editor-ui-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/editor-ui-api.resources",
-  resources = [
-      "//tools/idea:editor-ui-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:util",
-      "//tools/idea:annotations",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:indexing-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/miglayout-swing",
-  jars = [
-      "lib/miglayout-swing.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "projectModel-impl",
-  srcs = glob([
-      "platform/projectModel-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/projectModel-impl.resources",
-  resources = [
-      "//tools/idea:projectModel-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:lib/snappy-in-java-0.3.1",
-    ],
-  exports = [
-      "//tools/idea:projectModel-api",
-      "//tools/idea:jps-model-serialization",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "junit_testlib",
-  srcs = glob([
-      "plugins/junit/test/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/junit_testlib.resources",
-  resources = [
-      "//tools/idea:junit_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:junit",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:java-runtime",
-      "//tools/idea:testRunner",
-      "//tools/idea:lib/junit",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:junit_rt",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:smRunner",
-      "//tools/idea:smRunner_testlib",
-    ],
-  exports = [
-      "//tools/idea:junit",
-      "//tools/idea:smRunner",
-      "//tools/idea:smRunner_testlib",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "properties_testlib",
-  srcs = glob([
-      "plugins/properties/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/properties_testlib.resources",
-  resources = [
-      "//tools/idea:properties_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:properties",
-      "//tools/idea:boot",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:platform-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:annotations",
-      "//tools/idea:resources",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-    ],
-  exports = [
-      "//tools/idea:properties",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/native-platform-0.10",
-  jars = [
-      "plugins/gradle/lib/native-platform-0.10.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "properties-psi-api",
-  srcs = glob([
-      "plugins/properties/properties-psi-api/src/**/*.java",
-      "plugins/properties/properties-psi-api/gen/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/properties-psi-api.resources",
-  resources = [
-      "//tools/idea:properties-psi-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:analysis-api",
-      "//tools/idea:indexing-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lang-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "MM_idea-ui_testlib.res",
-  srcs = glob([
-      "platform/external-system-impl/testSrc/**/*",
-      "java/compiler/impl/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/compiler/impl/testSrc": "MM_idea-ui_testlib.resources",
-      "platform/external-system-impl/testSrc": "MM_idea-ui_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
-  jars = [
-      "plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/automaton",
-  jars = [
-      "lib/automaton.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
-  jars = [
-      "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "annotations-common",
-  srcs = glob([
-      "platform/annotations/common/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/annotations-common.resources",
-  resources = [
-      "//tools/idea:annotations-common.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "analysis-api",
-  srcs = glob([
-      "platform/analysis-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/analysis-api.resources",
-  resources = [
-      "//tools/idea:analysis-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:extensions",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:editor-ui-api",
-    ],
-  exports = [
-      "//tools/idea:editor-ui-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5",
-  jars = [
-      "plugins/maven/maven2-server-impl/lib/plexus-utils-1.5.5.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-impl",
-  srcs = glob([
-      "java/java-impl/src/**/*.java",
-      "java/java-impl/gen/**/*.java",
-      "plugins/InspectionGadgets/src/**/*.java",
-      "plugins/IntentionPowerPak/src/**/*.java",
-      "plugins/generate-tostring/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-impl.resources",
-  resources = [
-      "//tools/idea:java-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:boot",
-      "//tools/idea:util",
-      "//tools/idea:openapi",
-      "//tools/idea:lib/trove4j",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:java-runtime",
-      "//tools/idea:compiler-openapi",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:jsp-spi",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:lib/asm",
-      "//tools/idea:lib/asm-commons",
-      "//tools/idea:icons",
-      "//tools/idea:lib/jcip-annotations",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:java-indexing-impl",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:java-analysis-impl",
-      "//tools/idea:external-system-api",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:lib/xercesImpl",
-      "//tools/idea:lib/xml-apis",
-      "//tools/idea:lib/velocity",
-      "//tools/idea:java-structure-view",
-      "//tools/idea:lib/nekohtml-1.9.14",
-    ],
-  exports = [
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:java-indexing-impl",
-      "//tools/idea:java-analysis-impl",
-      "//tools/idea:java-structure-view",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-i18n",
-  srcs = glob([
-      "plugins/java-i18n/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-i18n.resources",
-  resources = [
-      "//tools/idea:java-i18n.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-      "//tools/idea:openapi",
-      "//tools/idea:properties",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:java-impl",
-      "//tools/idea:jsp-base-openapi",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-    ],
-  exports = [
-      "//tools/idea:properties",
-      "//tools/idea:java-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jps-model-api",
-  srcs = glob([
-      "jps/model-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-model-api.resources",
-  resources = [
-      "//tools/idea:jps-model-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
-      "//tools/idea:util-rt",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "external-system-rt.res",
-  srcs = glob([
-      "platform/external-system-rt/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/external-system-rt/src": "external-system-rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "vcs-api.res",
-  srcs = glob([
-      "platform/vcs-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/vcs-api/src": "vcs-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-groovy_library(
-  name = "gradle-tests_testlib",
-  srcs = [
-      "plugins/gradle/testData",
-      "plugins/gradle/testSources",
-    ],
-  resource_strip_prefix = "tools/idea/gradle-tests_testlib.resources",
-  resources = [
-      "//tools/idea:gradle-tests_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:gradle-tests",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:gradle",
-      "//tools/idea:gradle-tooling-extension-tests",
-      "//tools/idea:gradle-tooling-extension-tests_testlib",
-      "//tools/idea:maven-server-api",
-    ],
-  exports = [
-      "//tools/idea:gradle-tests",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "IntelliLang-java.res",
-  srcs = glob([
-      "plugins/IntelliLang/java-support/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/IntelliLang/java-support": "IntelliLang-java.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "boot.res",
-  srcs = glob([
-      "platform/boot/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/boot/src": "boot.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-native-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-native-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "ant_testlib.res",
-  srcs = glob([
-      "plugins/ant/tests/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/ant/tests/src": "ant_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-base-services-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-base-services-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "groovy-jps-plugin.res",
-  srcs = glob([
-      "plugins/groovy/jps-plugin/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/jps-plugin/src": "groovy-jps-plugin.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/cli-parser-1.1",
-  jars = [
-      "lib/cli-parser-1.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "java-i18n_testlib.res",
-  srcs = glob([
-      "plugins/java-i18n/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/java-i18n/testSrc": "java-i18n_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "forms-compiler",
-  srcs = glob([
-      "java/compiler/forms-compiler/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/forms-compiler.resources",
-  resources = [
-      "//tools/idea:forms-compiler.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/junit",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:instrumentation-util",
-    ],
-  exports = [
-      "//tools/idea:instrumentation-util",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/hamcrest-core-1.3",
-  jars = [
-      "lib/hamcrest-core-1.3.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-ide-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "lang-api_testlib",
-  srcs = glob([
-      "platform/lang-api/testSources/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/lang-api_testlib.resources",
-  resources = [
-      "//tools/idea:lang-api_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:analysis-api",
-    ],
-  exports = [
-      "//tools/idea:lang-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:analysis-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
-  jars = [
-      "plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-resources-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-resources-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-language-jvm-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "gradle-jps-plugin",
-  srcs = glob([
-      "plugins/gradle/jps-plugin/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/gradle-jps-plugin.resources",
-  resources = [
-      "//tools/idea:gradle-jps-plugin.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-model-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-resources-2.14.1",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:lib/gson-2.5",
-    ],
-  exports = [
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jetgroovy_testlib.res",
-  srcs = glob([
-      "plugins/groovy/test/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/test": "jetgroovy_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/xmlgraphics-commons-1.5",
-  jars = [
-      "lib/xmlgraphics-commons-1.5.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-indexing-impl",
-  srcs = glob([
-      "java/java-indexing-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-indexing-impl.resources",
-  resources = [
-      "//tools/idea:java-indexing-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:indexing-api",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:lib/guava-18.0",
-    ],
-  exports = [
-      "//tools/idea:java-psi-api",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:indexing-api",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:java-indexing-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jps-builders_testlib.res",
-  srcs = glob([
-      "jps/jps-builders/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/jps-builders/testSrc": "jps-builders_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "xslt-rt",
-  srcs = glob([
-      "plugins/xpath/xslt-rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xslt-rt.resources",
-  resources = [
-      "//tools/idea:xslt-rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/picocontainer",
-  jars = [
-      "lib/picocontainer.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_test(
-  name = "jps-model-tests_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":jps-model-tests_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=jps-model-tests_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/groovy/testdata/griffon/griffon-rt-1.1.0",
-  jars = [
-      "plugins/groovy/testdata/griffon/griffon-rt-1.1.0.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "smRunner",
-  srcs = glob([
-      "platform/smRunner/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/smRunner.resources",
-  resources = [
-      "//tools/idea:smRunner.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:testRunner",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:lib/serviceMessages",
-      "//tools/idea:annotations",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:lang-api",
-    ],
-  exports = [
-      "//tools/idea:testRunner",
-      "//tools/idea:lib/serviceMessages",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "properties-psi-impl.res",
-  srcs = glob([
-      "plugins/properties/properties-psi-impl/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/properties/properties-psi-impl/src": "properties-psi-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "jsp-openapi.res",
-  srcs = glob([
-      "java/jsp-openapi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/jsp-openapi/src": "jsp-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "platform-api",
-  srcs = glob([
-      "platform/platform-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/platform-api.resources",
-  resources = [
-      "//tools/idea:platform-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:bootstrap",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/commons-codec-1.9",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:icons",
-      "//tools/idea:lib/automaton",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:lib/proxy-vole_20131209",
-      "//tools/idea:analysis-api",
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:lib/pty4j-0.6",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:lib/httpcore-4.4.1",
-      "//tools/idea:lib/httpmime-4.4.1",
-      "//tools/idea:lib/httpclient-4.4.1",
-      "//tools/idea:lib/fluent-hc-4.4.1",
-      "//tools/idea:lib/jna",
-      "//tools/idea:lib/jna-platform",
-    ],
-  exports = [
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:core-api",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:forms_rt",
-      "//tools/idea:platform-resources-en",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:analysis-api",
-      "//tools/idea:editor-ui-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-impl/lib/gradle-ear-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/reflectasm-1.07",
-  jars = [
-      "lib/reflectasm-1.07.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "util-tests",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/util-tests.resources",
-  resources = [
-      "//tools/idea:util-tests.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "compiler-openapi",
-  srcs = glob([
-      "java/compiler/openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/compiler-openapi.resources",
-  resources = [
-      "//tools/idea:compiler-openapi.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jsp-base-openapi.res",
-  srcs = glob([
-      "java/jsp-base-openapi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/jsp-base-openapi/src": "jsp-base-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "analysis-impl",
-  srcs = glob([
-      "platform/analysis-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/analysis-impl.resources",
-  resources = [
-      "//tools/idea:analysis-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:analysis-api",
-      "//tools/idea:core-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:util",
-      "//tools/idea:extensions",
-      "//tools/idea:resources-en",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:indexing-impl",
-    ],
-  exports = [
-      "//tools/idea:analysis-api",
-      "//tools/idea:core-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "gradle-tooling-extension-tests_testlib",
-  srcs = glob([
-      "plugins/gradle/tooling-extension-impl/testSources/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/gradle-tooling-extension-tests_testlib.resources",
-  resources = [
-      "//tools/idea:gradle-tooling-extension-tests_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:gradle-tooling-extension-tests",
-      "//tools/idea:gradle-tooling-extension-impl",
-      "//tools/idea:gradle",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-    ],
-  exports = [
-      "//tools/idea:gradle-tooling-extension-tests",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "projectModel-api",
-  srcs = glob([
-      "platform/projectModel-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/projectModel-api.resources",
-  resources = [
-      "//tools/idea:projectModel-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:jps-model-api",
-    ],
-  exports = [
-      "//tools/idea:core-api",
-      "//tools/idea:jps-model-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "duplicates-analysis.res",
-  srcs = glob([
-      "platform/duplicates-analysis/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/duplicates-analysis/src": "duplicates-analysis.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-impl/lib/gradle-reporting-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "junit_rt",
-  srcs = glob([
-      "plugins/junit_rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/junit_rt.resources",
-  resources = [
-      "//tools/idea:junit_rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:java-runtime",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2",
-  jars = [
-      "plugins/maven/maven2-server-impl/lib/maven-dependency-tree-1.2.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "ant-jps-plugin_testlib.res",
-  srcs = glob([
-      "plugins/ant/jps-plugin/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/ant/jps-plugin/testSrc": "ant-jps-plugin_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "external-system-api.res",
-  srcs = glob([
-      "platform/external-system-api/src/**/*",
-      "platform/external-system-api/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/external-system-api/resources": "external-system-api.resources",
-      "platform/external-system-api/src": "external-system-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "annotations-common.res",
-  srcs = glob([
-      "platform/annotations/common/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/annotations/common/src": "annotations-common.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle-tooling-extension-api.res",
-  srcs = glob([
-      "plugins/gradle/tooling-extension-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/tooling-extension-api/src": "gradle-tooling-extension-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "lvcs-api",
-  srcs = glob([
-      "platform/lvcs-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/lvcs-api.resources",
-  resources = [
-      "//tools/idea:lvcs-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jps-launcher",
-  srcs = glob([
-      "jps/jps-launcher/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-launcher.resources",
-  resources = [
-      "//tools/idea:jps-launcher.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "properties.res",
-  srcs = glob([
-      "plugins/properties/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/properties/src": "properties.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "jps-builders",
-  srcs = glob([
-      "jps/jps-builders/src/**/*.java",
-    ], exclude=[
-      "jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager.java",
-      "jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-builders.resources",
-  resources = [
-      "//tools/idea:jps-builders.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:forms_rt",
-      "//tools/idea:forms-compiler",
-      "//tools/idea:instrumentation-util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:lib/protobuf-2.5.0",
-      "//tools/idea:jps/lib/optimizedFileManager",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lib/ecj-4.5.2",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:jps-serialization-tests",
-    ],
-  exports = [
-      "//tools/idea:util",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/protobuf-2.5.0",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jsp-spi.res",
-  srcs = glob([
-      "java/jsp-spi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/jsp-spi/src": "jsp-spi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "util-rt.res",
-  srcs = glob([
-      "platform/util-rt/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/util-rt/src": "util-rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "annotations.res",
-  srcs = glob([
-      "platform/annotations/java5/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/annotations/java5/src": "annotations.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_test(
-  name = "maven-jps-plugin_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":maven-jps-plugin_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=maven-jps-plugin_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_test(
-  name = "extensions_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":extensions_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=extensions_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-kotlin_groovy_library(
-  name = "MM_RegExpSupport",
-  srcs = [
-      "RegExpSupport/src",
-      "RegExpSupport/gen",
-      "xml/xml-analysis-impl/src",
-      "xml/xml-psi-impl/src",
-      "xml/xml-psi-impl/gen",
-      "platform/lvcs-impl/src",
-      "platform/vcs-impl/src",
-      "xml/impl/src",
-      "spellchecker/src",
-      "xml/relaxng/src",
-      "xml/dom-openapi/src",
-      "json/src",
-      "json/gen",
-      "images/src",
-      "platform/xdebugger-impl/src",
-      "xml/dom-impl/src",
-      "platform/lang-impl/src",
-      "platform/lang-impl/gen",
-      "platform/diff-impl/src",
-      "platform/configuration-store-impl/src",
-      "platform/platform-impl/src",
-      "platform/built-in-server/src",
-      "platform/testFramework/src",
-      "xml/xml-structure-view-impl/src",
-    ],
-  resource_strip_prefix = "tools/idea/MM_RegExpSupport.resources",
-  resources = [
-      "//tools/idea:MM_RegExpSupport.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/jaxen-1.1.3",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:core-impl",
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:lib/xercesImpl",
-      "//tools/idea:lib/xml-apis",
-      "//tools/idea:lib/jsr173_1.0_api",
-      "//tools/idea:lib/xbean",
-      "//tools/idea:lib/resolver",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:vcs-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/jcip-annotations",
-      "//tools/idea:diff-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/commons-codec-1.9",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:lib/gson-2.5",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:icons",
-      "//tools/idea:lib/swingx-core-1.6.2",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:built-in-server-api",
-      "//tools/idea:xml/relaxng/lib/rngom-20051226-patched",
-      "//tools/idea:xml/relaxng/lib/isorelax",
-      "//tools/idea:xml/relaxng/lib/trang-core",
-      "//tools/idea:xml/relaxng/lib/jing",
-      "//tools/idea:extensions",
-      "//tools/idea:util",
-      "//tools/idea:lib/sanselan-0.98-snapshot",
-      "//tools/idea:lib/asm",
-      "//tools/idea:lib/asm-commons",
-      "//tools/idea:lib/cglib-2.2.2",
-      "//tools/idea:boot",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:lib/velocity",
-      "//tools/idea:usageView",
-      "//tools/idea:lib/xpp3-1.1.4-min",
-      "//tools/idea:lib/cli-parser-1.1",
-      "//tools/idea:indexing-api",
-      "//tools/idea:lib/snappy-in-java-0.3.1",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:lib/commons-logging-1.2",
-      "//tools/idea:vcs-api-core",
-      "//tools/idea:bootstrap",
-      "//tools/idea:lib/eawtstub",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/jh",
-      "//tools/idea:lib/jna",
-      "//tools/idea:lib/jna-platform",
-      "//tools/idea:lib/winp-1.23",
-      "//tools/idea:lib/miglayout-swing",
-      "//tools/idea:lib/jayatana-1.2.4",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:lib/httpcore-4.4.1",
-      "//tools/idea:lib/httpmime-4.4.1",
-      "//tools/idea:lib/httpclient-4.4.1",
-      "//tools/idea:lib/fluent-hc-4.4.1",
-      "//tools/idea:lib/imgscalr-lib-4.2",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/analytics-library:analytics-tracker",
-      "//tools/analytics-library:analytics-shared",
-      "//tools/analytics-library:analytics-publisher",
-      "//tools/base/common:common",
-      "//tools/analytics-library:analytics-protos",
-      "//tools/idea:lib/xmlrpc-2.0",
-      "//tools/idea:tests_bootstrap",
-      "//tools/idea:resources-en",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:lib/dev/assertj-core-3.2.0",
-      "//tools/idea:xml-structure-view-api",
-    ],
-  exports = [
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:vcs-api",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:lib/cglib-2.2.2",
-      "//tools/idea:lang-api",
-      "//tools/idea:usageView",
-      "//tools/idea:lib/cli-parser-1.1",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:diff-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/commons-codec-1.9",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:lib/miglayout-swing",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:built-in-server-api",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "debugger-openapi",
-  srcs = glob([
-      "java/debugger/openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/debugger-openapi.resources",
-  resources = [
-      "//tools/idea:debugger-openapi.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:resources-en",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "duplicates-analysis",
-  srcs = glob([
-      "platform/duplicates-analysis/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/duplicates-analysis.resources",
-  resources = [
-      "//tools/idea:duplicates-analysis.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:annotations",
-      "//tools/idea:extensions",
-      "//tools/idea:util",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:projectModel-impl",
-    ],
-  exports = [
-      "//tools/idea:analysis-impl",
-      "//tools/idea:annotations",
-      "//tools/idea:extensions",
-      "//tools/idea:util",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:projectModel-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "junit.res",
-  srcs = glob([
-      "plugins/junit/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/junit/src": "junit.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "ant.res",
-  srcs = glob([
-      "plugins/ant/src/**/*",
-      "plugins/ant/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/ant/resources": "ant.resources",
-      "plugins/ant/src": "ant.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "xml-structure-view-api.res",
-  srcs = glob([
-      "xml/xml-structure-view-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "xml/xml-structure-view-api/src": "xml-structure-view-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "xml-openapi.res",
-  srcs = glob([
-      "xml/openapi/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "xml/openapi/src": "xml-openapi.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/velocity",
-  jars = [
-      "lib/velocity.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "xml/relaxng/lib/trang-core",
-  jars = [
-      "xml/relaxng/lib/trang-core.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "annotations",
-  srcs = glob([
-      "platform/annotations/java5/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/annotations.resources",
-  resources = [
-      "//tools/idea:annotations.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations-common",
-    ],
-  exports = [
-      "//tools/idea:annotations-common",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-psi-impl",
-  srcs = glob([
-      "java/java-psi-impl/src/**/*.java",
-      "java/java-psi-impl/gen/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-psi-impl.resources",
-  resources = [
-      "//tools/idea:java-psi-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:resources-en",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/guava-18.0",
-    ],
-  exports = [
-      "//tools/idea:java-psi-api",
-      "//tools/idea:core-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_test(
-  name = "junit_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":junit_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=junit_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jps-model-tests",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/jps-model-tests.resources",
-  resources = [
-      "//tools/idea:jps-model-tests.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "jps-model-serialization.res",
-  srcs = glob([
-      "jps/model-serialization/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "jps/model-serialization/src": "jps-model-serialization.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_test(
-  name = "java-i18n_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":java-i18n_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=java-i18n_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jsp-base-openapi",
-  srcs = glob([
-      "java/jsp-base-openapi/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jsp-base-openapi.resources",
-  resources = [
-      "//tools/idea:jsp-base-openapi.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:lang-api",
-    ],
-  exports = [
-      "//tools/idea:xml-openapi",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "typeMigration",
-  srcs = glob([
-      "java/typeMigration/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/typeMigration.resources",
-  resources = [
-      "//tools/idea:typeMigration.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:lang-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:openapi",
-      "//tools/idea:structuralsearch",
-      "//tools/idea:java-impl",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:structuralsearch-java",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "forms-compiler.res",
-  srcs = glob([
-      "java/compiler/forms-compiler/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/compiler/forms-compiler/src": "forms-compiler.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "xdebugger-api",
-  srcs = glob([
-      "platform/xdebugger-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xdebugger-api.resources",
-  resources = [
-      "//tools/idea:xdebugger-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-    ],
-  exports = [
-      "//tools/idea:lang-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "usageView",
-  srcs = glob([
-      "platform/usageView/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/usageView.resources",
-  resources = [
-      "//tools/idea:usageView.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lang-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:editor-ui-ex",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "testng.res",
-  srcs = glob([
-      "plugins/testng/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/testng/src": "testng.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "properties_testlib.res",
-  srcs = glob([
-      "plugins/properties/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/properties/testSrc": "properties_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "gradle-tooling-extension-tests",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/gradle-tooling-extension-tests.resources",
-  resources = [
-      "//tools/idea:gradle-tooling-extension-tests.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/maven/lib/wadl-core",
-  jars = [
-      "plugins/maven/lib/wadl-core.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/xercesImpl",
-  jars = [
-      "lib/xercesImpl.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/jaxen-1.1.3",
-  jars = [
-      "lib/jaxen-1.1.3.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "eclipse-jps-plugin.res",
-  srcs = glob([
-      "plugins/eclipse/jps-plugin/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/eclipse/jps-plugin/src": "eclipse-jps-plugin.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/junit-4.12",
-  jars = [
-      "lib/junit-4.12.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "instrumentation-util",
-  srcs = glob([
-      "java/compiler/instrumentation-util/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/instrumentation-util.resources",
-  resources = [
-      "//tools/idea:instrumentation-util.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/asm-all",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-apache-bcel",
-  jars = [
-      "lib/ant/lib/ant-apache-bcel.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/guava-18.0",
-  jars = [
-      "lib/guava-18.0.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "properties",
-  srcs = glob([
-      "plugins/properties/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/properties.resources",
-  resources = [
-      "//tools/idea:properties.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:boot",
-      "//tools/idea:lang-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:annotations",
-      "//tools/idea:resources",
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-      "//tools/idea:MM_idea-ui",
-    ],
-  exports = [
-      "//tools/idea:properties-psi-api",
-      "//tools/idea:properties-psi-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-kotlin_library(
-  name = "util-tests_testlib",
-  srcs = [
-      "platform/util/testSrc",
-    ],
-  resource_strip_prefix = "tools/idea/util-tests_testlib.resources",
-  resources = [
-      "//tools/idea:util-tests_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util-tests",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:util",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:lib/dev/assertj-core-3.2.0",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:lib/jna",
-      "//tools/idea:lib/jna-platform",
-    ],
-  exports = [
-      "//tools/idea:util-tests",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "lang-api",
-  srcs = glob([
-      "platform/lang-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/lang-api.resources",
-  resources = [
-      "//tools/idea:lang-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:analysis-api",
-    ],
-  exports = [
-      "//tools/idea:platform-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-      "//tools/idea:indexing-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:analysis-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "resources.res",
-  srcs = glob([
-      "resources/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "resources/src": "resources.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "editor-ui-ex",
-  srcs = glob([
-      "platform/editor-ui-ex/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/editor-ui-ex.resources",
-  resources = [
-      "//tools/idea:editor-ui-ex.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:util",
-      "//tools/idea:annotations",
-      "//tools/idea:core-impl",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:analysis-api",
-    ],
-  exports = [
-      "//tools/idea:editor-ui-api",
-      "//tools/idea:util",
-      "//tools/idea:annotations",
-      "//tools/idea:core-impl",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/slf4j-log4j12-1.7.10",
-  jars = [
-      "lib/slf4j-log4j12-1.7.10.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/xstream-1.4.8",
-  jars = [
-      "lib/xstream-1.4.8.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/dev/jmock-2.5.1",
-  jars = [
-      "lib/dev/jmock-2.5.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-groovy_library(
-  name = "groovy-psi",
-  srcs = [
-      "plugins/groovy/groovy-psi/src",
-      "plugins/groovy/groovy-psi/gen",
-    ],
-  resource_strip_prefix = "tools/idea/groovy-psi.resources",
-  resources = [
-      "//tools/idea:groovy-psi.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:junit",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:java-impl",
-      "//tools/idea:core-impl",
-      "//tools/idea:extensions",
-      "//tools/idea:annotations",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:java-analysis-impl",
-      "//tools/idea:java-structure-view",
-      "//tools/idea:properties-psi-impl",
-      "//tools/idea:properties-psi-api",
-    ],
-  exports = [
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-testing-jvm-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/imgscalr-lib-4.2",
-  jars = [
-      "lib/imgscalr-lib-4.2.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1",
-  jars = [
-      "plugins/gradle/tooling-extension-api/lib/gradle-testing-base-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-launcher",
-  jars = [
-      "lib/ant/lib/ant-launcher.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "IntelliLang.res",
-  srcs = glob([
-      "plugins/IntelliLang/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/IntelliLang/src": "IntelliLang.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "xml-psi-api",
-  srcs = glob([
-      "xml/xml-psi-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xml-psi-api.resources",
-  resources = [
-      "//tools/idea:xml-psi-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:analysis-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "copyright.res",
-  srcs = glob([
-      "plugins/copyright/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/copyright/src": "copyright.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "xdebugger-api.res",
-  srcs = glob([
-      "platform/xdebugger-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/xdebugger-api/src": "xdebugger-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "smRunner_testlib",
-  srcs = glob([
-      "platform/smRunner/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/smRunner_testlib.resources",
-  resources = [
-      "//tools/idea:smRunner_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:smRunner",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:testRunner",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:lib/serviceMessages",
-      "//tools/idea:annotations",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-    ],
-  exports = [
-      "//tools/idea:smRunner",
-      "//tools/idea:testRunner",
-      "//tools/idea:lib/serviceMessages",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "structuralsearch-java",
-  srcs = glob([
-      "java/structuralsearch-java/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/structuralsearch-java.resources",
-  resources = [
-      "//tools/idea:structuralsearch-java.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:structuralsearch",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:duplicates-analysis",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/asm",
-  jars = [
-      "lib/asm.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "typeMigration.res",
-  srcs = glob([
-      "java/typeMigration/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/typeMigration/src": "typeMigration.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "gradle.res",
-  srcs = glob([
-      "plugins/gradle/src/**/*",
-      "plugins/gradle/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/gradle/resources": "gradle.resources",
-      "plugins/gradle/src": "gradle.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-wrapper-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-wrapper-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/httpclient-4.4.1",
-  jars = [
-      "lib/httpclient-4.4.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/log4j",
-  jars = [
-      "lib/log4j.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-apache-regexp",
-  jars = [
-      "lib/ant/lib/ant-apache-regexp.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/cglib-2.2.2",
-  jars = [
-      "lib/cglib-2.2.2.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "xpath",
-  srcs = glob([
-      "plugins/xpath/xpath-lang/src/**/*.java",
-      "plugins/xpath/xpath-view/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xpath.resources",
-  resources = [
-      "//tools/idea:xpath.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:lang-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:xslt-rt",
-      "//tools/idea:annotations",
-      "//tools/idea:lib/jaxen-1.1.3",
-      "//tools/idea:resources-en",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/dev/jmock-legacy-2.5.1",
-  jars = [
-      "lib/dev/jmock-legacy-2.5.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/xpp3-1.1.4-min",
-  jars = [
-      "lib/xpp3-1.1.4-min.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/asm-commons",
-  jars = [
-      "lib/asm-commons.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jps-serialization-tests_testlib",
-  srcs = glob([
-      "jps/model-serialization/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-serialization-tests_testlib.resources",
-  resources = [
-      "//tools/idea:jps-serialization-tests_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-serialization-tests",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:jps-model-tests",
-      "//tools/idea:jps-model-tests_testlib",
-    ],
-  exports = [
-      "//tools/idea:jps-serialization-tests",
-      "//tools/idea:jps-model-tests",
-      "//tools/idea:jps-model-tests_testlib",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "java-structure-view.res",
-  srcs = glob([
-      "java/java-structure-view/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-structure-view/src": "java-structure-view.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "MM_idea-ui.res",
-  srcs = glob([
-      "java/idea-ui/src/**/*",
-      "platform/external-system-impl/src/**/*",
-      "java/testFramework/src/**/*",
-      "java/execution/impl/src/**/*",
-      "java/debugger/impl/src/**/*",
-      "java/compiler/impl/src/**/*",
-      "platform/external-system-impl/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/debugger/impl/src": "MM_idea-ui.resources",
-      "platform/external-system-impl/resources": "MM_idea-ui.resources",
-      "java/idea-ui/src": "MM_idea-ui.resources",
-      "java/execution/impl/src": "MM_idea-ui.resources",
-      "java/compiler/impl/src": "MM_idea-ui.resources",
-      "java/testFramework/src": "MM_idea-ui.resources",
-      "platform/external-system-impl/src": "MM_idea-ui.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "usageView.res",
-  srcs = glob([
-      "platform/usageView/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/usageView/src": "usageView.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-jai",
-  jars = [
-      "lib/ant/lib/ant-jai.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "groovy_rt.res",
-  srcs = glob([
-      "plugins/groovy/rt/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/groovy/rt/src": "groovy_rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "testng",
-  srcs = glob([
-      "plugins/testng/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/testng.resources",
-  resources = [
-      "//tools/idea:testng.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:debugger-openapi",
-      "//tools/idea:lib/junit",
-      "//tools/idea:testRunner",
-      "//tools/idea:java-runtime",
-      "//tools/idea:testng_rt",
-      "//tools/idea:java-i18n",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:java-impl",
-      "//tools/idea:jsp-openapi",
-      "//tools/idea:plugins/testng/lib/testng",
-      "//tools/idea:plugins/testng/lib/jcommander",
-      "//tools/idea:java-indexing-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:smRunner",
-      "//tools/idea:typeMigration",
-    ],
-  exports = [
-      "//tools/idea:smRunner",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "ant-jps-plugin_testlib",
-  srcs = glob([
-      "plugins/ant/jps-plugin/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/ant-jps-plugin_testlib.resources",
-  resources = [
-      "//tools/idea:ant-jps-plugin_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:ant-jps-plugin",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:util",
-      "//tools/idea:jps-builders",
-      "//tools/idea:jps-builders_testlib",
-      "//tools/idea:java-runtime",
-      "//tools/idea:jps-serialization-tests",
-      "//tools/idea:jps-serialization-tests_testlib",
-    ],
-  exports = [
-      "//tools/idea:ant-jps-plugin",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "ByteCodeViewer.res",
-  srcs = glob([
-      "plugins/ByteCodeViewer/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/ByteCodeViewer/src": "ByteCodeViewer.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/gradle/lib/guava-jdk5-17.0",
-  jars = [
-      "plugins/gradle/lib/guava-jdk5-17.0.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "gradle-tooling-extension-api",
-  srcs = glob([
-      "plugins/gradle/tooling-extension-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/gradle-tooling-extension-api.resources",
-  resources = [
-      "//tools/idea:gradle-tooling-extension-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:external-system-rt",
-      "//tools/idea:annotations",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/guava-jdk5-17.0",
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  exports = [
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/idea:plugins/gradle/lib/gradle-tooling-api-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-core-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-messaging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-wrapper-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-base-services-groovy-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-logging-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-native-2.14.1",
-      "//tools/idea:plugins/gradle/lib/gradle-process-services-2.14.1",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "forms-compiler_testlib",
-  srcs = glob([
-      "java/compiler/forms-compiler/testSrc/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/forms-compiler_testlib.resources",
-  resources = [
-      "//tools/idea:forms-compiler_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:forms-compiler",
-      "//tools/idea:lib/jdom",
-      "//tools/idea:forms_rt",
-      "//tools/idea:lib/asm-all",
-      "//tools/idea:lib/junit",
-      "//tools/idea:lib/jgoodies-forms",
-      "//tools/idea:instrumentation-util",
-    ],
-  exports = [
-      "//tools/idea:forms-compiler",
-      "//tools/idea:instrumentation-util",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "lang-api.res",
-  srcs = glob([
-      "platform/lang-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/lang-api/src": "lang-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_test(
-  name = "lang-api_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":lang-api_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=lang-api_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "jps/lib/optimizedFileManager",
-  jars = [
-      "jps/lib/optimizedFileManager.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "ant_testlib",
-  srcs = glob([
-      "plugins/ant/tests/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/ant_testlib.resources",
-  resources = [
-      "//tools/idea:ant_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:ant",
-      "//tools/idea:openapi",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:java-runtime",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:properties",
-      "//tools/idea:properties_testlib",
-      "//tools/idea:execution-openapi",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:util",
-      "//tools/idea:ant-jps-plugin",
-      "//tools/idea:ant-jps-plugin_testlib",
-      "//tools/idea:properties-psi-api",
-    ],
-  exports = [
-      "//tools/idea:ant",
-      "//tools/idea:lib/ant/lib/ant-commons-net",
-      "//tools/idea:lib/ant/lib/ant-jmf",
-      "//tools/idea:lib/ant/lib/ant-apache-resolver",
-      "//tools/idea:lib/ant/lib/ant-jai",
-      "//tools/idea:lib/ant/lib/ant-apache-bsf",
-      "//tools/idea:lib/ant/lib/ant-commons-logging",
-      "//tools/idea:lib/ant/lib/ant-junit",
-      "//tools/idea:lib/ant/lib/ant-jsch",
-      "//tools/idea:lib/ant/lib/ant-apache-bcel",
-      "//tools/idea:lib/ant/lib/ant",
-      "//tools/idea:lib/ant/lib/ant-netrexx",
-      "//tools/idea:lib/ant/lib/ant-apache-oro",
-      "//tools/idea:lib/ant/lib/ant-antlr",
-      "//tools/idea:lib/ant/lib/ant-jdepend",
-      "//tools/idea:lib/ant/lib/ant-launcher",
-      "//tools/idea:lib/ant/lib/ant-apache-regexp",
-      "//tools/idea:lib/ant/lib/ant-apache-log4j",
-      "//tools/idea:lib/ant/lib/ant-swing",
-      "//tools/idea:lib/ant/lib/ant-javamail",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/httpcore-4.4.1",
-  jars = [
-      "lib/httpcore-4.4.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "maven-artifact-resolver-common.res",
-  srcs = glob([
-      "plugins/maven/artifact-resolver/common/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/artifact-resolver/common/src": "maven-artifact-resolver-common.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/swingx-core-1.6.2",
-  jars = [
-      "lib/swingx-core-1.6.2.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "projectModel-impl.res",
-  srcs = glob([
-      "platform/projectModel-impl/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/projectModel-impl/src": "projectModel-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/coverage-agent",
-  jars = [
-      "lib/coverage-agent.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "util-rt",
-  srcs = glob([
-      "platform/util-rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/util-rt.resources",
-  resources = [
-      "//tools/idea:util-rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:annotations",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/oromatcher",
-  jars = [
-      "lib/oromatcher.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_test(
-  name = "forms-compiler_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":forms-compiler_testlib",
-      "//tools/base/testutils:testutils",
-    ],
-  jvm_flags = [
-      "-Dtest.suite.jar=forms-compiler_testlib.jar",
-    ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-apache-log4j",
-  jars = [
-      "lib/ant/lib/ant-apache-log4j.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "analysis-api.res",
-  srcs = glob([
-      "platform/analysis-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/analysis-api/src": "analysis-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "lang-api_testlib.res",
-  srcs = glob([
-      "platform/lang-api/testSources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/lang-api/testSources": "lang-api_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "util-tests.res",
-  srcs = glob([
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/dev/jmock-junit4-2.5.1",
-  jars = [
-      "lib/dev/jmock-junit4-2.5.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "icons",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/icons.resources",
-  resources = [
-      "//tools/idea:icons.res",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "ant-jps-plugin",
-  srcs = glob([
-      "plugins/ant/jps-plugin/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/ant-jps-plugin.resources",
-  resources = [
-      "//tools/idea:ant-jps-plugin.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:jps-model-api",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:util",
-      "//tools/idea:jps-builders",
-      "//tools/idea:java-runtime",
-      "//tools/idea:jps-serialization-tests",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-logging-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-logging-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "jps-model-impl",
-  srcs = glob([
-      "jps/model-impl/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/jps-model-impl.resources",
-  resources = [
-      "//tools/idea:jps-model-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-      "//tools/idea:jps-model-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-analysis-api",
-  srcs = glob([
-      "java/java-analysis-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-analysis-api.resources",
-  resources = [
-      "//tools/idea:java-analysis-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:analysis-api",
-      "//tools/idea:java-psi-api",
-      "//tools/idea:projectModel-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-groovy_library(
-  name = "typeMigration_testlib",
-  srcs = [
-      "java/typeMigration/test",
-    ],
-  resource_strip_prefix = "tools/idea/typeMigration_testlib.resources",
-  resources = [
-      "//tools/idea:typeMigration_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:typeMigration",
-      "//tools/idea:util",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:MM_RegExpSupport_testlib",
-      "//tools/idea:openapi",
-      "//tools/idea:structuralsearch",
-      "//tools/idea:java-impl",
-      "//tools/idea:MM_idea-ui",
-      "//tools/idea:MM_idea-ui_testlib",
-      "//tools/idea:structuralsearch-java",
-    ],
-  exports = [
-      "//tools/idea:typeMigration",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant",
-  jars = [
-      "lib/ant/lib/ant.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "extensions_testlib.res",
-  srcs = glob([
-      "platform/extensions/testSrc/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/extensions/testSrc": "extensions_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/nekohtml-1.9.14",
-  jars = [
-      "lib/nekohtml-1.9.14.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "IntelliLang-xml.res",
-  srcs = glob([
-      "plugins/IntelliLang/xml-support/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/IntelliLang/xml-support": "IntelliLang-xml.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/sanselan-0.98-snapshot",
-  jars = [
-      "lib/sanselan-0.98-snapshot.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "gradle-tests.res",
-  srcs = glob([
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "ant-jps-plugin.res",
-  srcs = glob([
-      "plugins/ant/jps-plugin/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/ant/jps-plugin/src": "ant-jps-plugin.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "typeMigration_testlib.res",
-  srcs = glob([
-      "java/typeMigration/test/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/typeMigration/test": "typeMigration_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-commons-net",
-  jars = [
-      "lib/ant/lib/ant-commons-net.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "testRunner",
-  srcs = glob([
-      "platform/testRunner/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/testRunner.resources",
-  resources = [
-      "//tools/idea:testRunner.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:platform-api",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:xdebugger-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "plugins/gradle/lib/gradle-tooling-api-2.14.1",
-  jars = [
-      "plugins/gradle/lib/gradle-tooling-api-2.14.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "platform-resources-en.res",
-  srcs = glob([
-      "platform/platform-resources-en/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/platform-resources-en/src": "platform-resources-en.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "plugins/maven/maven-server-api/lib/lucene-core-2.4.1",
-  jars = [
-      "plugins/maven/maven-server-api/lib/lucene-core-2.4.1.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "testng_rt",
-  srcs = glob([
-      "plugins/testng_rt/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/testng_rt.resources",
-  resources = [
-      "//tools/idea:testng_rt.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:plugins/testng/lib/testng",
-      "//tools/idea:plugins/testng/lib/jcommander",
-      "//tools/idea:java-runtime",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/xbean",
-  jars = [
-      "lib/xbean.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/jh",
-  jars = [
-      "lib/jh.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "junit_rt.res",
-  srcs = glob([
-      "plugins/junit_rt/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/junit_rt/src": "junit_rt.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "bootstrap",
-  srcs = glob([
-      "platform/bootstrap/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/bootstrap.resources",
-  resources = [
-      "//tools/idea:bootstrap.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:util",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-junit",
-  jars = [
-      "lib/ant/lib/ant-junit.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/ant/lib/ant-commons-logging",
-  jars = [
-      "lib/ant/lib/ant-commons-logging.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "testng_testlib.res",
-  srcs = glob([
-      "plugins/testng/testSources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/testng/testSources": "testng_testlib.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "MM_RegExpSupport.res",
-  srcs = glob([
-      "RegExpSupport/src/**/*",
-      "RegExpSupport/gen/**/*",
-      "xml/xml-analysis-impl/src/**/*",
-      "xml/xml-psi-impl/src/**/*",
-      "xml/xml-psi-impl/gen/**/*",
-      "platform/lvcs-impl/src/**/*",
-      "platform/vcs-impl/src/**/*",
-      "xml/impl/src/**/*",
-      "spellchecker/src/**/*",
-      "xml/relaxng/src/**/*",
-      "xml/dom-openapi/src/**/*",
-      "json/src/**/*",
-      "json/gen/**/*",
-      "images/src/**/*",
-      "platform/xdebugger-impl/src/**/*",
-      "xml/dom-impl/src/**/*",
-      "platform/lang-impl/src/**/*",
-      "platform/lang-impl/gen/**/*",
-      "platform/diff-impl/src/**/*",
-      "platform/configuration-store-impl/src/**/*",
-      "platform/platform-impl/src/**/*",
-      "platform/built-in-server/src/**/*",
-      "platform/testFramework/src/**/*",
-      "xml/xml-structure-view-impl/src/**/*",
-      "xml/xml-analysis-impl/resources/**/*",
-      "xml/xml-psi-impl/resources/**/*",
-      "xml/impl/resources/**/*",
-      "platform/platform-resources/src/**/*",
-      "json/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/configuration-store-impl/src": "MM_RegExpSupport.resources",
-      "json/src": "MM_RegExpSupport.resources",
-      "platform/vcs-impl/src": "MM_RegExpSupport.resources",
-      "xml/dom-impl/src": "MM_RegExpSupport.resources",
-      "xml/xml-psi-impl/resources": "MM_RegExpSupport.resources",
-      "platform/xdebugger-impl/src": "MM_RegExpSupport.resources",
-      "platform/diff-impl/src": "MM_RegExpSupport.resources",
-      "xml/impl/src": "MM_RegExpSupport.resources",
-      "json/gen": "MM_RegExpSupport.resources",
-      "platform/lvcs-impl/src": "MM_RegExpSupport.resources",
-      "xml/xml-analysis-impl/src": "MM_RegExpSupport.resources",
-      "xml/xml-psi-impl/gen": "MM_RegExpSupport.resources",
-      "platform/platform-impl/src": "MM_RegExpSupport.resources",
-      "platform/built-in-server/src": "MM_RegExpSupport.resources",
-      "xml/xml-psi-impl/src": "MM_RegExpSupport.resources",
-      "xml/xml-structure-view-impl/src": "MM_RegExpSupport.resources",
-      "spellchecker/src": "MM_RegExpSupport.resources",
-      "xml/impl/resources": "MM_RegExpSupport.resources",
-      "platform/lang-impl/gen": "MM_RegExpSupport.resources",
-      "RegExpSupport/gen": "MM_RegExpSupport.resources",
-      "xml/xml-analysis-impl/resources": "MM_RegExpSupport.resources",
-      "platform/lang-impl/src": "MM_RegExpSupport.resources",
-      "platform/platform-resources/src": "MM_RegExpSupport.resources",
-      "RegExpSupport/src": "MM_RegExpSupport.resources",
-      "xml/relaxng/src": "MM_RegExpSupport.resources",
-      "xml/dom-openapi/src": "MM_RegExpSupport.resources",
-      "images/src": "MM_RegExpSupport.resources",
-      "json/resources": "MM_RegExpSupport.resources",
-      "platform/testFramework/src": "MM_RegExpSupport.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "structure-view-impl.res",
-  srcs = glob([
-      "platform/structure-view-impl/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/structure-view-impl/src": "structure-view-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "java-impl.res",
-  srcs = glob([
-      "java/java-impl/src/**/*",
-      "java/java-impl/gen/**/*",
-      "plugins/InspectionGadgets/src/**/*",
-      "plugins/IntentionPowerPak/src/**/*",
-      "plugins/generate-tostring/src/**/*",
-      "plugins/generate-tostring/resources/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "java/java-impl/gen": "java-impl.resources",
-      "plugins/generate-tostring/src": "java-impl.resources",
-      "plugins/IntentionPowerPak/src": "java-impl.resources",
-      "plugins/generate-tostring/resources": "java-impl.resources",
-      "plugins/InspectionGadgets/src": "java-impl.resources",
-      "java/java-impl/src": "java-impl.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_import(
-  name = "lib/hamcrest-library-1.3",
-  jars = [
-      "lib/hamcrest-library-1.3.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-java_import(
-  name = "lib/coverage-util",
-  jars = [
-      "lib/coverage-util.jar",
-    ],
-  visibility = ["//visibility:public"],
-)
-
-fileset(
-  name = "diff-api.res",
-  srcs = glob([
-      "platform/diff-api/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/diff-api/src": "diff-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "smRunner.res",
-  srcs = glob([
-      "platform/smRunner/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/smRunner/src": "smRunner.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-fileset(
-  name = "extensions.res",
-  srcs = glob([
-      "platform/extensions/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "platform/extensions/src": "extensions.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
-java_library(
-  name = "maven-artifact-resolver-m2",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m2/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-artifact-resolver-m2.resources",
-  resources = [
-      "//tools/idea:maven-artifact-resolver-m2.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:plugins/maven/maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber",
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  exports = [
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "java-analysis-impl",
-  srcs = glob([
-      "java/java-analysis-impl/src/**/*.java",
-      "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/java-analysis-impl.resources",
-  resources = [
-      "//tools/idea:java-analysis-impl.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:java-indexing-impl",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:java-analysis-api",
-      "//tools/idea:resources-en",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lib/asm-all",
-    ],
-  exports = [
-      "//tools/idea:analysis-impl",
-      "//tools/idea:java-indexing-impl",
-      "//tools/idea:java-psi-impl",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:java-analysis-api",
-      "//tools/idea:lib/asm-all",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "maven-artifact-resolver-m3",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m3/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-artifact-resolver-m3.resources",
-  resources = [
-      "//tools/idea:maven-artifact-resolver-m3.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/aether-api-1.13.1",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-core-3.0.5",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/plexus-component-annotations-1.5.5",
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  exports = [
-      "//tools/idea:maven-artifact-resolver-common",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
-)
-
-java_library(
-  name = "xml-structure-view-api",
-  srcs = glob([
-      "xml/xml-structure-view-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/xml-structure-view-api.resources",
-  resources = [
-      "//tools/idea:xml-structure-view-api.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:editor-ui-api",
-    ],
-  exports = [
-      "//tools/idea:xml-psi-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "xml-structure-view-api",
+    srcs = ["xml/xml-structure-view-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:editor-ui-api[module]",
+    ],
+    exports = ["//tools/idea:xml-psi-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "eclipse",
+    srcs = [
+        "plugins/eclipse/src",
+        "plugins/eclipse/gen",
+    ],
+    test_srcs = ["plugins/eclipse/testSources"],
+    resources = ["plugins/eclipse/resources"],
+    deps = [
+        "//tools/idea:lib/jdom",
+        "//tools/idea:openapi[module]",
+        "//tools/idea:bootstrap[module]",
+        "//tools/idea:lib/hamcrest-core-1.3[test]",
+        "//tools/idea:lib/junit-4.12[test]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:compiler-openapi[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:eclipse-jps-plugin[module]",
+        "//tools/idea:common-eclipse-util[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "IntelliLang-java",
+    srcs = ["plugins/IntelliLang/java-support"],
+    deps = [
+        "//tools/idea:openapi[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:MM_idea-ui[module]",
+        "//tools/idea:lib/asm-all",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:java-impl[module]",
+        "//tools/idea:IntelliLang[module]",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "properties-psi-impl",
+    srcs = ["plugins/properties/properties-psi-impl/src"],
+    deps = [
+        "//tools/idea:properties-psi-api[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:editor-ui-api[module]",
+        "//tools/idea:analysis-api[module]",
+        "//tools/idea:xml-psi-api[module]",
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:indexing-impl[module]",
+        "//tools/idea:structure-view-impl[module]",
+        "//tools/idea:analysis-impl[module]",
+    ],
+    exports = ["//tools/idea:properties-psi-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -8267,23 +3480,16 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "IntelliLang",
-  srcs = glob([
-      "plugins/IntelliLang/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/IntelliLang.resources",
-  resources = [
-      "//tools/idea:IntelliLang.res",
+iml_module(
+    name = "IntelliLang",
+    srcs = ["plugins/IntelliLang/src"],
+    deps = [
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:platform-api[module]",
+        "//tools/idea:lib/jaxen-1.1.3",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/jaxen-1.1.3",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -8299,160 +3505,6 @@ java_import(
   jars = [
       "lib/serviceMessages.jar",
     ],
-  visibility = ["//visibility:public"],
-)
-
-kotlin_library(
-  name = "MM_RegExpSupport_testlib",
-  srcs = [
-      "RegExpSupport/test",
-      "platform/vcs-impl/testSrc",
-      "spellchecker/testSrc",
-      "xml/relaxng/test",
-      "platform/xdebugger-impl/testSrc",
-      "platform/testFramework/testSrc",
-    ],
-  resource_strip_prefix = "tools/idea/MM_RegExpSupport_testlib.resources",
-  resources = [
-      "//tools/idea:MM_RegExpSupport_testlib.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/jaxen-1.1.3",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:core-impl",
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:lib/xercesImpl",
-      "//tools/idea:lib/xml-apis",
-      "//tools/idea:lib/jsr173_1.0_api",
-      "//tools/idea:lib/xbean",
-      "//tools/idea:lib/resolver",
-      "//tools/idea:lib/picocontainer",
-      "//tools/idea:vcs-api",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:lib/jcip-annotations",
-      "//tools/idea:diff-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/commons-codec-1.9",
-      "//tools/idea:jps-model-serialization",
-      "//tools/idea:lib/guava-18.0",
-      "//tools/idea:lib/gson-2.5",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:icons",
-      "//tools/idea:lib/swingx-core-1.6.2",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:xdebugger-api",
-      "//tools/idea:built-in-server-api",
-      "//tools/idea:xml/relaxng/lib/rngom-20051226-patched",
-      "//tools/idea:xml/relaxng/lib/isorelax",
-      "//tools/idea:xml/relaxng/lib/trang-core",
-      "//tools/idea:xml/relaxng/lib/jing",
-      "//tools/idea:extensions",
-      "//tools/idea:extensions_testlib",
-      "//tools/idea:util",
-      "//tools/idea:lib/sanselan-0.98-snapshot",
-      "//tools/idea:lib/asm",
-      "//tools/idea:lib/asm-commons",
-      "//tools/idea:lib/cglib-2.2.2",
-      "//tools/idea:boot",
-      "//tools/idea:lib/oromatcher",
-      "//tools/idea:lib/velocity",
-      "//tools/idea:usageView",
-      "//tools/idea:lib/xpp3-1.1.4-min",
-      "//tools/idea:lib/cli-parser-1.1",
-      "//tools/idea:indexing-api",
-      "//tools/idea:lib/snappy-in-java-0.3.1",
-      "//tools/idea:jps-model-impl",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:lib/commons-logging-1.2",
-      "//tools/idea:vcs-api-core",
-      "//tools/idea:bootstrap",
-      "//tools/idea:lib/eawtstub",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/jh",
-      "//tools/idea:lib/jna",
-      "//tools/idea:lib/jna-platform",
-      "//tools/idea:lib/winp-1.23",
-      "//tools/idea:lib/miglayout-swing",
-      "//tools/idea:lib/jayatana-1.2.4",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:lib/httpcore-4.4.1",
-      "//tools/idea:lib/httpmime-4.4.1",
-      "//tools/idea:lib/httpclient-4.4.1",
-      "//tools/idea:lib/fluent-hc-4.4.1",
-      "//tools/idea:lib/imgscalr-lib-4.2",
-      "//tools/idea:lib/slf4j-api-1.7.10",
-      "//tools/idea:lib/slf4j-log4j12-1.7.10",
-      "//tools/analytics-library:analytics-tracker",
-      "//tools/analytics-library:analytics-tracker_testlib",
-      "//tools/analytics-library:analytics-shared",
-      "//tools/analytics-library:analytics-shared_testlib",
-      "//tools/analytics-library:analytics-publisher",
-      "//tools/analytics-library:analytics-publisher_testlib",
-      "//tools/base/common:common",
-      "//tools/base/common:common_testlib",
-      "//tools/analytics-library:analytics-protos",
-      "//tools/idea:lib/xmlrpc-2.0",
-      "//tools/idea:tests_bootstrap",
-      "//tools/idea:resources-en",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/groovy-all-2.4.6",
-      "//tools/idea:lib/dev/assertj-core-3.2.0",
-      "//tools/idea:xml-structure-view-api",
-    ],
-  exports = [
-      "//tools/idea:MM_RegExpSupport",
-      "//tools/idea:xml-analysis-api",
-      "//tools/idea:xml-psi-api",
-      "//tools/idea:vcs-api",
-      "//tools/idea:xml-openapi",
-      "//tools/idea:lib/cglib-2.2.2",
-      "//tools/idea:lang-api",
-      "//tools/idea:lang-api_testlib",
-      "//tools/idea:usageView",
-      "//tools/idea:lib/cli-parser-1.1",
-      "//tools/idea:indexing-impl",
-      "//tools/idea:projectModel-impl",
-      "//tools/idea:analysis-impl",
-      "//tools/idea:structure-view-impl",
-      "//tools/idea:diff-api",
-      "//tools/idea:platform-api",
-      "//tools/idea:lib/commons-codec-1.9",
-      "//tools/idea:lvcs-api",
-      "//tools/idea:core-impl",
-      "//tools/idea:lib/miglayout-swing",
-      "//tools/idea:lib/netty-all-4.1.0.CR7",
-      "//tools/idea:editor-ui-ex",
-      "//tools/idea:built-in-server-api",
-      "//tools/idea:lib/hamcrest-core-1.3",
-      "//tools/idea:lib/junit-4.12",
-      "//tools/idea:lib/log4j",
-      "//tools/idea:lib/dev/easymock",
-      "//tools/idea:lib/dev/easymockclassextension",
-      "//tools/idea:lib/dev/jmock-2.5.1",
-      "//tools/idea:lib/dev/jmock-junit4-2.5.1",
-      "//tools/idea:lib/dev/jmock-legacy-2.5.1",
-      "//tools/idea:lib/dev/objenesis-1.0",
-      "//tools/idea:java-runtime",
-      "//tools/idea:lib/groovy-all-2.4.6",
-    ],
-  javacopts = ["-extra_checks:off"],
   visibility = ["//visibility:public"],
 )
 
@@ -8472,25 +3524,26 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "maven-server-api.res",
-  srcs = glob([
-      "plugins/maven/maven-server-api/src/**/*",
+java_import(
+  name = "lib/ant/lib/ant-jdepend",
+  jars = [
+      "lib/ant/lib/ant-jdepend.jar",
     ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/maven-server-api/src": "maven-server-api.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
+  visibility = ["//visibility:public"],
+)
+
+iml_module(
+    name = "editor-ui-api",
+    srcs = ["platform/editor-ui-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:util[module]",
+        "//tools/idea:annotations[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:indexing-api[module]",
     ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -8501,26 +3554,17 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "indexing-api",
-  srcs = glob([
-      "platform/indexing-api/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/indexing-api.resources",
-  resources = [
-      "//tools/idea:indexing-api.res",
+iml_module(
+    name = "indexing-api",
+    srcs = ["platform/indexing-api/src"],
+    deps = [
+        "//tools/idea:core-api[module]",
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:lib/nanoxml-2.2.3",
     ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:core-api",
-      "//tools/idea:projectModel-api",
-      "//tools/idea:lib/nanoxml-2.2.3",
-    ],
-  exports = [
-      "//tools/idea:core-api",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    exports = ["//tools/idea:core-api"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -8531,27 +3575,6 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-fileset(
-  name = "maven-artifact-resolver-m3.res",
-  srcs = glob([
-      "plugins/maven/artifact-resolver-m3/src/**/*",
-    ],
-    exclude = [
-      "**/* *",
-      "**/*.java",
-      "**/*.kt",
-      "**/*.groovy",
-      "**/*$*",
-      "**/.DS_Store",
-    ]),
-  mappings = {
-      "plugins/maven/artifact-resolver-m3/src": "maven-artifact-resolver-m3.resources",
-    },
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-    ],
-)
-
 java_import(
   name = "lib/xml-apis-ext",
   jars = [
@@ -8560,21 +3583,12 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "maven-artifact-resolver-common",
-  srcs = glob([
-      "plugins/maven/artifact-resolver/common/src/**/*.java",
-    ]),
-  resource_strip_prefix = "tools/idea/maven-artifact-resolver-common.resources",
-  resources = [
-      "//tools/idea:maven-artifact-resolver-common.res",
-    ],
-  deps = [
-      "@local_jdk//:langtools-neverlink",
-      "//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5",
-    ],
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+iml_module(
+    name = "maven-artifact-resolver-common",
+    srcs = ["plugins/maven/artifact-resolver/common/src"],
+    deps = ["//tools/idea:plugins/maven/maven30-server-impl/lib/maven3/lib/maven-artifact-3.0.5"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
 
 java_import(
@@ -8585,30 +3599,45 @@ java_import(
   visibility = ["//visibility:public"],
 )
 
-java_library(
-  name = "resources",
-  srcs = glob([
-    ]),
-  resource_strip_prefix = "tools/idea/resources.resources",
-  resources = [
-      "//tools/idea:resources.res",
+iml_module(
+    name = "resources",
+    srcs = ["resources/src"],
+    deps = [
+        "//tools/idea:MM_RegExpSupport[module]",
+        "//tools/idea:community-resources[module]",
+        "//tools/idea:util[module]",
     ],
-  javacopts = ["-extra_checks:off"],
+    exports = [
+        "//tools/idea:MM_RegExpSupport",
+        "//tools/idea:community-resources",
+    ],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+  name = "lib/miglayout-swing",
+  jars = [
+      "lib/miglayout-swing.jar",
+    ],
   visibility = ["//visibility:public"],
 )
 
-java_test(
-  name = "jps-serialization-tests_tests",
-  srcs = glob([
-    ]),
-  runtime_deps = [
-      ":jps-serialization-tests_testlib",
-      "//tools/base/testutils:testutils",
+iml_module(
+    name = "projectModel-impl",
+    srcs = ["platform/projectModel-impl/src"],
+    deps = [
+        "//tools/idea:projectModel-api[module]",
+        "//tools/idea:core-impl[module]",
+        "//tools/idea:jps-model-api[module]",
+        "//tools/idea:jps-model-impl[module]",
+        "//tools/idea:jps-model-serialization[module]",
+        "//tools/idea:lib/snappy-in-java-0.3.1",
     ],
-  jvm_flags = [
-      "-Dtest.suite.jar=jps-serialization-tests_testlib.jar",
+    exports = [
+        "//tools/idea:projectModel-api",
+        "//tools/idea:jps-model-serialization",
     ],
-  test_class = "com.android.testutils.JarTestSuite",
-  javacopts = ["-extra_checks:off"],
-  visibility = ["//visibility:public"],
+    javacopts = ["-extra_checks:off"],
+    visibility = ["//visibility:public"],
 )
