@@ -50,7 +50,7 @@ class NsisFileListGenerator {
       directoryToFiles.each {
         if (!it.value.empty) {
           out.newLine()
-          out.writeLine("SetOutPath \$INSTDIR${it.key.isEmpty() ? "" : "\\"}${toWinPath(it.key)}")
+          out.writeLine("SetOutPath \"\$INSTDIR${it.key.isEmpty() ? "" : "\\"}${toWinPath(it.key)}\"")
 
           it.value.each {
             out.writeLine("File \"${it.absolutePath}\"")
