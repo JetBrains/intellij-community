@@ -63,8 +63,8 @@ public final class GapsTest extends TestCase{
     panel.doLayout();
 
     if (SystemInfo.isMac) {
-      assertEquals(new Rectangle(0,0,100,28), field1.getBounds());
-      assertEquals(new Rectangle(107,0,100,28), field2.getBounds());
+      assertEquals(new Rectangle(0,0,100,26), field1.getBounds());
+      assertEquals(new Rectangle(107,0,100,26), field2.getBounds());
     } else {
       assertEquals(new Rectangle(0,0,100,20), field1.getBounds());
       assertEquals(new Rectangle(107,0,100,20), field2.getBounds());
