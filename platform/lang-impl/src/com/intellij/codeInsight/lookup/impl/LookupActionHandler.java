@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollingUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -70,9 +71,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   protected abstract void executeInLookup(LookupImpl lookup, DataContext context, @Nullable Caret caret);
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
+    return lookup != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 
   private static void executeUpOrDown(LookupImpl lookup, boolean up) {
