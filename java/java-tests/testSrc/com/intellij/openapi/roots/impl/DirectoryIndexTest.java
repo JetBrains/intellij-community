@@ -23,15 +23,13 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +51,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myTestSrc1;
   private VirtualFile myPack1Dir, myPack2Dir;
   private VirtualFile myFileLibDir, myFileLibSrc, myFileLibCls;
-  private VirtualFile myLibDir, myLibSrcDir, myLibClsDir;
+  private VirtualFile myLibDir, myLibSrcDir, myLibAdditionalSrcDir, myLibClsDir;
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
@@ -84,6 +82,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
                 lib
                     src
                       exc
+                    additional-src
                     cls
                       exc
                 module2
@@ -111,6 +110,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
       myLibDir = createChildDirectory(myModule1Dir, "lib");
       myLibSrcDir = createChildDirectory(myLibDir, "src");
       myExcludedLibSrcDir = createChildDirectory(myLibSrcDir, "exc");
+      myLibAdditionalSrcDir = createChildDirectory(myLibDir, "additional-src");
       myLibClsDir = createChildDirectory(myLibDir, "cls");
       myExcludedLibClsDir = createChildDirectory(myLibClsDir, "exc");
       myModule2Dir = createChildDirectory(myModule1Dir, "module2");
@@ -154,6 +154,13 @@ public class DirectoryIndexTest extends IdeaTestCase {
                                                     Collections.singletonList(myLibClsDir.getUrl()), Collections.singletonList(myLibSrcDir.getUrl()),
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
+      PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
+        @NotNull
+        @Override
+        public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
+          return Collections.singletonList(myLibAdditionalSrcDir);
+        }
+      }, getTestRootDisposable());
 
       // fill roots of module3
       {
@@ -600,7 +607,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
-    
+    checkInfo(myLibAdditionalSrcDir, myModule, true, true, null, null, myModule);
+
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
 
