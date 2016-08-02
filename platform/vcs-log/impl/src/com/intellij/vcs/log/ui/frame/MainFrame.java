@@ -283,7 +283,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (roots.size() == 1) {
         return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
       }
-    } else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
+    }
+    else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
       int[] selectedRows = myGraphTable.getSelectedRows();
       if (selectedRows.length != 1) return null;
       return myGraphTable.getModel().getBranchesAtRow(selectedRows[0]);
@@ -329,7 +330,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private class CommitSelectionListenerForDiff extends CommitSelectionListener {
     protected CommitSelectionListenerForDiff() {
-      super(myLogData, myGraphTable, myChangesLoadingPane);
+      super(myLogData, MainFrame.this.myGraphTable, myChangesLoadingPane);
     }
 
     @Override

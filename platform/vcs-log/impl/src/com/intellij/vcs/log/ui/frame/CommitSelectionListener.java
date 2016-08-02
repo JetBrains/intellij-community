@@ -34,7 +34,7 @@ import java.util.List;
 public abstract class CommitSelectionListener implements ListSelectionListener {
   private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogGraphTable myGraphTable;
+  @NotNull protected final VcsLogGraphTable myGraphTable;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
   @Nullable private ListSelectionEvent myLastEvent;
