@@ -43,8 +43,8 @@ public class PsiEllipsisType extends PsiArrayType {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(getComponentType().getPresentableText(), "...", false, true);
+  public String getPresentableText(boolean annotated) {
+    return getText(getComponentType().getPresentableText(), "...", false, annotated);
   }
 
   @NotNull

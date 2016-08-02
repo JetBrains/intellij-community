@@ -83,8 +83,8 @@ public class PsiWildcardType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(false, true, myBound == null ? null : myBound.getPresentableText());
+  public String getPresentableText(boolean annotated) {
+    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText());
   }
 
   @Override

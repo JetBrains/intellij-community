@@ -185,9 +185,10 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
+  public String getPresentableText(boolean annotated) {
     String presentableText = PsiNameHelper.getPresentableText(myReference);
-    PsiAnnotation[] annotations = getAnnotations();
+
+    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
     if (annotations.length == 0) return presentableText;
 
     StringBuilder sb = new StringBuilder();
