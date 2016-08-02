@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
@@ -51,7 +50,6 @@ import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletio
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -766,12 +764,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull
     private List<String> getUsersList(@NotNull Project project) {
       VcsUserRegistry userRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
-      return map(userRegistry.getUsers(), new Function<VcsUser, String>() {
-        @Override
-        public String fun(VcsUser user) {
-          return VcsUserUtil.toExactString(user);
-        }
-      });
+      return map(userRegistry.getUsers(), VcsUserUtil::toExactString);
     }
 
     @Override

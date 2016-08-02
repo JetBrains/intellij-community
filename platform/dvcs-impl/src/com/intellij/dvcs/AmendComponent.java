@@ -20,8 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,7 +27,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -52,11 +48,12 @@ public abstract class AmendComponent {
 
   private static final Logger LOG = Logger.getInstance(AmendComponent.class);
 
-  @NotNull protected final JCheckBox myAmend;
+  @NotNull private final CheckinProjectPanel myCheckinPanel;
+  @NotNull private final JCheckBox myAmend;
   @NotNull private final String myPreviousMessage;
+
+  @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
-  @NotNull protected final CheckinProjectPanel myCheckinPanel;
-  @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
 
   public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
     this(project, panel, DvcsBundle.message("commit.amend"));
@@ -64,7 +61,6 @@ public abstract class AmendComponent {
 
   public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel, @NotNull String title) {
     myCheckinPanel = panel;
-
     myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
@@ -74,16 +70,16 @@ public abstract class AmendComponent {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myAmend.isSelected()) {
-            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
-              if (myMessagesForRoots == null) {
-                loadMessagesInModalTask(project);      //load all commit messages for all repositories
-              }
-              String message = constructAmendedMessage();
-              if (!StringUtil.isEmptyOrSpaces(message)) {
-                myAmendedMessage = message;
-                substituteCommitMessage(myAmendedMessage);
-              }
+          if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+            if (myMessagesForRoots == null) {
+              loadMessagesInModalTask(project); // load all commit messages for all repositories
             }
+            String message = constructAmendedMessage();
+            if (!StringUtil.isEmptyOrSpaces(message)) {
+              myAmendedMessage = message;
+              substituteCommitMessage(myAmendedMessage);
+            }
+          }
         }
         else {
           // there was the amended message, but user has changed it => not reverting
@@ -95,8 +91,9 @@ public abstract class AmendComponent {
     });
   }
 
+  @Nullable
   private String constructAmendedMessage() {
-    Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths());        // get only selected files
+    Set<VirtualFile> selectedRoots = getVcsRoots(getSelectedFilePaths()); // get only selected files
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     if (myMessagesForRoots != null) {
       for (VirtualFile root : selectedRoots) {
@@ -125,13 +122,8 @@ public abstract class AmendComponent {
 
   private void loadMessagesInModalTask(@NotNull Project project) {
     try {
-      myMessagesForRoots =
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Map<VirtualFile,String>, VcsException>() {
-          @Override
-          public Map<VirtualFile, String> compute() throws VcsException {
-            return getLastCommitMessages();
-          }
-        }, "Reading commit message...", false, project);
+      myMessagesForRoots = ProgressManager.getInstance().runProcessWithProgressSynchronously(this::getLastCommitMessages,
+                                                                                             "Reading Commit Message...", true, project);
     }
     catch (VcsException e) {
       Messages.showErrorDialog(project, "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
@@ -151,25 +143,16 @@ public abstract class AmendComponent {
   private Map<VirtualFile, String> getLastCommitMessages() throws VcsException {
     Map<VirtualFile, String> messagesForRoots = new HashMap<>();
     Collection<VirtualFile> roots = myCheckinPanel.getRoots(); //all committed vcs roots, not only selected
-    final Ref<VcsException> exception = Ref.create();
     for (VirtualFile root : roots) {
       String message = getLastCommitMessage(root);
       messagesForRoots.put(root, message);
-    }
-    if (!exception.isNull()) {
-      throw exception.get();
     }
     return messagesForRoots;
   }
 
   @NotNull
   private List<FilePath> getSelectedFilePaths() {
-    return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
-      @Override
-      public FilePath fun(File file) {
-        return VcsUtil.getFilePath(file);
-      }
-    });
+    return ContainerUtil.map(myCheckinPanel.getFiles(), VcsUtil::getFilePath);
   }
 
   @NotNull
