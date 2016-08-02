@@ -42,7 +42,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,7 +49,7 @@ import java.util.*;
  * @author Dennis.Ushakov
  */
 public class ExtractMethodHelper {
-  public static void processDuplicates(@Nullable final PsiElement callElement,
+  public static void processDuplicates(@NotNull final PsiElement callElement,
                                        @NotNull final PsiElement generatedMethod,
                                        @NotNull final List<PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
@@ -61,7 +60,7 @@ public class ExtractMethodHelper {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
       return;
     }
-    final Project project = generatedMethod.getProject();
+    final Project project = callElement.getProject();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("searching.for.duplicates"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
@@ -116,7 +115,7 @@ public class ExtractMethodHelper {
    * @param duplicates  discovered duplicates of extracted code fragment
    * @see #collectDuplicates(SimpleDuplicatesFinder, List, PsiElement)
    */
-  public static void replaceDuplicates(@Nullable PsiElement callElement,
+  public static void replaceDuplicates(@NotNull PsiElement callElement,
                                        @NotNull Editor editor,
                                        @NotNull Consumer<Pair<SimpleMatch, PsiElement>> replacer,
                                        @NotNull List<SimpleMatch> duplicates) {
@@ -125,12 +124,7 @@ public class ExtractMethodHelper {
         .message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
                  ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
       final boolean isUnittest = ApplicationManager.getApplication().isUnitTestMode();
-      final Project project = callElement != null ? callElement.getProject() : editor.getProject();
-      if (project == null) {
-        Messages.showErrorDialog(editor.getComponent(), "Cannot find project.");
-        return;
-      }
-
+      final Project project = callElement.getProject();
       final int exitCode = !isUnittest ? Messages.showYesNoDialog(project, message,
                                                                   RefactoringBundle.message("refactoring.extract.method.dialog.title"),
                                                                   Messages.getInformationIcon()) :
