@@ -1,5 +1,5 @@
 class A:
-    <error descr="method \"__init__\" cannot be async">async</error> def __init__(self):
+    <error descr="function \"__init__\" cannot be async">async</error> def __init__(self):
         self.foo = '2'
         self.bar = '3'
 
