@@ -22,7 +22,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails>
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                     @NotNull ConcurrentIntObjectMap<VcsCommitMetadata> topCommitsDetailsCache,
                     @NotNull Disposable parentDisposable) {
-    super(hashMap, logProviders, new VcsCommitCache<Integer, VcsShortCommitDetails>(), parentDisposable);
+    super(hashMap, logProviders, new VcsCommitCache<>(), parentDisposable);
     myTopCommitsDetailsCache = topCommitsDetailsCache;
   }
 
