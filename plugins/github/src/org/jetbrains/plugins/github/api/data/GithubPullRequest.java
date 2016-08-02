@@ -62,7 +62,7 @@ public class GithubPullRequest {
     @Mandatory private String ref;
     @Mandatory private String sha;
 
-    @Mandatory private GithubRepo repo;
+    private GithubRepo repo;
     @Mandatory private GithubUser user;
 
     @NotNull
@@ -80,7 +80,7 @@ public class GithubPullRequest {
       return sha;
     }
 
-    @NotNull
+    @Nullable
     public GithubRepo getRepo() {
       return repo;
     }
