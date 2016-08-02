@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class FileChooser {
                                  @Nullable final Project project,
                                  @Nullable final VirtualFile toSelect,
                                  @NotNull final Consumer<List<VirtualFile>> callback) {
-    chooseFiles(descriptor, project, null, toSelect, callback);
+    chooseFiles(descriptor, project, IdeFocusManager.getInstance(project).getFocusOwner(), toSelect, callback);
   }
 
   /**
