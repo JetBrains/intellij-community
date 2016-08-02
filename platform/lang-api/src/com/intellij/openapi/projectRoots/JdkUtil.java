@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,21 +75,28 @@ public class JdkUtil {
   @Nullable
   public static String getJdkMainAttribute(@NotNull Sdk jdk, Attributes.Name attribute) {
     VirtualFile homeDirectory = jdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
 
-    VirtualFile rtJar = homeDirectory.findFileByRelativePath("jre/lib/rt.jar");                 // JDK
-    if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("lib/rt.jar");              // JRE
-    if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("jre/lib/vm.jar");          // IBM JDK
-    if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar");  // Apple JDK
+    VirtualFile rtJar = null;
+    if (homeDirectory != null) {
+      rtJar = homeDirectory.findFileByRelativePath("jre/lib/rt.jar");                             // JDK
+      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("lib/rt.jar");              // JRE
+      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("jre/lib/vm.jar");          // IBM JDK
+      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar");  // Apple JDK
+    }
 
     if (rtJar == null) {
-      String versionString = jdk.getVersionString();
-      if (versionString != null) {
-        final int start = versionString.indexOf("\"");
-        final int end = versionString.lastIndexOf("\"");
-        versionString = start >= 0 && (end > start)? versionString.substring(start + 1, end) : null;
+      if (attribute == Attributes.Name.IMPLEMENTATION_VERSION) {
+        String versionString = jdk.getVersionString();
+        if (versionString != null) {
+          final int start = versionString.indexOf("\"");
+          final int end = versionString.lastIndexOf("\"");
+          versionString = start >= 0 && (end > start) ? versionString.substring(start + 1, end) : null;
+        }
+        return versionString;
       }
-      return versionString;
+      else {
+        return null;
+      }
     }
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJar);
