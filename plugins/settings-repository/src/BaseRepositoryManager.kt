@@ -26,8 +26,10 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.*
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -163,7 +165,12 @@ fun Path.removeWithParentsIfEmpty(root: Path, isFile: Boolean = true) {
     // remove empty directories
     var parent = this.parent
     while (parent != null && parent != root) {
-      parent.delete()
+      try {
+        Files.delete(parent)
+      }
+      catch (e: IOException) {
+        break
+      }
       parent = parent.parent
     }
   }
