@@ -136,21 +136,23 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
     projectBuildingRequest.setResolveDependencies(false);
+
     try {
-      buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
-    }
-    catch (ProjectBuildingException e) {
-      for (ProjectBuildingResult result : e.getResults()) {
-        if (result.getProject() != null) {
-          buildingResults.add(result);
+      if (files.size() == 1) {
+        buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+      }
+      else {
+        try {
+          buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
         }
-        else {
-          try {
-            ProjectBuildingResult build = builder.build(result.getPomFile(), projectBuildingRequest);
-            buildingResults.add(build);
-          }
-          catch (ProjectBuildingException e2) {
-            buildingResults.addAll(e2.getResults());
+        catch (ProjectBuildingException e) {
+          for (ProjectBuildingResult result : e.getResults()) {
+            if (result.getProject() != null) {
+              buildingResults.add(result);
+            }
+            else {
+              buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
+            }
           }
         }
       }
@@ -159,6 +161,19 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       modelInterpolator.setLocalRepository(savedLocalRepository);
     }
     return buildingResults;
+  }
+
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
+    try {
+      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
+      buildingResults.add(build);
+    }
+    catch (ProjectBuildingException e) {
+      buildingResults.addAll(e.getResults());
+    }
   }
 
   protected void addMvn2CompatResults(MavenProject project,
