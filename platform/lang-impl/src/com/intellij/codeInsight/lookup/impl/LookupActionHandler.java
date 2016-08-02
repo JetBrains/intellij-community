@@ -40,11 +40,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class LookupActionHandler extends EditorActionHandler {
   protected final EditorActionHandler myOriginalHandler;
-  private final boolean myRequireFocusedLookup;
 
-  public LookupActionHandler(EditorActionHandler originalHandler, boolean requireFocusedLookup) {
+  public LookupActionHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
-    myRequireFocusedLookup = requireFocusedLookup;
   }
 
   @Override
@@ -55,7 +53,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   @Override
   public void doExecute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
+    if (lookup == null || !lookup.isAvailableToUser()) {
       Project project = editor.getProject();
       if (project != null && lookup != null) {
         LookupManager.getInstance(project).hideActiveLookup();
@@ -97,7 +95,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   public static class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -145,7 +143,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class UpHandler extends LookupActionHandler {
     public UpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -161,7 +159,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -173,7 +171,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -185,7 +183,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class LeftHandler extends LookupActionHandler {
     public LeftHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
@@ -204,7 +202,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
   public static class RightHandler extends LookupActionHandler {
     public RightHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
+      super(originalHandler);
     }
 
     @Override
