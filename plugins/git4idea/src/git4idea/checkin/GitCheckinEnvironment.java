@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
@@ -73,6 +74,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -99,6 +101,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
+  private boolean myNextCommitSignOff;
 
   public GitCheckinEnvironment(@NotNull Project project,
                                @NotNull final VcsDirtyScopeManager dirtyScopeManager,
@@ -225,7 +228,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             Set<FilePath> files = new HashSet<>();
             files.addAll(added);
             files.addAll(removed);
-            commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend, myNextCommitAuthorDate);
+            commit(myProject, root, files, messageFile);
           }
           catch (VcsException ex) {
             PartialOperation partialOperation = isMergeCommit(ex);
@@ -259,13 +262,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private static List<VcsException> commitWithCaseOnlyRename(@NotNull Project project,
-                                                             @NotNull VirtualFile root,
-                                                             @NotNull Set<Change> caseOnlyRenames,
-                                                             @NotNull Set<FilePath> added,
-                                                             @NotNull Set<FilePath> removed,
-                                                             @NotNull File messageFile,
-                                                             @Nullable String author) {
+  private List<VcsException> commitWithCaseOnlyRename(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull Set<Change> caseOnlyRenames,
+                                                      @NotNull Set<FilePath> added,
+                                                      @NotNull Set<FilePath> removed,
+                                                      @NotNull File messageFile,
+                                                      @Nullable String author) {
     String rootPath = root.getPath();
     LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
@@ -364,13 +367,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param partialOperation
    * @return true if merge commit was successful
    */
-  private static boolean mergeCommit(final Project project,
-                                     final VirtualFile root,
-                                     final Set<FilePath> added,
-                                     final Set<FilePath> removed,
-                                     final File messageFile,
-                                     final String author,
-                                     List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
+  private boolean mergeCommit(final Project project,
+                              final VirtualFile root,
+                              final Set<FilePath> added,
+                              final Set<FilePath> removed,
+                              final File messageFile,
+                              final String author,
+                              List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
@@ -459,15 +462,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
-  private static void commitWithoutPaths(@NotNull Project project,
-                                         @NotNull VirtualFile root,
-                                         @NotNull File messageFile,
-                                         @Nullable String author) throws VcsException {
+  private void commitWithoutPaths(@NotNull Project project,
+                                  @NotNull VirtualFile root,
+                                  @NotNull File messageFile,
+                                  @Nullable String author) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
     handler.addParameters("-F", messageFile.getAbsolutePath());
     if (author != null) {
       handler.addParameters("--author=" + author);
+    }
+    if (myNextCommitSignOff) {
+      handler.addParameters("--signoff");
     }
     handler.endOptions();
     handler.run();
@@ -573,17 +579,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  private static void commit(Project project,
-                             VirtualFile root,
-                             Collection<FilePath> files,
-                             File message,
-                             final String nextCommitAuthor,
-                             boolean nextCommitAmend, Date nextCommitAuthorDate)
+  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files, @NotNull File message)
     throws VcsException {
-    boolean amend = nextCommitAmend;
+    boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.setStdoutSuppressed(false);
+      if (myNextCommitSignOff) {
+        handler.addParameters("--signoff");
+      }
       if (amend) {
         handler.addParameters("--amend");
       }
@@ -591,11 +595,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         amend = true;
       }
       handler.addParameters("--only", "-F", message.getAbsolutePath());
-      if (nextCommitAuthor != null) {
-        handler.addParameters("--author=" + nextCommitAuthor);
+      if (myNextCommitAuthor != null) {
+        handler.addParameters("--author=" + myNextCommitAuthor);
       }
-      if (nextCommitAuthorDate != null) {
-        handler.addParameters("--date", COMMIT_DATE_FORMAT.format(nextCommitAuthorDate));
+      if (myNextCommitAuthorDate != null) {
+        handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
       }
       handler.endOptions();
       handler.addParameters(paths);
@@ -695,6 +699,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
     @NotNull private AmendComponent myAmendComponent;
+    @NotNull private final JCheckBox mySignOffCheckbox;
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myVcs = assertNotNull(GitVcs.getInstance(project));
@@ -705,6 +710,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       authorLabel.setLabelFor(myAuthorField);
 
       myAmendComponent = new MyAmendComponent(project, panel);
+      mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
+      mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
 
       GridBag gb = new GridBag().
         setDefaultAnchor(GridBagConstraints.WEST).
@@ -712,6 +719,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel = new JPanel(new GridBagLayout());
       myPanel.add(authorLabel, gb.nextLine().next());
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
+      myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
       myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
     }
 
@@ -787,6 +795,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       myNextCommitAmend = myAmendComponent.isAmend();
       myNextCommitAuthorDate = myAuthorDate;
+      mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
+      myNextCommitSignOff = mySignOffCheckbox.isSelected();
     }
 
     @Override
