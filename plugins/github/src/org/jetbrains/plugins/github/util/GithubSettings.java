@@ -170,7 +170,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   private void setPassword(@NotNull String password, boolean rememberPassword) {
-    PasswordSafe.getInstance().setPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password, !rememberPassword);
+    if (!rememberPassword) return;
+    PasswordSafe.getInstance().setPassword(GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
   }
 
   private static boolean isValidGitAuth(@NotNull GithubAuthData auth) {
