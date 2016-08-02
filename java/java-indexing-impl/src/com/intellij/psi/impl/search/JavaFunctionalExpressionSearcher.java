@@ -42,10 +42,7 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -163,13 +160,26 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       ReadAction.run(() -> {
         if (!psiMethod.isValid()) return;
 
-        final GlobalSearchScope methodUseScope = convertToGlobalScope(psiMethod.getProject(), psiMethod.getUseScope());
+        GlobalSearchScope methodUseScope = getGlobalUseScope(psiMethod);
         for (Location location : getPossibleCallLocations(descriptor.samClass, psiMethod)) {
           queries.putValue(location, methodUseScope);
         }
       });
     }
     return queries;
+  }
+
+  @NotNull
+  private static GlobalSearchScope getGlobalUseScope(PsiMethod method) {
+    if (PsiTreeUtil.getContextOfType(method, PsiAnonymousClass.class) != null || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      // don't call method.getUseScope as it'll be too specific and might cause stub-AST switch
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(method);
+      if (vFile != null) {
+        return GlobalSearchScope.fileScope(method.getProject(), vFile);
+      }
+    }
+
+    return convertToGlobalScope(method.getProject(), method.getUseScope());
   }
 
   @NotNull
