@@ -150,7 +150,12 @@ class StateMap private constructor(private val names: Array<String>, private val
         diffs.add(key)
       }
     }
-    else if (getNewByteIfDiffers(key, newState!!, oldState as ByteArray) != null) {
+    else if (oldState == null) {
+      if (newState != null) {
+        diffs.add(key)
+      }
+    }
+    else if (newState == null || getNewByteIfDiffers(key, newState, oldState as ByteArray) != null) {
       diffs.add(key)
     }
   }

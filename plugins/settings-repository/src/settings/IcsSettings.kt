@@ -79,6 +79,7 @@ fun loadSettings(settingsFile: Path): IcsSettings {
 }
 
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class IcsSettings {
   var shareProjectWorkspace = false
   var commitDelay = DEFAULT_COMMIT_DELAY

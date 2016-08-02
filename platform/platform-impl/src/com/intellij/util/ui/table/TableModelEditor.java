@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   private final MyListTableModel model;
 
   public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
-    this(Collections.<T>emptyList(), columns, itemEditor, emptyText);
+    this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 
   /**
@@ -175,16 +175,16 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return model;
   }
 
-  public static abstract class DialogItemEditor<T> extends CollectionItemEditor<T> {
-    public abstract void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
+  public interface DialogItemEditor<T> extends CollectionItemEditor<T> {
+    void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
 
-    public abstract void applyEdited(@NotNull T oldItem, @NotNull T newItem);
+    void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 
-    public boolean isEditable(@NotNull T item) {
+    default boolean isEditable(@NotNull T item) {
       return true;
     }
 
-    public boolean isUseDialogToAdd() {
+    default boolean isUseDialogToAdd() {
       return false;
     }
   }

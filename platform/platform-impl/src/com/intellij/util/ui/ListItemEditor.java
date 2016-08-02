@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,17 @@ package com.intellij.util.ui;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ListItemEditor<T> extends CollectionItemEditor<T> {
+public interface ListItemEditor<T> extends CollectionItemEditor<T> {
   @NotNull
-  public abstract String getName(@NotNull T item);
+  default String getName(@NotNull T item) {
+    return item.toString();
+  }
 
-  public void applyModifiedProperties(@NotNull T newItem, @NotNull T oldItem) {
+  default void applyModifiedProperties(@NotNull T newItem, @NotNull T oldItem) {
     XmlSerializerUtil.copyBean(newItem, oldItem);
   }
 
-  public boolean isEditable(@NotNull T item) {
+  default boolean isEditable(@NotNull T item) {
     return true;
   }
 }

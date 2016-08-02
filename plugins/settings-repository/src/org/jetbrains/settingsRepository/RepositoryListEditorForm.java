@@ -15,25 +15,20 @@
  */
 package org.jetbrains.settingsRepository;
 
+import com.intellij.openapi.ui.ComboBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class IcsConfigurableForm {
-  private final IcsConfigurableUi ui;
+class RepositoryListEditorForm {
+  ComboBox repositoryList;
+  JButton deleteButton;
+  JPanel component;
 
-  JPanel readOnlySourcesPanel;
-  JPanel rootPanel;
-  JCheckBox autoSyncCheckBox;
-
-  @SuppressWarnings("unused")
-  private JPanel repositoryListEditor;
-
-  public IcsConfigurableForm(@NotNull IcsConfigurableUi ui) {
-    this.ui = ui;
+  public RepositoryListEditorForm(@NotNull ComboBox repositoryList) {
+    this.repositoryList = repositoryList;
   }
 
   private void createUIComponents() {
-    repositoryListEditor = (JPanel)ui.getRepositoryListEditor().getComponent();
   }
 }
