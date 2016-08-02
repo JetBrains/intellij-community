@@ -37,7 +37,7 @@ public class PutLabelAction extends LocalHistoryActionWithDialog {
   }
 
   @Override
-  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
-    return f != null && gw.isVersioned(f);
+  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, AnActionEvent e) {
+    return true;
   }
 }

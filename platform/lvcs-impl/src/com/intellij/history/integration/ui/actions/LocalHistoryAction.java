@@ -22,10 +22,8 @@ import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +42,15 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
     LocalHistoryFacade vcs = getVcs();
     IdeaGateway gateway = getGateway();
-    p.setEnabled(vcs != null && gateway != null && isEnabled(vcs, gateway, getFile(e), e));
+    p.setEnabled(vcs != null && gateway != null && isEnabled(vcs, gateway, e));
   }
 
   protected String getText(AnActionEvent e) {
     return e.getPresentation().getTextWithMnemonic();
+  }
+
+  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, AnActionEvent e) {
+    return isEnabled(vcs, gw, getFile(e), e);
   }
 
   protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
