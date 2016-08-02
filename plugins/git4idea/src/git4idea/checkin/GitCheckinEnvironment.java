@@ -16,7 +16,7 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.DvcsCommitAdditionalComponent;
+import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ModalityState;
@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
@@ -47,6 +48,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -81,6 +83,7 @@ import java.util.List;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.getLogString;
 
@@ -688,42 +691,39 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthorDate = null;
   }
 
-  private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
-    private final GitVcs myVcs;
+  private class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
+    @NotNull private final GitVcs myVcs;
+    @NotNull private JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
+    @NotNull private AmendComponent myAmendComponent;
 
-    GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
-      super(project, panel);
-      myVcs = GitVcs.getInstance(project);
-      final Insets insets = JBUI.insets(2);
-      // add authors drop down
-      GridBagConstraints c = new GridBagConstraints();
-      c.gridx = 0;
-      c.gridy = 0;
-      c.anchor = GridBagConstraints.WEST;
-      c.insets = insets;
-      final JLabel authorLabel = new JLabel(GitBundle.message("commit.author"));
-      myPanel.add(authorLabel, c);
+    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+      myVcs = assertNotNull(GitVcs.getInstance(project));
 
-      c = new GridBagConstraints();
-      c.anchor = GridBagConstraints.CENTER;
-      c.insets = insets;
-      c.gridx = 1;
-      c.gridy = 0;
-      c.weightx = 1;
-      c.fill = GridBagConstraints.HORIZONTAL;
+      myAuthorField = createTextField(project, getAuthors(project));
+      myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
+      JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
+      authorLabel.setLabelFor(myAuthorField);
 
+      myAmendComponent = new MyAmendComponent(project, panel);
+
+      GridBag gb = new GridBag().
+        setDefaultAnchor(GridBagConstraints.WEST).
+        setDefaultInsets(JBUI.insets(2));
+      myPanel = new JPanel(new GridBagLayout());
+      myPanel.add(authorLabel, gb.nextLine().next());
+      myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
+      myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
+    }
+
+    @NotNull
+    private List<String> getAuthors(@NotNull Project project) {
       Set<String> authors = new HashSet<>(getUsersList(project));
       addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<>(authors);
       Collections.sort(list);
-
-      myAuthorField = createTextField(project, list);
-
-      authorLabel.setLabelFor(myAuthorField);
-      myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
-      myPanel.add(myAuthorField, c);
+      return list;
     }
 
     @NotNull
@@ -733,28 +733,34 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
     }
 
-    @Override
-    @NotNull
-    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
-      return GitUtil.gitRoots(filePaths);
-    }
+    private class MyAmendComponent extends AmendComponent {
+      public MyAmendComponent(Project project, CheckinProjectPanel panel) {
+        super(project, panel);
+      }
 
-    @Nullable
-    @Override
-    protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
-      h.addParameters("--max-count=1");
-      String formatPattern;
-      if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
-        formatPattern = "%B";
+      @NotNull
+      @Override
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files) {
+        return GitUtil.gitRoots(files);
       }
-      else {
-        // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
-        // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
-        formatPattern = "%s%n%n%-b";
+
+      @Nullable
+      @Override
+      protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
+        GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+        h.addParameters("--max-count=1");
+        String formatPattern;
+        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+          formatPattern = "%B";
+        }
+        else {
+          // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+          // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
+          formatPattern = "%s%n%n%-b";
+        }
+        h.addParameters("--pretty=format:" + formatPattern);
+        return h.run();
       }
-      h.addParameters("--pretty=format:" + formatPattern);
-      return h.run();
     }
 
     @NotNull
@@ -770,7 +776,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void refresh() {
-      super.refresh();
+      myAmendComponent.refresh();
       myAuthorField.setText(null);
       myAuthorDate = null;
       reset();
@@ -786,7 +792,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
-      myNextCommitAmend = myAmend.isSelected();
+      myNextCommitAmend = myAmendComponent.isAmend();
       myNextCommitAuthorDate = myAuthorDate;
     }
 
@@ -808,6 +814,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myAuthorField.setText(null);
         myAuthorDate = null;
       }
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myPanel;
     }
   }
 

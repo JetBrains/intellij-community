@@ -27,12 +27,10 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,33 +43,29 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComponent {
+/**
+ * Provides a checkbox to amend current commit to the previous commit.
+ * Selecting a checkbox loads the previous commit message from the provider, and substitutes current message in the editor,
+ * unless it was already modified by user.
+ */
+public abstract class AmendComponent {
 
-  private static final Logger log = Logger.getInstance(DvcsCommitAdditionalComponent.class);
+  private static final Logger LOG = Logger.getInstance(AmendComponent.class);
 
-  protected final JPanel myPanel;
-  protected final JCheckBox myAmend;
+  @NotNull protected final JCheckBox myAmend;
   @NotNull private final String myPreviousMessage;
   @Nullable private String myAmendedMessage;
   @NotNull protected final CheckinProjectPanel myCheckinPanel;
   @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
 
-  public DvcsCommitAdditionalComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
-    myCheckinPanel = panel;
-    myPanel = new JPanel(new GridBagLayout());
-    final Insets insets = JBUI.insets(2);
-    // add amend checkbox
-    GridBagConstraints c = new GridBagConstraints();
-    //todo change to MigLayout
-    c.gridx = 0;
-    c.gridy = 1;
-    c.gridwidth = 2;
-    c.anchor = GridBagConstraints.CENTER;
-    c.insets = insets;
-    c.weightx = 1;
-    c.fill = GridBagConstraints.HORIZONTAL;
+  public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+    this(project, panel, DvcsBundle.message("commit.amend"));
+  }
 
-    myAmend = new NonFocusableCheckBox(DvcsBundle.message("commit.amend"));
+  public AmendComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel, @NotNull String title) {
+    myCheckinPanel = panel;
+
+    myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
     myPreviousMessage = myCheckinPanel.getCommitMessage();
@@ -99,7 +93,6 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
         }
       }
     });
-    myPanel.add(myAmend, c);
   }
 
   private String constructAmendedMessage() {
@@ -116,12 +109,18 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
   public void refresh() {
     myAmend.setSelected(false);
+  }
+
+  @NotNull
+  public Component getComponent() {
+    return myAmend;
+  }
+
+  @NotNull
+  public JCheckBox getCheckBox() {
+    return myAmend;
   }
 
   private void loadMessagesInModalTask(@NotNull Project project) {
@@ -135,9 +134,9 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
         }, "Reading commit message...", false, project);
     }
     catch (VcsException e) {
-      Messages.showErrorDialog(getComponent(), "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
+      Messages.showErrorDialog(project, "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
                                "Commit Message not Loaded");
-      log.info(e);
+      LOG.info(e);
     }
   }
 
