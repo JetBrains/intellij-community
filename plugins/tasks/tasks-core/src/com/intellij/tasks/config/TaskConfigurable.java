@@ -159,10 +159,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return true;
   }
 
-  public boolean isVisible() {
-    return true;
-  }
-
   public Configurable[] getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = new Configurable[] { new TaskRepositoriesConfigurable(myProject) };

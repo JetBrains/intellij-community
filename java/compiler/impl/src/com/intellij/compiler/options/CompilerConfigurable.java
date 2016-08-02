@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,10 +57,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   }
 
   public boolean hasOwnContent() {
-    return true;
-  }
-
-  public boolean isVisible() {
     return true;
   }
 

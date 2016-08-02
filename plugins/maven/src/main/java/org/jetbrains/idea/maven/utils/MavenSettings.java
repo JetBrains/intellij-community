@@ -64,10 +64,6 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     return true;
   }
 
-  public boolean isVisible() {
-    return true;
-  }
-
   public JComponent createComponent() {
     return myConfigurable.createComponent();
   }

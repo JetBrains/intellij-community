@@ -38,11 +38,6 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return true;
   }
 
-  @Override
-  public boolean isVisible() {
-    return true;
-  }
-
   @Nullable
   @Override
   public String getHelpTopic() {
