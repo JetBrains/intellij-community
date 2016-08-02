@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,12 +155,6 @@ class TypeCorrector extends PsiTypeMapper {
 
     @NotNull
     @Override
-    public String getCanonicalText(boolean annotated) {
-      return myDelegate.getCanonicalText(annotated);
-    }
-
-    @NotNull
-    @Override
     public PsiClass resolve() {
       return myResolveResult.myMappedClass;
     }
@@ -224,8 +218,14 @@ class TypeCorrector extends PsiTypeMapper {
 
     @NotNull
     @Override
-    public String getPresentableText() {
-      return myDelegate.getPresentableText();
+    public String getPresentableText(boolean annotated) {
+      return myDelegate.getPresentableText(annotated);
+    }
+
+    @NotNull
+    @Override
+    public String getCanonicalText(boolean annotated) {
+      return myDelegate.getCanonicalText(annotated);
     }
 
     @NotNull
