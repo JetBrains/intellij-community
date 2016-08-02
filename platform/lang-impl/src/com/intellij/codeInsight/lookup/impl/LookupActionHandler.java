@@ -56,7 +56,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
-      if (project != null) {
+      if (project != null && lookup != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
       myOriginalHandler.execute(editor, caret, dataContext);
