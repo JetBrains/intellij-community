@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        else if (type == Configurable.Assistant.class || type == OptionalConfigurable.class) {
+        else if (type == OptionalConfigurable.class) {
           return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
         }
       }
