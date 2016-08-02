@@ -406,10 +406,9 @@ public class StudySerializationUtils {
           final JsonArray hintsArray = new JsonArray();
 
           try {
-            final Type listType = new TypeToken<List<String>>() {
-            }.getType();
+            final Type listType = new TypeToken<List<String>>() {}.getType();
             final List<String> hints = gson.fromJson(hintString, listType);
-            if (!hints.isEmpty()) {
+            if (hints != null && !hints.isEmpty()) {
               for (int i = 0; i < hints.size(); i++) {
                 if (i == 0) {
                   placeholderObject.addProperty(HINT, hints.get(0));
