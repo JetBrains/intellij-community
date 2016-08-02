@@ -1,2 +1,2 @@
 class Cl(object):
-  def __rp<caret>
+  def __rpo<caret>

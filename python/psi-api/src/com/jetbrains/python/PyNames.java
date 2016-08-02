@@ -287,12 +287,15 @@ public class PyNames {
       //_BuiltinMethods.put("__author__", _only_self_descr);
       //_BuiltinMethods.put("__bases__", _only_self_descr);
     .put("__call__", new BuiltinDescription("(self, *args, **kwargs)"))
+    .put("__ceil__", _only_self_descr)
       //_BuiltinMethods.put("__class__", _only_self_descr);
     .put("__cmp__", _self_other_descr)
     .put("__coerce__", _self_other_descr)
     .put("__complex__", _only_self_descr)
     .put("__contains__", _self_item_descr)
+    .put("__copy__", _only_self_descr)
       //_BuiltinMethods.put("__debug__", _only_self_descr);
+    .put("__deepcopy__", new BuiltinDescription("(self, memodict={})"))
     .put("__del__", _only_self_descr)
     .put("__delete__", new BuiltinDescription("(self, instance)"))
     .put("__delattr__", _self_item_descr)
@@ -307,14 +310,18 @@ public class PyNames {
     .put("__eq__", _self_other_descr)
       //_BuiltinMethods.put("__file__", _only_self_descr);
     .put("__float__", _only_self_descr)
+    .put("__floor__", _only_self_descr)
     .put("__floordiv__", _self_other_descr)
       //_BuiltinMethods.put("__future__", _only_self_descr);
     .put("__ge__", _self_other_descr)
     .put("__get__", new BuiltinDescription("(self, instance, owner)"))
     .put("__getattr__", _self_item_descr)
     .put("__getattribute__", _self_item_descr)
+    .put("__getinitargs__", _only_self_descr)
     .put("__getitem__", _self_item_descr)
+    .put("__getnewargs__", _only_self_descr)
       //_BuiltinMethods.put("__getslice__", new BuiltinDescription("(self, i, j)"));
+    .put("__getstate__", _only_self_descr)
     .put("__gt__", _self_other_descr)
     .put("__hash__", _only_self_descr)
     .put("__hex__", _only_self_descr)
@@ -344,6 +351,7 @@ public class PyNames {
     .put("__lt__", _self_other_descr)
       //_BuiltinMethods.put("__members__", _only_self_descr);
       //_BuiltinMethods.put("__metaclass__", _only_self_descr);
+    .put("__missing__", _self_key_descr)
     .put("__mod__", _self_other_descr)
       //_BuiltinMethods.put("__mro__", _only_self_descr);
     .put("__mul__", _self_other_descr)
@@ -361,6 +369,7 @@ public class PyNames {
     .put("__rdiv__", _self_other_descr)
     .put("__rdivmod__", _self_other_descr)
     .put("__reduce__", _only_self_descr)
+    .put("__reduce_ex__", new BuiltinDescription("(self, protocol)"))
     .put("__repr__", _only_self_descr)
     .put("__reversed__", _only_self_descr)
     .put("__rfloordiv__", _self_other_descr)
@@ -383,6 +392,7 @@ public class PyNames {
     .put("__str__", _only_self_descr)
     .put("__sub__", _self_other_descr)
     .put("__truediv__", _self_other_descr)
+    .put("__trunc__", _only_self_descr)
     .put("__unicode__", _only_self_descr)
       //_BuiltinMethods.put("__version__", _only_self_descr);
     .put("__xor__", _self_other_descr)
@@ -400,8 +410,10 @@ public class PyNames {
     .put("__bool__", _only_self_descr)
     .put("__bytes__", _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
+    .put("__instancecheck__", new BuiltinDescription("(self, instance)"))
     .put("__prepare__", new BuiltinDescription("(metacls, name, bases)"))
     .put("__round__", new BuiltinDescription("(self, n=None)"))
+    .put("__subclasscheck__", new BuiltinDescription("(self, subclass)"))
     .put(DUNDER_NEXT, _only_self_descr)
     .build();
 
