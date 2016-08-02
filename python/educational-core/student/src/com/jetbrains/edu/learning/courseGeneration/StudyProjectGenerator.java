@@ -383,6 +383,7 @@ public class StudyProjectGenerator {
     if (myCourses.isEmpty()) {
       myCourses = getBundledIntro();
     }
+    StudyUtils.sortCourses(myCourses);
     return myCourses;
   }
 
