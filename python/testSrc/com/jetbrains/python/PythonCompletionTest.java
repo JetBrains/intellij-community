@@ -27,6 +27,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -50,7 +51,8 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
-  private List<String> doTestByText(String text) {
+  @Nullable
+  private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
     return myFixture.getLookupElementStrings();
@@ -893,7 +895,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testFormatStringWithFormatModifier() {
     doTest();
   }
-  
+
   // PY-3077
   public void testPercentStringWithDictLiteralArg() {
     doTest();
@@ -903,7 +905,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testPercentStringWithDictCallArg() {
     doTest();
   }
-  
+
   // PY-3077
   public void testPercentStringWithParenDictCallArg() {
     doTest();
@@ -918,17 +920,17 @@ public class PythonCompletionTest extends PyTestCase {
   public void testPercentStringDictLiteralStringKey() {
     doTest();
   }
-  
+
   // PY-3077
   public void testPercentStringDictCallStringKey() {
     doTest();
   }
-  
+
   // PY-3077
   public void testPercentStringDictLiteralArgument() {
     doTest();
   }
-  
+
   // PY-19839
   public void testPercentStringDictRefKeys() {
     final List<String> variants = doTestByFile();
@@ -1013,6 +1015,32 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-20017
   public void testAncestorHasDunderNewMethod() {
     doTest();
+  }
+
+  // PY-20279
+  public void testImplicitDunderClass() {
+    final List<String> inClassMethod = doTestByText("class First:\n" +
+                                                    "    def foo(self):\n" +
+                                                    "        print(__cl<caret>)");
+    assertNotNull(inClassMethod);
+    assertDoesntContain(inClassMethod, PyNames.__CLASS__);
+
+    final List<String> inStaticMethod = doTestByText("class First:\n" +
+                                                     "    @staticmethod\n" +
+                                                     "    def foo():\n" +
+                                                     "        print(__cl<caret>)");
+    assertNotNull(inStaticMethod);
+    assertDoesntContain(inStaticMethod, PyNames.__CLASS__);
+
+    final List<String> inClass = doTestByText("class First:\n" +
+                                              "    print(__cl<caret>)");
+    assertNotNull(inClass);
+    assertEmpty(inClass);
+
+    final List<String> inFunction = doTestByText("def abc():\n" +
+                                                 "    print(__cl<caret>)");
+    assertNotNull(inFunction);
+    assertEmpty(inClass);
   }
 
   // PY-20768

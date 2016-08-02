@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -76,7 +78,8 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
-  private List<String> doTestByText(String text) {
+  @Nullable
+  private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
     return myFixture.getLookupElementStrings();
@@ -163,6 +166,28 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-17828
   public void testDunderPrepare() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-20279
+  public void testImplicitDunderClass() {
+    final List<String> inClassMethod = doTestByText("class First:\n" +
+                                                    "    def foo(self):\n" +
+                                                    "        print(__cl<caret>)");
+    assertNotNull(inClassMethod);
+    assertContainsElements(inClassMethod, PyNames.__CLASS__);
+
+    final List<String> inStaticMethod = doTestByText("class First:\n" +
+                                                     "    @staticmethod\n" +
+                                                     "    def foo():\n" +
+                                                     "        print(__cl<caret>)");
+    assertNotNull(inStaticMethod);
+    assertContainsElements(inStaticMethod, PyNames.__CLASS__);
+
+    assertNull(doTestByText("class First:\n" +
+                            "    print(__cl<caret>)"));
+
+    assertNull(doTestByText("def abc():\n" +
+                            "    print(__cl<caret>)"));
   }
 
   // PY-20770

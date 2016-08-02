@@ -668,11 +668,18 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (underscores >= 2) {
       // if we're a normal module, add module's attrs
-      PsiFile f = realContext.getContainingFile();
-      if (f instanceof PyFile) {
+      if (realContext.getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
           ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
         }
+      }
+
+      // if we're inside method, add implicit __class__
+      if (LanguageLevel.forElement(myElement).isAtLeast(LanguageLevel.PYTHON30)) {
+        Optional
+          .ofNullable(PsiTreeUtil.getParentOfType(myElement, PyFunction.class))
+          .map(PyFunction::getContainingClass)
+          .ifPresent(pyClass -> ret.add(LookupElementBuilder.create(PyNames.__CLASS__)));
       }
     }
 
