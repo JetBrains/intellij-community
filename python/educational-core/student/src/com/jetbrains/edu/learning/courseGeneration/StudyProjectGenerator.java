@@ -329,6 +329,10 @@ public class StudyProjectGenerator {
    */
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void flushCache(List<CourseInfo> courses) {
+    flushCache(courses, true);
+  }
+
+  public static void flushCache(List<CourseInfo> courses, boolean preserveOld) {
     File cacheFile = new File(OUR_COURSES_DIR, CACHE_NAME);
     PrintWriter writer = null;
     try {
@@ -337,7 +341,9 @@ public class StudyProjectGenerator {
 
       final Set<CourseInfo> courseInfos = new HashSet<>();
       courseInfos.addAll(courses);
-      courseInfos.addAll(getCoursesFromCache());
+      if (preserveOld) {
+        courseInfos.addAll(getCoursesFromCache());
+      }
 
       writer = new PrintWriter(cacheFile);
       for (CourseInfo courseInfo : courseInfos) {

@@ -270,7 +270,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
-    StudyProjectGenerator.flushCache(myAvailableCourses);
+    StudyProjectGenerator.flushCache(myAvailableCourses, false);
   }
 
   private void addCoursesToCombobox(@NotNull List<CourseInfo> courses) {
