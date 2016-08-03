@@ -17,7 +17,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.codehaus.gant.GantBuilder
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
@@ -36,35 +35,57 @@ class BuildContextImpl extends BuildContext {
   final List<String> outputDirectoriesToKeep = []
 
 //todo[nik] construct buildOutputRoot automatically based on product name
-  BuildContextImpl(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
+  static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                    String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                    BuildOptions options, MacHostProperties macHostProperties, SignTool signTool, ScrambleTool scrambleTool) {
-    this.projectBuilder = projectBuilder
-    this.ant = ant
-    this.project = project
-    this.global = global
-    this.productProperties = productProperties
-    windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
-    linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
-    macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
-    this.options = options
-    this.macHostProperties = macHostProperties
-    this.signTool = signTool
-    this.scrambleTool = scrambleTool
-    underTeamCity = System.getProperty("teamcity.buildType.id") != null
-    messages = new BuildMessagesImpl(projectBuilder, ant.project, underTeamCity)
+    boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
+    BuildMessages messages = BuildMessagesImpl.create(projectBuilder, ant.project, underTeamCity)
 
-    bundledJreManager = new BundledJreManager(this, buildOutputRoot)
     def jdk8Home = JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64")
-    paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
+    BuildPathsImpl paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
+
+    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(paths.projectHome)
+    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(paths.projectHome)
+    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(paths.projectHome)
 
     if (project.modules.isEmpty()) {
-      loadProject()
+      loadProject(paths, project, global, projectBuilder, messages, options)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
       messages.info("Skipping loading project because it's already loaded")
     }
+
+    return new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
+                                windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                macHostProperties, options,
+                                signTool, scrambleTool, underTeamCity)
+  }
+
+  BuildContextImpl(AntBuilder ant, BuildMessages messages, BuildPaths paths, JpsProject project, JpsGlobal global,
+                   JpsGantProjectBuilder projectBuilder, ProductProperties productProperties,
+                   WindowsDistributionCustomizer windowsDistributionCustomizer, LinuxDistributionCustomizer linuxDistributionCustomizer,
+                   MacDistributionCustomizer macDistributionCustomizer,
+                   MacHostProperties macHostProperties, BuildOptions options, SignTool signTool, ScrambleTool scrambleTool, boolean underTeamCity) {
+    this.ant = ant
+    this.messages = messages
+    this.paths = paths
+    this.project = project
+    this.global = global
+    this.projectBuilder = projectBuilder
+    this.productProperties = productProperties
+    this.macHostProperties = macHostProperties
+    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
+    this.options = options
+    this.signTool = signTool
+    this.scrambleTool = scrambleTool
+    this.underTeamCity = underTeamCity
+
+    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
+    this.windowsDistributionCustomizer = windowsDistributionCustomizer
+    this.linuxDistributionCustomizer = linuxDistributionCustomizer
+    this.macDistributionCustomizer = macDistributionCustomizer
+
     def appInfoFile = findApplicationInfoInSources()
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
 
@@ -75,7 +96,8 @@ class BuildContextImpl extends BuildContext {
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
   }
 
-  private void loadProject() {
+  private static List<String> loadProject(BuildPaths paths, JpsProject project, JpsGlobal global, JpsGantProjectBuilder projectBuilder,
+                                          BuildMessages messages, BuildOptions options) {
     def projectHome = paths.projectHome
     def bundledKotlinPath = "$paths.communityHome/build/kotlinc"
     if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
@@ -86,12 +108,12 @@ class BuildContextImpl extends BuildContext {
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(global, "1.8", paths.jdkHome)
 
-    checkOptions()
+    checkOptions(options, messages)
     projectBuilder.buildIncrementally = options.incrementalCompilation
     def dataDirName = options.incrementalCompilation ? ".jps-build-data-incremental" : ".jps-build-data"
     projectBuilder.dataStorageRoot = new File(paths.buildOutputRoot, dataDirName)
-    def tempDir = System.getProperty("teamcity.build.tempDir") ?: System.getProperty("java.io.tmpdir")
-    projectBuilder.setupAdditionalLogging(new File("$tempDir/system/build-log/build.log"), System.getProperty("intellij.build.debug.logging.categories", ""))
+    def logDir = new File(paths.buildOutputRoot, "log")
+    projectBuilder.setupAdditionalLogging(new File("$logDir/compilation.log"), System.getProperty("intellij.build.debug.logging.categories", ""))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
     JpsProjectLoader.loadProject(project, pathVariables, projectHome)
@@ -100,6 +122,7 @@ class BuildContextImpl extends BuildContext {
 
     def classesDirName = "classes"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
+    List<String> outputDirectoriesToKeep = []
     if (options.pathToCompiledClassesArchive != null) {
       messages.block("Unpack compiled classes archive") {
         FileUtil.delete(new File(classesOutput))
@@ -121,10 +144,11 @@ class BuildContextImpl extends BuildContext {
       }
     }
 
-    suppressWarnings()
+    suppressWarnings(project)
+    return outputDirectoriesToKeep
   }
 
-  private void checkOptions() {
+  private static void checkOptions(BuildOptions options, BuildMessages messages) {
     if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
       options.incrementalCompilation = false
@@ -139,7 +163,7 @@ class BuildContextImpl extends BuildContext {
     }
   }
 
-  private void suppressWarnings() {
+  private static void suppressWarnings(JpsProject project) {
     def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
     compilerOptions.GENERATE_NO_WARNINGS = true
     compilerOptions.DEPRECATION = false
@@ -200,6 +224,18 @@ class BuildContextImpl extends BuildContext {
       messages.block(stepMessage, step)
     }
   }
+
+  @Override
+  BuildContext forkForParallelTask(String taskName) {
+    def ant = new AntBuilder(ant.project)
+    def messages = messages.forkForParallelTask(taskName)
+    def child = new BuildContextImpl(ant, messages, paths, project, global, projectBuilder, productProperties,
+                                           windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                           macHostProperties, options, signTool, scrambleTool, underTeamCity)
+    child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
+    return child
+  }
+
 
   @Override
   boolean includeBreakGenLibraries() {

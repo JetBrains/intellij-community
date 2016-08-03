@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
  */
 class BundledJreManager {
   private final BuildContext buildContext
-  private final String baseDirectoryForJre
+  String baseDirectoryForJre
 
   BundledJreManager(BuildContext buildContext, String baseDirectoryForJre) {
     this.buildContext = buildContext

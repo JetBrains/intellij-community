@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.module.JpsModule
  * @author nik
  */
 abstract class BuildContext {
-  GantBuilder ant
+  AntBuilder ant
   BuildMessages messages
   BuildPaths paths
   JpsProject project
@@ -85,13 +85,20 @@ abstract class BuildContext {
    */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
-  public static BuildContext createContext(GantBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
+  public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
                                            String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
                                            BuildOptions options = new BuildOptions(), MacHostProperties macHostProperties = null, SignTool signTool = null,
                                            ScrambleTool scrambleTool = null) {
-    return new BuildContextImpl(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
-                                options, macHostProperties, signTool, scrambleTool)
+    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
+                                   options, macHostProperties, signTool, scrambleTool)
   }
+
+  /**
+   * Creates copy of this context which can be used to start a parallel task.
+   * @param taskName short name of the task. It will be prepended to the messages from that task to distinguish them from messages from
+   * other tasks running in parallel
+   */
+  abstract BuildContext forkForParallelTask(String taskName)
 }
 
 /**
@@ -145,4 +152,17 @@ interface BuildMessages {
 
   void progress(String message)
   public <V> V block(String blockName, Closure<V> body)
+
+  BuildMessages forkForParallelTask(String taskName)
+
+  /**
+   * Must be invoked for the forked instance on the thread where it is executing before the task is started.
+   * It's required to correctly handle messages from Ant tasks.
+   */
+  void startFork()
+
+  /**
+   * Must be invoked for the forked instance on the thread where it is executing when the task is finished
+   */
+  void finishFork()
 }

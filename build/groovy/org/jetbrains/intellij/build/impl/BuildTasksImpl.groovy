@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -208,31 +209,43 @@ idea.fatal.error.notification=disabled
     def propertiesFile = patchIdeaPropertiesFile()
 
     WindowsDistributionBuilder windowsBuilder = null
-    def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
-    if (windowsDistributionCustomizer != null) {
-      buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
-        windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
-        windowsBuilder.layoutWin(propertiesFile)
-      })
-    }
-
     LinuxDistributionBuilder linuxBuilder = null
-    def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
-    if (linuxDistributionCustomizer != null) {
-      buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
-        linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
-        linuxBuilder.layoutUnix(propertiesFile)
-      }
-    }
-
     MacDistributionBuilder macBuilder = null
-    def macDistributionCustomizer = buildContext.macDistributionCustomizer
-    if (macDistributionCustomizer != null) {
-      buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
-        macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
-        macBuilder.layoutMac(propertiesFile)
+    runInParallel([new BuildTaskRunnable("win") {
+      @Override
+      void run(BuildContext buildContext) {
+        def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
+        if (windowsDistributionCustomizer != null) {
+          buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
+            windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
+            windowsBuilder.layoutWin(propertiesFile)
+          })
+        }
+      }
+    }, new BuildTaskRunnable("linux") {
+      @Override
+      void run(BuildContext buildContext) {
+        def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
+        if (linuxDistributionCustomizer != null) {
+          buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
+            linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
+            linuxBuilder.layoutUnix(propertiesFile)
+          }
+        }
+      }
+    }, new BuildTaskRunnable("mac") {
+      @Override
+      void run(BuildContext buildContext) {
+        def macDistributionCustomizer = buildContext.macDistributionCustomizer
+        if (macDistributionCustomizer != null) {
+          buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
+            macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
+            macBuilder.layoutMac(propertiesFile)
+          }
+        }
       }
     }
+    ])
 
     if (buildContext.productProperties.buildCrossPlatformDistribution) {
       if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {
@@ -315,5 +328,56 @@ idea.fatal.error.notification=disabled
     for (String moduleName : includingTestsInModules) {
       buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
     }
+  }
+
+  private void runInParallel(List<BuildTaskRunnable> tasks) {
+    if (!buildContext.options.runBuildStepsInParallel) {
+      tasks.each {
+        it.run(buildContext)
+      }
+      return
+    }
+
+    buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+    List<Thread> threads = []
+    List<BuildMessages> messages = []
+    List<Throwable> errors = Collections.synchronizedList([])
+    tasks.each { task ->
+      def childContext = buildContext.forkForParallelTask(task.taskName)
+      def thread = new Thread("Thread for build task '$task.taskName'") {
+        @Override
+        void run() {
+          childContext.messages.startFork()
+          try {
+            task.run(childContext)
+          }
+          catch (Throwable t) {
+            errors << t
+          }
+          finally {
+            childContext.messages.info("task finished")
+            childContext.messages.finishFork()
+          }
+        }
+      }
+      thread.start()
+      threads << thread
+      messages << childContext.messages
+    }
+    threads.each { it.join() }
+    if (!errors.empty) {
+      errors.subList(1, errors.size()).each { it.printStackTrace() }
+      throw errors.first()
+    }
+  }
+
+  private abstract static class BuildTaskRunnable {
+    final String taskName
+
+    BuildTaskRunnable(String name) {
+      taskName = name
+    }
+
+    abstract void run(BuildContext context)
   }
 }

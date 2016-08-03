@@ -15,45 +15,68 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.text.StringUtil
 import org.apache.tools.ant.BuildException
+import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
+import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.gant.BuildInfoPrinter
 import org.jetbrains.jps.gant.DefaultBuildInfoPrinter
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 
+import java.util.function.Function
+
 /**
  * @author nik
  */
 class BuildMessagesImpl implements BuildMessages {
-  private final JpsGantProjectBuilder builder
-  private final BuildInfoPrinter buildInfoPrinter
-  private final Project antProject
-  private final boolean underTeamCity
-  private int indent = 0
+  private final BuildMessageLogger logger
+  private final Function<String, BuildMessageLogger> loggerFactory
+  private final AntTaskLogger antTaskLogger
 
-  BuildMessagesImpl(JpsGantProjectBuilder builder, Project antProject, boolean underTeamCity) {
-    this.underTeamCity = underTeamCity
-    this.antProject = antProject
-    this.builder = builder
-    buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
+  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject, boolean underTeamCity) {
+    String key = "IntelliJBuildMessages"
+    def registered = antProject.getReference(key)
+    if (registered != null) return registered as BuildMessagesImpl
+
+    BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
     builder.buildInfoPrinter = buildInfoPrinter
+    disableAntLogging(antProject)
+    Function<String, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
+    def antTaskLogger = new AntTaskLogger()
+    def messages = new BuildMessagesImpl(loggerFactory.apply(null), loggerFactory, antTaskLogger)
+    antTaskLogger.defaultHandler = messages
+    antProject.addBuildListener(antTaskLogger)
+    antProject.addReference(key, messages)
+    return messages
+  }
+
+  /**
+   * default Ant logging doesn't work well with parallel tasks, so we use our own {@link AntTaskLogger} instead
+   */
+  private static void disableAntLogging(Project project) {
+    project.getBuildListeners().each {
+      if (it instanceof DefaultLogger) {
+        it.setMessageOutputLevel(Project.MSG_ERR)
+      }
+    }
+  }
+
+  private BuildMessagesImpl(BuildMessageLogger logger, Function<String, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger) {
+    this.logger = logger
+    this.loggerFactory = loggerFactory
+    this.antTaskLogger = antTaskLogger
   }
 
   @Override
   void info(String message) {
-    antProject.log(withIndent(message), Project.MSG_INFO)
-  }
-
-  private String withIndent(String message) {
-    StringUtil.repeat(" ", 2 * indent) + message
+    logger.logMessage(message, BuildMessageLogger.Level.INFO)
   }
 
   @Override
   void warning(String message) {
-    antProject.log(withIndent(message), Project.MSG_WARN)
+    logger.logMessage(message, BuildMessageLogger.Level.WARNING)
   }
 
   @Override
@@ -63,34 +86,32 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void progress(String message) {
-    if (underTeamCity) {
-      buildInfoPrinter.printProgressMessage(builder, message)
-    }
-    else {
-      info(message)
-    }
+    logger.logProgressMessage(message)
   }
 
   @Override
   public <V> V block(String blockName, Closure<V> body) {
     try {
-      //todo[nik] move this logic into DefaultBuildInfoPrinter?
-      if (underTeamCity) {
-        buildInfoPrinter.printBlockOpenedMessage(builder, blockName)
-      }
-      else {
-        info(blockName)
-        indent++
-      }
+      logger.startBlock(blockName)
       return body()
     }
     finally {
-      if (underTeamCity) {
-        buildInfoPrinter.printBlockClosedMessage(builder, blockName)
-      }
-      else {
-        indent--
-      }
+      logger.finishBlock(blockName)
     }
+  }
+
+  @Override
+  BuildMessages forkForParallelTask(String taskName) {
+    return new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger)
+  }
+
+  @Override
+  void startFork() {
+    antTaskLogger.registerThreadHandler(Thread.currentThread(), this)
+  }
+
+  @Override
+  void finishFork() {
+    antTaskLogger.unregisterThreadHandler(Thread.currentThread())
   }
 }
