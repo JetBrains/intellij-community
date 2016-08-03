@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.startup;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Irina.Chernushina on 8/19/2015.
@@ -65,18 +67,18 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
         projectStartupTaskManager.checkOnChange(settings);
       }
     });
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-    alarm.addRequest(createRequest(project, alarm), DELAY_MILLIS);
+    scheduleRunActivities(project);
   }
 
-  private static Runnable createRequest(final Project project, final Alarm alarm) {
-    return () -> {
-      if (! ((StartupManagerEx) StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
-        alarm.addRequest(createRequest(project, alarm), DELAY_MILLIS);
-      } else {
+  private static void scheduleRunActivities(@NotNull Project project) {
+    JobScheduler.getScheduler().schedule(() -> {
+      if (!((StartupManagerEx)StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
+        scheduleRunActivities(project);
+      }
+      else {
         runActivities(project);
       }
-    };
+    }, DELAY_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private static void runActivities(final Project project) {
