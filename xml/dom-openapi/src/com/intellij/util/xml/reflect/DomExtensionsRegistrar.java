@@ -22,16 +22,27 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Type;
 
 /**
+ * Allows runtime extension of DOM Model.
+ *
  * @author peter
  */
 public interface DomExtensionsRegistrar {
 
+  /**
+   * Register single occurence subtag extension.
+   */
   @NotNull
   DomExtension registerFixedNumberChildExtension(@NotNull XmlName name, @NotNull Type type);
 
+  /**
+   * Register multiple occurence subtag extension.
+   */
   @NotNull
   DomExtension registerCollectionChildrenExtension(@NotNull XmlName name, @NotNull Type type);
 
+  /**
+   * Register {@link com.intellij.util.xml.GenericAttributeValue} using given parameterType.
+   */
   @NotNull
   DomExtension registerGenericAttributeValueChildExtension(@NotNull XmlName name, final Type parameterType);
 
@@ -44,8 +55,6 @@ public interface DomExtensionsRegistrar {
   DomExtension registerAttributeChildExtension(@NotNull XmlName name, @NotNull final Type type);
 
   /**
-   * @param type
-   * @return
    * @see com.intellij.util.xml.CustomChildren
    */
   @NotNull
