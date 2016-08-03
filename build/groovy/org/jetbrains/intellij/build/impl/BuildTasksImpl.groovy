@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -264,6 +265,7 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesAndBuildDistributions(List<PluginLayout> allPlugins) {
     def productLayout = buildContext.productProperties.productLayout
+    checkProductLayout(productLayout, allPlugins)
     cleanOutput()
     def includedModules = productLayout.getIncludedModules(allPlugins)
     compileModules(includedModules)
@@ -279,6 +281,33 @@ idea.fatal.error.notification=disabled
       }
     }
     buildDistributions()
+  }
+
+  private void checkProductLayout(ProductModulesLayout layout, List<PluginLayout> allPlugins) {
+    def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
+    checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
+    checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
+
+    checkModules(layout.platformApiModules, "platformApiModules")
+    checkModules(layout.platformImplementationModules, "platformImplementationModules")
+    checkModules(layout.additionalPlatformModules.keySet(), "additionalPlatformModules")
+  }
+
+  private void checkModules(Collection<String> modules, String fieldName) {
+    def unknownModules = modules.findAll {buildContext.findModule(it) == null}
+    if (!unknownModules.empty) {
+      buildContext.messages.error("The following modules from productProperties.$fieldName aren't found in the project.")
+    }
+  }
+
+  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> allPluginModules) {
+    def unknownBundledPluginModules = pluginModules.findAll { !allPluginModules.contains(it) }
+    if (!unknownBundledPluginModules.empty) {
+      buildContext.messages.error(
+        "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
+        "Make sure that the plugin layouts are specified in one of *_REPOSITORY_PLUGINS lists and you refer to either main plugin module or an optional module."
+      )
+    }
   }
 
   @Override
