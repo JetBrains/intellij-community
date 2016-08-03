@@ -174,8 +174,8 @@ public class CCFromCourseArchive extends DumbAwareAction {
         }
         answerPlaceholder.setHints(result);
       }
-      answerPlaceholder.setUseLength(false);
       document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
+      answerPlaceholder.setUseLength(false);
       FileDocumentManager.getInstance().saveDocument(document);
     }), "Replace answer placeholder", "From Course Archive");
   }
