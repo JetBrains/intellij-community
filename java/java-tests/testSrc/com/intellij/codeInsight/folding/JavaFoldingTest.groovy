@@ -42,8 +42,8 @@ import org.intellij.lang.annotations.Language
  * @author Denis Zhdanov
  * @since 1/17/11 1:00 PM
  */
+@SuppressWarnings("ALL") // too many warnings in injections
 public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
-
   def JavaCodeFoldingSettingsImpl myFoldingSettings
   def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
@@ -120,7 +120,7 @@ class Test {
 
   public void testFoldGroup() {
     // Implied by IDEA-79420
-    myFoldingSettings.COLLAPSE_CLOSURES = true
+    myFoldingSettings.setCollapseLambdas(true)
     @Language("JAVA")
     def text = """\
 class Test {
@@ -158,7 +158,7 @@ class Test {
   }
 
   public void "test closure folding when an abstract method is not in the direct superclass"() {
-    myFoldingSettings.COLLAPSE_CLOSURES = true
+    myFoldingSettings.setCollapseLambdas(true)
     @Language("JAVA")
     def text = """\
 public abstract class AroundTemplateMethod<T> {
@@ -190,7 +190,7 @@ class Test {
   }
 
   public void "test builder style setter"() {
-    myFoldingSettings.COLLAPSE_ACCESSORS = true
+    myFoldingSettings.setCollapseAccessors(true)
     @Language("JAVA")
     def text = """\
 class Foo {
@@ -660,7 +660,7 @@ class Test {
   }
 
   public void "test insert boolean literal argument name"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
     @Language("JAVA")
     def text = """class Groo {
 
@@ -719,7 +719,7 @@ class Test {
   }
 
   public void "test do not collapse varargs"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
     @Language("JAVA")
     def text = """
 public class VarArgTest {
@@ -837,7 +837,7 @@ public class CharSymbol {
   }
 
   public void "test inline names if literal expression can be assigned to method parameter"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
     @Language("JAVA")
     def text = """
 public class CharSymbol {
@@ -868,7 +868,8 @@ public class CharSymbol {
   }
 
   public void "test inline negative and positive numbers"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
+
     @Language("JAVA")
     def text = """
 public class CharSymbol {
@@ -897,7 +898,7 @@ public class CharSymbol {
   }
 
   public void "test inline constructor literal arguments names"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
     @Language("JAVA")
     def text = """
 public class Test {
@@ -929,7 +930,7 @@ public class Test {
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
-    myFoldingSettings.INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
     @Language("JAVA")
     def text = """
 public class Test {

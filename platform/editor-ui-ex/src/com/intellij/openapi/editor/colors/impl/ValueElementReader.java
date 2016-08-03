@@ -112,7 +112,6 @@ class ValueElementReader {
    * @param type  the class that defines the result type
    * @param value a string value to convert
    * @param <T>   the result type
-   * @return
    */
   protected <T> T convert(Class<T> type, String value) {
     if (String.class.equals(type)) {
@@ -133,7 +132,7 @@ class ValueElementReader {
     }
     if (Enum.class.isAssignableFrom(type)) {
       //noinspection unchecked
-      return (T)(toEnum((Class<Enum>)type, value));
+      return (T)toEnum((Class<Enum>)type, value);
     }
     if (Boolean.class.equals(type)) {
       //noinspection unchecked

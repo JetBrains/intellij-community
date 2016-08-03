@@ -607,7 +607,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   
-  public void testOverriddenMethodMarkersDoNotClearedByCHangingWhitespaceNearby() throws Exception {
+  public void testOverriddenMethodMarkersDoNotClearedByChangingWhitespaceNearby() throws Exception {
     configureByFile(BASE_PATH + "OverriddenMethodMarkers.java");
     highlightErrors();
 
