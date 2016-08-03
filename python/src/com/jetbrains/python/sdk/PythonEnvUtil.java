@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class PythonEnvUtil {
    * Resets the environment variables that affect the way the Python interpreter searches for its settings and libraries.
    */
   public static Map<String, String> resetHomePathChanges(@NotNull String homePath, @NotNull Map<String, String> env) {
-    if (System.getenv(PYVENV_LAUNCHER) != null) {
+    if (System.getenv(PYVENV_LAUNCHER) != null || EnvironmentUtil.getEnvironmentMap().containsKey(PYVENV_LAUNCHER)) {
       env.put(PYVENV_LAUNCHER, homePath);
     }
     return env;
