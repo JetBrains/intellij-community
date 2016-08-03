@@ -268,18 +268,18 @@ public class EduAdaptiveStepicConnector {
             if (lessonDir != null) {
               ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
                 try {
+                  final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+                  final File taskDir = new File(lessonDirectory, EduNames.TASK + String.valueOf(task.getIndex()));
+                  StudyProjectGenerator.flushTask(task, taskDir);
+                  StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
                   StudyGenerator.createTask(task, lessonDir, new File(course.getCourseDirectory(), lessonDir.getName()), project);
+                  adaptive.initLesson(course, true);
                 }
                 catch (IOException e) {
                   LOG.warn(e.getMessage());
                 }
               }));
             }
-
-            final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-            StudyProjectGenerator.flushLesson(lessonDirectory, adaptive);
-            StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-            adaptive.initLesson(course, true);
           }
         }
         ApplicationManager.getApplication().invokeLater(() -> {
