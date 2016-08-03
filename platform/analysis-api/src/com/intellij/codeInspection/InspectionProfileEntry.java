@@ -85,9 +85,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
     final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
     if (merger != null) {
-      for (String sourceToolId : merger.getSourceToolNames()) {
+      String[] suppressIds = merger.getSuppressIds();
+      String[] sourceToolIds = suppressIds.length != 0 ? suppressIds : merger.getSourceToolNames();
+      for (String sourceToolId : sourceToolIds) {
         for (InspectionSuppressor suppressor : suppressors) {
-          if (isSuppressed(sourceToolId, suppressor, element)) {
+          if (suppressor.isSuppressedFor(element, sourceToolId)) {
             return true;
           }
         }

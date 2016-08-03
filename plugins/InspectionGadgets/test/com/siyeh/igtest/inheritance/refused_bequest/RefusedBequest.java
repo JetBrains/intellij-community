@@ -20,7 +20,7 @@ class A {
 
 class B extends A {
   @Override
-  public String toString() {
+  public String <warning descr="Method 'toString()' does not call 'super.toString()'">toString</warning>() {
     return "B.toString";
   }
 }

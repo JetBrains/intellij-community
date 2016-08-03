@@ -244,6 +244,9 @@ public class MethodUtils {
    * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
    */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+    if (method.hasModifierProperty(PsiModifier.NATIVE)) {
+      return false;
+    }
     return isTrivial(method.getBody(), throwIsTrivial);
   }
 

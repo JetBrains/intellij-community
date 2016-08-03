@@ -369,6 +369,23 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
+  public void testMergedMethodDoesntCallSuperMethodInspections() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"CloneCallsSuperClone\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"FinalizeCallsSuperFinalize\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreObjectSubclasses\" value=\"false\" />\n" +
+                         "    <option name=\"ignoreTrivialFinalizers\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "  <inspection_tool class=\"RefusedBequest\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                         "    <option name=\"ignoreEmptySuperMethods\" value=\"false\" />\n" +
+                         "    <option name=\"onlyReportWhenAnnotated\" value=\"true\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "  <inspection_tool class=\"SetupCallsSuperSetup\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"TeardownCallsSuperTeardown\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "</profile>");
+  }
+
   public void testMergedThrowableNotThrownInspections() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
