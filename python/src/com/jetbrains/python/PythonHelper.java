@@ -141,7 +141,9 @@ public enum PythonHelper implements HelperPackage {
       args.add(asParamString());
       args.addAll(parameters);
       final GeneralCommandLine cmd = new GeneralCommandLine(args);
-      addToPythonPath(cmd.getEnvironment());
+      final Map<String, String> env = cmd.getEnvironment();
+      addToPythonPath(env);
+      PythonEnvUtil.resetHomePathChanges(sdkPath, env);
       return cmd;
     }
 

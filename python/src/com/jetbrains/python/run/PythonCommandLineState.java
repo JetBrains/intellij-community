@@ -289,7 +289,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       env.putAll(myConfig.getEnvs());
     }
 
-    addCommonEnvironmentVariables(env);
+    addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
@@ -298,8 +298,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildPythonPath(project, commandLine, myConfig, isDebug);
   }
 
-  protected static void addCommonEnvironmentVariables(Map<String, String> env) {
+  protected static void addCommonEnvironmentVariables(@Nullable String homePath, Map<String, String> env) {
     PythonEnvUtil.setPythonUnbuffered(env);
+    if (homePath != null) {
+      PythonEnvUtil.resetHomePathChanges(homePath, env);
+    }
     env.put("PYCHARM_HOSTED", "1");
   }
 
