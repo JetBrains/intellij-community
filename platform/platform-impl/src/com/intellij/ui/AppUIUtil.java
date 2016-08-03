@@ -214,14 +214,16 @@ public class AppUIUtil {
   }
 
   public static void showPrivacyPolicy() {
-    Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
-    if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
-      try {
-        SwingUtilities.invokeAndWait(() -> showPrivacyPolicyAgreement(policy.getSecond()));
-        PrivacyPolicy.setVersionAccepted(policy.getFirst());
-      }
-      catch (Exception e) {
-        Logger.getInstance(AppUIUtil.class).warn(e);
+    if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
+      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+        try {
+          SwingUtilities.invokeAndWait(() -> showPrivacyPolicyAgreement(policy.getSecond()));
+          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+        }
+        catch (Exception e) {
+          Logger.getInstance(AppUIUtil.class).warn(e);
+        }
       }
     }
   }
