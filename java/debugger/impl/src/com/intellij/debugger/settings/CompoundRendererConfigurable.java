@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -525,9 +526,12 @@ class CompoundRendererConfigurable extends JPanel {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
             s -> {
-              PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-              final JavaCodeFragment fragment =
-                JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+              JavaCodeFragment fragment = new PsiTypeCodeFragmentImpl(project, true, "fragment.java", s, 0, null) {
+                @Override
+                public boolean importClass(PsiClass aClass) {
+                  return false;
+                }
+              };
               fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
               return PsiDocumentManager.getInstance(project).getDocument(fragment);
             }, "");
