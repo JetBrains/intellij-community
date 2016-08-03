@@ -1,5 +1,6 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.openapi.Disposable;
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
-import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,6 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   private boolean myOldEverywhere = false;
   private String myOldPattern = "";
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<Future<List<Task>>>();
 
   public TaskItemProvider(Project project) {
@@ -68,7 +67,11 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       return true;
     }
 
-    FutureTask<List<Task>> future = new FutureTask<List<Task>>(() -> fetchFromServer(pattern, everywhere, cancelled));
+    if (myDisposed) {
+      return false;
+    }
+    int delay = myFutureReference.get() == null && pattern.length() > 5 ? 0 : DELAY_PERIOD;
+    Future<List<Task>> future = JobScheduler.getScheduler().schedule(() -> fetchFromServer(pattern, everywhere, cancelled), delay, TimeUnit.MILLISECONDS);
 
     // Newer request always wins
     Future<List<Task>> oldFuture = myFutureReference.getAndSet(future);
@@ -76,11 +79,6 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       LOG.debug("Cancelling existing task");
       oldFuture.cancel(true);
     }
-
-    if (myAlarm.isDisposed()) {
-      return false;
-    }
-    myAlarm.addRequest(future, oldFuture == null && pattern.length() > 5 ? 0 : DELAY_PERIOD);
 
     try {
       List<Task> tasks;
@@ -173,12 +171,14 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     return true;
   }
 
+
+  private boolean myDisposed;
   @Override
   public void dispose() {
-    // Alarm should be disposed already
     Future<List<Task>> future = myFutureReference.get();
     if (future != null) {
       future.cancel(true);
     }
+    myDisposed = true;
   }
 }
