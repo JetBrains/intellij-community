@@ -1597,4 +1597,10 @@ class Bar {
     assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
   }
+
+  public void testSuggestInterfaceArrayWhenObjectIsExpected() {
+    configure()
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+  }
 }

@@ -83,10 +83,15 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
     addArrayTypes(parameters.getPosition(), infos, consumer);
 
-    processInheritors(parameters, extractClassTypes(infos), prefixMatcher, type -> {
+    List<PsiClassType> classTypes = extractClassTypes(infos);
+    boolean arraysWelcome = classTypes.stream().anyMatch(t -> t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
+    processInheritors(parameters, classTypes, prefixMatcher, type -> {
       final LookupElement element = addExpectedType(type, parameters);
       if (element != null) {
         consumer.consume(element);
+      }
+      if (arraysWelcome) {
+        consumer.consume(createNewArrayItem(parameters.getPosition(), type.createArrayType()));
       }
     });
   }
