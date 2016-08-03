@@ -170,7 +170,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
         }
         answerPlaceholder.setHints(result);
       }
-
+      answerPlaceholder.setUseLength(false);
       document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
       FileDocumentManager.getInstance().saveDocument(document);
     }), "x", "qwe");
