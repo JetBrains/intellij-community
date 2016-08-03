@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -70,28 +71,24 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
-    if (function != null) {
-      for (PyParameter parameter : function.getParameterList().getParameters()) {
-        if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
-          for (PyCallExpression call : fillCallExpressions(function)) {
-            final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
-            final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
-            if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
-              return false;
-            }
-          }
-
-          for (PySubscriptionExpression subscription : fillSubscriptions(function)) {
-            final PyExpression indexExpression = subscription.getIndexExpression();
-            final String indexValue = PythonStringUtil.getStringValue(indexExpression);
-            if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
-              return false;
-            }
-          }
-
-          return true;
+    if (getKeywordContainer(function) != null) {
+      for (PyCallExpression call : fillCallExpressions(function)) {
+        final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
+        final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
+        if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
+          return false;
         }
       }
+
+      for (PySubscriptionExpression subscription : fillSubscriptions(function)) {
+        final PyExpression indexExpression = subscription.getIndexExpression();
+        final String indexValue = PythonStringUtil.getStringValue(indexExpression);
+        if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     return false;
@@ -100,14 +97,13 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   @Nullable
   private static PyParameter getKeywordContainer(PyFunction function) {
     if (function != null) {
-      PyParameter[] parameterList = function.getParameterList().getParameters();
-      for (PyParameter parameter : parameterList) {
-        if (parameter instanceof PyNamedParameter) {
-          if (((PyNamedParameter)parameter).isKeywordContainer()) {
-            return parameter;
-          }
-        }
-      }
+      return Arrays
+        .stream(function.getParameterList().getParameters())
+        .filter(PyNamedParameter.class::isInstance)
+        .map(PyNamedParameter.class::cast)
+        .filter(PyNamedParameter::isKeywordContainer)
+        .findFirst()
+        .orElse(null);
     }
     return null;
   }
