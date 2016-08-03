@@ -372,8 +372,8 @@ public class EduStepicConnector {
     course.setAuthors(info.getAuthors());
     course.setDescription(info.getDescription());
     course.setAdaptive(info.isAdaptive());
-    course.setId(info.id);
-    course.setUpdateDate(info.getUpdateDate());
+    course.setId(info.getId());
+    course.setUpdateDate(getCourseUpdateDate(info.getId()));
     
     if (!course.isAdaptive()) {
       String courseType = info.getType();
