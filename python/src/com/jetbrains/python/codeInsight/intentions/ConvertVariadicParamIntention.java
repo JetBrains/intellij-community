@@ -76,7 +76,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
-      for (PyCallExpression call : fillCallExpressions(function)) {
+      for (PyCallExpression call : findKeywordContainerCalls(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
         if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
@@ -156,39 +156,45 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     return Collections.emptyList();
   }
 
-  private static boolean isCallElement(PyExpression callee, String keywordContainerName) {
-    PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-    return (qualifier != null && qualifier.getText().equals(keywordContainerName)
-                                      && ("get".equals(((PyQualifiedExpression)callee).getReferencedName())
-                                          || "__getitem__".equals(((PyQualifiedExpression)callee).getReferencedName()) ));
+  private static boolean isKeywordContainerCall(@NotNull PyQualifiedExpression callee, @NotNull String keywordContainerName) {
+    final PyExpression qualifier = callee.getQualifier();
+    return qualifier != null &&
+           qualifier.getText().equals(keywordContainerName) &&
+           ArrayUtil.contains(callee.getReferencedName(), "get", PyNames.GETITEM);
   }
 
-  private static List<PyCallExpression> fillCallExpressions(PyFunction function) {
-    List<PyCallExpression> callElements = new ArrayList<>();
-    PyStatementList statementList = function.getStatementList();
-    Stack<PsiElement> stack = new Stack<>();
-    PyParameter keywordContainer = getKeywordContainer(function);
-    if (keywordContainer != null) {
-      String keywordContainerName = keywordContainer.getName();
-      for (PyStatement st : statementList.getStatements()) {
-        stack.push(st);
+  @NotNull
+  private static List<PyCallExpression> findKeywordContainerCalls(@NotNull PyFunction function) {
+    final PyParameter keywordContainer = getKeywordContainer(function);
+    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
+
+    if (keywordContainerName != null) {
+      final List<PyCallExpression> result = new ArrayList<PyCallExpression>();
+      final Stack<PsiElement> stack = new Stack<PsiElement>();
+
+      for (PyStatement statement : function.getStatementList().getStatements()) {
+        stack.push(statement);
+
         while (!stack.isEmpty()) {
-          PsiElement e = stack.pop();
-          if (!(e instanceof PySubscriptionExpression)) {
-            if (e instanceof PyCallExpression && ((PyCallExpression)e).getCallee() instanceof PyQualifiedExpression
-                    && isCallElement(((PyCallExpression)e).getCallee(), keywordContainerName)) {
-              callElements.add((PyCallExpression)e);
-            }
-            else {
-              for (PsiElement psiElement : e.getChildren()) {
-                stack.push(psiElement);
-              }
+          final PsiElement element = stack.pop();
+
+          if (element instanceof PyCallExpression &&
+              ((PyCallExpression)element).getCallee() instanceof PyQualifiedExpression &&
+              isKeywordContainerCall((PyQualifiedExpression)((PyCallExpression)element).getCallee(), keywordContainerName)) {
+            result.add((PyCallExpression)element);
+          }
+          else {
+            for (PsiElement child : element.getChildren()) {
+              stack.push(child);
             }
           }
         }
       }
+
+      return result;
     }
-    return callElements;
+
+    return Collections.emptyList();
   }
 
   private static void replaceSubscriptions(PyFunction function, Project project) {
@@ -220,7 +226,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
 
   private static void replaceCallElements(PyFunction function, Project project) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    List <PyCallExpression> callElements = fillCallExpressions(function);
+    List <PyCallExpression> callElements = findKeywordContainerCalls(function);
 
     int size = callElements.size();
     for (int i = 0; i != size; ++i) {
