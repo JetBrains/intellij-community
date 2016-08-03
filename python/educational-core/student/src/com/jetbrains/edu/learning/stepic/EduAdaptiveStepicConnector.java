@@ -271,7 +271,7 @@ public class EduAdaptiveStepicConnector {
             }
             final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
             if (window != null) {
-              window.setTaskText(unsolvedTask.getText(), unsolvedTask.getTaskDir(project), project);
+              window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getText()), unsolvedTask.getTaskDir(project), project);
             }
           }
           else {

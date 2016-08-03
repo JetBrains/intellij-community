@@ -476,19 +476,24 @@ public class StudyUtils {
       return null;
     }
 
-    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+    
     String text = task.getText();
     if (text != null && !text.isEmpty()) {
-      return prefix + text + ourPostfix;
+      return wrapTextToDisplayLatex(text);
     }
     if (taskDirectory != null) {
       final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_HTML);
-      if (taskTextFileHtml != null) return prefix + taskTextFileHtml + ourPostfix;
+      if (taskTextFileHtml != null) return wrapTextToDisplayLatex(taskTextFileHtml);
       
       final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
-      if (taskTextFileMd != null) return prefix + convertToHtml(taskTextFileMd) + ourPostfix;      
+      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));      
     }
     return null;
+  }
+
+  public static String wrapTextToDisplayLatex(String taskTextFileHtml) {
+    final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+    return prefix + taskTextFileHtml + ourPostfix;
   }
 
   @Nullable
