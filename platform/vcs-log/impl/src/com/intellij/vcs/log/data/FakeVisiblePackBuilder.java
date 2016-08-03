@@ -91,8 +91,9 @@ public class FakeVisiblePackBuilder {
 
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
     Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
-    for (VirtualFile root : map.keySet()) {
-      refs.put(root, new CompressedRefs(map.get(root), myHashMap));
+    for (VirtualFile root : providers.keySet()) {
+      Set<VcsRef> refsForRoot = map.get(root);
+      refs.put(root, new CompressedRefs(refsForRoot == null ? ContainerUtil.newHashSet() : refsForRoot, myHashMap));
     }
     return new RefsModel(refs, heads, myHashMap, providers);
   }
