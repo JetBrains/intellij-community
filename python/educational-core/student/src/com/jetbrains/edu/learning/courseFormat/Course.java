@@ -25,7 +25,7 @@ public class Course {
   @Expose private String name;
   private String myCourseDirectory = "";
   @Expose private int id;
-  @SerializedName("update_date") private Date myUpdateDate;
+  @Expose @SerializedName("update_date") private Date myUpdateDate;
   @Expose private boolean isAdaptive = false;
   @Expose @SerializedName("language") private String myLanguage = "Python";
 
@@ -139,10 +139,11 @@ public class Course {
     final Date date = EduStepicConnector.getCourseUpdateDate(id);
     if (date == null) return true;
     if (myUpdateDate == null) return false;
+    if (date.after(myUpdateDate)) return false;
     for (Lesson lesson : lessons) {
       if (!lesson.isUpToDate()) return false;
     }
-    return !date.after(myUpdateDate);
+    return true;
   }
 
   public void setUpdated() {

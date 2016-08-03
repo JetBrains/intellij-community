@@ -40,7 +40,7 @@ public class Task implements StudyItem {
   private Map<String, String> testsText = new HashMap<String, String>();
 
   @Transient private Lesson myLesson;
-  private Date myUpdateDate;
+  @Expose @SerializedName("update_date") private Date myUpdateDate;
 
   public Task() {}
 
