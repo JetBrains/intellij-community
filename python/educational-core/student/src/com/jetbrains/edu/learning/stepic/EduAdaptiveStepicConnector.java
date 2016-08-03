@@ -180,6 +180,7 @@ public class EduAdaptiveStepicConnector {
         final StepicWrappers.ViewsWrapper viewsWrapper = new StepicWrappers.ViewsWrapper(assignment.id, assignment.step);
         post.setEntity(new StringEntity(new Gson().toJson(viewsWrapper)));
         setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
+        setTimeout(post);
         final CloseableHttpResponse viewPostResult = client.execute(post);
         if (viewPostResult.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
           LOG.warn("Error while Views post, code: " + viewPostResult.getStatusLine().getStatusCode());
