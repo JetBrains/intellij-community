@@ -165,11 +165,9 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     return newChildren;
   }
 
-  /*
-    Algorithm is similar to calcParentToChildren(), but a bit simpler, because we have one specific parentFile.
-   */
-  public static Collection<VirtualFile> getFilesShownAsChildrenInProjectView(@NotNull final Project project,
-                                                                             @NotNull final VirtualFile parentFile) {
+  // Algorithm is similar to calcParentToChildren(), but a bit simpler, because we have one specific parentFile.
+  public static Collection<ChildFileInfo> getFilesShownAsChildrenInProjectView(@NotNull final Project project,
+                                                                               @NotNull final VirtualFile parentFile) {
     LOG.assertTrue(!parentFile.isDirectory());
 
     final VirtualFile dir = parentFile.getParent();
@@ -186,7 +184,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
 
     final Collection<NestingRule> rulesWhereItCanBeChild = filterRules(rules, parentFile.getName(), false);
 
-    final SmartList<VirtualFile> result = new SmartList<>();
+    final SmartList<ChildFileInfo> result = new SmartList<>();
 
     for (VirtualFile child : children) {
       if (child.isDirectory()) continue;
@@ -216,7 +214,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         if (matchesChild) {
           final String baseName = childName.substring(0, childName.length() - rule.myChildFileSuffix.length());
           if (parentFile.getName().equals(baseName + rule.myParentFileSuffix)) {
-            result.add(child);
+            result.add(new ChildFileInfo(child, baseName));
           }
         }
       }
@@ -383,5 +381,15 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
   private static class Edge<T> {
     @Nullable private T from;
     @Nullable private T to;
+  }
+
+  public static class ChildFileInfo {
+    @NotNull public final VirtualFile file;
+    @NotNull public final String namePartCommonWithParentFile;
+
+    public ChildFileInfo(@NotNull final VirtualFile file, @NotNull final String namePartCommonWithParentFile) {
+      this.file = file;
+      this.namePartCommonWithParentFile = namePartCommonWithParentFile;
+    }
   }
 }

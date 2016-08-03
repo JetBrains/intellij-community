@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * According to {@link NestingTreeStructureProvider} some files in the Project View are shown as
- * children of another peer file. When going to delete such 'parent' file this <code>RelatedFilesSafeDeleteProcessorDelegate</code>
+ * children of another peer file. When going to delete such 'parent' file {@link RelatedFilesSafeDeleteProcessorDelegate}
  * suggests to delete child files as well. Example: when deleting foo.ts file user is suggested to delete generated foo.js and foo.js.map
  * files as well.
  */
@@ -58,12 +58,12 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
     final VirtualFile file = ((PsiFile)element).getVirtualFile();
     if (file == null) return Collections.emptyList();
 
-    final Collection<VirtualFile> relatedFiles =
+    final Collection<NestingTreeStructureProvider.ChildFileInfo> relatedFileInfos =
       NestingTreeStructureProvider.getFilesShownAsChildrenInProjectView(element.getProject(), file);
 
-    final Collection<PsiElement> psiFiles = new ArrayList<>(relatedFiles.size());
-    for (VirtualFile relatedFile : relatedFiles) {
-      final PsiFile psiFile = element.getManager().findFile(relatedFile);
+    final Collection<PsiElement> psiFiles = new ArrayList<>(relatedFileInfos.size());
+    for (NestingTreeStructureProvider.ChildFileInfo info : relatedFileInfos) {
+      final PsiFile psiFile = element.getManager().findFile(info.file);
       if (psiFile != null && !allElementsToDelete.contains(psiFile)) {
         psiFiles.add(psiFile);
       }
