@@ -63,9 +63,22 @@ public class StepicWrappers {
           assert taskDir != null;
           VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
           assert ideaDir != null;
+          String stepic = "stepic";
+          VirtualFile stepicDir = ideaDir.findChild(stepic);
+          if (stepicDir == null) {
+            try {
+              stepicDir = ideaDir.createChildDirectory(StepicWrappers.class, stepic);
+            }
+            catch (IOException e) {
+              LOG.info("Failed to create idea/stepic directory", e);
+            }
+          }
+          if (stepicDir == null) {
+            return;
+          }
           String name = entry.getKey();
           VirtualFile answerFile = taskDir.findChild(name);
-          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, ideaDir, null);
+          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, stepicDir, null);
           if (pair == null) {
             return;
           }
