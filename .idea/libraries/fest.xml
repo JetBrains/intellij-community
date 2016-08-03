@@ -3,17 +3,17 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/fest-assert-1.5.0-SNAPSHOT.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/fest-reflect-2.0-SNAPSHOT.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/fest-swing-1.4-SNAPSHOT.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/fest-util-1.3.0-SNAPSHOT.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jsr305-1.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/MultithreadedTC-1.01.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/jsr305-1.3.9.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/fest-assert-1.5.0-SNAPSHOT-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/fest-reflect-2.0-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/fest-swing-1.4-SNAPSHOT-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/fest-util-1.3.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/MultithreadedTC-1.01-source.zip!/MultithreadedTC-1.01-source/src" />
     </SOURCES>
   </library>
 </component>
