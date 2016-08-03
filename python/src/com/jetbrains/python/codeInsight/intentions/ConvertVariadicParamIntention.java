@@ -52,11 +52,14 @@ import java.util.List;
  *
  */
 public class ConvertVariadicParamIntention extends BaseIntentionAction {
+
+  @Override
   @NotNull
   public String getText() {
     return PyBundle.message("INTN.convert.variadic.param");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.convert.variadic.param");
@@ -71,7 +74,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
-    if (getKeywordContainer(function) != null) {
+    if (function != null) {
       for (PyCallExpression call : fillCallExpressions(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
@@ -88,31 +91,32 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
         }
       }
 
-      return true;
+      return getKeywordContainer(function) != null;
     }
 
     return false;
   }
 
   @Nullable
-  private static PyParameter getKeywordContainer(PyFunction function) {
-    if (function != null) {
-      return Arrays
-        .stream(function.getParameterList().getParameters())
-        .filter(PyNamedParameter.class::isInstance)
-        .map(PyNamedParameter.class::cast)
-        .filter(PyNamedParameter::isKeywordContainer)
-        .findFirst()
-        .orElse(null);
-    }
-    return null;
+  private static PyParameter getKeywordContainer(@NotNull PyFunction function) {
+    return Arrays
+      .stream(function.getParameterList().getParameters())
+      .filter(PyNamedParameter.class::isInstance)
+      .map(PyNamedParameter.class::cast)
+      .filter(PyNamedParameter::isKeywordContainer)
+      .findFirst()
+      .orElse(null);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyFunction function =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
-    replaceSubscriptions(function, project);
-    replaceCallElements(function, project);
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+
+    if (function != null) {
+      replaceSubscriptions(function, project);
+      replaceCallElements(function, project);
+    }
   }
 
   /**
