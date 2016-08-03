@@ -22,13 +22,24 @@ public enum RegExpCapability {
   XML_SCHEMA_MODE,
   DANGLING_METACHARACTERS,
   NESTED_CHARACTER_CLASSES,
+
+  /**
+   * supports three-digit octal numbers not started with 0 (e.g. \123), 
+   * if false \1 from \123 will be considered as a group back reference
+   */
   OCTAL_NO_LEADING_ZERO,
+
   OMIT_NUMBERS_IN_QUANTIFIERS,
   COMMENT_MODE,
   ALLOW_HEX_DIGIT_CLASS,
   ALLOW_EMPTY_CHARACTER_CLASS,
   ALLOW_HORIZONTAL_WHITESPACE_CLASS,
   UNICODE_CATEGORY_SHORTHAND,
+
+  /**
+   * supports expressions like [[:alpha:]], [^[:alpha:]], [[:^alpha:]]
+   */
   POSIX_BRACKET_EXPRESSIONS,
+
   CARET_NEGATED_PROPERTIES
 }
