@@ -60,9 +60,7 @@ public class StudyCheckUtils {
         if (fileEditor instanceof StudyEditor) {
           Editor editor = ((StudyEditor)fileEditor).getEditor();
           editor.getMarkupModel().removeAllHighlighters();
-          for (TaskFile taskFile : task.getTaskFiles().values()) {
-            StudyUtils.drawPlaceholdersFromOtherSteps(editor, taskFile, task);
-          }
+          StudyUtils.drawPlaceholdersFromOtherSteps(editor, entry.getValue(), task);
           TaskFile currentTaskFile = StudyUtils.getTaskFile(project, virtualFile);
           if (currentTaskFile != null) {
             StudyUtils.drawAllWindows(editor, currentTaskFile, false);
