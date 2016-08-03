@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -338,7 +339,6 @@ idea.fatal.error.notification=disabled
       return
     }
 
-    buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
     List<Thread> threads = []
     List<BuildMessages> messages = []
     List<Throwable> errors = Collections.synchronizedList([])
@@ -347,7 +347,8 @@ idea.fatal.error.notification=disabled
       def thread = new Thread("Thread for build task '$task.taskName'") {
         @Override
         void run() {
-          childContext.messages.startFork()
+          def start = System.currentTimeMillis()
+          childContext.messages.onForkStarted()
           try {
             task.run(childContext)
           }
@@ -355,16 +356,20 @@ idea.fatal.error.notification=disabled
             errors << t
           }
           finally {
-            childContext.messages.info("task finished")
-            childContext.messages.finishFork()
+            buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
+            childContext.messages.onForkFinished()
           }
         }
       }
-      thread.start()
       threads << thread
       messages << childContext.messages
     }
-    threads.each { it.join() }
+    buildContext.messages.block("Run parallel tasks") {
+      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+      threads.each { it.start() }
+      threads.each { it.join() }
+    }
+    buildContext.messages.onAllForksFinished()
     if (!errors.empty) {
       errors.subList(1, errors.size()).each { it.printStackTrace() }
       throw errors.first()

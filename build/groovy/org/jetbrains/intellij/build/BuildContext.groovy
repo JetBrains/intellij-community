@@ -156,13 +156,18 @@ interface BuildMessages {
   BuildMessages forkForParallelTask(String taskName)
 
   /**
+   * Must be invoked from the main thread when all forks have been finished
+   */
+  void onAllForksFinished()
+
+  /**
    * Must be invoked for the forked instance on the thread where it is executing before the task is started.
    * It's required to correctly handle messages from Ant tasks.
    */
-  void startFork()
+  void onForkStarted()
 
   /**
    * Must be invoked for the forked instance on the thread where it is executing when the task is finished
    */
-  void finishFork()
+  void onForkFinished()
 }

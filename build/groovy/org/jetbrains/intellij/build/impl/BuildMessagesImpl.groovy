@@ -20,6 +20,7 @@ import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.jps.gant.BuildInfoPrinter
 import org.jetbrains.jps.gant.DefaultBuildInfoPrinter
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
@@ -34,6 +35,9 @@ class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
   private final Function<String, BuildMessageLogger> loggerFactory
   private final AntTaskLogger antTaskLogger
+  private final BuildMessagesImpl parentInstance
+  private final List<BuildMessagesImpl> forkedInstances = []
+  private final List<LogMessage> delayedMessages = []
 
   static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject, boolean underTeamCity) {
     String key = "IntelliJBuildMessages"
@@ -45,7 +49,7 @@ class BuildMessagesImpl implements BuildMessages {
     disableAntLogging(antProject)
     Function<String, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
     def antTaskLogger = new AntTaskLogger()
-    def messages = new BuildMessagesImpl(loggerFactory.apply(null), loggerFactory, antTaskLogger)
+    def messages = new BuildMessagesImpl(loggerFactory.apply(null), loggerFactory, antTaskLogger, null)
     antTaskLogger.defaultHandler = messages
     antProject.addBuildListener(antTaskLogger)
     antProject.addReference(key, messages)
@@ -63,20 +67,22 @@ class BuildMessagesImpl implements BuildMessages {
     }
   }
 
-  private BuildMessagesImpl(BuildMessageLogger logger, Function<String, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger) {
+  private BuildMessagesImpl(BuildMessageLogger logger, Function<String, BuildMessageLogger> loggerFactory, AntTaskLogger antTaskLogger,
+                            BuildMessagesImpl parentInstance) {
     this.logger = logger
     this.loggerFactory = loggerFactory
     this.antTaskLogger = antTaskLogger
+    this.parentInstance = parentInstance
   }
 
   @Override
   void info(String message) {
-    logger.logMessage(message, BuildMessageLogger.Level.INFO)
+    processMessage(new LogMessage(LogMessage.Kind.INFO, message))
   }
 
   @Override
   void warning(String message) {
-    logger.logMessage(message, BuildMessageLogger.Level.WARNING)
+    processMessage(new LogMessage(LogMessage.Kind.WARNING, message))
   }
 
   @Override
@@ -86,32 +92,61 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void progress(String message) {
-    logger.logProgressMessage(message)
+    if (parentInstance != null) {
+      //progress messages should be shown immediately, there are no problems with that since they aren't organized into groups
+      parentInstance.progress(message)
+    }
+    else {
+      logger.processMessage(new LogMessage(LogMessage.Kind.PROGRESS, message))
+    }
   }
 
   @Override
   public <V> V block(String blockName, Closure<V> body) {
     try {
-      logger.startBlock(blockName)
+      processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
       return body()
     }
     finally {
-      logger.finishBlock(blockName)
+      processMessage(new LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
+    }
+  }
+
+  void processMessage(LogMessage message) {
+    if (parentInstance != null) {
+      //It appears that TeamCity currently cannot properly handle log messages from parallel tasks (https://youtrack.jetbrains.com/issue/TW-46515)
+      //Until it is fixed we need to delay delivering of messages from the tasks running in parallel until all tasks have been finished.
+      delayedMessages.add(message)
+    }
+    else {
+      logger.processMessage(message)
     }
   }
 
   @Override
   BuildMessages forkForParallelTask(String taskName) {
-    return new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger)
+    def forked = new BuildMessagesImpl(loggerFactory.apply(taskName), loggerFactory, antTaskLogger, this)
+    forkedInstances << forked
+    return forked
   }
 
   @Override
-  void startFork() {
+  void onAllForksFinished() {
+    forkedInstances.each { forked ->
+      forked.delayedMessages.each {
+        forked.logger.processMessage(it)
+      }
+    }
+    forkedInstances.clear()
+  }
+
+  @Override
+  void onForkStarted() {
     antTaskLogger.registerThreadHandler(Thread.currentThread(), this)
   }
 
   @Override
-  void finishFork() {
+  void onForkFinished() {
     antTaskLogger.unregisterThreadHandler(Thread.currentThread())
   }
 }

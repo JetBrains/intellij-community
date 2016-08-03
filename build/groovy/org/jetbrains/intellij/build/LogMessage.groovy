@@ -18,6 +18,15 @@ package org.jetbrains.intellij.build
 /**
  * @author nik
  */
-abstract class BuildMessageLogger {
-  abstract void processMessage(LogMessage message)
+class LogMessage {
+  enum Kind {
+    ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED
+  }
+  final Kind kind
+  final String text
+
+  LogMessage(Kind kind, String text) {
+    this.text = text
+    this.kind = kind
+  }
 }

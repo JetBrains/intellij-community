@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.Function
 
@@ -34,31 +35,34 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   }
 
   @Override
-  void logMessage(String message, Level level) {
-    String status = level == Level.WARNING ? " status='WARNING'" : ""
+  void processMessage(LogMessage message) {
+    switch (message.kind) {
+      case LogMessage.Kind.ERROR:
+      case LogMessage.Kind.WARNING:
+      case LogMessage.Kind.INFO:
+        logPlainMessage(message)
+        break
+      case LogMessage.Kind.PROGRESS:
+        out.println "##teamcity[progressMessage '${escape(message.text)}']"
+        break
+      case LogMessage.Kind.BLOCK_STARTED:
+        printTeamCityMessage("blockOpened", "name='${escape(message.text)}'")
+        break
+      case LogMessage.Kind.BLOCK_FINISHED:
+        printTeamCityMessage("blockClosed", "name='${escape(message.text)}'")
+        break
+    }
+  }
+
+  void logPlainMessage(LogMessage message) {
+    String status = message.kind == LogMessage.Kind.WARNING ? " status='WARNING'" : ""
     if (parallelTaskId != null || !status.isEmpty()) {
-      printTeamCityMessage("message", "text='${escape(message)}'$status")
+      printTeamCityMessage("message", "text='${escape(message.text)}'$status")
     }
     else {
       out.println message
     }
   }
-
-  @Override
-  void logProgressMessage(String message) {
-    out.println "##teamcity[progressMessage '${escape(message)}']"
-  }
-
-  @Override
-  void startBlock(String blockName) {
-    printTeamCityMessage("blockOpened", "name='${escape(blockName)}'")
-  }
-
-  @Override
-  void finishBlock(String blockName) {
-    printTeamCityMessage("blockClosed", "name='${escape(blockName)}'")
-  }
-
 
   private void printTeamCityMessage(String messageId, String messageArguments) {
     String flowArg = parallelTaskId != null ? " flowId='${escape(parallelTaskId)}'" : ""

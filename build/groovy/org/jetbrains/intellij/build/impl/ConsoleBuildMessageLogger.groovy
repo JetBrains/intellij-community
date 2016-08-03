@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.Function
 
@@ -33,13 +34,22 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
   }
 
   @Override
-  void logMessage(String message, Level level) {
-    printMessage(message)
-  }
-
-  @Override
-  void logProgressMessage(String message) {
-    printMessage(message)
+  void processMessage(LogMessage message) {
+    switch (message.kind) {
+      case LogMessage.Kind.ERROR:
+      case LogMessage.Kind.WARNING:
+      case LogMessage.Kind.INFO:
+      case LogMessage.Kind.PROGRESS:
+        printMessage(message.text)
+        break
+      case LogMessage.Kind.BLOCK_STARTED:
+        printMessage(message.text)
+        indent++
+        break
+      case LogMessage.Kind.BLOCK_FINISHED:
+        indent--
+        break
+    }
   }
 
   private printMessage(String message) {
@@ -47,16 +57,5 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
     message.eachLine {
       out.println(" " * indent + taskPrefix + it)
     }
-  }
-
-  @Override
-  void startBlock(String blockName) {
-    printMessage(blockName)
-    indent++
-  }
-
-  @Override
-  void finishBlock(String blockName) {
-    indent--
   }
 }
