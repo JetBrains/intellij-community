@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -83,7 +84,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
         }
       }
 
-      for (PySubscriptionExpression subscription : fillSubscriptions(function)) {
+      for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
         final PyExpression indexExpression = subscription.getIndexExpression();
         final String indexValue = PythonStringUtil.getStringValue(indexExpression);
         if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
@@ -119,35 +120,40 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     }
   }
 
-  /**
-   * finds subscriptions of keyword container, adds them to mySubscriptions
-   * @param function
-   */
-  private static List<PySubscriptionExpression> fillSubscriptions(PyFunction function) {
-    List<PySubscriptionExpression> subscriptions = new ArrayList<>();
-    PyStatementList statementList = function.getStatementList();
-    Stack<PsiElement> stack = new Stack<>();
-    PyParameter keywordContainer = getKeywordContainer(function);
-    if (keywordContainer != null) {
-      String keywordContainerName = keywordContainer.getName();
-      for (PyStatement st : statementList.getStatements()) {
-        stack.push(st);
+  @NotNull
+  private static List<PySubscriptionExpression> findKeywordContainerSubscriptions(@NotNull PyFunction function) {
+    final PyParameter keywordContainer = getKeywordContainer(function);
+    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
+
+    if (keywordContainerName != null) {
+      final List<PySubscriptionExpression> result = new ArrayList<PySubscriptionExpression>();
+      final Stack<PsiElement> stack = new Stack<PsiElement>();
+
+      for (PyStatement statement : function.getStatementList().getStatements()) {
+        stack.push(statement);
+
         while (!stack.isEmpty()) {
-          PsiElement e = stack.pop();
-          if (e instanceof PySubscriptionExpression) {
-            if (((PySubscriptionExpression)e).getOperand().getText().equals(keywordContainerName)) {
-              subscriptions.add((PySubscriptionExpression)e);
+          final PsiElement element = stack.pop();
+
+          if (element instanceof PySubscriptionExpression) {
+            final PySubscriptionExpression subscription = (PySubscriptionExpression)element;
+
+            if (subscription.getOperand().getText().equals(keywordContainerName)) {
+              result.add(subscription);
             }
           }
           else {
-            for (PsiElement psiElement : e.getChildren()) {
-              stack.push(psiElement);
+            for (PsiElement child : element.getChildren()) {
+              stack.push(child);
             }
           }
         }
       }
+
+      return result;
     }
-    return subscriptions;
+
+    return Collections.emptyList();
   }
 
   private static boolean isCallElement(PyExpression callee, String keywordContainerName) {
@@ -187,7 +193,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
 
   private static void replaceSubscriptions(PyFunction function, Project project) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    List <PySubscriptionExpression> subscriptions = fillSubscriptions(function);
+    List <PySubscriptionExpression> subscriptions = findKeywordContainerSubscriptions(function);
     int size = subscriptions.size();
     for (int i = 0; i != size; ++i) {
       PySubscriptionExpression subscriptionExpression = subscriptions.get(i);
