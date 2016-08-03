@@ -87,7 +87,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
       //try to find test_runner import
       final String extension = PythonFileType.INSTANCE.getDefaultExtension();
       // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-      final GlobalSearchScope searchScope = module.getModuleContentScope();
+      final GlobalSearchScope searchScope = module.getModuleScope();
       final Collection<VirtualFile> pyFiles = FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope);
       for (VirtualFile file : pyFiles) {
         if (file.getName().startsWith("test")) {
