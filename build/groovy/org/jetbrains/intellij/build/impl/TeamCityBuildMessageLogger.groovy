@@ -60,7 +60,7 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
       printTeamCityMessage("message", "text='${escape(message.text)}'$status")
     }
     else {
-      out.println message
+      out.println message.text
     }
   }
 
