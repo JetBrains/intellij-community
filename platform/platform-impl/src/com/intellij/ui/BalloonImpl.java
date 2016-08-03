@@ -1076,12 +1076,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     public void updateBounds(final BalloonImpl balloon) {
       if (balloon.myLayeredPane == null || balloon.myComp == null) return;
 
-      final Rectangle bounds =
+      Rectangle bounds =
         getUpdatedBounds(balloon.myLayeredPane.getSize(), balloon.myForcedBounds, balloon.myComp.getPreferredSize(), balloon.myShowPointer,
                          balloon.myTargetPoint, balloon.myContainerInsets);
 
       if (balloon.myShadowBorderProvider == null) {
-        bounds.setLocation(getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderInsets()));
+        bounds = new Rectangle(getShiftedPoint(bounds.getLocation(), balloon.getShadowBorderInsets()), bounds.getSize());
       }
       balloon.myComp._setBounds(bounds);
     }
