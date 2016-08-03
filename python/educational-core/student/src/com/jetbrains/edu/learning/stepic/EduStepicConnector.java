@@ -255,7 +255,6 @@ public class EduStepicConnector {
   public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
     if (ourClient == null) {
       login(project);
-      initializeClient();
     }
     return ourClient;
   }
@@ -591,7 +590,7 @@ public class EduStepicConnector {
     }
   }
 
-  private static boolean login(@NotNull final Project project) {
+  static boolean login(@NotNull final Project project) {
     final StepicUser user = StudyTaskManager.getInstance(project).getUser();
     final String login =  user.getEmail();
     if (StringUtil.isEmptyOrSpaces(login)) {
