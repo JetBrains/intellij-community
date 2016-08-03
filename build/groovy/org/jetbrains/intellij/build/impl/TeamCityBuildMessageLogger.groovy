@@ -46,7 +46,7 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
 
   @Override
   void logProgressMessage(String message) {
-    printTeamCityMessage("progressMessage", "'${escape(message)}'")
+    out.println "##teamcity[progressMessage '${escape(message)}']"
   }
 
   @Override
