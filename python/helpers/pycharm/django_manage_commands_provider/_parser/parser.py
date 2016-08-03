@@ -62,6 +62,7 @@ def report_data(dumper, commands_to_skip):
                         command_name))
                 sys.exit(1)
 
+        use_argparse = False
         # There is no optparse in 1.10
         if _is_django_10():
             use_argparse = True
