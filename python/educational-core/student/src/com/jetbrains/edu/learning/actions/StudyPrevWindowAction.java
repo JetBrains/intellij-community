@@ -3,6 +3,7 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.icons.AllIcons;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,22 @@ public class StudyPrevWindowAction extends StudyWindowNavigationAction {
 
   @Nullable
   @Override
-  protected AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window) {
-    int prevIndex = window.getIndex() - 1;
-    List<AnswerPlaceholder> windows = window.getTaskFile().getAnswerPlaceholders();
-    if (StudyUtils.indexIsValid(prevIndex, windows)) {
-      return windows.get(prevIndex);
+  protected AnswerPlaceholder getTargetPlaceholder(@NotNull final TaskFile taskFile, int offset) {
+    final AnswerPlaceholder selectedAnswerPlaceholder = taskFile.getAnswerPlaceholder(offset);
+    final List<AnswerPlaceholder> placeholders = taskFile.getAnswerPlaceholders();
+    if (selectedAnswerPlaceholder == null) {
+      for (int i = placeholders.size() - 1; i >= 0; i--) {
+        final AnswerPlaceholder placeholder = placeholders.get(i);
+        if (placeholder.getOffset() < offset) {
+          return placeholder;
+        }
+      }
+    }
+    else {
+      int prevIndex = selectedAnswerPlaceholder.getIndex() - 1;
+      if (StudyUtils.indexIsValid(prevIndex, placeholders)) {
+        return placeholders.get(prevIndex);
+      }
     }
     return null;
   }

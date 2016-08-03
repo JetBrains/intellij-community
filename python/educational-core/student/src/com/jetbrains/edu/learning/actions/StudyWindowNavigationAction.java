@@ -29,15 +29,12 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
         if (openedFile != null) {
           final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
           if (selectedTaskFile != null) {
-            final AnswerPlaceholder selectedAnswerPlaceholder = getSelectedAnswerPlaceholder(selectedEditor, selectedTaskFile);
-            if (selectedAnswerPlaceholder == null) {
+            final int offset = selectedEditor.getCaretModel().getOffset();
+            final AnswerPlaceholder targetPlaceholder = getTargetPlaceholder(selectedTaskFile, offset);
+            if (targetPlaceholder == null) {
               return;
             }
-            final AnswerPlaceholder nextAnswerPlaceholder = getNextAnswerPlaceholder(selectedAnswerPlaceholder);
-            if (nextAnswerPlaceholder == null) {
-              return;
-            }
-            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, nextAnswerPlaceholder);
+            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, targetPlaceholder);
             selectedEditor.getSelectionModel().removeSelection();
             }
           }
@@ -45,12 +42,12 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
       }
 
   @Nullable
-  private static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile file) {
-    return file.getAnswerPlaceholder(editor.getCaretModel().getOffset());
+  protected static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final TaskFile file, int offset) {
+    return file.getAnswerPlaceholder(offset);
   }
 
   @Nullable
-  protected abstract AnswerPlaceholder getNextAnswerPlaceholder(@NotNull final AnswerPlaceholder window);
+  protected abstract AnswerPlaceholder getTargetPlaceholder(@NotNull final TaskFile taskFile, int offset);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
