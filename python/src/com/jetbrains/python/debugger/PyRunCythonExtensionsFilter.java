@@ -105,6 +105,9 @@ public class PyRunCythonExtensionsFilter implements Filter {
         final Map<String, String> environment = new HashMap<String, String>(System.getenv());
         PythonEnvUtil.setPythonUnbuffered(environment);
         PythonEnvUtil.setPythonDontWriteBytecode(environment);
+        if (sdkPath != null) {
+          PythonEnvUtil.resetHomePathChanges(sdkPath, environment);
+        }
         GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withEnvironment(environment);
 
         final boolean canCreate = FileUtil.ensureCanCreateFile(new File(helpersPath));
