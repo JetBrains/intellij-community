@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
@@ -23,6 +26,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
@@ -134,12 +138,23 @@ abstract class LineLayout {
       HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor);
       int endOffsetInEditor = startOffsetInEditor + textLength;
       while (!iterator.atEnd() && iterator.getStart() < endOffsetInEditor) {
+        int relStartOffset = Math.max(0, iterator.getStart() - startOffsetInEditor);
         IElementType currentToken = iterator.getTokenType();
-        if (distinctTokens(lastToken, currentToken)) {
-          int tokenStart = Math.max(iterator.getStart(), startOffsetInEditor);
-          addRuns(runs, text, lastOffset - startOffsetInEditor, tokenStart - startOffsetInEditor, flags);
+        String lcPrefix = getLineCommentPrefix(currentToken);
+        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= (iterator.getEnd() - iterator.getStart()) &&
+            CharArrayUtil.regionMatches(text, relStartOffset, relStartOffset + lcPrefix.length(), lcPrefix)) {
+          addRuns(runs, text, lastOffset - startOffsetInEditor, relStartOffset, flags);
+          int textStartOffset = Math.min(textLength, Math.min(iterator.getEnd() - startOffsetInEditor,
+                                                              CharArrayUtil.shiftForward(text, relStartOffset + lcPrefix.length(), " \t")));
+          lastOffset = Math.min(iterator.getEnd(), endOffsetInEditor);
+          lastToken = null;
+          addRuns(runs, text, relStartOffset, textStartOffset, flags);
+          addRuns(runs, text, textStartOffset, lastOffset - startOffsetInEditor, flags);
+        }
+        else if (distinctTokens(lastToken, currentToken)) {
+          addRuns(runs, text, lastOffset - startOffsetInEditor, relStartOffset, flags);
           lastToken = currentToken;
-          lastOffset = tokenStart;
+          lastOffset = relStartOffset + startOffsetInEditor;
         }
         iterator.advance();
       }
@@ -149,6 +164,14 @@ abstract class LineLayout {
       addRuns(runs, text, 0, textLength, flags);
     }
     return runs;
+  }
+
+  private static String getLineCommentPrefix(IElementType token) {
+    if (token == null) return null;
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
+    return (commenter instanceof CodeDocumentationAwareCommenter) &&
+           token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType()) ?
+           commenter.getLineCommentPrefix() : null;
   }
 
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
@@ -162,7 +185,7 @@ abstract class LineLayout {
   }
   
   private static void addRuns(List<BidiRun> runs, char[] text, int start, int end, int flags) {
-    if (!Bidi.requiresBidi(text, start, end)) {
+    if (start < end && !Bidi.requiresBidi(text, start, end)) {
       addOrMergeRun(runs, new BidiRun((byte)0, start, end));
       return;
     }

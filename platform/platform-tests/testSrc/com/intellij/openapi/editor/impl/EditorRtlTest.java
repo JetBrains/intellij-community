@@ -594,6 +594,12 @@ public class EditorRtlTest extends AbstractEditorTest {
       EditorSettingsExternalizable.getInstance().setBidiTextDirection(savedValue);
     }
   }
+
+  public void testLineCommentLayout() throws Exception {
+    prepare("<caret>// R", TestFileType.JAVA);
+    right();
+    checkResult("/<caret>/ R");
+  }
   
   private void prepareText(String text) throws IOException {
     prepare(text, TestFileType.TEXT);
