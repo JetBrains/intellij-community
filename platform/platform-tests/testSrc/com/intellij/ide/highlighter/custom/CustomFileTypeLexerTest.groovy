@@ -38,11 +38,11 @@ class CustomFileTypeLexerTest extends TestCase {
     doTest(lexer, text, expected);
   }
 
-  private void doTest(Lexer lexer, String text, String expected) {
+  private static void doTest(Lexer lexer, String text, String expected) {
     assertEquals(expected, LexerTestCase.printTokens(text, 0, lexer))
   }
 
-  private SyntaxTable createGenericTable() {
+  private static SyntaxTable createGenericTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.lineComment = ';'
@@ -97,7 +97,7 @@ WHITESPACE ('\\n')
 '''
   }
 
-  private SyntaxTable createJavaSyntaxTable() {
+  private static SyntaxTable createJavaSyntaxTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.setLineComment("//");
@@ -229,7 +229,7 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
     assertEquals(6, lexer.getBufferEnd());
   }
 
-  private SyntaxTable createPropTable() {
+  private static SyntaxTable createPropTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.setLineComment("#");
@@ -388,12 +388,21 @@ R_PARENTH (')')
 '''
   }
 
+  public void "test hex literals"() {
+    SyntaxTable table = new SyntaxTable()
+    table.hexPrefix = '0y'
+    doTest table, '1 0yabc0', '''\
+NUMBER ('1')
+WHITESPACE (' ')
+NUMBER ('0yabc0')
+'''
+  }
+
   public void testKeywordLexerPerformance() {
     int count = 3000
     List<String> keywords = []
     for (i in 0..<count) {
       char start = ('a' as char) + (i % 7)
-      char then = start
       keywords.add((start as String) * i)
     }
     SyntaxTable table = new SyntaxTable()
