@@ -41,7 +41,7 @@ import java.util.List;
  * Date: Dec 19, 2003
  * Time: 1:25:15 PM
  */
-public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends TypeRenderer implements ChildrenRenderer{
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;

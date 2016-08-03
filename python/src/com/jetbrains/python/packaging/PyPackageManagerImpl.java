@@ -442,10 +442,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
 
     try {
-      final Map<String, String> environment = new HashMap<>(System.getenv());
+      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
+      final Map<String, String> environment = commandLine.getEnvironment();
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
-      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
+      PythonEnvUtil.resetHomePathChanges(homePath, environment);
       final Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");

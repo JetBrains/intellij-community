@@ -478,7 +478,11 @@ public class StudyProjectGenerator {
       flushCache(myCourses);
       if (courseName != null && !courseName.getName().equals(unzippedName)) {
         //noinspection ResultOfMethodCallIgnored
-        courseDir.renameTo(new File(OUR_COURSES_DIR, courseName.getName()));
+        File dest = new File(OUR_COURSES_DIR, courseName.getName());
+        if (dest.exists()) {
+          FileUtil.delete(dest);
+        }
+        courseDir.renameTo(dest);
         //noinspection ResultOfMethodCallIgnored
         courseDir.delete();
       }

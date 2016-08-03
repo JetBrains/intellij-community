@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,19 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
-import com.sun.jdi.ObjectReference;
+import com.intellij.psi.PsiType;
 import com.sun.jdi.Type;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor{
@@ -60,24 +60,11 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {
-    Value value = myParentDescriptor.getValue();
-
-    if(value instanceof ObjectReference) {
-      final String typeName = value.type().name();
-
-      final PsiClass psiClass = DebuggerUtils.findClass(myTypeName, myProject, context.getDebugProcess().getSearchScope());
-
-      if (psiClass == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));
-      }
-
-      return createCodeFragment(psiClass);
+    Pair<PsiClass, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(myTypeName, myProject);
+    if (psiClassAndType.first == null) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", myTypeName));
     }
-    else {
-      throw EvaluateExceptionUtil.createEvaluateException(
-        DebuggerBundle.message("evaluation.error.objref.expected", myParentDescriptor.getName())
-      );
-    }
+    return createCodeFragment(psiClassAndType.first);
   }
 
   public ValueDescriptorImpl getParentDescriptor() {
