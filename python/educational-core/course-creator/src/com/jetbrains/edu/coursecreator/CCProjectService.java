@@ -84,7 +84,10 @@ public class CCProjectService implements PersistentStateComponent<Element> {
             String answerName = FileUtil.getNameWithoutExtension(name) + CCUtils.ANSWER_EXTENSION_DOTTED + FileUtilRt.getExtension(name);
             Document document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, answerName);
             if (document == null) {
-              continue;
+              document = StudyUtils.getDocument(myProject.getBasePath(), lessonIndex, taskIndex, name);
+              if (document == null) {
+                continue;
+              }
             }
             for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS, true)) {
               Element lineElement = getChildWithName(placeholder, LINE, true);
