@@ -388,17 +388,19 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final CheckedTreeNode root = new CheckedTreeNode(null);
     final DataNodeCheckedTreeNode projectNode = treeNodeMap.get(myProjectInfo.getExternalProjectStructure());
 
+    String rootModuleComment = "root module";
     if (rootModuleNode[0] != null && projectNode != null) {
-      rootModuleNode[0].comment = "root module";
-      if (projectNode.isNodeChild(rootModuleNode[0])) projectNode.remove(rootModuleNode[0]);
-      projectNode.insert(rootModuleNode[0], 0);
+      rootModuleNode[0].comment = rootModuleComment;
+      if (!projectNode.isNodeChild(rootModuleNode[0])) {
+        projectNode.add(rootModuleNode[0]);
+      }
     }
 
     List<TreeNode> nodes = projectNode != null ? TreeUtil.childrenToArray(projectNode) : ContainerUtil.emptyList();
     Collections.sort(nodes, (o1, o2) -> {
       if(o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
-        if("root module".equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
-        if("root module".equals(((DataNodeCheckedTreeNode)o2).comment)) return 1;
+        if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
+        if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o2).comment)) return 1;
         return StringUtil.naturalCompare(((DataNodeCheckedTreeNode)o1).text, ((DataNodeCheckedTreeNode)o2).text);
       }
       return 0;
