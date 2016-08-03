@@ -135,7 +135,7 @@ public class TaskFile {
   public void sortAnswerPlaceholders() {
     Collections.sort(myAnswerPlaceholders, new AnswerPlaceholderComparator());
     for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
-      myAnswerPlaceholders.get(i).setIndex(i + 1);
+      myAnswerPlaceholders.get(i).setIndex(i);
     }
   }
 
