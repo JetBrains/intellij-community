@@ -42,7 +42,9 @@ public class MacPathChooserDialog implements PathChooserDialog {
   private final FileDialog myFileDialog;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
-    myFileDialog = createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD);
+    myFileDialog = parent != null
+                   ? createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD)
+                   : createFileDialogWithoutOwner(descriptor.getTitle(), FileDialog.LOAD);
   }
 
   @NotNull
@@ -90,5 +92,13 @@ public class MacPathChooserDialog implements PathChooserDialog {
       throw new IllegalArgumentException("Owner should be a descendant of Dialog or Frame");
     }
     return fileDialog;
+  }
+
+  @NotNull
+  private static FileDialog createFileDialogWithoutOwner(String title, int load) {
+    // This is bad. But sometimes we do not have any windows at all.
+    // On the other hand, it is a bit strange to show a file dialog without an owner
+    // Therefore we should minimize usage of this case.
+    return new FileDialog((Frame)null, title, load);
   }
 }

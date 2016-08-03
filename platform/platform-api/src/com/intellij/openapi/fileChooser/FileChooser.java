@@ -126,7 +126,7 @@ public class FileChooser {
                                 @Nullable final Project project,
                                 @Nullable final VirtualFile toSelect,
                                 @NotNull final Consumer<VirtualFile> callback) {
-    chooseFile(descriptor, project, null, toSelect, callback);
+    chooseFile(descriptor, project, IdeFocusManager.getInstance(project).getFocusOwner(), toSelect, callback);
   }
 
   /**
