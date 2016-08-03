@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,10 +64,14 @@ public class MacPathChooserDialog implements PathChooserDialog {
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
-    myFileDialog.setFile(toSelect.getCanonicalPath());
+    String path = toSelect != null ? toSelect.getCanonicalPath() : null;
+    myFileDialog.setFile(path);
     myFileDialog.setVisible(true);
 
-    callback.consume(getChosenFiles(Stream.of(myFileDialog.getFiles())));
+    File[] files = myFileDialog.getFiles();
+    if (!ArrayUtil.isEmpty(files)) {
+      callback.consume(getChosenFiles(Stream.of(files)));
+    }
   }
 
   @NotNull

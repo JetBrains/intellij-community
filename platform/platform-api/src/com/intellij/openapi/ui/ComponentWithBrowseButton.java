@@ -256,7 +256,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
         }
       }
 
-      FileChooser.chooseFile(fileChooserDescriptor, getProject(), getInitialFile(), file -> onFileChosen(file));
+      FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
     }
 
     @Nullable
