@@ -93,7 +93,6 @@ class BuildTasksImpl extends BuildTasks {
 
 //todo[nik] do we need 'cp' and 'jvmArgs' parameters?
   void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    //todo[nik] create searchableOptions.xml in a separate directory instead of modifying it in the module output
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
       if (!new File(javaRuntimeClasses).exists()) {

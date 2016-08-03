@@ -311,9 +311,7 @@ class MacDistributionBuilder {
        "apple.laf.useScreenMenuBar"            : "true",
        "apple.awt.graphics.UseQuartz"          : "true",
        "apple.awt.fullscreencapturealldisplays": "false"]
-    if (buildContext.productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep current behavior (platform prefix for CE is set in MainImpl anyway)
-      && buildContext.productProperties.platformPrefix != "Idea") {
+    if (buildContext.productProperties.platformPrefix != null) {
       properties["idea.platform.prefix"] = buildContext.productProperties.platformPrefix
     }
 

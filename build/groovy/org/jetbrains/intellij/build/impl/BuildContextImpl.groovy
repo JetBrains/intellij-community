@@ -247,9 +247,7 @@ class BuildContextImpl extends BuildContext {
   @Override
   String getAdditionalJvmArguments() {
     String jvmArgs
-    if (productProperties.platformPrefix != null
-//todo[nik] remove later. This is added to keep the current behavior (platform prefix for CE is set in MainImpl anyway)
-      && productProperties.platformPrefix != "Idea") {
+    if (productProperties.platformPrefix != null) {
       jvmArgs = "-Didea.platform.prefix=${productProperties.platformPrefix}"
     }
     else {

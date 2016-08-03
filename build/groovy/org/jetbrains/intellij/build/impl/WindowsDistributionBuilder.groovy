@@ -145,7 +145,7 @@ class WindowsDistributionBuilder {
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
       String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
-      def productName = buildContext.applicationInfo.upperCaseProductName //todo[nik] use '.productName' instead
+      def productName = buildContext.applicationInfo.shortProductName
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
       def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
