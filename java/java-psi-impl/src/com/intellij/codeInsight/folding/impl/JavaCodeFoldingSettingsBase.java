@@ -19,17 +19,19 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 
 public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_ACCESSORS;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_ONE_LINE_METHODS = true;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_INNER_CLASSES;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_ANONYMOUS_CLASSES;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_ANNOTATIONS;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_CLOSURES = true;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_I18N_MESSAGES = true;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
-  @SuppressWarnings("WeakerAccess") public boolean COLLAPSE_END_OF_LINE_COMMENTS;
-  @SuppressWarnings("WeakerAccess") public boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS;
+  private boolean COLLAPSE_ACCESSORS;
+  private boolean COLLAPSE_ONE_LINE_METHODS = true;
+  private boolean COLLAPSE_INNER_CLASSES;
+  private boolean COLLAPSE_ANONYMOUS_CLASSES;
+  private boolean COLLAPSE_ANNOTATIONS;
+  private boolean COLLAPSE_CLOSURES = true;
+  private boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
+  private boolean COLLAPSE_I18N_MESSAGES = true;
+  private boolean COLLAPSE_SUPPRESS_WARNINGS = true;
+  private boolean COLLAPSE_END_OF_LINE_COMMENTS;
+  private boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS;
+  private int INLINE_LITERAL_PARAMETER_MIN_NAME_LENGTH = 3;
+  private int INLINE_LITERAL_PARAMETER_MIN_ARGS_TO_FOLD = 2;
 
   @Override
   public boolean isCollapseImports() {
@@ -83,6 +85,11 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public boolean isCollapseOneLineMethods() {
     return COLLAPSE_ONE_LINE_METHODS;
+  }
+
+  @Override
+  public void setCollapseOneLineMethods(boolean value) {
+    COLLAPSE_ONE_LINE_METHODS = value;
   }
 
   @Override
@@ -173,5 +180,25 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public void setInlineParameterNamesForLiteralCallArguments(boolean value) {
     INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = value;
+  }
+
+  @Override
+  public int getInlineLiteralParameterMinNameLength() {
+    return INLINE_LITERAL_PARAMETER_MIN_NAME_LENGTH;
+  }
+
+  @Override
+  public void setInlineLiteralParameterMinNameLength(int value) {
+    INLINE_LITERAL_PARAMETER_MIN_NAME_LENGTH = value;
+  }
+
+  @Override
+  public int getInlineLiteralParameterMinArgumentsToFold() {
+    return INLINE_LITERAL_PARAMETER_MIN_ARGS_TO_FOLD;
+  }
+
+  @Override
+  public void setInlineLiteralParameterMinArgumentsToFold(int value) {
+    INLINE_LITERAL_PARAMETER_MIN_ARGS_TO_FOLD = value;
   }
 }

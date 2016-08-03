@@ -31,7 +31,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.EditorTestUtil
@@ -687,15 +686,13 @@ class Test {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.size() == 9
 
-    def literals = fooClass.methods[0].body.statements[6].children[0].children[1].children.findAll { it instanceof PsiLiteralExpression }
-    def parameters = fooClass.methods[1].parameterList.parameters
-
-    for (int i = 0; i < literals.size(); i++) {
-      def currentElement = literals[i]
-      def correspondingFolding = regions[i + 1]
-      assert correspondingFolding.startOffset == currentElement.textRange.startOffset && correspondingFolding.endOffset == currentElement.textRange.endOffset
-      assert correspondingFolding.placeholderText == parameters[i].name + ": " + currentElement.text
-    }
+    checkTheFoldingStartsRightBefore(regions[1], text, "(testNow: ", "true")
+    checkTheFoldingStartsRightBefore(regions[2], text, " shouldIgnoreRoots: ", "false")
+    checkTheFoldingStartsRightBefore(regions[3], text, " times: ", "555")
+    checkTheFoldingStartsRightBefore(regions[4], text, " pii: ", "3.141f")
+    checkTheFoldingStartsRightBefore(regions[5], text, " title: ", '"Huge Title"')
+    checkTheFoldingStartsRightBefore(regions[6], text, " terminate: ", "'c'")
+    checkTheFoldingStartsRightBefore(regions[7], text, " file: ", "null")
   }
 
   public void "test do not inline name if setter"() {
@@ -738,8 +735,7 @@ public class VarArgTest {
     configure text
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.size() == 3
-    checkRangeOffsetByPositionInText(regions[1], text, "13")
-    assert regions[1].placeholderText == "test: 13"
+    checkTheFoldingStartsRightBefore(regions[1], text, "(test: ", "13")
   }
 
   public void "test do not inline if parameter length is one or two"() {
@@ -857,14 +853,11 @@ public class CharSymbol {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.size() == 5
 
-    checkRangeOffsetByPositionInText(regions[1], text, "100")
-    assert regions[1].placeholderText == "test: 100"
+    checkTheFoldingStartsRightBefore(regions[1], text, "(test: ", "100")
 
-    checkRangeOffsetByPositionInText(regions[2], text, "false")
-    assert regions[2].placeholderText == "boo: false"
+    checkTheFoldingStartsRightBefore(regions[2], text, " boo: ", "false")
 
-    checkRangeOffsetByPositionInText(regions[3], text, '"Hi!"')
-    assert regions[3].placeholderText == 'seq: "Hi!"'
+    checkTheFoldingStartsRightBefore(regions[3], text, " seq: ", '"Hi!"')
   }
 
   public void "test inline negative and positive numbers"() {
@@ -890,11 +883,53 @@ public class CharSymbol {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.size() == 4
 
-    checkRangeOffsetByPositionInText(regions[1], text, "-1")
-    assert regions[1].placeholderText == "test: -1"
+    checkTheFoldingStartsRightBefore(regions[1], text, "(test: ", "-1")
+    checkTheFoldingStartsRightBefore(regions[2], text, "(test: ", "+1")
+  }
 
-    checkRangeOffsetByPositionInText(regions[2], text, "+1")
-    assert regions[2].placeholderText == "test: +1"
+  public void "test inline literal arguments with crazy settings"() {
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
+    myFoldingSettings.setInlineLiteralParameterMinArgumentsToFold(1);
+    myFoldingSettings.setInlineLiteralParameterMinNameLength(1);
+    @Language("JAVA")
+    def text = """
+public class Test {
+  public void main(boolean isActive, boolean requestFocus, int xoo) {
+    System.out.println("AAA");
+    main(true,false, /*comment*/2);
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+
+    checkTheFoldingStartsRightBefore(regions[1], text, "(x: ", '"AAA"')
+    checkTheFoldingStartsRightBefore(regions[2], text, "(isActive: ", "true")
+    checkTheFoldingStartsRightBefore(regions[3], text, ",requestFocus: ", "false")
+    checkTheFoldingStartsRightBefore(regions[4], text, "/xoo: ", "2")
+  }
+
+  public void "test inline literal arguments with generics"() {
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true);
+    myFoldingSettings.setInlineLiteralParameterMinArgumentsToFold(1);
+    myFoldingSettings.setInlineLiteralParameterMinNameLength(1);
+    @Language("JAVA")
+    def text = """
+import java.util.*;
+public class Test {
+  public void main(Comparator<Integer> c, List<String> l) {
+    c.compare(0, /** ddd */3);
+    l.add(1, "uuu");
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+
+    checkTheFoldingStartsRightBefore(regions[1], text, "(o1: ", '0')
+    checkTheFoldingStartsRightBefore(regions[2], text, "/o2: ", "3")
+    checkTheFoldingStartsRightBefore(regions[3], text, "(index: ", "1")
+    checkTheFoldingStartsRightBefore(regions[4], text, " element: ", '"uuu"')
   }
 
   public void "test inline constructor literal arguments names"() {
@@ -922,11 +957,14 @@ public class Test {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.length == 6
 
-    assert regions[1].placeholderText == "isActive: true"
-    assert regions[2].placeholderText == "requestFocus: false"
+    checkTheFoldingStartsRightBefore(regions[1], text, "(isActive: ", "true")
+    checkTheFoldingStartsRightBefore(regions[2], text, " requestFocus: ", "false")
+  }
 
-    checkRangeOffsetByPositionInText(regions[1], text, "true")
-    checkRangeOffsetByPositionInText(regions[2], text, "false")
+  private static def checkTheFoldingStartsRightBefore(FoldRegion region, String fileText, String placeHolder, String fileTextAfterFold) {
+    assert region.endOffset == fileText.indexOf(fileTextAfterFold)
+    assert region.startOffset == region.endOffset - 1
+    assert region.placeholderText == placeHolder : "expected placeholder text: "+placeHolder+"; but got: "+region.placeholderText
   }
 
   public void "test inline anonymous class constructor literal arguments names"() {
@@ -951,17 +989,9 @@ public class Test {
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
     assert regions.length == 4
 
-    assert regions[2].placeholderText == "counter: 10"
-    assert regions[3].placeholderText == "shouldTest: false"
-
-    checkRangeOffsetByPositionInText(regions[2], text, "10")
-    checkRangeOffsetByPositionInText(regions[3], text, "false")
+    checkTheFoldingStartsRightBefore(regions[2], text, "(counter: ", "10")
+    checkTheFoldingStartsRightBefore(regions[3], text, " shouldTest: ", "false")
   }
-
-  private static def checkRangeOffsetByPositionInText(FoldRegion region, String text, String foldElement) {
-    assert region.startOffset == text.indexOf(foldElement) && region.endOffset == text.indexOf(foldElement) + foldElement.length()
-  }
-
 
   private def changeFoldRegions(Closure op) {
     myFixture.editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret(op)
