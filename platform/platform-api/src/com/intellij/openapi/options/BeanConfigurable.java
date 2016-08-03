@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,7 @@ import java.util.List;
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
   private final T myInstance;
 
-  private static abstract class BeanField<T extends JComponent> {
+  private abstract static class BeanField<T extends JComponent> {
     String myFieldName;
     T myComponent;
 
@@ -64,7 +65,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     }
 
     abstract Object getComponentValue();
-    abstract void setComponentValue(Object instance);
+    abstract void setComponentValue(Object value);
 
     Object getBeanValue(Object instance) {
       try {
@@ -120,16 +121,19 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       myTitle = title;
     }
 
+    @Override
     JCheckBox createComponent() {
       return new JCheckBox(myTitle);
     }
 
+    @Override
     Object getComponentValue() {
       return getComponent().isSelected();
     }
 
-    void setComponentValue(final Object instance) {
-      getComponent().setSelected(((Boolean) instance).booleanValue());
+    @Override
+    void setComponentValue(final Object value) {
+      getComponent().setSelected(((Boolean) value).booleanValue());
     }
 
     @Override
@@ -137,21 +141,27 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       return "is" + StringUtil.capitalize(myFieldName);
     }
 
+    @Override
     protected Class getValueClass() {
       return boolean.class;
     }
   }
 
-  private final List<BeanField> myFields = new ArrayList<BeanField>();
+  private final List<BeanField> myFields = new ArrayList<>();
 
-  protected BeanConfigurable(T beanInstance) {
+  protected BeanConfigurable(@NotNull T beanInstance) {
     myInstance = beanInstance;
+  }
+
+  protected T getInstance() {
+    return myInstance;
   }
 
   protected void checkBox(@NonNls String fieldName, String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }
 
+  @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridLayout(myFields.size(), 1));
     for (BeanField field: myFields) {
@@ -160,6 +170,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     return panel;
   }
 
+  @Override
   public boolean isModified() {
     for (BeanField field : myFields) {
       if (field.isModified(myInstance)) return true;
@@ -167,18 +178,17 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     for (BeanField field : myFields) {
       field.apply(myInstance);
     }
   }
 
+  @Override
   public void reset() {
     for (BeanField field : myFields) {
       field.reset(myInstance);
     }
-  }
-
-  public void disposeUIResources() {
   }
 }
