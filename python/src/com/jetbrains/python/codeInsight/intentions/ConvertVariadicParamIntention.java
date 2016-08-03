@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 /**
  * User: catherine
@@ -118,79 +119,12 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
 
   @NotNull
   private static List<PySubscriptionExpression> findKeywordContainerSubscriptions(@NotNull PyFunction function) {
-    final PyParameter keywordContainer = getKeywordContainer(function);
-    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
-
-    if (keywordContainerName != null) {
-      final List<PySubscriptionExpression> result = new ArrayList<PySubscriptionExpression>();
-      final Stack<PsiElement> stack = new Stack<PsiElement>();
-
-      for (PyStatement statement : function.getStatementList().getStatements()) {
-        stack.push(statement);
-
-        while (!stack.isEmpty()) {
-          final PsiElement element = stack.pop();
-
-          if (element instanceof PySubscriptionExpression) {
-            final PySubscriptionExpression subscription = (PySubscriptionExpression)element;
-
-            if (subscription.getOperand().getText().equals(keywordContainerName)) {
-              result.add(subscription);
-            }
-          }
-          else {
-            for (PsiElement child : element.getChildren()) {
-              stack.push(child);
-            }
-          }
-        }
-      }
-
-      return result;
-    }
-
-    return Collections.emptyList();
-  }
-
-  private static boolean isKeywordContainerCall(@NotNull PyQualifiedExpression callee, @NotNull String keywordContainerName) {
-    final PyExpression qualifier = callee.getQualifier();
-    return qualifier != null &&
-           qualifier.getText().equals(keywordContainerName) &&
-           ArrayUtil.contains(callee.getReferencedName(), "get", PyNames.GETITEM);
+    return findKeywordContainerUsages(function, ConvertVariadicParamIntention::isKeywordContainerSubscription);
   }
 
   @NotNull
   private static List<PyCallExpression> findKeywordContainerCalls(@NotNull PyFunction function) {
-    final PyParameter keywordContainer = getKeywordContainer(function);
-    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
-
-    if (keywordContainerName != null) {
-      final List<PyCallExpression> result = new ArrayList<PyCallExpression>();
-      final Stack<PsiElement> stack = new Stack<PsiElement>();
-
-      for (PyStatement statement : function.getStatementList().getStatements()) {
-        stack.push(statement);
-
-        while (!stack.isEmpty()) {
-          final PsiElement element = stack.pop();
-
-          if (element instanceof PyCallExpression &&
-              ((PyCallExpression)element).getCallee() instanceof PyQualifiedExpression &&
-              isKeywordContainerCall((PyQualifiedExpression)((PyCallExpression)element).getCallee(), keywordContainerName)) {
-            result.add((PyCallExpression)element);
-          }
-          else {
-            for (PsiElement child : element.getChildren()) {
-              stack.push(child);
-            }
-          }
-        }
-      }
-
-      return result;
-    }
-
-    return Collections.emptyList();
+    return findKeywordContainerUsages(function, ConvertVariadicParamIntention::isKeywordContainerCall);
   }
 
   private static void replaceKeywordContainerSubscriptions(@NotNull PyFunction function, @NotNull Project project) {
@@ -245,6 +179,65 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
           }
         );
     }
+  }
+
+  @NotNull
+  private static <T> List<T> findKeywordContainerUsages(@NotNull PyFunction function,
+                                                        @NotNull BiPredicate<PsiElement, String> usagePredicate) {
+    final PyParameter keywordContainer = getKeywordContainer(function);
+    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
+
+    if (keywordContainerName != null) {
+      final List<T> result = new ArrayList<T>();
+      final Stack<PsiElement> stack = new Stack<PsiElement>();
+
+      for (PyStatement statement : function.getStatementList().getStatements()) {
+        stack.push(statement);
+
+        while (!stack.isEmpty()) {
+          final PsiElement element = stack.pop();
+
+          if (usagePredicate.test(element, keywordContainerName)) {
+            //noinspection unchecked
+            result.add((T)element);
+          }
+          else {
+            for (PsiElement child : element.getChildren()) {
+              stack.push(child);
+            }
+          }
+        }
+      }
+
+      return result;
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull String keywordContainerName) {
+    return Optional
+      .ofNullable(PyUtil.as(element, PySubscriptionExpression.class))
+      .map(PySubscriptionExpression::getOperand)
+      .map(PyExpression::getText)
+      .filter(text -> text.equals(keywordContainerName))
+      .isPresent();
+  }
+
+  private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull String keywordContainerName) {
+    return Optional
+      .ofNullable(PyUtil.as(element, PyCallExpression.class))
+      .map(PyCallExpression::getCallee)
+      .map(callee -> PyUtil.as(callee, PyQualifiedExpression.class))
+      .filter(
+        callee -> {
+          final PyExpression qualifier = callee.getQualifier();
+          return qualifier != null &&
+                 qualifier.getText().equals(keywordContainerName) &&
+                 ArrayUtil.contains(callee.getReferencedName(), "get", PyNames.GETITEM);
+        }
+      )
+      .isPresent();
   }
 
   @Nullable
