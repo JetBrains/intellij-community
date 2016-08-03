@@ -144,6 +144,7 @@ public class ChangeListChooserPanel extends JPanel {
   public void setDefaultName(String name) {
     if (!StringUtil.isEmptyOrSpaces(name)) {
       myListPanel.setChangeListName(name);
+      updateDescription();
     }
   }
 
