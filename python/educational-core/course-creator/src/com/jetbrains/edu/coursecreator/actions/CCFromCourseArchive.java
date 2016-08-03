@@ -173,7 +173,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
       answerPlaceholder.setUseLength(false);
       document.replaceString(offset, offset + answerPlaceholder.getRealLength(), answerPlaceholder.getPossibleAnswer());
       FileDocumentManager.getInstance().saveDocument(document);
-    }), "x", "qwe");
+    }), "Replace answer placeholder", "From Course Archive");
   }
 
   private static void synchronize(@NotNull final Project project) {
