@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -32,10 +31,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: catherine
@@ -116,7 +112,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
 
     if (function != null) {
       replaceKeywordContainerSubscriptions(function, project);
-      replaceCallElements(function, project);
+      replaceKeywordContainerCalls(function, project);
     }
   }
 
@@ -220,45 +216,51 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     }
   }
 
-  private static void replaceCallElements(PyFunction function, Project project) {
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    List <PyCallExpression> callElements = findKeywordContainerCalls(function);
+  private static void replaceKeywordContainerCalls(@NotNull PyFunction function, @NotNull Project project) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    int size = callElements.size();
-    for (int i = 0; i != size; ++i) {
-      PyCallExpression callExpression = callElements.get(i);
-      PyExpression indexExpression = callExpression.getArguments()[0];
+    for (PyCallExpression call : findKeywordContainerCalls(function)) {
+      Optional
+        .of(call.getArguments())
+        .map(ArrayUtil::getFirstElement)
+        .map(firstArgument -> PyUtil.as(firstArgument, PyStringLiteralExpression.class))
+        .map(PyStringLiteralExpression::getStringValue)
+        .ifPresent(
+          indexValue -> {
+            final PyNamedParameter parameterWithDefaultValue = getParameterWithDefaultValue(elementGenerator, call, indexValue);
+            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
+            final PyParameter keywordContainer = getKeywordContainer(function);
 
-      if (indexExpression instanceof PyStringLiteralExpression) {
-        PyNamedParameter defaultValue = null;
-        if (callExpression.getArguments().length > 1) {
-          defaultValue = elementGenerator.createParameter(
-              ((PyStringLiteralExpression)indexExpression).getStringValue()
-                                                         + "=" + callExpression.getArguments()[1].getText());
-        }
-        if (defaultValue == null) {
-          PyExpression callee = callExpression.getCallee();
-          if (callee instanceof PyQualifiedExpression && "get".equals(((PyQualifiedExpression)callee).getReferencedName())) {
-            defaultValue = elementGenerator.createParameter(((PyStringLiteralExpression)indexExpression).getStringValue() + "=None");
+            if (parameter != null) {
+              if (parameterWithDefaultValue != null) {
+                function.getParameterList().addBefore(parameterWithDefaultValue, keywordContainer);
+              }
+              else {
+                function.getParameterList().addBefore(parameter, keywordContainer);
+              }
+              function.getParameterList().addBefore((PsiElement)elementGenerator.createComma(), keywordContainer);
+
+              call.replace(parameter);
+            }
           }
-        }
-        PyExpression p = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function),
-                                                                   ((PyStringLiteralExpression)indexExpression).getStringValue());
-        ASTNode comma = elementGenerator.createComma();
-
-        PyParameter keywordContainer = getKeywordContainer(function);
-
-        if (p != null) {
-          if (defaultValue != null)
-            function.getParameterList().addBefore(defaultValue, keywordContainer);
-          else
-            function.getParameterList().addBefore(p, keywordContainer);
-
-          function.getParameterList().addBefore((PsiElement)comma, keywordContainer);
-
-          callExpression.replace(p);
-        }
-      }
+        );
     }
+  }
+
+  @Nullable
+  private static PyNamedParameter getParameterWithDefaultValue(@NotNull PyElementGenerator elementGenerator,
+                                                               @NotNull PyCallExpression call,
+                                                               @NotNull String parameterName) {
+    final PyExpression[] arguments = call.getArguments();
+    if (arguments.length > 1) {
+      return elementGenerator.createParameter(parameterName + "=" + arguments[1].getText());
+    }
+
+    final PyQualifiedExpression callee = PyUtil.as(call.getCallee(), PyQualifiedExpression.class);
+    if (callee != null && "get".equals(callee.getReferencedName())) {
+      return elementGenerator.createParameter(parameterName + "=" + PyNames.NONE);
+    }
+
+    return null;
   }
 }
