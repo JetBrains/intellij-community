@@ -127,4 +127,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   @Nullable
   public abstract String getSubscriptionAdditionalFormData();
+
+  /**
+   * @return true if the product's vendor is JetBrains
+   */
+  public final boolean isVendorJetBrains() {
+    return "JetBrains".equals(getShortCompanyName());
+  }
 }
