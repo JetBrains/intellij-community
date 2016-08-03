@@ -73,7 +73,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
 
     TaskFile taskFile = state.getTaskFile();
-    int index = taskFile.getAnswerPlaceholders().size() + 1;
+    int index = taskFile.getAnswerPlaceholders().size();
     answerPlaceholder.setIndex(index);
     taskFile.addAnswerPlaceholder(answerPlaceholder);
     answerPlaceholder.setTaskFile(taskFile);
