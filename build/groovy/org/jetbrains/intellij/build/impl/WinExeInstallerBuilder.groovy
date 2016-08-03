@@ -85,6 +85,7 @@ class WinExeInstallerBuilder {
     prepareConfigurationFiles(box, winDistPath)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
+    buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
     if (SystemInfoRt.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +

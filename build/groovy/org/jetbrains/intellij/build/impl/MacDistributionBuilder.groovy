@@ -38,6 +38,7 @@ class MacDistributionBuilder {
   }
 
   public layoutMac(File ideaPropertiesFile) {
+    buildContext.messages.progress("Building distributions for Mac OS")
     def docTypes = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
@@ -215,6 +216,7 @@ class MacDistributionBuilder {
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = "${customizer.rootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      buildContext.messages.progress("Building zip archive for Mac OS")
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {

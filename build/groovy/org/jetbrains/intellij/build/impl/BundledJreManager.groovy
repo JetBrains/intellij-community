@@ -74,8 +74,9 @@ class BundledJreManager {
     if (archive == null) {
       return null
     }
-    buildContext.messages.block("Extracting $archive.name JRE") {
+    buildContext.messages.block("Extract $archive.name JRE") {
       String destination = "$targetDir/jre"
+      buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
         buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
       }

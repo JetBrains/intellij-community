@@ -38,6 +38,7 @@ class WindowsDistributionBuilder {
 
   //todo[nik] rename
   void layoutWin(File ideaProperties) {
+    buildContext.messages.progress("Building distributions for Windows")
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -199,6 +200,7 @@ IDS_VM_OPTIONS=$vmOptions
       if (jreDirectoryPath != null) {
         dirs += jreDirectoryPath
       }
+      buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
