@@ -132,6 +132,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @return true if the product's vendor is JetBrains
    */
   public final boolean isVendorJetBrains() {
-    return "JetBrains".equals(getShortCompanyName());
+    String companyName = getCompanyName();
+    return companyName != null && companyName.startsWith("JetBrains");
   }
 }
