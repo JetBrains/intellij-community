@@ -2072,6 +2072,16 @@ public class PyRequirementTest extends PyTestCase {
     doRequirementVersionNormalizationTest("0.1.*", "v0.1.*");
   }
 
+  // https://www.python.org/dev/peps/pep-0440/#normalization
+  public void testRequirementAlternateVersionNumber() {
+    doRequirementVersionNormalizationTest("900", "0900");
+  }
+
+  // https://www.python.org/dev/peps/pep-0440/#normalization
+  public void testRequirementAlternateLocalVersionNumber() {
+    doRequirementVersionNormalizationTest("1.0+foo0100", "1.0+foo0100");
+  }
+
   // PY-11835
   public void testRequirementNotNormalizableVersion() {
     final String name = "django_compressor";
