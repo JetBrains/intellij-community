@@ -19,11 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.HighlightUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +83,29 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
       if (body == null) {
         return;
       }
+      final PsiType returnType = method.getReturnType();
+      final StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final StringBuilder statementText = new StringBuilder("super.");
-      statementText.append(methodName.getText()).append('(');
+      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+        if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+          statementText.append("final ");
+        }
+        statementText.append(returnType.getCanonicalText()).append(' ');
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        final SuggestedNameInfo baseNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, returnType);
+        final SuggestedNameInfo nameInfo = codeStyleManager.suggestUniqueVariableName(baseNameInfo, body, true);
+        statementText.append(nameInfo.names.length > 0 ? nameInfo.names[0] : "result");
+        statementText.append('=');
+        final PsiMethod superMethod = MethodUtils.getSuper(method);
+        if (superMethod == null) {
+          return;
+        }
+        final PsiType superReturnType = superMethod.getReturnType();
+        if (superReturnType != null && !returnType.isAssignableFrom(superReturnType)) {
+          statementText.append('(').append(returnType.getCanonicalText()).append(')');
+        }
+      }
+      statementText.append("super.").append(methodName.getText()).append('(');
       boolean comma = false;
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         if (comma) statementText.append(',');
@@ -99,6 +120,11 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
       final PsiElement element1 = styleManager.reformat(element);
       if (isOnTheFly()) {
         HighlightUtils.highlightElement(element1);
+        if (element1 instanceof PsiDeclarationStatement) {
+          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element1;
+          final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
+          HighlightUtils.showRenameTemplate(body, variable);
+        }
       }
     }
   }
