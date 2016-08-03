@@ -181,9 +181,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       newScheme.setFont(type, font);
     }
 
-    newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap);
+    newScheme.myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>(myAttributesMap.size());
+    copyTextAttributes(newScheme.myAttributesMap);
     newScheme.myColorsMap = new HashMap<ColorKey, Color>(myColorsMap);
     newScheme.myVersion = myVersion;
+  }
+  
+  private void copyTextAttributes(@NotNull Map<TextAttributesKey, TextAttributes> attributesMap) {
+    for (TextAttributesKey key : myAttributesMap.keySet()) {
+      attributesMap.put(key, unwrapTextAttributes(myAttributesMap.get(key)));
+    }
   }
 
   @Override
@@ -413,9 +420,19 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         // For now inheritance overriding is not supported, just make sure that empty attributes mean inheritance.
         attr.setEnforceEmpty(false);
       }
-      myAttributesMap.put(key, attr);
       migrateErrorStripeColorFrom14(key, attr);
+      myAttributesMap.put(key, wrapTextAttributes(attr));
     }
+  }
+  
+  @NotNull
+  protected TextAttributes wrapTextAttributes(@NotNull TextAttributes attributes) {
+    return attributes;
+  }
+  
+  @NotNull
+  protected TextAttributes unwrapTextAttributes(@NotNull TextAttributes attributes) {
+    return attributes;
   }
 
   private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {

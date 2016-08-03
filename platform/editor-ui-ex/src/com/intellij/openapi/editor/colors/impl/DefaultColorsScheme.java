@@ -19,6 +19,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.ReadOnlyTextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -92,5 +93,22 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     newScheme.setName(DEFAULT_SCHEME_NAME);
     newScheme.setDefaultMetaInfo(this);
     return newScheme;
+  }
+
+  @NotNull
+  @Override
+  protected TextAttributes wrapTextAttributes(@NotNull TextAttributes attributes) {
+    return new ReadOnlyTextAttributes(attributes);
+  }
+
+  @NotNull
+  @Override
+  protected TextAttributes unwrapTextAttributes(@NotNull TextAttributes attributes) {
+    return new TextAttributes(
+      attributes.getForegroundColor(),
+      attributes.getBackgroundColor(),
+      attributes.getEffectColor(),
+      attributes.getEffectType(),
+      attributes.getFontType());
   }
 }

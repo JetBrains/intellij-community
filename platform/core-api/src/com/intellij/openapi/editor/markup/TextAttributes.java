@@ -80,8 +80,21 @@ public class TextAttributes implements Cloneable {
     readExternal(element);
   }
 
-  public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @Nullable Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
-    setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
+  public TextAttributes(@Nullable Color foregroundColor,
+                        @Nullable Color backgroundColor,
+                        @Nullable Color effectColor,
+                        EffectType effectType,
+                        @JdkConstants.FontStyle int fontType) {
+    doSetAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
+  }
+  
+  public TextAttributes(@Nullable Color foregroundColor,
+                        @Nullable Color backgroundColor,
+                        @Nullable Color effectColor,
+                        EffectType effectType,
+                        @Nullable Color errorStripeColor,
+                        @JdkConstants.FontStyle int fontType) {
+    doSetAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, fontType);
   }
 
   public void setAttributes(Color foregroundColor,
@@ -90,6 +103,15 @@ public class TextAttributes implements Cloneable {
                             Color errorStripeColor,
                             EffectType effectType,
                             @JdkConstants.FontStyle int fontType) {
+    doSetAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, fontType);
+  }
+
+  private void doSetAttributes(Color foregroundColor,
+                               Color backgroundColor,
+                               Color effectColor,
+                               Color errorStripeColor,
+                               EffectType effectType,
+                               @JdkConstants.FontStyle int fontType) {
     myAttrs = AttributesFlyweight.create(foregroundColor, backgroundColor, fontType, effectColor, effectType, errorStripeColor);
   }
 
