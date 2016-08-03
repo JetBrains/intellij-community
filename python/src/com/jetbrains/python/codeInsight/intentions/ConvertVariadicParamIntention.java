@@ -115,7 +115,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
-      replaceSubscriptions(function, project);
+      replaceKeywordContainerSubscriptions(function, project);
       replaceCallElements(function, project);
     }
   }
@@ -197,30 +197,26 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     return Collections.emptyList();
   }
 
-  private static void replaceSubscriptions(PyFunction function, Project project) {
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    List <PySubscriptionExpression> subscriptions = findKeywordContainerSubscriptions(function);
-    int size = subscriptions.size();
-    for (int i = 0; i != size; ++i) {
-      PySubscriptionExpression subscriptionExpression = subscriptions.get(i);
-      PyExpression indexExpression = subscriptionExpression.getIndexExpression();
-      if (indexExpression instanceof PyStringLiteralExpression) {
-        PyExpression p = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), 
-                                                                   ((PyStringLiteralExpression)indexExpression).getStringValue());
-        ASTNode comma = elementGenerator.createComma();
-        PyClass containingClass = function.getContainingClass();
-        if (p != null) {
-          if (containingClass == null) {
-            function.getParameterList().addBefore(p, function.getParameterList().getParameters()[0]);
-            function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[0]);
+  private static void replaceKeywordContainerSubscriptions(@NotNull PyFunction function, @NotNull Project project) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+
+    for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
+      Optional
+        .ofNullable(subscription.getIndexExpression())
+        .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
+        .map(PyStringLiteralExpression::getStringValue)
+        .map(indexValue -> elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue))
+        .ifPresent(
+          parameter -> {
+            final int anchorIndex = function.getContainingClass() == null ? 0 : 1;
+            final PsiElement comma = (PsiElement)elementGenerator.createComma();
+
+            function.getParameterList().addBefore(parameter, function.getParameterList().getParameters()[anchorIndex]);
+            function.getParameterList().addBefore(comma, function.getParameterList().getParameters()[anchorIndex]);
+
+            subscription.replace(parameter);
           }
-          else {
-            function.getParameterList().addBefore(p, function.getParameterList().getParameters()[1]);
-            function.getParameterList().addBefore((PsiElement)comma, function.getParameterList().getParameters()[1]);
-          }
-          subscriptionExpression.replace(p);
-        }
-      }
+        );
     }
   }
 
