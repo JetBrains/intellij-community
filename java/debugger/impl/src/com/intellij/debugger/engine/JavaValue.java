@@ -303,7 +303,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                  myValueDescriptor.getLastRenderer() instanceof ToStringBasedRenderer) {
           value = StringUtil.wrapWithDoubleQuote(truncateToMaxLength(myValue));
         }
-        else if (myValueDescriptor.getLastRenderer() instanceof CompoundReferenceRenderer) {
+        else if (myValueDescriptor.getLastRenderer() instanceof CompoundTypeRenderer) {
           value = truncateToMaxLength(myValue);
         }
         renderer.renderValue(value);

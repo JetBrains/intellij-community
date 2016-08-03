@@ -328,7 +328,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     else if(rendererId.equals(CompoundNodeRenderer.UNIQUE_ID) || rendererId.equals(REFERENCE_RENDERER)) {
       return createCompoundReferenceRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
     }
+    else if (rendererId.equals(CompoundTypeRenderer.UNIQUE_ID)) {
+      return createCompoundTypeRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
+    }
     return null;
+  }
+
+  public CompoundTypeRenderer createCompoundTypeRenderer(
+    @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
+  ) {
+    CompoundTypeRenderer renderer = new CompoundTypeRenderer(this, rendererName, labelRenderer, childrenRenderer);
+    renderer.setClassName(className);
+    return renderer;
   }
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(

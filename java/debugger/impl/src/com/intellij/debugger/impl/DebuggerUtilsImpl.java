@@ -36,9 +36,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -136,6 +137,27 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   @Override
   public PsiElement getContextElement(StackFrameContext context) {
     return PositionUtil.getContextElement(context);
+  }
+
+  public static Pair<PsiClass, PsiType> getPsiClassAndType(String className, Project project) {
+    PsiClass contextClass;
+    PsiType contextType;
+    PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(className);
+    if (primitiveType != null) {
+      contextClass = JavaPsiFacade.getInstance(project).findClass(primitiveType.getBoxedTypeName(), GlobalSearchScope.allScope(project));
+      contextType = primitiveType;
+    }
+    else {
+      contextClass = findClass(className, project, GlobalSearchScope.allScope(project));
+      if (contextClass != null) {
+        contextClass = (PsiClass)contextClass.getNavigationElement();
+      }
+      if (contextClass instanceof PsiCompiledElement) {
+        contextClass = (PsiClass)((PsiCompiledElement)contextClass).getMirror();
+      }
+      contextType = getType(className, project);
+    }
+    return Pair.create(contextClass, contextType);
   }
 
   @Override
