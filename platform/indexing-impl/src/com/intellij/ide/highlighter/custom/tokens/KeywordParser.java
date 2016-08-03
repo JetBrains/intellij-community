@@ -96,12 +96,7 @@ public class KeywordParser {
       return true;
     }
     
-    return !isWordPart(offset - 1, sequence) || !isWordPart(offset, sequence);
-  }
-
-  static boolean isWordPart(int offset, CharSequence sequence) {
-    char ch = sequence.charAt(offset);
-    return ch == '-' || Character.isJavaIdentifierPart(ch);
+    return !Character.isJavaIdentifierPart(sequence.charAt(offset - 1)) || !Character.isJavaIdentifierPart(sequence.charAt(offset));
   }
 
   private static IElementType getToken(int keywordSetIndex) {
