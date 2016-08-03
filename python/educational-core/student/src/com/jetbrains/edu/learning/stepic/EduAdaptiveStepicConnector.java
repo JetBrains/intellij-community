@@ -31,7 +31,6 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -75,11 +74,11 @@ public class EduAdaptiveStepicConnector {
       setTimeout(request);
 
       final CloseableHttpResponse response = client.execute(request);
-      final StatusLine statusLine = response.getStatusLine();
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
 
-      if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+      final int statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == HttpStatus.SC_OK) {
         final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
         final StepicWrappers.RecommendationWrapper recomWrapper = gson.fromJson(responseString, StepicWrappers.RecommendationWrapper.class);
 
@@ -118,6 +117,9 @@ public class EduAdaptiveStepicConnector {
         }
       }
       else {
+        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+          return getNextRecommendation(project, course);
+        }
         throw new IOException("Stepic returned non 200 status code: " + responseString);
       }
     }
@@ -200,12 +202,15 @@ public class EduAdaptiveStepicConnector {
     setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
-      if (execute.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+      final int statusCode = execute.getStatusLine().getStatusCode();
+      if (statusCode == HttpStatus.SC_CREATED) {
         return true;
       }
       else {
-        LOG.warn("Stepic returned non-201 status code: " + execute.getStatusLine().getStatusCode() + " " +
-                 EntityUtils.toString(execute.getEntity()));
+        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+          return postRecommendationReaction(project, lessonId, user, reaction);
+        }
+        LOG.warn("Stepic returned non-201 status code: " + statusCode + " " + EntityUtils.toString(execute.getEntity()));
         return false;
       }
     }
@@ -530,10 +535,19 @@ public class EduAdaptiveStepicConnector {
     setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
     setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
-    final String entity = EntityUtils.toString(httpResponse.getEntity());
-    final StepicWrappers.AttemptContainer container =
-      new Gson().fromJson(entity, StepicWrappers.AttemptContainer.class);
-    return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
+    final int statusCode = httpResponse.getStatusLine().getStatusCode();
+    if (statusCode == HttpStatus.SC_CREATED) {
+      final String entity = EntityUtils.toString(httpResponse.getEntity());
+      final StepicWrappers.AttemptContainer container =
+        new Gson().fromJson(entity, StepicWrappers.AttemptContainer.class);
+      return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
+    }
+    else {
+      if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+        return getAttemptId(project, task);
+      }
+    }
+    return -1;
   }
 
   private static void createTestFileFromSamples(@NotNull final Task task,
