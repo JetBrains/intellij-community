@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,8 +52,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -83,7 +80,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     com.intellij.openapi.util.Key.create("connectedUiNode");
   @NotNull
   private Project myProject;
-  private volatile boolean myDisposed = false;
   private JBLoadingPanel loadingPanel;
   private JPanel mainPanel;
   private JPanel contentPanel;
@@ -245,7 +241,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public void dispose() {
     super.dispose();
-    myDisposed = true;
   }
 
   private CheckboxTree createTree() {
@@ -386,7 +381,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       final Collection<String> moduleDependencies = moduleDependenciesMap.get(moduleId);
       final DataNode<Identifiable> moduleNode = modulesNodeMap.get(moduleId);
       if (moduleNode != null) {
-        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, s -> modulesNodeMap.get(s)));
+        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, modulesNodeMap::get));
       }
     }
 
@@ -399,7 +394,15 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       projectNode.insert(rootModuleNode[0], 0);
     }
 
-    List<TreeNode> nodes = projectNode != null ? TreeUtil.childrenToArray(projectNode) : ContainerUtil.<TreeNode>emptyList();
+    List<TreeNode> nodes = projectNode != null ? TreeUtil.childrenToArray(projectNode) : ContainerUtil.emptyList();
+    Collections.sort(nodes, (o1, o2) -> {
+      if(o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
+        if("root module".equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
+        if("root module".equals(((DataNodeCheckedTreeNode)o2).comment)) return 1;
+        return StringUtil.naturalCompare(((DataNodeCheckedTreeNode)o1).text, ((DataNodeCheckedTreeNode)o2).text);
+      }
+      return 0;
+    });
     TreeUtil.addChildrenTo(root, nodes);
     return Couple.of(root, preselectedNode[0]);
   }
