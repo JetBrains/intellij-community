@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +74,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   private final JPanel myPanel;
   private final Project myProject;
   private final PageEngine<List<CommittedChangeList>> myListsEngine;
-  private final Alarm myAlarm;
   private TableView<CommittedChangeList> myRevisionsList;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
@@ -119,7 +116,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     init();
     enableMore();
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     if (! myAlreadyCalculatedState) {
       refreshListStatus(lists);
     }
@@ -158,9 +154,16 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     refreshListStatus(list);
   }
 
-  public void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
-    if (myAlarm.isDisposed()) return;
-    myAlarm.addRequest(new Runnable() {
+  private boolean myDisposed;
+  @Override
+  protected void dispose() {
+    super.dispose();
+    myDisposed = true;
+  }
+
+  private void refreshListStatus(@NotNull final List<CommittedChangeList> changeLists) {
+    if (myDisposed) return;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         int cnt = 10;
@@ -183,7 +186,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
         myRevisionsList.revalidate();
         myRevisionsList.repaint();
       }
-    }, 0);
+    });
   }
 
   @NotNull
