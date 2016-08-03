@@ -2075,11 +2075,17 @@ public class PyRequirementTest extends PyTestCase {
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateVersionNumber() {
     doRequirementVersionNormalizationTest("900", "0900");
+    doRequirementVersionNormalizationTest("201607251407", "0201607251407");
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternateLocalVersionNumber() {
     doRequirementVersionNormalizationTest("1.0+foo0100", "1.0+foo0100");
+  }
+
+  // PY-20223
+  public void testRequirementVersionWithBigInteger() {
+    assertEquals(new PyRequirement("pkg-name", "3.4.201607251407"), PyRequirement.fromLine("pkg-name==3.4.201607251407"));
   }
 
   // PY-11835
