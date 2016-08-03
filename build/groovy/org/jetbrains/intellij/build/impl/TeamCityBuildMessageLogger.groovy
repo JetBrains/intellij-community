@@ -36,11 +36,8 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   @Override
   void logMessage(String message, Level level) {
     String status = level == Level.WARNING ? " status='WARNING'" : ""
-    if (parallelTaskId != null) {
-      out.println "##teamcity[message flowId='${escape(parallelTaskId)}' text='${escape(message)}'$status]"
-    }
-    else if (!status.isEmpty()) {
-      out.println "##teamcity[message text='${escape(message)}'$status]"
+    if (parallelTaskId != null || !status.isEmpty()) {
+      printTeamCityMessage("message", "text='${escape(message)}'$status")
     }
     else {
       out.println message
@@ -49,19 +46,24 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
 
   @Override
   void logProgressMessage(String message) {
-    out.println "##teamcity[progressMessage '${escape(message)}']"
+    printTeamCityMessage("progressMessage", "'${escape(message)}'")
   }
 
   @Override
   void startBlock(String blockName) {
-    out.println "##teamcity[blockOpened name='${escape(blockName)}']"
+    printTeamCityMessage("blockOpened", "name='${escape(blockName)}'")
   }
 
   @Override
   void finishBlock(String blockName) {
-    out.println "##teamcity[blockClosed name='${escape(blockName)}']"
+    printTeamCityMessage("blockClosed", "name='${escape(blockName)}'")
   }
 
+
+  private void printTeamCityMessage(String messageId, String messageArguments) {
+    String flowArg = parallelTaskId != null ? " flowId='${escape(parallelTaskId)}'" : ""
+    out.println "##teamcity[$messageId$flowArg $messageArguments]"
+  }
 
   private static char escapeChar(char c) {
     switch (c) {
