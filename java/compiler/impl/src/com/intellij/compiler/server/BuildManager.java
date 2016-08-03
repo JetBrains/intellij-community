@@ -45,6 +45,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -305,9 +306,12 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
-        if (file != null && file.isInLocalFileSystem()) {
-          scheduleProjectSave();
+        final Document document = e.getDocument();
+        if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+          if (file != null && file.isInLocalFileSystem()) {
+            scheduleProjectSave();
+          }
         }
       }
     });
