@@ -2,7 +2,7 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="include.kotlin.jars.to.classpath" value="true"/>
   <property name="project.home" value="${build.dir}/.."/>
-  <property name="gant.home" value="${project.home}/builder/lib/gant"/>
+  <property name="gant.home" value="${project.home}/build/lib/gant"/>
   <property name="idea.lib" value="${project.home}/lib"/>
 
   <condition property="gant.target" value="default">
@@ -15,18 +15,18 @@
     <fileset dir="${gant.home}/lib">
       <include name="*.jar"/>
     </fileset>
-    <fileset dir="${project.home}/builder/lib/jps">
+    <fileset dir="${project.home}/build/lib/jps">
       <include name="*.jar"/>
     </fileset>
-    <pathelement path="${project.home}/builder/groovy"/>
+    <pathelement path="${project.home}/build/groovy"/>
     <fileset file="${project.home}/jps/lib/optimizedFileManager.jar"/>
-    <fileset dir="${project.home}/builder/kotlinc/jps" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
+    <fileset dir="${project.home}/build/kotlinc/jps" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
       <include name="*.jar"/>
     </fileset>
-    <fileset dir="${project.home}/builder/kotlinc/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
+    <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
       <include name="kotlin-runtime.jar"/>
     </fileset>
-    <fileset dir="${project.home}/builder/kotlinc/plugin/Kotlin/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
+    <fileset dir="${project.home}/build/kotlinc/plugin/Kotlin/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
       <include name="kotlin-plugin.jar"/>
     </fileset>
     <fileset dir="${idea.lib}">

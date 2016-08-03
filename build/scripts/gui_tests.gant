@@ -2,7 +2,7 @@
 // below (and with some changes to invoke our GUI test suite instead
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this)}/builder/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 requireProperty("out", "$home/out")
 

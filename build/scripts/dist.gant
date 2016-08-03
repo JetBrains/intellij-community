@@ -21,7 +21,7 @@ import org.jetbrains.jps.gant.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
-includeTargets << new File("${guessHome(this)}/builder/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 requireProperty("out", "$home/out")
 requireProperty("buildNumber", "SNAPSHOT")
@@ -65,7 +65,7 @@ def loadProductProperties(String home, String buildNumber) {
   requireProperty("product", "idea")
   requireProperty("productPropertiesPath", "")
   if (productPropertiesPath.isEmpty()) {
-    productPropertiesPath = "$home/builder/scripts/" + p("product") + "_properties.gant";
+    productPropertiesPath = "$home/build/scripts/" + p("product") + "_properties.gant";
   }
   if (!new File(productPropertiesPath).exists()) {
     throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
@@ -170,7 +170,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   wireBuildDate(args.buildNumber, appInfoFile())
   ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
 
-  def layouts = includeFile("$home/builder/scripts/layouts.gant")
+  def layouts = includeFile("$home/build/scripts/layouts.gant")
   LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
   layouts.layout_core(home, paths.artifacts_core)
   ant.zip(destfile: "${paths.artifacts}/intellij-core-${StringUtil.trimStart(args.buildNumber, "IC-")}.zip") {
@@ -198,7 +198,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
     fileset(file: "${home}/LICENSE.txt")
     fileset(file: "${home}/NOTICE.txt")
   }
-  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/builder/conf/ideaCE.properties"]])
+  patchPropertiesFile(paths.distAll, args + [appendices: ["$home/build/conf/ideaCE.properties"]])
 
   layoutWin(args, home, paths)
   layoutMac(args, home, paths)

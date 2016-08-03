@@ -47,16 +47,16 @@
     <ant antfile="${project.home}/../adt/idea/android/build.xml" target="rebuild"/>
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
-    <delete dir="${project.home}/builder/kotlinc" />
+    <delete dir="${project.home}/build/kotlinc" />
     <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
-      <sysproperty key="gant.script" value="${project.home}/builder/scripts/download_kotlin.gant"/>
+      <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
       <classpath>
         <fileset dir="${project.home}/lib/ant/lib">
           <include name="*.jar"/>
         </fileset>
       </classpath>
       <arg value="-f"/>
-      <arg value="${project.home}/builder/gant.xml"/>
+      <arg value="${project.home}/build/gant.xml"/>
     </java>
   </target>
 
@@ -80,32 +80,32 @@
         <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
         <sysproperty key="idea.test.group" value="ALL_EXCLUDE_DEFINED"/>
         <arg value="-f"/>
-        <arg value="${project.home}/builder/gant.xml"/>
+        <arg value="${project.home}/build/gant.xml"/>
       </java>
     </sequential>
   </macrodef>
 
   <target name="build" depends="init">
-    <call_gant script="${project.home}/builder/scripts/dist.gant"/>
+    <call_gant script="${project.home}/build/scripts/dist.gant"/>
   </target>
 
   <target name="test" depends="init">
-    <call_gant script="${project.home}/builder/scripts/tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/tests.gant"/>
   </target>
 
   <target name="coverage" depends="init">
-    <call_gant script="${project.home}/builder/scripts/tests.gant" target="coverage" />
+    <call_gant script="${project.home}/build/scripts/tests.gant" target="coverage" />
   </target>
 
   <target name="guiTests" depends="init">
     <delete>
-      <fileset dir="${project.home}/builder" includes="TEST-com.android.tools.idea.tests.gui.*"/>
+      <fileset dir="${project.home}/build" includes="TEST-com.android.tools.idea.tests.gui.*"/>
     </delete>
-    <call_gant script="${project.home}/builder/scripts/gui_tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/gui_tests.gant"/>
   </target>
 
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
-  <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/builder/lib/jarjar-1.0.jar"/>
+  <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
   <target name="fullupdater" depends="build">
     <jarjar jarfile="${out.dir}/updater-full.jar">
       <zipfileset src="${out.dir}/updater.jar" />

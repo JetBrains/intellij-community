@@ -145,11 +145,11 @@ binding.setVariable("guessHome", {
 })
 
 binding.setVariable("loadProject", {
-  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/builder/jdk/1.6", "JDK_16_x64"))
-  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/builder/jdk/1.8", "JDK_18_x64"))
-  def bundledKotlinPath = "$home/builder/kotlinc"
+  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
+  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
+  def bundledKotlinPath = "$home/build/kotlinc"
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
-    bundledKotlinPath = "$home/community/builder/kotlinc"
+    bundledKotlinPath = "$home/community/build/kotlinc"
   }
   if (!new File(bundledKotlinPath, "lib/kotlin-runtime.jar").exists()) {
     projectBuilder.error("Could not find Kotlin runtime at $bundledKotlinPath/lib/kotlin-runtime.jar: run download_kotlin.gant script to download Kotlin JARs")
@@ -451,7 +451,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.copy(todir: path) {
-    fileset(dir: "$ch/builder/conf/mac/Contents")
+    fileset(dir: "$ch/build/conf/mac/Contents")
   }
 
   ant.tstamp() {
@@ -683,7 +683,7 @@ binding.setVariable("unixVMOptions", { String target, String name, String name64
 binding.setVariable("unixReadme", { String target, String home, String name, Map args ->
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
   String settings_dir = args.system_selector.replaceFirst("\\d+", "")
-  copyAndPatchFile("$home/builder/Install-Linux-tar.txt", "$target/Install-Linux-tar.txt",
+  copyAndPatchFile("$home/build/Install-Linux-tar.txt", "$target/Install-Linux-tar.txt",
                    ["product_full": fullName,
                     "product": p("component.names.product").toLowerCase(),
                     "system_selector": args.system_selector,
@@ -808,11 +808,11 @@ binding.setVariable("moduleSrc", {String moduleName ->
  * E.g.
  *
  * Load all properties from file:
- *    readIdeaProperties("idea.properties.path" : "$home/ruby/builder/idea.properties")
+ *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties")
  *
  * Load all properties except "idea.cycle.buffer.size", change "idea.max.intellisense.filesize" to 3000
  * and enable "idea.is.internal" mode:
- *    readIdeaProperties("idea.properties.path" : "$home/ruby/builder/idea.properties",
+ *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties",
  *                       "idea.properties" : ["idea.max.intellisense.filesize" : 3000,
  *                                           "idea.cycle.buffer.size" : null,
  *                                           "idea.is.internal" : true ])
@@ -893,7 +893,7 @@ binding.setVariable("signExecutableFiles", { String binDir ->
   getChildren(fileBinDir).each {
     fileName = it.getName()
     if (fileName.endsWith(".exe")) {
-      executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/builder/signBuild.xml")
+      executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
     }
   }
   projectBuilder.stage("Signing done")
@@ -1178,7 +1178,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     arg(value: launcherProperties)
     arg(value: outputPath)
     classpath {
-      pathelement(location: "$ch/builder/lib/launcher-generator.jar")
+      pathelement(location: "$ch/build/lib/launcher-generator.jar")
       fileset(dir: "$ch/lib") {
         include(name: "guava*.jar")
         include(name: "jdom.jar")
