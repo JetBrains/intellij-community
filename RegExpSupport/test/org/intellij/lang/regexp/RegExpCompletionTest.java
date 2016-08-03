@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,6 +39,26 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
     private static String getExpectedResultFileName(String testName) {
         return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + "Expected" + ".regexp";
+    }
+
+    public void testPosixBracketExpression() {
+      EnumSet<RegExpCapability> capabilities = RegExpParserDefinition.DEFAULT_CAPABILITIES.clone();
+      capabilities.add(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
+      RegExpParserDefinition.setTestingCapabilities(capabilities, getTestRootDisposable());
+
+      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:alp<caret>");
+      myFixture.completeBasic();
+      myFixture.checkResult("[[:alpha:]<caret>");
+    }
+
+    public void testNegatePosixBracketExpression() {
+      EnumSet<RegExpCapability> capabilities = RegExpParserDefinition.DEFAULT_CAPABILITIES.clone();
+      capabilities.add(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
+      RegExpParserDefinition.setTestingCapabilities(capabilities, getTestRootDisposable());
+
+      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:^alp<caret>");
+      myFixture.completeBasic();
+      myFixture.checkResult("[[:^alpha:]<caret>");
     }
 
     public void testBackSlashVariants() throws Throwable {

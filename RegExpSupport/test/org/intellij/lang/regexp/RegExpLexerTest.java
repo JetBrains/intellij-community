@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,16 @@ public class RegExpLexerTest extends LexerTestCase {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
     doTest("[[:xdigit:]]", "CLASS_BEGIN ('[')\n" +
                            "BRACKET_EXPRESSION_BEGIN ('[:')\n" +
+                           "NAME ('xdigit')\n" +
+                           "BRACKET_EXPRESSION_END (':]')\n" +
+                           "CLASS_END (']')", lexer);
+  }
+
+  public void testNegatedPosixBracketExpression() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
+    doTest("[[:^xdigit:]]", "CLASS_BEGIN ('[')\n" +
+                           "BRACKET_EXPRESSION_BEGIN ('[:')\n" +
+                           "CARET ('^')\n" +
                            "NAME ('xdigit')\n" +
                            "BRACKET_EXPRESSION_END (':]')\n" +
                            "CLASS_END (']')", lexer);

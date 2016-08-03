@@ -277,6 +277,9 @@ public class RegExpParser implements PsiParser {
   private static void parseBracketExpression(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
+    if (builder.getTokenType() == RegExpTT.CARET) {
+      builder.advanceLexer();
+    }
     checkMatches(builder, RegExpTT.NAME, "POSIX character class name expected");
     checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, "Unclosed POSIX bracket expression");
     marker.done(RegExpElementTypes.POSIX_BRACKET_EXPRESSION);

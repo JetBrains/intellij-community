@@ -284,6 +284,7 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <BRACKET_EXPRESSION> {
+  "^"                                     { return RegExpTT.CARET; }
   {NAME}                                  { return RegExpTT.NAME;   }
   ":" {RBRACKET}                          { yybegin(CLASS2); return RegExpTT.BRACKET_EXPRESSION_END; }
   {ANY}                                   { return RegExpTT.BAD_CHARACTER; }

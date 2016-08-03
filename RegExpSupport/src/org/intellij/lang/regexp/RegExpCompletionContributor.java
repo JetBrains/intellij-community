@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ui.EmptyIcon;
-import org.intellij.lang.regexp.psi.RegExpClass;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * @author vnikolaenko
@@ -52,7 +52,9 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       final ElementPattern<PsiElement> propertyNamePattern = psiElement().afterLeaf(psiElement().withText("{").afterLeaf(propertyPattern));
       extend(CompletionType.BASIC, propertyNamePattern, new PropertyNameCompletionProvider());
 
-      final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().afterLeaf(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN));
+      final ElementPattern<PsiElement> bracketExpressionPattern = psiElement().afterLeaf(
+        or(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN),
+           psiElement(RegExpTT.CARET).afterLeaf(psiElement(RegExpTT.BRACKET_EXPRESSION_BEGIN))));
       extend(CompletionType.BASIC, bracketExpressionPattern, new BracketExpressionCompletionProvider());
     }
 
