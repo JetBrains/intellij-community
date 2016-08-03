@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
@@ -60,38 +61,39 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     return PyBundle.message("INTN.convert.variadic.param");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile)) {
       return false;
     }
 
-    PyFunction function =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+
     if (function != null) {
-      PyParameter[] parameterList = function.getParameterList().getParameters();
-      for (PyParameter parameter : parameterList) {
-        if (parameter instanceof PyNamedParameter) {
-          if (((PyNamedParameter)parameter).isKeywordContainer()) {
-            List <PySubscriptionExpression> subscriptions = fillSubscriptions(function);
-            List <PyCallExpression> callElements = fillCallExpressions(function);
-            if ((subscriptions.size() + callElements.size()) != 0) {
-              for (PyCallExpression element : callElements) {
-                final PyExpression[] arguments = element.getArguments();
-                if (arguments.length < 1) return false;
-                if (!PyNames.isIdentifierString(PythonStringUtil.getStringValue(arguments[0])))
-                  return false;
-              }
-              for (PySubscriptionExpression subscription : subscriptions) {
-                final PyExpression expression = subscription.getIndexExpression();
-                if (expression == null || !PyNames.isIdentifierString(PythonStringUtil.getStringValue(expression)))
-                  return false;
-              }
+      for (PyParameter parameter : function.getParameterList().getParameters()) {
+        if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+          for (PyCallExpression call : fillCallExpressions(function)) {
+            final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
+            final String firstArgumentValue = PythonStringUtil.getStringValue(firstArgument);
+            if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
+              return false;
             }
-            return true;
           }
+
+          for (PySubscriptionExpression subscription : fillSubscriptions(function)) {
+            final PyExpression indexExpression = subscription.getIndexExpression();
+            final String indexValue = PythonStringUtil.getStringValue(indexExpression);
+            if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
+              return false;
+            }
+          }
+
+          return true;
         }
       }
     }
+
     return false;
   }
 
