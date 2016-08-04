@@ -126,7 +126,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public List<String> myLastCommitMessages = new ArrayList<String>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
-  public boolean PRESELECT_EXISTING_CHANGELIST = true;
+  public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
   public boolean CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = false;

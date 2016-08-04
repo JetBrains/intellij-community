@@ -27,7 +27,11 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +56,7 @@ public class ChangeListChooserPanel extends JPanel {
   private final NullableConsumer<String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
+  private boolean myNewNameSuggested = false;
 
   public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
     super(new BorderLayout());
@@ -138,7 +143,7 @@ public class ChangeListChooserPanel extends JPanel {
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
     List<String> changelistNames = ContainerUtil.map(changeLists, ChangeList::getName);
     Collections.sort(changelistNames);
-    myExistingListsCombo.setModel(new CollectionComboBoxModel<String>(changelistNames));
+    myExistingListsCombo.setModel(new DefaultComboBoxModel<String>(ArrayUtil.toStringArray(changelistNames)));
   }
 
   public void setSuggestedName(@NotNull String name) {
@@ -147,9 +152,20 @@ public class ChangeListChooserPanel extends JPanel {
       myExistingListsCombo.setSelectedItem(name);
     }
     else {
-      myListPanel.setChangeListName(name);
+      myNewNameSuggested = true;
+      if (VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST) {
+        myExistingListsCombo.insertItemAt(name, 0);
+        selectActiveChangeListIfExist();
+      }
+      else {
+        myListPanel.setChangeListName(name);
+      }
     }
     updateDescription();
+  }
+
+  private void selectActiveChangeListIfExist() {
+    myExistingListsCombo.setSelectedItem(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
   }
 
   public void updateEnabled() {
@@ -175,16 +191,23 @@ public class ChangeListChooserPanel extends JPanel {
       //update description if changed
       localChangeList.setComment(myListPanel.getDescription());
     }
+    rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
     if (myListPanel.getMakeActiveCheckBox().isSelected()) {
       manager.setDefaultChangeList(localChangeList);
     }
-    VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE = myListPanel.getMakeActiveCheckBox().isSelected();
     return localChangeList;
+  }
+
+  private void rememberSettings(@NotNull Project project, boolean activeListSelected, boolean setActive) {
+    if (myNewNameSuggested) {
+      VcsConfiguration.getInstance(project).PRESELECT_EXISTING_CHANGELIST = activeListSelected;
+    }
+    VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE = setActive;
   }
 
   public void setDefaultSelection(final ChangeList defaultSelection) {
     if (defaultSelection == null) {
-      myExistingListsCombo.setSelectedIndex(0);
+      selectActiveChangeListIfExist();
     }
     else {
       myExistingListsCombo.setSelectedItem(defaultSelection.getName());
