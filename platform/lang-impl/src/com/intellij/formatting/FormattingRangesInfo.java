@@ -16,12 +16,12 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public interface FormattingRangesInfo {
-  boolean isWhitespaceReadOnly(@Nullable TextRange range);
+  boolean isWhitespaceReadOnly(@NotNull TextRange range);
 
-  boolean isReadOnly(@Nullable TextRange range);
+  boolean isReadOnly(@NotNull TextRange range);
 
   boolean isOnInsertedLine(int offset);
 }

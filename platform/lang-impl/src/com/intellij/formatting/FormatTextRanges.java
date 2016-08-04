@@ -49,7 +49,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
   }
 
   @Override
-  public boolean isWhitespaceReadOnly(TextRange range) {
+  public boolean isWhitespaceReadOnly(@NotNull TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isWhitespaceReadOnly(range)) {
         return false;
@@ -59,7 +59,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
   }
 
   @Override
-  public boolean isReadOnly(TextRange range) {
+  public boolean isReadOnly(@NotNull TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isReadOnly(range)) {
         return false;

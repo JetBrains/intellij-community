@@ -16,64 +16,58 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class FormatTextRange {
-  private TextRange myRange;
-  private final boolean myProcessHeadingWhitespace;
+  private @NotNull TextRange formattingRange;
+  private final boolean processHeadingWhitespace;
 
-  public FormatTextRange(TextRange range, boolean processHeadingWhitespace) {
-    myRange = range;
-    myProcessHeadingWhitespace = processHeadingWhitespace;
+  public FormatTextRange(@NotNull TextRange range, boolean processHeadingSpace) {
+    formattingRange = range;
+    processHeadingWhitespace = processHeadingSpace;
   }
   
   public boolean isProcessHeadingWhitespace() {
-    return myProcessHeadingWhitespace;
+    return processHeadingWhitespace;
   }
 
-  public boolean isWhitespaceReadOnly(@Nullable TextRange range) {
-    if (myRange == null) {
+  public boolean isWhitespaceReadOnly(@NotNull TextRange range) {
+    if (range.getStartOffset() >= formattingRange.getEndOffset()) return true;
+    
+    if (processHeadingWhitespace && range.getEndOffset() == formattingRange.getStartOffset()) {
       return false;
     }
-    if (range == null || range.getStartOffset() >= myRange.getEndOffset()) return true;
-    if (myProcessHeadingWhitespace) {
-      return range.getEndOffset() < myRange.getStartOffset();
-    }
-    else {
-      return range.getEndOffset() <= myRange.getStartOffset();
-    }
+    
+    return range.getEndOffset() <= formattingRange.getStartOffset();
   }
 
   public int getStartOffset() {
-    return myRange.getStartOffset();
+    return formattingRange.getStartOffset();
   }
 
-  public boolean isReadOnly(TextRange range) {
-    if (myRange == null) {
-      return false;
-    }
-
-    return range.getStartOffset() > myRange.getEndOffset() || range.getEndOffset() < myRange.getStartOffset();
+  public boolean isReadOnly(@NotNull TextRange range) {
+    return range.getStartOffset() > formattingRange.getEndOffset() || range.getEndOffset() < formattingRange.getStartOffset();
   }
 
+  @NotNull
   public TextRange getTextRange() {
-    return myRange;
+    return formattingRange;
   }
 
-  public void setTextRange(TextRange range) {
-    myRange = range;
+  public void setTextRange(@NotNull TextRange range) {
+    formattingRange = range;
   }
 
   public TextRange getNonEmptyTextRange() {
-    int endOffset = myRange.getStartOffset() == myRange.getEndOffset()
-                 ? myRange.getEndOffset() + 1
-                 : myRange.getEndOffset();
+    int endOffset = formattingRange.getStartOffset() == formattingRange.getEndOffset()
+                 ? formattingRange.getEndOffset() + 1
+                 : formattingRange.getEndOffset();
     
-    return new TextRange(myRange.getStartOffset(), endOffset);
+    return new TextRange(formattingRange.getStartOffset(), endOffset);
   }
 
   @Override
   public String toString() {
-    return myRange.toString() + (myProcessHeadingWhitespace ? "+" : "");
+    return formattingRange.toString() + (processHeadingWhitespace ? "+" : "");
   }
 }
