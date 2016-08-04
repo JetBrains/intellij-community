@@ -369,6 +369,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return visitor.result();
   }
 
+  public Map<PyReturnStatement, PyType> getReturnStatementsWithTypes(TypeEvalContext typeEvalContext) {
+    final ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
+    final PyStatementList statements = getStatementList();
+    statements.accept(visitor);
+    return visitor.results();
+  }
+
   @Nullable
   private PyType createCoroutineType(@Nullable PyType returnType) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
@@ -503,6 +510,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     private final PyFunction myFunction;
     private final TypeEvalContext myContext;
     private PyType myResult = null;
+    private Map<PyReturnStatement, PyType> myReturnStatements = new HashMap<>();
     private boolean myHasReturns = false;
     private boolean myHasRaises = false;
 
@@ -519,10 +527,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);
         if (!myHasReturns) {
           myResult = returnType;
+          myReturnStatements.put(node, returnType);
           myHasReturns = true;
         }
         else {
           myResult = PyUnionType.union(myResult, returnType);
+          myReturnStatements.put(node, returnType);
         }
       }
     }
@@ -535,6 +545,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     @Nullable
     PyType result() {
       return myHasReturns || myHasRaises ? myResult : PyNoneType.INSTANCE;
+    }
+
+    Map<PyReturnStatement, PyType> results() {
+      return myReturnStatements;
     }
   }
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Optional, List
 
 def a(x):
     # type: (List[int]) -> List[str]
@@ -15,3 +15,24 @@ def c():
 def d(x):
     # type: (x: int) -> List[str]
     return [str(x)]
+
+def e():
+    # type: () -> int
+    pass
+
+def f():
+    # type: () -> Optional[str]
+    x = int(input())
+    if x > 0:
+        return 42
+    elif x == 0:
+        return 'abc'
+    else:
+        return
+
+def g(x):
+    # type: (Any) -> int
+    if x:
+        return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
+    else:
+        return <warning descr="Expected type 'int', got 'dict' instead">{}</warning>

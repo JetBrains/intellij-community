@@ -90,22 +90,28 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       PyType type = myTypeEvalContext.getType(node);
-      if (type instanceof PyFunctionTypeImpl && node instanceof PyFunctionImpl) {
-        PyType expected = ((PyFunctionTypeImpl)type).getReturnType(myTypeEvalContext);
-        PyType actual = ((PyFunctionImpl)node).getReturnStatementType(myTypeEvalContext);
-        PyStatement[] statements = node.getStatementList().getStatements();
-
-        if (!PyTypeChecker.isUnknown(expected) && !PyTypeChecker.isUnknown(actual)) {
-          PyExpression expr = null;
-          for (PyStatement statement : statements) {
-            if (statement instanceof PyReturnStatement) {
-              expr = ((PyReturnStatement)statement).getExpression();
+      final PyAnnotation annotation = node.getAnnotation();
+      final String comment = node.getTypeCommentAnnotation();
+      if (type instanceof PyFunctionTypeImpl && node instanceof PyFunctionImpl && (annotation != null || comment != null)) {
+        PyType expected = myTypeEvalContext.getReturnType(node);
+        Map<PyReturnStatement, PyType> returnStatements = ((PyFunctionImpl)node).getReturnStatementsWithTypes(myTypeEvalContext);
+        Collection<PyType> types = returnStatements.values();
+        PyType actual = PyUnionType.union(types);
+        boolean match = PyTypeChecker.match(expected, actual, myTypeEvalContext);
+        if (!match) {
+          List<PyReturnStatement> errorPlaces = new ArrayList<>();
+          for (Map.Entry<PyReturnStatement, PyType> entry : returnStatements.entrySet())
+          {
+            PyReturnStatement retStmt = entry.getKey();
+            PyType retType = entry.getValue();
+            if (!PyTypeChecker.match(expected, retType, myTypeEvalContext)) {
+              errorPlaces.add(retStmt);
             }
           }
-          if (expr != null && !PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+          for (PyReturnStatement err : errorPlaces) {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-            final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-            registerProblem(expr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
+            final String actualName = PythonDocumentationProvider.getTypeName(returnStatements.get(err), myTypeEvalContext);
+            registerProblem(err.getExpression(), String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
           }
         }
       }
