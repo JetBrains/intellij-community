@@ -198,7 +198,7 @@ public class GroovyPositionManager implements PositionManager {
     }
 
     PsiFile file = typeDefinition.getContainingFile();
-    if (file instanceof GroovyFile) {
+    if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
       for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
         String s = helper.isAppropriateScriptFile((GroovyFile)file) ? helper.customizeClassName(typeDefinition) : null;
         if (s != null) {
