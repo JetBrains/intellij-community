@@ -29,13 +29,13 @@ import java.lang.reflect.Type;
 public interface DomExtensionsRegistrar {
 
   /**
-   * Register single occurence subtag extension.
+   * Register single occurrence subtag extension.
    */
   @NotNull
   DomExtension registerFixedNumberChildExtension(@NotNull XmlName name, @NotNull Type type);
 
   /**
-   * Register multiple occurence subtag extension.
+   * Register multiple occurrence subtag extension.
    */
   @NotNull
   DomExtension registerCollectionChildrenExtension(@NotNull XmlName name, @NotNull Type type);
