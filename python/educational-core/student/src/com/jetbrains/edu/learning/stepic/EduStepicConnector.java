@@ -357,9 +357,6 @@ public class EduStepicConnector {
         if (info.isAdaptive()) {
           info.setDescription("This is a Stepic Adaptive course.\n\n" + info.getDescription());
         }
-
-        String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
-        info.setName(name.trim());
         
         result.add(info);
       }
