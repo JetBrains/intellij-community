@@ -345,7 +345,7 @@ public class StudyProjectGenerator {
         courseInfos.addAll(getCoursesFromCache());
       }
 
-      writer = new PrintWriter(cacheFile);
+      writer = new PrintWriter(cacheFile, "UTF-8");
       for (CourseInfo courseInfo : courseInfos) {
         final String json = gson.toJson(courseInfo);
         writer.println(json);
