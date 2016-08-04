@@ -16,16 +16,17 @@
 package com.intellij.util.containers
 
 import com.intellij.util.SmartList
+import com.intellij.util.lang.CompoundRuntimeException
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
-  var list = get(key)
+  val list = get(key)
   if (list != null && list.remove(value) && list.isEmpty()) {
     remove(key)
   }
 }
 
 fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
-  var list = get(key)
+  val list = get(key)
   if (list == null) {
     put(key, SmartList<V>(value))
   }
@@ -67,3 +68,35 @@ inline fun <T, R> List<T>.computeOrNull(processor: (T) -> R): R? {
 }
 
 fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this
+
+inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
+  var errors: MutableList<Throwable>? = null
+  for (element in this) {
+    try {
+      operation(element)
+    }
+    catch (e: Throwable) {
+      if (errors == null) {
+        errors = SmartList()
+      }
+      errors.add(e)
+    }
+  }
+  CompoundRuntimeException.throwIfNotEmpty(errors)
+}
+
+inline fun <T> Collection<T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
+  var errors: MutableList<Throwable>? = null
+  for (element in this) {
+    try {
+      operation(element)
+    }
+    catch (e: Throwable) {
+      if (errors == null) {
+        errors = SmartList()
+      }
+      errors.add(e)
+    }
+  }
+  CompoundRuntimeException.throwIfNotEmpty(errors)
+}

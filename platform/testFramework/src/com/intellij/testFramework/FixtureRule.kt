@@ -34,8 +34,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.SmartList
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.systemIndependentPath
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
@@ -267,22 +266,6 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
       }
     }
   }
-}
-
-inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
-  var errors: MutableList<Throwable>? = null
-  for (element in this) {
-    try {
-      operation(element)
-    }
-    catch (e: Throwable) {
-      if (errors == null) {
-        errors = SmartList()
-      }
-      errors.add(e)
-    }
-  }
-  CompoundRuntimeException.throwIfNotEmpty(errors)
 }
 
 /**
