@@ -29,3 +29,84 @@ class FormatTextRangesTest {
   }
   
 }
+
+
+class FormatRangesStorageTest {
+
+  private fun FormatTextRange.assertRange(start: Int, end: Int, isProcessHeadingSpace: Boolean) {
+    assertThat(textRange).isEqualTo(TextRange(start, end))
+    assertThat(isProcessHeadingWhitespace).isEqualTo(isProcessHeadingSpace)
+  }
+
+  @Test
+  fun `check fully contained text range is not added`() {
+    val storage = FormatRangesStorage()
+
+    storage.add(TextRange(10, 20), false)
+    storage.add(TextRange(15, 18), false)
+    val ranges = storage.getRanges()
+
+    assertThat(ranges).hasSize(1)
+    ranges[0].assertRange(10, 20, false)
+  }
+
+  @Test
+  fun `check left boundary is not formatted`() {
+    val storage = FormatRangesStorage()
+
+    storage.add(TextRange(10, 20), false)
+    storage.add(TextRange(5, 10), false)
+    val ranges = storage.getRanges()
+    assertThat(ranges).hasSize(2)
+  }
+
+
+  @Test
+  fun `check left boundary is formatted`() {
+    val storage = FormatRangesStorage()
+
+    storage.add(TextRange(10, 20), true)
+    storage.add(TextRange(5, 10), false)
+    val ranges = storage.getRanges()
+    
+    assertThat(ranges).hasSize(1)
+    ranges[0].assertRange(5, 20, false)
+  }
+
+  @Test
+  fun `check right boundary is not formatted`() {
+    val storage = FormatRangesStorage()
+
+    storage.add(TextRange(10, 20), false)
+    storage.add(TextRange(20, 30), false)
+    val ranges = storage.getRanges()
+    assertThat(ranges).hasSize(2)
+  }
+
+
+  @Test
+  fun `check right boundary is formatted`() {
+    val storage = FormatRangesStorage()
+
+    storage.add(TextRange(10, 20), false)
+    storage.add(TextRange(19, 30), false)
+    val ranges = storage.getRanges()
+    assertThat(ranges).hasSize(1)
+    ranges[0].assertRange(10, 30, false)
+  }
+
+
+  @Test
+  fun `ensure isProcessHeading space state merged`() {
+    val storage = FormatRangesStorage()
+    
+    storage.add(TextRange(10, 20), false)
+    storage.add(TextRange(10, 20), true)
+    val ranges = storage.getRanges()
+    assertThat(ranges).hasSize(1)
+    ranges[0].assertRange(10, 20, true)
+  }
+  
+
+
+}

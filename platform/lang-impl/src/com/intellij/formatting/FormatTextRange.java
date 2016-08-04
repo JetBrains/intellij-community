@@ -44,6 +44,10 @@ public class FormatTextRange {
   public int getStartOffset() {
     return formattingRange.getStartOffset();
   }
+  
+  public int getEndOffset() {
+    return formattingRange.getEndOffset();
+  }
 
   public boolean isReadOnly(@NotNull TextRange range) {
     return range.getStartOffset() > formattingRange.getEndOffset() || range.getEndOffset() < formattingRange.getStartOffset();
