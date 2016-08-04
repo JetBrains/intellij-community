@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.ui.MacUIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class BackspaceAction extends TextComponentEditorAction {
   public BackspaceAction() {
     super(new Handler());
@@ -61,10 +63,18 @@ public class BackspaceAction extends TextComponentEditorAction {
       return;
     }
 
+    int offset = editor.getCaretModel().getOffset();
+    VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
+    List<Inlay> inlays = editor.getInlayModel().getElementsInRange(offset, offset, Inlay.Type.INLINE);
+    if (!inlays.isEmpty() && visualPosition.equals(editor.offsetToVisualPosition(offset, true, false))) {
+      editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, false);
+      EditorModificationUtil.scrollToCaret(editor);
+      return;
+    }
+
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     int colNumber = editor.getCaretModel().getLogicalPosition().column;
     Document document = editor.getDocument();
-    int offset = editor.getCaretModel().getOffset();
     if(colNumber > 0) {
       if(EditorModificationUtil.calcAfterLineEnd(editor) > 0) {
         int columnShift = -1;
