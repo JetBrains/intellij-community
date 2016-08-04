@@ -183,6 +183,15 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-1177
+  public void testWhileTrueBreak() {
+    doTest();
+  }
+
+  public void testWhileOneBreak() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyUnboundLocalVariableInspection.class);
