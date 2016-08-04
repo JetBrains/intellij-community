@@ -19,17 +19,25 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: catherine
@@ -46,6 +54,9 @@ public class PyAugmentAssignmentInspection extends PyInspection {
   @NotNull
   private static final TokenSet COMMUTATIVE_OPERATIONS =
     TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT, PyTokenTypes.OR, PyTokenTypes.AND);
+
+  @NotNull
+  private static final List<String> SEQUENCE_METHODS = Arrays.asList(PyNames.LEN, PyNames.ITER, PyNames.GETITEM, PyNames.CONTAINS);
 
   @Nls
   @NotNull
@@ -119,18 +130,38 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         final PyType otherOperandType = myTypeEvalContext.getType(otherOperandExpression);
 
         if (!PyTypeChecker.isUnknown(otherOperandType)) {
-          final PyBuiltinCache cache = PyBuiltinCache.getInstance(otherOperandExpression);
+          if (changedParts) {
+            if (hasAnySequenceMethod(otherOperandType, otherOperandExpression)) {
+              return false;
+            }
 
-          return isNumeric(otherOperandType, cache) ||
-                 !changedParts && isString(otherOperandType, cache, LanguageLevel.forElement(otherOperandExpression));
+            final PyType mainOperandType = myTypeEvalContext.getType(mainOperandExpression);
+            if (mainOperandType != null && hasAnySequenceMethod(mainOperandType, mainOperandExpression)) {
+              return false;
+            }
+          }
+
+          return isNumeric(otherOperandType, PyBuiltinCache.getInstance(otherOperandExpression)) ||
+                 hasAnySequenceMethod(otherOperandType, otherOperandExpression);
         }
       }
 
       return false;
     }
 
-    private boolean isString(@NotNull PyType type, @NotNull PyBuiltinCache cache, @NotNull LanguageLevel level) {
-      return PyTypeChecker.match(cache.getStringType(level), type, myTypeEvalContext);
+    private boolean hasAnySequenceMethod(@NotNull PyType type, @NotNull PyExpression location) {
+      if (type instanceof PyStructuralType) {
+        final Set<String> attributeNames = ((PyStructuralType)type).getAttributeNames();
+
+        return SEQUENCE_METHODS.stream().anyMatch(attributeNames::contains);
+      }
+
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+
+      return !SEQUENCE_METHODS
+        .stream()
+        .map(method -> type.resolveMember(method, location, AccessDirection.READ, resolveContext))
+        .allMatch(ContainerUtil::isEmpty);
     }
 
     private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
