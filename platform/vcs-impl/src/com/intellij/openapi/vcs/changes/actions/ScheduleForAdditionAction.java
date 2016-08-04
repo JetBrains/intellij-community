@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,8 +102,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
     return hasExplicitUnversioned
            ? e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)
-           : notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM))
-             .filter(file -> isFileUnversioned(file, vcsManager, fileStatusManager));
+           : checkVirtualFiles(e)
+             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, fileStatusManager))
+             : Stream.empty();
   }
 
   private boolean isFileUnversioned(@NotNull VirtualFile file,
@@ -115,5 +117,16 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   protected boolean isStatusForAddition(FileStatus status) {
     return status == FileStatus.UNKNOWN;
+  }
+
+  /**
+   * {@link #isStatusForAddition(FileStatus)} checks file status to be {@link FileStatus.UNKNOWN} (if not overridden).
+   * As an optimization, we assume that if {@link ChangesListView.UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys.CHANGES} is
+   * not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
+   * {@link VcsDataKeys.VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus.UNKNOWN} status and we should not explicitly
+   * check {@link VcsDataKeys.VIRTUAL_FILE_STREAM} files in this case.
+   */
+  protected boolean checkVirtualFiles(@NotNull AnActionEvent e) {
+    return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
   }
 }
