@@ -26,6 +26,7 @@ import org.apache.http.HeaderElement;
 import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubConnection.ArrayPagedRequest;
 import org.jetbrains.plugins.github.api.GithubConnection.PagedRequest;
 import org.jetbrains.plugins.github.api.data.*;
 import org.jetbrains.plugins.github.api.requests.*;
@@ -80,7 +81,7 @@ public class GithubApiUtil {
                                      @NotNull String path,
                                      @NotNull Class<? extends T[]> type,
                                      @NotNull Header... headers) throws IOException {
-    PagedRequest<T> request = new PagedRequest<>(path, type, headers);
+    PagedRequest<T> request = new ArrayPagedRequest<>(path, type, headers);
     return request.getAll(connection);
   }
 
@@ -441,7 +442,7 @@ public class GithubApiUtil {
         path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE + "&" + state;
       }
 
-      PagedRequest<GithubIssue> request = new PagedRequest<>(path, GithubIssue[].class, ACCEPT_V3_JSON);
+      PagedRequest<GithubIssue> request = new ArrayPagedRequest<>(path, GithubIssue[].class, ACCEPT_V3_JSON);
 
       List<GithubIssue> result = new ArrayList<>();
       while (request.hasNext() && max > result.size()) {
@@ -602,7 +603,7 @@ public class GithubApiUtil {
   @NotNull
   public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
     String path = "/repos/" + user + "/" + repo + "/pulls?state=all&" + PER_PAGE;
-    return new PagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
+    return new ArrayPagedRequest<>(path, GithubPullRequest[].class, ACCEPT_V3_JSON_HTML_MARKUP);
   }
 
   @NotNull
@@ -658,7 +659,7 @@ public class GithubApiUtil {
     try {
       String path = "/repos/" + user + "/" + repo + "/forks?" + PER_PAGE;
 
-      PagedRequest<GithubRepo> request = new PagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
+      PagedRequest<GithubRepo> request = new ArrayPagedRequest<>(path, GithubRepo[].class, ACCEPT_V3_JSON);
 
       while (request.hasNext()) {
         for (GithubRepo fork : request.next(connection)) {
