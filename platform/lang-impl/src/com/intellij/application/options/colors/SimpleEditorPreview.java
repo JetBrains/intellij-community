@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,6 +36,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSettingsPage;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -48,19 +50,26 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.*;
 import java.util.List;
 
-public class SimpleEditorPreview implements PreviewPanel{
+public class SimpleEditorPreview implements PreviewPanel {
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;
   private final Alarm myBlinkingAlarm;
-  private final HighlightData[] myHighlightData;
+  private final List<HighlightData> myHighlightData =  new ArrayList<HighlightData>();
 
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+  private final HighlightsExtractor myHighlightsExtractor;
+  private boolean myTextIsChanging = false;
 
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page) {
     this(options, page, true);
+  }
+
+  @NotNull
+  public List<HighlightData> getHighlightDataForExtension() {
+    return myHighlightData;
   }
 
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page, final boolean navigatable) {
@@ -69,22 +78,22 @@ public class SimpleEditorPreview implements PreviewPanel{
 
     String text = page.getDemoText();
 
-    HighlightsExtractor extractant2 = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
-    List<HighlightData> highlights = new ArrayList<HighlightData>();
-    String stripped = extractant2.extractHighlights(text, highlights);
-    myHighlightData = highlights.toArray(new HighlightData[highlights.size()]);
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
+    String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
     int selectedLine = -1;
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(stripped, 10, 3, selectedLine, myOptions, false);
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
     if (navigatable) {
-      addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
+      addMouseMotionListener(myEditor, page.getHighlighter(), false);
 
       CaretListener listener = new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
-          navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);
+          if (!myTextIsChanging) {
+            navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), false);
+          }
         }
       };
       myEditor.getCaretModel().addCaretListener(listener);
@@ -95,14 +104,33 @@ public class SimpleEditorPreview implements PreviewPanel{
     return myEditor;
   }
 
+  public void setDemoText(final String text) {
+    UIUtil.invokeAndWaitIfNeeded( new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            myTextIsChanging = true;
+            myHighlightData.clear();
+            String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
+            myEditor.getSelectionModel().removeSelection();
+            myEditor.getDocument().setText(stripped);
+          } finally {
+            myTextIsChanging = false;
+          }
+        });
+      }
+    });
+  }
+
   private void addMouseMotionListener(final Editor view,
                                       final SyntaxHighlighter highlighter,
-                                      final HighlightData[] data, final boolean isBackgroundImportant) {
+                                      final boolean isBackgroundImportant) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
         LogicalPosition pos = view.xyToLogicalPosition(new Point(e.getX(), e.getY()));
-        navigate(view, false, pos, highlighter, data, isBackgroundImportant);
+        navigate(view, false, pos, highlighter, isBackgroundImportant);
       }
     });
   }
@@ -110,7 +138,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   private void navigate(final Editor editor, boolean select,
                         LogicalPosition pos,
                         final SyntaxHighlighter highlighter,
-                        final HighlightData[] data, final boolean isBackgroundImportant) {
+                        final boolean isBackgroundImportant) {
     int offset = editor.logicalPositionToOffset(pos);
 
     if (!isBackgroundImportant && editor.offsetToLogicalPosition(offset).column != pos.column) {
@@ -120,17 +148,15 @@ public class SimpleEditorPreview implements PreviewPanel{
       }
     }
 
-    if (data != null) {
-      for (HighlightData highlightData : data) {
-        if (ClickNavigator.highlightDataContainsOffset(highlightData, editor.logicalPositionToOffset(pos))) {
-          if (!select) {
-            ClickNavigator.setCursor(editor, Cursor.HAND_CURSOR);
-          }
-          else {
-            myDispatcher.getMulticaster().selectionInPreviewChanged(highlightData.getHighlightType());
-          }
-          return;
+    for (HighlightData highlightData : myHighlightData) {
+      if (ClickNavigator.highlightDataContainsOffset(highlightData, editor.logicalPositionToOffset(pos))) {
+        if (!select) {
+          ClickNavigator.setCursor(editor, Cursor.HAND_CURSOR);
         }
+        else {
+          myDispatcher.getMulticaster().selectionInPreviewChanged(highlightData.getHighlightType());
+        }
+        return;
       }
     }
 
@@ -174,16 +200,14 @@ public class SimpleEditorPreview implements PreviewPanel{
     updateHighlighters();
 
     myEditor.reinitSettings();
-
   }
 
   private void updateHighlighters() {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myEditor.isDisposed()) return;
       myEditor.getMarkupModel().removeAllHighlighters();
-      HighlightData[] datum = myHighlightData;
       final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
-      for (final HighlightData data : datum) {
+      for (final HighlightData data : myHighlightData) {
         data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
       }
     });
@@ -193,11 +217,11 @@ public class SimpleEditorPreview implements PreviewPanel{
 
   @Override
   public void blinkSelectedHighlightType(Object description) {
-    if (description instanceof EditorSchemeAttributeDescriptor){
+    if (description instanceof EditorSchemeAttributeDescriptor) {
       String type = ((EditorSchemeAttributeDescriptor)description).getType();
 
       List<HighlightData> highlights = startBlinkingHighlights(myEditor,
-                                                               myHighlightData, type,
+                                                               type,
                                                                myPage.getHighlighter(), true,
                                                                myBlinkingAlarm, BLINK_COUNT, myPage);
 
@@ -208,7 +232,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   private static void scrollHighlightInView(final List<HighlightData> highlightDatas, final Editor editor) {
     boolean needScroll = true;
     int minOffset = Integer.MAX_VALUE;
-    for(HighlightData data: highlightDatas) {
+    for (HighlightData data : highlightDatas) {
       if (isOffsetVisible(editor, data.getStartOffset())) {
         needScroll = false;
         break;
@@ -232,7 +256,6 @@ public class SimpleEditorPreview implements PreviewPanel{
   }
 
   private List<HighlightData> startBlinkingHighlights(final EditorEx editor,
-                                                      final HighlightData[] highlightDatum,
                                                       final String attrKey,
                                                       final SyntaxHighlighter highlighter,
                                                       final boolean show,
@@ -244,14 +267,13 @@ public class SimpleEditorPreview implements PreviewPanel{
     boolean found = false;
     List<HighlightData> highlights = new ArrayList<HighlightData>();
     List<HighlightData> matchingHighlights = new ArrayList<HighlightData>();
-    for (int i = 0; highlightDatum != null && i < highlightDatum.length; i++) {
-      HighlightData highlightData = highlightDatum[i];
+    for (HighlightData highlightData : myHighlightData) {
       String type = highlightData.getHighlightType();
       highlights.add(highlightData);
       if (show && type.equals(attrKey)) {
         highlightData =
-        new HighlightData(highlightData.getStartOffset(), highlightData.getEndOffset(),
-                          CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
+          new HighlightData(highlightData.getStartOffset(), highlightData.getEndOffset(),
+                            CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
         highlights.add(highlightData);
         matchingHighlights.add(highlightData);
         found = true;
@@ -294,7 +316,7 @@ public class SimpleEditorPreview implements PreviewPanel{
       }
     }
     alarm.cancelAllRequests();
-    alarm.addComponentRequest(() -> startBlinkingHighlights(editor, highlightDatum, attrKey, highlighter, !show, alarm, count - 1, page), 400);
+    alarm.addComponentRequest(() -> startBlinkingHighlights(editor, attrKey, highlighter, !show, alarm, count - 1, page), 400);
     return matchingHighlights;
   }
 
@@ -309,6 +331,5 @@ public class SimpleEditorPreview implements PreviewPanel{
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myEditor);
     stopBlinking();
-
   }
 }

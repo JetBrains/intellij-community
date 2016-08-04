@@ -20,11 +20,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -122,7 +122,9 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   private void processListValueChanged() {
     Object selectedValue = myOptionsTree.getSelectedValue();
-    ColorAndFontDescription description = selectedValue instanceof ColorAndFontDescription ? (ColorAndFontDescription)selectedValue : null;
+    EditorSchemeAttributeDescriptor description = selectedValue instanceof EditorSchemeAttributeDescriptor
+                                                  ? (EditorSchemeAttributeDescriptor)selectedValue
+                                                  : null;
     if (description == null) {
       if (selectedValue == null) {
         String preselectedType = myProperties.getValue(SELECTED_COLOR_OPTION_PROPERTY);
@@ -164,7 +166,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   @Override
   public void applyChangesToScheme() {
-    ColorAndFontDescription descriptor = myOptionsTree.getSelectedDescriptor();
+    EditorSchemeAttributeDescriptor descriptor = myOptionsTree.getSelectedDescriptor();
     if (descriptor != null) {
       myOptionsPanel.apply(descriptor, myOptions.getSelectedScheme());
     }
@@ -193,9 +195,9 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
     void resetDefault();
 
-    void reset(@NotNull ColorAndFontDescription description);
+    void reset(@NotNull EditorSchemeAttributeDescriptor description);
 
-    void apply(@NotNull ColorAndFontDescription descriptor, EditorColorsScheme scheme);
+    void apply(@NotNull EditorSchemeAttributeDescriptor descriptor, EditorColorsScheme scheme);
 
     void addListener(@NotNull Listener listener);
 

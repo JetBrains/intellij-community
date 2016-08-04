@@ -46,6 +46,7 @@ public class RainbowHighlighter {
 
   @NotNull private final TextAttributesScheme myColorsScheme;
   @NotNull private final List<Color> myRainbowColors;
+  public final static String RAINBOW_TYPE = "rainbow";
 
   public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
@@ -57,6 +58,10 @@ public class RainbowHighlighter {
 
   public static boolean isRainbowEnabled() {
     return Registry.is("editor.rainbow.identifiers", false);
+  }
+
+  public static void setRainbowEnabled(boolean enabled) {
+    Registry.get("editor.rainbow.identifiers").setValue(enabled);
   }
 
   @NotNull
@@ -78,6 +83,14 @@ public class RainbowHighlighter {
       return registryColors.stream().map(s -> ColorUtil.fromHex(s.trim())).collect(Collectors.toList());
     }
 
+    return ColorGenerator.generateLinearColorSequence(getRainbowKeys()
+                                                        .stream()
+                                                        .map(key -> colorsScheme.getAttributes(key).getForegroundColor())
+                                                        .collect(Collectors.toList()),
+                                                      RAINBOW_COLORS_BETWEEN);
+  }
+
+  public static synchronized List<TextAttributesKey> getRainbowKeys() {
     if (RAINBOW_COLOR_KEYS.isEmpty()) {
       for (int i = 0; i < RAINBOW_COLORS_DEFAULT.length; ++i) {
         RAINBOW_COLOR_KEYS.add(TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i,
@@ -87,11 +100,7 @@ public class RainbowHighlighter {
                                                                            null, null, null, Font.PLAIN)));
       }
     }
-    return ColorGenerator.generateLinearColorSequence(RAINBOW_COLOR_KEYS
-                                                        .stream()
-                                                        .map(key -> colorsScheme.getAttributes(key).getForegroundColor())
-                                                        .collect(Collectors.toList()),
-                                                      RAINBOW_COLORS_BETWEEN);
+    return RAINBOW_COLOR_KEYS;
   }
 
   public HighlightInfo getInfo(int colorIndex, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {

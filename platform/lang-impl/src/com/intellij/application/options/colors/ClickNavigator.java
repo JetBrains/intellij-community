@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ui.UIUtil;

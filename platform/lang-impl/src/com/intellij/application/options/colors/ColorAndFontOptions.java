@@ -27,10 +27,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -77,6 +74,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
+
+  private final ColorAndFontGlobalState myInitGlobalOption = new ColorAndFontGlobalState();
+  private final ColorAndFontGlobalState myCurGlobalOption = new ColorAndFontGlobalState(myInitGlobalOption);
+
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
@@ -94,19 +95,28 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private boolean myDisposeCompleted = false;
   private final Disposable myDisposable = Disposer.newDisposable();
 
+  public ColorAndFontGlobalState getGlobalOption() {
+    return myCurGlobalOption;
+  }
+
   @Override
   public boolean isModified() {
     boolean listModified = isSchemeListModified();
     boolean schemeModified = isSomeSchemeModified();
+    boolean globalModified = isGlobalOptionModified();
 
-    if (listModified || schemeModified) {
+    if (listModified || schemeModified || globalModified) {
       myApplyCompleted = false;
     }
 
-    return listModified;
+    return listModified || globalModified;
   }
 
-  private boolean isSchemeListModified(){
+  private boolean isGlobalOptionModified() {
+    return !myInitGlobalOption.equals(myCurGlobalOption);
+  }
+
+  private boolean isSchemeListModified() {
     if (mySomeSchemesDeleted) return true;
 
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
@@ -240,6 +250,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     try {
+      myCurGlobalOption.apply();
+      myInitGlobalOption.copyFrom(myCurGlobalOption);
+
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
       SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
 
@@ -488,6 +501,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
    }
 
   private void initAll() {
+    myCurGlobalOption.copyFrom(myInitGlobalOption);
     mySchemes = new THashMap<String, MyColorScheme>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
@@ -523,8 +537,27 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                        @NotNull MyColorScheme scheme) {
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
+    //todo: single point configuration?
+    //if (provider instanceof RainbowColorSettingsPage) {
+    //  descriptions.add(new RainbowAttributeDescriptor(group,
+    //                                                  ApplicationBundle.message("rainbow.option.panel.display.name"),
+    //                                                  scheme,
+    //                                                  scheme.getInitRainbowState(),
+    //                                                  scheme.getCurrentRainbowState()));
+    //}
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
+      if (provider instanceof RainbowColorSettingsPage
+          && ((RainbowColorSettingsPage)provider).isRainbowType(descriptor.getKey())) {
+        //todo: joined sub-descriptor
+        descriptions.add(new RainbowAttributeDescriptor(group,
+                                                        descriptor.getDisplayName()
+                                                        + EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR
+                                                        + ApplicationBundle.message("rainbow.option.panel.display.name"),
+                                                        scheme,
+                                                        scheme.getInitRainbowState(),
+                                                        scheme.getCurrentRainbowState()));
+      }
     }
 
     ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();
@@ -626,7 +659,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private void revertChanges(){
-    if (isSchemeListModified() || isSomeSchemeModified()) {
+    if (isSchemeListModified() || isSomeSchemeModified() || isGlobalOptionModified()) {
       myRevertChangesCompleted = false;
     }
 
@@ -984,6 +1017,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
+    private RainbowAttributeDescriptor.RainbowInSchemeState myInitRainbowState;
+    private RainbowAttributeDescriptor.RainbowInSchemeState myCurrentRainbowState;
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
@@ -1112,6 +1147,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
       }
       return false;
+    }
+
+    public RainbowAttributeDescriptor.RainbowInSchemeState getInitRainbowState() {
+      if (myInitRainbowState == null) {
+        myInitRainbowState = new RainbowAttributeDescriptor.RainbowInSchemeState(this);
+      }
+      return myInitRainbowState;
+    }
+
+    public RainbowAttributeDescriptor.RainbowInSchemeState getCurrentRainbowState() {
+      if (myCurrentRainbowState == null) {
+        myCurrentRainbowState = new RainbowAttributeDescriptor.RainbowInSchemeState(getInitRainbowState());
+      }
+      return myCurrentRainbowState;
     }
   }
 

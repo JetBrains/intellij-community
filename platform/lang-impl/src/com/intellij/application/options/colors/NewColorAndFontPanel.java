@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -100,10 +101,8 @@ public class NewColorAndFontPanel extends JPanel {
     optionsPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
       public void settingsChanged() {
-        if (schemesPanel.updateDescription(true)) {
-          optionsPanel.applyChangesToScheme();
-          previewPanel.updateView();
-        }
+        optionsPanel.applyChangesToScheme();
+        previewPanel.updateView();
       }
 
       @Override
@@ -133,8 +132,8 @@ public class NewColorAndFontPanel extends JPanel {
                                             Collection<String> optionList, ColorSettingsPage page) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
 
-    final OptionsPanel optionsPanel = new OptionsPanelImpl(options, schemesPanel, category);
-
+    final OptionsPanel optionsPanel = new OptionsPanelImpl(options, schemesPanel, category,
+                                                           new CustomizedSwitcherPanel(options.getGlobalOption(), previewPanel, page));
 
     return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, category, optionList, page);
   }

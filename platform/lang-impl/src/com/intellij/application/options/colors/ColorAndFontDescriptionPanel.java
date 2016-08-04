@@ -17,6 +17,8 @@ package com.intellij.application.options.colors;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -172,7 +174,10 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     colorPanel.setEnabled(isChecked);
   }
 
-  public void reset(@NotNull ColorAndFontDescription description) {
+  public void reset(@NotNull EditorSchemeAttributeDescriptor attrDescription) {
+    if (!(attrDescription instanceof ColorAndFontDescription)) return;
+    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+
     if (description.isFontEnabled()) {
       myLabelFont.setEnabled(description.isEditable());
       myCbBold.setEnabled(description.isEditable());
@@ -218,7 +223,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
     if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
       String attrName = baseDescriptor.second.getDisplayName();
-      String attrLabel = attrName.replaceAll(ColorOptionsTree.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
+      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
       ColorSettingsPage settingsPage = baseDescriptor.first;
       String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
       String tooltipText;
@@ -263,7 +268,10 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myBackgroundChooser.setEditable(isEditEnabled);
   }
 
-  public void apply(@NotNull ColorAndFontDescription description, EditorColorsScheme scheme) {
+  public void apply(@NotNull EditorSchemeAttributeDescriptor attrDescription, EditorColorsScheme scheme) {
+    if (!(attrDescription instanceof ColorAndFontDescription)) return;
+    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+
     description.setInherited(myInheritAttributesBox.isSelected());
     if (description.isInherited()) {
       TextAttributes baseAttributes = description.getBaseAttributes();

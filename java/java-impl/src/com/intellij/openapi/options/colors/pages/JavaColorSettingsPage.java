@@ -25,7 +25,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
@@ -36,7 +36,7 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
+public class JavaColorSettingsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ourDescriptors = {
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), JavaHighlightingColors.KEYWORD),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), JavaHighlightingColors.NUMBER),
@@ -204,5 +204,46 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.KEY_LANGUAGE_SETTINGS;
+  }
+
+  @Override
+  public boolean isRainbowType(TextAttributesKey type) {
+    return JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.PARAMETER_ATTRIBUTES.equals(type)
+        || JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES.equals(type)
+
+        || JavaHighlightingColors.DOC_COMMENT_TAG_VALUE.equals(type);
+  }
+
+  @NotNull
+  @Override
+  public String getRainbowDemoText() {
+    return
+      "import <class>java.util.Date</class>;\n" +
+      "class <class>SomeClass</class> {\n" +
+      "  public int <field>field</field>;\n" +
+      "  <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>) {\n" +
+      "\n" +
+      "  }\n" +
+      "  /**\n" +
+      "   * Doc comment\n" +
+      "   * @param <javadocTagValue>param1</javadocTagValue> function param\n" +
+      "   * @param <javadocTagValue>param2</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>param3</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>param4</javadocTagValue>\n" +
+      "   * @param <javadocTagValue>param5</javadocTagValue>\n" +
+      "   */\n" +
+      "  void <methodDeclaration>method</methodDeclaration>(int <param>param1</param>,\n" +
+      "              int <param>param2</param>,\n" +
+      "              int <param>param3</param>,\n" +
+      "              int <param>param4</param>,\n" +
+      "              int <param>param5</param>) {\n" +
+      "    int <localVar>localVar1</localVar>, <localVar>localVar2</localVar>, <localVar>localVar3</localVar>, <localVar>localVar4</localVar>, <localVar>localVar5</localVar>;\n" +
+      "\n" +
+      "    <localVar>localVar3</localVar> = <param>param2</param>;\n" +
+      "    this.<field>field</field> = <localVar>localVar3</localVar> + <param>param1</param> + <param>param5</param>;\n" +
+      "  }\n" +
+      "}\n";
   }
 }
