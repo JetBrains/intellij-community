@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.*;
 
 public class EduAdaptiveStepicConnector {
-  public static final String PYTHON27 = "python27";
+  public static final String PYTHON2 = "python2";
   public static final String PYTHON3 = "python3";
   public static final String PYCHARM_COMMENT = "# Posted from PyCharm Edu\n";
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
@@ -515,7 +515,7 @@ public class EduAdaptiveStepicConnector {
         if (versionString != null) {
           final List<String> versionStringParts = StringUtil.split(versionString, " ");
           if (versionStringParts.size() == 2) {
-            return versionStringParts.get(1).startsWith("2") ? PYTHON27 : PYTHON3;
+            return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
           }
         }
       }
