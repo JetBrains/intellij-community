@@ -89,21 +89,20 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(PyFunction node) {
-      PyType type = myTypeEvalContext.getType(node);
       final PyAnnotation annotation = node.getAnnotation();
       final String comment = node.getTypeCommentAnnotation();
-      if (type instanceof PyFunctionTypeImpl && node instanceof PyFunctionImpl && (annotation != null || comment != null)) {
-        PyType expected = myTypeEvalContext.getReturnType(node);
-        Map<PyReturnStatement, PyType> returnStatements = ((PyFunctionImpl)node).getReturnStatementsWithTypes(myTypeEvalContext);
-        Collection<PyType> types = returnStatements.values();
-        PyType actual = PyUnionType.union(types);
-        boolean match = PyTypeChecker.match(expected, actual, myTypeEvalContext);
+      if (annotation != null || comment != null) {
+        final PyType expected = myTypeEvalContext.getReturnType(node);
+        final Map<PyReturnStatement, PyType> returnStatements = ((PyFunctionImpl)node).getReturnStatementsWithTypes(myTypeEvalContext);
+        final Collection<PyType> types = returnStatements.values();
+        final PyType actual = PyUnionType.union(types);
+        final boolean match = PyTypeChecker.match(expected, actual, myTypeEvalContext);
         if (!match) {
           List<PyReturnStatement> errorPlaces = new ArrayList<>();
           for (Map.Entry<PyReturnStatement, PyType> entry : returnStatements.entrySet())
           {
-            PyReturnStatement retStmt = entry.getKey();
-            PyType retType = entry.getValue();
+            final PyReturnStatement retStmt = entry.getKey();
+            final PyType retType = entry.getValue();
             if (!PyTypeChecker.match(expected, retType, myTypeEvalContext)) {
               errorPlaces.add(retStmt);
             }
