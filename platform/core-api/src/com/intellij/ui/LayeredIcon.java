@@ -96,7 +96,7 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     adjustSize();
   }
 
-  public void setIcon(Icon icon, int layer, @MagicConstant(flagsFromClass = SwingConstants.class) int constraint) {
+  public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
     int height = getIconHeight();
     int w = icon.getIconWidth();
