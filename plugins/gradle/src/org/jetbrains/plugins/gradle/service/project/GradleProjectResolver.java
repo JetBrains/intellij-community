@@ -438,13 +438,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
           else {
             final Set<String> testSet = ContainerUtil.newHashSet();
-            Map<ExternalSystemSourceType, String> gradleTestOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
-            if(gradleTestOutputs != null) {
-              ContainerUtil.addAllNotNull(compileSet,
-                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST),
-                                          gradleTestOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
+            if(gradleOutputs != null) {
+              ContainerUtil.addAllNotNull(testSet,
+                                          gradleOutputs.get(ExternalSystemSourceType.TEST),
+                                          gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
             }
-            if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
+            if (!testSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }
           }

@@ -849,4 +849,50 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     }
     assertModuleModuleDepScope("projectC", "projectB", DependencyScope.PROVIDED);
   }
+
+  @Test
+  public void testProjectConfigurationDependencyWithDependencyOnTestOutput() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    testOutput\n" +
+      "    testOutput.extendsFrom (testCompile)\n" +
+      "  }\n" +
+      "\n" +
+      "  dependencies {\n" +
+      "    testOutput sourceSets.test.output\n" +
+      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(path: ':project1')\n" +
+      "\n" +
+      "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+      "    testCompile project(path: ':project1', configuration: 'testOutput')\n" +
+      "  }\n" +
+      "\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDepScope("project1_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleModuleDepScope("project2_main", "project1_main", DependencyScope.COMPILE);
+
+    assertModuleModuleDepScope("project2_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_test", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+  }
 }
