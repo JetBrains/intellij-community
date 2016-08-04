@@ -37,6 +37,11 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
   }
 
   public void setProviderType(@NotNull ProviderType value) {
+    //noinspection deprecation
+    if (value == ProviderType.DO_NOT_STORE) {
+      value = ProviderType.MEMORY_ONLY;
+    }
+
     ProviderType oldValue = myProviderType;
     if (value != oldValue) {
       myProviderType = value;

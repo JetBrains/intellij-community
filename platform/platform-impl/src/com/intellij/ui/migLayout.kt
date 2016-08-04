@@ -15,6 +15,7 @@
  */
 package com.intellij.migLayout
 
+import com.intellij.BundleBase
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.UIUtil
@@ -24,8 +25,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 fun panel(vararg layoutConstraints: LCFlags) = JPanel(MigLayout(c().apply(layoutConstraints)))
 
@@ -50,11 +50,12 @@ fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constr
 }
 
 fun JPanel.label(text: String, constrains: CC? = null, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null) {
+  val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label = if (componentStyle == null && fontColor == null) {
-    JLabel(text)
+    JLabel(finalText)
   }
   else {
-    JBLabel(text, componentStyle ?: UIUtil.ComponentStyle.REGULAR, fontColor ?: UIUtil.FontColor.NORMAL)
+    JBLabel(finalText, componentStyle ?: UIUtil.ComponentStyle.REGULAR, fontColor ?: UIUtil.FontColor.NORMAL)
   }
 
   add(label, constrains)
@@ -66,6 +67,28 @@ fun JPanel.hint(text: String, constrains: CC = CC()) {
     constrains.gapLeft("30")
   }
   label(text, constrains, componentStyle = UIUtil.ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER)
+}
+
+fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
+
+fun JPanel.radioButton(text: String, vararg constraints: CCFlags) {
+  add(RadioButton(text), constraints.create())
+}
+
+fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
+  val group = ButtonGroup()
+  buttons.forEach {
+    group.add(it)
+    add(it)
+  }
+}
+
+enum class LCFlags {
+  noGrid, flowY, fill
+}
+
+enum class CCFlags {
+  wrap, grow, push
 }
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
@@ -80,16 +103,10 @@ fun c(insets: String? = "0", gap: String? = "20 5"): LC {
 }
 
 fun JPanel.add(component: Component, vararg constraints: CCFlags) {
-  add(component, CC().apply(constraints))
+  add(component, constraints.create())
 }
 
-enum class LCFlags {
-  noGrid, flowY, fill
-}
-
-enum class CCFlags {
-  wrap, grow, push
-}
+private fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
 
 fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
