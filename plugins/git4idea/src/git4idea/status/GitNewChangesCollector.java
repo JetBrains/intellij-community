@@ -129,6 +129,7 @@ class GitNewChangesCollector extends GitChangesCollector {
       handler.addParameters(params);
       handler.endOptions();
     }
+    handler.setSilent(true);
     return handler;
   }
 
