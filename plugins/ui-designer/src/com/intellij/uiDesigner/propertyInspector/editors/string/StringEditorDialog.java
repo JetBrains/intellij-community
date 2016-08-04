@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.*;
 
 /**
@@ -197,10 +196,10 @@ public final class StringEditorDialog extends DialogWrapper{
     return null;
   }
 
-  private static Collection<PsiReference> findPropertyReferences(final Property pproperty, final Module module) {
+  private static Collection<PsiReference> findPropertyReferences(final Property property, final Module module) {
     final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      (Runnable)() -> ReferencesSearch.search(pproperty).forEach(psiReference -> {
+      (Runnable)() -> ReferencesSearch.search(property).forEach(psiReference -> {
         PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);
         if (method == null || !AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
           references.add(psiReference);
@@ -352,7 +351,7 @@ public final class StringEditorDialog extends DialogWrapper{
             myTfBundleName.getButton().doClick();
           }
         },
-        KeyStroke.getKeyStroke(myLblBundleName.getDisplayedMnemonic(), KeyEvent.ALT_DOWN_MASK),
+        KeyStroke.getKeyStroke(myLblBundleName.getDisplayedMnemonic(), InputEvent.ALT_DOWN_MASK),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
 
@@ -392,7 +391,7 @@ public final class StringEditorDialog extends DialogWrapper{
             myTfKey.getButton().doClick();
           }
         },
-        KeyStroke.getKeyStroke(myLblKey.getDisplayedMnemonic(), KeyEvent.ALT_DOWN_MASK),
+        KeyStroke.getKeyStroke(myLblKey.getDisplayedMnemonic(), InputEvent.ALT_DOWN_MASK),
         JComponent.WHEN_IN_FOCUSED_WINDOW
       );
 

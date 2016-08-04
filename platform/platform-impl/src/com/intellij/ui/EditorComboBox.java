@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -59,7 +58,6 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       component.setText(text);
     }
   };
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
 
   private Document myDocument;
   private final Project myProject;
@@ -191,8 +189,6 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
       }
-    }
-    else {
     }
   }
 
