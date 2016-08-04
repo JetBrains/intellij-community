@@ -20,7 +20,41 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class FormatTextRangeTest {
+  
+  @Test
+  fun `without heading space`() {
+    //equal (startOffset, endOffset)
+    val ranges = newFormatRanges(5, 6, false)
+    assertThat(ranges.isWhitespaceReadOnly(TextRange(4, 5))).isTrue()
+    assertThat(ranges.isWhitespaceReadOnly(TextRange(6, 7))).isTrue()
+  }
+  
+  @Test
+  fun `with heading space`() {
+    //equal [startOffset, endOffset)
+    val ranges = newFormatRanges(5, 6, true)
+    assertThat(ranges.isWhitespaceReadOnly(TextRange(4, 5))).isFalse()
+    assertThat(ranges.isWhitespaceReadOnly(TextRange(6, 7))).isTrue()
+  }
+  
+  @Test
+  fun `check processHeadingSpace difference at start offset`() {
+    val noHeadingSpace = newFormatRanges(5, 6, false)
+    assertThat(noHeadingSpace.isWhitespaceReadOnly(TextRange(0, 5))).isTrue()
 
+    val withHeadingSpace = newFormatRanges(5, 6, true)
+    assertThat(withHeadingSpace.isWhitespaceReadOnly(TextRange(0, 5))).isFalse()
+  }
+  
+  @Test
+  fun `check processHeadingSpace difference at end offset`() {
+    val noHeadingSpace = newFormatRanges(5, 6, false)
+    assertThat(noHeadingSpace.isWhitespaceReadOnly(TextRange(6, 7))).isTrue()
+
+    val withHeadingSpace = newFormatRanges(5, 6, true)
+    assertThat(withHeadingSpace.isWhitespaceReadOnly(TextRange(6, 7))).isTrue()
+  }
+  
   @Test
   fun `check isWhitespaceReadOnly no heading space`() {
     val ranges = newFormatRanges(10, 30, false)
