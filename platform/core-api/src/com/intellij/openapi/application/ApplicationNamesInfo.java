@@ -93,7 +93,7 @@ public class ApplicationNamesInfo {
   }
 
   /**
-   * @return "idea"
+   * @return base name of the script files (*.exe, *.bat, *.sh) from the product 'bin' directory without extension ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm)
    */
   public String getScriptName() {
     return myScriptName;
