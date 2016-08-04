@@ -346,9 +346,14 @@ public class StudyProjectGenerator {
       }
 
       writer = new PrintWriter(cacheFile, "UTF-8");
-      for (CourseInfo courseInfo : courseInfos) {
-        final String json = gson.toJson(courseInfo);
-        writer.println(json);
+      try {
+        for (CourseInfo courseInfo : courseInfos) {
+          final String json = gson.toJson(courseInfo);
+          writer.println(json);
+        }
+      }
+      finally {
+        StudyUtils.closeSilently(writer);
       }
     }
     catch (IOException e) {
