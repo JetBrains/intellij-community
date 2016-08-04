@@ -93,6 +93,11 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
+  void error(String message, Throwable cause) {
+    throw new BuildException(message, cause)
+  }
+
+  @Override
   void progress(String message) {
     if (parentInstance != null) {
       //progress messages should be shown immediately, there are no problems with that since they aren't organized into groups

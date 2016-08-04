@@ -151,6 +151,8 @@ interface BuildMessages {
    */
   void error(String message)
 
+  void error(String message, Throwable cause)
+
   void progress(String message)
   public <V> V block(String blockName, Closure<V> body)
 

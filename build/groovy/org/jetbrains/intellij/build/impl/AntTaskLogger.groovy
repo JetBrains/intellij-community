@@ -55,7 +55,7 @@ class AntTaskLogger implements BuildListener {
     BuildMessages handler = threadHandlers[Thread.currentThread()] ?: taskHandlers[event.task?.runtimeConfigurableWrapper] ?: defaultHandler
     switch (event.priority) {
       case Project.MSG_ERR:
-        handler.error(message)
+        handler.error(message, event.exception)
         break
       case Project.MSG_WARN:
         handler.warning(message)
