@@ -141,7 +141,7 @@ public class ChangeListChooserPanel extends JPanel {
     myExistingListsCombo.setModel(new CollectionComboBoxModel<String>(changelistNames));
   }
 
-  public void setDefaultName(String name) {
+  public void setSuggestedName(@NotNull String name) {
     if (!StringUtil.isEmptyOrSpaces(name)) {
       myListPanel.setChangeListName(name);
       updateDescription();
