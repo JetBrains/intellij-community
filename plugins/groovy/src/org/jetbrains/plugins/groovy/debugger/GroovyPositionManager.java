@@ -197,10 +197,13 @@ public class GroovyPositionManager implements PositionManager {
       return parent == null ? null : parent + "$" + typeDefinition.getName() + suffix;
     }
 
-    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
-      final String s = helper.customizeClassName(typeDefinition);
-      if (s != null) {
-        return s;
+    PsiFile file = typeDefinition.getContainingFile();
+    if (file instanceof GroovyFile) {
+      for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+        String s = helper.isAppropriateScriptFile((GroovyFile)file) ? helper.customizeClassName(typeDefinition) : null;
+        if (s != null) {
+          return s;
+        }
       }
     }
 
