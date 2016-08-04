@@ -15,12 +15,15 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -40,11 +43,22 @@ import java.util.stream.Stream;
 public class MacPathChooserDialog implements PathChooserDialog {
 
   private final FileDialog myFileDialog;
+  private final FileChooserDescriptor myFileChooserDescriptor;
+  private final Component myParent;
+  private final String myTitle;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
     myFileDialog = parent != null
                    ? createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD)
                    : createFileDialogWithoutOwner(descriptor.getTitle(), FileDialog.LOAD);
+    myFileChooserDescriptor = descriptor;
+    myParent = parent;
+    myTitle = getChooserTitle(descriptor);
+  }
+
+  private static String getChooserTitle(final FileChooserDescriptor descriptor) {
+    final String title = descriptor.getTitle();
+    return title != null ? title : UIBundle.message("file.chooser.default.title");
   }
 
   @NotNull
@@ -71,8 +85,21 @@ public class MacPathChooserDialog implements PathChooserDialog {
     myFileDialog.setVisible(true);
 
     File[] files = myFileDialog.getFiles();
+    List<VirtualFile> virtualFilesList = getChosenFiles(Stream.of(files));
+
+    try {
+      myFileChooserDescriptor.validateSelectedFiles(virtualFilesList.toArray(VirtualFile.EMPTY_ARRAY));
+    }
+    catch (Exception e) {
+      Messages.showErrorDialog(myParent, e.getMessage(), myTitle);
+      return;
+    }
+
     if (!ArrayUtil.isEmpty(files)) {
-      callback.consume(getChosenFiles(Stream.of(files)));
+      callback.consume(virtualFilesList);
+    }
+    else if (callback instanceof FileChooser.FileChooserConsumer) {
+      ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }
 
