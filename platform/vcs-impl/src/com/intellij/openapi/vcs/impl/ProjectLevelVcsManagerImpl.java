@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -81,7 +81,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
+@State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls public static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -596,10 +597,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
+  @Nullable
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    mySerialization.readExternalUtil(element, myOptionsAndConfirmations);
-    final Attribute attribute = element.getAttribute(SETTINGS_EDITED_MANUALLY);
+  public Element getState() {
+    Element element = new Element("state");
+    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    if (myHaveLegacyVcsConfiguration) {
+      element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
+    }
+    return element;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
+    final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
       try {
         myHaveLegacyVcsConfiguration = attribute.getBooleanValue();
@@ -607,12 +619,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       catch (DataConversionException ignored) {
       }
     }
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    element.setAttribute(SETTINGS_EDITED_MANUALLY, String.valueOf(myHaveLegacyVcsConfiguration));
   }
 
   @Override

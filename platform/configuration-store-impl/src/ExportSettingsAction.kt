@@ -167,7 +167,6 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
   }
 
-  @Suppress("DEPRECATION")
   (ApplicationManager.getApplication() as ComponentManagerEx).getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 

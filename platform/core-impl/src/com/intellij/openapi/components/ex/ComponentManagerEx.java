@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,7 @@ public interface ComponentManagerEx extends ComponentManager {
   /**
    * Gets all components whose implementation class is derived from <code>baseClass</code>.
    *
-   * @return array of components
-   * @deprecated use extension points instead
+   * Consider using extension points instead.
    */
   @NotNull
   <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass);

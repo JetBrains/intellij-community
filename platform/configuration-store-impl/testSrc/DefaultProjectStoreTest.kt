@@ -10,10 +10,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
-import com.intellij.util.delete
-import com.intellij.util.loadElement
-import com.intellij.util.refreshVfs
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.*
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
@@ -24,7 +21,8 @@ import java.nio.file.Paths
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
 
     internal const val TEST_COMPONENT_NAME = "Foo"
 
@@ -99,5 +97,14 @@ internal class DefaultProjectStoreTest {
     finally {
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
+  }
+
+  @Test fun `new project from default - remove workspace component configuration`() {
+    val element = loadElement("""
+    <state>
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+    </state>""")
+    removeWorkspaceComponentConfiguration(ProjectManager.getInstance().defaultProject, element)
+    assertThat(element.isEmpty()).isTrue()
   }
 }
