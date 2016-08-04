@@ -27,12 +27,10 @@ import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-val DEFAULT_PANEL_LC = c()
+fun panel(vararg layoutConstraints: LCFlags) = JPanel(MigLayout(c().apply(layoutConstraints)))
 
-fun panel(layoutConstraints: LC? = DEFAULT_PANEL_LC) = JPanel(MigLayout(layoutConstraints))
-
-inline fun panel(layoutConstraints: LC? = DEFAULT_PANEL_LC, init: JPanel.() -> Unit): JPanel {
-  val panel = panel(layoutConstraints)
+inline fun panel(vararg layoutConstraints: LCFlags, init: JPanel.() -> Unit): JPanel {
+  val panel = panel(*layoutConstraints)
   panel.init()
   return panel
 }
@@ -45,10 +43,10 @@ fun titledPanel(title: String): JPanel {
   return panel
 }
 
-fun JPanel.titledPanel(title: String, wrappedComponent: Component, constrains: CC? = null) {
+fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
   val panel = titledPanel(title)
   panel.add(wrappedComponent)
-  add(panel, constrains)
+  add(panel, *constraints)
 }
 
 fun JPanel.label(text: String, constrains: CC? = null, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null) {
@@ -72,33 +70,45 @@ fun JPanel.hint(text: String, constrains: CC = CC()) {
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
 // see com.intellij.uiDesigner.core.AbstractLayout.DEFAULT_HGAP and DEFAULT_VGAP (multiplied by 2 to achieve the same look (it seems in terms of MigLayout gap is both left and right space))
-fun c(insets: String? = "0", gap: String? = "20 5", fill: Boolean = false, noGrid: Boolean = false, flowY: Boolean = false): LC {
+fun c(insets: String? = "0", gap: String? = "20 5"): LC {
   // no setter for gap, so, create string to parse
   val lc = if (gap == null) LC() else ConstraintParser.parseLayoutConstraint("gap ${gap}")
   insets?.let {
     lc.insets(it)
   }
-  if (fill) {
-    lc.fill()
-  }
-  if (noGrid) {
-    lc.noGrid()
-  }
-  if (flowY) {
-    lc.flowY()
-  }
   return lc
 }
 
-@Suppress("unused")
-// add receiver to reduce completion scope
-fun JPanel.c(grow: Boolean = false, push: Boolean = false): CC {
-  val cc = CC()
-  if (grow) {
-    cc.grow()
+fun JPanel.add(component: Component, vararg constraints: CCFlags) {
+  add(component, CC().apply(constraints))
+}
+
+enum class LCFlags {
+  noGrid, flowY, fill
+}
+
+enum class CCFlags {
+  wrap, grow, push
+}
+
+fun LC.apply(flags: Array<out LCFlags>): LC {
+  for (flag in flags) {
+    when (flag) {
+      LCFlags.noGrid -> noGrid()
+      LCFlags.flowY -> flowY()
+      LCFlags.fill -> fill()
+    }
   }
-  if (push) {
-    cc.push()
+  return this
+}
+
+fun CC.apply(flags: Array<out CCFlags>): CC {
+  for (flag in flags) {
+    when (flag) {
+      CCFlags.wrap -> wrap()
+      CCFlags.grow -> grow()
+      CCFlags.push -> push()
+    }
   }
-  return cc
+  return this
 }

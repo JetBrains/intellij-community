@@ -15,7 +15,10 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.migLayout.c
+import com.intellij.migLayout.CCFlags.grow
+import com.intellij.migLayout.CCFlags.push
+import com.intellij.migLayout.LCFlags.flowY
+import com.intellij.migLayout.LCFlags.noGrid
 import com.intellij.migLayout.hint
 import com.intellij.migLayout.panel
 import com.intellij.migLayout.titledPanel
@@ -57,10 +60,10 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     saveSettings(settings, icsManager.settingsFile)
   }
 
-  override fun getComponent() = panel(c(noGrid = true, flowY = true)) {
+  override fun getComponent() = panel(noGrid, flowY) {
     add(editors.get(0).component)
     add(autoSync)
     hint("Use VCS -> Sync Settings to sync when you want")
-    titledPanel("Read-only Sources", editors.get(1).component, c(grow = true, push = true))
+    titledPanel("Read-only Sources", editors.get(1).component, grow, push)
   }
 }
