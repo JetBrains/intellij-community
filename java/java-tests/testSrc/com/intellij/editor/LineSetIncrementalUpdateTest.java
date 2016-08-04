@@ -24,8 +24,11 @@ package com.intellij.editor;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.LineSet;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
@@ -123,5 +126,19 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
         );
       }
     }.execute().throwException();
+  }
+
+  public void testTypingInLongLinePerformance() {
+    String longLine = StringUtil.repeat("a ", 200000);
+    PlatformTestUtil.startPerformanceTest("Document changes in a long line", 1000, () -> {
+      Document document = EditorFactory.getInstance().createDocument("a\n" + longLine + "<caret>" + longLine + "\n");
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        for (int i = 0; i < 1000; i++) {
+          int offset = i * 2 + longLine.length();
+          assertEquals(1, document.getLineNumber(offset));
+          document.insertString(offset, "b");
+        }
+      });
+    }).cpuBound().assertTiming();
   }
 }
