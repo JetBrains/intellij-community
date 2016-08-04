@@ -160,6 +160,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
+          vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
         if (SystemInfo.isXWindow) {

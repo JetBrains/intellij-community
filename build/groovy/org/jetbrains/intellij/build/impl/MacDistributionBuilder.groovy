@@ -309,6 +309,7 @@ class MacDistributionBuilder {
        "java.endorsed.dirs"                    : "",
        "idea.smooth.progress"                  : "false",
        "apple.laf.useScreenMenuBar"            : "true",
+       "apple.awt.fileDialogForDirectories"    : "true",
        "apple.awt.graphics.UseQuartz"          : "true",
        "apple.awt.fullscreencapturealldisplays": "false"]
     if (buildContext.productProperties.platformPrefix != null) {
