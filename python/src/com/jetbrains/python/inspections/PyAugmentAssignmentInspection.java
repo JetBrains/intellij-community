@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import org.jetbrains.annotations.Nls;
@@ -36,6 +37,16 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to detect assignments that can be replaced with augmented assignments.
  */
 public class PyAugmentAssignmentInspection extends PyInspection {
+
+  @NotNull
+  private static final TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
+                                                             PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
+                                                             PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
+                                                             PyTokenTypes.EXP);
+  @NotNull
+  private static final TokenSet COMMUTATIVE_OPERATIONS =
+    TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT, PyTokenTypes.OR, PyTokenTypes.AND);
+
   @Nls
   @NotNull
   @Override
@@ -52,61 +63,77 @@ public class PyAugmentAssignmentInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
+
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
     @Override
     public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-      final PyExpression value = node.getAssignedValue();
-      if (value instanceof PyBinaryExpression) {
-        final PyExpression target = node.getLeftHandSideExpression();
-        final PyBinaryExpression expression = (PyBinaryExpression)value;
-        PyExpression leftExpression = expression.getLeftExpression();
-        PyExpression rightExpression = expression.getRightExpression();
+      final PyExpression target = node.getLeftHandSideExpression();
+      final PyBinaryExpression value = PyUtil.as(node.getAssignedValue(), PyBinaryExpression.class);
 
-        if (rightExpression instanceof PyParenthesizedExpression) {
-          rightExpression = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
-        }
-        if (rightExpression == null || target == null) {
+      if (target != null && value != null) {
+        final PyExpression leftExpression = value.getLeftExpression();
+        final PyExpression rightExpression = PyPsiUtils.flattenParens(value.getRightExpression());
+
+        if (leftExpression == null || rightExpression == null) {
           return;
         }
-        boolean changedParts = false;
+
         final String targetText = target.getText();
-        final String rightText = rightExpression.getText();
-        if (rightText.equals(targetText)) {
-          final PyExpression tmp = rightExpression;
-          rightExpression = leftExpression;
-          leftExpression = tmp;
+        final PyExpression mainOperandExpression;
+        final PyExpression otherOperandExpression;
+        final boolean changedParts;
+
+        if (targetText.equals(leftExpression.getText())) {
+          mainOperandExpression = leftExpression;
+          otherOperandExpression = rightExpression;
+          changedParts = false;
+        }
+        else if (targetText.equals(rightExpression.getText())) {
+          mainOperandExpression = rightExpression;
+          otherOperandExpression = leftExpression;
           changedParts = true;
         }
+        else {
+          return;
+        }
 
-        final PyElementType op = expression.getOperator();
-        final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
-                                                    PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
-                                                    PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
-                                                    PyTokenTypes.EXP);
-        final TokenSet commutativeOperations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT, PyTokenTypes.OR, PyTokenTypes.AND);
-        if ((operations.contains(op) && !changedParts) || (changedParts && commutativeOperations.contains(op))) {
-          if (leftExpression.getText().equals(targetText) && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
-            final PyType type = myTypeEvalContext.getType(rightExpression);
-            if (type != null && !PyTypeChecker.isUnknown(type)) {
-              final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
-              final LanguageLevel languageLevel = LanguageLevel.forElement(rightExpression);
-              if (isNumeric(type, cache) || (isString(type, cache, languageLevel) && !changedParts)) {
-                registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
-              }
-            }
-          }
+        final PyElementType operator = value.getOperator();
+        if (operator != null && assignmentCanBeReplaced(mainOperandExpression, otherOperandExpression, operator, changedParts)) {
+          registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
         }
       }
     }
 
-    private boolean isString(PyType type, PyBuiltinCache cache, LanguageLevel level) {
+    private boolean assignmentCanBeReplaced(@NotNull PyExpression mainOperandExpression,
+                                            @NotNull PyExpression otherOperandExpression,
+                                            @NotNull PyElementType operator,
+                                            boolean changedParts) {
+      if (!(mainOperandExpression instanceof PyReferenceExpression || mainOperandExpression instanceof PySubscriptionExpression)) {
+        return false;
+      }
+
+      if (!changedParts && OPERATIONS.contains(operator) || changedParts && COMMUTATIVE_OPERATIONS.contains(operator)) {
+        final PyType otherOperandType = myTypeEvalContext.getType(otherOperandExpression);
+
+        if (!PyTypeChecker.isUnknown(otherOperandType)) {
+          final PyBuiltinCache cache = PyBuiltinCache.getInstance(otherOperandExpression);
+
+          return isNumeric(otherOperandType, cache) ||
+                 !changedParts && isString(otherOperandType, cache, LanguageLevel.forElement(otherOperandExpression));
+        }
+      }
+
+      return false;
+    }
+
+    private boolean isString(@NotNull PyType type, @NotNull PyBuiltinCache cache, @NotNull LanguageLevel level) {
       return PyTypeChecker.match(cache.getStringType(level), type, myTypeEvalContext);
     }
 
-    private boolean isNumeric(PyType type, PyBuiltinCache cache) {
+    private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
       return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
   }
