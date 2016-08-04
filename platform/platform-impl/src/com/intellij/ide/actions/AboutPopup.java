@@ -237,7 +237,7 @@ public class AboutPopup {
             myAlarm.addRequest(new Runnable() {
               @Override
               public void run() {
-                if (myShowCopyAlpha > 0) {
+                if (myShowCopyAlpha >= fadeStep) {
                   myShowCopyAlpha -= fadeStep;
                   repaint();
                   myAlarm.addRequest(this, animationDelay);
