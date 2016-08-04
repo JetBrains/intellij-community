@@ -123,7 +123,7 @@ public class HgHistoryUtil {
     final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
     return VcsFileUtil
-      .foreachChunk(hashParameters, new ThrowableNotNullFunction<List<String>, List<? extends VcsFullCommitDetails>, VcsException>() {
+      .foreachChunk(hashParameters, 2, new ThrowableNotNullFunction<List<String>, List<? extends VcsFullCommitDetails>, VcsException>() {
         @NotNull
         @Override
         public List<? extends VcsFullCommitDetails> fun(@NotNull List<String> strings) throws VcsException {
@@ -261,7 +261,7 @@ public class HgHistoryUtil {
     templateList.add("{desc}");
     final String[] templates = ArrayUtil.toStringArray(templateList);
 
-    return VcsFileUtil.foreachChunk(prepareHashes(hashes),
+    return VcsFileUtil.foreachChunk(prepareHashes(hashes), 2,
                                     new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
                                       @NotNull
                                       @Override
