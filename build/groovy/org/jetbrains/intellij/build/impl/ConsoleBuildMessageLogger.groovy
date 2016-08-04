@@ -27,7 +27,7 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
   public static final Function<String, BuildMessageLogger> FACTORY = { new ConsoleBuildMessageLogger(it) }
   private final String parallelTaskId
   private int indent
-  private static final PrintStream out = System.out //we need to store real System.out because AntBuilder replaces it during task execution
+  private static final PrintStream out = BuildUtils.realSystemOut
 
   ConsoleBuildMessageLogger(String parallelTaskId) {
     this.parallelTaskId = parallelTaskId

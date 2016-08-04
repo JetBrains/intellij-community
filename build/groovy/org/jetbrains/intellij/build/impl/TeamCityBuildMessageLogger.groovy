@@ -27,7 +27,7 @@ import java.util.function.Function
  */
 class TeamCityBuildMessageLogger extends BuildMessageLogger {
   public static final Function<String, BuildMessageLogger> FACTORY = { new TeamCityBuildMessageLogger(it) }
-  private static final PrintStream out = System.out //we need to store real System.out because AntBuilder replaces it during task execution
+  private static final PrintStream out = BuildUtils.realSystemOut
   private final String parallelTaskId
 
   TeamCityBuildMessageLogger(String parallelTaskId) {
