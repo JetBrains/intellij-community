@@ -440,5 +440,8 @@
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
+
+    <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>
   </extensions>
 </idea-plugin>
