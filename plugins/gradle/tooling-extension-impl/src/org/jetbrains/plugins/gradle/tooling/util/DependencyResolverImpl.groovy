@@ -155,9 +155,18 @@ class DependencyResolverImpl implements DependencyResolver {
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
         if(!configuration.resolvedConfiguration.hasError()) {
-          def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+          Collection<File> fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
           artifactMap.values().each {
             fileDeps.remove(it.file)
+          }
+          configurationProjectDependencies.values().each {
+            def intersect = fileDeps.intersect(it.resolve())
+            if(!intersect.isEmpty()) {
+              def fileCollectionDependency = new DefaultFileCollectionDependency(intersect)
+              fileCollectionDependency.scope = scope
+              result.add(fileCollectionDependency)
+              fileDeps.removeAll(intersect)
+            }
           }
           fileDeps.each {
             def fileCollectionDependency = new DefaultFileCollectionDependency([it])
