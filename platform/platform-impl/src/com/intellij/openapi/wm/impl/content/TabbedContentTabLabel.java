@@ -102,7 +102,8 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   }
 
   private void setIconInPopupLabel(JLabel label, String tabName) {
-    boolean hasIconsInTabs = hasIconsInTabs();
+    Icon baseIcon = getBaseIcon();
+    boolean hasIconsInTabs = baseIcon != null;
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
       if (nextTabWithName.getFirst().equals(tabName)) {
         JComponent tab = nextTabWithName.getSecond();
@@ -110,7 +111,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         if (tab instanceof Iconable) {
           tabIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
           if (hasIconsInTabs && tabIcon == null) {
-            tabIcon = EmptyIcon.ICON_16;
+            tabIcon = EmptyIcon.create(baseIcon);
           }
         }
         label.setIcon(tabIcon);
@@ -118,19 +119,20 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  private boolean hasIconsInTabs() {
-    boolean hasIconsInTabs = false;
+  @Nullable
+  private Icon getBaseIcon() {
+    Icon baseIcon = null;
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
       JComponent tabComponent = nextTabWithName.getSecond();
       if (tabComponent instanceof Iconable) {
         Icon tabIcon = ((Iconable)tabComponent).getIcon(Iconable.ICON_FLAG_VISIBILITY);
         if (tabIcon != null) {
-          hasIconsInTabs = true;
+          baseIcon = tabIcon;
           break;
         }
       }
     }
-    return hasIconsInTabs;
+    return baseIcon;
   }
 
   @Override
