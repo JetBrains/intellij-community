@@ -26,9 +26,10 @@ import com.intellij.openapi.options.BeanConfigurable;
 public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings.State> implements CodeFoldingOptionsProvider {
   public XmlCodeFoldingOptionsProvider() {
     super(XmlFoldingSettings.getInstance().getState());
-    checkBox("COLLAPSE_XML_TAGS", ApplicationBundle.message("checkbox.collapse.xml.tags"));
-    checkBox("COLLAPSE_HTML_STYLE_ATTRIBUTE", ApplicationBundle.message("checkbox.collapse.html.style.attribute"));
-    checkBox("COLLAPSE_ENTITIES", ApplicationBundle.message("checkbox.collapse.entities"));
-    checkBox("COLLAPSE_DATA_URI", ApplicationBundle.message("checkbox.collapse.data.uri"));
+    XmlFoldingSettings settings = XmlFoldingSettings.getInstance();
+    checkBox(ApplicationBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, value->settings.getState().COLLAPSE_XML_TAGS=value);
+    checkBox(ApplicationBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, value->settings.getState().COLLAPSE_HTML_STYLE_ATTRIBUTE=value);
+    checkBox(ApplicationBundle.message("checkbox.collapse.entities"),settings::isCollapseEntities, value->settings.getState().COLLAPSE_ENTITIES=value);
+    checkBox(ApplicationBundle.message("checkbox.collapse.data.uri"),settings::isCollapseDataUri, value->settings.getState().COLLAPSE_DATA_URI=value);
   }
 }
