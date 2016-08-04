@@ -255,7 +255,7 @@ public class GithubShareAction extends DumbAwareAction {
         // get existing github repos (network) and validate auth data
         return GithubUtil.runTask(project, authHolder, indicator, connection -> {
           // check access to private repos (network)
-          GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(connection);
+          GithubUserDetailed userInfo = GithubApiUtil.getCurrentUser(connection);
 
           HashSet<String> names = new HashSet<String>();
           for (GithubRepo info : GithubApiUtil.getUserRepos(connection)) {

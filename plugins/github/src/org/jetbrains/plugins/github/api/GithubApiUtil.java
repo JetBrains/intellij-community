@@ -207,19 +207,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubUser getCurrentUser(@NotNull GithubConnection connection) throws IOException {
-    try {
-      JsonElement result = connection.getRequest("/user", ACCEPT_V3_JSON);
-      return fromJson(result, GithubUser.class);
-    }
-    catch (GithubConfusingException e) {
-      e.setDetails("Can't get user info");
-      throw e;
-    }
-  }
-
-  @NotNull
-  public static GithubUserDetailed getCurrentUserDetailed(@NotNull GithubConnection connection) throws IOException {
+  public static GithubUserDetailed getCurrentUser(@NotNull GithubConnection connection) throws IOException {
     try {
       JsonElement result = connection.getRequest("/user", ACCEPT_V3_JSON);
       return fromJson(result, GithubUserDetailed.class);

@@ -123,7 +123,7 @@ public class GithubUtil {
 
       try {
         future = addCancellationListener(indicator, connection);
-        return GithubApiUtil.getCurrentUserDetailed(connection);
+        return GithubApiUtil.getCurrentUser(connection);
       }
       finally {
         connection.close();
