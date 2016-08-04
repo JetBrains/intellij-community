@@ -115,7 +115,7 @@ public class ChangeListChooserPanel extends JPanel {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);
-            if (getExistingChangelist() == null) {
+            if (getExistingChangelistByName(myListPanel.getChangeListName()) == null) {
               myLastTypedDescription = myListPanel.getDescription();
             }
           }
@@ -142,10 +142,14 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setSuggestedName(@NotNull String name) {
-    if (!StringUtil.isEmptyOrSpaces(name)) {
-      myListPanel.setChangeListName(name);
-      updateDescription();
+    if (StringUtil.isEmptyOrSpaces(name)) return;
+    if (getExistingChangelistByName(name) != null) {
+      myExistingListsCombo.setSelectedItem(name);
     }
+    else {
+      myListPanel.setChangeListName(name);
+    }
+    updateDescription();
   }
 
   public void updateEnabled() {
@@ -190,16 +194,15 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   private void updateDescription() {
-    LocalChangeList list = getExistingChangelist();
+    LocalChangeList list = getExistingChangelistByName(myListPanel.getChangeListName());
     String newText = list != null ? list.getComment() : myLastTypedDescription;
     if (!StringUtil.equals(myListPanel.getDescription(), newText)) {
       myListPanel.setDescription(newText);
     }
   }
 
-  private LocalChangeList getExistingChangelist() {
+  private LocalChangeList getExistingChangelistByName(@NotNull String changeListName) {
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
-    String changeListName = myListPanel.getChangeListName();
     return manager.findChangeList(changeListName);
   }
 
