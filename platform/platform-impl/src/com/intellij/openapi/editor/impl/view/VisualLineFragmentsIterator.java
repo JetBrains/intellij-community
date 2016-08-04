@@ -286,6 +286,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       myFoldRegion = null;
       myCurrentStartLogicalLine = myCurrentEndLogicalLine;
       myCurrentX += getCurrentInlaysWidth();
+      myCurrentVisualColumn++;
       setFragmentIterator();
     }
     else {
@@ -340,11 +341,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     int getStartVisualColumn() {
       return myDelegate != null
              ? myDelegate.getStartVisualColumn()
-             : myFoldRegion != null ? myCurrentVisualColumn - getFoldRegionWidthInColumns(myFoldRegion) : myCurrentVisualColumn;
+             : myCurrentVisualColumn - (myFoldRegion != null ? getFoldRegionWidthInColumns(myFoldRegion) : 1);
     }
 
     int getEndVisualColumn() {
-      return myDelegate == null ? myCurrentVisualColumn : myDelegate.getEndVisualColumn();
+      return myCurrentVisualColumn;
     }
     
     int getStartLogicalLine() {
@@ -391,7 +392,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       }
       else {
         boolean closerToStart = x < (getStartX() + getEndX()) / 2;
-        return new int[]{getEndVisualColumn(), closerToStart ? 0 : 1};
+        return new int[]{myCurrentVisualColumn - (closerToStart ? 1 : 0), closerToStart ? 0 : 1};
       }
     }
 
@@ -401,7 +402,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
              : myFoldRegion != null
                ? getStartX() + getXForVisualColumnInsideFoldRegion(myFoldRegion, column - myCurrentVisualColumn +
                                                                                  getFoldRegionWidthInColumns(myFoldRegion))
-               : getEndX();
+               : column == myCurrentVisualColumn ? getEndX() : getStartX();
     }
 
     // absolute

@@ -819,28 +819,20 @@ class EditorPainter implements TextDrawingCallback {
       Caret caret = location.myCaret;
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-        int inlaysHeight = getInlaysHeightAtCaret(caret);
-        if (inlaysHeight > 0) {
-          int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
-          int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
-          g.drawRect(x1, y, x2 - x1 - 1, inlaysHeight - 1);
+        int lineWidth = JBUI.scale(settings.getLineCursorWidth());
+        // See IDEA-148843 for details
+        if (!ImmediatePainter.isZeroLatencyTypingEnabled()) {
+          if (x > minX && lineWidth > 1) x--; // fully cover extra character's pixel which can appear due to antialiasing
         }
-        else {
-          int lineWidth = JBUI.scale(settings.getLineCursorWidth());
-          // See IDEA-148843 for details
-          if (!ImmediatePainter.isZeroLatencyTypingEnabled()) {
-            if (x > minX && lineWidth > 1) x--; // fully cover extra character's pixel which can appear due to antialiasing
-          }
-          g.fillRect(x, y, lineWidth, lineHeight);
-          if (myDocument.getTextLength() > 0 && caret != null &&
-              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
-            g.fillPolygon(new int[]{
-                            isRtl ? x + lineWidth : x,
-                            isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
-                            isRtl ? x + lineWidth : x
-                          },
-                          new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
-          }
+        g.fillRect(x, y, lineWidth, lineHeight);
+        if (myDocument.getTextLength() > 0 && caret != null &&
+            !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
+          g.fillPolygon(new int[]{
+                          isRtl ? x + lineWidth : x,
+                          isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
+                          isRtl ? x + lineWidth : x
+                        },
+                        new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
         }
       }
       else {
@@ -876,34 +868,14 @@ class EditorPainter implements TextDrawingCallback {
     EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(false);
     if (locations == null) return;
     int lineHeight = myView.getLineHeight();
-    boolean lineCaret = myEditor.isInsertMode() != myEditor.getSettings().isBlockCursor();
     for (EditorImpl.CaretRectangle location : locations) {
-      Caret caret = location.myCaret;
       int x = location.myPoint.x;
       int y = location.myPoint.y;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      int inlaysHeight = lineCaret ? getInlaysHeightAtCaret(caret) : 0;
-      if (inlaysHeight > 0) {
-        int x1 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(false)).x;
-        int x2 = myEditor.visualPositionToXY(caret.getVisualPosition().leanRight(true)).x;
-        myEditor.getContentComponent().repaintEditorComponent(x1, location.myPoint.y, x2 - x1 + width, inlaysHeight);
-      }
-      else {
-        myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, lineHeight);
-      }
+      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, lineHeight);
     }
   }
 
-  private int getInlaysHeightAtCaret(@Nullable Caret caret) {
-    if (caret == null) return 0;
-    List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(caret.getOffset(), caret.getOffset(), Inlay.Type.INLINE);
-    int height = 0;
-    for (Inlay inlay : inlays) {
-      height = Math.max(height, inlay.getHeightInPixels());
-    }
-    return height;
-  }
-  
   private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, int y, LineFragmentPainter painter) {
     int visualLine = visLineIterator.getVisualLine();
     float x = getMinX() + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);

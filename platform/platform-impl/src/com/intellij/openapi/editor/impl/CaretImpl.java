@@ -1520,10 +1520,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void invalidateRangeMarkerVisualPositions(RangeMarker marker) {
     SoftWrapModelImpl model = myEditor.getSoftWrapModel();
-    if (!myEditor.offsetToVisualPosition(marker.getStartOffset(), true, false).equals(myRangeMarkerStartPosition) &&
-        model.getSoftWrap(marker.getStartOffset()) == null ||
-        !myEditor.offsetToVisualPosition(marker.getEndOffset(), false, true).equals(myRangeMarkerEndPosition)
-        && model.getSoftWrap(marker.getEndOffset()) == null) {
+    InlayModelImpl inlayModel = myEditor.getInlayModel();
+    int startOffset = marker.getStartOffset();
+    int endOffset = marker.getEndOffset();
+    if (!myEditor.offsetToVisualPosition(startOffset, true, false).equals(myRangeMarkerStartPosition) &&
+        model.getSoftWrap(startOffset) == null && inlayModel.getElementsInRange(startOffset, startOffset, Inlay.Type.INLINE).isEmpty() ||
+        !myEditor.offsetToVisualPosition(endOffset, false, true).equals(myRangeMarkerEndPosition)
+        && model.getSoftWrap(endOffset) == null && inlayModel.getElementsInRange(endOffset, endOffset, Inlay.Type.INLINE).isEmpty()) {
       myRangeMarkerStartPosition = null;
       myRangeMarkerEndPosition = null;
     }

@@ -178,7 +178,7 @@ class EditorCoordinateMapper {
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
       }
-      else {
+      else if (fragment.getCurrentInlays() == null) {
         int minColumn = fragment.getMinLogicalColumn();
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
@@ -431,9 +431,10 @@ class EditorCoordinateMapper {
         firstFragment = false;
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
-        if (offset > minOffset && offset < maxOffset ||
+        if (fragment.getCurrentInlays() == null &&
+            (offset > minOffset && offset < maxOffset ||
             offset == minOffset && leanTowardsLargerOffsets ||
-            offset == maxOffset && !leanTowardsLargerOffsets) {
+            offset == maxOffset && !leanTowardsLargerOffsets)) {
           x = fragment.offsetToX(offset);
           break;
         }
