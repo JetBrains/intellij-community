@@ -68,19 +68,17 @@ public class ChangeListChooserPanel extends JPanel {
         if (value != null) {
           String name = value;
           LocalChangeList changeList = ChangeListManager.getInstance(myProject).findChangeList(name);
-          int visibleWidth = myExistingListsCombo.getEditorTextField().getVisibleRect().width;
+          int visibleWidth = getSize().width;
           if (visibleWidth == 0) {
-            name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
+            visibleWidth = MyEditorComboBox.PREF_WIDTH;
           }
-          else {
-            final FontMetrics fm = list.getFontMetrics(list.getFont());
-            final int width = fm.stringWidth(name);
-            if ((visibleWidth > 0) && (width > visibleWidth)) {
-              final String truncated = CommittedChangeListRenderer
-                .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
-              if (truncated.length() > 5) {
-                name = truncated + " ..";
-              }
+          final FontMetrics fm = list.getFontMetrics(list.getFont());
+          final int width = fm.stringWidth(name);
+          if (width > visibleWidth) {
+            final String truncated = CommittedChangeListRenderer
+              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
+            if (truncated.length() > 5) {
+              name = truncated + " ..";
             }
           }
           append(name, changeList != null && changeList.isDefault()
@@ -210,8 +208,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   private static class MyEditorComboBox extends ComboBox<String> {
 
+    private static final int PREF_WIDTH = 200;
+
     public MyEditorComboBox(Project project) {
-      super();
+      super(PREF_WIDTH);
       setEditor(new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, this) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
