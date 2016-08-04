@@ -15,12 +15,15 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 import static org.jetbrains.intellij.build.LibraryLicense.libraryLicense
 
 /**
  * @author nik
  */
+@CompileStatic
 class CommunityLibraryLicenses {
   public static final List<LibraryLicense> LICENSES_LIST = [
     libraryLicense(name: "aether-api-0.9.0.M2.jar", version: "0.9.0.M2", libraryNames: ["aether-api-0.9.0.M2.jar"],
@@ -363,5 +366,5 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
     jetbrainsLibrary("KotlinJavaRuntime")
-  ]
+  ] as List<LibraryLicense>
 }

@@ -15,21 +15,26 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 class IdeaCommunityProperties extends ProductProperties {
   IdeaCommunityProperties(String home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
     productCode = "IC"
     applicationInfoModule = "community-resources"
-    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties"]
+    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
   }
 
   @Override
+  @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")

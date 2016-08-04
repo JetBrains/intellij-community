@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileStatic
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
 import org.codehaus.gant.GantBinding
@@ -24,6 +25,7 @@ import org.codehaus.gant.GantBinding
 /**
  * @author nik
  */
+@CompileStatic
 class BuildUtils {
   static void addToClassPath(String path, AntBuilder ant) {
     def classLoader = (GroovyClassLoader)BuildUtils.class.classLoader

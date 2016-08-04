@@ -33,6 +33,7 @@
 
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
@@ -40,6 +41,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 /**
  * @author nik
  */
+@CompileStatic
 class CommunityRepositoryModules {
   static List<String> PLATFORM_API_MODULES = [
     "analysis-api",

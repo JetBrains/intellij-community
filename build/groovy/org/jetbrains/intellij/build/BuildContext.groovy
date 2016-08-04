@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
-import org.codehaus.gant.GantBuilder
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule
 /**
  * @author nik
  */
+@CompileStatic
 abstract class BuildContext {
   AntBuilder ant
   BuildMessages messages

@@ -30,11 +30,14 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * Implement this interfaces and pass the implementation to {@link BuildContext#createContext} method to sign the product's *.exe files.
  *
  * @author nik
  */
+@CompileStatic
 interface SignTool {
   /**
    * @param path absolute path (with '/' as a separator) to *.exe file to be signed

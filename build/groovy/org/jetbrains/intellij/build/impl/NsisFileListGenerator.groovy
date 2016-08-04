@@ -31,11 +31,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import groovy.transform.CompileStatic
 
 import java.util.regex.Pattern
 /**
  * @author nik
  */
+@CompileStatic
 class NsisFileListGenerator {
   private final Map<String, List<File>> directoryToFiles = [:]
   private final List<String> filesRelativePaths = []

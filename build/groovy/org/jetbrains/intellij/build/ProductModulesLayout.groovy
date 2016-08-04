@@ -33,11 +33,13 @@
 
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
  */
+@CompileStatic
 class ProductModulesLayout {
   /**
    * Name of the main product JAR file. Outputs of {@link #platformImplementationModules} will be packed into it.

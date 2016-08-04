@@ -16,10 +16,12 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
+import groovy.transform.CompileStatic
 
 /**
  * @author nik
  */
+@CompileStatic
 class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if

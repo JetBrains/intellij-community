@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 abstract class MacDistributionCustomizer {
   /**
    * Path to icns file containing product icon bundle for Mac OS distribution

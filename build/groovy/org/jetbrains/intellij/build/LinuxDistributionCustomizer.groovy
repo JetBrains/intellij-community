@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 abstract class LinuxDistributionCustomizer {
   /**
    * Path to a 128x128 png product icon for Linux distribution

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 
 /**
  * @author nik
@@ -40,6 +42,7 @@ package org.jetbrains.intellij.build
  *  7. Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true"
  *     http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules
  */
+@CompileStatic
 public class MacHostProperties {
   /**
    * Mac host host name.

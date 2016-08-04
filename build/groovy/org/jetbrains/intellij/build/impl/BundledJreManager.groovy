@@ -16,12 +16,15 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 
 /**
  * @author nik
  */
+@CompileStatic
 class BundledJreManager {
   private final BuildContext buildContext
   String baseDirectoryForJre
@@ -62,6 +65,7 @@ class BundledJreManager {
     return findJreArchive("mac")?.absolutePath
   }
 
+  @CompileDynamic
   private String extractJre(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
     String targetDir = "$baseDirectoryForJre/jre.$osDirName$arch.fileSuffix$vendorSuffix"
@@ -98,7 +102,7 @@ class BundledJreManager {
     def jdkDir = new File(buildContext.paths.projectHome, "build/jdk/$osDirName")
     String suffix = arch == JvmArchitecture.x32 ? "_x86" : "_x64"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
-    def jdkFiles = jdkDir.listFiles().findAll { it.name.startsWith(prefix) && it.name.endsWith("${suffix}.tar.gz") }
+    Collection<File> jdkFiles = jdkDir.listFiles()?.findAll { it.name.startsWith(prefix) && it.name.endsWith("${suffix}.tar.gz") } ?: [] as List<File>
     if (jdkFiles.size() > 1) {
       buildContext.messages.warning("Cannot extract $osDirName JRE: several matching files are found ($jdkFiles)")
       return null

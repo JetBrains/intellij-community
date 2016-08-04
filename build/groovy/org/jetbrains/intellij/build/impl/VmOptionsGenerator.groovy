@@ -15,11 +15,13 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.JvmArchitecture
 
 /**
  * @author nik
  */
+@CompileStatic
 class VmOptionsGenerator {
   private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +

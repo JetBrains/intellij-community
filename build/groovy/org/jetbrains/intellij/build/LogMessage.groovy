@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 class LogMessage {
   enum Kind {
     ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED

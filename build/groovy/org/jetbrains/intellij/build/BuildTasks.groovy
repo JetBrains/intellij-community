@@ -15,12 +15,14 @@
  */
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 /**
  * @author nik
  */
+@CompileStatic
 abstract class BuildTasks {
   /**
    * Build sources.zip archive containing the project source files keeping the original layout

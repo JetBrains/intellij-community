@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildEvent
 import org.apache.tools.ant.BuildListener
 import org.apache.tools.ant.Project
@@ -24,6 +25,7 @@ import org.jetbrains.intellij.build.BuildMessages
 /**
  * @author nik
  */
+@CompileStatic
 class AntTaskLogger implements BuildListener {
   BuildMessages defaultHandler
   private final Map<Thread, BuildMessages> threadHandlers = [:]

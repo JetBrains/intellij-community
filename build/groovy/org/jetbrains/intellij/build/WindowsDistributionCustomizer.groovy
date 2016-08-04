@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 package org.jetbrains.intellij.build
+
+import groovy.transform.CompileStatic
+
 /**
  * @author nik
  */
+@CompileStatic
 abstract class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution

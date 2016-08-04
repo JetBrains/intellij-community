@@ -17,6 +17,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsGlobal
@@ -26,9 +28,11 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
+
 /**
  * @author nik
  */
+@CompileStatic
 class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final boolean underTeamCity
@@ -124,10 +128,7 @@ class BuildContextImpl extends BuildContext {
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = []
     if (options.pathToCompiledClassesArchive != null) {
-      messages.block("Unpack compiled classes archive") {
-        FileUtil.delete(new File(classesOutput))
-        ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
-      }
+      unpackCompiledClasses(messages, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
     if (options.incrementalCompilation) {
@@ -146,6 +147,14 @@ class BuildContextImpl extends BuildContext {
 
     suppressWarnings(project)
     return outputDirectoriesToKeep
+  }
+
+  @CompileDynamic
+  private static void unpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+    messages.block("Unpack compiled classes archive") {
+      FileUtil.delete(new File(classesOutput))
+      ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
+    }
   }
 
   private static void checkOptions(BuildOptions options, BuildMessages messages) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.LogMessage
 
@@ -23,8 +24,9 @@ import java.util.function.Function
 /**
  * @author nik
  */
+@CompileStatic
 class ConsoleBuildMessageLogger extends BuildMessageLogger {
-  public static final Function<String, BuildMessageLogger> FACTORY = { new ConsoleBuildMessageLogger(it) }
+  public static final Closure<? extends BuildMessageLogger> FACTORY = { String taskName -> new ConsoleBuildMessageLogger(taskName) }
   private final String parallelTaskId
   private int indent
   private static final PrintStream out = BuildUtils.realSystemOut
