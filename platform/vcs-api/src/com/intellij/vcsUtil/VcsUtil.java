@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -681,6 +682,11 @@ public class VcsUtil {
 
   public static <T> boolean isEmpty(@Nullable Stream<T> items) {
     return items == null || !items.findAny().isPresent();
+  }
+
+  @NotNull
+  public static <T> Stream<T> notNullize(@Nullable Stream<T> items) {
+    return ObjectUtils.notNull(items, Stream.empty());
   }
 
   @NotNull
