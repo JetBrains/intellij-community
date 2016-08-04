@@ -64,6 +64,9 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   private static final AtomicBoolean ourGlobalListenerInstalled = new AtomicBoolean(false);
 
+  /**
+   * This code is implemented as static method (and not static constructor, as it was done before) to prevent installing listeners in Upsource
+   */
   private static void installGlobalListener() {
     if (ourGlobalListenerInstalled.compareAndSet(false, true)) {
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
