@@ -245,7 +245,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
    * This is useful for tool generated variables that are of no use to the user.
    */
   protected boolean isHiddenVariable(@NotNull String name) {
-    return false;
+    // https://b/30673627
+    // dx & jack sometimes produces locals with a null name. These locals are not reported by the VM on API 23, but API 24 returns these.
+    return name.isEmpty();
   }
 
   @NotNull
