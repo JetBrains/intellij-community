@@ -15,9 +15,9 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.migLayout.*
-import com.intellij.migLayout.CCFlags.*
-import com.intellij.migLayout.LCFlags.*
+import com.intellij.layout.*
+import com.intellij.layout.CCFlags.*
+import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi

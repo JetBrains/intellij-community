@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.migLayout
+package com.intellij.layout
 
 import com.intellij.BundleBase
 import com.intellij.ui.IdeBorderFactory
