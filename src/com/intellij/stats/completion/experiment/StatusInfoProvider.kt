@@ -1,6 +1,7 @@
 package com.intellij.stats.completion.experiment
 
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.stats.completion.RequestService
@@ -38,8 +39,17 @@ class StatusInfoProvider(private val requestSender: RequestService) {
         assertNotEDT()
         val response = requestSender.get(statusUrl)
         if (response != null && response.isOK()) {
-            statusInfo = gson.fromJson(response.text, ExperimentInfo::class.java)
-            saveInfo(statusInfo)
+            val map = gson.fromJson(response.text, LinkedTreeMap::class.java)
+            
+            val salt = map["salt"]?.toString()
+            val experimentVersion = map["experimentVersion"]?.toString()
+            if (salt != null && experimentVersion != null) {
+                statusInfo = ExperimentInfo(experimentVersion.toInt(), salt)
+                saveInfo(statusInfo)
+            }
+            
+            serverStatus = map["status"]?.toString() ?: ""
+            dataServerUrl = map["url"]?.toString() ?: ""
         }
     }
 
