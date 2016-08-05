@@ -142,16 +142,22 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     @Override
     public void doApplyInformationToEditor() {
       assert myDocument != null;
+      Map<Integer, Integer> existingWidths = new HashMap<>();
       for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.INLINE)) {
         if (!(inlay.getRenderer() instanceof MyRenderer)) continue;
         int offset = inlay.getOffset();
         String oldText = ((MyRenderer)inlay.getRenderer()).myText;
         String newText = myAnnotations.get(offset);
-        if (!Objects.equals(newText, oldText)) Disposer.dispose(inlay);
+        if (!Objects.equals(newText, oldText)) {
+          if (newText != null) existingWidths.put(offset, inlay.getWidthInPixels());
+          Disposer.dispose(inlay);
+        }
         else myAnnotations.remove(offset);
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
-        myEditor.getInlayModel().addElement(e.getKey(), Inlay.Type.INLINE, new MyRenderer(e.getValue()));
+        int offset = e.getKey();
+        Integer oldWidth = existingWidths.get(offset);
+        InlayAnimationManager.addElementWithAnimation(myEditor, offset, new MyRenderer(e.getValue()), oldWidth == null ? 0 : oldWidth);
       }
     }
   }
@@ -177,7 +183,10 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       g.setColor(JBColor.darkGray);
       g.setFont(FONT.getFont());
       FontMetrics metrics = g.getFontMetrics();
+      Shape savedClip = g.getClip();
+      g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)
       g.drawString(myText, r.x + 4, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
+      g.setClip(savedClip);
       config.restore();
     }
   }
