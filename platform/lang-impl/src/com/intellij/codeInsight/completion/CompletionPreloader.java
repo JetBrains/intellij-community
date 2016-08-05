@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author peter
  */
-public class ActionPreloader extends PreloadingActivity {
+public class CompletionPreloader extends PreloadingActivity {
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
+    for (Object extension : Extensions.getExtensions("com.intellij.completion.contributor")) {
+      if (extension instanceof CompletionContributorEP) {
+        ((CompletionContributorEP)extension).getInstance();
+      }
     }
-
-    TypedHandlerDelegate.EP_NAME.getExtensions();
   }
 }
