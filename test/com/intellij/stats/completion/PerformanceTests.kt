@@ -32,6 +32,7 @@ class Test {
 
     override fun tearDown() {
         CompletionLoggerProvider.getInstance().dispose()
+        //todo check if lookup is disposed and no more completion cancelled event is triggered
         val statsDir = pathProvider.getStatsDataDirectory()
         statsDir.deleteRecursively()
         super.tearDown()
