@@ -30,6 +30,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiType;
@@ -49,7 +50,7 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   }
 
   public String getName() {
-    return myName;
+    return StringUtil.isEmpty(myName) ? myText.getText() : myName;
   }
 
   @Nullable
