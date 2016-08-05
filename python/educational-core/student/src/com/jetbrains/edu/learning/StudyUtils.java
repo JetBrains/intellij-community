@@ -194,6 +194,8 @@ public class StudyUtils {
 
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
+    if (project.isDisposed()) return null;
+    
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow != null) {
       Content[] contents = toolWindow.getContentManager().getContents();
