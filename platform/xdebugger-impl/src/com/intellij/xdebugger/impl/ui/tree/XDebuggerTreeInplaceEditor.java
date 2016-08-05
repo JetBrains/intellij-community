@@ -17,7 +17,11 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
@@ -58,6 +62,43 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
       }
     }
     doOKAction();
+  }
+
+  @Override
+  protected void onShown() {
+    XDebugSession session = XDebugView.getSession(myTree);
+    if (session != null) {
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void sessionPaused() {
+          cancel();
+        }
+
+        @Override
+        public void sessionResumed() {
+          cancel();
+        }
+
+        @Override
+        public void sessionStopped() {
+          cancel();
+        }
+
+        @Override
+        public void stackFrameChanged() {
+          cancel();
+        }
+
+        @Override
+        public void beforeSessionResume() {
+          cancel();
+        }
+
+        private void cancel() {
+          AppUIUtil.invokeOnEdt(XDebuggerTreeInplaceEditor.this::cancelEditing);
+        }
+      }, myDisposable);
+    }
   }
 
   @Override

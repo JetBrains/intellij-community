@@ -15,10 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
@@ -38,10 +35,8 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   private final XWatchesView myWatchesView;
   private final WatchNode myOldNode;
-  private WatchEditorSessionListener mySessionListener;
 
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
-                            @Nullable XDebugSession session,
                             XWatchesView watchesView,
                             WatchNode node,
                             @NonNls String historyId,
@@ -51,9 +46,6 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myWatchesView = watchesView;
     myOldNode = oldNode;
     myExpressionEditor.setExpression(oldNode != null ? oldNode.getExpression() : null);
-    if (session != null) {
-      mySessionListener = new WatchEditorSessionListener(session).install();
-    }
   }
 
   @Override
@@ -82,54 +74,5 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
       myWatchesView.addWatchExpression(expression, index, false);
     }
     TreeUtil.selectNode(myTree, getNode());
-  }
-
-  @Override
-  protected void onHidden() {
-    super.onHidden();
-    if (mySessionListener != null) {
-      mySessionListener.remove();
-    }
-  }
-
-  private class WatchEditorSessionListener implements XDebugSessionListener {
-    private final XDebugSession mySession;
-
-    public WatchEditorSessionListener(@NotNull XDebugSession session) {
-      mySession = session;
-    }
-
-    public WatchEditorSessionListener install() {
-      mySession.addSessionListener(this);
-      return this;
-    }
-
-    public void remove() {
-      mySession.removeSessionListener(this);
-    }
-
-    private void cancel() {
-      AppUIUtil.invokeOnEdt(WatchInplaceEditor.this::cancelEditing);
-    }
-
-    @Override
-    public void sessionPaused() {
-      cancel();
-    }
-
-    @Override
-    public void beforeSessionResume() {
-      cancel();
-    }
-
-    @Override
-    public void sessionResumed() {
-      cancel();
-    }
-
-    @Override
-    public void sessionStopped() {
-      cancel();
-    }
   }
 }

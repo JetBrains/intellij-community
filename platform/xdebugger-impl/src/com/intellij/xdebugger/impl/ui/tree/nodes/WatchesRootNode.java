@@ -203,7 +203,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     else {
       messageNode = node;
     }
-    XDebugSession session = getSession(myTree);
-    new WatchInplaceEditor(this, session, myWatchesView, messageNode, "watch", node).show();
+    new WatchInplaceEditor(this, myWatchesView, messageNode, "watch", node).show();
   }
 }
