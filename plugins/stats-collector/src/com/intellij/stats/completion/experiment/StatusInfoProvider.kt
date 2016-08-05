@@ -13,18 +13,18 @@ class StatusInfoProvider(private val requestSender: RequestService) {
 
         private val statusUrl = "https://www.jetbrains.com/config/features-service-status.json"
 
-        private val dataServerStatus = "completion.stats.server.status"
-        private val dataServerUrl = "completion.stats.server.url"
         private val salt = "completion.stats.experiment.salt"
         private val experimentVersionString = "completion.stats.experiment.version"
     }
 
     @Volatile private var statusInfo = loadInfo()
+    @Volatile private var serverStatus = ""
+    @Volatile private var dataServerUrl = ""
 
 
     fun getExperimentVersion() = statusInfo.experimentVersion
-    fun getDataServerUrl(): String = statusInfo.url
-    fun isServerOk(): Boolean = statusInfo.status.equals("ok", ignoreCase = true)
+    fun getDataServerUrl(): String = dataServerUrl
+    fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     fun isPerformExperiment(): Boolean {
         val uid = PermanentInstallationID.get()
         val hash = (uid + statusInfo.salt).hashCode()
@@ -32,26 +32,25 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     }
     
     fun updateExperimentData() {
+        serverStatus = ""
+        dataServerUrl = ""
+        
         assertNotEDT()
         val response = requestSender.get(statusUrl)
         if (response != null && response.isOK()) {
-            statusInfo = gson.fromJson(response.text, StatusInfo::class.java)
+            statusInfo = gson.fromJson(response.text, ExperimentInfo::class.java)
             saveInfo(statusInfo)
         }
     }
 
-    private fun loadInfo(): StatusInfo {
+    private fun loadInfo(): ExperimentInfo {
         val component = PropertiesComponent.getInstance()
-
         val salt = component.getValue(salt) ?: ""
         val experimentVersion = component.getInt(experimentVersionString, 0)
-        val dataServerUrl = component.getValue(dataServerUrl) ?: ""
-        val status = component.getValue(dataServerStatus) ?: ""
-
-        return StatusInfo(status, dataServerUrl, experimentVersion, salt)
+        return ExperimentInfo(experimentVersion, salt)
     }
 
-    private fun saveInfo(info: StatusInfo) {
+    private fun saveInfo(info: ExperimentInfo) {
         val component = PropertiesComponent.getInstance()
         component.setValue(salt, info.salt)
         component.setValue(experimentVersionString, info.experimentVersion.toString())
@@ -59,6 +58,6 @@ class StatusInfoProvider(private val requestSender: RequestService) {
 
 }
 
-data class StatusInfo(var status: String, var url: String, var experimentVersion: Int, var salt: String) {
-    constructor() : this("", "", 0, "")
+data class ExperimentInfo(var experimentVersion: Int, var salt: String) {
+    constructor() : this(0, "")
 }
