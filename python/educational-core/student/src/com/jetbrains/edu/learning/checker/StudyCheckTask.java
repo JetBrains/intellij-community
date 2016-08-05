@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -119,6 +120,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull ProgressIndicator indicator) {
     final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
     final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
+
+    ApplicationManager.getApplication().invokeLater(() ->
+                                                      Messages.showErrorDialog(output.getStdout(), "StudyCheckTask#GetTestOutput()"));
+
     if (indicator.isCanceled()) {
       ApplicationManager.getApplication().invokeLater(
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));

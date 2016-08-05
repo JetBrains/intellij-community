@@ -302,16 +302,24 @@ public class StudyUtils {
     return manager.getTestFileName().equals(name);
   }
 
+  /**
+   * @param file file inside the taskDir
+   */
+  public static String getRelativePath(@NotNull VirtualFile taskDir, @NotNull VirtualFile file) {
+    return file.getPath().substring(taskDir.getPath().length() + 1);
+  }
+
   @Nullable
   public static TaskFile getTaskFile(@NotNull final Project project, @NotNull final VirtualFile file) {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return null;
     }
-    VirtualFile taskDir = file.getParent();
+    VirtualFile taskDir = getTaskDir(file);
     if (taskDir == null) {
       return null;
     }
+    // TODO: remove it?
     //need this because of multi-module generation
     if (EduNames.SRC.equals(taskDir.getName())) {
       taskDir = taskDir.getParent();
@@ -335,7 +343,8 @@ public class StudyUtils {
           return null;
         }
         final Task task = tasks.get(taskIndex);
-        return task.getFile(file.getName());
+        String relPath = getRelativePath(taskDir, file);
+        return task.getFile(relPath);
       }
     }
     return null;
@@ -643,15 +652,18 @@ public class StudyUtils {
   @Nullable
   public static VirtualFile getTaskDir(@NotNull VirtualFile taskFile) {
     VirtualFile parent = taskFile.getParent();
-    if (parent == null) {
-      return null;
-    }
-    String name = parent.getName();
-    if (name.contains(EduNames.TASK)) {
-      return parent;
-    }
-    if (EduNames.SRC.equals(name)) {
-      return parent.getParent();
+
+    while (parent != null) {
+      String name = parent.getName();
+
+      if (name.contains(EduNames.TASK) && parent.isDirectory()) {
+        return parent;
+      }
+      if (EduNames.SRC.equals(name)) {
+        return parent.getParent();
+      }
+
+      parent = parent.getParent();
     }
     return null;
   }

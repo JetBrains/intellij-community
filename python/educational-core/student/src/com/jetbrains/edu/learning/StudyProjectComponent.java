@@ -284,7 +284,8 @@ public class StudyProjectComponent implements ProjectComponent {
     public void fileCreated(@NotNull VirtualFileEvent event) {
       if (myProject.isDisposed()) return;
       final VirtualFile createdFile = event.getFile();
-      final VirtualFile taskDir = createdFile.getParent();
+      //final VirtualFile taskDir = createdFile.getParent();
+      final VirtualFile taskDir = StudyUtils.getTaskDir(createdFile);
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
         return;
@@ -303,7 +304,8 @@ public class StudyProjectComponent implements ProjectComponent {
               final TaskFile taskFile = new TaskFile();
               taskFile.initTaskFile(task, false);
               taskFile.setUserCreated(true);
-              final String name = createdFile.getName();
+              //final String name = createdFile.getName();
+              final String name = StudyUtils.getRelativePath(taskDir, createdFile);
               taskFile.name = name;
               //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);

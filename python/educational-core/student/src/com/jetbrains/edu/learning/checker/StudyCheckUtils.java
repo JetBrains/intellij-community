@@ -51,7 +51,8 @@ public class StudyCheckUtils {
   public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      //VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
@@ -85,7 +86,8 @@ public class StudyCheckUtils {
         TaskFile taskFile = entry.getValue();
         if (taskManager.hasFailedAnswerPlaceholders(taskFile)) {
           taskFileToNavigate = taskFile;
-          VirtualFile virtualFile = taskDir.findChild(name);
+          //VirtualFile virtualFile = taskDir.findChild(name);
+          VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
           if (virtualFile == null) {
             continue;
           }
@@ -125,7 +127,8 @@ public class StudyCheckUtils {
                                          @NotNull final Project project) {
     final TaskFile answerTaskFile = new TaskFile();
     answerTaskFile.name = taskFileName;
-    final VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    //final VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    final VirtualFile virtualFile = taskDir.findFileByRelativePath(taskFileName);
     if (virtualFile == null) {
       return;
     }
@@ -187,7 +190,8 @@ public class StudyCheckUtils {
     for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      //VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }

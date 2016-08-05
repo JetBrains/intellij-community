@@ -140,7 +140,8 @@ public class PyStudyCheckAction extends StudyCheckAction {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      //VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile != null) {
         if (!taskFile.getAnswerPlaceholders().isEmpty()) {
           taskVirtualFile = virtualFile;

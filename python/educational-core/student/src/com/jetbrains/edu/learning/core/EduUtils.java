@@ -68,19 +68,19 @@ public class EduUtils {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
   public static VirtualFile flushWindows(@NotNull final TaskFile taskFile, @NotNull final VirtualFile file) {
-    final VirtualFile taskDir = file.getParent();
+    final VirtualFile parentDir = file.getParent();
     VirtualFile fileWindows = null;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
       LOG.debug("Couldn't flush windows");
       return null;
     }
-    if (taskDir != null) {
+    if (parentDir != null) {
       final String name = file.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
-      deleteWindowsFile(taskDir, name);
+      deleteWindowsFile(parentDir, name);
       PrintWriter printWriter = null;
       try {
-        fileWindows = taskDir.createChildData(taskFile, name);
+        fileWindows = parentDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
         for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
           int length = answerPlaceholder.getRealLength();
@@ -238,21 +238,23 @@ public class EduUtils {
   public static void deleteWindowDescriptions(@NotNull final Task task, @NotNull final VirtualFile taskDir) {
     for (Map.Entry<String, TaskFile> entry : StudyUtils.getTaskFiles(task).entrySet()) {
       String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      //VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
       String windowsFileName = virtualFile.getNameWithoutExtension() + EduNames.WINDOWS_POSTFIX;
-      deleteWindowsFile(taskDir, windowsFileName);
+      VirtualFile parentDir = virtualFile.getParent();
+      deleteWindowsFile(parentDir, windowsFileName);
     }
   }
 
-  private static void deleteWindowsFile(@NotNull final VirtualFile taskDir, @NotNull final String name) {
-    final VirtualFile fileWindows = taskDir.findChild(name);
+  private static void deleteWindowsFile(@NotNull final VirtualFile parentDir, @NotNull final String name) {
+    final VirtualFile fileWindows = parentDir.findChild(name);
     if (fileWindows != null && fileWindows.exists()) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          fileWindows.delete(taskDir);
+          fileWindows.delete(parentDir);
         }
         catch (IOException e) {
           LOG.warn("Tried to delete non existed _windows file");

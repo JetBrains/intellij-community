@@ -48,7 +48,8 @@ public class StudyStepUtils {
     }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      //VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }

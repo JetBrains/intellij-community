@@ -55,9 +55,12 @@ public class PyStudyTestRunner extends StudyTestRunner {
       if (pythonPath != null) {
         commandLine.setExePath(pythonPath);
         commandLine.addParameter(testRunner.getPath());
+        commandLine.addParameter(pythonPath);
+        commandLine.addParameter(myTaskDir.getPath());
         File resourceFile = new File(course.getCourseDirectory());
         commandLine.addParameter(resourceFile.getPath());
         commandLine.addParameter(FileUtil.toSystemDependentName(executablePath));
+        commandLine.addParameter(String.valueOf(activeStepIndex));
         return commandLine.createProcess();
       }
     }

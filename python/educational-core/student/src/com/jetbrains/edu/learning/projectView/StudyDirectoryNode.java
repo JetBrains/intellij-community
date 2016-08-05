@@ -176,7 +176,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         VirtualFile child = null;
         Map<String, TaskFile> taskFiles = StudyUtils.getTaskFiles(task);
         for (Map.Entry<String, TaskFile> entry: taskFiles.entrySet()) {
-          VirtualFile file = taskDir.findChild(entry.getKey());
+          //VirtualFile file = taskDir.findChild(entry.getKey());
+          VirtualFile file = taskDir.findFileByRelativePath(entry.getKey());
           if (file != null) {
             FileEditorManager.getInstance(myProject).openFile(file, true);
           }
