@@ -20,6 +20,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -124,13 +125,16 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (valueDescriptor.isPrimitive()) {
       nodeIcon = AllIcons.Debugger.Db_primitive;
     }
+    else if (valueDescriptor instanceof WatchItemDescriptor) {
+      nodeIcon = AllIcons.Debugger.Watch;
+    }
     else {
-      if (valueDescriptor instanceof WatchItemDescriptor) {
-        nodeIcon = AllIcons.Debugger.Watch;
-      }
-      else {
-        nodeIcon = AllIcons.Debugger.Value;
-      }
+      nodeIcon = AllIcons.Debugger.Value;
+    }
+
+    EnumerationChildrenRenderer enumerationChildrenRenderer = EnumerationChildrenRenderer.getCurrent(valueDescriptor);
+    if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
+      nodeIcon = AllIcons.Debugger.Watch;
     }
 
     // if watches in variables enabled, always use watch icon

@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.descriptors.data.UserExpressionData;
+import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.util.InvalidDataException;
@@ -32,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,5 +143,19 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
 
   public void setChildren(List<Pair<String, TextWithImports>> children) {
     myChildren = children;
+  }
+
+  @Nullable
+  public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
+    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
+      Renderer renderer = ((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor().getLastRenderer();
+      if (renderer instanceof CompoundNodeRenderer) {
+        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
+        if (childrenRenderer instanceof EnumerationChildrenRenderer) {
+          return (EnumerationChildrenRenderer)childrenRenderer;
+        }
+      }
+    }
+    return null;
   }
 }

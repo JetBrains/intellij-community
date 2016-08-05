@@ -15,7 +15,7 @@
  */
 package com.intellij.util
 
-import com.intellij.ide.passwordSafe.masterKey.LOG
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -28,6 +28,7 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
+
 
 fun Path.exists() = Files.exists(this)
 
@@ -213,3 +214,5 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   }
   return null
 }
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")

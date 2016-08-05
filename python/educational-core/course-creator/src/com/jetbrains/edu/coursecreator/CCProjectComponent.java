@@ -10,8 +10,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -50,7 +50,7 @@ public class CCProjectComponent extends AbstractProjectComponent {
       File coursesDir = new File(PathManager.getConfigPath(), "courses");
       File courseDir = new File(coursesDir, oldCourse.getName() + "-" + myProject.getName());
       oldCourse.setCourseDirectory(courseDir.getPath());
-      StudyProjectComponent.getInstance(myProject).registerStudyToolWindow(oldCourse);
+      StudyUtils.registerStudyToolWindow(oldCourse, myProject);
       transformFiles(oldCourse, myProject);
     }
   }

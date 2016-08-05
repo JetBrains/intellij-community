@@ -35,7 +35,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -193,6 +195,8 @@ public class StudyUtils {
 
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
+    if (project.isDisposed()) return null;
+    
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow != null) {
       Content[] contents = toolWindow.getContentManager().getContents();
@@ -727,5 +731,35 @@ public class StudyUtils {
 
       return c1.isAdaptive() ? 1 : -1;
     });
+  }
+
+  public static void selectFirstAnswerPlaceholder(@Nullable final StudyEditor studyEditor, @NotNull final Project project) {
+    if (studyEditor == null) return;
+    final Editor editor = studyEditor.getEditor();
+    IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+    final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getAnswerPlaceholders();
+    if (placeholders.isEmpty()) return;
+    final AnswerPlaceholder placeholder = placeholders.get(0);
+    int startOffset = placeholder.getOffset();
+    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
+  }
+
+  public static void registerStudyToolWindow(@Nullable final Course course, Project project) {
+    if (course != null && "PyCharm".equals(course.getCourseType())) {
+      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      registerToolWindows(toolWindowManager, project);
+      final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+      if (studyToolWindow != null) {
+        studyToolWindow.show(null);
+        initToolWindows(project);
+      }
+    }
+  }
+
+  private static void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager, Project project) {
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
+    if (toolWindow == null) {
+      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, project, true);
+    }
   }
 }

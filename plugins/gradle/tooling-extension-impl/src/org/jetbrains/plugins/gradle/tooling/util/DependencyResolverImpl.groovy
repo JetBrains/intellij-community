@@ -143,8 +143,10 @@ class DependencyResolverImpl implements DependencyResolver {
         Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap = [:];
         componentResults.each { componentResultsMap.put(it.id, it) }
 
+        Set<Configuration> processedConfigurations = new HashSet<>()
         def projectDeps
         projectDeps = { Configuration conf, map = ArrayListMultimap.create() ->
+          if(!processedConfigurations.add(conf)) return map
           conf.incoming.dependencies.findAll { it instanceof ProjectDependency }.each { it ->
             map.put(toComponentIdentifier(it.group, it.name, it.version), it as ProjectDependency)
             projectDeps((it as ProjectDependency).projectConfiguration, map)

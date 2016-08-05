@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.masterKey
+package com.intellij.ide.passwordSafe
 
-import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -36,9 +35,9 @@ import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
+internal val LOG = Logger.getInstance(FileCredentialStore::class.java)
 
-class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider()  {
+class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage  {
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
@@ -93,6 +92,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
 
       if (db.isEmpty()) {
         dbFile.delete()
+        masterKeyStorage.set(null)
         return
       }
 
@@ -125,6 +125,11 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
     }
   }
 
+  fun clear() {
+    db.clear()
+    needToSave.set(true)
+  }
+
   override fun getPassword(requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
     // try old key - as hash
@@ -151,10 +156,16 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
     }
   }
 
-  override fun getName() = "File PasswordSafe"
+  fun copyTo(store: PasswordStorage) {
+    for ((k, v) in db) {
+      store.setPassword(k, v)
+    }
+  }
 }
 
-private fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
+internal fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
+
+internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
 internal fun generate(): ByteArray {
   val bytes = ByteArray(16)

@@ -15,7 +15,7 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.migLayout.MigLayoutKt;
+import com.intellij.layout.MigLayoutKt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.components.JBLabel;

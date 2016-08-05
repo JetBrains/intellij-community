@@ -15,30 +15,50 @@
  */
 package com.intellij.ide.passwordSafe.impl
 
-import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener
+import com.intellij.ide.passwordSafe.*
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.diagnostic.catchAndLog
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  private val currentProvider: FilePasswordSafeProvider
+  private @Volatile var currentProvider: PasswordStorage
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { FilePasswordSafeProvider(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { FileCredentialStore(emptyMap(), memoryOnly = true) }
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
+  val isNativeCredentialStoreUsed: Boolean
+    get() = currentProvider !is FileCredentialStore
+
   init {
-    currentProvider = FilePasswordSafeProvider(memoryOnly = settings.providerType == ProviderType.MEMORY_ONLY)
+    if (settings.providerType == ProviderType.MEMORY_ONLY) {
+      currentProvider = FileCredentialStore(memoryOnly = true)
+    }
+    else {
+      val appInfo = ApplicationInfoEx.getInstanceEx()
+      currentProvider = createPersistentCredentialStore(convertFileStore = appInfo.build.isSnapshot || appInfo.isEAP)
+    }
+
     ApplicationManager.getApplication().messageBus.connect().subscribe(PasswordSafeSettings.TOPIC, object: PasswordSafeSettingsListener {
       override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
         val memoryOnly = newValue == ProviderType.MEMORY_ONLY
-        currentProvider.memoryOnly = memoryOnly
         if (memoryOnly) {
-          currentProvider.deleteFileStorage()
+          val provider = currentProvider
+          if (provider is FileCredentialStore) {
+            provider.memoryOnly = true
+            provider.deleteFileStorage()
+          }
+          else {
+            currentProvider = FileCredentialStore(memoryOnly = true)
+          }
+        }
+        else {
+          currentProvider = createPersistentCredentialStore(currentProvider as? FileCredentialStore)
         }
       }
     })
@@ -76,18 +96,55 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   }
 
   override fun save() {
-    currentProvider.save()
+    (currentProvider as? FileCredentialStore)?.let { it.save() }
+  }
+
+  fun clearPasswords() {
+    LOG.info("Passwords cleared", Error())
+    try {
+      if (memoryHelperProvider.isInitialized()) {
+        memoryHelperProvider.value.clear()
+      }
+    }
+    finally {
+      (currentProvider as? FileCredentialStore)?.let { it.clear() }
+    }
   }
 
   // public - backward compatibility
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
-  val masterKeyProvider: PasswordSafeProvider
+  val masterKeyProvider: PasswordStorage
     get() = currentProvider
 
   @Suppress("unused")
   @Deprecated("Do not use it")
   // public - backward compatibility
-  val memoryProvider: PasswordSafeProvider
+  val memoryProvider: PasswordStorage
     get() = memoryHelperProvider.value
+}
+
+internal const val CREDENTIAL_STORE_SERVICE_NAME = "IntelliJ Platform"
+
+private fun createPersistentCredentialStore(existing: FileCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
+  LOG.catchAndLog {
+    if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+      val store = MacOsCredentialStore(CREDENTIAL_STORE_SERVICE_NAME)
+      if (convertFileStore) {
+        LOG.catchAndLog {
+          val fileStore = FileCredentialStore()
+          fileStore.copyTo(store)
+          fileStore.clear()
+          fileStore.save()
+        }
+      }
+      return store
+    }
+  }
+
+  existing?.let {
+    it.memoryOnly = false
+    return it
+  }
+  return FileCredentialStore()
 }

@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,16 +27,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.CallLocation;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey.Location;
 import com.intellij.psi.impl.java.stubs.JavaMethodElementType;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -45,9 +43,11 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ import java.util.stream.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFunctionalExpressionSearcher.class.getName());
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher");
   /**
    * The least number of candidate files with functional expressions that directly scanning them becomes expensive
    * and more advanced ways of searching become necessary: e.g. first searching for methods where the functional interface class is used
@@ -101,24 +101,30 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                  convertToGlobalScope(funInterface.getProject(),
                                                       funInterface.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope())));
       });
-      if (descriptor == null) return;
-
-      MultiMap<Location, GlobalSearchScope> queries = collectQueryKeys(descriptor, highLevelModules);
-      for (PsiFunctionalExpression expression : getCandidates(descriptor, queries)) {
-        if (!processExpression(consumer, funInterface, expression)) {
-          return;
-        }
-      }
+      if (descriptor == null || !descriptor.search(consumer, highLevelModules)) return;
     }
   }
 
-  private static Boolean processExpression(@NotNull Processor<PsiFunctionalExpression> consumer,
-                                           PsiClass aClass,
-                                           PsiFunctionalExpression expression) {
+  private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
+                                     PsiClass samClass,
+                                     VirtualFile vFile, Collection<Integer> offsets) {
     return ReadAction.compute(() -> {
-      if (expression.isValid() &&
-          InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType()), aClass, true)) {
-        if (!consumer.process(expression)) {
+      if (!samClass.isValid()) return true;
+
+      PsiFile file = samClass.getManager().findFile(vFile);
+      if (!(file instanceof PsiJavaFile)) {
+        LOG.error("Non-java file " + file + "; " + vFile);
+        return true;
+      }
+
+      for (Integer offset : offsets) {
+        PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
+        if (expression == null || expression.getTextRange().getStartOffset() != offset) {
+          LOG.error("Fun expression not found in " + file + " at " + offset);
+          continue;
+        }
+
+        if (hasType(samClass, expression) && !consumer.process(expression)) {
           return false;
         }
       }
@@ -127,39 +133,95 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     });
   }
 
-  @NotNull
-  private static Collection<? extends PsiFunctionalExpression> getCandidates(SamDescriptor descriptor, MultiMap<Location, GlobalSearchScope> queries) {
-    MultiMap<PsiFile, PsiFunctionalExpression> exprs = MultiMap.createLinked();
-    for (Map.Entry<Location, Collection<GlobalSearchScope>> entry : queries.entrySet()) {
-      ReadAction.run(() -> {
-        ProgressManager.checkCanceled();
-        GlobalSearchScope combinedScope = descriptor.useScope.intersectWith(
-          GlobalSearchScope.union(entry.getValue().toArray(new GlobalSearchScope[0])));
-        for (FunctionalExpressionKey key : descriptor.generateKeys(entry.getKey())) {
-          StubIndex.getInstance().processElements(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key,
-                                                  descriptor.samClass.getProject(), combinedScope, null,
-                                                  PsiFunctionalExpression.class,
-                                                  expression -> {
-                                                    exprs.putValue(expression.getContainingFile(), expression);
-                                                    return true;
-                                                  });
-        }
-      });
-    }
+  private static boolean hasType(PsiClass samClass, PsiFunctionalExpression expression) {
+    if (!canHaveType(expression, samClass)) return false;
 
-    Collection<? extends PsiFunctionalExpression> result = exprs.values();
-    LOG.info("checking " + result.size() + " fun-expressions in " + exprs.size() + " files");
-    return result;
+    return InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType()), samClass, true);
+  }
+
+  private static boolean canHaveType(PsiFunctionalExpression expression, PsiClass samClass) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+      int argIndex = Arrays.asList(((PsiExpressionList)parent).getExpressions()).indexOf(expression);
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent.getParent()).getMethodExpression();
+      PsiExpression qualifier = methodExpression.getQualifierExpression();
+      String methodName = methodExpression.getReferenceName();
+      if (qualifier != null && methodName != null && argIndex >= 0) {
+        Set<PsiClass> approximateTypes = ApproximateResolver.getPossibleTypes(qualifier, 10);
+        return approximateTypes == null || hasMethodWithSamCompatibleParameter(approximateTypes, methodName, argIndex, samClass);
+      }
+    }
+    return true;
+  }
+
+  private static boolean hasMethodWithSamCompatibleParameter(Set<PsiClass> qualifierClasses, String methodName, int argIndex, PsiClass samClass) {
+    for (PsiClass qualifierClass : qualifierClasses) {
+      for (PsiMethod method : qualifierClass.findMethodsByName(methodName, true)) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
+        if (paramIndex < parameters.length && canPassFunctionalExpression(samClass, parameters[paramIndex])) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
-  private static MultiMap<Location, GlobalSearchScope> collectQueryKeys(SamDescriptor descriptor, Set<Module> candidateModules) {
+  private static MultiMap<VirtualFile, Integer> getCandidateOffsets(SamDescriptor descriptor, MultiMap<Location, GlobalSearchScope> queries, Set<VirtualFile> likelyFiles) {
+    MultiMap<VirtualFile, Integer> result = MultiMap.createLinked();
+    MultiMap<VirtualFile, Integer> unlikely = MultiMap.createLinked();
+    for (Location location : queries.keySet()) {
+      MultiMap<VirtualFile, Integer> offsets = getOffsetsForLocation(descriptor, location, queries.get(location));
+      for (VirtualFile file : offsets.keySet()) {
+        (likelyFiles.contains(file) ? result : unlikely).putValues(file, offsets.get(file));
+      }
+      if (LOG.isDebugEnabled()) {
+        logIfLarge(offsets, location);
+      }
+    }
+
+    result.putAllValues(unlikely);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("checking " + result.values().size() + " fun-expressions in " + result.keySet().size() + " files");
+    }
+    return result;
+  }
+
+  private static void logIfLarge(MultiMap<VirtualFile, Integer> offsets, Location location) {
+    int delta = offsets.values().size();
+    if (delta > 5) {
+      String sample = offsets.entrySet().stream().limit(10).map(e -> e.getKey().getName() + "->" + e.getValue()).collect(Collectors.joining(", "));
+      LOG.debug(delta + " expressions for " + location + "; " + sample);
+    }
+  }
+
+  @NotNull
+  private static MultiMap<VirtualFile, Integer> getOffsetsForLocation(SamDescriptor descriptor, Location location, Collection<GlobalSearchScope> scopes) {
+    MultiMap<VirtualFile, Integer> map = MultiMap.create();
+    ReadAction.run(() -> {
+      ProgressManager.checkCanceled();
+      GlobalSearchScope combinedScope = descriptor.useScope.intersectWith(
+        GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[0])));
+      for (FunctionalExpressionKey key : descriptor.generateKeys(location)) {
+        FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, offsets) -> {
+          for (int i : offsets.toNativeArray()) {
+            map.putValue(file, i);
+          }
+          return true;
+        }, new JavaSourceFilterScope(combinedScope));
+      }
+    });
+    return map;
+  }
+
+  @NotNull
+  private static MultiMap<Location, GlobalSearchScope> collectQueryKeys(SamDescriptor descriptor, Iterable<PsiMethod> methods) {
     MultiMap<Location, GlobalSearchScope> queries = MultiMap.createSet();
     queries.putValue(Location.UNKNOWN, descriptor.useScope);
-    queries.putValue(new FunctionalExpressionKey.TypedLocation(assertNotNull(descriptor.samClass.getName())), descriptor.useScope);
+    queries.putValue(new FunctionalExpressionKey.TypedLocation(descriptor.getClassName()), descriptor.useScope);
 
-    //collect all methods with parameter of functional interface or free type parameter type
-    for (final PsiMethod psiMethod : getCandidateMethodsWithSuitableParams(descriptor, candidateModules)) {
+    for (PsiMethod psiMethod : methods) {
       ReadAction.run(() -> {
         if (!psiMethod.isValid()) return;
 
@@ -249,47 +311,17 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return highLevelModules;
   }
 
-  private static Collection<PsiMethod> getCandidateMethodsWithSuitableParams(SamDescriptor descriptor, Set<Module> candidateModules) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiMethod>>() {
-      @Override
-      public Collection<PsiMethod> compute() {
-        if (!descriptor.samClass.isValid()) return Collections.emptyList();
-
-        GlobalSearchScope visibleFromCandidates = combineResolveScopes(candidateModules, descriptor.samClass);
-        if (visibleFromCandidates == null) return Collections.emptyList();
-
-        Set<String> usedMethodNames = collectMethodNamesCalledWithFunExpressions(descriptor);
-
-        Set<PsiMethod> methods = ContainerUtil.newLinkedHashSet();
-        Processor<PsiMethod> methodProcessor = method -> {
-          if (usedMethodNames.contains(method.getName())) {
-            methods.add(method);
-          }
-          return true;
-        };
-
-        StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
-        StubIndex index = StubIndex.getInstance();
-        Project project = descriptor.samClass.getProject();
-        index.processElements(key, assertNotNull(descriptor.samClass.getName()), project, descriptor.useScope.intersectWith(visibleFromCandidates), PsiMethod.class, methodProcessor);
-        index.processElements(key, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME, project, visibleFromCandidates, PsiMethod.class, methodProcessor);
-        LOG.info("#methods: " + methods.size());
-        return methods;
-      }
-    });
-  }
-
   @NotNull
   private static Set<String> collectMethodNamesCalledWithFunExpressions(SamDescriptor descriptor) {
     Set<String> usedMethodNames = new HashSet<>();
-    StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FUNCTIONAL_EXPRESSIONS, key -> {
+    ReadAction.run(() -> FileBasedIndex.getInstance().processAllKeys(JavaFunctionalExpressionIndex.INDEX_ID, key -> {
       ProgressManager.checkCanceled();
       if (key.canRepresent(descriptor.samParamCount, descriptor.booleanCompatible, descriptor.isVoid) &&
           key.location instanceof CallLocation) {
         usedMethodNames.add(((CallLocation)key.location).methodName);
       }
       return true;
-    }, descriptor.useScope, null);
+    }, descriptor.useScope, null));
     return usedMethodNames;
   }
 
@@ -367,6 +399,75 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       this.samParamCount = samMethod.getParameterList().getParametersCount();
       this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
       this.isVoid = PsiType.VOID.equals(samType);
+    }
+
+    @NotNull
+    private MultiMap<VirtualFile, Integer> getOffsets(Set<Module> highLevelModules) {
+      GlobalSearchScope visibleFromCandidates = ReadAction.compute(
+        () -> samClass.isValid() ? combineResolveScopes(highLevelModules, samClass) : null);
+      if (visibleFromCandidates == null) return MultiMap.empty();
+
+      Set<String> usedMethodNames = collectMethodNamesCalledWithFunExpressions(this);
+      Set<PsiMethod> exactTypeMethods = getMethodsWithParameterType(usedMethodNames, useScope.intersectWith(visibleFromCandidates), getClassName());
+      Set<PsiMethod> genericMethods = getMethodsWithParameterType(usedMethodNames, visibleFromCandidates, JavaMethodElementType.TYPE_PARAMETER_PSEUDO_NAME);
+      LOG.debug("#methods: " + (exactTypeMethods.size() + genericMethods.size()));
+
+      MultiMap<Location, GlobalSearchScope> queries = collectQueryKeys(this, ContainerUtil.concat(exactTypeMethods, genericMethods));
+      return getCandidateOffsets(this, queries, getMostLikelyFiles(exactTypeMethods));
+    }
+
+    private boolean search(@NotNull Processor<PsiFunctionalExpression> consumer, Set<Module> highLevelModules) {
+      for (Map.Entry<VirtualFile, Collection<Integer>> entry : getOffsets(highLevelModules).entrySet()) {
+        if (!processFile(consumer, samClass, entry.getKey(), entry.getValue())) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @NotNull
+    private Set<VirtualFile> getMostLikelyFiles(Set<PsiMethod> exactTypeMethods) {
+      Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
+      ReadAction.run(() -> {
+        if (!samClass.isValid()) return;
+
+        Set<String> likelyNames = ContainerUtil.newLinkedHashSet(getClassName());
+        for (PsiMethod method : exactTypeMethods) {
+          likelyNames.add(method.getName());
+        }
+
+        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(samClass.getProject());
+        Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
+        for (String name : likelyNames) {
+          helper.processFilesWithText(this.useScope, UsageSearchContext.IN_CODE, true, name, processor);
+        }
+      });
+      return files;
+    }
+
+    private Set<PsiMethod> getMethodsWithParameterType(Set<String> usedMethodNames,
+                                                       GlobalSearchScope scope,
+                                                       String type) {
+      Set<PsiMethod> methods = new HashSet<>();
+      ReadAction.run(() -> {
+        if (!samClass.isValid()) return;
+
+        StubIndexKey<String, PsiMethod> key = JavaMethodParameterTypesIndex.getInstance().getKey();
+        StubIndex.getInstance().processElements(key, type, samClass.getProject(), scope, PsiMethod.class, method -> {
+          ProgressManager.checkCanceled();
+          if (usedMethodNames.contains(method.getName())) {
+            methods.add(method);
+          }
+
+          return true;
+        });
+      });
+      return methods;
+    }
+
+    @NotNull
+    String getClassName() {
+      return assertNotNull(samClass.getName());
     }
 
     List<FunctionalExpressionKey> generateKeys(Location location) {

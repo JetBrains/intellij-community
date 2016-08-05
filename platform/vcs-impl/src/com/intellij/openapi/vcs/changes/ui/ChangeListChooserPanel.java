@@ -27,7 +27,11 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +56,7 @@ public class ChangeListChooserPanel extends JPanel {
   private final NullableConsumer<String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
+  private boolean myNewNameSuggested = false;
 
   public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
     super(new BorderLayout());
@@ -68,19 +73,17 @@ public class ChangeListChooserPanel extends JPanel {
         if (value != null) {
           String name = value;
           LocalChangeList changeList = ChangeListManager.getInstance(myProject).findChangeList(name);
-          int visibleWidth = myExistingListsCombo.getEditorTextField().getVisibleRect().width;
+          int visibleWidth = getSize().width;
           if (visibleWidth == 0) {
-            name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
+            visibleWidth = MyEditorComboBox.PREF_WIDTH;
           }
-          else {
-            final FontMetrics fm = list.getFontMetrics(list.getFont());
-            final int width = fm.stringWidth(name);
-            if ((visibleWidth > 0) && (width > visibleWidth)) {
-              final String truncated = CommittedChangeListRenderer
-                .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
-              if (truncated.length() > 5) {
-                name = truncated + " ..";
-              }
+          final FontMetrics fm = list.getFontMetrics(list.getFont());
+          final int width = fm.stringWidth(name);
+          if (width > visibleWidth) {
+            final String truncated = CommittedChangeListRenderer
+              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
+            if (truncated.length() > 5) {
+              name = truncated + " ..";
             }
           }
           append(name, changeList != null && changeList.isDefault()
@@ -117,7 +120,7 @@ public class ChangeListChooserPanel extends JPanel {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);
-            if (getExistingChangelist() == null) {
+            if (getExistingChangelistByName(myListPanel.getChangeListName()) == null) {
               myLastTypedDescription = myListPanel.getDescription();
             }
           }
@@ -140,13 +143,29 @@ public class ChangeListChooserPanel extends JPanel {
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
     List<String> changelistNames = ContainerUtil.map(changeLists, ChangeList::getName);
     Collections.sort(changelistNames);
-    myExistingListsCombo.setModel(new CollectionComboBoxModel<String>(changelistNames));
+    myExistingListsCombo.setModel(new DefaultComboBoxModel<String>(ArrayUtil.toStringArray(changelistNames)));
   }
 
-  public void setDefaultName(String name) {
-    if (!StringUtil.isEmptyOrSpaces(name)) {
-      myListPanel.setChangeListName(name);
+  public void setSuggestedName(@NotNull String name) {
+    if (StringUtil.isEmptyOrSpaces(name)) return;
+    if (getExistingChangelistByName(name) != null) {
+      myExistingListsCombo.setSelectedItem(name);
     }
+    else {
+      myNewNameSuggested = true;
+      if (VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST) {
+        myExistingListsCombo.insertItemAt(name, 0);
+        selectActiveChangeListIfExist();
+      }
+      else {
+        myListPanel.setChangeListName(name);
+      }
+    }
+    updateDescription();
+  }
+
+  private void selectActiveChangeListIfExist() {
+    myExistingListsCombo.setSelectedItem(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
   }
 
   public void updateEnabled() {
@@ -172,16 +191,23 @@ public class ChangeListChooserPanel extends JPanel {
       //update description if changed
       localChangeList.setComment(myListPanel.getDescription());
     }
+    rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
     if (myListPanel.getMakeActiveCheckBox().isSelected()) {
       manager.setDefaultChangeList(localChangeList);
     }
-    VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE = myListPanel.getMakeActiveCheckBox().isSelected();
     return localChangeList;
+  }
+
+  private void rememberSettings(@NotNull Project project, boolean activeListSelected, boolean setActive) {
+    if (myNewNameSuggested) {
+      VcsConfiguration.getInstance(project).PRESELECT_EXISTING_CHANGELIST = activeListSelected;
+    }
+    VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE = setActive;
   }
 
   public void setDefaultSelection(final ChangeList defaultSelection) {
     if (defaultSelection == null) {
-      myExistingListsCombo.setSelectedIndex(0);
+      selectActiveChangeListIfExist();
     }
     else {
       myExistingListsCombo.setSelectedItem(defaultSelection.getName());
@@ -191,16 +217,15 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   private void updateDescription() {
-    LocalChangeList list = getExistingChangelist();
+    LocalChangeList list = getExistingChangelistByName(myListPanel.getChangeListName());
     String newText = list != null ? list.getComment() : myLastTypedDescription;
     if (!StringUtil.equals(myListPanel.getDescription(), newText)) {
       myListPanel.setDescription(newText);
     }
   }
 
-  private LocalChangeList getExistingChangelist() {
+  private LocalChangeList getExistingChangelistByName(@NotNull String changeListName) {
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
-    String changeListName = myListPanel.getChangeListName();
     return manager.findChangeList(changeListName);
   }
 
@@ -210,8 +235,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   private static class MyEditorComboBox extends ComboBox<String> {
 
+    private static final int PREF_WIDTH = 200;
+
     public MyEditorComboBox(Project project) {
-      super();
+      super(PREF_WIDTH);
       setEditor(new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, this) {
         @Override
         protected void onEditorCreate(EditorEx editor) {

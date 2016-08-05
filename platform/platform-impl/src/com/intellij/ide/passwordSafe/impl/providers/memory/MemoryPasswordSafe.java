@@ -83,11 +83,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
   }
 
-  @Override
-  public String getName() {
-    return "Memory PasswordSafe";
-  }
-
   public void clear() {
     database.get().clear();
   }

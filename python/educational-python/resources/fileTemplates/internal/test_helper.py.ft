@@ -48,12 +48,43 @@ def check_importable_path(path):
     """ Checks that file is importable.
         Reports failure otherwise.
     """
+    saved_input = patch_input()
     try:
         import_file(path)
     except:
         failed("The file contains syntax errors", test_file_importable.__name__)
         return
+    finally:
+        revert_input(saved_input)
+
     passed(test_file_importable.__name__)
+
+
+def patch_input():
+    def mock_fun(_m=""):
+        return "mock"
+
+    if sys.version_info[0] == 3:
+        import builtins
+        save_input = builtins.input
+        builtins.input = mock_fun
+        return save_input
+    elif sys.version_info[0] == 2 or sys.version_info[1] < 3:
+        import __builtin__
+        save_input = __builtin__.raw_input
+        __builtin__.raw_input = mock_fun
+        __builtin__.input = mock_fun
+        return save_input
+
+
+def revert_input(saved_input):
+    if sys.version_info[0] == 3:
+        import builtins
+        builtins.input = saved_input
+    elif sys.version_info[0] == 2 or sys.version_info[1] < 3:
+        import __builtin__
+        __builtins__.raw_input = saved_input
+        __builtin__.input = saved_input
 
 
 def import_file(path):

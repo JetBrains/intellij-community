@@ -85,11 +85,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                                                         @NotNull final Project project,
                                                         @NotNull final ShelvedChangeList[] changeLists,
                                                         @Nullable List<ShelvedBinaryFile> binaryFiles) {
-    String defaultName = changeLists[0].DESCRIPTION;
+    String suggestedName = changeLists[0].DESCRIPTION;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
       new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
-                            VcsBundle.message("unshelve.changelist.chooser.title"), defaultName) {
+                            VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
         @Nullable
         @Override
         protected JComponent createSouthPanel() {

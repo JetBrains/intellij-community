@@ -163,7 +163,7 @@
                         serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                         serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
-    <ApplicationLoadListener implementation="com.intellij.ide.passwordSafe.masterKey.PasswordDatabaseConvertor"/>
+    <ApplicationLoadListener implementation="com.intellij.ide.passwordSafe.PasswordDatabaseConvertor"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable" id="application.passwordSafe"
                              displayName="Passwords"/>

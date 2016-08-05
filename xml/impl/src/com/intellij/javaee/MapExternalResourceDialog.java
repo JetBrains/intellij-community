@@ -253,10 +253,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-          return myExplorer.getSelectedFiles();
-        }
-        else if (FileSystemTree.DATA_KEY.is(dataId)) {
+        if (FileSystemTree.DATA_KEY.is(dataId)) {
           return myExplorer;
         }
         return null;

@@ -23,9 +23,9 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.util.SmartList
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.UIUtil
@@ -119,16 +119,10 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
           }
 
           icsManager.repositoryActive = true
-          val isSmartSchemeReload = syncType != SyncType.OVERWRITE_LOCAL
           if (updateResult != null) {
             val app = ApplicationManager.getApplication()
             restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
                                                                   syncType == SyncType.OVERWRITE_LOCAL)
-          }
-          if (!restartApplication && !isSmartSchemeReload) {
-            (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-              it.reload()
-            }
           }
         }
       }

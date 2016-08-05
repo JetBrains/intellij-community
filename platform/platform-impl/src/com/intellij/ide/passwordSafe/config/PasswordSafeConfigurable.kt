@@ -15,11 +15,15 @@
  */
 package com.intellij.ide.passwordSafe.config
 
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.migLayout.*
-import com.intellij.migLayout.LCFlags.*
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
+import com.intellij.layout.*
+import com.intellij.layout.CCFlags.*
+import com.intellij.layout.LCFlags.*
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.ui.Messages
 
 class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
   override fun getSettings() = settings
@@ -45,8 +49,16 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     settings.providerType = getProviderType()
   }
 
-  override fun getComponent() = panel(noGrid, flowY) {
+  override fun getComponent() = panel(noGrid, flowY, fillX) {
+    val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
+
     buttonGroup(saveOnDisk, rememberPasswordsUntilClosing)
+
+    if (!passwordSafe.isNativeCredentialStoreUsed)
+    button("Clear Passwords", right) {
+      passwordSafe.clearPasswords()
+      Messages.showInfoMessage(this@panel, "Passwords were cleared", "Clear Passwords")
+    }
   }
 
   private fun getProviderType(): ProviderType {

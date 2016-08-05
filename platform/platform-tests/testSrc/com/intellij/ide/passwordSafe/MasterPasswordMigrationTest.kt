@@ -16,8 +16,6 @@
 package com.intellij.ide.passwordSafe
 
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
-import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
-import com.intellij.ide.passwordSafe.masterKey.convertOldDb
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.runInEdtAndWait
@@ -57,7 +55,7 @@ internal class MasterPasswordMigrationTest {
     </State>"""))
     assertThat(passwordSafe).isNotEmpty
 
-    val provider = FilePasswordSafeProvider(passwordSafe)
+    val provider = FileCredentialStore(passwordSafe)
     assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
   }
 
@@ -86,7 +84,7 @@ internal class MasterPasswordMigrationTest {
       </State>"""))
     }
     assertThat(passwordSafe).isNotEmpty
-    val provider = FilePasswordSafeProvider(passwordSafe)
+    val provider = FileCredentialStore(passwordSafe)
     assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
   }
 

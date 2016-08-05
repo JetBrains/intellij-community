@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.masterKey
+package com.intellij.ide.passwordSafe
 
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
+import com.intellij.ide.passwordSafe.impl.CREDENTIAL_STORE_SERVICE_NAME
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.EnterPasswordComponent
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDialog
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
+import com.intellij.ide.passwordSafe.macOs.saveGenericPassword
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.exists
 import gnu.trove.THashMap
-import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 import java.util.function.Function
 
 private val TEST_PASSWORD_VALUE = "test password"
@@ -112,15 +115,13 @@ internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordD
   return newDb
 }
 
-fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
-
 private fun rawTestKey(oldKey: String) = EncryptionUtil.hash("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe/TEST_PASSWORD:${oldKey}".toByteArray())
 
 internal class PasswordDatabaseConvertor : ApplicationLoadListener {
   override fun beforeComponentsCreated() {
     try {
       val oldDbFile = Paths.get(PathManager.getConfigPath(), "options", "security.xml")
-      if (Files.exists(oldDbFile)) {
+      if (oldDbFile.exists()) {
         val settings = ServiceManager.getService(PasswordSafeSettings::class.java)
         if (settings.providerType != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
           return
@@ -130,9 +131,19 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
         val oldDb = ServiceManager.getService(PasswordDatabase::class.java)
         // old db contains at least one test key - skip it
         if (oldDb.myDatabase.size > 1) {
+          @Suppress("DEPRECATION")
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
-            FilePasswordSafeProvider(newDb).save()
+            if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+              LOG.catchAndLog {
+                val serviceName = CREDENTIAL_STORE_SERVICE_NAME.toByteArray()
+                for ((k, v) in newDb) {
+                  saveGenericPassword(serviceName, k, v)
+                }
+                return
+              }
+            }
+            FileCredentialStore(newDb).save()
           }
         }
       }

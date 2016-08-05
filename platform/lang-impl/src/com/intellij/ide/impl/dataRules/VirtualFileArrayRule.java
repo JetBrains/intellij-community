@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -60,6 +61,11 @@ public class VirtualFileArrayRule implements GetDataRule {
     // Try to detect multiselection.
 
     Set<VirtualFile> result = null;
+
+    FileSystemTree fileSystemTree = FileSystemTree.DATA_KEY.getData(dataProvider);
+    if (fileSystemTree != null) {
+      result = addFiles(result, fileSystemTree.getSelectedFiles());
+    }
 
     Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
     if (project != null && !project.isDisposed()) {

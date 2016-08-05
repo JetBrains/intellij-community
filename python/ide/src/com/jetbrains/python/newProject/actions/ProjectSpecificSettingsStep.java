@@ -174,14 +174,18 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
         String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
         if (!isFrameworkInstalled(sdk)) {
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
-            warningList.add(frameworkName + " will be installed on the selected interpreter");
             myInstallFramework = true;
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
             if (packages == null) {
+              warningList.add(frameworkName + " will be installed on the selected interpreter");
               return false;
             }
             if (!PyPackageUtil.hasManagement(packages)) {
               warningList.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
+            }
+            else {
+              warningList.add(frameworkName + " will be installed on the selected interpreter");
+
             }
           } else {
             warningList.add(frameworkName + " is not installed on the selected interpreter");

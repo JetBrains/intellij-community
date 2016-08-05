@@ -340,26 +340,31 @@ public class EduStepicConnector {
   }
 
   private static boolean addCoursesFromStepic(List<CourseInfo> result, int pageNumber) throws IOException {
-    final String url = pageNumber == 0 ? EduStepicNames.COURSES : EduStepicNames.COURSES_FROM_PAGE + String.valueOf(pageNumber);
-    final StepicWrappers.CoursesContainer coursesContainer = getFromStepic(url, StepicWrappers.CoursesContainer.class);
+    final URI url;
+    try {
+      url = new URIBuilder(EduStepicNames.COURSES).addParameter("is_idea_compatible", "true").
+          addParameter("page", String.valueOf(pageNumber)).build();
+    }
+    catch (URISyntaxException e) {
+      LOG.error(e.getMessage());
+      return false;
+    }
+    final StepicWrappers.CoursesContainer coursesContainer = getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
     final List<CourseInfo> courseInfos = coursesContainer.courses;
     for (CourseInfo info : courseInfos) {
       final String courseType = info.getType();
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) continue;
       final List<String> typeLanguage = StringUtil.split(courseType, " ");
-      // TODO: should adaptive course be of PyCharmType ?
       if (info.isAdaptive() || (typeLanguage.size() == 2 && PYCHARM_PREFIX.equals(typeLanguage.get(0)))) {
         for (Integer instructor : info.instructors) {
-          final StepicUser author = getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor), StepicWrappers.AuthorWrapper.class).users.get(0);
+          final StepicUser author = getFromStepic(EduStepicNames.USERS + "/" + String.valueOf(instructor),
+                                                  StepicWrappers.AuthorWrapper.class).users.get(0);
           info.addAuthor(author);
         }
         
         if (info.isAdaptive()) {
-          info.setDescription("This is a Stepic Adaptive course.\n\n" + info.getDescription());
+          info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription());
         }
-
-        String name = info.getName().replaceAll("[^a-zA-Z0-9\\s]", "");
-        info.setName(name.trim());
         
         result.add(info);
       }

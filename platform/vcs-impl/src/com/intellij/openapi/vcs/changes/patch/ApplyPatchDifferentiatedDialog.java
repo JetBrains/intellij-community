@@ -203,7 +203,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myChangeListChooser.setDefaultSelection(defaultList);
     }
     else if (externalCommitMessage != null) {
-      myChangeListChooser.setDefaultName(externalCommitMessage);
+      myChangeListChooser.setSuggestedName(externalCommitMessage);
     }
     myChangeListChooser.init();
 
@@ -382,7 +382,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myShouldUpdateChangeListName) {
-          myChangeListChooser.setDefaultName(file.getNameWithoutExtension().replace('_', ' ').trim());
+          myChangeListChooser.setSuggestedName(file.getNameWithoutExtension().replace('_', ' ').trim());
         }
         myPatches.clear();
         myPatches.addAll(matchedPatches);

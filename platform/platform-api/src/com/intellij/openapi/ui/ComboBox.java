@@ -243,7 +243,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   public final void setEditor(final ComboBoxEditor editor) {
     ComboBoxEditor _editor = editor;
-    if (SystemInfo.isMac && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
       if (editor instanceof UIResource) {
         _editor = new FixedComboBoxEditor();
       }

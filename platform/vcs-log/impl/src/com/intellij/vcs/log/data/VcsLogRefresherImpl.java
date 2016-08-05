@@ -125,9 +125,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
       @Override
       public void each(@NotNull VirtualFile root, @NotNull VcsLogProvider provider) throws VcsException {
         VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
-        storeUsersAndDetails(data.getCommits());
         logInfo.put(root, compactCommits(data.getCommits(), root));
         logInfo.put(root, data.getRefs());
+        storeUsersAndDetails(data.getCommits());
         sw.rootCompleted(root);
       }
     }.iterate(getProvidersForRoots(requirements.keySet()));
