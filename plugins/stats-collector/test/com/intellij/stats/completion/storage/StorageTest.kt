@@ -128,6 +128,31 @@ class FileLoggerTest {
         assertThat(files[0].name.substringAfter('_').toInt()).isLessThan(files[1].name.substringAfter('_').toInt())
     }
 
+
+    @Test
+    fun test_delete_old_stuff() {
+        writeKb(4096)
+
+        var files = filesProvider.getDataFiles()
+        assertThat(files).hasSize(4096 / 250)
+        
+        val firstBefore = files.map { it.name.substringAfter('_').toInt() }
+                .sorted()
+                .first()
+        
+        assertThat(firstBefore).isEqualTo(0)
+        
+        filesProvider.cleanupOldFiles()
+        files = filesProvider.getDataFiles()
+        assertThat(files).hasSize(2048 / 250)
+        
+        val firstAfter = files.map { it.name.substringAfter('_').toInt() }
+                .sorted()
+                .first()
+        
+        assertThat(firstAfter).isEqualTo(8)
+    }
+
     private fun writeKb(kb: Int) {
         val bytesToWrite = 1024 * kb
         (0..bytesToWrite).forEach {

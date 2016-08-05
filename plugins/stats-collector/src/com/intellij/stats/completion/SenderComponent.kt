@@ -60,6 +60,7 @@ class StatisticSender(val requestService: RequestService, val filePathProvider: 
 
     fun sendStatsData(url: String) {
         assertNotEDT()
+        filePathProvider.cleanupOldFiles()
         val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
             if (it.length() > 0) {

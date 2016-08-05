@@ -4,6 +4,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.components.ServiceManager
 import java.io.File
 import java.io.FileFilter
+import java.nio.file.Files
 
 abstract class UrlProvider {
     abstract val statsServerPostUrl: String
@@ -20,6 +21,7 @@ abstract class FilePathProvider {
     abstract fun getUniqueFile(): File
     abstract fun getDataFiles(): List<File>
     abstract fun getStatsDataDirectory(): File
+    abstract fun cleanupOldFiles()
     
     companion object {
         fun getInstance(): FilePathProvider = ServiceManager.getService(FilePathProvider::class.java)
@@ -45,7 +47,24 @@ class PluginDirectoryFilePathProvider() : UniqueFilesProvider("chunk", { getPlug
 open class UniqueFilesProvider(private val baseName: String, private val rootDirectoryComputer: () -> File) : FilePathProvider() {
     
     constructor(baseName: String, rootDir: File) : this(baseName, { rootDir })
+
+    private val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
     
+    override fun cleanupOldFiles() {
+        val files = getDataFiles()
+        val sizeToSend = files.fold(0L, { totalSize, file -> totalSize + file.length() })
+        if (sizeToSend > MAX_ALLOWED_SEND_SIZE) {
+            var currentSize = sizeToSend
+            val iterator = files.iterator()
+            while (iterator.hasNext() && currentSize > MAX_ALLOWED_SEND_SIZE) {
+                val file = iterator.next()
+                val fileSize = file.length()
+                Files.delete(file.toPath())
+                currentSize -= fileSize
+            }
+        }
+    }
+
     override fun getUniqueFile(): File {
         val dir = getStatsDataDirectory()
 
