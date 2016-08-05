@@ -7,14 +7,10 @@ import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
-import java.io.File
 
 
 class PerformanceTests : LightFixtureCompletionTestCase() {
-    private lateinit var container: MutablePicoContainer
-    private lateinit var oldPathProvider: FilePathProvider
-    private lateinit var path: String
-    private lateinit var tmpPath: String
+    private lateinit var pathProvider: FilePathProvider
     
     private val runnable = "interface Runnable { void run();  void notify(); void wait(); void notifyAll(); }"
     private val text = """
@@ -27,28 +23,17 @@ class Test {
     }
 }
 """
-    
+
     override fun setUp() {
         super.setUp()
-        container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-        path = createTempFile("x.txt").absolutePath
-        tmpPath = createTempFile("xtmp.txt").absolutePath
-        val mockPathProvider = mock(FilePathProvider::class.java)
-        
-        oldPathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
-        container.replaceComponent(FilePathProvider::class.java, mockPathProvider)
+        val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
+        pathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
     }
 
     override fun tearDown() {
-        container.replaceComponent(FilePathProvider::class.java, oldPathProvider)
-        val file = File(path)
-        if (file.exists()) {
-            file.delete()
-        }
-        val tmpFile = File(tmpPath)
-        if (tmpFile.exists()) {
-            tmpFile.delete()
-        }
+        CompletionLoggerProvider.getInstance().dispose()
+        val statsDir = pathProvider.getStatsDataDirectory()
+        statsDir.deleteRecursively()
         super.tearDown()
     }
 
@@ -64,14 +49,11 @@ class Test {
             Thread.sleep(5000)
             ResponseData(200)
         }
-        
-        
-        val file = File(path)
+
+        val file = pathProvider.getUniqueFile()
         file.writeText("Some existing data to send")
-
-        val filePathProvider = mock(FilePathProvider::class.java)
-
-        val sender = StatisticSender(requestService, filePathProvider)
+        
+        val sender = StatisticSender(requestService, pathProvider)
         
         ApplicationManager.getApplication().executeOnPooledThread { 
             sender.sendStatsData("")

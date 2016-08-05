@@ -20,19 +20,14 @@ class FilesProviderTest {
     @Before
     fun setUp() {
         provider = UniqueFilesProvider("chunk", root)
-        removeAllFilesInStatsDataDirectory()
+        provider.getStatsDataDirectory().deleteRecursively()
     }
 
     @After
     fun tearDown() {
-        removeAllFilesInStatsDataDirectory()
+        provider.getStatsDataDirectory().deleteRecursively()
     }
-
-    private fun removeAllFilesInStatsDataDirectory() {
-        val dir = provider.getStatsDataDirectory()
-        dir.deleteRecursively()
-    }
-
+    
     @Test
     fun test_three_new_files_created() {
         provider.getUniqueFile().createNewFile()
