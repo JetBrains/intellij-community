@@ -22,10 +22,12 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
-
     fun getExperimentVersion() = statusInfo.experimentVersion
+    
     fun getDataServerUrl(): String = dataServerUrl
+    
     fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
+    
     fun isPerformExperiment(): Boolean {
         val uid = PermanentInstallationID.get()
         val hash = (uid + statusInfo.salt).hashCode()
@@ -44,7 +46,9 @@ class StatusInfoProvider(private val requestSender: RequestService) {
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
             if (salt != null && experimentVersion != null) {
-                statusInfo = ExperimentInfo(experimentVersion.toInt(), salt)
+                //should be Int always
+                val floatVersion = experimentVersion.toFloat()
+                statusInfo = ExperimentInfo(floatVersion.toInt(), salt)
                 saveInfo(statusInfo)
             }
             
