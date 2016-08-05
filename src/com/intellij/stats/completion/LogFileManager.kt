@@ -47,7 +47,9 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
     }
 
     override fun dispose() {
-        saveDataChunk(storage)
+        if (storage.size > 0) {
+            saveDataChunk(storage)
+        }
         storage.clear()
     }
 
