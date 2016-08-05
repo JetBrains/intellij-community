@@ -19,7 +19,9 @@ import com.intellij.activity.ModuleFilesBuildActivity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -41,5 +43,11 @@ public class ModuleFilesBuildActivityImpl extends ModuleBuildActivityImpl implem
   @Override
   public VirtualFile[] getFiles() {
     return myFiles;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Files build activity '" + Arrays.toString(myFiles) + "'";
   }
 }

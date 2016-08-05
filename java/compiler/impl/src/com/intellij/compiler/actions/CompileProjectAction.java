@@ -15,27 +15,30 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.activity.ActivityExecutionResult;
+import com.intellij.activity.ActivityManager;
+import com.intellij.activity.ActivityStatusNotification;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.activity.ActivityStatusNotificationAdapter;
-import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
-    ActivityManager.getInstance(project).rebuildProject(new ActivityStatusNotificationAdapter() {
+    ActivityManager.getInstance(project).rebuildAllModules(new ActivityStatusNotification() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings) {
-        if (aborted || project.isDisposed()) {
+      public void finished(@NotNull ActivityExecutionResult executionResult) {
+        if (executionResult.isAborted() || project.isDisposed()) {
           return;
         }
 
         String text = getTemplatePresentation().getText();
         LocalHistory.getInstance().putSystemLabel(
-          project, CompilerBundle.message(errors == 0 ? "rebuild.lvcs.label.no.errors" : "rebuild.lvcs.label.with.errors", text));
+          project, CompilerBundle
+            .message(executionResult.getErrors() == 0 ? "rebuild.lvcs.label.no.errors" : "rebuild.lvcs.label.with.errors", text));
       }
     });
   }

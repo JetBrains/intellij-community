@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.activity.ActivityManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -36,7 +36,7 @@ public class MakeModuleAction extends CompileActionBase {
       modules = new Module[]{module};
     }
     try {
-      ActivityManager.getInstance(project).buildDirty(modules);
+      ActivityManager.getInstance(project).build(modules);
     }
     catch (Exception e) {
       LOG.error(e);

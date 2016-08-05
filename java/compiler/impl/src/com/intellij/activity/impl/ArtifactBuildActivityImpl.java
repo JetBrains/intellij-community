@@ -17,6 +17,7 @@ package com.intellij.activity.impl;
 
 import com.intellij.activity.ArtifactBuildActivity;
 import com.intellij.packaging.artifacts.Artifact;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -33,5 +34,11 @@ public class ArtifactBuildActivityImpl extends AbstractBuildActivity implements 
   @Override
   public Artifact getArtifact() {
     return myArtifact;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Artifact '" + myArtifact.getName() + "' build activity";
   }
 }

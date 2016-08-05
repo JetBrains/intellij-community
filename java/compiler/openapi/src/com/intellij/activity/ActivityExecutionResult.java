@@ -17,15 +17,28 @@ package com.intellij.activity;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
+ * @since 8/5/2016
  */
-public interface ActivityChunkStatusNotification {
+public class ActivityExecutionResult {
+  private final boolean aborted;
+  private final int errors;
+  private final int warnings;
 
-  /**
-   *
-   * @param aborted  true if the build chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
-   */
-  void finished(boolean aborted, int errors, int warnings);
+  public ActivityExecutionResult(boolean aborted, int errors, int warnings) {
+    this.aborted = aborted;
+    this.errors = errors;
+    this.warnings = warnings;
+  }
+
+  public boolean isAborted() {
+    return aborted;
+  }
+
+  public int getErrors() {
+    return errors;
+  }
+
+  public int getWarnings() {
+    return warnings;
+  }
 }

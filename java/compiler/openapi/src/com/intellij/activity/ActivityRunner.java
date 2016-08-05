@@ -37,12 +37,12 @@ public abstract class ActivityRunner {
 
   public abstract void run(@NotNull Project project,
                            @NotNull ActivityContext context,
-                           @Nullable ActivityChunkStatusNotification callback,
+                           @Nullable ActivityStatusNotification callback,
                            @NotNull Collection<? extends Activity> activities);
 
   public void run(@NotNull Project project,
                   @NotNull ActivityContext context,
-                  @Nullable ActivityChunkStatusNotification callback,
+                  @Nullable ActivityStatusNotification callback,
                   @NotNull Activity... activities) {
     run(project, context, callback, Arrays.asList(activities));
   }

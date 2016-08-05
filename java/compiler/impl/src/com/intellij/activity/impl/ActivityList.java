@@ -29,4 +29,10 @@ public class ActivityList extends ArrayList<Activity> implements Activity {
   public ActivityList(@NotNull Collection<? extends Activity> c) {
     super(c);
   }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return toString();
+  }
 }

@@ -176,10 +176,10 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       }
     }.execute();
 
-    final ActivityStatusNotification callback = new ActivityStatusNotificationAdapter() {
+    final ActivityStatusNotification callback = new ActivityStatusNotification() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings) {
-        result.set(!aborted && errors == 0);
+      public void finished(@NotNull ActivityExecutionResult executionResult) {
+        result.set(!executionResult.isAborted() && executionResult.getErrors() == 0);
         finished.up();
       }
     };

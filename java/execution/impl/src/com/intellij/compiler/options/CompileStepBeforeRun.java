@@ -138,9 +138,9 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
       final Semaphore done = new Semaphore();
       done.down();
-      final ActivityStatusNotification callback = new ActivityStatusNotificationAdapter() {
-        public void finished(boolean aborted, int errors, int warnings) {
-          if ((errors == 0  || ignoreErrors) && !aborted) {
+      final ActivityStatusNotification callback = new ActivityStatusNotification() {
+        public void finished(@NotNull ActivityExecutionResult executionResult) {
+          if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
             result.set(Boolean.TRUE);
           }
           done.up();
@@ -153,7 +153,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         final ActivityManager activityManager = ActivityManager.getInstance(myProject);
         if (forceMakeProject) {
           // user explicitly requested whole-project make
-          activity = activityManager.createProjectBuildActivity(true, myProject);
+          activity = activityManager.createAllModulesBuildActivity(true, myProject);
         }
         else {
           final Module[] modules = runConfiguration.getModules();
@@ -167,7 +167,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
             activity = activityManager.createModulesBuildActivity(true, modules);
           }
           else {
-            activity = activityManager.createProjectBuildActivity(true, myProject);
+            activity = activityManager.createAllModulesBuildActivity(true, myProject);
           }
         }
 

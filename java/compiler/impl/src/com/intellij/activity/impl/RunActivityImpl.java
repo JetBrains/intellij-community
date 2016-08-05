@@ -90,4 +90,10 @@ public class RunActivityImpl extends AbstractActivity implements RunActivity {
   public RunnerAndConfigurationSettings getSettings() {
     return mySettings;
   }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Run activity '" + myRunProfile.getName() + "'";
+  }
 }

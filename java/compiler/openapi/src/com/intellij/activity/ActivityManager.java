@@ -45,22 +45,22 @@ public abstract class ActivityManager {
 
   public abstract void run(@NotNull ActivityContext context, @NotNull Activity activity, @Nullable ActivityStatusNotification callback);
 
-  public abstract void buildProjectDirty(@Nullable ActivityStatusNotification callback);
+  public abstract void buildAllModules(@Nullable ActivityStatusNotification callback);
 
-  public void buildProjectDirty() {
-    buildProjectDirty(null);
+  public void buildAllModules() {
+    buildAllModules(null);
   }
 
-  public abstract void rebuildProject(@Nullable ActivityStatusNotification callback);
+  public abstract void rebuildAllModules(@Nullable ActivityStatusNotification callback);
 
-  public void rebuildProject() {
-    rebuildProject(null);
+  public void rebuildAllModules() {
+    rebuildAllModules(null);
   }
 
-  public abstract void buildDirty(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
+  public abstract void build(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
 
-  public void buildDirty(@NotNull Module... modules) {
-    buildDirty(modules, null);
+  public void build(@NotNull Module... modules) {
+    build(modules, null);
   }
 
   public abstract void rebuild(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
@@ -87,7 +87,7 @@ public abstract class ActivityManager {
     rebuild(artifacts, null);
   }
 
-  public abstract Activity createProjectBuildActivity(boolean isIncrementalBuild, Project project);
+  public abstract Activity createAllModulesBuildActivity(boolean isIncrementalBuild, Project project);
 
   public abstract Activity createModulesBuildActivity(boolean isIncrementalBuild, Module... modules);
 

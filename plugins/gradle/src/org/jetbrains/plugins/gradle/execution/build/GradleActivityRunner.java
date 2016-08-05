@@ -62,7 +62,7 @@ public class GradleActivityRunner extends ActivityRunner {
   @Override
   public void run(@NotNull Project project,
                   @NotNull ActivityContext context,
-                  @Nullable ActivityChunkStatusNotification callback,
+                  @Nullable ActivityStatusNotification callback,
                   @NotNull Collection<? extends Activity> activities) {
     String executionName = "Gradle build";
 
@@ -96,7 +96,7 @@ public class GradleActivityRunner extends ActivityRunner {
         int successes = success ? successCounter.incrementAndGet() : successCounter.get();
         int errors = success ? errorCounter.get() : errorCounter.incrementAndGet();
         if (successes + errors == rootPaths.size()) {
-          callback.finished(false, errors, 0);
+          callback.finished(new ActivityExecutionResult(false, errors, 0));
         }
       }
     };
@@ -179,8 +179,8 @@ public class GradleActivityRunner extends ActivityRunner {
       List<String> tasks = ContainerUtil.mapNotNull(ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK),
                                                     node -> node.getData().isInherited() ? null : node.getData().getName());
 
-      Collection<String> cleanTasks = cleanTasksMap.getModifiable(rootProjectPath);
-      Collection<String> buildTasks = buildTasksMap.getModifiable(rootProjectPath);
+      Collection<String> cleanRootTasks = cleanTasksMap.getModifiable(rootProjectPath);
+      Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
       final String gradlePath;
 
@@ -194,32 +194,38 @@ public class GradleActivityRunner extends ActivityRunner {
         String task = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
         if (tasks.contains(task)) {
           if (!moduleBuildActivity.isIncrementalBuild()) {
-            cleanTasks.add(gradlePath + ":clean" + StringUtil.capitalize(task));
+            cleanRootTasks.add(gradlePath + ":clean" + StringUtil.capitalize(task));
           }
-          buildTasks.add(gradlePath + ":" + task);
+          buildRootTasks.add(gradlePath + ":" + task);
         }
         else if ("main".equals(sourceSetName) || "test".equals(sourceSetName)) {
           if (!moduleBuildActivity.isIncrementalBuild()) {
-            cleanTasks.add(gradlePath + ":clean");
+            cleanRootTasks.add(gradlePath + ":clean");
           }
-          buildTasks.add(gradlePath + ":build");
+          buildRootTasks.add(gradlePath + ":build");
         }
       }
       else {
         gradlePath = projectId.charAt(0) == ':' ? projectId : "";
         if (!moduleBuildActivity.isIncrementalBuild()) {
           if (tasks.contains("classes")) {
-            cleanTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanClasses" : gradlePath + ":cleanClasses"));
+            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanClasses" : gradlePath + ":cleanClasses"));
           }
           else if(tasks.contains("clean")){
-            cleanTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "clean" : gradlePath + ":clean"));
+            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "clean" : gradlePath + ":clean"));
+          }
+          else {
+            cleanTasksMap.getModifiable(externalProjectPath).add("clean");
           }
         }
         if (tasks.contains("classes")) {
-          buildTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":classes" : gradlePath + ":classes"));
+          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":classes" : gradlePath + ":classes"));
+        }
+        else if (tasks.contains("build")) {
+          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "build" : gradlePath + ":build"));
         }
         else {
-          buildTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "build" : gradlePath + ":build"));
+          buildTasksMap.getModifiable(externalProjectPath).add("build");
         }
       }
     }

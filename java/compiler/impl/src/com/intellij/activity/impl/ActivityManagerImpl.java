@@ -49,7 +49,7 @@ public class ActivityManagerImpl extends ActivityManager {
   }
 
   @Override
-  public void buildDirty(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback) {
+  public void build(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback) {
     run(createModulesBuildActivity(true, modules), callback);
   }
 
@@ -80,17 +80,17 @@ public class ActivityManagerImpl extends ActivityManager {
   }
 
   @Override
-  public void buildProjectDirty(@Nullable ActivityStatusNotification callback) {
-    run(createProjectBuildActivity(true, myProject), callback);
+  public void buildAllModules(@Nullable ActivityStatusNotification callback) {
+    run(createAllModulesBuildActivity(true, myProject), callback);
   }
 
   @Override
-  public void rebuildProject(@Nullable ActivityStatusNotification callback) {
-    run(createProjectBuildActivity(false, myProject), callback);
+  public void rebuildAllModules(@Nullable ActivityStatusNotification callback) {
+    run(createAllModulesBuildActivity(false, myProject), callback);
   }
 
   @Override
-  public Activity createProjectBuildActivity(boolean isIncrementalBuild, Project project) {
+  public Activity createAllModulesBuildActivity(boolean isIncrementalBuild, Project project) {
     return createModulesBuildActivity(isIncrementalBuild, ModuleManager.getInstance(project).getModules());
   }
 
@@ -135,18 +135,17 @@ public class ActivityManagerImpl extends ActivityManager {
     AtomicInteger errorsCounter = new AtomicInteger();
     AtomicInteger warningsCounter = new AtomicInteger();
     AtomicBoolean abortedFlag = new AtomicBoolean(false);
-    ActivityChunkStatusNotification chunkStatusNotification = callback == null ? null : new ActivityChunkStatusNotification() {
+    ActivityStatusNotification chunkStatusNotification = callback == null ? null : new ActivityStatusNotification() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings) {
+      public void finished(@NotNull ActivityExecutionResult executionResult) {
         int inProgress = inProgressCounter.decrementAndGet();
-        int allErrors = errorsCounter.addAndGet(errors);
-        int allWarnings = warningsCounter.addAndGet(warnings);
-        if (aborted) {
+        int allErrors = errorsCounter.addAndGet(executionResult.getErrors());
+        int allWarnings = warningsCounter.addAndGet(executionResult.getWarnings());
+        if (executionResult.isAborted()) {
           abortedFlag.set(true);
         }
-        callback.chunkFinished(aborted, errors, warnings, inProgress);
         if (inProgress == 0) {
-          callback.finished(abortedFlag.get(), allErrors, allWarnings);
+          callback.finished(new ActivityExecutionResult(abortedFlag.get(), allErrors, allWarnings));
         }
       }
     };

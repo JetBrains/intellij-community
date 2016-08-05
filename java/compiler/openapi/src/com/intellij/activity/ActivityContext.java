@@ -45,16 +45,8 @@ public class ActivityContext {
     return mySessionId;
   }
 
-  public void setSessionId(@Nullable Object sessionId) {
-    mySessionId = sessionId;
-  }
-
   @Nullable
   public RunConfiguration getRunConfiguration() {
     return myRunConfiguration;
-  }
-
-  public void setRunConfiguration(@Nullable RunConfiguration runConfiguration) {
-    myRunConfiguration = runConfiguration;
   }
 }

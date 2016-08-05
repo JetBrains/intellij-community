@@ -15,16 +15,16 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.project.Project;
 
 public class CompileDirtyAction extends CompileActionBase {
 
   protected void doAction(DataContext dataContext, Project project) {
-    ActivityManager.getInstance(project).buildProjectDirty();
+    ActivityManager.getInstance(project).buildAllModules();
   }
 
   public void update(AnActionEvent e){

@@ -15,25 +15,15 @@
  */
 package com.intellij.activity;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
 public interface ActivityStatusNotification {
-
   /**
-   * @param aborted  true if the at least one activity chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
+   * @param executionResult provides aggregated information about activity execution
    */
-  void finished(boolean aborted, int errors, int warnings);
-
-  /**
-   *
-   * @param aborted  true if the activity chunk has been cancelled.
-   * @param errors   error count
-   * @param warnings warning count
-   * @param inProgress not finished activity chunks count
-   */
-  void chunkFinished(boolean aborted, int errors, int warnings, int inProgress);
+  void finished(@NotNull ActivityExecutionResult executionResult);
 }

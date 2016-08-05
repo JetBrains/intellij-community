@@ -37,4 +37,10 @@ public class ModuleBuildActivityImpl extends AbstractBuildActivity implements Mo
   public Module getModule() {
     return myModule;
   }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Module '" + myModule.getName() + "' build activity";
+  }
 }

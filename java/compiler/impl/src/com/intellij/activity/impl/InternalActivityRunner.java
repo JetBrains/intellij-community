@@ -47,10 +47,11 @@ public class InternalActivityRunner extends ActivityRunner {
   @Override
   public void run(@NotNull Project project,
                   @NotNull ActivityContext context,
-                  @Nullable ActivityChunkStatusNotification callback,
+                  @Nullable ActivityStatusNotification callback,
                   @NotNull Collection<? extends Activity> activities) {
     CompileStatusNotification compileNotification =
-      callback == null ? null : (aborted, errors, warnings, compileContext) -> callback.finished(aborted, errors, warnings);
+      callback == null ? null : (aborted, errors, warnings, compileContext) ->
+        callback.finished(new ActivityExecutionResult(aborted, errors, warnings));
 
     Map<Class<? extends Activity>, List<Activity>> activityMap = groupBy(activities);
     runModulesBuildActivities(project, context, compileNotification, activityMap);

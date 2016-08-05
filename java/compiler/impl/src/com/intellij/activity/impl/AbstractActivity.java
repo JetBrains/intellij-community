@@ -45,4 +45,9 @@ public abstract class AbstractActivity implements Activity {
   public void setDependsOn(@NotNull Collection<Activity> dependencies) {
     myDependencies = dependencies;
   }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
+  }
 }

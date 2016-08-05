@@ -15,6 +15,8 @@
  */
 package com.intellij.activity;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * An {@link Activity} represents a single atomic piece of work for IDE workflow, such as 'Make Project' or run configurations.
  *
@@ -22,4 +24,6 @@ package com.intellij.activity;
  * @since 7/13/2016
  */
 public interface Activity {
+  @NotNull
+  String getPresentableName();
 }
