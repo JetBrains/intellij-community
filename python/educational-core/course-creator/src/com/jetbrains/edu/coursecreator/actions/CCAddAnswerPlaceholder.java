@@ -2,6 +2,11 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -75,13 +80,64 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     TaskFile taskFile = state.getTaskFile();
     int index = taskFile.getAnswerPlaceholders().size();
     answerPlaceholder.setIndex(index);
-    taskFile.addAnswerPlaceholder(answerPlaceholder);
     answerPlaceholder.setTaskFile(taskFile);
     taskFile.sortAnswerPlaceholders();
-
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
-    EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, JBColor.BLUE);
-    EduAnswerPlaceholderPainter.createGuardedBlocks(editor, answerPlaceholder);
+    AddAction action = new AddAction(answerPlaceholder, taskFile, editor);
+    new WriteCommandAction(project, "Add Answer Placeholder") {
+      protected void run(@NotNull final Result result) throws Throwable {
+        action.redo();
+        UndoManager.getInstance(project).undoableActionPerformed(action);
+      }
+    }.execute();
+  }
+
+  static class AddAction extends BasicUndoableAction {
+    private final AnswerPlaceholder myPlaceholder;
+    private final TaskFile myTaskFile;
+    private final Editor myEditor;
+
+    public AddAction(AnswerPlaceholder placeholder, TaskFile taskFile, Editor editor) {
+      super(editor.getDocument());
+      myPlaceholder = placeholder;
+      myTaskFile = taskFile;
+      myEditor = editor;
+    }
+
+    @Override
+    public void undo() throws UnexpectedUndoException {
+      final List<AnswerPlaceholder> answerPlaceholders = myTaskFile.getAnswerPlaceholders();
+      if (answerPlaceholders.contains(myPlaceholder)) {
+        answerPlaceholders.remove(myPlaceholder);
+        myEditor.getMarkupModel().removeAllHighlighters();
+        StudyUtils.drawAllWindows(myEditor, myTaskFile);
+        EduAnswerPlaceholderPainter.createGuardedBlocks(myEditor, myTaskFile);
+      }
+    }
+
+    @Override
+    public void redo() throws UnexpectedUndoException {
+      myTaskFile.addAnswerPlaceholder(myPlaceholder);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(myEditor, myPlaceholder, JBColor.BLUE);
+      EduAnswerPlaceholderPainter.createGuardedBlocks(myEditor, myPlaceholder);
+    }
+  }
+
+  static class DeleteAction extends AddAction {
+
+    public DeleteAction(AnswerPlaceholder placeholder, TaskFile taskFile, Editor editor) {
+      super(placeholder, taskFile, editor);
+    }
+
+    @Override
+    public void undo() throws UnexpectedUndoException {
+      super.redo();
+    }
+
+    @Override
+    public void redo() throws UnexpectedUndoException {
+      super.undo();
+    }
   }
 
   @Override
@@ -97,19 +153,16 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
   private static void deletePlaceholder(@NotNull CCState state) {
     Project project = state.getProject();
-    PsiFile psiFile = state.getFile();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document == null) return;
     TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    final List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
-    if (answerPlaceholders.contains(answerPlaceholder)) {
-      answerPlaceholders.remove(answerPlaceholder);
-      final Editor editor = state.getEditor();
-      editor.getMarkupModel().removeAllHighlighters();
-      StudyUtils.drawAllWindows(editor, taskFile);
-      EduAnswerPlaceholderPainter.createGuardedBlocks(editor, taskFile);
-    }
+    DeleteAction action = new DeleteAction(answerPlaceholder, taskFile, state.getEditor());
+    new WriteCommandAction(project, "Delete Answer Placeholder") {
+      protected void run(@NotNull final Result result) throws Throwable {
+        action.redo();
+        UndoManager.getInstance(project).undoableActionPerformed(action);
+      }
+    }.execute();
+
   }
 
   @Override
