@@ -22,28 +22,22 @@ abstract public class StudyWindowNavigationAction extends StudyActionWithShortcu
   }
 
   private void navigateToPlaceholder(@NotNull final Project project) {
-      final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
-      if (selectedEditor != null) {
-        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-        final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
-        if (openedFile != null) {
-          final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
-          if (selectedTaskFile != null) {
-            final int offset = selectedEditor.getCaretModel().getOffset();
-            final AnswerPlaceholder targetPlaceholder = getTargetPlaceholder(selectedTaskFile, offset);
-            if (targetPlaceholder == null) {
-              return;
-            }
-            StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, targetPlaceholder);
-            selectedEditor.getSelectionModel().removeSelection();
-            }
+    final Editor selectedEditor = StudyUtils.getSelectedEditor(project);
+    if (selectedEditor != null) {
+      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      final VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+      if (openedFile != null) {
+        final TaskFile selectedTaskFile = StudyUtils.getTaskFile(project, openedFile);
+        if (selectedTaskFile != null) {
+          final int offset = selectedEditor.getCaretModel().getOffset();
+          final AnswerPlaceholder targetPlaceholder = getTargetPlaceholder(selectedTaskFile, offset);
+          if (targetPlaceholder == null) {
+            return;
           }
+          StudyNavigator.navigateToAnswerPlaceholder(selectedEditor, targetPlaceholder);
         }
       }
-
-  @Nullable
-  protected static AnswerPlaceholder getSelectedAnswerPlaceholder(@NotNull final TaskFile file, int offset) {
-    return file.getAnswerPlaceholder(offset);
+    }
   }
 
   @Nullable

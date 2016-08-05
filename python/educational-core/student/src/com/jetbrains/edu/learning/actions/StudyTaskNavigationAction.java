@@ -71,6 +71,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
 
     updateProjectView(project, shouldBeActive);
 
+    StudyUtils.selectFirstAnswerPlaceholder(StudyUtils.getSelectedStudyEditor(project), project);
     ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN);
     if (runToolWindow != null) {
       runToolWindow.hide(null);

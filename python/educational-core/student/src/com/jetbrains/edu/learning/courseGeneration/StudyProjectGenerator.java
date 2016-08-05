@@ -7,9 +7,11 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -184,9 +187,20 @@ public class StudyProjectGenerator {
       }
     }
     if (activeVirtualFile != null) {
-      final PsiFile file = PsiManager.getInstance(project).findFile(activeVirtualFile);
-      ProjectView.getInstance(project).select(file, activeVirtualFile, true);
-      FileEditorManager.getInstance(project).openFile(activeVirtualFile, true);
+      VirtualFile finalActiveVirtualFile = activeVirtualFile;
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+        final PsiFile file = PsiManager.getInstance(project).findFile(finalActiveVirtualFile);
+        ProjectView.getInstance(project).select(file, finalActiveVirtualFile, false);
+        final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(finalActiveVirtualFile);
+        if (editors.length == 0) {
+          return;
+        }
+        final FileEditor studyEditor = editors[0];
+        if (studyEditor instanceof StudyEditor) {
+          StudyUtils.selectFirstAnswerPlaceholder((StudyEditor)studyEditor, project);
+        }
+      });
+      FileEditorManager.getInstance(project).openFile(finalActiveVirtualFile, true);
     }
     else {
       String first = StudyUtils.getFirst(taskFiles.keySet());
