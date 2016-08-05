@@ -115,7 +115,7 @@ public class FormatterStarter extends ApplicationStarterEx {
     }
     try {
       fileSetFormatter.processFiles();
-      messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " files formatted.\n");
+      messageOutput.info("\n" + fileSetFormatter.getProcessedFiles() + " file(s) formatted.\n");
     }
     catch (IOException e) {
       fatalError(messageOutput, e.getLocalizedMessage());

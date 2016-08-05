@@ -86,14 +86,14 @@ public abstract class FileSetProcessor {
             throw new IOException("Can not find " + entry.getPath());
           }
           LOG.info("Processing " + virtualFile.getPath());
-          processFile(virtualFile);
-          myProcessedFiles++;
+          if (processFile(virtualFile)) myProcessedFiles++;
         }
       }
     }
   }
 
   private boolean matchesFileMask(@NotNull String name) {
+    if (myFileMasks.isEmpty()) return true;
     for (String fileMask : myFileMasks) {
       if (name.matches(fileMask)) {
         return true;
@@ -102,7 +102,7 @@ public abstract class FileSetProcessor {
     return false;
   }
 
-  protected abstract void processFile(@NotNull VirtualFile virtualFile);
+  protected abstract boolean processFile(@NotNull VirtualFile virtualFile);
 
   public int getProcessedFiles() {
     return myProcessedFiles;

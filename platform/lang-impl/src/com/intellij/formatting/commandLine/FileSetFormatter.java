@@ -16,9 +16,11 @@
 package com.intellij.formatting.commandLine;
 
 import com.intellij.formatting.FormatTextRanges;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -44,8 +46,14 @@ import java.io.IOException;
 import java.util.UUID;
 
 class FileSetFormatter extends FileSetProcessor {
+  private static final Logger LOG = Logger.getInstance("#" + FileSetFormatter.class.getName());
+
   private final static String PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format.";
   private final static String PROJECT_DIR_SUFFIX = ".tmp";
+
+  private final static String RESULT_MESSAGE_OK = "OK";
+  private final static String RESULT_MESSAGE_FAILED = "Failed";
+  private final static String RESULT_MESSAGE_NOT_SUPPORTED = "Skipped, not supported.";
 
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
@@ -99,26 +107,40 @@ class FileSetFormatter extends FileSetProcessor {
   }
 
   @Override
-  protected void processFile(@NotNull VirtualFile virtualFile) {
-    if (myProject != null) {
-      VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
-      myMessageOutput.info("Formatting " + virtualFile.getCanonicalPath() + "...");
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document != null) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
-        if (psiFile != null) {
+  protected boolean processFile(@NotNull VirtualFile virtualFile) {
+    String resultMessage = RESULT_MESSAGE_OK;
+    assert myProject != null;
+    VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
+    myMessageOutput.info("Formatting " + virtualFile.getCanonicalPath() + "...");
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
+      if (psiFile != null) {
+        if (isFormattingSupported(psiFile)) {
           reformatFile(myProject, psiFile, document);
+          FileDocumentManager.getInstance().saveDocument(document);
         }
-        FileDocumentManager.getInstance().saveDocument(document);
+        else {
+          resultMessage = RESULT_MESSAGE_NOT_SUPPORTED;
+        }
       }
-      FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-      VirtualFile[] openFiles = editorManager.getOpenFiles();
-      for (VirtualFile openFile : openFiles) {
-        editorManager.closeFile(openFile);
+      else {
+        LOG.warn("Unable to get a PSI file for " + virtualFile.getPath());
+        resultMessage = RESULT_MESSAGE_FAILED;
       }
-      myMessageOutput.info("OK\n");
     }
+    else {
+      LOG.warn("No document available for " + virtualFile.getPath());
+      resultMessage = RESULT_MESSAGE_FAILED;
+    }
+    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+    VirtualFile[] openFiles = editorManager.getOpenFiles();
+    for (VirtualFile openFile : openFiles) {
+      editorManager.closeFile(openFile);
+    }
+    myMessageOutput.info(resultMessage + "\n");
+    return RESULT_MESSAGE_OK.equals(resultMessage);
   }
 
   private void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
@@ -137,4 +159,7 @@ class FileSetFormatter extends FileSetProcessor {
     }
   }
 
+  private static boolean isFormattingSupported(@NotNull PsiFile file) {
+    return LanguageFormatting.INSTANCE.forContext(file) != null;
+  }
 }
