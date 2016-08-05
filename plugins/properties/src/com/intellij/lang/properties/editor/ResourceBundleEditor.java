@@ -374,7 +374,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-            propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+            !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
           myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
         } else {
           myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
