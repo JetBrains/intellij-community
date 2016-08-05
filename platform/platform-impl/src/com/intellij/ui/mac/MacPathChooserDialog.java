@@ -15,6 +15,10 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -82,7 +86,26 @@ public class MacPathChooserDialog implements PathChooserDialog {
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
     String path = toSelect != null ? toSelect.getCanonicalPath() : null;
     myFileDialog.setFile(path);
-    myFileDialog.setVisible(true);
+
+    final CommandProcessorEx commandProcessor =
+      ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
+    final boolean appStarted = commandProcessor != null;
+
+
+    if (appStarted) {
+      commandProcessor.enterModal();
+      LaterInvocator.enterModal(myFileDialog);
+    }
+
+    try {
+      myFileDialog.setVisible(true);
+    }
+    finally {
+      if (appStarted) {
+        commandProcessor.leaveModal();
+        LaterInvocator.leaveModal(myFileDialog);
+      }
+    }
 
     File[] files = myFileDialog.getFiles();
     List<VirtualFile> virtualFilesList = getChosenFiles(Stream.of(files));
