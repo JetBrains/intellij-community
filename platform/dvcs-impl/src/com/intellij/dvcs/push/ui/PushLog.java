@@ -62,7 +62,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
-  private static final String STOP_EDITING = "stopEditing";
+  private static final String CANCEL_EDITING = "cancelEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
@@ -214,13 +214,13 @@ public class PushLog extends JPanel implements DataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
-    myTree.getActionMap().put(STOP_EDITING, new AbstractAction() {
+    myTree.getActionMap().put(CANCEL_EDITING, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myTree.stopEditing();
+        myTree.cancelEditing();
       }
     });
-    myTree.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), STOP_EDITING);
+    myTree.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), CANCEL_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
     MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
