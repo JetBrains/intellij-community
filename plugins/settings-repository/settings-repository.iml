@@ -28,7 +28,6 @@
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="module-library">
       <library name="jackson">

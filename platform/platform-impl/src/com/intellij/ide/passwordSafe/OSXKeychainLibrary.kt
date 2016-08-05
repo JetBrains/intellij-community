@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.keychain
+package com.intellij.ide.passwordSafe
 
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.Pointer
@@ -52,8 +52,8 @@ interface OSXKeychainLibrary : com.sun.jna.Library {
 
     fun findGenericPassword(serviceName: ByteArray, accountName: String): String? {
       val accountNameBytes = accountName.toByteArray()
-      val passwordSize = IntArray(1);
-      val passwordData = arrayOf<Pointer?>(null);
+      val passwordSize = IntArray(1)
+      val passwordData = arrayOf<Pointer?>(null)
       checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, passwordData))
       val pointer = passwordData[0] ?: return null
 
@@ -89,10 +89,10 @@ interface OSXKeychainLibrary : com.sun.jna.Library {
 
     fun checkForError(message: String, code: Int) {
       if (code != 0 && code != /* errSecItemNotFound, always returned from find it seems */-25300) {
-        val translated = LIBRARY.SecCopyErrorMessageString(code, null);
+        val translated = LIBRARY.SecCopyErrorMessageString(code, null)
         val builder = StringBuilder(message).append(": ")
         if (translated == null) {
-          builder.append(code);
+          builder.append(code)
         }
         else {
           val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())

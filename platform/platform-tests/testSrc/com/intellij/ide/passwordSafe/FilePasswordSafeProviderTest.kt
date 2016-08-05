@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe
 
-import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import org.assertj.core.api.Assertions.assertThat

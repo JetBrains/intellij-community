@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.masterKey
+package com.intellij.ide.passwordSafe
 
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
@@ -130,6 +130,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
         val oldDb = ServiceManager.getService(PasswordDatabase::class.java)
         // old db contains at least one test key - skip it
         if (oldDb.myDatabase.size > 1) {
+          @Suppress("DEPRECATION")
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
             FilePasswordSafeProvider(newDb).save()

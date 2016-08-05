@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.passwordSafe.impl
 
+import com.intellij.ide.passwordSafe.FilePasswordSafeProvider
+import com.intellij.ide.passwordSafe.LOG
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
-import com.intellij.ide.passwordSafe.masterKey.LOG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 
