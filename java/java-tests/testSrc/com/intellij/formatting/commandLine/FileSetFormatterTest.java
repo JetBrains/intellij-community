@@ -43,6 +43,7 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
     MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));
     FileSetFormatter formatter = new FileSetFormatter(messageOutput);
     formatter.addEntry(fileSpec);
+    formatter.addFileMask("*.java");
     formatter.setRecursive();
     formatter.setCodeStyleSettings(settings);
     formatter.processFiles();

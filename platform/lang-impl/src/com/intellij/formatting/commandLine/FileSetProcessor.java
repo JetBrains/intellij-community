@@ -18,7 +18,7 @@ package com.intellij.formatting.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -28,7 +28,8 @@ import java.util.Set;
 public abstract class FileSetProcessor {
   private static final Logger LOG = Logger.getInstance("#" + FileSetProcessor.class.getName());
 
-  private Set<File> myTopEntries = new HashSet<>();
+  private Set<File> myTopEntries = ContainerUtil.newHashSet();
+  private Set<String> myFileMasks = ContainerUtil.newHashSet();
   private int myProcessedFiles;
   private boolean isRecursive;
 
@@ -40,6 +41,21 @@ public abstract class FileSetProcessor {
 
   public void setRecursive() {
     isRecursive = true;
+  }
+
+  public void addFileMask(@NotNull String fileMask) {
+    String fileMaskRegexp = fileMaskToRegexp(fileMask);
+    LOG.info("File mask regexp: " + fileMaskRegexp);
+    myFileMasks.add(fileMaskRegexp);
+  }
+
+  private static String fileMaskToRegexp(@NotNull String fileMask) {
+    return
+      fileMask
+        .replace(".", "\\.")
+        .replace("*", ".*")
+        .replace("?", ".")
+        .replace("+", "\\+");
   }
 
   public void addEntry(@NotNull String filePath) throws IOException {
@@ -64,15 +80,26 @@ public abstract class FileSetProcessor {
         }
       }
       else {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(entry);
-        if (virtualFile == null) {
-          throw new IOException("Can not find " + entry.getPath());
+        if (matchesFileMask(entry.getName())) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(entry);
+          if (virtualFile == null) {
+            throw new IOException("Can not find " + entry.getPath());
+          }
+          LOG.info("Processing " + virtualFile.getPath());
+          processFile(virtualFile);
+          myProcessedFiles++;
         }
-        LOG.info("Processing " + virtualFile.getPath());
-        processFile(virtualFile);
-        myProcessedFiles++;
       }
     }
+  }
+
+  private boolean matchesFileMask(@NotNull String name) {
+    for (String fileMask : myFileMasks) {
+      if (name.matches(fileMask)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected abstract void processFile(@NotNull VirtualFile virtualFile);

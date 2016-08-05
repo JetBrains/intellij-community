@@ -75,7 +75,7 @@ public class FormatterStarter extends ApplicationStarterEx {
           //noinspection AssignmentToForLoopParameter
           i ++;
           if (i >= args.length) {
-            fatalError(messageOutput, "Mising settings file path.");
+            fatalError(messageOutput, "Missing settings file path.");
           }
           try {
             CodeStyleSettings settings = readSettings(args[i]);
@@ -87,6 +87,18 @@ public class FormatterStarter extends ApplicationStarterEx {
         }
         else if (checkOption(args[i], "-r", "-R")) {
           fileSetFormatter.setRecursive();
+        }
+        else if (checkOption(args[i], "-m", "-mask")) {
+          //noinspection AssignmentToForLoopParameter
+          i ++;
+          if (i >= args.length) {
+            fatalError(messageOutput, "Missing file mask(s).");
+          }
+          for (String mask : args[i].split(",")) {
+            if (!mask.isEmpty()) {
+              fileSetFormatter.addFileMask(mask);
+            }
+          }
         }
         else {
           fatalError(messageOutput, "Unknown option " + args[i]);
@@ -143,6 +155,7 @@ public class FormatterStarter extends ApplicationStarterEx {
     messageOutput.info("  -h|-help       Show a help message and exit.");
     messageOutput.info("  -s|-settings   A path to Intellij IDEA code style settings .xml file.\n");
     messageOutput.info("  -r|-R          Scan directories recursively.\n");
+    messageOutput.info("  -m|-mask       A comma-separated list of file masks.");
     messageOutput.info("  path<n>        A path to a file or a directory.\n");
     System.exit(0);
   }
