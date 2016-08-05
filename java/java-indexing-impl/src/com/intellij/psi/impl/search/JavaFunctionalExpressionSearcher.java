@@ -124,15 +124,47 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           continue;
         }
 
-        if (InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType()), samClass, true)) {
-          if (!consumer.process(expression)) {
-            return false;
-          }
+        if (hasType(samClass, expression) && !consumer.process(expression)) {
+          return false;
         }
       }
 
       return true;
     });
+  }
+
+  private static boolean hasType(PsiClass samClass, PsiFunctionalExpression expression) {
+    if (!canHaveType(expression, samClass)) return false;
+
+    return InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(expression.getFunctionalInterfaceType()), samClass, true);
+  }
+
+  private static boolean canHaveType(PsiFunctionalExpression expression, PsiClass samClass) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+      int argIndex = Arrays.asList(((PsiExpressionList)parent).getExpressions()).indexOf(expression);
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent.getParent()).getMethodExpression();
+      PsiExpression qualifier = methodExpression.getQualifierExpression();
+      String methodName = methodExpression.getReferenceName();
+      if (qualifier != null && methodName != null && argIndex >= 0) {
+        Set<PsiClass> approximateTypes = ApproximateResolver.getPossibleTypes(qualifier, 10);
+        return approximateTypes == null || hasMethodWithSamCompatibleParameter(approximateTypes, methodName, argIndex, samClass);
+      }
+    }
+    return true;
+  }
+
+  private static boolean hasMethodWithSamCompatibleParameter(Set<PsiClass> qualifierClasses, String methodName, int argIndex, PsiClass samClass) {
+    for (PsiClass qualifierClass : qualifierClasses) {
+      for (PsiMethod method : qualifierClass.findMethodsByName(methodName, true)) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
+        if (paramIndex < parameters.length && canPassFunctionalExpression(samClass, parameters[paramIndex])) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
