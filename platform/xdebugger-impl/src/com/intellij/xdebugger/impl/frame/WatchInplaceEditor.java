@@ -22,11 +22,8 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author nik
@@ -39,9 +36,8 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
                             XWatchesView watchesView,
                             WatchNode node,
-                            @NonNls String historyId,
                             @Nullable WatchNode oldNode) {
-    super((XDebuggerTreeNode)node, historyId);
+    super((XDebuggerTreeNode)node, "watch");
     myRootNode = rootNode;
     myWatchesView = watchesView;
     myOldNode = oldNode;
@@ -49,30 +45,24 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   }
 
   @Override
-  protected JComponent createInplaceEditorComponent() {
-    return myExpressionEditor.getComponent();
-  }
-
-  @Override
   public void cancelEditing() {
     if (!isShown()) return;
     super.cancelEditing();
-    int index = myRootNode.getIndex(getNode());
+    int index = myRootNode.getIndex(myNode);
     if (myOldNode == null && index != -1) {
-      myRootNode.removeChildNode(getNode());
+      myRootNode.removeChildNode(myNode);
     }
-    TreeUtil.selectNode(myTree, getNode());
+    TreeUtil.selectNode(myTree, myNode);
   }
 
   @Override
   public void doOKAction() {
-    XExpression expression = myExpressionEditor.getExpression();
-    myExpressionEditor.saveTextInHistory();
+    XExpression expression = getExpression();
     super.doOKAction();
-    int index = myRootNode.removeChildNode(getNode());
+    int index = myRootNode.removeChildNode(myNode);
     if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
-    TreeUtil.selectNode(myTree, getNode());
+    TreeUtil.selectNode(myTree, myNode);
   }
 }

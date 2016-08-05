@@ -44,6 +44,7 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -407,5 +408,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     });
+  }
+
+  public boolean isDetached() {
+    return DataManager.getInstance().getDataContext(this).getData(XDebugSessionTab.TAB_KEY) == null;
   }
 }

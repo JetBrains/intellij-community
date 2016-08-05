@@ -48,7 +48,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myEditorPanel = new JPanel();
     myEditorPanel.setLayout(new BorderLayout(0, 0));
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
-    nameLabel.setIcon(getNode().getIcon());
+    nameLabel.setIcon(myNode.getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     XValuePresentation presentation = node.getValuePresentation();
     if (presentation != null) {
@@ -90,10 +90,8 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void doOKAction() {
     if (myModifier == null) return;
 
-    myExpressionEditor.saveTextInHistory();
-
-    DebuggerUIUtil.setTreeNodeValue(myValueNode, myExpressionEditor.getExpression().getExpression(), errorMessage -> {
-      Editor editor = myExpressionEditor.getEditor();
+    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression().getExpression(), errorMessage -> {
+      Editor editor = getEditor();
       if (editor != null) {
         HintManager.getInstance().showErrorHint(editor, errorMessage);
       }

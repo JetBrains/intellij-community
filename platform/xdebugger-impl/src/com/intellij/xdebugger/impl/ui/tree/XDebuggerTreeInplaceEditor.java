@@ -34,7 +34,7 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
-  private final XDebuggerTreeNode myNode;
+  protected final XDebuggerTreeNode myNode;
   protected final XDebuggerExpressionComboBox myExpressionEditor;
   protected final XDebuggerTree myTree;
 
@@ -42,6 +42,11 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     myNode = node;
     myTree = myNode.getTree();
     myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition(), false);
+  }
+
+  @Override
+  protected JComponent createInplaceEditorComponent() {
+    return myExpressionEditor.getComponent();
   }
 
   @Override
@@ -62,6 +67,12 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
       }
     }
     doOKAction();
+  }
+
+  @Override
+  public void doOKAction() {
+    myExpressionEditor.saveTextInHistory();
+    super.doOKAction();
   }
 
   @Override
@@ -101,13 +112,13 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     }
   }
 
+  protected XExpression getExpression() {
+    return myExpressionEditor.getExpression();
+  }
+
   @Override
   protected JComponent getPreferredFocusedComponent() {
     return myExpressionEditor.getPreferredFocusedComponent();
-  }
-
-  public XDebuggerTreeNode getNode() {
-    return myNode;
   }
 
   @Override
@@ -126,8 +137,8 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   }
 
   @Override
-  protected JTree getTree() {
-    return myNode.getTree();
+  protected XDebuggerTree getTree() {
+    return myTree;
   }
 
   @Override

@@ -203,6 +203,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     else {
       messageNode = node;
     }
-    new WatchInplaceEditor(this, myWatchesView, messageNode, "watch", node).show();
+    new WatchInplaceEditor(this, myWatchesView, messageNode, node).show();
   }
 }

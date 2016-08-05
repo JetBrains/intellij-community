@@ -160,6 +160,10 @@
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
       </action>
+      <action id="Debugger.EditCustomField" class="com.intellij.debugger.actions.EditCustomFieldAction" use-shortcut-of="XDebugger.SetValue">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
+      </action>
       <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
