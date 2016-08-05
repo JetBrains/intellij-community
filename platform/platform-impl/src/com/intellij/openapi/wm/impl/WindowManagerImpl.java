@@ -115,6 +115,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private final WindowAdapter myActivationListener;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
+  private final WindowScalingManager myWindowScalingManager;
 
   /**
    * invoked by reflection
@@ -140,6 +141,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
     myCommandProcessor = new CommandProcessor();
     myWindowWatcher = new WindowWatcher();
+    myWindowScalingManager = new WindowScalingManager();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
     myLayout = new DesktopLayout();
@@ -189,6 +191,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
         }
       }, AWTEvent.CONTAINER_EVENT_MASK, application);
     }
+  }
+
+  @Override
+  public void rescaleFrames(float scaleFactor) {
+    myWindowScalingManager.rescaleFrames(scaleFactor);
   }
 
   @Override
