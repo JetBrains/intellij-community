@@ -166,6 +166,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
   }
 
+  @Override
   public boolean isIndexed(int commit) {
     try {
       return myMessagesIndex.get(commit) != null &&

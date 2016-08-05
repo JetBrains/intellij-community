@@ -25,6 +25,8 @@ import java.util.Set;
 public interface VcsLogIndex {
   void scheduleIndex(boolean full);
 
+  boolean isIndexed(int commit);
+
   void markForIndexing(int commit, @NotNull VirtualFile root);
 
   boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters);

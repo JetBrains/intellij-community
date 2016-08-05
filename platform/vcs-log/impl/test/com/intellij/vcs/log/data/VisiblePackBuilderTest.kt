@@ -248,6 +248,10 @@ class VisiblePackBuilderTest {
   }
 
   class EmptyIndex : VcsLogIndex {
+    override fun isIndexed(commit: Int): Boolean {
+      return false
+    }
+
     override fun canFilter(filters: MutableList<VcsLogDetailsFilter>): Boolean {
       return false
     }
