@@ -1,7 +1,6 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -20,27 +19,20 @@ fun <T> MutablePicoContainer.replaceComponent(componentInterface: Class<T>, comp
 class FileLoggerTest : PlatformTestCase() {
     private lateinit var dir: File
     private lateinit var logFile: File
-    private lateinit var oldPathProvider: FilePathProvider
-    private lateinit var pico: MutablePicoContainer
+    
+    private lateinit var pathProvider: FilePathProvider
 
     override fun setUp() {
         super.setUp()
         dir = createTempDirectory()
         logFile = File(dir, "unique_1")
         
-        val mockPathProvider = mock(FilePathProvider::class.java)
-        `when`(mockPathProvider.getStatsDataDirectory()).thenReturn(dir)
-        `when`(mockPathProvider.getUniqueFile()).thenReturn(logFile)
-        
-        pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-        
-        val name = FilePathProvider::class.java.name
-        oldPathProvider = pico.getComponentInstance(name) as FilePathProvider
-        pico.replaceComponent(FilePathProvider::class.java, mockPathProvider)
+        pathProvider = mock(FilePathProvider::class.java)
+        `when`(pathProvider.getStatsDataDirectory()).thenReturn(dir)
+        `when`(pathProvider.getUniqueFile()).thenReturn(logFile)
     }
 
     override fun tearDown() {
-        pico.replaceComponent(FilePathProvider::class.java, oldPathProvider)
         dir.deleteRecursively()
         super.tearDown()
     }
@@ -50,7 +42,7 @@ class FileLoggerTest : PlatformTestCase() {
     fun testLogging() {
         val fileLengthBefore = logFile.length()
         
-        val logFileManager = LogFileManagerImpl(FilePathProvider.getInstance())
+        val logFileManager = LogFileManagerImpl(pathProvider)
         val loggerProvider = CompletionFileLoggerProvider(logFileManager)
         val logger = loggerProvider.newCompletionLogger()
         val lookup = mock(LookupImpl::class.java)
