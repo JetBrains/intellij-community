@@ -86,30 +86,12 @@ public abstract class RainbowVisitor implements HighlightVisitor {
                                   @NotNull PsiElement rainbowElement,
                                   @NotNull String id,
                                   @Nullable TextAttributesKey colorKey) {
-    HashMap<String, Integer> id2index = USED_COLORS.getValue(context);
-    Integer colorIndex = id2index.get(id);
-    if (colorIndex == null) {
-      colorIndex = Math.abs(StringHash.murmur(id, 0x55AA));
-
-      Map<Integer, Integer> index2usage = new HashMap<Integer, Integer>();
-      id2index.values().forEach(i -> {
-        Integer useCount = index2usage.get(i);
-        index2usage.put(i, useCount == null ? 1 : ++useCount);
-      });
-
-      int colorsCount = getHighlighter().getColorsCount();
-      out:
-      for (int cutoff = 0; ; ++cutoff) {
-        for (int i = 0; i < colorsCount; ++i) {
-          colorIndex %= colorsCount;
-          Integer useCount = index2usage.get(colorIndex % colorsCount);
-          if (useCount == null) useCount = 0;
-          if (useCount == cutoff) break out;
-          ++colorIndex;
-        }
-      }
-      id2index.put(id, colorIndex);
-    }
-    return getHighlighter().getInfo(colorIndex, rainbowElement, colorKey);
+    return getHighlighter()
+      .getInfo(getHighlighter().getColorIndex(
+                   USED_COLORS.getValue(context),
+                   id,
+                   RainbowHighlighter.getRainbowHash(id)),
+               rainbowElement,
+               colorKey);
   }
 }

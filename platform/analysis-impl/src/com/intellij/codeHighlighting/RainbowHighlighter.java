@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
@@ -34,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RainbowHighlighter {
@@ -47,6 +50,7 @@ public class RainbowHighlighter {
   @NotNull private final TextAttributesScheme myColorsScheme;
   @NotNull private final List<Color> myRainbowColors;
   public final static String RAINBOW_TYPE = "rainbow";
+  private final static String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
 
   public RainbowHighlighter(@Nullable TextAttributesScheme colorsScheme) {
     myColorsScheme = colorsScheme != null ? colorsScheme : EditorColorsManager.getInstance().getGlobalScheme();
@@ -85,7 +89,9 @@ public class RainbowHighlighter {
 
     return ColorGenerator.generateLinearColorSequence(getRainbowKeys()
                                                         .stream()
-                                                        .map(key -> colorsScheme.getAttributes(key).getForegroundColor())
+                                                        .map(key ->
+                                                               colorsScheme.getAttributes(key).getForegroundColor()
+                                                        )
                                                         .collect(Collectors.toList()),
                                                       RAINBOW_COLORS_BETWEEN);
   }
@@ -103,10 +109,64 @@ public class RainbowHighlighter {
     return RAINBOW_COLOR_KEYS;
   }
 
+  public static int getRainbowHash(@NotNull String id) {
+    return StringHash.murmur(id, 0x55AA);
+  }
+
+  @NotNull
+  public List<TextAttributesKey> getRainbowTempKeys() {
+    int[] index = {0};
+    return myRainbowColors
+        .stream()
+        .map(color -> {
+          TextAttributesKey key = TextAttributesKey.createTextAttributesKey(RAINBOW_TEMP_PREF + index[0]++, new TextAttributes());
+          key.getDefaultAttributes().setForegroundColor(color);
+          return key;
+        })
+        .collect(Collectors.toList());
+  }
+
+  public static boolean isRainbowTempKey(TextAttributesKey key) {
+    return key.getExternalName().startsWith(RAINBOW_TEMP_PREF);
+  }
+
   public HighlightInfo getInfo(int colorIndex, @Nullable PsiElement id, @Nullable TextAttributesKey colorKey) {
-    if (id == null) {
-      return null;
+    return id == null ? null : getInfoBuilder(colorIndex, colorKey).range(id).create();
+  }
+
+  public HighlightInfo getInfo(int colorIndex, int start, int end, @Nullable TextAttributesKey colorKey) {
+    return getInfoBuilder(colorIndex, colorKey).range(start, end).create();
+  }
+
+  public int getColorIndex(HashMap<String, Integer> id2index, @NotNull String id, int idHash) {
+    Integer colorIndex = id2index.get(id);
+    if (colorIndex == null) {
+      colorIndex = Math.abs(idHash);
+
+      Map<Integer, Integer> index2usage = new HashMap<Integer, Integer>();
+      id2index.values().forEach(i -> {
+        Integer useCount = index2usage.get(i);
+        index2usage.put(i, useCount == null ? 1 : ++useCount);
+      });
+
+      int colorsCount = getColorsCount();
+      out:
+      for (int cutoff = 0; ; ++cutoff) {
+        for (int i = 0; i < colorsCount; ++i) {
+          colorIndex %= colorsCount;
+          Integer useCount = index2usage.get(colorIndex % colorsCount);
+          if (useCount == null) useCount = 0;
+          if (useCount == cutoff) break out;
+          ++colorIndex;
+        }
+      }
+      id2index.put(id, colorIndex);
     }
+    return colorIndex;
+  }
+
+  @NotNull
+  protected HighlightInfo.Builder getInfoBuilder(int colorIndex, @Nullable TextAttributesKey colorKey) {
     if (colorKey == null) {
       colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
     }
@@ -116,8 +176,6 @@ public class RainbowHighlighter {
                         .fromFlyweight(myColorsScheme
                                          .getAttributes(colorKey)
                                          .getFlyweight()
-                                         .withForeground(calculateForeground(colorIndex))))
-      .range(id)
-      .create();
+                                         .withForeground(calculateForeground(colorIndex))));
   }
 }

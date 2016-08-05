@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,30 +109,28 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
     updatePreviewPanel(descriptor);
   }
 
-  private void addRainbowHighlighting(DocumentEx document, @NotNull List<HighlightData> data) {
-    List<TextAttributesKey> keys = RainbowHighlighter.getRainbowKeys();
-    if (!keys.isEmpty()) {
-      List<HighlightData> newData = new ArrayList<HighlightData>();
-      int i = 0;
+  private void addRainbowHighlighting(@NotNull DocumentEx document,
+                                      @NotNull List<HighlightData> showLineData,
+                                      @NotNull List<HighlightData> data,
+                                      @NotNull RainbowHighlighter rainbowHighlighter,
+                                      @NotNull List<TextAttributesKey> rainbowTempKeys) {
+    if (!rainbowTempKeys.isEmpty()) {
+      List<HighlightData> newData = new ArrayList<HighlightData>(showLineData);
       HashMap<String, Integer> id2index = new HashMap<String, Integer>();
+
       for (HighlightData d : data) {
         if (((RainbowColorSettingsPage)myPage).isRainbowType(d.getHighlightKey())) {
-          // sequential approach for color selection
           String id = document.getText(TextRange.create(d.getStartOffset(), d.getEndOffset()));
-          Integer index = id2index.get(id);
-          if (index == null) {
-            index = i++ % keys.size();
-            id2index.put(id, index);
-          }
-          TextAttributesKey type = keys.get(index);
 
-          HighlightData rainbow = new HighlightData(d.getStartOffset(), d.getEndOffset(), type);
+          int index = rainbowHighlighter.getColorIndex(id2index, id, RainbowHighlighter.getRainbowHash(id));
+          HighlightData rainbow = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys.get(index));
+
           //fixme: twisted coloring in editor. We need add rainbow-tag twice.
           newData.add(rainbow);
           newData.add(d);
           newData.add(rainbow);
         }
-        else {
+        else if (!RainbowHighlighter.isRainbowTempKey(d.getHighlightKey())) {
           newData.add(d);
         }
       }
@@ -170,18 +169,47 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
     if (myActive == myRainbowPanel
         && myPage instanceof RainbowColorSettingsPage
         && descriptor instanceof RainbowAttributeDescriptor) {
-      simpleEditorPreview.setDemoText(((RainbowColorSettingsPage)myPage).getRainbowDemoText());
-      List<HighlightData> highlightDatas = simpleEditorPreview.getHighlightDataForExtension();
       if (myRainbowPanel.myGlobalState.isRainbowOn) {
-        addRainbowHighlighting(simpleEditorPreview.getEditor().getDocument(), highlightDatas);
+        RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
+        List<TextAttributesKey> tempKeys = highlighter.getRainbowTempKeys();
+        Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
+        simpleEditorPreview.setDemoText(demo.first + "\n" + ((RainbowColorSettingsPage)myPage).getRainbowDemoText());
+        addRainbowHighlighting(simpleEditorPreview.getEditor().getDocument(),
+                               demo.second,
+                               simpleEditorPreview.getHighlightDataForExtension(),
+                               highlighter,
+                               tempKeys);
       }
       else {
-        removeRainbowHighlighting(highlightDatas);
+        simpleEditorPreview.setDemoText(((RainbowColorSettingsPage)myPage).getRainbowDemoText());
+        removeRainbowHighlighting(simpleEditorPreview.getHighlightDataForExtension());
       }
     }
     else {
       simpleEditorPreview.setDemoText(myPage.getDemoText());
     }
+  }
+
+  @NotNull
+  private static Pair<String, List<HighlightData>> getColorDemoLine(RainbowHighlighter highlighter, List<TextAttributesKey> tempKeys) {
+    int colorsCount = highlighter.getColorsCount();
+    int stopCount = RainbowHighlighter.getRainbowKeys().size();
+    List<HighlightData> markup = new ArrayList<HighlightData>(colorsCount);
+    StringBuilder sb = new StringBuilder();
+    int pos = 0;
+    int i = 0;
+    for (TextAttributesKey key : tempKeys) {
+      String toAdd = (i % stopCount == 0) ? "Stop#" + String.valueOf(i / stopCount + 1) : "T";
+      int end = pos + toAdd.length();
+      markup.add(new HighlightData(pos, end, key));
+      if (sb.length() != 0) {
+        sb.append(" ");
+      }
+      sb.append(toAdd);
+      pos = end + 1;
+      ++i;
+    }
+    return Pair.create(sb.toString(), markup);
   }
 
   @Override
