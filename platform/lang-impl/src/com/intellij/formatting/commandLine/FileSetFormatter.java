@@ -54,6 +54,7 @@ class FileSetFormatter extends FileSetProcessor {
   private final static String RESULT_MESSAGE_OK = "OK";
   private final static String RESULT_MESSAGE_FAILED = "Failed";
   private final static String RESULT_MESSAGE_NOT_SUPPORTED = "Skipped, not supported.";
+  private final static String RESULT_MESSAGE_BINARY_FILE = "Skipped, binary file.";
 
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
@@ -112,32 +113,37 @@ class FileSetFormatter extends FileSetProcessor {
     assert myProject != null;
     VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile);
     myMessageOutput.info("Formatting " + virtualFile.getCanonicalPath() + "...");
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
-      if (psiFile != null) {
-        if (isFormattingSupported(psiFile)) {
-          reformatFile(myProject, psiFile, document);
-          FileDocumentManager.getInstance().saveDocument(document);
+    if (!virtualFile.getFileType().isBinary()) {
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      if (document != null) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
+        if (psiFile != null) {
+          if (isFormattingSupported(psiFile)) {
+            reformatFile(myProject, psiFile, document);
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+          else {
+            resultMessage = RESULT_MESSAGE_NOT_SUPPORTED;
+          }
         }
         else {
-          resultMessage = RESULT_MESSAGE_NOT_SUPPORTED;
+          LOG.warn("Unable to get a PSI file for " + virtualFile.getPath());
+          resultMessage = RESULT_MESSAGE_FAILED;
         }
       }
       else {
-        LOG.warn("Unable to get a PSI file for " + virtualFile.getPath());
+        LOG.warn("No document available for " + virtualFile.getPath());
         resultMessage = RESULT_MESSAGE_FAILED;
+      }
+      FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+      VirtualFile[] openFiles = editorManager.getOpenFiles();
+      for (VirtualFile openFile : openFiles) {
+        editorManager.closeFile(openFile);
       }
     }
     else {
-      LOG.warn("No document available for " + virtualFile.getPath());
-      resultMessage = RESULT_MESSAGE_FAILED;
-    }
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      editorManager.closeFile(openFile);
+      resultMessage = RESULT_MESSAGE_BINARY_FILE;
     }
     myMessageOutput.info(resultMessage + "\n");
     return RESULT_MESSAGE_OK.equals(resultMessage);
