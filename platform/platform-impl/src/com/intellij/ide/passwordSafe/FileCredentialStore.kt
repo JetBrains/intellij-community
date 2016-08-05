@@ -155,6 +155,12 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
       needToSave.set(true)
     }
   }
+
+  fun copyTo(store: PasswordStorage) {
+    for ((k, v) in db) {
+      store.setPassword(k, v)
+    }
+  }
 }
 
 internal fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
