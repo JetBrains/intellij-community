@@ -20,22 +20,22 @@ import java.util.*
 
 
 internal class FormatRangesStorage {
-  private val rangesByStartOffset = TreeMap<Int, FormatTextRange>()
+  private val rangesByStartOffset: MutableList<FormatTextRange> = ArrayList()
 
   fun add(range: TextRange, processHeadingWhitespace: Boolean) {
     val formatRange = FormatTextRange(range, processHeadingWhitespace)
-    rangesByStartOffset.put(formatRange.startOffset, formatRange)
+    rangesByStartOffset.add(formatRange)
   }
   
   fun isWhiteSpaceReadOnly(range: TextRange): Boolean {
-    return rangesByStartOffset.values.find { !it.isWhitespaceReadOnly(range) } == null
+    return rangesByStartOffset.find { !it.isWhitespaceReadOnly(range) } == null
   }
   
   fun isReadOnly(range: TextRange): Boolean {
-    return rangesByStartOffset.values.find { !it.isReadOnly(range) } == null
+    return rangesByStartOffset.find { !it.isReadOnly(range) } == null
   }
   
-  fun getRanges(): List<FormatTextRange> = rangesByStartOffset.values.toList()
+  fun getRanges(): List<FormatTextRange> = rangesByStartOffset
   
   fun isEmpty() = rangesByStartOffset.isEmpty()
   
