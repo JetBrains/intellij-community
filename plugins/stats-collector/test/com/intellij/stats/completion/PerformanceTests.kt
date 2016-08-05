@@ -2,8 +2,9 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.testFramework.UsefulTestCase
+import org.mockito.Matchers
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -33,9 +34,6 @@ class Test {
         path = createTempFile("x.txt").absolutePath
         tmpPath = createTempFile("xtmp.txt").absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
-//        `when`(mockPathProvider.statsFilePath).thenReturn(path)
-//        `when`(mockPathProvider.swapFile).thenReturn(tmpPath)
-        
         
         oldPathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
         container.replaceComponent(FilePathProvider::class.java, mockPathProvider)
@@ -58,36 +56,23 @@ class Test {
         myFixture.configureByText("Test.java", text)
         myFixture.addClass(runnable)
 
-
-        val urlProvider = ServiceManager.getService(UrlProvider::class.java)
+        
         val requestService = mock(RequestService::class.java)
+        `when`(requestService.post(Matchers.anyString(), Matchers.any<Map<String, String>>())).then { 
+            Thread.sleep(5000)
+            ResponseData(200)
+        }
         
-        
-//        val requestService: RequestService = object : RequestService() {
-//            override fun post(url: String, params: Map<String, String>): ResponseData {
-//                Thread.sleep(5000)
-//                return ResponseData(200)
-//            }
-//
-//            override fun post(url: String, file: File): ResponseData? {
-//                throw UnsupportedOperationException()
-//            }
-//
-//            override fun get(url: String): ResponseData? {
-//                throw UnsupportedOperationException()
-//            }
-//        }
         
         val file = File(path)
         file.writeText("Some existing data to send")
 
-
         val filePathProvider = mock(FilePathProvider::class.java)
 
-        val sender = StatisticSender(urlProvider, requestService, filePathProvider)
+        val sender = StatisticSender(requestService, filePathProvider)
         
         ApplicationManager.getApplication().executeOnPooledThread { 
-            sender.sendStatsData()
+            sender.sendStatsData("")
         }
         Thread.sleep(300)
         
