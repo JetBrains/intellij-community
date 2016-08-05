@@ -71,8 +71,9 @@ public class PyStudyInterpreterInspection extends PyInspection {
         final Module module = ModuleUtilCore.findModuleForPsiElement(node);
         if (module != null) {
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
+          if (sdk == null) return;
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-          if (sdk == null || flavor == null) return;
+          if (flavor == null) return;
           final String versionString = flavor.getVersionString(sdk.getHomePath());
           if (versionString == null) return;
           final String prefix = flavor.getName() + " ";
