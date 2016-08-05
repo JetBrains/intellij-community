@@ -124,6 +124,8 @@ public class HgHistoryUtil {
                                     strings -> {
                                       HgCommandResult logResult =
                                         getLogResult(project, root, version, limit, strings, HgChangesetUtil.makeTemplate(templates));
+                                      if (logResult == null) return Collections.emptyList();
+                                      if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
                                       return createFullCommitsFromResult(project, root, logResult, version, silent);
                                     });
   }
