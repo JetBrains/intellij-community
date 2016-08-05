@@ -15,7 +15,7 @@
  */
 package org.jetbrains.keychain
 
-import com.intellij.ide.passwordSafe.OSXKeychainLibrary
+import com.intellij.ide.passwordSafe.MacOsKeychainLibrary
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
 
@@ -39,7 +39,7 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
       return credentials
     }
 
-    val data = OSXKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName) ?: return null
+    val data = MacOsKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName) ?: return null
     if (sshKeyFile == null) {
       val separatorIndex = data.indexOf('@')
       if (separatorIndex > 0) {
@@ -73,12 +73,12 @@ class OsXCredentialsStore(serviceName: String) : CredentialsStore {
     }
 
     val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.id)}@${PasswordUtil.encodePassword(credentials.token)}" else credentials.token!!
-    OSXKeychainLibrary.saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
+    MacOsKeychainLibrary.saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
   }
 
   override fun reset(host: String) {
     if (accountToCredentials.remove(host) != null) {
-      OSXKeychainLibrary.deleteGenericPassword(serviceName, host)
+      MacOsKeychainLibrary.deleteGenericPassword(serviceName, host)
     }
   }
 }
