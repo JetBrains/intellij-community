@@ -328,4 +328,8 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyShadowingNamesInspection() {
     doHighlightingTest(PyShadowingNamesInspection.class);
   }
+
+  public void testPyDunderSlotsInspection() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
+  }
 }
