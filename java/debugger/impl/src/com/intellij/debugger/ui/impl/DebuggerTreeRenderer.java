@@ -20,6 +20,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.ChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundNodeRenderer;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -124,12 +128,21 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (valueDescriptor.isPrimitive()) {
       nodeIcon = AllIcons.Debugger.Db_primitive;
     }
+    else if (valueDescriptor instanceof WatchItemDescriptor) {
+      nodeIcon = AllIcons.Debugger.Watch;
+    }
     else {
-      if (valueDescriptor instanceof WatchItemDescriptor) {
-        nodeIcon = AllIcons.Debugger.Watch;
-      }
-      else {
-        nodeIcon = AllIcons.Debugger.Value;
+      nodeIcon = AllIcons.Debugger.Value;
+    }
+
+    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
+      Renderer renderer = ((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor().getLastRenderer();
+      if (renderer instanceof CompoundNodeRenderer) {
+        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
+        if (childrenRenderer instanceof EnumerationChildrenRenderer &&
+            ((EnumerationChildrenRenderer)childrenRenderer).isAppendDefaultChildren()) {
+          nodeIcon = AllIcons.Debugger.Watch;
+        }
       }
     }
 
