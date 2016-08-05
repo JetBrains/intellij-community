@@ -2,6 +2,10 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -22,6 +26,14 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
     TaskFile taskFile = StudyUtils.getTaskFile(project, file);
     if (taskFile == null) {
       return;
+    }
+    if (!taskFile.getAnswerPlaceholders().isEmpty() && FileEditorManager.getInstance(project).isFileOpen(file)) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(file)) {
+        if (fileEditor instanceof PsiAwareTextEditorImpl) {
+          Editor editor = ((PsiAwareTextEditorImpl)fileEditor).getEditor();
+          editor.getMarkupModel().removeAllHighlighters();
+        }
+      }
     }
     String name = file.getName();
     VirtualFile patternFile = StudyUtils.getPatternFile(taskFile, name);
