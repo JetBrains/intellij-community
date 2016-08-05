@@ -22,16 +22,14 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     private val sendInterval = 5 * Time.MINUTE
 
     private fun send() {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
-            try {
-                sender.sendStatsData()
-            }
-            catch (e: Exception) {
-                LOG.error(e.message)
-            }
-            finally {
-                alarm.addRequest({ send() }, sendInterval)
-            }
+        if (ApplicationManager.getApplication().isUnitTestMode) return
+
+        try {
+            sender.sendStatsData()
+        } catch (e: Exception) {
+            LOG.error(e.message)
+        } finally {
+            alarm.addRequest({ send() }, sendInterval)
         }
     }
     
