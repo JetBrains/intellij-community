@@ -1667,8 +1667,8 @@ public class ControlFlowUtil {
     }
 
     MyVisitor visitor = new MyVisitor();
-    depthFirstSearch(flow, visitor, 0, flow.getSize());
-    return visitor.getResult().booleanValue();
+    depthFirstSearch(flow, visitor, 0, flow.getSize()); // traverse the graph, store the graph edges in visitor.graph
+    return visitor.getResult().booleanValue(); // traverse the visitor.graph starting with the startOffset
   }
 
   public static boolean isVariableAssignedInLoop(@NotNull PsiReferenceExpression expression, PsiElement resolved) {
