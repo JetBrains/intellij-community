@@ -27,16 +27,16 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   private @Volatile var currentProvider: PasswordStorage
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { FilePasswordSafeProvider(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { FileCredentialStore(emptyMap(), memoryOnly = true) }
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
   val isNativeCredentialStoreUsed: Boolean
-      get() = currentProvider !is FilePasswordSafeProvider
+      get() = currentProvider !is FileCredentialStore
 
   init {
     if (settings.providerType == ProviderType.MEMORY_ONLY) {
-      currentProvider = FilePasswordSafeProvider(memoryOnly = true)
+      currentProvider = FileCredentialStore(memoryOnly = true)
     }
     else {
       currentProvider = createPersistentCredentialStore()
@@ -47,16 +47,16 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
         val memoryOnly = newValue == ProviderType.MEMORY_ONLY
         if (memoryOnly) {
           val provider = currentProvider
-          if (provider is FilePasswordSafeProvider) {
+          if (provider is FileCredentialStore) {
             provider.memoryOnly = true
             provider.deleteFileStorage()
           }
           else {
-            currentProvider = FilePasswordSafeProvider(memoryOnly = true)
+            currentProvider = FileCredentialStore(memoryOnly = true)
           }
         }
         else {
-          currentProvider = createPersistentCredentialStore(currentProvider as? FilePasswordSafeProvider)
+          currentProvider = createPersistentCredentialStore(currentProvider as? FileCredentialStore)
         }
       }
     })
@@ -94,7 +94,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   }
 
   override fun save() {
-    (currentProvider as? FilePasswordSafeProvider)?.let { it.save() }
+    (currentProvider as? FileCredentialStore)?.let { it.save() }
   }
 
   fun clearPasswords() {
@@ -105,7 +105,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       }
     }
     finally {
-      (currentProvider as? FilePasswordSafeProvider)?.let { it.clear() }
+      (currentProvider as? FileCredentialStore)?.let { it.clear() }
     }
   }
 
@@ -122,7 +122,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     get() = memoryHelperProvider.value
 }
 
-private fun createPersistentCredentialStore(existing: FilePasswordSafeProvider? = null): PasswordStorage {
+private fun createPersistentCredentialStore(existing: FileCredentialStore? = null): PasswordStorage {
   LOG.catchAndLog {
     if (isMacOsCredentialsStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
       return MacOsCredentialStore("IntelliJ Platform")
@@ -133,5 +133,5 @@ private fun createPersistentCredentialStore(existing: FilePasswordSafeProvider? 
     it.memoryOnly = false
     return it
   }
-  return FilePasswordSafeProvider()
+  return FileCredentialStore()
 }

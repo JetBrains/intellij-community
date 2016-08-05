@@ -130,7 +130,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
           @Suppress("DEPRECATION")
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
-            FilePasswordSafeProvider(newDb).save()
+            FileCredentialStore(newDb).save()
           }
         }
       }

@@ -35,9 +35,9 @@ import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
+internal val LOG = Logger.getInstance(FileCredentialStore::class.java)
 
-class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage  {
+class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage  {
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")

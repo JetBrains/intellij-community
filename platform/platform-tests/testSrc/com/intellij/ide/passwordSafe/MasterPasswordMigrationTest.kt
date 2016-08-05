@@ -55,7 +55,7 @@ internal class MasterPasswordMigrationTest {
     </State>"""))
     assertThat(passwordSafe).isNotEmpty
 
-    val provider = FilePasswordSafeProvider(passwordSafe)
+    val provider = FileCredentialStore(passwordSafe)
     assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
   }
 
@@ -84,7 +84,7 @@ internal class MasterPasswordMigrationTest {
       </State>"""))
     }
     assertThat(passwordSafe).isNotEmpty
-    val provider = FilePasswordSafeProvider(passwordSafe)
+    val provider = FileCredentialStore(passwordSafe)
     assertThat(provider.getPassword("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest/TEST")).isEqualTo("test")
   }
 

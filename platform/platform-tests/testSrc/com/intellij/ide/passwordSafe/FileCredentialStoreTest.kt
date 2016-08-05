@@ -23,7 +23,7 @@ import org.junit.Test
 import java.math.BigInteger
 import java.util.*
 
-class FilePasswordSafeProviderTest {
+class FileCredentialStoreTest {
   private val tempDirManager = TemporaryDirectory()
 
     @Rule
@@ -33,7 +33,7 @@ class FilePasswordSafeProviderTest {
   @Test
   fun many() {
     val baseDir = tempDirManager.newPath()
-    var provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+    var provider = FileCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
     val random = Random()
@@ -42,7 +42,7 @@ class FilePasswordSafeProviderTest {
     }
 
     provider.save()
-    provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+    provider = FileCredentialStore(baseDirectory = baseDir)
 
     provider.deleteFileStorage()
 
@@ -58,7 +58,7 @@ class FilePasswordSafeProviderTest {
   @Test
   fun test() {
     val baseDir = tempDirManager.newPath()
-    var provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+    var provider = FileCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
     assertThat(provider.getPassword("foo")).isNull()
@@ -91,7 +91,7 @@ class FilePasswordSafeProviderTest {
     assertThat(pdbPwdFile).isRegularFile()
     assertThat(pdbPwdTmpFile).doesNotExist()
 
-    provider = FilePasswordSafeProvider(baseDirectory = baseDir)
+    provider = FileCredentialStore(baseDirectory = baseDir)
 
     assertThat(provider.getPassword("foo")).isNull()
     assertThat(provider.getPassword("am")).isEqualTo("pass2")
