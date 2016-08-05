@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -35,10 +37,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
+  boolean myStickToLargerOffsetsOnUpdate = true;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    if (myEditor.getDocument().isInEventsHandling()) throw new IllegalStateException("Cannot add inlay during document update");
     myInlayTree = new RangeMarkerTree<InlayImpl>(editor.getDocument()) {
       @NotNull
       @Override
@@ -56,6 +58,28 @@ public class InlayModelImpl implements InlayModel, Disposable {
         myDispatcher.getMulticaster().onRemoved(markerEx);
       }
     };
+    myEditor.getDocument().addDocumentListener(new PrioritizedDocumentListener() {
+      @Override
+      public int getPriority() {
+        return EditorDocumentPriorities.INLAY_MODEL;
+      }
+
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        int offset = event.getOffset();
+        if (event.getOldLength() == 0 &&
+            offset == myEditor.getCaretModel().getOffset() &&
+            !getElementsInRange(offset, offset, Inlay.Type.INLINE).isEmpty() &&
+            myEditor.getCaretModel().getVisualPosition().equals(myEditor.offsetToVisualPosition(offset, false, false))) {
+          myStickToLargerOffsetsOnUpdate = true;
+        }
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        myStickToLargerOffsetsOnUpdate = false;
+      }
+    }, this);
   }
 
   @Override

@@ -49,8 +49,10 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     super.changedUpdateImpl(e);
-    if (isValid() && getOffset() >= e.getOffset() && getOffset() <= e.getOffset() + e.getNewLength()) {
-      invalidate(e);
+    if (myEditor.getInlayModel().myStickToLargerOffsetsOnUpdate && isValid() && e.getOldLength() == 0 && getOffset() == e.getOffset()) {
+      int newOffset = e.getOffset() + e.getNewLength();
+      setIntervalStart(newOffset);
+      setIntervalEnd(newOffset);
     }
   }
 
