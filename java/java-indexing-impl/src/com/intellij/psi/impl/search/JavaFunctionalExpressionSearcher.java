@@ -168,16 +168,20 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, Integer> getCandidateOffsets(SamDescriptor descriptor, MultiMap<Location, GlobalSearchScope> queries) {
-    MultiMap<VirtualFile, Integer> result = MultiMap.create();
+  private static MultiMap<VirtualFile, Integer> getCandidateOffsets(SamDescriptor descriptor, MultiMap<Location, GlobalSearchScope> queries, Set<VirtualFile> likelyFiles) {
+    MultiMap<VirtualFile, Integer> result = MultiMap.createLinked();
+    MultiMap<VirtualFile, Integer> unlikely = MultiMap.createLinked();
     for (Location location : queries.keySet()) {
       MultiMap<VirtualFile, Integer> offsets = getOffsetsForLocation(descriptor, location, queries.get(location));
-      result.putAllValues(offsets);
+      for (VirtualFile file : offsets.keySet()) {
+        (likelyFiles.contains(file) ? result : unlikely).putValues(file, offsets.get(file));
+      }
       if (LOG.isDebugEnabled()) {
         logIfLarge(offsets, location);
       }
     }
 
+    result.putAllValues(unlikely);
     if (LOG.isDebugEnabled()) {
       LOG.debug("checking " + result.values().size() + " fun-expressions in " + result.keySet().size() + " files");
     }
@@ -397,10 +401,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       this.isVoid = PsiType.VOID.equals(samType);
     }
 
-    private boolean search(@NotNull Processor<PsiFunctionalExpression> consumer, Set<Module> highLevelModules) {
+    @NotNull
+    private MultiMap<VirtualFile, Integer> getOffsets(Set<Module> highLevelModules) {
       GlobalSearchScope visibleFromCandidates = ReadAction.compute(
         () -> samClass.isValid() ? combineResolveScopes(highLevelModules, samClass) : null);
-      if (visibleFromCandidates == null) return true;
+      if (visibleFromCandidates == null) return MultiMap.empty();
 
       Set<String> usedMethodNames = collectMethodNamesCalledWithFunExpressions(this);
       Set<PsiMethod> exactTypeMethods = getMethodsWithParameterType(usedMethodNames, useScope.intersectWith(visibleFromCandidates), getClassName());
@@ -408,21 +413,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       LOG.debug("#methods: " + (exactTypeMethods.size() + genericMethods.size()));
 
       MultiMap<Location, GlobalSearchScope> queries = collectQueryKeys(this, ContainerUtil.concat(exactTypeMethods, genericMethods));
-      return processLikelyFirst(getMostLikelyFiles(exactTypeMethods), consumer, queries);
+      return getCandidateOffsets(this, queries, getMostLikelyFiles(exactTypeMethods));
     }
 
-    private boolean processLikelyFirst(Set<VirtualFile> likelyFiles,
-                                       @NotNull Processor<PsiFunctionalExpression> consumer,
-                                       MultiMap<Location, GlobalSearchScope> queries) {
-      MultiMap<VirtualFile, Integer> file2Offsets = getCandidateOffsets(this, queries);
-      for (VirtualFile file : likelyFiles) {
-        Collection<Integer> offsets = file2Offsets.remove(file);
-        if (offsets != null && !processFile(consumer, samClass, file, offsets)) {
-          return false;
-        }
-      }
-
-      for (Map.Entry<VirtualFile, Collection<Integer>> entry : file2Offsets.entrySet()) {
+    private boolean search(@NotNull Processor<PsiFunctionalExpression> consumer, Set<Module> highLevelModules) {
+      for (Map.Entry<VirtualFile, Collection<Integer>> entry : getOffsets(highLevelModules).entrySet()) {
         if (!processFile(consumer, samClass, entry.getKey(), entry.getValue())) {
           return false;
         }
