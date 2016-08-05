@@ -15,11 +15,15 @@
  */
 package com.intellij.ide.passwordSafe.config
 
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.migLayout.*
+import com.intellij.migLayout.CCFlags.*
 import com.intellij.migLayout.LCFlags.*
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.ui.Messages
 
 class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
   override fun getSettings() = settings
@@ -47,6 +51,10 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
 
   override fun getComponent() = panel(noGrid, flowY) {
     buttonGroup(saveOnDisk, rememberPasswordsUntilClosing)
+    button("Clear Passwords", right, pushX) {
+      (PasswordSafe.getInstance() as PasswordSafeImpl).clearPasswords()
+      Messages.showInfoMessage(this@panel, "Passwords were cleared", "Clear Passwords")
+    }
   }
 
   private fun getProviderType(): ProviderType {

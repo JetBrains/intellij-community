@@ -93,6 +93,7 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
 
       if (db.isEmpty()) {
         dbFile.delete()
+        masterKeyStorage.set(null)
         return
       }
 
@@ -123,6 +124,11 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       masterKeyStorage.set(null)
       encryptionSupport = null
     }
+  }
+
+  fun clear() {
+    db.clear()
+    needToSave.set(true)
   }
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {

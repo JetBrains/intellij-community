@@ -20,6 +20,7 @@ import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
 import com.intellij.ide.passwordSafe.masterKey.FilePasswordSafeProvider
+import com.intellij.ide.passwordSafe.masterKey.LOG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 
@@ -77,6 +78,18 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun save() {
     currentProvider.save()
+  }
+
+  fun clearPasswords() {
+    LOG.info("Passwords cleared", Error())
+    try {
+      if (memoryHelperProvider.isInitialized()) {
+        memoryHelperProvider.value.clear()
+      }
+    }
+    finally {
+      currentProvider.clear()
+    }
   }
 
   // public - backward compatibility

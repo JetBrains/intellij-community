@@ -25,12 +25,38 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.LayoutManager
+import java.awt.event.ActionEvent
 import javax.swing.*
 
-fun panel(vararg layoutConstraints: LCFlags) = JPanel(MigLayout(c().apply(layoutConstraints)))
+enum class LCFlags {
+  /**
+   * Puts the layout in a flow-only mode.
+   * All components in the flow direction will be put in the same cell and will thus not be aligned with component in other rows/columns.
+   * For normal horizontal flow this is the same as to say that all component will be put in the first and only column.
+   */
+  noGrid,
 
-inline fun panel(vararg layoutConstraints: LCFlags, init: JPanel.() -> Unit): JPanel {
-  val panel = panel(*layoutConstraints)
+  /**
+   * Puts the layout in vertical flow mode. This means that the next cell is normally below and the next component will be put there instead of to the right. Default is horizontal flow.
+   */
+  flowY,
+
+  /**
+   * Claims all available space in the container for the columns and/or rows.
+   * At least one component need to have a "grow" constraint for it to fill the container.
+   * The space will be divided equal, though honoring "growPriority".
+   * If no columns/rows has "grow" set the grow weight of the components in the rows/columns will migrate to that row/column.
+   */
+  fill
+}
+
+enum class CCFlags {
+  wrap, grow, push, pushY, pushX, right
+}
+
+inline fun panel(vararg layoutConstraints: LCFlags, init: Panel.() -> Unit): JPanel {
+  val panel = Panel(MigLayout(c().apply(layoutConstraints)))
   panel.init()
   return panel
 }
@@ -49,7 +75,7 @@ fun JPanel.titledPanel(title: String, wrappedComponent: Component, vararg constr
   add(panel, *constraints)
 }
 
-fun JPanel.label(text: String, constrains: CC? = null, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null) {
+fun JPanel.label(text: String, constraints: CC? = null, componentStyle: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null) {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
   val label = if (componentStyle == null && fontColor == null) {
     JLabel(finalText)
@@ -58,21 +84,21 @@ fun JPanel.label(text: String, constrains: CC? = null, componentStyle: UIUtil.Co
     JBLabel(finalText, componentStyle ?: UIUtil.ComponentStyle.REGULAR, fontColor ?: UIUtil.FontColor.NORMAL)
   }
 
-  add(label, constrains)
+  add(label, constraints)
 }
 
-fun JPanel.hint(text: String, constrains: CC = CC()) {
-  if (constrains.horizontal.gapBefore == null) {
+fun JPanel.hint(text: String, constraints: CC = CC()) {
+  if (constraints.horizontal.gapBefore == null) {
     // default gap 10 * indent 3
-    constrains.gapLeft("30")
+    constraints.gapLeft("30")
   }
-  label(text, constrains, componentStyle = UIUtil.ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER)
+  label(text, constraints, componentStyle = UIUtil.ComponentStyle.SMALL, fontColor = UIUtil.FontColor.BRIGHTER)
 }
 
 fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
 fun JPanel.radioButton(text: String, vararg constraints: CCFlags) {
-  add(RadioButton(text), constraints.create())
+  add(RadioButton(BundleBase.replaceMnemonicAmpersand(text)), constraints.create())
 }
 
 fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
@@ -83,12 +109,10 @@ fun JPanel.buttonGroup(vararg buttons: AbstractButton) {
   }
 }
 
-enum class LCFlags {
-  noGrid, flowY, fill
-}
-
-enum class CCFlags {
-  wrap, grow, push
+fun JPanel.button(text: String, vararg constraints: CCFlags, actionListener: (event: ActionEvent) -> Unit) {
+  val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
+  button.addActionListener(actionListener)
+  add(button, constraints.create())
 }
 
 // default values differs to MigLayout - IntelliJ Platform defaults are used
@@ -108,6 +132,22 @@ fun JPanel.add(component: Component, vararg constraints: CCFlags) {
 
 private fun Array<out CCFlags>.create() = if (isEmpty()) null else CC().apply(this)
 
+// we have to use own class because we want to use method `add`, but Kotlin cannot select proper method implementation (not Kotlin bug, but intentional change)
+// and it is required to add invoke operator fun to Component, but use JPanel as receiver
+class Panel(layout: LayoutManager) : JPanel(layout) {
+  operator fun Component.invoke(vararg constraints: CCFlags) {
+    add(this, constraints.create())
+  }
+
+  operator fun Component.invoke(constraints: CC? = null) {
+    add(this, constraints)
+  }
+
+  fun add(component: Component, vararg constraints: CCFlags) {
+    add(component, constraints.create())
+  }
+}
+
 fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
     when (flag) {
@@ -124,7 +164,11 @@ fun CC.apply(flags: Array<out CCFlags>): CC {
     when (flag) {
       CCFlags.wrap -> wrap()
       CCFlags.grow -> grow()
+      CCFlags.right -> alignX("right")
+
       CCFlags.push -> push()
+      CCFlags.pushX -> pushX()
+      CCFlags.pushY -> pushY()
     }
   }
   return this

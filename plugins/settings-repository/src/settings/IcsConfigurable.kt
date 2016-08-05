@@ -15,13 +15,9 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.migLayout.CCFlags.grow
-import com.intellij.migLayout.CCFlags.push
-import com.intellij.migLayout.LCFlags.flowY
-import com.intellij.migLayout.LCFlags.noGrid
-import com.intellij.migLayout.hint
-import com.intellij.migLayout.panel
-import com.intellij.migLayout.titledPanel
+import com.intellij.migLayout.*
+import com.intellij.migLayout.CCFlags.*
+import com.intellij.migLayout.LCFlags.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
@@ -61,8 +57,8 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   }
 
   override fun getComponent() = panel(noGrid, flowY) {
-    add(editors.get(0).component)
-    add(autoSync)
+    editors.get(0).component()
+    autoSync()
     hint("Use VCS -> Sync Settings to sync when you want")
     titledPanel("Read-only Sources", editors.get(1).component, grow, push)
   }

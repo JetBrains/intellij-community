@@ -103,7 +103,7 @@ class FilePasswordSafeProviderTest {
     provider.save()
 
     assertThat(pdbFile).doesNotExist()
-    assertThat(pdbPwdFile).isRegularFile()
+    assertThat(pdbPwdFile).doesNotExist()
     assertThat(pdbPwdTmpFile).doesNotExist()
 
     provider.deleteFileStorage()
