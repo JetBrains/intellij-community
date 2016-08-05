@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base Java-based provider for password safe that assumes a simple key-value storage.
  */
-public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
+public abstract class BasePasswordSafeProvider implements PasswordSafeProvider {
 
   /**
    * <p>Get secret key for the provider.</p>

@@ -31,7 +31,6 @@ import com.intellij.openapi.util.SystemInfo
 import gnu.trove.THashMap
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 import java.util.function.Function
 
 private val TEST_PASSWORD_VALUE = "test password"
@@ -111,8 +110,6 @@ internal fun convertOldDb(oldKey: String, @Suppress("DEPRECATION") db: PasswordD
   }
   return newDb
 }
-
-fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
 private fun rawTestKey(oldKey: String) = EncryptionUtil.hash("com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe/TEST_PASSWORD:${oldKey}".toByteArray())
 

@@ -38,7 +38,7 @@ import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
 
-class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider()  {
+class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider  {
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")
@@ -156,11 +156,11 @@ class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String,
       needToSave.set(true)
     }
   }
-
-  override fun getName() = "File PasswordSafe"
 }
 
-private fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
+internal fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
+
+internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
 internal fun generate(): ByteArray {
   val bytes = ByteArray(16)

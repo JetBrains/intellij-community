@@ -20,16 +20,11 @@ import com.intellij.ide.passwordSafe.PasswordStorage;
 /**
  * The provider for password safe component
  */
-public abstract class PasswordSafeProvider implements PasswordStorage {
+public interface PasswordSafeProvider extends PasswordStorage {
   /**
    * @return true, the implementation is supported in the current environment
    */
-  public boolean isSupported() {
+  default boolean isSupported() {
     return true;
   }
-
-  /**
-   * @return the name of provider
-   */
-  public abstract String getName();
 }

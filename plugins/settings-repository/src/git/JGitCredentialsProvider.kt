@@ -15,7 +15,7 @@
  */
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.ide.passwordSafe.isOSXCredentialsStoreSupported
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialsStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NotNullLazyValue
@@ -94,7 +94,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
     }
     else {
       // we open password protected SSH key file using OS X keychain - "git credentials" is pointless in this case
-      if (sshKeyFile == null || !isOSXCredentialsStoreSupported) {
+      if (sshKeyFile == null || !isMacOsCredentialsStoreSupported) {
         if (credentialsFromGit == null) {
           credentialsFromGit = getCredentialsUsingGit(uri, repository)
         }

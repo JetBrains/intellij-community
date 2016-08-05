@@ -15,17 +15,16 @@
  */
 package com.intellij.ide.passwordSafe.impl
 
-import com.intellij.ide.passwordSafe.FilePasswordSafeProvider
-import com.intellij.ide.passwordSafe.LOG
-import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener
+import com.intellij.ide.passwordSafe.*
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialsStoreSupported
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.diagnostic.catchAndLog
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  private val currentProvider: FilePasswordSafeProvider
+  private @Volatile var currentProvider: PasswordSafeProvider
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { FilePasswordSafeProvider(emptyMap(), memoryOnly = true) }
@@ -33,13 +32,28 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
   init {
-    currentProvider = FilePasswordSafeProvider(memoryOnly = settings.providerType == ProviderType.MEMORY_ONLY)
+    if (settings.providerType == ProviderType.MEMORY_ONLY) {
+      currentProvider = FilePasswordSafeProvider(memoryOnly = true)
+    }
+    else {
+      currentProvider = createPersistentCredentialStore()
+    }
+
     ApplicationManager.getApplication().messageBus.connect().subscribe(PasswordSafeSettings.TOPIC, object: PasswordSafeSettingsListener {
       override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
         val memoryOnly = newValue == ProviderType.MEMORY_ONLY
-        currentProvider.memoryOnly = memoryOnly
         if (memoryOnly) {
-          currentProvider.deleteFileStorage()
+          val provider = currentProvider
+          if (provider is FilePasswordSafeProvider) {
+            provider.memoryOnly = true
+            provider.deleteFileStorage()
+          }
+          else {
+            currentProvider = FilePasswordSafeProvider(memoryOnly = true)
+          }
+        }
+        else {
+          currentProvider = createPersistentCredentialStore(currentProvider as? FilePasswordSafeProvider)
         }
       }
     })
@@ -77,7 +91,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   }
 
   override fun save() {
-    currentProvider.save()
+    (currentProvider as? FilePasswordSafeProvider)?.let { it.save() }
   }
 
   fun clearPasswords() {
@@ -88,7 +102,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       }
     }
     finally {
-      currentProvider.clear()
+      (currentProvider as? FilePasswordSafeProvider)?.let { it.clear() }
     }
   }
 
@@ -103,4 +117,18 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   // public - backward compatibility
   val memoryProvider: PasswordSafeProvider
     get() = memoryHelperProvider.value
+}
+
+private fun createPersistentCredentialStore(existing: FilePasswordSafeProvider? = null): PasswordSafeProvider {
+  LOG.catchAndLog {
+    if (isMacOsCredentialsStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
+      return MacOsCredentialStore("IntelliJ Platform")
+    }
+  }
+
+  existing?.let {
+    it.memoryOnly = false
+    return it
+  }
+  return FilePasswordSafeProvider()
 }
