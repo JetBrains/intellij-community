@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
-import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.ide.passwordSafe.PasswordStorage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base Java-based provider for password safe that assumes a simple key-value storage.
  */
-public abstract class BasePasswordSafeProvider implements PasswordSafeProvider {
+public abstract class BasePasswordSafeProvider implements PasswordStorage {
 
   /**
    * <p>Get secret key for the provider.</p>

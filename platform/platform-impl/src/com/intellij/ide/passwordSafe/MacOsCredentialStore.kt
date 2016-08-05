@@ -15,14 +15,13 @@
  */
 package com.intellij.ide.passwordSafe
 
-import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider
 import com.intellij.ide.passwordSafe.macOs.deleteGenericPassword
 import com.intellij.ide.passwordSafe.macOs.findGenericPassword
 import com.intellij.ide.passwordSafe.macOs.saveGenericPassword
 import com.intellij.openapi.diagnostic.catchAndLog
 import java.security.MessageDigest
 
-internal class MacOsCredentialStore(serviceName: String) : PasswordSafeProvider {
+internal class MacOsCredentialStore(serviceName: String) : PasswordStorage {
   private val serviceName = serviceName.toByteArray()
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {

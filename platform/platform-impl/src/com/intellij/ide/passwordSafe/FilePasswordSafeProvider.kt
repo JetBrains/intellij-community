@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe
 
-import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -38,7 +37,7 @@ import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(FilePasswordSafeProvider::class.java)
 
-class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordSafeProvider  {
+class FilePasswordSafeProvider @JvmOverloads constructor(keyToValue: Map<String, String>? = null, baseDirectory: Path = Paths.get(PathManager.getConfigPath()), var memoryOnly: Boolean = false) : PasswordStorage  {
   private val db = ContainerUtil.newConcurrentMap<String, String>()
 
   private val dbFile = baseDirectory.resolve("pdb")

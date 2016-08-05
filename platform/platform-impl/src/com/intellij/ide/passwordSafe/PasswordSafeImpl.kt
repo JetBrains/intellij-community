@@ -24,12 +24,15 @@ import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  private @Volatile var currentProvider: PasswordSafeProvider
+  private @Volatile var currentProvider: PasswordStorage
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { FilePasswordSafeProvider(emptyMap(), memoryOnly = true) }
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
+
+  val isNativeCredentialStoreUsed: Boolean
+      get() = currentProvider !is FilePasswordSafeProvider
 
   init {
     if (settings.providerType == ProviderType.MEMORY_ONLY) {
@@ -109,17 +112,17 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   // public - backward compatibility
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
-  val masterKeyProvider: PasswordSafeProvider
+  val masterKeyProvider: PasswordStorage
     get() = currentProvider
 
   @Suppress("unused")
   @Deprecated("Do not use it")
   // public - backward compatibility
-  val memoryProvider: PasswordSafeProvider
+  val memoryProvider: PasswordStorage
     get() = memoryHelperProvider.value
 }
 
-private fun createPersistentCredentialStore(existing: FilePasswordSafeProvider? = null): PasswordSafeProvider {
+private fun createPersistentCredentialStore(existing: FilePasswordSafeProvider? = null): PasswordStorage {
   LOG.catchAndLog {
     if (isMacOsCredentialsStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
       return MacOsCredentialStore("IntelliJ Platform")
