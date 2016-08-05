@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,7 +23,6 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,12 +105,13 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
   }
 
 
-  private static class ClearPlaceholders implements UndoableAction {
+  private static class ClearPlaceholders extends BasicUndoableAction {
     private final List<AnswerPlaceholder> myPlaceholders;
     private final Editor myEditor;
     private final TaskFile myTaskFile;
 
     public ClearPlaceholders(TaskFile taskFile, List<AnswerPlaceholder> placeholders, Editor editor) {
+      super(editor.getDocument());
       myTaskFile = taskFile;
       myPlaceholders = placeholders;
       myEditor = editor;
@@ -125,13 +127,6 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
     public void redo() throws UnexpectedUndoException {
       myTaskFile.getAnswerPlaceholders().clear();
       updateView(myEditor, myTaskFile);
-    }
-
-    @Nullable
-    @Override
-    public DocumentReference[] getAffectedDocuments() {
-      DocumentReference reference = DocumentReferenceManager.getInstance().create(myEditor.getDocument());
-      return new DocumentReference[]{reference};
     }
 
     @Override
