@@ -87,7 +87,9 @@ public class StudyNavigator {
     if (editor.isDisposed()) {
       return;
     }
-    editor.getCaretModel().moveToOffset(answerPlaceholder.getOffset());
+    int startOffset = answerPlaceholder.getOffset();
+    editor.getCaretModel().moveToOffset(startOffset);
+    editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getRealLength());
   }
 
 

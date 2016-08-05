@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
@@ -727,5 +728,16 @@ public class StudyUtils {
 
       return c1.isAdaptive() ? 1 : -1;
     });
+  }
+
+  public static void selectFirstAnswerPlaceholder(@Nullable final StudyEditor studyEditor, @NotNull final Project project) {
+    if (studyEditor == null) return;
+    final Editor editor = studyEditor.getEditor();
+    IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
+    final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getAnswerPlaceholders();
+    if (placeholders.isEmpty()) return;
+    final AnswerPlaceholder placeholder = placeholders.get(0);
+    int startOffset = placeholder.getOffset();
+    editor.getSelectionModel().setSelection(startOffset, startOffset + placeholder.getRealLength());
   }
 }
