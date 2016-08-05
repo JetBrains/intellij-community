@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
@@ -15,7 +16,12 @@ import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
 
-class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapter() {
+fun assertNotEDT() {
+    val isInTestMode = ApplicationManager.getApplication().isUnitTestMode
+    assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
+}
+
+class SenderComponent(val sender: StatisticSender, val testerHelper: StatusInfoProvider) : ApplicationComponent.Adapter() {
     private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
@@ -25,7 +31,11 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
         if (ApplicationManager.getApplication().isUnitTestMode) return
 
         try {
-            sender.sendStatsData()
+            ApplicationManager.getApplication().executeOnPooledThread {
+                testerHelper.updateExperimentData()
+                val dataServerUrl = testerHelper.getDataServerUrl()
+                sender.sendStatsData(dataServerUrl)
+            }
         } catch (e: Exception) {
             LOG.error(e.message)
         } finally {
@@ -44,16 +54,13 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     }
 }
 
-class StatisticSender(val urlProvider: UrlProvider, 
-                      val requestService: RequestService,
-                      val filePathProvider: FilePathProvider) {
-    
-    fun sendStatsData() {
+class StatisticSender(val requestService: RequestService, val filePathProvider: FilePathProvider) {
+
+    fun sendStatsData(url: String) {
         assertNotEDT()
         val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
             if (it.length() > 0) {
-                val url = urlProvider.statsServerPostUrl
                 val isSentSuccessfully = sendContent(url, it)
                 if (isSentSuccessfully) {
                     it.delete()
@@ -63,11 +70,6 @@ class StatisticSender(val urlProvider: UrlProvider,
                 }
             }
         }
-    }
-
-    private fun assertNotEDT() {
-        val isInTestMode = ApplicationManager.getApplication().isUnitTestMode
-        assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
     }
 
     private fun sendContent(url: String, file: File): Boolean {

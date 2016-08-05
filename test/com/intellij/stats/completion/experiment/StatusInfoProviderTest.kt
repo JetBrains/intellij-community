@@ -10,7 +10,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 
-class ABTesterHelperTest : LightIdeaTestCase() {
+class StatusInfoProviderTest : LightIdeaTestCase() {
 
     fun `test experiment info is fetched`() {
         val requestSender = mock(RequestService::class.java)
@@ -20,7 +20,7 @@ class ABTesterHelperTest : LightIdeaTestCase() {
         val urlProvider = mock(UrlProvider::class.java)
         `when`(urlProvider.experimentDataUrl).thenReturn("http://qq.da")
 
-        val helper = ABTesterHelper(requestSender, urlProvider)
+        val helper = StatusInfoProvider(requestSender, urlProvider)
         helper.unsetLastUpdate()
         
         val performExperiment = helper.isPerformExperiment()

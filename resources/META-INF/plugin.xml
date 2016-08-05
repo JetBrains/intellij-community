@@ -26,7 +26,7 @@
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender" serviceImplementation="com.intellij.stats.completion.StatisticSender">
     </applicationService>
-    <applicationService serviceInterface="com.intellij.stats.completion.experiment.ABTesterHelper" serviceImplementation="com.intellij.stats.completion.experiment.ABTesterHelper">
+    <applicationService serviceInterface="com.intellij.stats.completion.experiment.StatusInfoProvider" serviceImplementation="com.intellij.stats.completion.experiment.StatusInfoProvider">
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.RequestService" serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
