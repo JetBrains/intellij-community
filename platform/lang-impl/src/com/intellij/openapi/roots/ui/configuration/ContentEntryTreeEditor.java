@@ -276,10 +276,6 @@ public class ContentEntryTreeEditor {
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree.getSelectedFiles();
-      }
-
       if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }
