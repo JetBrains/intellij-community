@@ -11,11 +11,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.stats.completion.experiment.ABTesterHelper
+import com.intellij.stats.completion.experiment.StatusInfoProvider
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(project: Project, experimentHelper: ABTesterHelper): AbstractProjectComponent(project) {
+class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInfoProvider): AbstractProjectComponent(project) {
     private val lookupActionsTracker = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -117,7 +117,7 @@ class LookupActionsListener : AnActionListener.Adapter() {
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger, 
-                               private val experimentHelper: ABTesterHelper) 
+                               private val experimentHelper: StatusInfoProvider) 
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
