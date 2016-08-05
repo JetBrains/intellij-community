@@ -1,8 +1,12 @@
 package com.intellij.stats.completion
 
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.PlatformTestCase
-import com.intellij.testFramework.UsefulTestCase
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+import org.mockito.Matchers
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -14,16 +18,20 @@ fun <T> MutablePicoContainer.replaceComponent(componentInterface: Class<T>, comp
 }
 
 class FileLoggerTest : PlatformTestCase() {
-    private lateinit var path: String
+    private lateinit var dir: File
+    private lateinit var logFile: File
     private lateinit var oldPathProvider: FilePathProvider
     private lateinit var pico: MutablePicoContainer
 
     override fun setUp() {
         super.setUp()
-        path = createTempFile("x.txt").absolutePath
+        dir = createTempDirectory()
+        logFile = File(dir, "unique_1")
+        
         val mockPathProvider = mock(FilePathProvider::class.java)
-//        `when`(mockPathProvider.statsFilePath).thenReturn(path)
-
+        `when`(mockPathProvider.getStatsDataDirectory()).thenReturn(dir)
+        `when`(mockPathProvider.getUniqueFile()).thenReturn(logFile)
+        
         pico = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         
         val name = FilePathProvider::class.java.name
@@ -33,41 +41,28 @@ class FileLoggerTest : PlatformTestCase() {
 
     override fun tearDown() {
         pico.replaceComponent(FilePathProvider::class.java, oldPathProvider)
-        val file = File(path)
-        if (file.exists()) {
-            file.delete()
-        }
+        dir.deleteRecursively()
         super.tearDown()
     }
-
-    fun `test data is appended`() {
-        performLogging()
-
-        var text = File(path).readText()
-        val firstLength = text.length
-        
-        performLogging()
-        
-        text = File(path).readText()
-        val secondLength = text.length
-        
-        UsefulTestCase.assertEquals(firstLength * 2, secondLength)
-    }
     
-    fun `test file is created if it doesn't exist`() {
-        performLogging()
-        var text = File(path).readText()
-        UsefulTestCase.assertTrue(text.length > 0)
-    }
-
-    private fun performLogging(): CompletionLogger {
+    
+    @Test
+    fun testLogging() {
+        val fileLengthBefore = logFile.length()
+        
         val logFileManager = LogFileManagerImpl(FilePathProvider.getInstance())
-        var loggerProvider = CompletionFileLoggerProvider(logFileManager)
-        var logger = loggerProvider.newCompletionLogger()
-//        logger.completionStarted(emptyList(), false, 1)
+        val loggerProvider = CompletionFileLoggerProvider(logFileManager)
+        val logger = loggerProvider.newCompletionLogger()
+        val lookup = mock(LookupImpl::class.java)
+        
+        `when`(lookup.getRelevanceObjects(Matchers.any(), Matchers.anyBoolean())).thenReturn(emptyMap())
+        `when`(lookup.items).thenReturn(emptyList())
+        logger.completionStarted(lookup, true, 2)
+        
         logger.completionCancelled()
         loggerProvider.dispose()
-        return logger
+        
+        assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
     }
 
 
