@@ -2,10 +2,7 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +18,7 @@ import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
@@ -84,12 +82,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     taskFile.sortAnswerPlaceholders();
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     AddAction action = new AddAction(answerPlaceholder, taskFile, editor);
-    new WriteCommandAction(project, "Add Answer Placeholder") {
-      protected void run(@NotNull final Result result) throws Throwable {
-        action.redo();
-        UndoManager.getInstance(project).undoableActionPerformed(action);
-      }
-    }.execute();
+    EduUtils.runUndoableAction(project, "Add Answer Placeholder", action);
   }
 
   static class AddAction extends BasicUndoableAction {
@@ -123,23 +116,6 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     }
   }
 
-  static class DeleteAction extends AddAction {
-
-    public DeleteAction(AnswerPlaceholder placeholder, TaskFile taskFile, Editor editor) {
-      super(placeholder, taskFile, editor);
-    }
-
-    @Override
-    public void undo() throws UnexpectedUndoException {
-      super.redo();
-    }
-
-    @Override
-    public void redo() throws UnexpectedUndoException {
-      super.undo();
-    }
-  }
-
   @Override
   protected void performAnswerPlaceholderAction(@NotNull CCState state) {
     if (canAddPlaceholder(state)) {
@@ -155,14 +131,17 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     Project project = state.getProject();
     TaskFile taskFile = state.getTaskFile();
     AnswerPlaceholder answerPlaceholder = state.getAnswerPlaceholder();
-    DeleteAction action = new DeleteAction(answerPlaceholder, taskFile, state.getEditor());
-    new WriteCommandAction(project, "Delete Answer Placeholder") {
-      protected void run(@NotNull final Result result) throws Throwable {
-        action.redo();
-        UndoManager.getInstance(project).undoableActionPerformed(action);
+    EduUtils.runUndoableAction(project, "Delete Answer Placeholder", new AddAction(answerPlaceholder, taskFile, state.getEditor()) {
+      @Override
+      public void undo() throws UnexpectedUndoException {
+        super.redo();
       }
-    }.execute();
 
+      @Override
+      public void redo() throws UnexpectedUndoException {
+        super.undo();
+      }
+    });
   }
 
   @Override
