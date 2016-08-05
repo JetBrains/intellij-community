@@ -37,6 +37,10 @@ public enum RegExpCapability {
    */
   ALLOW_EMPTY_CHARACTER_CLASS,
   ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+
+  /**
+   * allows not to wrap one-letter unicode categories with braces: \p{L} -> \pL
+   */
   UNICODE_CATEGORY_SHORTHAND,
 
   /**
@@ -44,5 +48,8 @@ public enum RegExpCapability {
    */
   POSIX_BRACKET_EXPRESSIONS,
 
+  /**
+   * supports for property negations like \p{^Alnum}
+   */
   CARET_NEGATED_PROPERTIES
 }
