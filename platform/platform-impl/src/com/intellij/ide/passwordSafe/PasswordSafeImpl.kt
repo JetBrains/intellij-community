@@ -32,7 +32,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
   val isNativeCredentialStoreUsed: Boolean
-      get() = currentProvider !is FileCredentialStore
+    get() = currentProvider !is FileCredentialStore
 
   init {
     if (settings.providerType == ProviderType.MEMORY_ONLY) {
@@ -122,10 +122,12 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     get() = memoryHelperProvider.value
 }
 
+internal const val CREDENTIAL_STORE_SERVICE_NAME = "IntelliJ Platform"
+
 private fun createPersistentCredentialStore(existing: FileCredentialStore? = null): PasswordStorage {
   LOG.catchAndLog {
-    if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
-      return MacOsCredentialStore("IntelliJ Platform")
+    if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+      return MacOsCredentialStore(CREDENTIAL_STORE_SERVICE_NAME)
     }
   }
 
