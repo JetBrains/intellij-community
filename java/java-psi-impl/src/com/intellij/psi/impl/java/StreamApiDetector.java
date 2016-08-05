@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs;
+package com.intellij.psi.impl.java;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
