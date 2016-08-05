@@ -152,7 +152,9 @@ fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
     when (flag) {
       LCFlags.noGrid -> isNoGrid = true
-      LCFlags.flowY -> isFlowX = true
+
+      LCFlags.flowY -> isFlowX = false
+
       LCFlags.fill -> fill()
       LCFlags.fillX -> isFillX = true
       LCFlags.fillY -> isFillY = true
