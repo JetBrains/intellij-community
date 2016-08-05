@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
@@ -42,7 +41,6 @@ import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -97,7 +95,7 @@ public class StudyProjectComponent implements ProjectComponent {
 
     }
 
-    registerStudyToolWindow(course);
+    StudyUtils.registerStudyToolWindow(course, myProject);
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -117,18 +115,6 @@ public class StudyProjectComponent implements ProjectComponent {
         });
       }
     });
-  }
-
-  public void registerStudyToolWindow(@Nullable final Course course) {
-    if (course != null && "PyCharm".equals(course.getCourseType())) {
-      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      registerToolWindows(toolWindowManager);
-      final ToolWindow studyToolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-      if (studyToolWindow != null) {
-        studyToolWindow.show(null);
-        StudyUtils.initToolWindows(myProject);
-      }
-    }
   }
 
   private void registerShortcuts() {
@@ -151,13 +137,6 @@ public class StudyProjectComponent implements ProjectComponent {
       else {
         LOG.warn("Actions on toolbar are nulls");
       }
-    }
-  }
-
-  private void registerToolWindows(@NotNull final ToolWindowManager toolWindowManager) {
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
-    if (toolWindow == null) {
-      toolWindowManager.registerToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW, true, ToolWindowAnchor.RIGHT, myProject, true);
     }
   }
 

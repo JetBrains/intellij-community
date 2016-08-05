@@ -24,7 +24,6 @@ import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -100,7 +99,7 @@ public class StudyProjectGenerator {
       StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
       course.setCourseDirectory(courseDirectory.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-      StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+      StudyUtils.registerStudyToolWindow(course, project);
       openFirstTask(course, project);
       EduUsagesCollector.projectTypeCreated(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
     });

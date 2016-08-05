@@ -19,8 +19,8 @@ import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
-import com.jetbrains.edu.learning.StudyProjectComponent;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
@@ -107,7 +107,7 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
     course.setCourseDirectory(courseDir.getPath());
 
     StudyTaskManager.getInstance(project).setCourse(course);
-    StudyProjectComponent.getInstance(project).registerStudyToolWindow(course);
+    StudyUtils.registerStudyToolWindow(course, project);
     return course;
   }
 
