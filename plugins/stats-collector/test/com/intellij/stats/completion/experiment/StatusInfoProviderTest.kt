@@ -24,7 +24,7 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
         val response = newResponse("ok", "sdfs", "2", "http://test.jetstat-resty.aws.intellij.net/uploadstats")
         val infoProvider = getProvider(response)
 
-        infoProvider.updateExperimentData()
+        infoProvider.updateStatus()
 
         assertThat(infoProvider.getDataServerUrl()).isEqualTo("http://test.jetstat-resty.aws.intellij.net/uploadstats")
         assertThat(infoProvider.isServerOk()).isEqualTo(true)
@@ -35,7 +35,7 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
         val response = newResponse("maintance", "sdfs", "2", "http://xxx.xxx")
         val infoProvider = getProvider(response)
 
-        infoProvider.updateExperimentData()
+        infoProvider.updateStatus()
 
         assertThat(infoProvider.isServerOk()).isEqualTo(false)
         assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
@@ -45,12 +45,12 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
     fun `test round to Int`() {
         var response = newResponse("maintance", "sdfs", "2.9", "http://xxx.xxx")
         var infoProvider = getProvider(response)
-        infoProvider.updateExperimentData()
+        infoProvider.updateStatus()
         assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
         
         response = newResponse("maintance", "sdfs", "2.1", "http://xxx.xxx")
         infoProvider = getProvider(response)
-        infoProvider.updateExperimentData()
+        infoProvider.updateStatus()
         assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
     }
 
