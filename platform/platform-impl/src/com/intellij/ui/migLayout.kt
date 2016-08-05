@@ -48,7 +48,7 @@ enum class LCFlags {
    * The space will be divided equal, though honoring "growPriority".
    * If no columns/rows has "grow" set the grow weight of the components in the rows/columns will migrate to that row/column.
    */
-  fill
+  fill, fillX, fillY
 }
 
 enum class CCFlags {
@@ -151,9 +151,11 @@ class Panel(layout: LayoutManager) : JPanel(layout) {
 fun LC.apply(flags: Array<out LCFlags>): LC {
   for (flag in flags) {
     when (flag) {
-      LCFlags.noGrid -> noGrid()
-      LCFlags.flowY -> flowY()
+      LCFlags.noGrid -> isNoGrid = true
+      LCFlags.flowY -> isFlowX = true
       LCFlags.fill -> fill()
+      LCFlags.fillX -> isFillX = true
+      LCFlags.fillY -> isFillY = true
     }
   }
   return this
@@ -162,7 +164,7 @@ fun LC.apply(flags: Array<out LCFlags>): LC {
 fun CC.apply(flags: Array<out CCFlags>): CC {
   for (flag in flags) {
     when (flag) {
-      CCFlags.wrap -> wrap()
+      CCFlags.wrap -> isWrap = true
       CCFlags.grow -> grow()
       CCFlags.right -> alignX("right")
 

@@ -49,9 +49,9 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     settings.providerType = getProviderType()
   }
 
-  override fun getComponent() = panel(noGrid, flowY) {
+  override fun getComponent() = panel(noGrid, flowY, fillX) {
     buttonGroup(saveOnDisk, rememberPasswordsUntilClosing)
-    button("Clear Passwords", right, pushX) {
+    button("Clear Passwords", right) {
       (PasswordSafe.getInstance() as PasswordSafeImpl).clearPasswords()
       Messages.showInfoMessage(this@panel, "Passwords were cleared", "Clear Passwords")
     }
