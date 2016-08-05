@@ -18,7 +18,7 @@ package com.intellij.ide.passwordSafe.impl
 import com.intellij.ide.passwordSafe.*
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialsStoreSupported
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
@@ -124,7 +124,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
 private fun createPersistentCredentialStore(existing: FileCredentialStore? = null): PasswordStorage {
   LOG.catchAndLog {
-    if (isMacOsCredentialsStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
+    if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.osx.keychain", false)) {
       return MacOsCredentialStore("IntelliJ Platform")
     }
   }

@@ -19,7 +19,7 @@ import com.intellij.ide.passwordSafe.LOG
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.Pointer
 
-val isMacOsCredentialsStoreSupported: Boolean
+val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
 private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary

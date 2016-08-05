@@ -28,8 +28,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.exists
 import gnu.trove.THashMap
-import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.function.Function
 
@@ -117,7 +117,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
   override fun beforeComponentsCreated() {
     try {
       val oldDbFile = Paths.get(PathManager.getConfigPath(), "options", "security.xml")
-      if (Files.exists(oldDbFile)) {
+      if (oldDbFile.exists()) {
         val settings = ServiceManager.getService(PasswordSafeSettings::class.java)
         if (settings.providerType != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
           return
