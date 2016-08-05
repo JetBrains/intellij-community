@@ -52,8 +52,8 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(200))
         `when`(requestService.post(test_url, secondFile)).thenReturn(ResponseData(200))
         
-        val sender = StatisticSender(urlProvider, requestService, filePathProvider)
-        sender.sendStatsData()
+        val sender = StatisticSender(requestService, filePathProvider)
+        sender.sendStatsData("")
         
         assertThat(firstFile.exists()).isEqualTo(false)
         assertThat(secondFile.exists()).isEqualTo(false)
@@ -68,8 +68,8 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(200))
         `when`(requestService.post(test_url, secondFile)).thenReturn(ResponseData(404))
 
-        val sender = StatisticSender(urlProvider, requestService, filePathProvider)
-        sender.sendStatsData()
+        val sender = StatisticSender(requestService, filePathProvider)
+        sender.sendStatsData("")
 
         assertThat(firstFile.exists()).isEqualTo(false)
         assertThat(secondFile.exists()).isEqualTo(true)
@@ -83,8 +83,8 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         `when`(requestService.post(test_url, firstFile)).thenReturn(ResponseData(404))
         `when`(requestService.post(test_url, secondFile)).thenThrow(IllegalAccessError("Should not be invoked"))
 
-        val sender = StatisticSender(urlProvider, requestService, filePathProvider)
-        sender.sendStatsData()
+        val sender = StatisticSender(requestService, filePathProvider)
+        sender.sendStatsData("")
 
         assertThat(firstFile.exists()).isEqualTo(true)
         assertThat(secondFile.exists()).isEqualTo(true)
