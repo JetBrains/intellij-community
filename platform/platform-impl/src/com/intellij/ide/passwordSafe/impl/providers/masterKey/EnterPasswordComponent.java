@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
@@ -35,9 +34,7 @@ public class EnterPasswordComponent extends PasswordComponentBase {
 
     myPasswordConsumer = passwordConsumer;
 
-    myPromptLabel.setText("<html><br>Master password is required to unlock the password database.<br>" +
-                          "The password database will be unlocked during this session<br>" +
-                          "for all subsystems.</html>");
+    myPromptLabel.setText("<html><br>Master password is required to unlock the password database to convert it to a new format.</html>");
     UIUtil.setEnabled(myNewPasswordPanel, false, true);
     myNewPasswordPanel.setVisible(false);
 
@@ -63,6 +60,6 @@ public class EnterPasswordComponent extends PasswordComponentBase {
 
   @Override
   public String getHelpId() {
-    return HelpID.ENTER_PASSWORD;
+    return "settings_passwords_master_password_enter";
   }
 }
