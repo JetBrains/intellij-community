@@ -34,7 +34,7 @@ class StatusInfoProvider(private val requestSender: RequestService) {
         return hash % 2 == 0
     }
     
-    fun updateExperimentData() {
+    fun updateStatus() {
         serverStatus = ""
         dataServerUrl = ""
         

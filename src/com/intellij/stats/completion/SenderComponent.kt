@@ -21,7 +21,7 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender, val testerHelper: StatusInfoProvider) : ApplicationComponent.Adapter() {
+class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoProvider) : ApplicationComponent.Adapter() {
     private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
@@ -32,9 +32,11 @@ class SenderComponent(val sender: StatisticSender, val testerHelper: StatusInfoP
 
         try {
             ApplicationManager.getApplication().executeOnPooledThread {
-                testerHelper.updateExperimentData()
-                val dataServerUrl = testerHelper.getDataServerUrl()
-                sender.sendStatsData(dataServerUrl)
+                statusHelper.updateStatus()
+                if (statusHelper.isServerOk()) {
+                    val dataServerUrl = statusHelper.getDataServerUrl()
+                    sender.sendStatsData(dataServerUrl)
+                }
             }
         } catch (e: Exception) {
             LOG.error(e.message)
