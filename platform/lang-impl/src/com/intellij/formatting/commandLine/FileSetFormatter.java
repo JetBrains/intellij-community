@@ -52,13 +52,14 @@ class FileSetFormatter extends FileSetProcessor {
   private MessageOutput myMessageOutput;
   private @NotNull CodeStyleSettings mySettings;
 
-  FileSetFormatter(@NotNull String fileSpec,
-                   @Nullable CodeStyleSettings settings,
-                   @NotNull MessageOutput messageOutput) {
-    super(fileSpec);
+  FileSetFormatter(@NotNull MessageOutput messageOutput) {
     myMessageOutput = messageOutput;
-    mySettings = settings != null ? settings : new CodeStyleSettings();
+    mySettings = new CodeStyleSettings();
     myProjectUID = UUID.randomUUID().toString();
+  }
+
+  public void setCodeStyleSettings(@NotNull CodeStyleSettings settings) {
+    mySettings = settings;
   }
 
   private void createProject() throws IOException {
