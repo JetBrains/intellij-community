@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Map;
@@ -37,6 +38,8 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
 {
   private final AtomicReference<Map<String/* external project path */, String>> myGradleHomes =
     new AtomicReference<Map<String, String>>(ContainerUtilRt.newHashMap());
+  private final AtomicReference<Map<String/* external project path */, String>> myGradleVersions =
+    new AtomicReference<Map<String, String>>(ContainerUtilRt.newHashMap());
 
   public GradleLocalSettings(@NotNull Project project) {
     super(GradleConstants.SYSTEM_ID, project);
@@ -52,8 +55,14 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
     return myGradleHomes.get().get(linkedProjectPath);
   }
 
+  @Nullable
+  public String getGradleVersion(String linkedProjectPath) {
+    return myGradleVersions.get().get(linkedProjectPath);
+  }
+
   public void setGradleHome(@NotNull String linkedProjectPath, @NotNull String gradleHome) {
     myGradleHomes.get().put(linkedProjectPath, gradleHome);
+    myGradleVersions.get().put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
   }
 
   @Override
@@ -61,6 +70,7 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
     super.forgetExternalProjects(linkedProjectPathsToForget);
     for (String path : linkedProjectPathsToForget) {
       myGradleHomes.get().remove(path);
+      myGradleVersions.get().remove(path);
     }
   }
 
@@ -70,6 +80,7 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
     MyState state = new MyState();
     fillState(state);
     state.myGradleHomes = myGradleHomes.get();
+    state.myGradleVersions = myGradleVersions.get();
     return state;
   }
 
@@ -77,9 +88,11 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
   public void loadState(@NotNull MyState state) {
     super.loadState(state);
     setIfNotNull(myGradleHomes, state.myGradleHomes);
+    setIfNotNull(myGradleVersions, state.myGradleVersions);
   }
 
   public static class MyState extends AbstractExternalSystemLocalSettings.State {
     public Map<String/* project path */, String> myGradleHomes = ContainerUtilRt.newHashMap();
+    public Map<String/* project path */, String> myGradleVersions = ContainerUtilRt.newHashMap();
   }
 }
