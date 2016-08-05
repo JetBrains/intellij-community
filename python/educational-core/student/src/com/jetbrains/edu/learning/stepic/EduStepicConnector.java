@@ -363,7 +363,7 @@ public class EduStepicConnector {
         }
         
         if (info.isAdaptive()) {
-          info.setDescription("This is a Stepic Adaptive course.\n\n" + info.getDescription());
+          info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription());
         }
         
         result.add(info);
