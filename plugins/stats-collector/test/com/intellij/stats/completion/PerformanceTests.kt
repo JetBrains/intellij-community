@@ -58,7 +58,9 @@ class Test {
 
         
         val requestService = mock(RequestService::class.java)
-        `when`(requestService.post(Matchers.anyString(), Matchers.any<Map<String, String>>())).then { 
+        val anyString = Matchers.anyString()
+        val anyMap = Matchers.anyMapOf(String::class.java, String::class.java)
+        `when`(requestService.post(anyString, anyMap)).then { 
             Thread.sleep(5000)
             ResponseData(200)
         }
