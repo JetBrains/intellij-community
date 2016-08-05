@@ -152,10 +152,10 @@ public class FormatterStarter extends ApplicationStarterEx {
 
   private static void showUsageInfo(@NotNull MessageOutput messageOutput) {
     messageOutput.info("Usage: format [-h] [-r|-R] [-s|-settings settingsPath] path1 path2...\n");
-    messageOutput.info("  -h|-help       Show a help message and exit.");
+    messageOutput.info("  -h|-help       Show a help message and exit.\n");
     messageOutput.info("  -s|-settings   A path to Intellij IDEA code style settings .xml file.\n");
     messageOutput.info("  -r|-R          Scan directories recursively.\n");
-    messageOutput.info("  -m|-mask       A comma-separated list of file masks.");
+    messageOutput.info("  -m|-mask       A comma-separated list of file masks.\n");
     messageOutput.info("  path<n>        A path to a file or a directory.\n");
     System.exit(0);
   }
