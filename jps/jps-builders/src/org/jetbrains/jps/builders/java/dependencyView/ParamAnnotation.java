@@ -31,19 +31,19 @@ import java.io.IOException;
 public class ParamAnnotation implements RW.Savable{
   public static final ParamAnnotation[] EMPTY_ARRAY = new ParamAnnotation[0];
 
-  public final int myParamIndex;
+  public final int paramIndex;
   @NotNull
-  public final TypeRepr.ClassType myAnnotationType;
+  public final TypeRepr.ClassType type;
 
-  public ParamAnnotation(int paramIndex, @NotNull TypeRepr.ClassType annotationType) {
-    myParamIndex = paramIndex;
-    myAnnotationType = annotationType;
+  public ParamAnnotation(int paramIndex, @NotNull TypeRepr.ClassType type) {
+    this.paramIndex = paramIndex;
+    this.type = type;
   }
 
   public ParamAnnotation(DataExternalizer<TypeRepr.ClassType> externalizer, DataInput in) {
     try {
-      myParamIndex = DataInputOutputUtil.readINT(in);
-      myAnnotationType = externalizer.read(in);
+      paramIndex = DataInputOutputUtil.readINT(in);
+      type = externalizer.read(in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -53,8 +53,8 @@ public class ParamAnnotation implements RW.Savable{
   @Override
   public void save(DataOutput out) {
     try {
-      DataInputOutputUtil.writeINT(out, myParamIndex);
-      myAnnotationType.save(out);
+      DataInputOutputUtil.writeINT(out, paramIndex);
+      type.save(out);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -68,16 +68,16 @@ public class ParamAnnotation implements RW.Savable{
 
     ParamAnnotation that = (ParamAnnotation)o;
 
-    if (myParamIndex != that.myParamIndex) return false;
-    if (!myAnnotationType.equals(that.myAnnotationType)) return false;
+    if (paramIndex != that.paramIndex) return false;
+    if (!type.equals(that.type)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myParamIndex;
-    result = 31 * result + myAnnotationType.hashCode();
+    int result = paramIndex;
+    result = 31 * result + type.hashCode();
     return result;
   }
 }
