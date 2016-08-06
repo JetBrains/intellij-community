@@ -428,7 +428,12 @@ public def layoutCommunityPlugins(String home, BuildContext buildContext = null)
     }
 
     layoutPlugin("svn4idea") {
-      fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
+      fileset(dir: "$home/plugins/svn4idea/lib") {
+        exclude(name: "svnkitsrc.zip")
+        exclude(name: "sqljetsrc.zip")
+        exclude(name: "svnkit-javahl16.zip")
+        exclude(name: "trileadsrc.zip")
+      }
     }
 
     layoutPlugin("junit", "junit", "idea-junit") {
