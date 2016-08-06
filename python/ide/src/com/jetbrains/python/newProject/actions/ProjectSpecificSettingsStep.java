@@ -243,7 +243,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
   private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
     final JButton interpreterButton = new FixedSizeButton(location);
+    interpreterButton.putClientProperty("JButton.buttonType", null);
     interpreterButton.setIcon(PythonIcons.Python.Python);
+    interpreterButton.putClientProperty("JButton.buttonType", "square");
     interpreterButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -282,7 +284,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     final Sdk preferred = compatibleSdk;
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
+    mySdkCombo.putClientProperty("JButton.buttonType", null);
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+    mySdkCombo.putClientProperty("JButton.buttonType", "square");
 
     return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
   }
