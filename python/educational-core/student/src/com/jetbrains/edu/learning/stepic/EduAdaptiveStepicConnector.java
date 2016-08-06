@@ -311,9 +311,7 @@ public class EduAdaptiveStepicConnector {
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
-        ApplicationManager.getApplication().invokeLater(() -> {
-          StudyUtils.showErrorPopupOnToolbar(project);
-        });
+        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));
       }
     }
   }
