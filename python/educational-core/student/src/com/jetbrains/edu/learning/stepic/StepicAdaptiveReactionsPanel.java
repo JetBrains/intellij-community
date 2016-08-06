@@ -25,7 +25,7 @@ import java.awt.event.MouseEvent;
 public class StepicAdaptiveReactionsPanel extends JPanel {
   private final ReactionButtonPanel myHardPanel;
   private final ReactionButtonPanel myBoringPanel;
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private static final int TOO_HARD_REACTION = 0;
   private static final int TOO_BORING_REACTION = -1;
   private static final String HARD_REACTION = "Too Hard";
@@ -118,12 +118,11 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       setLayout(new GridBagLayout());
       setBorder(BorderFactory.createEtchedBorder());
       add(myButtonPanel);
-      addMouseListener(() -> { if (isEnabled()) EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction, ()->
-        StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true));});
+      addMouseListener(reaction);
     }
 
-    private void addMouseListener(@NotNull Runnable onClickAction) {
-      final ReactionMouseAdapter mouseAdapter = new ReactionMouseAdapter(onClickAction, this);
+    private void addMouseListener(int reaction) {
+      final ReactionMouseAdapter mouseAdapter = new ReactionMouseAdapter(this, reaction);
       this.addMouseListener(mouseAdapter);
       myButtonPanel.addMouseListener(mouseAdapter);
       myLabel.addMouseListener(mouseAdapter);
@@ -139,17 +138,17 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     }
 
     private class ReactionMouseAdapter extends MouseAdapter {
-      private final Runnable myClickAction;
       private final ReactionButtonPanel myPanel;
+      private final int myReaction;
 
-      public ReactionMouseAdapter(@NotNull final Runnable onClickAction, @NotNull final ReactionButtonPanel mainPanel) {
-        myClickAction = onClickAction;
+      public ReactionMouseAdapter(@NotNull final ReactionButtonPanel mainPanel, int reaction) {
+        myReaction = reaction;
         myPanel = mainPanel;
       }
 
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 1) {
+        if (e.getClickCount() == 1 && isEnabled()) {
           final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(myProject);
           if (task != null && task.getStatus() != StudyStatus.Solved) {
             final ProgressIndicatorBase progress = new ProgressIndicatorBase();
@@ -159,7 +158,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
-                myClickAction.run();
+                EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myReaction);
+                StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
           }
