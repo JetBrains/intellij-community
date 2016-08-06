@@ -86,6 +86,7 @@
     </group>
 
     <action id="UnpackCourse" class="com.jetbrains.edu.coursecreator.actions.CCFromCourseArchive"/>
+    <action id="GetCourse" class="com.jetbrains.edu.coursecreator.actions.CCGetCourseFromStepic"/>
   </actions>
 
 
