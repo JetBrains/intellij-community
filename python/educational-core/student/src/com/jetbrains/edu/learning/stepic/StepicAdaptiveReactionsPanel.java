@@ -118,7 +118,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       setLayout(new GridBagLayout());
       setBorder(BorderFactory.createEtchedBorder());
       add(myButtonPanel);
-      addMouseListener(() -> { if (isEnabled()) EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction);});
+      addMouseListener(() -> { if (isEnabled()) EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction, ()->
+        StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true));});
     }
 
     private void addMouseListener(@NotNull Runnable onClickAction) {
@@ -159,11 +160,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
                 myClickAction.run();
-              }
-
-              @Override
-              public void onFinished() {
-                StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
           }

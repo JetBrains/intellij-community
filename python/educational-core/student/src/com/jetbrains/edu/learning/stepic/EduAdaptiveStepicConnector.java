@@ -221,7 +221,7 @@ public class EduAdaptiveStepicConnector {
     return false;
   }
 
-  public static void addNextRecommendedTask(@NotNull final Project project, int reaction) {
+  public static void addNextRecommendedTask(@NotNull final Project project, int reaction, @Nullable Runnable callback) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
@@ -300,11 +300,15 @@ public class EduAdaptiveStepicConnector {
         ApplicationManager.getApplication().invokeLater(() -> {
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
           ProjectView.getInstance(project).refresh();
+          if (callback != null) callback.run();
         });
       }
       else {
         LOG.warn("Recommendation reactions weren't posted");
-        ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          StudyUtils.showErrorPopupOnToolbar(project);
+          if (callback != null) callback.run();
+        });
       }
     }
   }
