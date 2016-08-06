@@ -14,15 +14,17 @@ from docutils.writers import Writer
 ENCODING = 'utf-8'
 _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
 _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
 
 
 def read_safe():
     return _stdin.read().decode(ENCODING)
 
 
-def print_safe(s):
-    _stdout.write(s.encode(ENCODING))
-    _stdout.flush()
+def print_safe(s, error=False):
+    stream = _stderr if error else _stdout
+    stream.write(s.encode(ENCODING))
+    stream.flush()
 
 
 # Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
