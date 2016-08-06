@@ -128,7 +128,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       myLabel.addMouseListener(mouseAdapter);
     }
 
-
     public void setEnabledRecursive(final boolean isEnabled) {
       ApplicationManager.getApplication().invokeLater(() -> {
         super.setEnabled(isEnabled);
@@ -158,7 +157,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
-                EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myReaction);
+                EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, myReaction, indicator);
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });
