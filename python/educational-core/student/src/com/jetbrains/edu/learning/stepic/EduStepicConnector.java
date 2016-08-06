@@ -124,6 +124,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to create user " + responseString);
         return false;
@@ -217,6 +218,7 @@ public class EduStepicConnector {
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         LOG.warn("Failed to login: " + line.getStatusCode() + line.getReasonPhrase());
         LOG.debug("Failed to login " + responseString);
+        EntityUtils.consume(responseEntity);
         ourClient = null;
         return false;
       }
@@ -241,6 +243,7 @@ public class EduStepicConnector {
     final StatusLine statusLine = response.getStatusLine();
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+    EntityUtils.consume(responseEntity);
     if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
       throw new IOException("Stepic returned non 200 status code " + responseString);
     }
@@ -508,6 +511,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = attemptResponse.getEntity();
       final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = attemptResponse.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to make attempt " + attemptResponseString);
       }
@@ -535,6 +539,7 @@ public class EduStepicConnector {
     final HttpEntity responseEntity = response.getEntity();
     final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
     final StatusLine line = response.getStatusLine();
+    EntityUtils.consume(responseEntity);
     if (line.getStatusCode() != HttpStatus.SC_CREATED) {
       LOG.error("Failed to make submission " + responseString);
     }
@@ -583,6 +588,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         if (!relogin) {
           login(project);
@@ -681,6 +687,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
       }
@@ -707,6 +714,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_CREATED) {
         LOG.error("Failed to push " + responseString);
         return -1;
@@ -752,6 +760,7 @@ public class EduStepicConnector {
         if (line.getStatusCode() != HttpStatus.SC_OK) {
           final HttpEntity responseEntity = response.getEntity();
           final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          EntityUtils.consume(responseEntity);
           LOG.error("Failed to push " + responseString);
         }
       }
@@ -780,6 +789,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
         if (login(project)) {
           return updateLesson(project, lesson, indicator);
@@ -821,6 +831,7 @@ public class EduStepicConnector {
       final HttpEntity responseEntity = response.getEntity();
       final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine line = response.getStatusLine();
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
         if (login(project)) {
           return postLesson(project, lesson, indicator);
@@ -854,6 +865,7 @@ public class EduStepicConnector {
         if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
           final HttpEntity responseEntity = response.getEntity();
           final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+          EntityUtils.consume(responseEntity);
           LOG.error("Failed to delete task " + responseString);
         }
       }
@@ -884,6 +896,7 @@ public class EduStepicConnector {
         final StatusLine line = response.getStatusLine();
         final HttpEntity responseEntity = response.getEntity();
         final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        EntityUtils.consume(responseEntity);
         if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
           if (login(project)) {
             postTask(project, task, lessonId);
