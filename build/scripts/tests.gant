@@ -44,6 +44,7 @@ if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
 };
 
 args << "-Djna.nosys=true"
+args << "-Djava.awt.headless=true"
 
 setProperty("jvm_args", args)
 
