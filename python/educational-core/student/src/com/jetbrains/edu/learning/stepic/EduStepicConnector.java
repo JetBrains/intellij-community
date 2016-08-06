@@ -213,12 +213,13 @@ public class EduStepicConnector {
       final CloseableHttpResponse response = ourClient.execute(request);
       saveCSRFToken();
       final StatusLine line = response.getStatusLine();
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+      EntityUtils.consume(responseEntity);
       if (line.getStatusCode() != HttpStatus.SC_MOVED_TEMPORARILY) {
-        final HttpEntity responseEntity = response.getEntity();
-        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
         LOG.warn("Failed to login: " + line.getStatusCode() + line.getReasonPhrase());
         LOG.debug("Failed to login " + responseString);
-        EntityUtils.consume(responseEntity);
+
         ourClient = null;
         return false;
       }
@@ -750,6 +751,9 @@ public class EduStepicConnector {
 
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        EntityUtils.consume(responseEntity);
         final StatusLine line = response.getStatusLine();
         if (line.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
           if (login(project)) {
@@ -758,9 +762,6 @@ public class EduStepicConnector {
           }
         }
         if (line.getStatusCode() != HttpStatus.SC_OK) {
-          final HttpEntity responseEntity = response.getEntity();
-          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-          EntityUtils.consume(responseEntity);
           LOG.error("Failed to push " + responseString);
         }
       }
@@ -861,11 +862,11 @@ public class EduStepicConnector {
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
         final CloseableHttpResponse response = ourClient.execute(request);
+        final HttpEntity responseEntity = response.getEntity();
+        final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+        EntityUtils.consume(responseEntity);
         final StatusLine line = response.getStatusLine();
         if (line.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-          final HttpEntity responseEntity = response.getEntity();
-          final String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-          EntityUtils.consume(responseEntity);
           LOG.error("Failed to delete task " + responseString);
         }
       }
