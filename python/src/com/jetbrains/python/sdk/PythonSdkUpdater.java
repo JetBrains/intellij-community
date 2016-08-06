@@ -166,8 +166,13 @@ public class PythonSdkUpdater implements StartupActivity {
                   PyPackageManager.getInstance(sdk12).refreshAndGetPackages(true);
                 }
                 catch (ExecutionException e) {
-                  e.initCause(methodCallStacktrace);
-                  LOG.warn(e);
+                  if (LOG.isDebugEnabled()) {
+                    e.initCause(methodCallStacktrace);
+                    LOG.debug(e);
+                  }
+                  else {
+                    LOG.warn(e.getMessage());
+                  }
                 }
               }
               catch (InvalidSdkException e) {
