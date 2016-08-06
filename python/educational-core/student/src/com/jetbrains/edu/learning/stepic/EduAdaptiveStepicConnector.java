@@ -29,6 +29,7 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -239,6 +240,7 @@ public class EduAdaptiveStepicConnector {
         if (task != null) {
           final Lesson adaptive = course.getLessons().get(0);
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
+          final String lessonName = EduNames.LESSON + String.valueOf(adaptive.getIndex());
           if (reaction == 0 || reaction == -1) {
             unsolvedTask.setName(task.getName());
             unsolvedTask.setStepicId(task.getStepicId());
@@ -264,11 +266,12 @@ public class EduAdaptiveStepicConnector {
               LOG.warn("Got task without unexpected number of task files: " + taskFiles.size());
             }
 
-            final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-            final File taskDirectory = new File(lessonDirectory, EduNames.TASK + String.valueOf(adaptive.getTaskList().size()));
+            final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
+            final String taskName = EduNames.TASK + String.valueOf(adaptive.getTaskList().size());
+            final File taskDirectory = new File(lessonDirectory, taskName);
             StudyProjectGenerator.flushTask(task, taskDirectory);
             StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
-            final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
 
             if (lessonDir != null) {
               createTestFiles(course, task, unsolvedTask, lessonDir);
@@ -277,21 +280,24 @@ public class EduAdaptiveStepicConnector {
             if (window != null) {
               window.setTaskText(StudyUtils.wrapTextToDisplayLatex(unsolvedTask.getText()), unsolvedTask.getTaskDir(project), project);
             }
+            StudyNavigator.navigateToTask(project, lessonName, taskName);
           }
           else {
             adaptive.addTask(task);
             task.setIndex(adaptive.getTaskList().size());
-            final VirtualFile lessonDir = project.getBaseDir().findChild(EduNames.LESSON + String.valueOf(adaptive.getIndex()));
+            final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
 
             if (lessonDir != null) {
               ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
                 try {
-                  final File lessonDirectory = new File(course.getCourseDirectory(), EduNames.LESSON + String.valueOf(adaptive.getIndex()));
-                  final File taskDir = new File(lessonDirectory, EduNames.TASK + String.valueOf(task.getIndex()));
+                  final File lessonDirectory = new File(course.getCourseDirectory(), lessonName);
+                  final String taskName = EduNames.TASK + String.valueOf(task.getIndex());
+                  final File taskDir = new File(lessonDirectory, taskName);
                   StudyProjectGenerator.flushTask(task, taskDir);
                   StudyProjectGenerator.flushCourseJson(course, new File(course.getCourseDirectory()));
                   StudyGenerator.createTask(task, lessonDir, new File(course.getCourseDirectory(), lessonDir.getName()), project);
                   adaptive.initLesson(course, true);
+                  StudyNavigator.navigateToTask(project, lessonName, taskName);
                 }
                 catch (IOException e) {
                   LOG.warn(e.getMessage());
