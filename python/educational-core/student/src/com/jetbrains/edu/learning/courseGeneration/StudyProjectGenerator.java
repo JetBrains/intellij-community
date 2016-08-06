@@ -83,6 +83,10 @@ public class StudyProjectGenerator {
     mySelectedCourseInfo = courseName;
   }
 
+  public CourseInfo getSelectedCourseInfo() {
+    return mySelectedCourseInfo;
+  }
+
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     if (myUser != null) {
       StudyTaskManager.getInstance(project).setUser(myUser);
