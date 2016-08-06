@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
@@ -221,16 +222,18 @@ public class EduAdaptiveStepicConnector {
     return false;
   }
 
-  public static void addNextRecommendedTask(@NotNull final Project project, int reaction) {
+  public static void addNextRecommendedTask(@NotNull final Project project, int reaction, ProgressIndicator indicator) {
     final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
+      indicator.checkCanceled();
       final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
         postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
                                    String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
+        indicator.checkCanceled();
         final Task task = getNextRecommendation(project, course);
 
         if (task != null) {
