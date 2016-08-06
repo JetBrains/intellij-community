@@ -118,7 +118,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       setLayout(new GridBagLayout());
       setBorder(BorderFactory.createEtchedBorder());
       add(myButtonPanel);
-      addMouseListener(() -> EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction));
+      addMouseListener(() -> { if (isEnabled()) EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, reaction);});
     }
 
     private void addMouseListener(@NotNull Runnable onClickAction) {
