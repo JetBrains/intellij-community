@@ -294,6 +294,19 @@ public class EduStepicConnector {
     return Collections.singletonList(CourseInfo.INVALID_COURSE);
   }
 
+  public static CourseInfo getCourseInfo(Project project, String courseId) {
+    final String url = EduStepicNames.COURSES + "/" + courseId;
+    try {
+      login(project);
+      final StepicWrappers.CoursesContainer coursesContainer = getFromStepic(url, StepicWrappers.CoursesContainer.class);
+      return coursesContainer.courses.get(0);
+    }
+    catch (IOException e) {
+      LOG.error(e.getMessage());
+    }
+    return null;
+  }
+
   public static Date getCourseUpdateDate(final int courseId) {
     final String url = EduStepicNames.COURSES + "/" + courseId;
     try {
