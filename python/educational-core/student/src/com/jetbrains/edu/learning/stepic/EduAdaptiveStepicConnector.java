@@ -201,6 +201,9 @@ public class EduAdaptiveStepicConnector {
     try {
       final CloseableHttpResponse execute = client.execute(post);
       final int statusCode = execute.getStatusLine().getStatusCode();
+      final HttpEntity entity = execute.getEntity();
+      final String entityString = EntityUtils.toString(entity);
+      EntityUtils.consume(entity);
       if (statusCode == HttpStatus.SC_CREATED) {
         return true;
       }
@@ -208,9 +211,6 @@ public class EduAdaptiveStepicConnector {
         if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
           return postRecommendationReaction(project, lessonId, user, reaction);
         }
-        final HttpEntity entity = execute.getEntity();
-        final String entityString = EntityUtils.toString(entity);
-        EntityUtils.consume(entity);
         LOG.warn("Stepic returned non-201 status code: " + statusCode + " " + entityString);
         return false;
       }
@@ -549,10 +549,10 @@ public class EduAdaptiveStepicConnector {
     setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
     final int statusCode = httpResponse.getStatusLine().getStatusCode();
+    final HttpEntity entity = httpResponse.getEntity();
+    final String entityString = EntityUtils.toString(entity);
+    EntityUtils.consume(entity);
     if (statusCode == HttpStatus.SC_CREATED) {
-      final HttpEntity entity = httpResponse.getEntity();
-      final String entityString = EntityUtils.toString(entity);
-      EntityUtils.consume(entity);
       final StepicWrappers.AttemptContainer container =
         new Gson().fromJson(entityString, StepicWrappers.AttemptContainer.class);
       return (container.attempts != null && !container.attempts.isEmpty()) ? container.attempts.get(0).id : -1;
