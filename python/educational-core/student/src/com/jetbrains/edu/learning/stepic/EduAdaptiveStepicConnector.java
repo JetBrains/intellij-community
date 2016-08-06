@@ -94,8 +94,6 @@ public class EduAdaptiveStepicConnector {
             final Lesson realLesson = lessonContainer.lessons.get(0);
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
-            viewAllSteps(client, realLesson.getId());
-
             for (int stepId : realLesson.steps) {
               final StepicWrappers.StepSource step = getStep(stepId);
               if (step.block.name.equals("code")) {
@@ -155,38 +153,6 @@ public class EduAdaptiveStepicConnector {
       .setSocketTimeout(CONNECTION_TIMEOUT)
       .build();
     request.setConfig(requestConfig);
-  }
-
-  private static void viewAllSteps(CloseableHttpClient client, int lessonId) throws URISyntaxException, IOException {
-    final URI unitsUrl = new URIBuilder(EduStepicNames.UNITS).addParameter(EduNames.LESSON, String.valueOf(lessonId)).build();
-    final StepicWrappers.UnitContainer unitContainer = getFromStepic(unitsUrl.toString(), StepicWrappers.UnitContainer.class);
-    if (unitContainer.units.size() != 1) {
-      LOG.warn("Got unexpected numbers of units: " + unitContainer.units.size());
-      return;
-    }
-
-    final URIBuilder builder = new URIBuilder(EduStepicNames.ASSIGNMENT);
-    for (Integer step : unitContainer.units.get(0).assignments) {
-      builder.addParameter("ids[]", String.valueOf(step));
-    }
-    final URI assignmentUrl = builder.build();
-    final StepicWrappers.AssignmentsWrapper assignments = getFromStepic(assignmentUrl.toString(), StepicWrappers.AssignmentsWrapper.class);
-    if (assignments.assignments.size() > 0) {
-      for (StepicWrappers.Assignment assignment : assignments.assignments) {
-        final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.VIEWS_URL);
-        final StepicWrappers.ViewsWrapper viewsWrapper = new StepicWrappers.ViewsWrapper(assignment.id, assignment.step);
-        post.setEntity(new StringEntity(new Gson().toJson(viewsWrapper)));
-        setHeaders(post, EduStepicNames.CONTENT_TYPE_APPL_JSON);
-        setTimeout(post);
-        final CloseableHttpResponse viewPostResult = client.execute(post);
-        if (viewPostResult.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-          LOG.warn("Error while Views post, code: " + viewPostResult.getStatusLine().getStatusCode());
-        }
-      }
-    }
-    else {
-      LOG.warn("Got assignments of incorrect length: " + assignments.assignments.size());
-    }
   }
 
   public static boolean postRecommendationReaction(@NotNull final Project project, @NotNull final String lessonId,
