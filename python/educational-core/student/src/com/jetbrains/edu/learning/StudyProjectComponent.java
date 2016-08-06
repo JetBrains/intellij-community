@@ -71,7 +71,7 @@ public class StudyProjectComponent implements ProjectComponent {
       Platform.setImplicitExit(false);
     }
 
-    if (course != null && !course.isUpToDate()) {
+    if (course != null && !course.isAdaptive() && !course.isUpToDate()) {
       final Notification notification =
         new Notification("Update.course", "Course Updates", "Course is ready to <a href=\"update\">update</a>", NotificationType.INFORMATION,
                          new NotificationListener() {
