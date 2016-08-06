@@ -174,7 +174,8 @@ public class EduAdaptiveStepicConnector {
         return true;
       }
       else {
-        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED) && login(project)) {
+        if ((statusCode == HttpStatus.SC_BAD_REQUEST || statusCode == HttpStatus.SC_UNAUTHORIZED || statusCode == HttpStatus.SC_FORBIDDEN)
+            && login(project)) {
           return postRecommendationReaction(project, lessonId, user, reaction);
         }
         LOG.warn("Stepic returned non-201 status code: " + statusCode + " " + entityString);
