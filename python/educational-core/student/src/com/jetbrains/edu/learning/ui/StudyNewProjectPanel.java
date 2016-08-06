@@ -130,7 +130,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       myDescriptionPane.setEditable(false);
       //setting the first course in list as selected
       myGenerator.setSelectedCourse(selectedCourse);
-
+      if (myGenerator.getSelectedCourseInfo() != null) {
+        myCoursesComboBox.setSelectedItem(myGenerator.getSelectedCourseInfo());
+      }
       if (selectedCourse.isAdaptive() && !myGenerator.isLoggedIn()) {
         setError(LOGIN_TO_STEPIC_MESSAGE);
       }
