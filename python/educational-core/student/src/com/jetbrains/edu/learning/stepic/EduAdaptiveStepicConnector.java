@@ -101,18 +101,12 @@ public class EduAdaptiveStepicConnector {
               if (step.block.name.equals("code")) {
                 return getTaskFromStep(project, stepId, step.block, realLesson.getName());
               }
-              else {
-                final StudyEditor editor = StudyUtils.getSelectedStudyEditor(project);
-                if (editor != null && editor.getTaskFile() != null) {
-                  final StepicUser user = StudyTaskManager.getInstance(project).getUser();
-                  postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
-                                             String.valueOf(user.getId()), -1);
-                  return getNextRecommendation(project, course);
-                }
-              }
             }
 
-            LOG.warn("Got a lesson without code part as a recommendation");
+            final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+            postRecommendationReaction(project, lessonId,
+                                       String.valueOf(user.getId()), -1);
+            return getNextRecommendation(project, course);
           }
           else {
             LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
