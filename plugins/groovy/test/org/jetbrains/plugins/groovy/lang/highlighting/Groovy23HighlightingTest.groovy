@@ -158,5 +158,24 @@ trait A {
     assert map.size() == 1 // need to implement only foo(a, b, c)
   }
 
+  void 'test non-static inner class in trait not allowed'() {
+    testHighlighting '''\
+interface I {}
+
+trait T {
+  def a = new <error descr="Non-static inner classes are not allowed in traits">I</error>() {}
+  def foo() {
+    new <error descr="Non-static inner classes are not allowed in traits">I</error>() {}
+  }
+  class <error descr="Non-static inner classes are not allowed in traits">A</error> {}
+  static class B {
+    def foo() {
+      new I() {} //no error here
+    }
+  }
+}
+'''
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }

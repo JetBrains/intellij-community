@@ -2017,6 +2017,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("annotation.type.cannot.be.inner"));
     }
 
+    if (!typeDefinition.hasModifierProperty(PsiModifier.STATIC)
+        && (typeDefinition.getContainingClass() != null || typeDefinition instanceof GrAnonymousClassDefinition)) {
+      GrTypeDefinition owner = PsiTreeUtil.getParentOfType(typeDefinition, GrTypeDefinition.class);
+      if (owner instanceof GrTraitTypeDefinition) {
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("non.static.classes.not.allowed"));
+      }
+    }
+
     checkDuplicateClass(typeDefinition, holder);
 
     checkCyclicInheritance(holder, typeDefinition);

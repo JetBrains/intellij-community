@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -172,14 +173,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     if (owner instanceof GrVariableDeclaration && owner.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement pParent = owner.getParent().getParent();
       if (!modifierList.hasExplicitVisibilityModifiers()) { //properties are backed by private fields
-        if (!(pParent instanceof GrTypeDefinition && isInterface((GrTypeDefinition)pParent))) {
+        if (!(pParent instanceof GrTypeDefinition && GrTraitUtil.isInterface((GrTypeDefinition)pParent))) {
           if (modifier.equals(GrModifier.PRIVATE)) return true;
           if (modifier.equals(GrModifier.PROTECTED)) return false;
           if (modifier.equals(GrModifier.PUBLIC)) return false;
         }
       }
 
-      if (pParent instanceof GrTypeDefinition && isInterface((GrTypeDefinition)pParent)) {
+      if (pParent instanceof GrTypeDefinition && GrTraitUtil.isInterface((GrTypeDefinition)pParent)) {
         if (modifier.equals(GrModifier.STATIC)) return true;
         if (modifier.equals(GrModifier.FINAL)) return true;
       }
@@ -217,7 +218,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
       if (modifier.equals(GrModifier.STATIC)) {
         final PsiClass containingClass = clazz.getContainingClass();
-        return containingClass != null && containingClass.isInterface();
+        return GrTraitUtil.isInterface(containingClass);
       }
       if (modifier.equals(GrModifier.ABSTRACT)) {
         if (clazz.isInterface()) return true;
@@ -242,10 +243,6 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return false;
-  }
-
-  private static boolean isInterface(GrTypeDefinition pParent) {
-    return pParent.isInterface() && !pParent.isTrait();
   }
 
   @Override
