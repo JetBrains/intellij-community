@@ -40,8 +40,8 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
   override fun acceptElement(e: PsiElement) = when (e) {
     is GrVariableDeclaration -> e.variables.singleOrNull() is GrField
     is GrField -> e is GrEnumConstant
-    is GrClosableBlock,
-    is GrMember -> true
+    is GrClosableBlock -> true
+    is GrMember -> e.name != null
     else -> false
   }
 
