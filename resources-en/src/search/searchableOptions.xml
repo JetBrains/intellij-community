@@ -6137,6 +6137,16 @@
     <option name="but" path="ActionManager" hit="Close All But Pinned" />
     <option name="close" path="ActionManager" hit="Close All But Pinned" />
     <option name="pinned" path="ActionManager" hit="Close All But Pinned" />
+    <option name="close" path="ActionManager" hit="Close All To The Left" />
+    <option name="all" path="ActionManager" hit="Close All To The Left" />
+    <option name="to" path="ActionManager" hit="Close All To The Left" />
+    <option name="the" path="ActionManager" hit="Close All To The Left" />
+    <option name="left" path="ActionManager" hit="Close All To The Left" />
+    <option name="close" path="ActionManager" hit="Close All To The Right" />
+    <option name="all" path="ActionManager" hit="Close All To The Right" />
+    <option name="to" path="ActionManager" hit="Close All To The Right" />
+    <option name="the" path="ActionManager" hit="Close All To The Right" />
+    <option name="right" path="ActionManager" hit="Close All To The Right" />
     <option name="close" path="ActionManager" hit="Close Connection" />
     <option name="connection" path="ActionManager" hit="Close Connection" />
     <option name="close" path="ActionManager" hit="Close JPA console" />

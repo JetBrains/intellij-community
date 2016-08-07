@@ -602,6 +602,8 @@
         <action id="CloseAllEditors" class="xcom.intellij.ide.actions.CloseAllEditorsAction" text="Close A_ll Editors" description="Close all editors in active tab group"/>
         <action id="CloseAllEditorsButActive" class="xcom.intellij.ide.actions.CloseAllEditorsButActiveAction" text="Close All Editors B_ut Active" description="Close all open editors except the active one"/>
         <action id="CloseAllUnmodifiedEditors" class="xcom.intellij.ide.actions.CloseAllUnmodifiedEditorsAction" text="Close All Unmodified Editors" description="Close all nonmodified editors"/>
+        <action id="CloseAllEditorsToTheRight" class="xcom.intellij.ide.actions.CloseAllEditorsToTheRightAction" text="Close All Editors To The Right" description="Close all editors to the right"/>
+        <action id="CloseAllEditorsToTheLeft" class="xcom.intellij.ide.actions.CloseAllEditorsToTheLeftAction" text="Close All Editors To The Left" description="Close all editors to the left"/>
         <separator/>
         <action id="SplitHorisontal"        class="xcom.intellij.ide.actions.SplitHorizontalAction" text="Split Vertically" description="Split editor area into 2 tab groups and move the current tab to the right group"/>
         <action id="SplitVertical"          class="xcom.intellij.ide.actions.SplitVerticalAction"   text="Split Horizontally" description="Split editor area into 2 tab groups and move the current tab to the bottom group"/>
