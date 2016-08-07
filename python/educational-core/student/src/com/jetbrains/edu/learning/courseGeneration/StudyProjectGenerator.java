@@ -83,6 +83,10 @@ public class StudyProjectGenerator {
     mySelectedCourseInfo = courseName;
   }
 
+  public CourseInfo getSelectedCourseInfo() {
+    return mySelectedCourseInfo;
+  }
+
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
     if (myUser != null) {
       StudyTaskManager.getInstance(project).setUser(myUser);
@@ -407,8 +411,26 @@ public class StudyProjectGenerator {
     if (myCourses.isEmpty()) {
       myCourses = getBundledIntro();
     }
-    StudyUtils.sortCourses(myCourses);
+    sortCourses(myCourses);
     return myCourses;
+  }
+
+  public void sortCourses(List<CourseInfo> result) {
+    // sort courses so as to have non-adaptive courses in the beginning of the list
+    Collections.sort(result, (c1, c2) -> {
+      if (mySelectedCourseInfo != null) {
+        if (mySelectedCourseInfo.equals(c1)) {
+          return -1;
+        }
+        if (mySelectedCourseInfo.equals(c2)) {
+          return 1;
+        }
+      }
+      if ((c1.isAdaptive() && c2.isAdaptive()) || (!c1.isAdaptive() && !c2.isAdaptive())) {
+        return 0;
+      }
+      return c1.isAdaptive() ? 1 : -1;
+    });
   }
 
   @NotNull
@@ -539,7 +561,7 @@ public class StudyProjectGenerator {
       File courseFile = courseFiles[0];
       CourseInfo courseInfo = getCourseInfo(courseFile);
       if (courseInfo != null) {
-        courses.add(courseInfo);
+        courses.add(0, courseInfo);
       }
       return courseInfo;
     }
