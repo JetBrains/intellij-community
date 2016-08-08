@@ -448,7 +448,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   private Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAfterRevisionsFiles(getSelectedChanges()),
+      getAfterRevisionsFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
     ).distinct();
   }

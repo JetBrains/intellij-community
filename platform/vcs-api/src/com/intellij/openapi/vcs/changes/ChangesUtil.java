@@ -178,28 +178,25 @@ public class ChangesUtil {
   @SuppressWarnings("unused")
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getAfterRevisionsFiles(changes).toArray(VirtualFile[]::new);
+    return getAfterRevisionsFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
   @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Collection<Change> changes) {
-    return changes.stream()
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
+    return getAfterRevisionsFiles(changes, false);
+  }
+
+  @NotNull
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes, boolean refresh) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+
+    return changes
       .map(Change::getAfterRevision)
       .filter(Objects::nonNull)
       .map(ContentRevision::getFile)
-      .map(ChangesUtil::refreshAndFind)
-      .filter(Objects::nonNull);
-  }
-
-  @Nullable
-  private static VirtualFile refreshAndFind(@NotNull FilePath filePath) {
-    VirtualFile file = filePath.getVirtualFile();
-
-    if (file == null || !file.isValid()) {
-      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
-    }
-
-    return file != null && file.isValid() ? file : null;
+      .map(path -> refresh ? fileSystem.refreshAndFindFileByPath(path.getPath()) : path.getVirtualFile())
+      .filter(Objects::nonNull)
+      .filter(VirtualFile::isValid);
   }
 
   @NotNull
