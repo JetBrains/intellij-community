@@ -76,10 +76,12 @@ public class PatchReader {
    * @deprecated use {@link PatchReader#readTextPatches()} instead
    */
   @Deprecated
+  @NotNull
   public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
     return readTextPatches();
   }
 
+  @NotNull
   public List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
     parseAllPatches();
     return getTextPatches();
@@ -125,14 +127,17 @@ public class PatchReader {
    * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
    */
   @Deprecated
+  @NotNull
   public List<TextFilePatch> getPatches() {
     return getTextPatches();
   }
 
+  @NotNull
   public List<TextFilePatch> getTextPatches() {
     return ContainerUtil.findAll(myPatches, TextFilePatch.class);
   }
 
+  @NotNull
   public List<FilePatch> getAllPatches() {
     return myPatches;
   }
