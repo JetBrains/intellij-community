@@ -136,9 +136,6 @@ class CommunityRepositoryModules {
     },
     plugin("svn4idea") {
       withResource("lib/licenses", "lib/licenses")
-      withResource("lib/sqljetsrc.zip", "lib")
-      withResource("lib/svnkit-javahl16.zip", "lib")
-      withResource("lib/trileadsrc.zip", "lib")
     },
     plugin("cvs-plugin") {
       directoryName = "cvsIntegration"
