@@ -135,7 +135,7 @@ class SelectTestStep(title: String?,
     entry.accept(object : TestEntryVisitor() {
       override fun visitTest(test: SingleTestEntry) {
         val suite = test.suite ?: return
-        val configuration = suite.runConfiguration
+        val configuration = suite.runConfigurationEntry
         if (configuration == null) {
           items.add(suite)
           return
@@ -165,10 +165,8 @@ class SelectTestStep(title: String?,
 }
 
 
-class SelectConfigurationStep(private val items: List<RecentTestsPopupEntry>, 
-                              private val runner: RecentTestRunner) 
-  : BaseListPopupStep<RecentTestsPopupEntry>(null, items)
-{
+class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
+                              private val runner: RecentTestRunner) : BaseListPopupStep<RecentTestsPopupEntry>(null, items) {
 
   override fun getTextFor(value: RecentTestsPopupEntry): String {
     var presentation = value.presentation
