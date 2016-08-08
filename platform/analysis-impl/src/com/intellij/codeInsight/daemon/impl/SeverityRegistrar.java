@@ -47,6 +47,11 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+  /**
+   * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
+   */
+  public static final int SHOWN_SEVERITIES_OFFSET = 1;
+
   private final static Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
   @NonNls private static final String INFO_TAG = "info";
