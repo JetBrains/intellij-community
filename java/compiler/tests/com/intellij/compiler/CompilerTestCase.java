@@ -51,7 +51,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected VirtualFile myOriginalSourceDir; // directory under testData/compiler/<group>/<testCase>/ where Java sources are located
   private CompilerTestData myData;
 
-  protected final Set<String> myRecompiledPaths = new HashSet<String>();
+  protected final Set<String> myRecompiledPaths = new HashSet<>();
   protected VirtualFile myModuleRoot;
   private boolean myUsedMakeToCompile = false;
 
@@ -167,7 +167,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         mySemaphore.down();
 
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        final List<String> generated = new ArrayList<String>();
+        final List<String> generated = new ArrayList<>();
         final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
           @Override
           public void fileGenerated(String outputRoot, String relativePath) {
@@ -246,7 +246,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
 
     if (recompiled.length != getRecompiledCount()) {
-      final Set<String> extraRecompiled = new HashSet<String>();
+      final Set<String> extraRecompiled = new HashSet<>();
       extraRecompiled.addAll(myRecompiledPaths);
       extraRecompiled.removeAll(Arrays.asList(recompiled));
       for (String path : extraRecompiled) {
@@ -350,7 +350,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         fail(libDir.getPath() + " is expected to be a directory");
       }
       final VirtualFile[] children = libDir.getChildren();
-      List<String> urls = new ArrayList<String>();
+      List<String> urls = new ArrayList<>();
       for (VirtualFile child : children) {
         if (!child.isDirectory() && (child.getName().endsWith(".jar") || child.getName().endsWith(".zip"))) {
           final String url = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, child.getPath()) + JarFileSystem.JAR_SEPARATOR;

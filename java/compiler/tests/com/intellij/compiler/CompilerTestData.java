@@ -13,7 +13,7 @@ import org.jdom.Element;
 import java.util.*;
 
 public class CompilerTestData implements JDOMExternalizable {
-  private final Set<String> myPathsToDelete = new HashSet<String>();
+  private final Set<String> myPathsToDelete = new HashSet<>();
   private String[] myDeletedByMake;
   private String[] myToRecompile;
 
@@ -31,7 +31,7 @@ public class CompilerTestData implements JDOMExternalizable {
     }
 
     // read paths that are expected to be deleted
-    List<String> data = new ArrayList<String>();
+    List<String> data = new ArrayList<>();
     for (Object o2 : element.getChildren("deleted_by_make")) {
       Element elem = (Element)o2;
       for (Object o : elem.getChildren()) {

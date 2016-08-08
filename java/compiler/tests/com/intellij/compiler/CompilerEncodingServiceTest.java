@@ -21,7 +21,7 @@ public class CompilerEncodingServiceTest extends PsiTestCase {
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
 
   private Collection<Charset> projectDefaultPlus(@NotNull Charset... charsets) {
-    Set<Charset> result = new THashSet<Charset>();
+    Set<Charset> result = new THashSet<>();
     result.add(getProjectDefault());
     result.addAll(Arrays.asList(charsets));
     return result;

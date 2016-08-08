@@ -36,7 +36,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
   }
 
   private void doTestManyModules(boolean inheritOutputPath) {
-    List<Module> modules = new ArrayList<Module>();
+    List<Module> modules = new ArrayList<>();
     for (int i = 0; i < 15; i++) {
       VirtualFile file = createFile("m" + i + "/src/A" + i + ".java", "public class A" + i + "{}");
       final String moduleName = "m" + i;

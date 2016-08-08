@@ -31,8 +31,8 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
-    private final List<String> myProblems = new ArrayList<String>();
-    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix[]>();
+    private final List<String> myProblems = new ArrayList<>();
+    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
@@ -59,7 +59,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     public void assertProblems(String... expectedMessages) {
-      Set<String> expected = new THashSet<String>(Arrays.asList(expectedMessages));
+      Set<String> expected = new THashSet<>(Arrays.asList(expectedMessages));
       outer:
       for (String problem : myProblems) {
         for (String message : expected) {

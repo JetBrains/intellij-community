@@ -20,7 +20,7 @@ import java.util.Set;
 public class TreeBasedMapTest extends TestCase {
 
   public void testMapSize() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
     map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
@@ -37,7 +37,7 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapAdd() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
     map.put("", "ValueEmpty");
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
@@ -62,7 +62,7 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapRemove() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
     map.put("", "ValueEmpty");
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
@@ -96,7 +96,7 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapIterate() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
     map.put("", "ValueEmpty");
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
     map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
@@ -106,7 +106,7 @@ public class TreeBasedMapTest extends TestCase {
     map.put("aaa/b/c", "ValueAAABC");
 
     final Iterator<String> iterator = map.getKeysIterator();
-    Map<String, String> checkMap = new HashMap<String, String>();
+    Map<String, String> checkMap = new HashMap<>();
 
     while (iterator.hasNext()) {
       final String key = iterator.next();
@@ -136,12 +136,12 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapIterate1() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
     map.put("/a/b/c", "ABC");
     map.put("/a/b/c/", "ABC1");
 
     final Iterator<String> iterator = map.getKeysIterator();
-    Map<String, String> checkMap = new HashMap<String, String>();
+    Map<String, String> checkMap = new HashMap<>();
 
     while (iterator.hasNext()) {
       final String key = iterator.next();
@@ -158,14 +158,14 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapIterateAfterRemoved() {
-    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
     map.put("/a/b/c", "ABC");
     map.put("/a/b/c/", "ABC1");
 
     map.remove("/a/b/c/");
 
     final Iterator<String> iterator = map.getKeysIterator();
-    Map<String, String> checkMap = new HashMap<String, String>();
+    Map<String, String> checkMap = new HashMap<>();
 
     while (iterator.hasNext()) {
       final String key = iterator.next();
