@@ -34,7 +34,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class InlayModelImpl implements InlayModel, Disposable {
-  public static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset);
+  public static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
+                                                                     .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);

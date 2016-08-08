@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @NotNull
   private final EditorImpl myEditor;
+  final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
   @NotNull
   private final Type myType;
   private final int myWidthInPixels;
@@ -33,6 +34,7 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   InlayImpl(@NotNull EditorImpl editor, int offset, @NotNull Type type, @NotNull Renderer renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
+    myOriginalOffset = offset;
     myType = type;
     myWidthInPixels = renderer.calcWidthInPixels(editor);
     if (type == Type.INLINE && myWidthInPixels <= 0) {
