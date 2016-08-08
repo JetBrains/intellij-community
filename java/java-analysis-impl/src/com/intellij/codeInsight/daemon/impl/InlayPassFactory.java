@@ -20,19 +20,19 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.folding.impl.ParameterNameFoldingManager;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,17 +177,20 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.setColor(Gray._230);
-      g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
-      g.setColor(JBColor.darkGray);
-      g.setFont(FONT.getFont());
-      FontMetrics metrics = g.getFontMetrics();
-      Shape savedClip = g.getClip();
-      g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)
-      g.drawString(myText, r.x + 4, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
-      g.setClip(savedClip);
-      config.restore();
+      TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
+      if (attributes != null) {
+        GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+        g.setColor(attributes.getBackgroundColor());
+        g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
+        g.setColor(attributes.getForegroundColor());
+        g.setFont(FONT.getFont());
+        FontMetrics metrics = g.getFontMetrics();
+        Shape savedClip = g.getClip();
+        g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)
+        g.drawString(myText, r.x + 4, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
+        g.setClip(savedClip);
+        config.restore();
+      }
     }
   }
 }
