@@ -258,31 +258,6 @@ public class AnalyticsUploader {
     }
   }
 
-  // Posting to Dremel means simply connecting to the URL and ignoring the response
-  private static void postToGoogleLogs(@NotNull URL url) throws IOException {
-    // Discard the actual response, but make sure it reads OK
-    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-
-    int responseCode;
-    try {
-      responseCode = conn.getResponseCode();
-    }
-    catch (UnknownHostException e) {
-      if (DEBUG) {
-        System.err.println("Unexpected exception while sending exception counts: " + e);
-      }
-      return;
-    }
-    finally {
-      conn.disconnect();
-    }
-
-    // tools.google.com is expected to return a 404
-    if (DEBUG && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
-      System.err.println("Ping did not return a 404");
-    }
-  }
-
   private static void postToAnalytics(@NotNull final List<BasicNameValuePair> parameters) {
     String channel = UNIT_TEST_MODE ?
                      "unit-test" : ChannelStatus.fromCode(UpdateSettings.getInstance().getUpdateChannelType()).getDisplayName();
