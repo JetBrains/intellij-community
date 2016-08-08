@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -247,9 +248,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
   private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
     final JButton interpreterButton = new FixedSizeButton(location);
-    interpreterButton.putClientProperty("JButton.buttonType", null);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      interpreterButton.putClientProperty("JButton.buttonType", null);
     interpreterButton.setIcon(PythonIcons.Python.Python);
-    interpreterButton.putClientProperty("JButton.buttonType", "square");
     interpreterButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -288,9 +289,9 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     final Sdk preferred = compatibleSdk;
     mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
-    mySdkCombo.putClientProperty("JButton.buttonType", null);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      mySdkCombo.putClientProperty("JButton.buttonType", null);
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
-    mySdkCombo.putClientProperty("JButton.buttonType", "square");
 
     return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
   }
