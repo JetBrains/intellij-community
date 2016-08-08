@@ -41,7 +41,7 @@ import java.util.Set;
 public abstract class AnnotationsChangeTracker {
 
   /**
-   * Enumeration defining all possile places that extension requests to recompile
+   * Enumeration defining all possible places that extension requests to recompile
    */
   public enum Recompile {
     /**
