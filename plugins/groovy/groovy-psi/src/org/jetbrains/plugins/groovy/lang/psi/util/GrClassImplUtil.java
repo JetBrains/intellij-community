@@ -356,6 +356,7 @@ public class GrClassImplUtil {
                                       @NotNull PsiElementFactory factory,
                                       @NotNull LanguageLevel level, CandidateInfo fieldInfo) {
     final PsiField field = (PsiField)fieldInfo.getElement();
+    if (!shouldProcessTraitMember(grType, field, place)) return true;
     if (!processInstanceMember(processInstanceMethods, field) || isSameDeclaration(place, field)) {
       return true;
     }
@@ -377,6 +378,7 @@ public class GrClassImplUtil {
                                        boolean placeGroovy,
                                        @NotNull CandidateInfo info) {
     PsiMethod method = (PsiMethod)info.getElement();
+    if (!shouldProcessTraitMember(grType, method, place)) return true;
     if (!processInstanceMember(processInstanceMethods, method) ||
         isSameDeclaration(place, method) ||
         !isMethodVisible(placeGroovy, method)) {
@@ -387,6 +389,14 @@ public class GrClassImplUtil {
       PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory, level);
 
     return processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor));
+  }
+
+  private static boolean shouldProcessTraitMember(@NotNull GrTypeDefinition grType,
+                                                  @NotNull PsiMember element,
+                                                  @NotNull PsiElement place) {
+    return !grType.isTrait() ||
+           !element.hasModifierProperty(PsiModifier.STATIC) ||
+           grType.equals(element.getContainingClass()) && PsiTreeUtil.isAncestor(grType, place, true);
   }
 
   private static boolean shouldProcessInstanceMembers(@NotNull GrTypeDefinition grType, @Nullable PsiElement lastParent) {

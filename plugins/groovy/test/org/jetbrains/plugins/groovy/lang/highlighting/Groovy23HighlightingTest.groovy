@@ -177,5 +177,32 @@ trait T {
 '''
   }
 
+  void 'test static trait members not resolved in direct access'() {
+    testHighlighting '''\
+trait StaticsContainer {
+  public static boolean CALLED = false
+  static void init() { CALLED = true }
+  static foo() { init() }
+}
+
+class NoName implements StaticsContainer {}
+
+NoName.init()
+assert NoName.StaticsContainer__CALLED
+
+StaticsContainer.<warning descr="Cannot resolve symbol 'init'">init</warning>()
+StaticsContainer.<warning descr="Cannot resolve symbol 'CALLED'">CALLED</warning>
+'''
+    fixture.configureByText 'Consumer.java', '''\
+public class Consumer {
+  public static void main(String[] args) {
+    System.out.println(NoName.StaticsContainer__CALLED);
+    System.out.println(StaticsContainer.<error descr="Cannot resolve symbol 'CALLED'">CALLED</error>);
+  }
+}
+'''
+    fixture.testHighlighting()
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }
