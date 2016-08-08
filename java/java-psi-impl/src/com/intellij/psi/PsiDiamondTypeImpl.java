@@ -116,6 +116,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return PsiTreeUtil.getParentOfType(typeElementWithDiamondTypeArgument, PsiNewExpression.class, true, PsiTypeElement.class);
   }
 
+  @Nullable
   @Override
   public JavaResolveResult getStaticFactory() {
     final PsiNewExpression newExpression = getNewExpression();

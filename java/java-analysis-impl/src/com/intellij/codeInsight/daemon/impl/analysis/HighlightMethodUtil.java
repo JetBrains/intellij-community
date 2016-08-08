@@ -1539,7 +1539,10 @@ public class HighlightMethodUtil {
 
       boolean applicable = true;
       try {
-        applicable = constructor != null && result.isApplicable();
+        final PsiDiamondType diamondType = constructorCall instanceof PsiNewExpression ? PsiDiamondType.getDiamondType((PsiNewExpression)constructorCall) : null;
+        final JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
+        applicable = staticFactory instanceof MethodCandidateInfo ? ((MethodCandidateInfo)staticFactory).isApplicable()
+                                                                  : result != null && result.isApplicable();
       }
       catch (IndexNotReadyException e) {
         // ignore
