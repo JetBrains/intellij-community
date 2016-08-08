@@ -19,11 +19,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -78,9 +80,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     final LabeledComponent<ComboBox> coursesCombo = LabeledComponent.create(myCoursesComboBox, "Courses:", BorderLayout.WEST);
 
     myRefreshButton = new FixedSizeButton(coursesCombo);
-    myRefreshButton.putClientProperty("JButton.buttonType", null);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      myRefreshButton.putClientProperty("JButton.buttonType", null);
     myRefreshButton.setIcon(AllIcons.Actions.Refresh);
-    myRefreshButton.putClientProperty("JButton.buttonType", "square");
     myBrowseButton = new FixedSizeButton(coursesCombo);
 
     final JPanel comboPanel = new JPanel(new BorderLayout());
@@ -143,9 +145,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
   }
 
   private void setupBrowseButton() {
-    myBrowseButton.putClientProperty("JButton.buttonType", null);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula())
+      myBrowseButton.putClientProperty("JButton.buttonType", null);
     myBrowseButton.setIcon(InteractiveLearningIcons.InterpreterGear);
-    myBrowseButton.putClientProperty("JButton.buttonType", "square");
     final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
