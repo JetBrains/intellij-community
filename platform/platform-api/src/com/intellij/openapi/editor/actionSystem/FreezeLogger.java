@@ -43,11 +43,15 @@ public class FreezeLogger {
   }
   
   private static void dumpThreads(@Nullable Project project) {
-    boolean isInDumbMode = project != null && !project.isDisposed() && DumbService.isDumb(project);
-    
-    String dumps = ThreadDumper.dumpThreadsToString();
-    String msg = "Typing freeze report, (DumbMode=" + isInDumbMode + ") thread dumps attached. EDT stacktrace:\n" 
-                 + ThreadDumper.dumpEdtStackTrace() 
+    final String edtTrace = ThreadDumper.dumpEdtStackTrace();
+    if (edtTrace.contains("java.lang.ClassLoader.loadClass")) {
+      return;
+    }
+
+    final boolean isInDumbMode = project != null && !project.isDisposed() && DumbService.isDumb(project);
+    final String dumps = ThreadDumper.dumpThreadsToString();
+    final String msg = "Typing freeze report, (DumbMode=" + isInDumbMode + ") thread dumps attached. EDT stacktrace:\n"
+                 + edtTrace
                  + "\n\n\n";
     
     LOG.error(msg, dumps);
