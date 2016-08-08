@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -42,6 +43,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -190,7 +192,8 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
         String baseDirName = myPanel.getBaseDirName();
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
-        PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(), true);
+        PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(),
+                                 ContainerUtil.findAll(patches, BinaryFilePatch.class));
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
           final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
           if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {

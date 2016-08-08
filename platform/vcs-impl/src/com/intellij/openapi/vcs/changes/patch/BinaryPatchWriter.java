@@ -18,12 +18,13 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.diff.impl.patch.Base85;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED_HASH;
 
@@ -41,27 +42,25 @@ public class BinaryPatchWriter {
 
 
   public static void writeBinaries(@Nullable String basePath,
-                                   @NotNull Collection<FilePatch> patches,
+                                   @NotNull List<BinaryFilePatch> patches,
                                    @NotNull Writer writer,
                                    @NotNull final String lineSeparator) throws IOException {
     for (FilePatch patch : patches) {
-      if (!(patch instanceof BinaryFilePatch)) continue;
       BinaryFilePatch filePatch = (BinaryFilePatch)patch;
       writer.write(String.format(GIT_DIFF_HEADER, filePatch.getBeforeName(), filePatch.getAfterName()));
       writer.write(lineSeparator);
       File afterFile = new File(basePath, filePatch.getAfterName());
       if (filePatch.isDeletedFile()) {
-        writer.write(String.format(FILE_MODE_HEADER, "deleted", REGULAR_FILE_MODE));
+        writer.write(getFileModeHeader(FileStatus.DELETED, REGULAR_FILE_MODE));
         writer.write(lineSeparator);
       }
       else if (filePatch.isNewFile()) {
-        writer.write(String.format(FILE_MODE_HEADER, "new", afterFile.canExecute() ? EXECUTABLE_FILE_MODE : REGULAR_FILE_MODE));
+        writer.write(getFileModeHeader(FileStatus.ADDED, afterFile.canExecute() ? EXECUTABLE_FILE_MODE : REGULAR_FILE_MODE));
         writer.write(lineSeparator);
       }
       byte[] afterContent = filePatch.getAfterContent();
-      writer.write(String.format(INDEX_SHA1_HEADER,
-                                 filePatch.isNewFile() ? NOT_COMMITTED_HASH : getSha1ForContent(filePatch.getBeforeContent()),
-                                 filePatch.isDeletedFile() ? NOT_COMMITTED_HASH : getSha1ForContent(afterContent)));
+      writer.write(getIndexHeader(filePatch.isNewFile() ? NOT_COMMITTED_HASH : getSha1ForContent(filePatch.getBeforeContent()),
+                                  filePatch.isDeletedFile() ? NOT_COMMITTED_HASH : getSha1ForContent(afterContent)));
       writer.write(lineSeparator);
       writer.write(GIT_BINARY_HEADER);
       writer.write(lineSeparator);
@@ -73,6 +72,17 @@ public class BinaryPatchWriter {
     }
   }
 
+  @NotNull
+  private static String getFileModeHeader(@NotNull FileStatus fileStatus, int mode) {
+    return String.format(FILE_MODE_HEADER, fileStatus == FileStatus.DELETED ? "deleted" : "new", mode);
+  }
+
+  @NotNull
+  private static String getIndexHeader(@NotNull String beforeHash, @NotNull String afterHash) {
+    return String.format(INDEX_SHA1_HEADER, beforeHash, afterHash);
+  }
+
+  @NotNull
   private static String getSha1ForContent(@Nullable byte[] content) {
     return content != null ? BlobIndexUtil.sha1ForBlob(content) : NOT_COMMITTED_HASH;
   }

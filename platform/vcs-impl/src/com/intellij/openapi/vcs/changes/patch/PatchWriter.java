@@ -16,12 +16,14 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +44,7 @@ public class PatchWriter {
                                   List<FilePatch> patches,
                                   CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
-    writePatches(project, fileName, basePath, patches, commitContext, charset, false);
+    writePatches(project, fileName, basePath, patches, commitContext, charset, ContainerUtil.emptyList());
   }
 
   public static void writePatches(@NotNull final Project project,
@@ -50,15 +52,13 @@ public class PatchWriter {
                                   @Nullable String basePath,
                                   List<FilePatch> patches,
                                   CommitContext commitContext,
-                                  @NotNull Charset charset, boolean includeBinaries) throws IOException {
+                                  @NotNull Charset charset, List<BinaryFilePatch> binaryFilePatches) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset);
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
       UnifiedDiffWriter
         .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
-      if (includeBinaries) {
-        BinaryPatchWriter.writeBinaries(basePath, patches, writer, lineSeparator);
-      }
+      BinaryPatchWriter.writeBinaries(basePath, binaryFilePatches, writer, lineSeparator);
     }
     finally {
       writer.close();
