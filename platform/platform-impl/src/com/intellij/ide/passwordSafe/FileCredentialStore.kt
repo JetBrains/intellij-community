@@ -163,7 +163,7 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
   }
 }
 
-internal fun getRawKey(key: String?, requestor: Class<*>?) = "${if (requestor == null) "" else "${requestor.name}/"}$key"
+internal fun getRawKey(key: String, requestor: Class<*>?) = if (requestor == null) key else "${requestor.name}/$key"
 
 internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 

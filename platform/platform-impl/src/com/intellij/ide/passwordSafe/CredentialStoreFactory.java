@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.intellij.build
+package com.intellij.ide.passwordSafe;
 
-import groovy.transform.Canonical
-import groovy.transform.CompileStatic
-import groovy.transform.Immutable
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-@CompileStatic
-@Immutable
-class LogMessage {
-  enum Kind {
-    ERROR, WARNING, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED
-  }
-  final Kind kind
-  final String text
+public interface CredentialStoreFactory {
+  ExtensionPointName<CredentialStoreFactory> CREDENTIAL_STORE_FACTORY = ExtensionPointName.create("com.intellij.credentialStore");
+
+  @Nullable
+  PasswordStorage create();
 }

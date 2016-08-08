@@ -17,11 +17,13 @@ package com.intellij.ide.passwordSafe
 
 import com.intellij.ide.passwordSafe.macOs.deleteGenericPassword
 import com.intellij.ide.passwordSafe.macOs.findGenericPassword
+import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
 import com.intellij.ide.passwordSafe.macOs.saveGenericPassword
 import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.util.SystemProperties
 import java.security.MessageDigest
 
-internal class MacOsCredentialStore(serviceName: String) : PasswordStorage {
+private class MacOsCredentialStore(serviceName: String) : PasswordStorage {
   private val serviceName = serviceName.toByteArray()
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {
@@ -60,5 +62,14 @@ internal class MacOsCredentialStore(serviceName: String) : PasswordStorage {
         saveGenericPassword(serviceName, rawKey, value)
       }
     }
+  }
+}
+
+private class MacOsCredentialStoreFactory : CredentialStoreFactory {
+  override fun create(): PasswordStorage? {
+    if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+      return MacOsCredentialStore("IntelliJ Platform")
+    }
+    return null
   }
 }

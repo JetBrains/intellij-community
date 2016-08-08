@@ -18,7 +18,6 @@ package com.intellij.ide.passwordSafe.impl
 import com.intellij.ide.passwordSafe.*
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.SettingsSavingComponent
@@ -124,12 +123,10 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     get() = memoryHelperProvider.value
 }
 
-internal const val CREDENTIAL_STORE_SERVICE_NAME = "IntelliJ Platform"
-
 private fun createPersistentCredentialStore(existing: FileCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
   LOG.catchAndLog {
-    if (isMacOsCredentialStoreSupported && com.intellij.util.SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
-      val store = MacOsCredentialStore(CREDENTIAL_STORE_SERVICE_NAME)
+    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+      val store = factory.create() ?: continue
       if (convertFileStore) {
         LOG.catchAndLog {
           val fileStore = FileCredentialStore()
