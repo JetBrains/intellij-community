@@ -40,7 +40,7 @@ public class PatchWriter {
 
   public static void writePatches(@NotNull final Project project,
                                   String fileName,
-                                  @Nullable String basePath,
+                                  @NotNull String basePath,
                                   List<FilePatch> patches,
                                   CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
@@ -52,7 +52,8 @@ public class PatchWriter {
                                   @Nullable String basePath,
                                   List<FilePatch> patches,
                                   CommitContext commitContext,
-                                  @NotNull Charset charset, List<BinaryFilePatch> binaryFilePatches) throws IOException {
+                                  @NotNull Charset charset,
+                                  List<BinaryFilePatch> binaryFilePatches) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset);
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
