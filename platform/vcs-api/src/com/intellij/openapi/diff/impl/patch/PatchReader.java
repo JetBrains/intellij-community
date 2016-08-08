@@ -72,9 +72,17 @@ public class PatchReader {
     myPatchContentParser = new PatchContentParser(saveHunks);
   }
 
+  /**
+   * @deprecated use {@link PatchReader#readTextPatches()} instead
+   */
+  @Deprecated
   public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
+    return readTextPatches();
+  }
+
+  public List<TextFilePatch> readTextPatches() throws PatchSyntaxException {
     parseAllPatches();
-    return getPatches();
+    return getTextPatches();
   }
 
   @Nullable
@@ -113,7 +121,15 @@ public class PatchReader {
     }
   }*/
 
+  /**
+   * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
+   */
+  @Deprecated
   public List<TextFilePatch> getPatches() {
+    return getTextPatches();
+  }
+
+  public List<TextFilePatch> getTextPatches() {
     return ContainerUtil.findAll(myPatches, TextFilePatch.class);
   }
 
