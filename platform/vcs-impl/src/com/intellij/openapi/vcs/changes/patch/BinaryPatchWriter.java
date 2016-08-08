@@ -84,6 +84,6 @@ public class BinaryPatchWriter {
 
   @NotNull
   private static String getSha1ForContent(@Nullable byte[] content) {
-    return content != null ? BlobIndexUtil.sha1ForBlob(content) : NOT_COMMITTED_HASH;
+    return content != null ? BlobIndexUtil.getSha1(content) : NOT_COMMITTED_HASH;
   }
 }

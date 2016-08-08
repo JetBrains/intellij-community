@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
-import com.google.common.primitives.Bytes;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -40,18 +39,17 @@ public class BlobIndexUtil {
 
 
   @NotNull
-  public static String sha1ForBlob(@NotNull File file) throws IOException {
-    return sha1ForBlob(Files.toByteArray(file));
+  public static String getSha1(@NotNull File file) throws IOException {
+    return getSha1(Files.toByteArray(file));
   }
 
   /**
    * Generate sha1 for file content using git-like algorithm
    */
   @NotNull
-  public static String sha1ForBlob(@NotNull byte[] bytes) {
-    String str = "blob " + bytes.length + '\u0000';
-    //todo: optimize for large input
-    return Hashing.sha1().hashBytes(Bytes.concat(str.getBytes(Charsets.UTF_8), bytes)).toString();
+  public static String getSha1(@NotNull byte[] bytes) {
+    String prefix = "blob " + bytes.length + '\u0000';
+    return Hashing.sha1().newHasher().putBytes(prefix.getBytes(Charsets.UTF_8)).putBytes(bytes).hash().toString();
   }
 
   @NotNull
@@ -61,8 +59,8 @@ public class BlobIndexUtil {
 
     //noinspection ConstantConditions
     Charset detectCharset = ObjectUtils.chooseNotNull(afterRevision, beforeRevision).getFile().getCharset();
-    String before = beforeRevision == null ? NOT_COMMITTED_HASH : sha1ForBlob(getContentBytes(beforeRevision, detectCharset));
-    String after = afterRevision == null ? NOT_COMMITTED_HASH : sha1ForBlob(getContentBytes(afterRevision, detectCharset));
+    String before = beforeRevision == null ? NOT_COMMITTED_HASH : getSha1(getContentBytes(beforeRevision, detectCharset));
+    String after = afterRevision == null ? NOT_COMMITTED_HASH : getSha1(getContentBytes(afterRevision, detectCharset));
     return new Couple<>(before, after);
   }
 
