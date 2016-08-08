@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdePopupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,12 +26,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +58,14 @@ public class MacPathChooserDialog implements PathChooserDialog {
   private final String myTitle;
 
   public MacPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
+
+    //StackingPopupDispatcher.getInstance().hidePersistentPopups();
+    //myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
+
     myFileDialog = parent != null
                    ? createFileDialogWithOwner(findOwnerByComponent(parent), descriptor.getTitle(), FileDialog.LOAD)
                    : createFileDialogWithoutOwner(descriptor.getTitle(), FileDialog.LOAD);
+
     myFileChooserDescriptor = descriptor;
     myParent = parent;
     myTitle = getChooserTitle(descriptor);
@@ -134,12 +145,36 @@ public class MacPathChooserDialog implements PathChooserDialog {
   @NotNull
   private static FileDialog createFileDialogWithOwner(@NotNull Window owner, String title, int mode) {
     FileDialog fileDialog;
-    if (owner instanceof Frame) {
-      fileDialog = new FileDialog((Frame)owner, title, mode);
-    } else if (owner instanceof Dialog) {
-      fileDialog = new FileDialog((Dialog)owner, title, mode);
+
+    IdePopupManager manager = IdeEventQueue.getInstance().getPopupManager();
+
+    if (manager.isPopupWindow(owner)) {
+
+      manager.closeAllPopups();
+
+      owner = owner.getOwner();
+
+      while (owner != null
+             && !(owner instanceof Dialog)
+             && !(owner instanceof Frame))
+      {
+        owner = owner.getOwner();
+      }
+
+      if (owner == null) {
+        fileDialog = createFileDialogWithoutOwner(title, mode);
+      } else {
+        fileDialog = createFileDialogWithOwner(owner, title, mode);
+      }
+
     } else {
-      throw new IllegalArgumentException("Owner should be a descendant of Dialog or Frame");
+      if (owner instanceof Frame) {
+        fileDialog = new FileDialog((Frame)owner, title, mode);
+      } else if (owner instanceof Dialog) {
+        fileDialog = new FileDialog((Dialog)owner, title, mode);
+      } else {
+        throw new RuntimeException("Owner should be a frame or a dialog");
+      }
     }
     return fileDialog;
   }
