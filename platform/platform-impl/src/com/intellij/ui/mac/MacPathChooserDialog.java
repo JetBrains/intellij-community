@@ -156,27 +156,39 @@ public class MacPathChooserDialog implements PathChooserDialog {
 
       while (owner != null
              && !(owner instanceof Dialog)
-             && !(owner instanceof Frame))
-      {
+             && !(owner instanceof Frame)) {
         owner = owner.getOwner();
       }
+    }
 
-      if (owner == null) {
-        fileDialog = createFileDialogWithoutOwner(title, mode);
-      } else {
-        fileDialog = createFileDialogWithOwner(owner, title, mode);
+    if (owner instanceof Dialog) {
+      Dialog ownerDialog = (Dialog)owner;
+      if (ownerDialog.isModal()) {
+        owner = ownerDialog;
       }
+      else {
+        while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
+          owner = owner.getOwner();
+        }
+      }
+    }
 
-    } else {
+    if (owner == null) {
+      fileDialog = createFileDialogWithoutOwner(title, mode);
+    }
+    else {
       if (owner instanceof Frame) {
         fileDialog = new FileDialog((Frame)owner, title, mode);
-      } else if (owner instanceof Dialog) {
+      }
+      else if (owner instanceof Dialog) {
         fileDialog = new FileDialog((Dialog)owner, title, mode);
-      } else {
+      }
+      else {
         throw new RuntimeException("Owner should be a frame or a dialog");
       }
     }
-    return fileDialog;
+
+      return fileDialog;
   }
 
   @NotNull
