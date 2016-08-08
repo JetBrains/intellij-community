@@ -671,7 +671,7 @@ public class MavenProjectsTree {
       VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
       long profilesTimestamp = getFileTimestamp(profilesXmlFile);
 
-      long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
+      long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile(mavenProject.getDirectory()));
       long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
 
       int profilesHashCode = explicitProfiles.hashCode();

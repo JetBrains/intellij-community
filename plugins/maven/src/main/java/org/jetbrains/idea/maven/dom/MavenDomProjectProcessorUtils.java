@@ -442,7 +442,7 @@ public class MavenDomProjectProcessorUtils {
                                                 Function<? super MavenDomProfile, T> domProfileFunction) {
     MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
 
-    for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
+    for (VirtualFile each : settings.getEffectiveSettingsFiles(project.getBasePath())) {
       MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(project, each, MavenDomSettingsModel.class);
       if (settingsDom == null) continue;
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -83,6 +84,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -635,6 +638,11 @@ public class MavenUtil {
     return version != null && version.compareTo("3.0.0") >= 0;
   }
 
+  public static boolean isMaven33(String mavenHome) {
+    String version = getMavenVersion(mavenHome);
+    return version != null && version.compareTo("3.3.0") >= 0;
+  }
+
   @Nullable
   public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
@@ -642,9 +650,48 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
+  public static File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile,
+                                             @Nullable String overriddenMavenHome,
+                                             @Nullable String projectBaseDir) {
     if (!isEmptyOrSpaces(overriddenUserSettingsFile)) return new File(overriddenUserSettingsFile);
+
+    File path = resolveProjectMvnConfigSettings(overriddenMavenHome, projectBaseDir);
+    if (path != null) return path;
+
     return new File(resolveM2Dir(), SETTINGS_XML);
+  }
+
+  @Nullable
+  private static File resolveProjectMvnConfigSettings(@Nullable String overriddenMavenHome, @Nullable String projectBaseDir) {
+    if (!isEmptyOrSpaces(projectBaseDir)) {
+      File mavenHome = resolveMavenHomeDirectory(overriddenMavenHome);
+      if (isMaven33(mavenHome.getAbsolutePath())) {
+        File dotMvnDir = new File(projectBaseDir, ".mvn");
+        if (dotMvnDir.isDirectory()) {
+          File mavenConfig = new File(dotMvnDir, "maven.config");
+          try {
+            String mavenOpts = FileUtil.loadFile(mavenConfig, "UTF-8");
+            ParametersList mavenOptsList = new ParametersList();
+            mavenOptsList.addParametersString(mavenOpts);
+            if (mavenOptsList.hasParameter("--settings") || mavenOptsList.hasParameter("-s")) {
+              String[] params = mavenOptsList.getArray();
+              for (int i = 0; i < params.length - 1; i++) {
+                if ("--settings".equals(params[i]) || "-s".equals(params[i])) {
+                  java.nio.file.Path path = Paths.get(projectBaseDir).resolve(Paths.get(params[i + 1]));
+                  if (Files.isRegularFile(path)) {
+                    return path.toFile();
+                  }
+                }
+              }
+            }
+          }
+          catch (IOException ex) {
+            Logger.getInstance(MavenUtil.class).debug("Failed to read " + mavenConfig, ex);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -659,7 +706,7 @@ public class MavenUtil {
     File result = null;
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
-      result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
+      result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile, null, null),
                                         resolveGlobalSettingsFile(overriddenMavenHome));
     }
     try {

@@ -199,7 +199,7 @@ public class MavenProjectsManagerWatcher {
   private void updateSettingsFilePointers() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchedRoots);
     mySettingsFilesPointers.clear();
-    addFilePointer(myGeneralSettings.getEffectiveUserSettingsIoFile(),
+    addFilePointer(myGeneralSettings.getEffectiveUserSettingsIoFile(myProject.getBasePath()),
                    myGeneralSettings.getEffectiveGlobalSettingsIoFile());
   }
 
