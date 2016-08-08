@@ -491,7 +491,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       schemes.add(scheme as T)
     }
     else {
-      addScheme(scheme as T)
+      addNewScheme(scheme as T, true)
     }
     return scheme
   }
@@ -819,7 +819,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       for (s in schemes) {
         if (s === scheme) {
-          filesToDelete.remove("${info.fileName}")
+          filesToDelete.remove(info.fileName)
           continue@l
         }
       }
@@ -862,7 +862,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     if (processor.isExternalizable(scheme) && filesToDelete.isNotEmpty()) {
       schemeToInfo.get(scheme)?.let {
-        filesToDelete.remove("${it.fileName}")
+        filesToDelete.remove(it.fileName)
       }
     }
 
