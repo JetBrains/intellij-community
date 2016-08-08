@@ -116,4 +116,8 @@ public class AnnotationTest extends IncrementalTestCase {
   public void testConservativeNonIncremental1() throws Exception {
     doTest();
   }
+
+  public void testAnnotationsTracker() throws Exception {
+    doTest();
+  }
 }
