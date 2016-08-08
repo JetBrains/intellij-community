@@ -100,15 +100,10 @@ class SuiteEntry(val suiteUrl: String,
 }
 
 
-class RunConfigurationEntry(initial: SuiteEntry) : RecentTestsPopupEntry {
+class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
   val suites = arrayListOf<SuiteEntry>()
-  val runSettings = initial.runConfiguration
   
-  init {
-    addSuite(initial)
-  }
-
   override val runDate: Date
     get() {
       return suites.minBy { it.runDate }!!.runDate

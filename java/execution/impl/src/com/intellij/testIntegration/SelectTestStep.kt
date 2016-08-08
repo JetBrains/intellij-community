@@ -134,21 +134,17 @@ class SelectTestStep(title: String?,
     
     entry.accept(object : TestEntryVisitor() {
       override fun visitTest(test: SingleTestEntry) {
-        val suite = test.suite ?: return
-        val configuration = suite.runConfigurationEntry
-        if (configuration == null) {
-          items.add(suite)
-          return
-        }
+        val configuration = test.suite?.runConfigurationEntry ?: RunConfigurationEntry(test.runConfiguration)
+        items.add(test.suite ?: return)
 
         if (isSingleTestConfiguration(configuration)) {
-          items.add(suite)
+          items.add(test.suite ?: return)
           return
         }
         
         items.add(configuration)
         if (configuration.suites.size > 1) {
-          items.add(0, suite)
+          items.add(0, test.suite ?: return)
         }
       }
 

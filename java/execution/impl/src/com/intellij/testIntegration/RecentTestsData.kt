@@ -44,7 +44,9 @@ class RecentTestsData {
       entry.addSuite(suite)
     }
     else {
-      runConfigurationSuites.put(id, RunConfigurationEntry(suite))
+      val configurationEntry = RunConfigurationEntry(suite.runConfiguration)
+      configurationEntry.addSuite(suite)
+      runConfigurationSuites.put(id, configurationEntry)
     }
   }
 
@@ -90,29 +92,22 @@ class RecentTestsData {
   fun getTestsToShow(): List<RecentTestsPopupEntry> {
     val allConfigurations = runConfigurationSuites.values
 
-    val allSuites = allConfigurations.fold(arrayListOf<SuiteEntry>(), { list: List<SuiteEntry>, entry -> list + entry.suites })
-    testsWithoutSuites.forEach {
-      val info = it
-      allSuites
-          .find { 
-            it.isMyTest(info.test) 
-          }
-          ?.let {
-            info.test.suite = it 
-          }
-    }
-    
-    val testsCollector = SingleTestCollector()
-    allConfigurations.forEach { it.accept(testsCollector) }
-    val failedTests = testsCollector.tests.filter { it.failed }
-    
+    val failedTests = getFailedTests(allConfigurations)
+
     val configsCollector = ConfigurationsCollector()
     allConfigurations.forEach { it.accept(configsCollector) }
     val passedConfigurations = configsCollector.entries.filter { !it.failed }
     
-    val entriesToShow = failedTests + passedConfigurations + testsWithoutSuites.map { it.test }.filter { it.suite != null && it.failed }
+    val entriesToShow = failedTests + passedConfigurations + testsWithoutSuites.map { it.test }.filter { it.failed }
     
     return entriesToShow.sortedByDescending { it.runDate }
+  }
+
+  private fun getFailedTests(allConfigurations: MutableCollection<RunConfigurationEntry>): List<SingleTestEntry> {
+    val testsCollector = SingleTestCollector()
+    allConfigurations.forEach { it.accept(testsCollector) }
+    val failedTests = testsCollector.tests.filter { it.failed }
+    return failedTests
   }
 }
 
