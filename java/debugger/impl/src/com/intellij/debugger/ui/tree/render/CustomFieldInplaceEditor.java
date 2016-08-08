@@ -37,16 +37,16 @@ import java.util.List;
  * @author egor
  */
 public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
+  private final UserExpressionDescriptorImpl myDescriptor;
   private final EnumerationChildrenRenderer myRenderer;
-  private final boolean myAddNew;
 
   public CustomFieldInplaceEditor(@NotNull XDebuggerTreeNode node,
                                   @Nullable UserExpressionDescriptorImpl descriptor,
                                   @Nullable EnumerationChildrenRenderer renderer) {
     super(node, "customField");
+    myDescriptor = descriptor;
     myRenderer = renderer;
-    myAddNew = descriptor == null;
-    if (!myAddNew) {
+    if (descriptor != null) {
       myExpressionEditor.setExpression(TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()));
     }
   }
@@ -91,13 +91,12 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void doOKAction() {
     List<Pair<String, TextWithImports>> children = getRendererChildren();
     TextWithImports newText = TextWithImportsImpl.fromXExpression(myExpressionEditor.getExpression());
-    if (myAddNew) {
+    if (myDescriptor == null) {
       children.add(0, Pair.create("", newText));
     }
     else {
-      int index = myNode.getParent().getIndex(myNode);
-      Pair<String, TextWithImports> old = children.get(index);
-      children.set(index, Pair.create(old.first, newText));
+      Integer index = myDescriptor.getUserData(UserExpressionDescriptorImpl.ENUMERATION_INDEX);
+      children.set(index, Pair.create(children.get(index).first, newText));
     }
 
     XDebuggerUtilImpl.rebuildTreeAndViews(myTree);
