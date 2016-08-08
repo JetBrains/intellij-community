@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.util.treeView;
 
+import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,7 +97,7 @@ public class TreeViewUtil {
    */
   public static boolean isEmptyMiddlePackage(@NotNull PsiDirectory dir,
                                              boolean strictlyEmpty,
-                                             @Nullable Condition<PsiFileSystemItem> filter) {
+                                             @Nullable PsiFileSystemItemFilter filter) {
     final VirtualFile[] files = dir.getVirtualFile().getChildren();
     if (files.length == 0) {
       return false;
@@ -110,10 +110,10 @@ public class TreeViewUtil {
       if (!file.isDirectory()) {
         if (filter == null) return false;
         PsiFile childFile = manager.findFile(file);
-        if (childFile != null && filter.value(childFile)) return false;
+        if (childFile != null && filter.accept(childFile)) return false;
       }
       PsiDirectory childDir = manager.findDirectory(file);
-      if (childDir != null && (filter == null || filter.value(childDir))) {
+      if (childDir != null && (filter == null || filter.accept(childDir))) {
         directoriesCount++;
         if (strictlyEmpty && directoriesCount > 1) return false;
         if (JavaDirectoryService.getInstance().getPackage(childDir) != null) {

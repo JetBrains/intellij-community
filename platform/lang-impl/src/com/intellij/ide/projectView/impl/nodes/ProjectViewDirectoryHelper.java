@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,7 +128,7 @@ public class ProjectViewDirectoryHelper {
 
   public boolean isEmptyMiddleDirectory(PsiDirectory directory,
                                         final boolean strictlyEmpty,
-                                        @Nullable Condition<PsiFileSystemItem> filter) {
+                                        @Nullable PsiFileSystemItemFilter filter) {
     return false;
   }
 
@@ -160,7 +159,7 @@ public class ProjectViewDirectoryHelper {
   public Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories,
-                                                           @Nullable Condition<PsiFileSystemItem> filter) {
+                                                           @Nullable PsiFileSystemItemFilter filter) {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -178,7 +177,7 @@ public class ProjectViewDirectoryHelper {
       if (withSubDirectories) {
         PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
-          if (!skipDirectory(subdir) || filter != null && !filter.value(subdir)) {
+          if (!skipDirectory(subdir) || filter != null && !filter.accept(subdir)) {
             continue;
           }
           VirtualFile directoryFile = subdir.getVirtualFile();
@@ -277,7 +276,7 @@ public class ProjectViewDirectoryHelper {
                                           @Nullable ModuleFileIndex moduleFileIndex,
                                           ViewSettings viewSettings,
                                           boolean withSubDirectories,
-                                          @Nullable Condition<PsiFileSystemItem> filter) {
+                                          @Nullable PsiFileSystemItemFilter filter) {
     for (PsiElement child : children) {
       LOG.assertTrue(child.isValid());
 
@@ -292,7 +291,7 @@ public class ProjectViewDirectoryHelper {
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
         continue;
       }
-      if (filter != null && !filter.value((PsiFileSystemItem)child)) {
+      if (filter != null && !filter.accept((PsiFileSystemItem)child)) {
         continue;
       }
       if (child instanceof PsiFile) {
@@ -320,11 +319,11 @@ public class ProjectViewDirectoryHelper {
                                 PsiDirectory dir,
                                 @Nullable ModuleFileIndex moduleFileIndex,
                                 ViewSettings viewSettings,
-                                @Nullable Condition<PsiFileSystemItem> filter) {
+                                @Nullable PsiFileSystemItemFilter filter) {
     final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
-      if (skipDirectory(subdir) || filter != null && !filter.value(subdir)) {
+      if (skipDirectory(subdir) || filter != null && !filter.accept(subdir)) {
         continue;
       }
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(subdir.getVirtualFile())) {

@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -43,7 +42,6 @@ import com.intellij.pom.NavigatableWithText;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -58,19 +56,19 @@ import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
 
-  private final Condition<PsiFileSystemItem> myFilter;
+  private final PsiFileSystemItemFilter myFilter;
 
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     this(project, value, viewSettings, null);
   }
 
-  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings, @Nullable Condition<PsiFileSystemItem> filter) {
+  public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings, @Nullable PsiFileSystemItemFilter filter) {
     super(project, value, viewSettings);
     myFilter = filter;
   }
 
   @Nullable
-  public Condition<PsiFileSystemItem> getFilter() {
+  public PsiFileSystemItemFilter getFilter() {
     return myFilter;
   }
 
@@ -188,13 +186,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
 
     final Project project = value.getProject();
-    Condition<PsiFileSystemItem> filter = getFilter();
+    PsiFileSystemItemFilter filter = getFilter();
     if (filter != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile != null && !filter.value(psiFile)) return false;
+      if (psiFile != null && !filter.accept(psiFile)) return false;
 
       PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(file);
-      if (psiDirectory != null && !filter.value(psiDirectory)) return false;
+      if (psiDirectory != null && !filter.accept(psiDirectory)) return false;
     }
 
     if (Registry.is("ide.hide.excluded.files")) {
