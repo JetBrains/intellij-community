@@ -1,5 +1,6 @@
 package com.jetbrains.edu.coursecreator.actions;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,6 +9,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
@@ -68,6 +71,8 @@ public class CCChangeCourseInfo extends DumbAwareAction {
       course.setDescription(panel.getDescription());
       setVersion(course, panel);
       ProjectView.getInstance(project).refresh();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+      InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
   }
 
