@@ -37,11 +37,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -68,6 +66,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 
 /**
  * @author yole
@@ -443,9 +444,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
-      final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, result);
+      Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAfterRevisionsFiles(changes)));
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);

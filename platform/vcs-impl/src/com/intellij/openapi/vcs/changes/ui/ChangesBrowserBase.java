@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
@@ -52,10 +51,12 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangesBrowserBase.class);
@@ -215,10 +216,10 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection});
     }
     else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
       sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
@@ -445,13 +446,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public abstract List<Change> getAllChanges();
 
   @NotNull
-  private VirtualFile[] getSelectedFiles() {
-    Set<VirtualFile> result = ContainerUtil.newHashSet();
-
-    result.addAll(ChangesUtil.getAfterRevisionsFiles(getSelectedChanges()));
-    result.addAll(getVirtualFiles(myViewer.getSelectionPaths(), null).collect(toList()));
-
-    return VfsUtilCore.toVirtualFileArray(result);
+  private Stream<VirtualFile> getSelectedFiles() {
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges()),
+      getVirtualFiles(myViewer.getSelectionPaths(), null)
+    ).distinct();
   }
 
   public AnAction getDiffAction() {

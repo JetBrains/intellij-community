@@ -159,8 +159,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       }
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink
-        .put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles().toArray(VirtualFile[]::new)));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
