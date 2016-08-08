@@ -19,9 +19,12 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.tree.TreeNode;
 
 /**
  * @author egor
@@ -35,6 +38,11 @@ public class RemoveCustomFieldAction extends EditCustomFieldAction {
       Integer index = descriptor.getUserData(UserExpressionDescriptorImpl.ENUMERATION_INDEX);
       if (index != null) {
         enumerationChildrenRenderer.getChildren().remove(index.intValue());
+        TreeNode parent = node.getParent();
+        int indexToSelect = parent.getIndex(node) + 1;
+        if (indexToSelect < parent.getChildCount()) {
+          TreeUtil.selectNode(node.getTree(), parent.getChildAt(indexToSelect));
+        }
         XDebuggerUtilImpl.rebuildTreeAndViews(node.getTree());
       }
     }
