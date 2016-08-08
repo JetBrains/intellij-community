@@ -48,11 +48,11 @@ public class ScriptGenerator {
   /**
    * The class paths for the script
    */
-  private final ArrayList<String> myPaths = new ArrayList<String>();
+  private final ArrayList<String> myPaths = new ArrayList<>();
   /**
    * The internal parameters for the script
    */
-  private final ArrayList<String> myInternalParameters = new ArrayList<String>();
+  private final ArrayList<String> myInternalParameters = new ArrayList<>();
 
   /**
    * A constructor

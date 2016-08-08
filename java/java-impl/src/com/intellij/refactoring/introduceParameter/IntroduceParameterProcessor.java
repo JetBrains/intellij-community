@@ -151,7 +151,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     PsiMethod[] overridingMethods =
       OverridingMethodsSearch.search(myMethodToSearchFor).toArray(PsiMethod.EMPTY_ARRAY);
@@ -213,7 +213,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
-    private final Set<PsiElement> myResult = new HashSet<PsiElement>();
+    private final Set<PsiElement> myResult = new HashSet<>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
@@ -230,7 +230,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);

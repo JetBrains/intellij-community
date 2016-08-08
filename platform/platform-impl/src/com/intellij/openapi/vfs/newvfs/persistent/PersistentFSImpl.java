@@ -698,7 +698,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       ContainerUtil.quickSort(deletionEvents, DEPTH_COMPARATOR);
 
       invalidIDs = new TIntHashSet(deletionEvents.size());
-      final Set<VirtualFile> dirsToBeDeleted = new THashSet<VirtualFile>(deletionEvents.size());
+      final Set<VirtualFile> dirsToBeDeleted = new THashSet<>(deletionEvents.size());
       nextEvent:
       for (EventWrapper wrapper : deletionEvents) {
         final VirtualFile candidate = wrapper.event.getFile();
@@ -717,7 +717,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
 
-    final List<VFileEvent> filtered = new ArrayList<VFileEvent>(events.size() - invalidIDs.size());
+    final List<VFileEvent> filtered = new ArrayList<>(events.size() - invalidIDs.size());
     for (int i = 0, size = events.size(); i < size; i++) {
       final VFileEvent event = events.get(i);
       if (event.isValid() && !(event instanceof VFileDeleteEvent && invalidIDs.contains(i))) {
@@ -748,10 +748,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
 
       if (changedParent != null) {
-        if (parentToChildrenEventsChanges == null) parentToChildrenEventsChanges = new THashMap<VirtualFile, List<VFileEvent>>();
+        if (parentToChildrenEventsChanges == null) parentToChildrenEventsChanges = new THashMap<>();
         List<VFileEvent> parentChildrenChanges = parentToChildrenEventsChanges.get(changedParent);
         if (parentChildrenChanges == null) {
-          parentToChildrenEventsChanges.put(changedParent, parentChildrenChanges = new SmartList<VFileEvent>());
+          parentToChildrenEventsChanges.put(changedParent, parentChildrenChanges = new SmartList<>());
         }
         parentChildrenChanges.add(event);
       }
@@ -777,7 +777,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
-    List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
+    List<VirtualFile> childrenToBeUpdated = new SmartList<>();
 
     final int parentId = getFileId(parent);
     assert parentId != 0;
@@ -984,7 +984,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public VirtualFile[] getRoots(@NotNull final NewVirtualFileSystem fs) {
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final List<VirtualFile> roots = new ArrayList<>();
 
     for (NewVirtualFile root : myRoots.values()) {
       if (root.getFileSystem() == fs) {

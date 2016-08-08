@@ -94,7 +94,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   public static void startup(String outputPath) throws IOException {
     final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options =
-      new HashMap<SearchableConfigurable, TreeSet<OptionDescription>>();
+      new HashMap<>();
     SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
     Element root = new Element(OPTIONS);
     for (SearchableConfigurable configurable : options.keySet()) {
@@ -138,7 +138,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   private static void processFileTemplates(Element configurableElement) {
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
+    TreeSet<OptionDescription> options = new TreeSet<>();
 
     FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
     processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates());
@@ -183,7 +183,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   private static TreeSet<OptionDescription> wordsToOptionDescriptors(Set<String> optionsPath) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final TreeSet<OptionDescription> result = new TreeSet<OptionDescription>();
+    final TreeSet<OptionDescription> result = new TreeSet<>();
     for (String opt : optionsPath) {
       final Set<String> words = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(opt);
       for (String word : words) {
@@ -200,7 +200,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     final String componentName = actionManager.getComponentName();
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> ids = ((ActionManagerImpl)actionManager).getActionIds();
-    final TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
+    final TreeSet<OptionDescription> options = new TreeSet<>();
     for (String id : ids) {
       final AnAction anAction = actionManager.getAction(id);
       final String text = anAction.getTemplatePresentation().getText();

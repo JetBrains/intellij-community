@@ -207,7 +207,7 @@ public class PyTypeModelBuilder {
           break;
         }
       }
-      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      final List<TypeModel> elementModels = new ArrayList<>();
       if (!nullOnlyTypes) {
         for (PyType elementType : elementTypes) {
           elementModels.add(build(elementType, true));
@@ -233,7 +233,7 @@ public class PyTypeModelBuilder {
       result = build((PyCallableType)type);
     }
     else if (type instanceof PyTupleType) {
-      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      final List<TypeModel> elementModels = new ArrayList<>();
       final PyTupleType tupleType = (PyTupleType)type;
       for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
         final PyType elementType = tupleType.getElementType(i);
@@ -273,7 +273,7 @@ public class PyTypeModelBuilder {
     List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
     if (parameters != null) {
-      parameterModels = new ArrayList<TypeModel>();
+      parameterModels = new ArrayList<>();
       for (PyCallableParameter parameter : parameters) {
         parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
       }

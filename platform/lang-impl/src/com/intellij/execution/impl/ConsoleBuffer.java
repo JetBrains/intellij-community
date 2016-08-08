@@ -55,8 +55,8 @@ public class ConsoleBuffer {
    * <p/>
    * Feel free to check rationale for using this approach at {@link #myCyclicBufferSize} contract.
    */
-  private final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<StringBuilder>();
-  private final Set<ConsoleViewContentType> myContentTypesToNotStripOnCycling = new HashSet<ConsoleViewContentType>();
+  private final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<>();
+  private final Set<ConsoleViewContentType> myContentTypesToNotStripOnCycling = new HashSet<>();
 
   /**
    * Main console usage scenario assumes the following:
@@ -107,8 +107,8 @@ public class ConsoleBuffer {
    * <p/>
    * Target offsets are anchored to the {@link #myDeferredOutput deferred buffer}.
    */
-  private final List<TokenInfo> myDeferredTokens = new ArrayList<TokenInfo>();
-  private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
+  private final List<TokenInfo> myDeferredTokens = new ArrayList<>();
+  private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<>();
 
   private boolean myKeepSlashR = true;
 
@@ -283,7 +283,7 @@ public class ConsoleBuffer {
     }
 
     if (numberOfSymbolsToProceed <= 0) {
-      return new Pair<String, Integer>("", 0);
+      return new Pair<>("", 0);
     }
 
     if (numberOfSymbolsToProceed < s.length()) {
@@ -320,7 +320,7 @@ public class ConsoleBuffer {
     }
 
     ConsoleUtil.addToken(s.length(), info, contentType, myDeferredTokens);
-    return new Pair<String, Integer>(s, trimmedSymbolsNumber);
+    return new Pair<>(s, trimmedSymbolsNumber);
   }
 
   //private void checkState() {

@@ -81,7 +81,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final SimpleColoredComponent myTailComponent;
   private final SimpleColoredComponent myTypeLabel;
   private final LookupPanel myPanel;
-  private final Map<Integer, Boolean> mySelected = new HashMap<Integer, Boolean>();
+  private final Map<Integer, Boolean> mySelected = new HashMap<>();
 
   private static final String ELLIPSIS = "\u2026";
   private int myMaxWidth = -1;

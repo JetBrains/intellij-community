@@ -155,8 +155,8 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
                                              @NotNull List<VcsFileRevision> revisions) throws VcsException {
     try {
       StringBuilder content = new StringBuilder();
-      List<LineInfo> lines = new ArrayList<LineInfo>();
-      HashMap<String, LineInfo> commits = new HashMap<String, LineInfo>();
+      List<LineInfo> lines = new ArrayList<>();
+      HashMap<String, LineInfo> commits = new HashMap<>();
       final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = getRevisionMap(revisions);
       for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
         // parse header line
@@ -252,7 +252,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();
     final Map<VcsRevisionNumber, VcsFileRevision> historyAsMap = session.getHistoryAsMap();
-    final List<LineInfo> lines = new ArrayList<LineInfo>();
+    final List<LineInfo> lines = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       final GitRevisionNumber revision = (GitRevisionNumber)basicAnnotation.getRevision(i);
       final GitFileRevision vcsFileRevision = (GitFileRevision)historyAsMap.get(revision);

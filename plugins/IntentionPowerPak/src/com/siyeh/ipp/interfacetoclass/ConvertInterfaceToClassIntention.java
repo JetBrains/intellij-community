@@ -106,7 +106,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiClass anInterface = (PsiClass)element.getParent();
     final SearchScope searchScope = anInterface.getUseScope();
     final Query<PsiClass> query = ClassInheritorsSearch.search(anInterface, searchScope, false);
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     query.forEach(aClass -> {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {

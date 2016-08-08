@@ -58,7 +58,7 @@ public class GenericRepositoryUtil {
   }
 
   public static String substituteTemplateVariables(String s, Collection<TemplateVariable> variables, boolean escape) throws Exception {
-    Map<String, String> lookup = new HashMap<String, String>();
+    Map<String, String> lookup = new HashMap<>();
     for (TemplateVariable v : variables) {
       lookup.put(v.getName(), v.getValue());
     }

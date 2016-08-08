@@ -51,8 +51,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
-  private final List<EventListener> myMouseListeners = new ArrayList<EventListener>();
-  private final Set<EventListener> mySortedMouseListeners = new TreeSet<EventListener>((o1, o2) -> {
+  private final List<EventListener> myMouseListeners = new ArrayList<>();
+  private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
     double weight1 = 0;
     double weight2 = 0;
     if (o1 instanceof Weighted) {
@@ -74,7 +74,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   };
 
   private boolean myPreprocessorActive;
-  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
+  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<>();
 
   private Component myLastCursorComponent;
   private Cursor myLastOriginalCursor;

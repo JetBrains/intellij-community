@@ -97,7 +97,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                                                   final ArtifactAntGenerationContext generationContext, 
                                                                   ArtifactType artifactType,
                                                                   List<PackagingElement<?>> children) {
-      final List<Generator> generators = new ArrayList<Generator>();
+      final List<Generator> generators = new ArrayList<>();
       for (PackagingElement<?> child : children) {
         generators.addAll(child.computeAntInstructions(resolvingContext, copyInstructionCreator, generationContext, artifactType));
       }
@@ -114,7 +114,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
 
-    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> children = new ArrayList<>();
     String artifactFileName = rootElement.getName();
     for (PackagingElement<?> child : rootElement.getChildren()) {
       if (child instanceof ArchivePackagingElement) {

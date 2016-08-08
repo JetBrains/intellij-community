@@ -150,7 +150,7 @@ public class CertificateWrapper {
 
   // E.g. CN=*.github.com,O=GitHub\, Inc.,L=San Francisco,ST=California,C=US
   private static Map<String, String> extractFields(X500Principal principal) {
-    Map<String, String> fields = new HashMap<String, String>();
+    Map<String, String> fields = new HashMap<>();
     for (String field : principal.getName().split("(?<!\\\\),")) {
       String[] parts = field.trim().split("=", 2);
       if (parts.length != 2) {

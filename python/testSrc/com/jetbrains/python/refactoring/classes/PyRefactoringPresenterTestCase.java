@@ -91,7 +91,7 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
    * Configures view to capture config info
    */
   private void configureMockCapture() {
-    myViewConfigCapture = new Capture<C>();
+    myViewConfigCapture = new Capture<>();
 
     myView.configure(EasyMock.capture(myViewConfigCapture));
     EasyMock.expectLastCall().once();

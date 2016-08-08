@@ -325,7 +325,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
       return null;
     }
 
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     for (String name : StringUtil.tokenize(fieldsString, ", ")) {
       result.add(name);

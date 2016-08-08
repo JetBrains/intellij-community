@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
  * @author vlan
  */
 public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
-  private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
+  private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<>();
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
   private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
@@ -226,9 +226,9 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             return null;
           default:
             // Function returns a tuple
-            final ArrayList<PyType> unionMembers = new ArrayList<PyType>();
+            final ArrayList<PyType> unionMembers = new ArrayList<>();
 
-            final List<PyType> members = new ArrayList<PyType>();
+            final List<PyType> members = new ArrayList<>();
 
             for (int i = 0; i < returns.size(); i++) {
               SectionField ret = returns.get(i);
@@ -328,7 +328,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       return realTypeName;
     }
     final List<String> typeSubStrings = StringUtil.split(typeString, " ");
-    List<String> typeParts = new ArrayList<String>();
+    List<String> typeParts = new ArrayList<>();
     for (String string : typeSubStrings) {
       final String type = NUMPY_ALIAS_TO_REAL_TYPE.get(string);
       typeParts.add(type != null ? type : string);
@@ -360,7 +360,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType parseNumpyDocType(@NotNull PsiElement anchor, @NotNull String typeString) {
     final String withoutOptional = cleanupOptional(typeString);
-    final Set<PyType> types = new LinkedHashSet<PyType>();
+    final Set<PyType> types = new LinkedHashSet<>();
     if (withoutOptional != null) {
       typeString = withoutOptional;
     }

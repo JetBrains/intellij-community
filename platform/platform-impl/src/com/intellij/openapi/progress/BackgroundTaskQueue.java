@@ -48,9 +48,9 @@ public class BackgroundTaskQueue {
 
     Condition disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
 
-    myProcessor = new QueueProcessor<TaskData>((data, continuation) -> {
+    myProcessor = new QueueProcessor<>((data, continuation) -> {
       Task.Backgroundable task = data.task;
-      
+
       ProgressIndicator indicator = data.indicator;
       if (indicator == null) {
         if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -61,7 +61,7 @@ public class BackgroundTaskQueue {
           indicator = new BackgroundableProcessIndicator(task);
         }
       }
-      
+
       ModalityState modalityState = data.modalityState;
       if (modalityState == null) modalityState = ModalityState.NON_MODAL;
 

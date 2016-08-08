@@ -66,7 +66,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
       return true;
     }
 
-    final Map<String, ProcessorConfigProfile> configProfiles = new java.util.HashMap<String, ProcessorConfigProfile>();
+    final Map<String, ProcessorConfigProfile> configProfiles = new java.util.HashMap<>();
     for (ProcessorConfigProfile profile : config.getModuleProcessorProfiles()) {
       configProfiles.put(profile.getName(), profile);
     }

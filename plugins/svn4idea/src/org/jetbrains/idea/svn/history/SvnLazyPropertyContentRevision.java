@@ -72,8 +72,8 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
 
   private List<PropertyData> loadContent() throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final Ref<List<PropertyData>> ref = new Ref<List<PropertyData>>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+    final Ref<List<PropertyData>> ref = new Ref<>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {

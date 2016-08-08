@@ -59,7 +59,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public Collection<String> getAdditionalAnnotations() {
     List<String> annos = ADDITIONAL_ANNOS;
     if (annos == null) {
-      annos = new ArrayList<String>();
+      annos = new ArrayList<>();
       Collections.addAll(annos, STANDARD_ANNOS);
       final EntryPoint[] extensions = Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
       for (EntryPoint extension : extensions) {
@@ -86,8 +86,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   public EntryPointsManagerBase(@NotNull Project project) {
     myProject = project;
-    myTemporaryEntryPoints = new HashSet<RefElement>();
-    myPersistentEntryPoints = new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
+    myTemporaryEntryPoints = new HashSet<>();
+    myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
     final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     ((ExtensionPointImpl)point).addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
@@ -317,7 +317,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Override
   public RefElement[] getEntryPoints() {
     validateEntryPoints();
-    List<RefElement> entries = new ArrayList<RefElement>();
+    List<RefElement> entries = new ArrayList<>();
     Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
     for (SmartRefElementPointer refElementPointer : collection) {
       final RefEntity elt = refElementPointer.getRefElement();

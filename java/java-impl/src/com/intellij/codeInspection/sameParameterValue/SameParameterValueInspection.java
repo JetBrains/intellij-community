@@ -133,7 +133,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
 
     public static void removeParameter(final PsiMethod method, final PsiParameter parameter) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final List<ParameterInfoImpl> psiParameters = new ArrayList<ParameterInfoImpl>();
+      final List<ParameterInfoImpl> psiParameters = new ArrayList<>();
       int paramIdx = 0;
       final String paramName = parameter.getName();
       for (PsiParameter param : parameters) {

@@ -48,7 +48,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements,
                                      @NotNull Collection<LineMarkerInfo> result) {
-    final Set<PsiStatement> statements = new HashSet<PsiStatement>();
+    final Set<PsiStatement> statements = new HashSet<>();
 
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();

@@ -44,7 +44,7 @@ public class ColorSettingsUtil {
 
   public static Map<TextAttributesKey, String> keyToDisplayTextMap(final ColorSettingsPage page) {
     final List<AttributesDescriptor> attributeDescriptors = getAllAttributeDescriptors(page);
-    final Map<TextAttributesKey, String> displayText = new HashMap<TextAttributesKey, String>();
+    final Map<TextAttributesKey, String> displayText = new HashMap<>();
     for (AttributesDescriptor attributeDescriptor : attributeDescriptors) {
       final TextAttributesKey key = attributeDescriptor.getKey();
       displayText.put(key, attributeDescriptor.getDisplayName());
@@ -53,7 +53,7 @@ public class ColorSettingsUtil {
   }
 
   public static List<AttributesDescriptor> getAllAttributeDescriptors(ColorAndFontDescriptorsProvider provider) {
-    List<AttributesDescriptor> result = new ArrayList<AttributesDescriptor>();
+    List<AttributesDescriptor> result = new ArrayList<>();
     Collections.addAll(result, provider.getAttributeDescriptors());
     if (isInspectionColorsPage(provider)) {
       addInspectionSeverityAttributes(result);

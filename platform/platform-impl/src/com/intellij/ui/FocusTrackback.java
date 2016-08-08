@@ -52,11 +52,11 @@ public class FocusTrackback {
 
   private Window myRoot;
 
-  private WeakReference<Component> myFocusOwner = new WeakReference<Component>(null);
-  private WeakReference<Component> myLocalFocusOwner = new WeakReference<Component>(null);
+  private WeakReference<Component> myFocusOwner = new WeakReference<>(null);
+  private WeakReference<Component> myLocalFocusOwner = new WeakReference<>(null);
 
-  private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
-  private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<Window, Component>();
+  private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<>();
+  private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<>();
 
   private final String myRequestorName;
   private ComponentQuery myFocusedComponentQuery;
@@ -73,7 +73,7 @@ public class FocusTrackback {
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
-    myRequestor = new WeakReference<Object>(requestor);
+    myRequestor = new WeakReference<>(requestor);
     myRequestorName = requestor.toString();
     myParentWindow = parent;
     myMustBeShown = mustBeShown;
@@ -136,7 +136,7 @@ public class FocusTrackback {
   }
 
   private void setLocalFocusOwner(Component component) {
-    myLocalFocusOwner = new WeakReference<Component>(component);
+    myLocalFocusOwner = new WeakReference<>(component);
   }
 
   public static Component getFocusFor(Window parent) {
@@ -341,7 +341,7 @@ public class FocusTrackback {
   private static List<FocusTrackback> getStackForRoot(final Window root) {
     List<FocusTrackback> stack = ourRootWindowToParentsStack.get(root);
     if (stack == null) {
-      stack = new ArrayList<FocusTrackback>();
+      stack = new ArrayList<>();
       ourRootWindowToParentsStack.put(root, stack);
     }
     return stack;
@@ -411,7 +411,7 @@ public class FocusTrackback {
   }
 
   private void setFocusOwner(final Component focusOwner) {
-    myFocusOwner = new WeakReference<Component>(focusOwner);
+    myFocusOwner = new WeakReference<>(focusOwner);
   }
 
   public void setMustBeShown(final boolean mustBeShown) {
@@ -489,7 +489,7 @@ public class FocusTrackback {
 
   @NotNull
   public static List<JBPopup> getChildPopups(@NotNull final Component component) {
-    List<JBPopup> result = new ArrayList<JBPopup>();
+    List<JBPopup> result = new ArrayList<>();
 
     final Window window = UIUtil.getWindow(component);
     if (window == null) return result;

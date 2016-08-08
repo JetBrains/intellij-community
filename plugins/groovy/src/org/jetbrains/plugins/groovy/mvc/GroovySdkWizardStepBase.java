@@ -61,7 +61,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
       @Override
       public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
         if (myLibraryCompositionSettings != null) {
-          myLibraryCompositionSettings.addLibraries(rootModel, new ArrayList<Library>(), myLibrariesContainer);
+          myLibraryCompositionSettings.addLibraries(rootModel, new ArrayList<>(), myLibrariesContainer);
         }
         module.putUserData(MvcFramework.CREATE_APP_STRUCTURE, Boolean.TRUE);
       }

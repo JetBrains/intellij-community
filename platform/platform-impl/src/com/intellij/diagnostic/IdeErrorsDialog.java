@@ -99,7 +99,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private HyperlinkLabel myAttachmentWarningLabel;
 
   private int myIndex = 0;
-  private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<ArrayList<AbstractMessage>>();
+  private final List<ArrayList<AbstractMessage>> myMergedMessages = new ArrayList<>();
   private List<AbstractMessage> myRawMessages;
   private final MessagePool myMessagePool;
   private HeaderlessTabbedPane myTabs;
@@ -710,7 +710,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static Map<String, ArrayList<AbstractMessage>> mergeMessages(List<AbstractMessage> aErrors) {
-    Map<String, ArrayList<AbstractMessage>> hash2Messages = new LinkedHashMap<String, ArrayList<AbstractMessage>>();
+    Map<String, ArrayList<AbstractMessage>> hash2Messages = new LinkedHashMap<>();
     for (final AbstractMessage each : aErrors) {
       final String hashCode = getThrowableHashCode(each.getThrowable());
       ArrayList<AbstractMessage> list;
@@ -718,7 +718,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         list = hash2Messages.get(hashCode);
       }
       else {
-        list = new ArrayList<AbstractMessage>();
+        list = new ArrayList<>();
         hash2Messages.put(hashCode, list);
       }
       list.add(0, each);

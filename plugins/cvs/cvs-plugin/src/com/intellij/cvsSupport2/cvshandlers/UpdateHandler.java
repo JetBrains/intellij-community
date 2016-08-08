@@ -43,7 +43,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final FilePath[] myFiles;
 
   private final Project myProject;
-  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
+  private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<>();
   private final UpdatedFiles myUpdatedFiles;
   private final UpdateSettings myUpdateSettings;
 

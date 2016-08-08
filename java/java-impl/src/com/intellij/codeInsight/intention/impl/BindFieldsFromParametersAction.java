@@ -96,7 +96,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
-    final List<PsiParameter> parameters = new ArrayList<PsiParameter>();
+    final List<PsiParameter> parameters = new ArrayList<>();
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       if (isAvailable(parameter)) {
         parameters.add(parameter);
@@ -157,9 +157,9 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     final PsiMethod method = psiParameter != null ? (PsiMethod)psiParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
 
-    final HashSet<String> usedNames = new HashSet<String>();
+    final HashSet<String> usedNames = new HashSet<>();
     final Iterable<PsiParameter> parameters = selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive);
-    final MultiMap<PsiType, PsiParameter> types = new MultiMap<PsiType, PsiParameter>();
+    final MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
     for (PsiParameter parameter : parameters) {
       types.putValue(parameter.getType(), parameter);
     }
@@ -200,7 +200,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static MemberChooser<ParameterClassMember> showChooser(@NotNull Project project,
                                            @NotNull PsiMethod method,
                                            @NotNull ParameterClassMember[] members) {
-    final MemberChooser<ParameterClassMember> chooser = new MemberChooser<ParameterClassMember>(members, false, true, project);
+    final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
     chooser.selectElements(members);
     chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
     chooser.show();
@@ -217,7 +217,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static <T extends PsiElement> List<T> revealPointers(@NotNull Iterable<SmartPsiElementPointer<T>> pointers) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (SmartPsiElementPointer<T> pointer : pointers) {
       result.add(pointer.getElement());
     }
@@ -226,7 +226,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static List<PsiParameter> revealParameterClassMembers(@NotNull Iterable<ParameterClassMember> parameterClassMembers) {
-    final List<PsiParameter> result = new ArrayList<PsiParameter>();
+    final List<PsiParameter> result = new ArrayList<>();
     for (ParameterClassMember parameterClassMember : parameterClassMembers) {
       result.add(parameterClassMember.getParameter());
     }
@@ -247,7 +247,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static Collection<SmartPsiElementPointer<PsiParameter>> copyUnboundedParamsAndClearOriginal(@NotNull PsiMethod method) {
     synchronized (LOCK) {
       final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(method);
-      final Collection<SmartPsiElementPointer<PsiParameter>> result = new ArrayList<SmartPsiElementPointer<PsiParameter>>(unboundedParams);
+      final Collection<SmartPsiElementPointer<PsiParameter>> result = new ArrayList<>(unboundedParams);
       unboundedParams.clear();
       return result;
     }

@@ -528,7 +528,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final File file = FileUtil.createTempFile(wc1, "file", ".txt");
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     Assert.assertNotNull(vf);
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     Assert.assertTrue(exceptions.isEmpty());
@@ -581,7 +581,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<SequentialUpdatesContext>());
+                                                     new Ref<>());
     Assert.assertTrue(session.getExceptions() != null && ! session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());
     Assert.assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
@@ -598,7 +598,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<SequentialUpdatesContext>());
+                                                     new Ref<>());
     Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());
     if (myIsSecure) {
@@ -608,7 +608,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   }
 
   private void testBrowseRepositoryImpl(final String url) throws SVNException {
-    final List<SVNDirEntry> list = new ArrayList<SVNDirEntry>();
+    final List<SVNDirEntry> list = new ArrayList<>();
     final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
     repository.getDir(".", -1, null, new ISVNDirEntryHandler() {
       @Override

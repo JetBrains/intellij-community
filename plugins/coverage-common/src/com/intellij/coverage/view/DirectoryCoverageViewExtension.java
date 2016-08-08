@@ -76,7 +76,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node) {
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
       if (val instanceof PsiFile || val == null) return Collections.emptyList();

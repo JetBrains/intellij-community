@@ -111,7 +111,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
       @NotNull
       @Override
       protected Set<String> compute() {
-        Set<String> result = new LinkedHashSet<String>();
+        Set<String> result = new LinkedHashSet<>();
         //// add main java root of buildSrc project
         result.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
         //// add main groovy root of buildSrc project

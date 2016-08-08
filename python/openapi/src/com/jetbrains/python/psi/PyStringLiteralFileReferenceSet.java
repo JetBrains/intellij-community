@@ -71,7 +71,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
     final Matcher matcher = DELIMITERS.matcher(value);
     int start = 0;
     int index = 0;
-    final List<FileReference> results = new ArrayList<FileReference>();
+    final List<FileReference> results = new ArrayList<>();
     while (matcher.find()) {
       final String s = value.substring(start, matcher.start());
       if (!s.isEmpty()) {

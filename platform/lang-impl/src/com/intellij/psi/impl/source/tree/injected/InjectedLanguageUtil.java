@@ -407,7 +407,7 @@ public class InjectedLanguageUtil {
                                        @NotNull PsiFile hostFile,
                                        final int hostOffset,
                                        @NotNull final PsiDocumentManager documentManager) {
-    final Ref<PsiElement> out = new Ref<PsiElement>();
+    final Ref<PsiElement> out = new Ref<>();
     enumerate(element, hostFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

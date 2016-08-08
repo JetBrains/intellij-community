@@ -61,7 +61,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
 
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final THashSet<PsiClass> myClasses = new THashSet<PsiClass>();
+      private final THashSet<PsiClass> myClasses = new THashSet<>();
       @Override
       protected void search() {
         myClasses.clear();
@@ -129,7 +129,7 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    final Ref<CantRunException> ref = new Ref<CantRunException>();
+    final Ref<CantRunException> ref = new Ref<>();
     final GlobalSearchScope aPackage = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
       @Override
       public GlobalSearchScope compute() {

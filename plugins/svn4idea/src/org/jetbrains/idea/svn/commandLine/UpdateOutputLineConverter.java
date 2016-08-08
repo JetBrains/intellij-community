@@ -126,7 +126,7 @@ public class UpdateOutputLineConverter {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
-  private final static Set<Character> ourActions = new HashSet<Character>(Arrays.asList(new Character[] {'A', 'D', 'U', 'C', 'G', 'E', 'R'}));
+  private final static Set<Character> ourActions = new HashSet<>(Arrays.asList(new Character[]{'A', 'D', 'U', 'C', 'G', 'E', 'R'}));
 
   @Nullable
   private ProgressEvent parseNormalString(final String line) {

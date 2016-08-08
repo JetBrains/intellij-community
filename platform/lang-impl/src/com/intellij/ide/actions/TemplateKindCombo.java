@@ -59,7 +59,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
 
   public void addItem(@NotNull String presentableName, @Nullable Icon icon, @NotNull String templateName) {
     //noinspection unchecked
-    getComboBox().addItem(new Trinity<String, Icon, String>(presentableName, icon, templateName));
+    getComboBox().addItem(new Trinity<>(presentableName, icon, templateName));
   }
 
   @NotNull

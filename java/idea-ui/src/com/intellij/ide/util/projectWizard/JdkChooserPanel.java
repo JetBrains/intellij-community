@@ -176,7 +176,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   private Sdk[] getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
-    final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
+    final Set<Sdk> compatibleJdks = new HashSet<>();
     for (Sdk projectJdk : collection) {
       if (isCompatibleJdk(projectJdk, type)) {
         compatibleJdks.add(projectJdk);

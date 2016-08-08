@@ -359,7 +359,7 @@ public class CodeFormatterFacade {
 
   @NotNull
   private static Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
-    Stack<PsiElement> toProcess = new Stack<PsiElement>();
+    Stack<PsiElement> toProcess = new Stack<>();
     for (PsiElement e = file.findElementAt(range.getStartOffset()); e != null; e = e.getNextSibling()) {
       if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
         break;

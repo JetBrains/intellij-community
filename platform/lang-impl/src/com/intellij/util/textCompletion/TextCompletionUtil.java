@@ -58,7 +58,7 @@ public class TextCompletionUtil {
       KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
     if (!StringUtil.isEmpty(completionShortcutText)) {
 
-      final Ref<Boolean> toShowHintRef = new Ref<Boolean>(true);
+      final Ref<Boolean> toShowHintRef = new Ref<>(true);
       editor.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {

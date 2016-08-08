@@ -215,7 +215,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       if (aClass == null || !aClass.isAnnotationType()) {
         return true;
       }
-      final Set<String> names = new HashSet<String>();
+      final Set<String> names = new HashSet<>();
       final PsiAnnotationParameterList annotationParameterList = annotation.getParameterList();
       if (PsiUtilCore.hasErrorElementChild(annotationParameterList)) {
         return true;

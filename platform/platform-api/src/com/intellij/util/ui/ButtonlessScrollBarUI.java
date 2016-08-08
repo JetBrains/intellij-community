@@ -1127,7 +1127,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     private final WeakReference<AWTEventListener> myReference;
 
     private WeakLestener(AWTEventListener listener) {
-      myReference = new WeakReference<AWTEventListener>(listener);
+      myReference = new WeakReference<>(listener);
     }
 
     @Override

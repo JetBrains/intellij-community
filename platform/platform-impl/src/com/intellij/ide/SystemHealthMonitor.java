@@ -151,7 +151,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
     final File file = new File(PathManager.getSystemPath());
     final AtomicBoolean reported = new AtomicBoolean();
-    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
+    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
 
     JobScheduler.getScheduler().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;

@@ -46,7 +46,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
 
   @NotNull
   public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text, @NonNls String labelConstraint) {
-    final LabeledComponent<Comp> labeledComponent = new LabeledComponent<Comp>();
+    final LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
     labeledComponent.setText(text);
     labeledComponent.setLabelLocation(labelConstraint);

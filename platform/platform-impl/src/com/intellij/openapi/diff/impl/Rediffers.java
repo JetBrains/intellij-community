@@ -25,7 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 
 public class Rediffers {
-  private final HashMap<EditorSource, Rediff> myRediffers = new HashMap<EditorSource, Rediff>();
+  private final HashMap<EditorSource, Rediff> myRediffers = new HashMap<>();
   private final DiffPanelImpl myPanel;
   private final Alarm myAlarm = new Alarm();
   private final Runnable myUpdateRequest = new Runnable() {

@@ -59,7 +59,7 @@ public class SuperMethodWarningUtil {
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
 
 
-    Set<String> superClasses = new HashSet<String>();
+    Set<String> superClasses = new HashSet<>();
     boolean superAbstract = false;
     boolean parentInterface = false;
     for (final PsiMethod superMethod : superMethods) {

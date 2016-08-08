@@ -38,13 +38,13 @@ public interface DiffRequestPresentable {
     public MyResult(DiffRequest request, DiffPresentationReturnValue returnValue) {
       myRequest = request;
       myReturnValue = returnValue;
-      myErrors = new ArrayList<String>();
+      myErrors = new ArrayList<>();
     }
 
     public MyResult(DiffRequest request, DiffPresentationReturnValue returnValue, final String error) {
       myRequest = request;
       myReturnValue = returnValue;
-      myErrors = new ArrayList<String>();
+      myErrors = new ArrayList<>();
       if (! StringUtil.isEmptyOrSpaces(error)) {
         myErrors.add(error);
       }

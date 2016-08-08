@@ -91,8 +91,8 @@ public class ArtifactCompileScope {
       return cached;
     }
 
-    Set<Artifact> artifacts = new HashSet<Artifact>();
-    final Set<Module> modules = new HashSet<Module>(Arrays.asList(compileScope.getAffectedModules()));
+    Set<Artifact> artifacts = new HashSet<>();
+    final Set<Module> modules = new HashSet<>(Arrays.asList(compileScope.getAffectedModules()));
     final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
@@ -130,9 +130,9 @@ public class ArtifactCompileScope {
   private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts,
                                                     @NotNull PackagingElementResolvingContext context,
                                                     final boolean withOutputPathOnly) {
-    Set<Artifact> result = new HashSet<Artifact>();
+    Set<Artifact> result = new HashSet<>();
     for (Artifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, context, new HashSet<Artifact>(), result, withOutputPathOnly);
+      collectIncludedArtifacts(artifact, context, new HashSet<>(), result, withOutputPathOnly);
     }
     return result;
   }

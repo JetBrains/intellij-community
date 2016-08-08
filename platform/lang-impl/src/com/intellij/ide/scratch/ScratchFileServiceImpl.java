@@ -77,7 +77,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   private final MyLanguages myScratchMapping = new MyLanguages();
 
   protected ScratchFileServiceImpl(Application application) {
-    myIndex = new LightDirectoryIndex<RootType>(application, NULL_TYPE, index -> {
+    myIndex = new LightDirectoryIndex<>(application, NULL_TYPE, index -> {
       LocalFileSystem fileSystem = LocalFileSystem.getInstance();
       for (RootType r : RootType.getAllRootIds()) {
         index.putInfo(fileSystem.findFileByPath(getRootPath(r)), r);

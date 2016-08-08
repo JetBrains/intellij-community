@@ -97,7 +97,7 @@ public class ReplaceMethodRefWithLambdaInspection extends BaseInspection {
     private static boolean isWithSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
       final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+        final List<PsiElement> sideEffects = new ArrayList<>();
         SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
         return !sideEffects.isEmpty();
       }

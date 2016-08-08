@@ -251,7 +251,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<Sdk> sdks) {
-    final Set<String> names = new HashSet<String>();
+    final Set<String> names = new HashSet<>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
     }
@@ -293,7 +293,7 @@ public class SdkConfigurationUtil {
 
   @NotNull
   public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {
         result.add(sdkHome);

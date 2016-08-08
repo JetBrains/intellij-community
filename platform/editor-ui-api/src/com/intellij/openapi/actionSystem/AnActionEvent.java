@@ -44,7 +44,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   @JdkConstants.InputEventMask private final int myModifiers;
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
-  private static final Map<String, String> ourInjectedIds = new HashMap<String, String>();
+  private static final Map<String, String> ourInjectedIds = new HashMap<>();
 
   /**
    * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or

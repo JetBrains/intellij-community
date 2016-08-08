@@ -38,7 +38,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   private static final List<Key> ALL_COLORS = Arrays.asList(RED, GREEN, BLUE);
 
   private OutputLineSplitter mySplitter;
-  final Map<Key, List<String>> myOutput = new THashMap<Key, List<String>>();
+  final Map<Key, List<String>> myOutput = new THashMap<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -51,7 +51,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         synchronized (myOutput) {
           List<String> list = myOutput.get(outputType);
           if (list == null) {
-            myOutput.put(outputType, list = new ArrayList<String>());
+            myOutput.put(outputType, list = new ArrayList<>());
           }
           list.add(text);
         }
@@ -60,9 +60,9 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   }
 
   public void testReadingSeveralStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
     for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
+      written.put(each, new ArrayList<>());
       execute(() -> {
         Random r = new Random();
         for (int i = 0; i < 1000; i++) {
@@ -91,9 +91,9 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   }
 
   public void testReadingColoredStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<Key, List<String>>();
+    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
     for (final Key each : ALL_TYPES) {
-      written.put(each, new ArrayList<String>());
+      written.put(each, new ArrayList<>());
       execute(() -> {
         Random r = new Random();
         for (int i = 0; i < 1000; i++) {
@@ -122,7 +122,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
     final Semaphore read = new Semaphore(0);
 
     final AtomicBoolean isFinished = new AtomicBoolean();
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future<?>> futures = new ArrayList<>();
 
     for (final Key each : ALL_TYPES) {
       futures.add(execute(() -> {

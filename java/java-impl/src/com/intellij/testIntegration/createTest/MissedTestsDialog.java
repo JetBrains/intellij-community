@@ -85,7 +85,7 @@ public class MissedTestsDialog extends DialogWrapper {
   }
 
   private void disableMethodsWithTests(List<MemberInfo> info) {
-    final Set<String> existingNames = new HashSet<String>();
+    final Set<String> existingNames = new HashSet<>();
     final String prefix = getTestPrefix(existingNames);
 
     existingNames.addAll(ContainerUtil.map(myTestClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
@@ -110,7 +110,7 @@ public class MissedTestsDialog extends DialogWrapper {
   private void updateMethodsTable() {
     List<MemberInfo> infos = TestIntegrationUtils.extractClassMethods(mySourceClass, myIncludeInheritedCb.isSelected());
 
-    Set<PsiMember> selectedMethods = new HashSet<PsiMember>();
+    Set<PsiMember> selectedMethods = new HashSet<>();
     for (MemberInfo each : myTable.getSelectedMemberInfos()) {
       selectedMethods.add(each.getMember());
     }

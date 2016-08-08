@@ -226,7 +226,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       }
       PsiResolveHelper helper = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper();
       PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
-      final Collection<PsiElement> methods = new LinkedHashSet<PsiElement>();
+      final Collection<PsiElement> methods = new LinkedHashSet<>();
       for (PsiElement candidate1 : candidates) {
         PsiMethod candidate = (PsiMethod)candidate1;
         if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
@@ -300,10 +300,10 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
 
         if (containingClass == null && psiClass == null) return PsiClass.EMPTY_ARRAY;
         if (containingClass != null) {
-          PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<PsiClass>(containingClass);
+          PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<>(containingClass);
           while (psiClass != null) {
             if (!processor1.process(psiClass) ||
-                !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<PsiClass>(psiClass)) ||
+                !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<>(psiClass)) ||
                 !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
               return new PsiClass[] {psiClass};
             }
@@ -327,12 +327,12 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
           classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
 
-          final Set<PsiClass> supers = new HashSet<PsiClass>();
+          final Set<PsiClass> supers = new HashSet<>();
           for (PsiClass psiClass : classesToSearch) {
             supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
           }
 
-          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          final List<PsiElement> elements = new ArrayList<>();
           elements.addAll(classesToSearch);
           elements.addAll(supers);
           elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());

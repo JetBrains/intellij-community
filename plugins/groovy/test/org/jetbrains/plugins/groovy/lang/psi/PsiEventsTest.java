@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiEventsTest extends PsiTestCase {
   public void testEditingInDocComment() throws  Exception {
-    final Ref<Boolean> gotIt = new Ref<Boolean>(false);
+    final Ref<Boolean> gotIt = new Ref<>(false);
     getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {

@@ -222,7 +222,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
       abstract int getValue(CodeStyleSettings settings);
     }
 
-    private static final Map<String, PropertyManager> PROPERTIES = new HashMap<String, PropertyManager>();
+    private static final Map<String, PropertyManager> PROPERTIES = new HashMap<>();
     static {
       init();
     }
@@ -317,7 +317,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     }
 
     private static Iterable<String> getPropertyNames(final CodeStyleSettings settings) {
-      List<String> result = new ArrayList<String>(PROPERTIES.keySet());
+      List<String> result = new ArrayList<>(PROPERTIES.keySet());
       Collections.sort(result, new Comparator<String>() {
         public int compare(String o1, String o2) {
           int weight1 = getWeight(o1);

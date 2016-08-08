@@ -48,9 +48,9 @@ class FTManager {
   @Nullable
   private final FTManager myOriginal;
   private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
-  private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
+  private final Map<String, FileTemplateBase> myTemplates = new HashMap<>();
   private volatile List<FileTemplateBase> mySortedTemplates;
-  private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<DefaultTemplate>();
+  private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<>();
 
   FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName) {
     this(name, defaultTemplatesDirName, false);
@@ -86,7 +86,7 @@ class FTManager {
   public Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
     List<FileTemplateBase> sorted = mySortedTemplates;
     if (sorted == null) {
-      sorted = new ArrayList<FileTemplateBase>(getTemplates().values());
+      sorted = new ArrayList<>(getTemplates().values());
       Collections.sort(sorted, (t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
       mySortedTemplates = sorted;
     }
@@ -95,7 +95,7 @@ class FTManager {
       return Collections.unmodifiableCollection(sorted);
     }
 
-    final List<FileTemplateBase> list = new ArrayList<FileTemplateBase>(sorted.size());
+    final List<FileTemplateBase> list = new ArrayList<>(sorted.size());
     for (FileTemplateBase template : sorted) {
       if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isEnabled()) {
         continue;
@@ -170,7 +170,7 @@ class FTManager {
   }
 
   public void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
-    final Set<String> toDisable = new HashSet<String>();
+    final Set<String> toDisable = new HashSet<>();
     for (DefaultTemplate template : myDefaultTemplates) {
       toDisable.add(template.getQualifiedName());
     }
@@ -220,8 +220,8 @@ class FTManager {
       return;
     }
 
-    final List<File> templateWithDefaultExtension = new ArrayList<File>();
-    final Set<String> processedNames = new HashSet<String>();
+    final List<File> templateWithDefaultExtension = new ArrayList<>();
+    final Set<String> processedNames = new HashSet<>();
 
     for (File file : configFiles) {
       if (file.isDirectory() || FileTypeManager.getInstance().isFileIgnored(file.getName()) || file.isHidden()) {
@@ -269,8 +269,8 @@ class FTManager {
 
     final File[] files = configRoot.listFiles();
 
-    final Set<String> allNames = new HashSet<String>();
-    final Map<String, File> templatesOnDisk = files != null && files.length > 0? new HashMap<String, File>() : Collections.<String, File>emptyMap();
+    final Set<String> allNames = new HashSet<>();
+    final Map<String, File> templatesOnDisk = files != null && files.length > 0 ? new HashMap<>() : Collections.<String, File>emptyMap();
     if (files != null) {
       for (File file : files) {
         if (!file.isDirectory()) {
@@ -281,7 +281,7 @@ class FTManager {
       }
     }
 
-    final Map<String, FileTemplateBase> templatesToSave = new HashMap<String, FileTemplateBase>();
+    final Map<String, FileTemplateBase> templatesToSave = new HashMap<>();
 
     for (FileTemplateBase template : getAllTemplates(true)) {
       if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isTextModified()) {

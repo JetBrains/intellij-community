@@ -69,7 +69,7 @@ public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
                                                            @Nullable Icon icon,
                                                            boolean showCompletionHint,
                                                            @Nullable String text) {
-    return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
+    return new TextFieldWithAutoCompletion<>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
   }
 
   public void setVariants(@NotNull Collection<T> variants) {

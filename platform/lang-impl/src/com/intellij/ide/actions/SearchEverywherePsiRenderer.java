@@ -109,7 +109,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     String right = ")";
 
     if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
-    final LinkedList<String> parts = new LinkedList<String>(StringUtil.split(text, "."));
+    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, "."));
     int index;
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;

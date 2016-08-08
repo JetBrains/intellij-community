@@ -111,8 +111,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   @Override
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
-    escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
-    shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
+    escapers = new SmartList<>();
+    shreds = new SmartList<>();
     outChars = new StringBuilder();
 
     if (!cleared) {
@@ -390,7 +390,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   private void addToResults(Place place, PsiFile psiFile) {
     if (result == null) {
-      result = new SmartList<Pair<Place, PsiFile>>();
+      result = new SmartList<>();
     }
     result.add(Pair.create(place, psiFile));
   }
@@ -491,7 +491,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>(10);
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);

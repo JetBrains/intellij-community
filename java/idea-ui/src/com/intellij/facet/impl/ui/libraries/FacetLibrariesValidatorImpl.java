@@ -48,7 +48,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
   private FacetLibrariesValidatorDescription myDescription;
-  private final List<Library> myAddedLibraries = new ArrayList<Library>();
+  private final List<Library> myAddedLibraries = new ArrayList<>();
 
   public FacetLibrariesValidatorImpl(LibraryInfo[] requiredLibraries, FacetLibrariesValidatorDescription description,
                                      final LibrariesValidatorContext context, FacetValidatorsManager validatorsManager) {
@@ -103,7 +103,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private List<VirtualFile> collectRoots(final @NotNull ModuleRootModel rootModel) {
-    final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> roots = new ArrayList<>();
     rootModel.orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(library -> {
       ContainerUtil.addAll(roots, myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES));
       return true;

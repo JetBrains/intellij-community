@@ -31,11 +31,11 @@ public class FormatUtils {
    * @noinspection StaticCollection
    */
   @NonNls
-  public static final Set<String> formatMethodNames = new HashSet<String>(2);
+  public static final Set<String> formatMethodNames = new HashSet<>(2);
   /**
    * @noinspection StaticCollection
    */
-  public static final Set<String> formatClassNames = new HashSet<String>(4);
+  public static final Set<String> formatClassNames = new HashSet<>(4);
 
   static {
     formatMethodNames.add("format");

@@ -132,7 +132,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   private static boolean findConflicts(InitialInfo info) {
     //new ConflictsDialog()
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     final PsiElement declarationOwner = info.getContext().getParent();
 
@@ -274,7 +274,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     for (ParameterInfo info : helper.getParameterInfos()) {
       final String oldName = info.getOriginalName();
       final String newName = info.getName();
-      final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
+      final ArrayList<GrExpression> result = new ArrayList<>();
       if (!oldName.equals(newName)) {
         for (final GrStatement statement : statements) {
           statement.accept(new PsiRecursiveElementVisitor() {

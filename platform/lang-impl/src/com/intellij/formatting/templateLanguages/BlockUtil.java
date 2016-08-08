@@ -42,7 +42,7 @@ class BlockUtil {
     assert !(parent instanceof DataLanguageBlockWrapper) : parent.getClass();
     List<Block> children = parent.getSubBlocks();
     if (children.size() == 0) return Collections.emptyList();
-    ArrayList<DataLanguageBlockWrapper> result = new ArrayList<DataLanguageBlockWrapper>(children.size());
+    ArrayList<DataLanguageBlockWrapper> result = new ArrayList<>(children.size());
     DataLanguageBlockWrapper prevWrapper = null;
     for (Block child : children) {
       DataLanguageBlockWrapper currWrapper = createAndAddBlock(result, child, null);
@@ -59,10 +59,10 @@ class BlockUtil {
     final List<Block> subBlocks = parent.getSubBlocks();
     if (subBlocks.size() == 0) return Pair
       .create(Collections.<DataLanguageBlockWrapper>emptyList(), Collections.<DataLanguageBlockWrapper>emptyList());
-    final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<DataLanguageBlockWrapper>(subBlocks.size() / 2);
-    final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<DataLanguageBlockWrapper>(subBlocks.size() / 2);
+    final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<>(subBlocks.size() / 2);
+    final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<>(subBlocks.size() / 2);
     splitByRightBoundAndCollectBlocks(subBlocks, before, after, bounds);
-    return new Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>>(before, after);
+    return new Pair<>(before, after);
   }
 
   private static void splitByRightBoundAndCollectBlocks(@NotNull List<Block> blocks,
@@ -95,7 +95,7 @@ class BlockUtil {
 
 
   public static List<Block> mergeBlocks(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
-    ArrayList<Block> result = new ArrayList<Block>(tlBlocks.size() + foreignBlocks.size());
+    ArrayList<Block> result = new ArrayList<>(tlBlocks.size() + foreignBlocks.size());
     int vInd = 0;
     int fInd = 0;
     while (vInd < tlBlocks.size() && fInd < foreignBlocks.size()) {
@@ -183,7 +183,7 @@ class BlockUtil {
   }
 
   static List<Block> splitBlockIntoFragments(@NotNull Block block, @NotNull List<TemplateLanguageBlock> subBlocks) {
-    final List<Block> children = new ArrayList<Block>(5);
+    final List<Block> children = new ArrayList<>(5);
     final TextRange range = block.getTextRange();
     int childStartOffset = range.getStartOffset();
     TemplateLanguageBlock lastTLBlock = null;

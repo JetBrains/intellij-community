@@ -75,7 +75,7 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>(); // guarded by myRefTable
+  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<>(); // guarded by myRefTable
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
@@ -85,11 +85,11 @@ public class RefManagerImpl extends RefManager {
   private volatile boolean myIsInProcess;
   private volatile boolean myOfflineView;
 
-  private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
+  private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<>();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new THashMap<Key, RefManagerExtension>();
-  private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
+  private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
+  private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
   private final StringInterner myNameInterner = new StringInterner();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
@@ -368,7 +368,7 @@ public class RefManagerImpl extends RefManager {
   public List<RefElement> getSortedElements() {
     List<RefElement> answer;
     synchronized (myRefTable) {
-      answer = new ArrayList<RefElement>(myRefTable.values());
+      answer = new ArrayList<>(myRefTable.values());
     }
     ContainerUtil.quickSort(answer, (o1, o2) -> ReadAction.compute(() -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();

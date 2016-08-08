@@ -37,7 +37,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   public static final DataKey<GroupItem> DATA_KEY = DataKey.create(GroupItem.class.getName());
 
   @NotNull private String myName;
-  @NotNull private final ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
+  @NotNull private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private boolean myReadOnly = false;
   private boolean mySpecialGroup = false;
 

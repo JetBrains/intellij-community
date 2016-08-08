@@ -60,7 +60,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     @Override
     protected MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> compute() {
       MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map =
-        new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
+        new MultiValuesMap<>();
       StructureViewExtension[] extensions = Extensions.getExtensions(StructureViewExtension.EXTENSION_POINT_NAME);
       for (StructureViewExtension extension : extensions) {
         map.put(extension.getType(), extension);
@@ -68,7 +68,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
       return map;
     }
   };
-  private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
+  private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<>();
 
   public StructureViewFactoryImpl(Project project) {
     myProject = project;

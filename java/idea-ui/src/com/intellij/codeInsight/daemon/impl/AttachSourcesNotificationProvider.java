@@ -70,7 +70,7 @@ import java.util.*;
  */
 public class AttachSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
-    new ExtensionPointName<AttachSourcesProvider>("com.intellij.attachSourcesProvider");
+    new ExtensionPointName<>("com.intellij.attachSourcesProvider");
 
   private static final Key<EditorNotificationPanel> KEY = Key.create("add sources to class");
 
@@ -107,7 +107,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     if (sourceFile == null) {
       final List<LibraryOrderEntry> libraries = findLibraryEntriesForFile(file);
       if (libraries != null) {
-        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<AttachSourcesProvider.AttachSourcesAction>();
+        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
         PsiFile clsFile = PsiManager.getInstance(myProject).findFile(file);
         boolean hasNonLightAction = false;
@@ -231,7 +231,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
-      final List<Library.ModifiableModel> modelsToCommit = new ArrayList<Library.ModifiableModel>();
+      final List<Library.ModifiableModel> modelsToCommit = new ArrayList<>();
       for (LibraryOrderEntry orderEntry : orderEntriesContainingFile) {
         final Library library = orderEntry.getLibrary();
         if (library == null) continue;
@@ -296,7 +296,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       VirtualFile[] files = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
       if (files.length == 0) return ActionCallback.REJECTED;
 
-      final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<Library, LibraryOrderEntry>();
+      final Map<Library, LibraryOrderEntry> librariesToAppendSourcesTo = new HashMap<>();
       for (LibraryOrderEntry library : libraries) {
         librariesToAppendSourcesTo.put(library.getLibrary(), library);
       }

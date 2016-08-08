@@ -31,7 +31,7 @@ public class ApplyPatchHunk {
   }
   
   public ApplyPatchStatus apply(final List<String> lines) throws ApplyPatchException {
-    List<String> originalLines = new ArrayList<String>(lines);
+    List<String> originalLines = new ArrayList<>(lines);
     try {
       return tryApply(lines, false);
     }

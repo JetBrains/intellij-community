@@ -148,7 +148,7 @@ public class HgAnnotation extends FileAnnotation {
   @Override
   @Nullable
   public List<VcsFileRevision> getRevisions() {
-    List<VcsFileRevision> result = new LinkedList<VcsFileRevision>();
+    List<VcsFileRevision> result = new LinkedList<>();
     result.addAll(myFileRevisions);
     return result;
   }

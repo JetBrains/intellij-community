@@ -174,7 +174,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   }
 
   public List<ParamInfo> getParameters() {
-    List<ParamInfo> result = new ArrayList<ParamInfo>(myParametersTableModel.getRowCount());
+    List<ParamInfo> result = new ArrayList<>(myParametersTableModel.getRowCount());
     for (ParameterTableModelItemBase<ParamInfo> item : myParametersTableModel.getItems()) {
       result.add(item.parameter);
     }
@@ -352,7 +352,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Caller) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          final Ref<CallerChooserBase<Method>> chooser = new Ref<CallerChooserBase<Method>>();
+          final Ref<CallerChooserBase<Method>> chooser = new Ref<>();
           Consumer<Set<Method>> callback = callers -> {
             myMethodsToPropagateParameters = callers;
             myParameterPropagationTreeToReuse = chooser.get().getTree();

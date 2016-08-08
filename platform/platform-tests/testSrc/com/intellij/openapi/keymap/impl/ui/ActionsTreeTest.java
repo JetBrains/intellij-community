@@ -204,7 +204,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   public void testPresentation() {
     ActionManager manager = ActionManager.getInstance();
 
-    List<String> failures = new SmartList<String>();
+    List<String> failures = new SmartList<>();
     for (String id : manager.getActionIds("")) {
       if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         try {
@@ -266,8 +266,8 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       myActionsTree.filter(filter, new QuickList[0]);
     }
 
-    List<String> missing = new ArrayList<String>();
-    List<String> present = new ArrayList<String>();
+    List<String> missing = new ArrayList<>();
+    List<String> present = new ArrayList<>();
     for (String actionId : idsThatMustBePresent) {
       if (!myActionsTree.getMainGroup().containsId(actionId)) missing.add(actionId);
     }

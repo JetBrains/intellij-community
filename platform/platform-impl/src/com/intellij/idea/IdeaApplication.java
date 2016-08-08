@@ -133,7 +133,7 @@ public class IdeaApplication {
    */
   @NotNull
   private static String[] processProgramArguments(String[] args) {
-    ArrayList<String> arguments = new ArrayList<String>();
+    ArrayList<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
       if (arg.startsWith("-D")) {
@@ -316,7 +316,7 @@ public class IdeaApplication {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
-      Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+      Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(args, willOpenProject);
 

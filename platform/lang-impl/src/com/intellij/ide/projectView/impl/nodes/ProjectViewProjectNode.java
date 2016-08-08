@@ -48,7 +48,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   public Collection<AbstractTreeNode> getChildren() {
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
-    Set<Module> modules = new LinkedHashSet<Module>(topLevelContentRoots.size());
+    Set<Module> modules = new LinkedHashSet<>(topLevelContentRoots.size());
 
     for (VirtualFile root : topLevelContentRoots) {
       final Module module = ModuleUtil.findModuleForFile(root, myProject);
@@ -57,7 +57,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       }
     }
 
-    ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> nodes = new ArrayList<>();
     final PsiManager psiManager = PsiManager.getInstance(getProject());
 
     /*
@@ -103,7 +103,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     Iterator<VirtualFile> it = roots.iterator();
     VirtualFile current = it.next();
 
-    List<VirtualFile> reducedRoots = new ArrayList<VirtualFile>();
+    List<VirtualFile> reducedRoots = new ArrayList<>();
     while (it.hasNext()) {
       VirtualFile next = it.next();
       VirtualFile common = VfsUtilCore.getCommonAncestor(current, next);

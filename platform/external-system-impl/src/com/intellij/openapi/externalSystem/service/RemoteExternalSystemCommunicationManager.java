@@ -88,9 +88,9 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   private static final String MAIN_CLASS_NAME = RemoteExternalSystemFacadeImpl.class.getName();
 
   private final AtomicReference<RemoteExternalSystemProgressNotificationManager> myExportedNotificationManager
-    = new AtomicReference<RemoteExternalSystemProgressNotificationManager>();
+    = new AtomicReference<>();
 
-  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<ProjectSystemId>();
+  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
 
   @NotNull private final ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
   @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;

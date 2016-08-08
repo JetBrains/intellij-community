@@ -567,7 +567,7 @@ public class PsiImplUtil {
     final PsiCodeBlock body = SoftReference.dereference(ref);
     if (body != null) return body;
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
-    block.putUserData(PSI_CODE_BLOCK, new SoftReference<PsiCodeBlock>(newBody));
+    block.putUserData(PSI_CODE_BLOCK, new SoftReference<>(newBody));
     return newBody;
   }
 
@@ -578,7 +578,7 @@ public class PsiImplUtil {
     final PsiTypeElement element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticTypeElement newTypeElement = new GrSyntheticTypeElement(typeElement);
-    typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<PsiTypeElement>(newTypeElement));
+    typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<>(newTypeElement));
     return newTypeElement;
   }
 
@@ -589,7 +589,7 @@ public class PsiImplUtil {
     final PsiExpression element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
-    expr.putUserData(PSI_EXPRESSION, new SoftReference<PsiExpression>(newExpr));
+    expr.putUserData(PSI_EXPRESSION, new SoftReference<>(newExpr));
     return newExpr;
   }
 
@@ -600,7 +600,7 @@ public class PsiImplUtil {
     final PsiReferenceList element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticReferenceList newList = new GrSyntheticReferenceList(list, role);
-    list.putUserData(PSI_REFERENCE_LIST, new SoftReference<PsiReferenceList>(newList));
+    list.putUserData(PSI_REFERENCE_LIST, new SoftReference<>(newList));
     return newList;
   }
 
@@ -801,7 +801,7 @@ public class PsiImplUtil {
   }
 
   public static GrStatement[] getStatements(final GrStatementOwner statementOwner) {
-    List<GrStatement> result = new ArrayList<GrStatement>();
+    List<GrStatement> result = new ArrayList<>();
     for (PsiElement cur = statementOwner.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) {
         result.add((GrStatement)cur);

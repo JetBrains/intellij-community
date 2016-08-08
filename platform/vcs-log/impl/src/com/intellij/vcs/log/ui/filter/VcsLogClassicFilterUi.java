@@ -84,9 +84,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter);
-    myUserFilterModel = new FilterModel<VcsLogUserFilter>(dataPackGetter);
-    myDateFilterModel = new FilterModel<VcsLogDateFilter>(dataPackGetter);
-    myStructureFilterModel = new FilterModel<VcsLogFileFilter>(dataPackGetter);
+    myUserFilterModel = new FilterModel<>(dataPackGetter);
+    myDateFilterModel = new FilterModel<>(dataPackGetter);
+    myStructureFilterModel = new FilterModel<>(dataPackGetter);
     myTextFilterModel = new TextFilterModel(dataPackGetter);
 
     updateUiOnFilterChange();
@@ -98,7 +98,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       model.addSetFilterListener(() -> {
         myUi.applyFiltersAndUpdateUi();
         myBranchFilterModel
-          .onStructureFilterChanged(new HashSet<VirtualFile>(myLogData.getRoots()), myStructureFilterModel.getFilter());
+          .onStructureFilterChanged(new HashSet<>(myLogData.getRoots()), myStructureFilterModel.getFilter());
       });
     }
   }

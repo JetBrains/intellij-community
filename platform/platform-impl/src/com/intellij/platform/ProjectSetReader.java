@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class ProjectSetReader {
   public void readDescriptor(@NotNull JsonObject descriptor, @Nullable ProjectSetProcessor.Context context) {
-    Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
+    Map<String, ProjectSetProcessor> processors = new HashMap<>();
     for (ProjectSetProcessor extension : ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions()) {
       processors.put(extension.getId(), extension);
     }

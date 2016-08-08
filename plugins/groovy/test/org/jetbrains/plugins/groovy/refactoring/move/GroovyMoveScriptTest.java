@@ -85,7 +85,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     assertNotNull("Directory " + newDirName + " not found", psiDirectory);
 
     final PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-    List<PsiClass> classList = new ArrayList<PsiClass>();
+    List<PsiClass> classList = new ArrayList<>();
     for (PsiFile file : files) {
       Collections.addAll(classList, ((PsiClassOwner)file).getClasses());
     }

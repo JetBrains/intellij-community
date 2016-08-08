@@ -47,7 +47,7 @@ public class LoadedRevisionsCache implements Disposable {
 
   private LoadedRevisionsCache(final Project project) {
     myProject = project;
-    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<String, Bunch>() : new SoftHashMap<String, Bunch>();
+    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : new SoftHashMap<>();
 
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
@@ -98,7 +98,7 @@ public class LoadedRevisionsCache implements Disposable {
 
     int start = 0;
     int end = (first == 0) ? (Math.min(listSize, size)) : first;
-    final List<List<CommittedChangeList>> result = new ArrayList<List<CommittedChangeList>>(listSize / size + 1);
+    final List<List<CommittedChangeList>> result = new ArrayList<>(listSize / size + 1);
     while (start < listSize) {
       result.add(list.subList(start, end));
       start = end;

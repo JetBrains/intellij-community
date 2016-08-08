@@ -123,7 +123,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     final Set<VirtualFile> files;
 
     if (caseSensitively) {
-      files = new THashSet<VirtualFile>();
+      files = new THashSet<>();
       FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
         @Override
         public boolean process(final VirtualFile file, final Void value) {
@@ -163,7 +163,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   private static Set<VirtualFile> getVirtualFilesByNameIgnoringCase(@NotNull final String name,
                                                                     @NotNull final GlobalSearchScope scope,
                                                                     @Nullable final IdFilter idFilter) {
-    final Set<String> keys = new THashSet<String>();
+    final Set<String> keys = new THashSet<>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
     index.processAllKeys(NAME, value -> {
       if (name.equalsIgnoreCase(value)) {
@@ -173,7 +173,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     }, scope, idFilter);
 
     // values accessed outside of provessAllKeys 
-    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+    final Set<VirtualFile> files = new THashSet<>();
     for (String each : keys) {
       files.addAll(index.getContainingFiles(NAME, each, scope));
     }
@@ -184,7 +184,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                          final String name,
                                          @NotNull final GlobalSearchScope scope,
                                          boolean includeDirs) {
-    SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
+    SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
     processFilesByName(name, includeDirs, processor, scope, project, null);
 
@@ -236,7 +236,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     ext = "." + ext;
     len++;
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (String name : getAllFilenames(project)) {
       final int length = name.length();
       if (length > len && name.substring(length - len).equalsIgnoreCase(ext)) {

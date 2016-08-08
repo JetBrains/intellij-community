@@ -111,7 +111,7 @@ abstract class HgAbstractFilesAction extends AnAction {
   private void execute(Project project, final HgVcs activeVcs,
     final VirtualFile[] files, DataContext context) throws VcsException {
 
-    List<VirtualFile> enabledFiles = new LinkedList<VirtualFile>();
+    List<VirtualFile> enabledFiles = new LinkedList<>();
     for (VirtualFile file : files) {
       if (isEnabled(project, activeVcs, file)) {
         enabledFiles.add(file);

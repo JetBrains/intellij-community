@@ -355,7 +355,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     candidatesWithoutArgument = filterApplicableCandidates(file, caretOffset, candidatesWithoutArgument);
     candidatesWithArgument = filterApplicableCandidates(file, argumentOffset, candidatesWithArgument);
-    Map<TemplateImpl, String> candidate2Argument = new HashMap<TemplateImpl, String>();
+    Map<TemplateImpl, String> candidate2Argument = new HashMap<>();
     addToMap(candidate2Argument, candidatesWithoutArgument, null);
     addToMap(candidate2Argument, candidatesWithArgument, argument);
     return candidate2Argument;
@@ -445,7 +445,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       editor.getSelectionModel().removeSelection();
       Map<String, String> predefinedVarValues = null;
       if (argument != null) {
-        predefinedVarValues = new HashMap<String, String>();
+        predefinedVarValues = new HashMap<>();
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(template, processor, predefinedVarValues);
@@ -459,7 +459,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     PsiFile copy = insertDummyIdentifierIfNeeded(file, caretOffset, caretOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
 
-    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : candidates) {
       if (isApplicable(copy, caretOffset - candidate.getKey().length(), candidate)) {
         result.add(candidate);
@@ -469,7 +469,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private static List<TemplateContextType> getBases(TemplateContextType type) {
-    ArrayList<TemplateContextType> list = new ArrayList<TemplateContextType>();
+    ArrayList<TemplateContextType> list = new ArrayList<>();
     while (true) {
       type = type.getBaseContextType();
       if (type == null) return list;
@@ -478,7 +478,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull PsiFile file, int offset) {
-    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
+    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<>();
     LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
     for (TemplateContextType contextType : contexts) {
       if (contextType.isInContext(file, offset)) {
@@ -500,7 +500,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
     final TemplateContextType[] typeCollection = getAllContextTypes();
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
+    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<>();
     for (TemplateContextType contextType : typeCollection) {
       if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
         userDefinedExtensionsFirst.addLast(contextType);
@@ -556,7 +556,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
-    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
+    List<CustomLiveTemplate> result = new ArrayList<>();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file, selectionOnly)) {
         result.add(template);

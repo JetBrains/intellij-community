@@ -355,7 +355,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
-    final Set<String> usedWords = new HashSet<String>();
+    final Set<String> usedWords = new HashSet<>();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
     final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);

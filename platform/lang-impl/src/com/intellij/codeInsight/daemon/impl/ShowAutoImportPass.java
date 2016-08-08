@@ -103,7 +103,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
         !codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY) return;
 
     Document document = getDocument();
-    final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    final List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
       if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
         return true;
@@ -124,7 +124,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
-    final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
+    final List<HighlightInfo> highlights = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
       if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
         highlights.add(info);

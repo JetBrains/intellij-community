@@ -150,7 +150,7 @@ public class VariableInlineHandler extends InlineActionHandler {
     }
 
     final HighlightManager highlighter = HighlightManager.getInstance(project);
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     final PsiReference[] psiReferences = references.toArray(new PsiReference[references.size()]);
     TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, s -> {
       final PsiElement psiElement = s.getElement();

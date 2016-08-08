@@ -302,7 +302,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   }
 
   private static class FSDir extends FSItem {
-    private final List<FSItem> myChildren = new ArrayList<FSItem>();
+    private final List<FSItem> myChildren = new ArrayList<>();
 
     public FSDir(final FSDir parent, final String name) {
       super(parent, name);

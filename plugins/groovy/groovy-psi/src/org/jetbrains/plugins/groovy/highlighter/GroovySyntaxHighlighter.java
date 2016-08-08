@@ -84,8 +84,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey INVALID_STRING_ESCAPE = createTextAttributesKey("Invalid string escape", JavaHighlightingColors.INVALID_STRING_ESCAPE);
   public static final TextAttributesKey LABEL = createTextAttributesKey("Label", DefaultLanguageHighlighterColors.LABEL);
 
-  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
-  private static final Map<IElementType, TextAttributesKey> POWER_SAVE_MODE_ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
+  private static final Map<IElementType, TextAttributesKey> POWER_SAVE_MODE_ATTRIBUTES = new HashMap<>();
 
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(

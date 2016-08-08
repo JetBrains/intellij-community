@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class HtmlAttributeValueProvider {
   public static final ExtensionPointName<HtmlAttributeValueProvider> EP_NAME =
-    new ExtensionPointName<HtmlAttributeValueProvider>("com.intellij.html.attributeValueProvider");
+    new ExtensionPointName<>("com.intellij.html.attributeValueProvider");
 
   /**
    * Calculates attribute value. Used when it is impossible to get attribute value as text of PSI element

@@ -63,7 +63,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   private long[] run(@NotNull File path, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
 
-    final AtomicReference<long[]> updatedToRevision = new AtomicReference<long[]>();
+    final AtomicReference<long[]> updatedToRevision = new AtomicReference<>();
     updatedToRevision.set(new long[0]);
 
     final BaseUpdateCommandListener listener = createCommandListener(new File[]{path}, updatedToRevision, base);
@@ -142,7 +142,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     throws SvnBindException {
     checkWorkingCopy(path);
 
-    final List<String> parameters = new ArrayList<String>();
+    final List<String> parameters = new ArrayList<>();
 
     fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
     CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
@@ -162,7 +162,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
                        boolean depthIsSticky) throws SvnBindException {
     checkWorkingCopy(path);
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, SvnTarget.fromURL(url, pegRevision));
     CommandUtil.put(parameters, path, false);

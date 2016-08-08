@@ -59,7 +59,7 @@ import java.util.List;
  * @author ven
  */
 public class VariableInplaceRenamer extends InplaceRefactoring {
-  public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
+  public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
@@ -231,9 +231,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       AutomaticRenamerFactory[] factories = Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME);
       for (AutomaticRenamerFactory renamerFactory : factories) {
         if (elementToRename != null && renamerFactory.isApplicable(elementToRename)) {
-          final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+          final List<UsageInfo> usages = new ArrayList<>();
           final AutomaticRenamer renamer =
-            renamerFactory.createRenamer(elementToRename, newName, new ArrayList<UsageInfo>());
+            renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>());
           if (renamer.hasAnythingToRename()) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);

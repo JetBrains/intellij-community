@@ -420,13 +420,13 @@ public class GitMergeProvider implements MergeProvider2 {
    * The merge session, it queries conflict information.
    */
   private class MyMergeSession implements MergeSession {
-    Map<VirtualFile, Conflict> myConflicts = new HashMap<VirtualFile, Conflict>();
+    Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
-          Map<String, Conflict> cs = new HashMap<String, Conflict>();
+          Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
           GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);

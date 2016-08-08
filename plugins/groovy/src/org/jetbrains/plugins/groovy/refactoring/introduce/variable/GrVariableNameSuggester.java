@@ -39,6 +39,6 @@ public class GrVariableNameSuggester {
   @NotNull
   public LinkedHashSet<String> suggestNames() {
     GrExpression expression = myContext.getExpression() != null ? myContext.getExpression() : myContext.getStringPart().getLiteral();
-    return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator)));
+    return new LinkedHashSet<>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator)));
   }
 }

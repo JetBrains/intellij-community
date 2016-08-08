@@ -100,7 +100,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
-    List<VcsException> exceptions = new LinkedList<VcsException>();
+    List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
@@ -179,7 +179,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
     Set<HgChange> allChangedFilesInRepo = statusCommand.executeInCurrentThread(repo);
 
-    Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
+    Set<HgFile> filesNotIncluded = new HashSet<>();
 
     for (HgChange change : allChangedFilesInRepo) {
       HgFile beforeFile = change.beforeFile();
@@ -215,7 +215,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    final List<HgFile> filesWithRoots = new ArrayList<HgFile>();
+    final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
       if (vcsRoot == null) {
@@ -248,7 +248,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<Change> changes) {
-    Map<HgRepository, Set<HgFile>> result = new HashMap<HgRepository, Set<HgFile>>();
+    Map<HgRepository, Set<HgFile>> result = new HashMap<>();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -275,7 +275,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     Set<HgFile> hgFiles = result.get(repo);
     if (hgFiles == null) {
-      hgFiles = new HashSet<HgFile>();
+      hgFiles = new HashSet<>();
       result.put(repo, hgFiles);
     }
 
@@ -373,7 +373,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
       HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
-      List<String> args = new ArrayList<String>();
+      List<String> args = new ArrayList<>();
       args.add("-r");
       args.add(".");
       args.add("--template");

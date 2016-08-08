@@ -229,7 +229,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private void updatePreviewPanel() {
     if (myProject.isDisposed()) return;
-    List<UsageInfo> infos = new ArrayList<UsageInfo>();
+    List<UsageInfo> infos = new ArrayList<>();
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -415,7 +415,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected void rebuildWithAlarm(final Alarm alarm) {
     alarm.cancelAllRequests();
     alarm.addRequest(() -> {
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       ApplicationManager.getApplication().runReadAction(() -> {
         try {
           myTodoTreeBuilder.collectFiles(virtualFile -> {

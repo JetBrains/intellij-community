@@ -45,9 +45,9 @@ import java.util.*;
  */
 public abstract class MembersGetter {
   public static final Key<Boolean> EXPECTED_TYPE_MEMBER = Key.create("EXPECTED_TYPE_MEMBER");
-  private final Set<PsiMember> myImportedStatically = new HashSet<PsiMember>();
-  private final List<PsiClass> myPlaceClasses = new ArrayList<PsiClass>();
-  private final List<PsiMethod> myPlaceMethods = new ArrayList<PsiMethod>();
+  private final Set<PsiMember> myImportedStatically = new HashSet<>();
+  private final List<PsiClass> myPlaceClasses = new ArrayList<>();
+  private final List<PsiMethod> myPlaceMethods = new ArrayList<>();
   protected final PsiElement myPlace;
 
   protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
@@ -102,7 +102,7 @@ public abstract class MembersGetter {
       }
       psiClass = CompletionUtil.getOriginalOrSelf(psiClass);
       if (mayProcessMembers(psiClass)) {
-        final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
+        final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<>(TrueFilter.INSTANCE);
         psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
         doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
 

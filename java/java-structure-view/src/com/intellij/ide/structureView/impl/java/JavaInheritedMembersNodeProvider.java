@@ -33,7 +33,7 @@ public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvid
   public Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
       final PsiClass aClass = ((JavaClassTreeElement)node).getValue();
-      Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>();
+      Collection<PsiElement> inherited = new LinkedHashSet<>();
       Collection<PsiElement> ownChildren = JavaClassTreeElement.getOwnChildren(aClass);
 
       aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
@@ -44,7 +44,7 @@ public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvid
           ContainerUtil.addAll(inherited, ((PsiClass)element).getInnerClasses());
         }
       }
-      List<TreeElement> array = new ArrayList<TreeElement>();
+      List<TreeElement> array = new ArrayList<>();
       for (PsiElement child : inherited) {
         if (!child.isValid()) continue;
         final Set<PsiClass> parents = ((JavaClassTreeElement)node).getParents();

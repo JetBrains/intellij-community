@@ -199,7 +199,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     if (indexOfBrace == -1) {
       return super.getTestSpec(location, failedTest);
     }
-    final List<String> testNameParts = new ArrayList<String>();
+    final List<String> testNameParts = new ArrayList<>();
     final VirtualFile file = location.getVirtualFile();
     if (file == null) {
       return null;

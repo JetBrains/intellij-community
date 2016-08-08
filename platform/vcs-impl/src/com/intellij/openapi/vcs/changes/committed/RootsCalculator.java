@@ -43,7 +43,7 @@ public class RootsCalculator {
   public Map<VirtualFile, RepositoryLocation> getRoots() {
     myContentRoots = myPlManager.getRootsUnderVcs(myVcs);
 
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     final List<VcsDirectoryMapping> mappings = myPlManager.getDirectoryMappings(myVcs);
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
@@ -65,7 +65,7 @@ public class RootsCalculator {
       }
     }
     ContainerUtil.addAll(roots, myContentRoots);
-    final Map<VirtualFile, RepositoryLocation> result = new HashMap<VirtualFile, RepositoryLocation>();
+    final Map<VirtualFile, RepositoryLocation> result = new HashMap<>();
     for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
       final VirtualFile vf = iterator.next();
       final RepositoryLocation location = myLocationCache.getLocation(myVcs, VcsUtil.getFilePath(vf), false);

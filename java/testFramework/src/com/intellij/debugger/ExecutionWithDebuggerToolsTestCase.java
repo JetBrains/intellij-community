@@ -57,11 +57,11 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
   private DebugProcessListener myPauseScriptListener;
-  private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<SuspendContextRunnable>();
+  private final List<SuspendContextRunnable> myScriptRunnables = new ArrayList<>();
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess;
-  private final List<Throwable> myException = new SmartList<Throwable>();
+  private final List<Throwable> myException = new SmartList<>();
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -74,7 +74,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<InvokeRatherLaterRequest>();
+  public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<>();
 
   protected DebugProcessImpl getDebugProcess() {
     return myDebugProcess;

@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import java.util.ArrayList;
 
 public class TemplateSegments {
-  private final ArrayList<RangeMarker> mySegments = new ArrayList<RangeMarker>();
+  private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
   private final Editor myEditor;
 
   public TemplateSegments(Editor editor) {

@@ -20,7 +20,7 @@ public class AnswerPlaceholder {
   @Expose private String myHint = "";
 
   @SerializedName("additional_hints")
-  @Expose private List<String> myAdditionalHints = new ArrayList<String>();
+  @Expose private List<String> myAdditionalHints = new ArrayList<>();
 
   @SerializedName("possible_answer")
   @Expose private String possibleAnswer = "";

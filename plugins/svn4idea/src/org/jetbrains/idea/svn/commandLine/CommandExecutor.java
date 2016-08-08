@@ -92,7 +92,7 @@ public class CommandExecutor {
     }
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(prepareParameters(command));
-    myExitCodeReference = new AtomicReference<Integer>();
+    myExitCodeReference = new AtomicReference<>();
   }
 
   @NotNull

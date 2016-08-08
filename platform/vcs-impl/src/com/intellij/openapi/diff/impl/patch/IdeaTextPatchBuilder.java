@@ -40,7 +40,7 @@ public class IdeaTextPatchBuilder {
   }
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(final Project project, final List<Change> changes) throws VcsException {
-    final List<BeforeAfter<AirContentRevision>> result = new ArrayList<BeforeAfter<AirContentRevision>>(changes.size());
+    final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
 
     final Convertor<Change, FilePath> beforePrefferingConvertor = new Convertor<Change, FilePath>() {
       public FilePath convert(Change o) {
@@ -48,7 +48,7 @@ public class IdeaTextPatchBuilder {
         return before == null ? ChangesUtil.getAfterPath(o) : before;
       }
     };
-    final MultiMap<VcsRoot,Change> byRoots = new SortByVcsRoots<Change>(project, beforePrefferingConvertor).sort(changes);
+    final MultiMap<VcsRoot,Change> byRoots = new SortByVcsRoots<>(project, beforePrefferingConvertor).sort(changes);
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
@@ -63,8 +63,8 @@ public class IdeaTextPatchBuilder {
 
       for (Change change : basedOnLocal) {
         // dates are here instead of numbers
-        result.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision(), provider),
-                                                       convertRevision(change.getAfterRevision(), provider)));
+        result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), provider),
+                                     convertRevision(change.getAfterRevision(), provider)));
       }
     }
     return result;
@@ -72,7 +72,7 @@ public class IdeaTextPatchBuilder {
 
   private static void addConvertChanges(final Collection<Change> changes, final List<BeforeAfter<AirContentRevision>> result) {
     for (Change change : changes) {
-      result.add(new BeforeAfter<AirContentRevision>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
+      result.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
     }
   }
 
@@ -86,11 +86,11 @@ public class IdeaTextPatchBuilder {
                                            final boolean reversePatch, final boolean includeBaseText) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
-      revisions = revisionsConvertor(project, new ArrayList<Change>(changes));
+      revisions = revisionsConvertor(project, new ArrayList<>(changes));
     } else {
-      revisions = new ArrayList<BeforeAfter<AirContentRevision>>(changes.size());
+      revisions = new ArrayList<>(changes.size());
       for (Change change : changes) {
-        revisions.add(new BeforeAfter<AirContentRevision>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
+        revisions.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
       }
     }
     return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {

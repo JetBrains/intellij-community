@@ -74,7 +74,7 @@ public class RenamePropertyUtil {
     if (containingClass == null) return member(m);
     final boolean isStatic = m.hasModifierProperty(PsiModifier.STATIC);
 
-    List<PsiElement> property = new ArrayList<PsiElement>();
+    List<PsiElement> property = new ArrayList<>();
     assert name != null;
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllGetters(containingClass, name, isStatic, false));
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllSetters(containingClass, name, isStatic, false));

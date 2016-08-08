@@ -61,7 +61,7 @@ public class DefaultRemoteServersViewContribution extends RemoteServersViewContr
   @NotNull
   @Override
   public List<AbstractTreeNode<?>> createServerNodes(Project project) {
-    List<AbstractTreeNode<?>> result = new ArrayList<AbstractTreeNode<?>>();
+    List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (RemoteServersViewContributor contributor : RemoteServersViewContributor.EP_NAME.getExtensions()) {
       result.addAll(contributor.createServerNodes(project));
     }

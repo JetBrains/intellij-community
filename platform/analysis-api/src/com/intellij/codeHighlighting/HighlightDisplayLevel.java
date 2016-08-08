@@ -36,7 +36,7 @@ import java.awt.*;
 import java.util.Map;
 
 public class HighlightDisplayLevel {
-  private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
+  private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
                                                                                                         createIconByKey(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));

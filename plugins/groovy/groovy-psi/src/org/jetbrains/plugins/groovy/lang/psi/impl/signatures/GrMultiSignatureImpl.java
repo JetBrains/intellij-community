@@ -52,7 +52,7 @@ public class GrMultiSignatureImpl implements GrMultiSignature {
 
   @Override
   public GrSignature curry(@NotNull PsiType[] args, int position, @NotNull PsiElement context) {
-    List<GrClosureSignature> newClosures = new ArrayList<GrClosureSignature>();
+    List<GrClosureSignature> newClosures = new ArrayList<>();
 
     for (GrClosureSignature old : mySignatures) {
       final GrSignature curried = old.curry(args, position, context);

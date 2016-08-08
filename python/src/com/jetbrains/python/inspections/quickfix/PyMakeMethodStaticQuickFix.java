@@ -60,7 +60,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
       parameters[0].delete();
     }
     final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
-    List<String> decoTexts = new ArrayList<String>();
+    List<String> decoTexts = new ArrayList<>();
     decoTexts.add("@staticmethod");
     if (problemDecoratorList != null) {
       final PyDecorator[] decorators = problemDecoratorList.getDecorators();

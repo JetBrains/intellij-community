@@ -244,16 +244,16 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     private static final int NUMBER_COLUMN = 0;
     private static final int NAME_COLUMN = 1;
 
-    private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<Pair<String, ListWithSelection>>();
+    private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<>();
 
     private MyTableModel(List<Chunk<Module>> chunks) {
       for (final Chunk<Module> chunk : chunks) {
-        final ListWithSelection<String> item = new ListWithSelection<String>();
+        final ListWithSelection<String> item = new ListWithSelection<>();
         for (final Module module : chunk.getNodes()) {
           item.add(module.getName());
         }
         item.selectFirst();
-        myItems.add(new Pair<String, ListWithSelection>(createCycleName(chunk), item));
+        myItems.add(new Pair<>(createCycleName(chunk), item));
       }
     }
 

@@ -73,11 +73,11 @@ public class MatchPatchPaths {
     final PatchBaseDirectoryDetector directoryDetector = PatchBaseDirectoryDetector.getInstance(myProject);
 
     myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
-    final List<PatchAndVariants> candidates = new ArrayList<PatchAndVariants>(list.size());
-    final List<FilePatch> newOrWithoutMatches = new ArrayList<FilePatch>();
+    final List<PatchAndVariants> candidates = new ArrayList<>(list.size());
+    final List<FilePatch> newOrWithoutMatches = new ArrayList<>();
     findCandidates(list, directoryDetector, candidates, newOrWithoutMatches);
 
-    final MultiMap<VirtualFile, AbstractFilePatchInProgress> result = new MultiMap<VirtualFile, AbstractFilePatchInProgress>();
+    final MultiMap<VirtualFile, AbstractFilePatchInProgress> result = new MultiMap<>();
     // process exact matches: if one, leave and extract. if several - leave only them
     filterExactMatches(candidates, result);
 
@@ -85,7 +85,7 @@ public class MatchPatchPaths {
     selectByContextOrByStrip(candidates, result); // for text only
     // created or no variants
     workWithNotExisting(directoryDetector, newOrWithoutMatches, result);
-    return new ArrayList<AbstractFilePatchInProgress>(result.values());
+    return new ArrayList<>(result.values());
   }
 
   private void workWithNotExisting(@NotNull PatchBaseDirectoryDetector directoryDetector,
@@ -146,7 +146,7 @@ public class MatchPatchPaths {
         iterator.remove();
       }
       else {
-        final List<AbstractFilePatchInProgress> exact = new ArrayList<AbstractFilePatchInProgress>(candidate.getVariants().size());
+        final List<AbstractFilePatchInProgress> exact = new ArrayList<>(candidate.getVariants().size());
         for (AbstractFilePatchInProgress patch : candidate.getVariants()) {
           if (patch.getCurrentStrip() == 0) {
             exact.add(patch);
@@ -173,7 +173,7 @@ public class MatchPatchPaths {
         newOrWithoutMatches.add(patch);
         continue;
       }
-      final Collection<VirtualFile> files = new ArrayList<VirtualFile>(findFilesFromIndex(directoryDetector, fileName));
+      final Collection<VirtualFile> files = new ArrayList<>(findFilesFromIndex(directoryDetector, fileName));
       // for directories outside the project scope but under version control
       if (patch.getBeforeName() != null && patch.getBeforeName().startsWith("..")) {
         final VirtualFile relativeFile = VfsUtil.findRelativeFile(myBaseDir, patch.getBeforeName().replace('\\', '/').split("/"));
@@ -314,12 +314,12 @@ public class MatchPatchPaths {
   private static Pair<VirtualFile, Integer> compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
     while ((parent != null) && (idx >= 0)) {
       if (!parent.getName().equals(parts[idx])) {
-        return new Pair<VirtualFile, Integer>(parent, idx + 1);
+        return new Pair<>(parent, idx + 1);
       }
       parent = parent.getParent();
       --idx;
     }
-    return new Pair<VirtualFile, Integer>(parent, idx + 1);
+    return new Pair<>(parent, idx + 1);
   }
 
   @Nullable

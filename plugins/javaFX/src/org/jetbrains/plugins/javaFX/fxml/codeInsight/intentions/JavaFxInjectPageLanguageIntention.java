@@ -59,7 +59,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     final List<ScriptEngineFactory> engineFactories = new ScriptEngineManager(composeUserClassLoader(project)).getEngineFactories();
 
     if (engineFactories != null) {
-      final Set<String> availableNames = new TreeSet<String>();
+      final Set<String> availableNames = new TreeSet<>();
       for (ScriptEngineFactory factory : engineFactories) {
         final String engineName = (String)factory.getParameter(ScriptEngine.NAME);
         availableNames.add(engineName);
@@ -71,7 +71,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   }
 
   private static ClassLoader composeUserClassLoader(Project project) {
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(project).recursively().librariesOnly().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
       try {

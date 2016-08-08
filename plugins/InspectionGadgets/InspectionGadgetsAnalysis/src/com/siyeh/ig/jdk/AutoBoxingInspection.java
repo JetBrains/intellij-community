@@ -43,7 +43,7 @@ public class AutoBoxingInspection extends BaseInspection {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls static final Map<String, String> s_boxingClasses = new HashMap<String, String>(8);
+  @NonNls static final Map<String, String> s_boxingClasses = new HashMap<>(8);
 
   static {
     s_boxingClasses.put("byte", CommonClassNames.JAVA_LANG_BYTE);
@@ -56,7 +56,7 @@ public class AutoBoxingInspection extends BaseInspection {
     s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
   }
 
-  @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<String>();
+  @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>();
 
   static {
     convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);

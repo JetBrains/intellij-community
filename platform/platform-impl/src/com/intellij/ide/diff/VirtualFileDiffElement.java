@@ -98,7 +98,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       return new VirtualFileDiffElement[0];
     }
     final VirtualFile[] files = myFile.getChildren();
-    final ArrayList<VirtualFileDiffElement> elements = new ArrayList<VirtualFileDiffElement>();
+    final ArrayList<VirtualFileDiffElement> elements = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!FileTypeManager.getInstance().isFileIgnored(file) && file.isValid()) {
         elements.add(new VirtualFileDiffElement(file));
@@ -185,7 +185,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   public static void refreshFile(boolean userInitiated, VirtualFile virtualFile) {
     if (userInitiated) {
-      final List<Document> docsToSave = new ArrayList<Document>();
+      final List<Document> docsToSave = new ArrayList<>();
       final FileDocumentManager manager = FileDocumentManager.getInstance();
       for (Document document : manager.getUnsavedDocuments()) {
         VirtualFile file = manager.getFile(document);

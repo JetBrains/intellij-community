@@ -51,7 +51,7 @@ public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
     private static final List<BooleanOptionDescription> ourValues = initValues();
 
     private static List<BooleanOptionDescription> initValues() {
-      final List<BooleanOptionDescription> result = new ArrayList<BooleanOptionDescription>();
+      final List<BooleanOptionDescription> result = new ArrayList<>();
       for (RegistryValue value : Registry.getAll()) {
         if (value.isBoolean()) {
           final String key = value.getKey();

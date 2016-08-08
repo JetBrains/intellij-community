@@ -109,11 +109,11 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   @SuppressWarnings("deprecation")
   private abstract class RunnerItem<T> {
-    private final Map<ProgramRunner, T> settings = new THashMap<ProgramRunner, T>();
+    private final Map<ProgramRunner, T> settings = new THashMap<>();
 
     private List<Element> unloadedSettings;
     // to avoid changed files
-    private final Set<String> loadedIds = new THashSet<String>();
+    private final Set<String> loadedIds = new THashSet<>();
 
     private final String childTagName;
 
@@ -163,7 +163,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
 
     public void getState(@NotNull Element element) throws WriteExternalException {
-      List<Element> runnerSettings = new SmartList<Element>();
+      List<Element> runnerSettings = new SmartList<>();
       for (ProgramRunner runner : settings.keySet()) {
         T settings = this.settings.get(runner);
         boolean wasLoaded = loadedIds.contains(runner.getRunnerId());
@@ -196,7 +196,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     private void add(@NotNull Element state, @Nullable ProgramRunner runner, @Nullable T data) throws InvalidDataException {
       if (runner == null) {
         if (unloadedSettings == null) {
-          unloadedSettings = new SmartList<Element>();
+          unloadedSettings = new SmartList<>();
         }
         unloadedSettings.add(state);
         return;
@@ -423,7 +423,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myConfiguration.checkConfiguration();
     if (myConfiguration instanceof RunConfigurationBase) {
       final RunConfigurationBase runConfigurationBase = (RunConfigurationBase) myConfiguration;
-      Set<ProgramRunner> runners = new THashSet<ProgramRunner>();
+      Set<ProgramRunner> runners = new THashSet<>();
       runners.addAll(myRunnerSettings.settings.keySet());
       runners.addAll(myConfigurationPerRunnerSettings.settings.keySet());
       for (ProgramRunner runner : runners) {

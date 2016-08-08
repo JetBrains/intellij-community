@@ -135,7 +135,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   @NotNull
   public FileTemplate[] getTemplates() {
     final int size = myModel.getSize();
-    List<FileTemplate> templates = new ArrayList<FileTemplate>(size);
+    List<FileTemplate> templates = new ArrayList<>(size);
     for (int i =0; i<size; i++) {
       templates.add((FileTemplate) myModel.getElementAt(i));
     }

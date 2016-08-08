@@ -129,7 +129,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
-    final ArrayList<PsiReference> references = new ArrayList<PsiReference>(super.collectRefs(referencesSearchScope));
+    final ArrayList<PsiReference> references = new ArrayList<>(super.collectRefs(referencesSearchScope));
     final PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -164,7 +164,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       if (substituted != null) {
         appendAdditionalElement(stringUsages, variable, substituted);
         RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(substituted);
-        final HashMap<PsiElement, String> allRenames = new HashMap<PsiElement, String>();
+        final HashMap<PsiElement, String> allRenames = new HashMap<>();
         PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
         processor.prepareRenaming(substituted, "", allRenames, new LocalSearchScope(currentFile));
         for (PsiElement element : allRenames.keySet()) {

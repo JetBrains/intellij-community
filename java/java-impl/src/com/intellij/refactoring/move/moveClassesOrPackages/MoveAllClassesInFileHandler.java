@@ -28,7 +28,8 @@ import java.util.Collection;
 import java.util.Map;
 
 public abstract class MoveAllClassesInFileHandler {
-  public static  ExtensionPointName<MoveAllClassesInFileHandler> EP_NAME = new ExtensionPointName<MoveAllClassesInFileHandler>("com.intellij.refactoring.moveAllClassesInFileHandler");
+  public static  ExtensionPointName<MoveAllClassesInFileHandler> EP_NAME =
+    new ExtensionPointName<>("com.intellij.refactoring.moveAllClassesInFileHandler");
 
   public abstract void processMoveAllClassesInFile(@NotNull Map<PsiClass, Boolean> allClasses, PsiClass psiClass, PsiElement... elementsToMove);
 }

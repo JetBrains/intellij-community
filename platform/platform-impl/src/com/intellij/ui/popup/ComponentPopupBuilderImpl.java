@@ -52,7 +52,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnWindowDeactivation = true;
-  private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
+  private final Set<JBPopupListener> myListeners = new LinkedHashSet<>();
   private boolean myUseDimServiceForXYLocation;
 
   private IconButton myCancelButton;
@@ -313,7 +313,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder addUserData(final Object object) {
     if (myUserData == null) {
-      myUserData = new ArrayList<Object>();
+      myUserData = new ArrayList<>();
     }
     myUserData.add(object);
     return this;

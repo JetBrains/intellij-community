@@ -567,7 +567,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
-    final LinkedList<ParamInfo> result = new LinkedList<ParamInfo>();
+    final LinkedList<ParamInfo> result = new LinkedList<>();
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
@@ -603,7 +603,7 @@ public class JavaDocInfoGenerator {
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInClassComment(final PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
     final PsiDocTag tag = locator.find(psiClass, getDocComment(psiClass));
     if (tag != null) {
-      return new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, new InheritDocProvider<PsiDocTag>() {
+      return new Pair<>(tag, new InheritDocProvider<PsiDocTag>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
           return findInHierarchy(psiClass, locator);
@@ -1643,7 +1643,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] params = method.getParameterList().getParameters();
     PsiDocTag[] localTags = comment != null ? comment.findTagsByName("param") : PsiDocTag.EMPTY_ARRAY;
 
-    LinkedList<ParamInfo> collectedTags = new LinkedList<ParamInfo>();
+    LinkedList<ParamInfo> collectedTags = new LinkedList<>();
 
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
@@ -1662,7 +1662,7 @@ public class JavaDocInfoGenerator {
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiMethod method, PsiDocComment comment) {
     final PsiDocTag[] localTags = comment == null ? PsiDocTag.EMPTY_ARRAY : comment.findTagsByName("param");
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-    final LinkedList<ParamInfo> collectedTags = new LinkedList<ParamInfo>();
+    final LinkedList<ParamInfo> collectedTags = new LinkedList<>();
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       final String paramName = "<" + typeParameter.getName() + ">";
@@ -1729,19 +1729,18 @@ public class JavaDocInfoGenerator {
   private void generateReturnsSection(StringBuilder buffer, final PsiMethod method, final PsiDocComment comment) {
     PsiDocTag tag = comment == null ? null : comment.findTagByName("return");
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair =
-      tag == null ? null : new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag,
-                                                                              new InheritDocProvider<PsiDocTag>(){
-                                                                                @Override
-                                                                                public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-                                                                                  return findInheritDocTag(method, new ReturnTagLocator());
+      tag == null ? null : new Pair<>(tag,
+                                      new InheritDocProvider<PsiDocTag>() {
+                                        @Override
+                                        public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+                                          return findInheritDocTag(method, new ReturnTagLocator());
+                                        }
 
-                                                                                }
-
-                                                                                @Override
-                                                                                public PsiClass getElement() {
-                                                                                  return method.getContainingClass();
-                                                                                }
-                                                                              });
+                                        @Override
+                                        public PsiClass getElement() {
+                                          return method.getContainingClass();
+                                        }
+                                      });
 
     if (pair == null && myElement instanceof PsiMethod) {
       pair = findInheritDocTag((PsiMethod)myElement, new ReturnTagLocator());
@@ -1776,9 +1775,9 @@ public class JavaDocInfoGenerator {
     final PsiDocTag[] localTags = getThrowsTags(comment);
 
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags =
-      new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+      new LinkedList<>();
 
-    final List<PsiClassType> declaredThrows = new ArrayList<PsiClassType>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
+    final List<PsiClassType> declaredThrows = new ArrayList<>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
 
     for (int i = localTags.length - 1; i > -1; i--) {
       PsiDocTagValue valueElement = localTags[i].getValueElement();
@@ -1793,7 +1792,7 @@ public class JavaDocInfoGenerator {
         }
 
         final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = findInheritDocTag(method, exceptionLocator(valueElement.getText()));
-        collectedTags.addFirst(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(localTags[i], new InheritDocProvider<PsiDocTag>() {
+        collectedTags.addFirst(new Pair<>(localTags[i], new InheritDocProvider<PsiDocTag>() {
           @Override
           public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
             return tag;
@@ -2153,7 +2152,7 @@ public class JavaDocInfoGenerator {
         T tag = loc.find(overriden, getDocComment(overriden));
 
         if (tag != null) {
-          return new Pair<T, InheritDocProvider<T>>
+          return new Pair<>
             (tag,
              new InheritDocProvider<T>() {
                @Override
@@ -2277,7 +2276,7 @@ public class JavaDocInfoGenerator {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
 
-    return findInheritDocTagInClass(method, aClass, loc, new HashSet<PsiClass>());
+    return findInheritDocTagInClass(method, aClass, loc, new HashSet<>());
   }
 
   private static class ParamInfo {

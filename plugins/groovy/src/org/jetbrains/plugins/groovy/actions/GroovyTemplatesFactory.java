@@ -51,7 +51,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     return GroovyTemplatesFactoryHolder.myInstance;
   }
 
-  private final ArrayList<String> myCustomTemplates = new ArrayList<String>();
+  private final ArrayList<String> myCustomTemplates = new ArrayList<>();
 
   @NonNls
   static final String NAME_TEMPLATE_PROPERTY = "NAME";

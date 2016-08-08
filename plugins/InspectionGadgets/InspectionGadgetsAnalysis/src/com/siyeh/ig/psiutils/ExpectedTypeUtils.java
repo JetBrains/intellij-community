@@ -60,13 +60,13 @@ public class ExpectedTypeUtils {
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<IElementType> arithmeticOps = new THashSet<IElementType>(5);
+    private static final Set<IElementType> arithmeticOps = new THashSet<>(5);
 
-    private static final Set<IElementType> booleanOps = new THashSet<IElementType>(5);
+    private static final Set<IElementType> booleanOps = new THashSet<>(5);
 
-    private static final Set<IElementType> shiftOps = new THashSet<IElementType>(3);
+    private static final Set<IElementType> shiftOps = new THashSet<>(3);
 
-    private static final Set<IElementType> operatorAssignmentOps = new THashSet<IElementType>(11);
+    private static final Set<IElementType> operatorAssignmentOps = new THashSet<>(11);
 
     static {
       arithmeticOps.add(JavaTokenType.PLUS);

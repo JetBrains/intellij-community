@@ -65,7 +65,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public PackagingElementType<?>[] getNonCompositeElementTypes() {
-    final List<PackagingElementType> elementTypes = new ArrayList<PackagingElementType>();
+    final List<PackagingElementType> elementTypes = new ArrayList<>();
     for (PackagingElementType elementType : getAllElementTypes()) {
       if (!(elementType instanceof CompositePackagingElementType)) {
         elementTypes.add(elementType);
@@ -77,7 +77,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   @NotNull
   public ComplexPackagingElementType<?>[] getComplexElementTypes() {
-    List<ComplexPackagingElementType<?>> types = new ArrayList<ComplexPackagingElementType<?>>();
+    List<ComplexPackagingElementType<?>> types = new ArrayList<>();
     for (PackagingElementType type : getAllElementTypes()) {
       if (type instanceof ComplexPackagingElementType) {
         types.add((ComplexPackagingElementType)type);
@@ -89,7 +89,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   @Override
   public CompositePackagingElementType<?>[] getCompositeElementTypes() {
-    final List<CompositePackagingElementType> elementTypes = new ArrayList<CompositePackagingElementType>();
+    final List<CompositePackagingElementType> elementTypes = new ArrayList<>();
     for (PackagingElementType elementType : getAllElementTypes()) {
       if (elementType instanceof CompositePackagingElementType) {
         elementTypes.add((CompositePackagingElementType)elementType);
@@ -212,7 +212,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
         return Collections.singletonList(createLibraryFiles(libraryName, LibraryTableImplUtil.MODULE_LEVEL, module.getName()));
       }
     }
-    final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> elements = new ArrayList<>();
     for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
       final String path = FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file));
       elements.add(file.isDirectory() && file.isInLocalFileSystem() ? new DirectoryCopyPackagingElement(path) : new FileCopyPackagingElement(path));

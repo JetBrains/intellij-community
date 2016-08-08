@@ -65,7 +65,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
       return Collections.emptyList();
     }
 
-    final Set<Library> libraries = new HashSet<Library>();
+    final Set<Library> libraries = new HashSet<>();
     for (LibraryOrderEntry orderEntry : orderEntries) {
       ContainerUtil.addIfNotNull(libraries, orderEntry.getLibrary());
     }

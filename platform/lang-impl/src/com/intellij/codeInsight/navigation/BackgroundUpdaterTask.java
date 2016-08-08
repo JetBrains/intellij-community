@@ -45,7 +45,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
   private Ref<UsageView> myUsageView;
-  private final List<PsiElement> myData = new ArrayList<PsiElement>();
+  private final List<PsiElement> myData = new ArrayList<>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
@@ -110,7 +110,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       myAlarm.cancelAllRequests();
       if (myCanceled) return;
       if (myPopup.isDisposed()) return;
-      ArrayList<PsiElement> data = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> data = new ArrayList<>();
       synchronized (lock) {
         if (comparator != null) {
           Collections.sort(myData, comparator);

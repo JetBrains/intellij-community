@@ -131,7 +131,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    List<PsiElement> refsToInlineList = new ArrayList<PsiElement>();
+    List<PsiElement> refsToInlineList = new ArrayList<>();
     Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
     for (PsiElement innerClassUsage : innerClassUsages) {
       if (!refsToInlineList.contains(innerClassUsage)) {
@@ -144,7 +144,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final Ref<Boolean> inlineAll = new Ref<Boolean>(true);
+    final Ref<Boolean> inlineAll = new Ref<>(true);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int occurrencesCount = refsToInlineList.size();
       if (refExpr != null && occurrencesCount > 1  || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {

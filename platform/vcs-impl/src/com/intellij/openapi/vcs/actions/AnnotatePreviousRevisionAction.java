@@ -30,14 +30,14 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
       return;
     }
 
-    Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
     for (int i = 0; i < revisions.size(); i++) {
       VcsFileRevision revision = revisions.get(i);
       VcsFileRevision previousRevision = i + 1 < revisions.size() ? revisions.get(i + 1) : null;
       map.put(revision.getRevisionNumber(), previousRevision);
     }
 
-    myRevisions = new ArrayList<VcsFileRevision>(annotation.getLineCount());
+    myRevisions = new ArrayList<>(annotation.getLineCount());
     for (int i = 0; i < annotation.getLineCount(); i++) {
       myRevisions.add(map.get(annotation.getLineRevisionNumber(i)));
     }

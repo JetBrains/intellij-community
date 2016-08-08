@@ -44,8 +44,8 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     }
     final PsiElement scope = anchor.getParent();
     if(scope == null) return true;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final HashSet<PsiVariable> reportedVariables = new HashSet<>();
     JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (!reportedVariables.contains(collidingVariable)) {

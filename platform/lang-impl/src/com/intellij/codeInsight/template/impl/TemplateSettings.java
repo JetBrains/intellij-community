@@ -98,8 +98,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
-  private final Map<String, Template> myTemplatesById = new LinkedHashMap<String, Template>();
-  private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
+  private final Map<String, Template> myTemplatesById = new LinkedHashMap<>();
+  private final Map<TemplateKey, TemplateImpl> myDefaultTemplates = new LinkedHashMap<>();
 
   private int myMaxKeyLength = 0;
   private final SchemeManager<TemplateGroup> mySchemeManager;
@@ -130,7 +130,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
-    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<TemplateKey>();
+    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
   public static class TemplateKey {
@@ -282,7 +282,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   void applyNewDeletedTemplates() {
     for (TemplateKey templateKey : myState.deletedKeys) {
       if (templateKey.groupName == null) {
-        for (TemplateImpl template : new ArrayList<TemplateImpl>(myTemplates.get(templateKey.key))) {
+        for (TemplateImpl template : new ArrayList<>(myTemplates.get(templateKey.key))) {
           removeTemplate(template);
         }
       }
@@ -480,7 +480,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
 
-    Map<String, TemplateImpl> created = new LinkedHashMap<String,  TemplateImpl>();
+    Map<String, TemplateImpl> created = new LinkedHashMap<>();
 
     for (Element child : element.getChildren(TEMPLATE)) {
       TemplateImpl template;
@@ -632,7 +632,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       myState.deletedKeys.add(TemplateKey.keyOf(template));
     }
     myMaxKeyLength = 0;
-    List<TemplateGroup> schemes = new SmartList<TemplateGroup>();
+    List<TemplateGroup> schemes = new SmartList<>();
     for (TemplateGroup group : newGroups) {
       if (!group.isEmpty()) {
         schemes.add(group);
@@ -651,7 +651,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
-    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {
         continue;

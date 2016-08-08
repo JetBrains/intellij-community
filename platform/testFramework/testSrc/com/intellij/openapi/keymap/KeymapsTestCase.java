@@ -375,7 +375,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   // @formatter:on
 
   private Map<String, Map<String, List<String>>> getKnownDuplicates() {
-    Map<String, Map<String, List<String>>> result = new LinkedHashMap<String, Map<String, List<String>>>();
+    Map<String, Map<String, List<String>>> result = new LinkedHashMap<>();
     collectKnownDuplicates(result);
     return result;
   }
@@ -390,7 +390,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
 
       Map<String, List<String>> mapping = result.get(keymapName);
       if (mapping == null) {
-        result.put(keymapName, mapping = new LinkedHashMap<String, List<String>>());
+        result.put(keymapName, mapping = new LinkedHashMap<>());
       }
 
       for (String[] shortcuts : eachKeymap.getValue()) {
@@ -407,8 +407,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String checkDuplicatesInKeymap(Keymap keymap, Map<String, Map<String, List<String>>> allKnownDuplicates) {
-    Set<Shortcut> shortcuts = new LinkedHashSet<Shortcut>();
-    Set<String> aids = new THashSet<String>(Arrays.asList(keymap.getActionIds()));
+    Set<Shortcut> shortcuts = new LinkedHashSet<>();
+    Set<String> aids = new THashSet<>(Arrays.asList(keymap.getActionIds()));
     removeBoundActionIds(aids);
 
     nextId:
@@ -430,7 +430,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         shortcuts.add(shortcut);
       }
     }
-    List<Shortcut> sorted = new ArrayList<Shortcut>(shortcuts);
+    List<Shortcut> sorted = new ArrayList<>(shortcuts);
     Collections.sort(sorted, (o1, o2) -> getText(o1).compareTo(getText(o2)));
 
     if (OUTPUT_TEST_DATA) {
@@ -444,7 +444,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
       }
-      Set<String> ids = new THashSet<String>(Arrays.asList(keymap.getActionIds(shortcut)));
+      Set<String> ids = new THashSet<>(Arrays.asList(keymap.getActionIds(shortcut)));
       removeBoundActionIds(ids);
       if (ids.size() == 1) continue;
       Keymap parent = keymap.getParent();
@@ -455,7 +455,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
           Shortcut[] here = keymap.getShortcuts(id);
           Shortcut[] there = parent.getShortcuts(id);
           if (keymap.getName().startsWith("Mac")) convertMac(there);
-          if (!new HashSet<Shortcut>(Arrays.asList(here)).equals(new HashSet<Shortcut>(Arrays.asList(there)))) {
+          if (!new HashSet<>(Arrays.asList(here)).equals(new HashSet<>(Arrays.asList(there)))) {
             differFromParent = true;
             break;
           }
@@ -496,10 +496,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     }
   }
 
-  @NonNls private static final Set<String> unknownActionIds = new THashSet<String>(Arrays.asList(
-    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
+  @NonNls private static final Set<String> unknownActionIds = new THashSet<>(Arrays.asList(
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow",
+    "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
-    "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow","ActivatePaletteToolWindow",
+    "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow",
     "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
     ""
@@ -510,27 +511,27 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   }
 
   public void testValidActionIds() {
-    THashSet<String> unknownActions = new THashSet<String>();
+    THashSet<String> unknownActions = new THashSet<>();
     collectUnknownActions(unknownActions);
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<String, List<String>> missingActions = new FactoryMap<String, List<String>>() {
       @Override
       protected Map<String, List<String>> createMap() {
-        return new LinkedHashMap<String, List<String>>();
+        return new LinkedHashMap<>();
       }
 
       @Nullable
       @Override
       protected List<String> create(String key) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
     };
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
       String[] ids = keymap.getActionIds();
       Arrays.sort(ids);
-      Set<String> noDuplicates = new LinkedHashSet<String>(Arrays.asList(ids));
-      TestCase.assertEquals(new ArrayList<String>(Arrays.asList(ids)), new ArrayList<String>(noDuplicates));
+      Set<String> noDuplicates = new LinkedHashSet<>(Arrays.asList(ids));
+      TestCase.assertEquals(new ArrayList<>(Arrays.asList(ids)), new ArrayList<>(noDuplicates));
       for (String cid : ids) {
         if (unknownActions.contains(cid)) continue;
         AnAction action = ActionManager.getInstance().getAction(cid);
@@ -545,7 +546,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
     }
 
-    List<String> reappearedAction = new ArrayList<String>();
+    List<String> reappearedAction = new ArrayList<>();
     for (String id : unknownActions) {
       AnAction action = ActionManager.getInstance().getAction(id);
       if (action != null) {
@@ -578,7 +579,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     Map<String, Map<String, List<String>>> duplicates = getKnownDuplicates();
 
     THashSet<String> allMaps =
-      new THashSet<String>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
+      new THashSet<>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
     TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were added: " +
                         ContainerUtil.subtract(allMaps, duplicates.keySet()),
                         ContainerUtil.subtract(allMaps, duplicates.keySet()).isEmpty()
@@ -592,20 +593,20 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     Map<Keymap, List<Shortcut>> reassignedShortcuts = new FactoryMap<Keymap, List<Shortcut>>() {
       @Override
       protected Map<Keymap, List<Shortcut>> createMap() {
-        return new LinkedHashMap<Keymap, List<Shortcut>>();
+        return new LinkedHashMap<>();
       }
 
       @Nullable
       @Override
       protected List<Shortcut> create(Keymap key) {
-        return new ArrayList<Shortcut>();
+        return new ArrayList<>();
       }
     };
     for (String name : duplicates.keySet()) {
       Keymap keymap = KeymapManagerEx.getInstanceEx().getKeymap(name);
       TestCase.assertNotNull("KeyMap " + name + " not found", keymap);
       Map<String, List<String>> duplicateIdsList = duplicates.get(name);
-      Set<String> mentionedShortcuts = new THashSet<String>();
+      Set<String> mentionedShortcuts = new THashSet<>();
       for (Map.Entry<String, List<String>> shortcutMappings : duplicateIdsList.entrySet()) {
 
         String shortcutString = shortcutMappings.getKey();
@@ -614,11 +615,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         }
         Shortcut shortcut = parse(shortcutString);
         String[] ids = keymap.getActionIds(shortcut);
-        Set<String> actualSc = new HashSet<String>(Arrays.asList(ids));
+        Set<String> actualSc = new HashSet<>(Arrays.asList(ids));
 
         removeBoundActionIds(actualSc);
 
-        Set<String> expectedSc = new HashSet<String>(shortcutMappings.getValue());
+        Set<String> expectedSc = new HashSet<>(shortcutMappings.getValue());
         for (String s : actualSc) {
           if (!expectedSc.contains(s)) {
             reassignedShortcuts.get(keymap).add(shortcut);

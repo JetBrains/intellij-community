@@ -63,7 +63,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
   @NotNull
   public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
-    ObjectIntHashMap<String> result = new ObjectIntHashMap<String>();
+    ObjectIntHashMap<String> result = new ObjectIntHashMap<>();
     long lastTimeSent = UsageStatisticsPersistenceComponent.getInstance().getLastTimeSent();
     for (CollectedUsages usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
       if (!usageDescriptors.usages.isEmpty() && usageDescriptors.collectionTime > lastTimeSent) {
@@ -79,7 +79,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
       return Collections.emptySet();
     }
     else {
-      final THashSet<UsageDescriptor> descriptors = new THashSet<UsageDescriptor>(result.size());
+      final THashSet<UsageDescriptor> descriptors = new THashSet<>(result.size());
       result.forEachEntry(new TObjectIntProcedure<String>() {
         @Override
         public boolean execute(String key, int value) {

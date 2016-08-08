@@ -35,7 +35,7 @@ public class SelectionCalculator {
   private final List<Revision> myRevisions;
   private final int myFromLine;
   private final int myToLine;
-  private final Map<Integer, Block> myCache = new HashMap<Integer, Block>();
+  private final Map<Integer, Block> myCache = new HashMap<>();
 
   public SelectionCalculator(IdeaGateway gw, List<Revision> rr, int fromLine, int toLine) {
     myGateway = gw;

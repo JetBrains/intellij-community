@@ -111,7 +111,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
-    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<CompletionResult>();
+    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
     runRemainingContributors(parameters, result -> {
       if (passResult) {
         passResult(result);

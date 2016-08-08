@@ -89,7 +89,7 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
 
   @NotNull
   public Collection<TreeElement> getChildren() {
-    Collection<TreeElement> result = new ArrayList<TreeElement>();
+    Collection<TreeElement> result = new ArrayList<>();
     List<String> prefixWords = StringUtil.split(myPrefix, mySeparator);
     for (TreeElement treeElement : myProperties) {
       if (!(treeElement instanceof StructureViewTreeElement)) {

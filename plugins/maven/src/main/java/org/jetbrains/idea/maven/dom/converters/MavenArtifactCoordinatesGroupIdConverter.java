@@ -59,7 +59,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
   @Override
   public Collection<String> getSmartVariants(ConvertContext convertContext) {
-    Set<String> groupIds = new HashSet<String>();
+    Set<String> groupIds = new HashSet<>();
     String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();
     if (!StringUtil.isEmptyOrSpaces(artifactId)) {
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(convertContext.getFile().getProject());

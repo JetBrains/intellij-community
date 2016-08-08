@@ -24,8 +24,8 @@ public class SymbolicRefs implements SymbolicRefsI {
   private String myUsername;
 
   public SymbolicRefs() {
-    myLocalBranches = new TreeSet<String>();
-    myRemoteBranches = new TreeSet<String>();
+    myLocalBranches = new TreeSet<>();
+    myRemoteBranches = new TreeSet<>();
   }
 
   public TreeSet<String> getLocalBranches() {

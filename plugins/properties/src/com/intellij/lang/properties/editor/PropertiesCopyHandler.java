@@ -118,7 +118,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static void copyPropertyToAnotherBundle(@NotNull Collection<IProperty> properties,
                                                   @NotNull final String newName,
                                                   @NotNull ResourceBundle targetResourceBundle) {
-    final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<IProperty, PropertiesFile>();
+    final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<>();
     for (IProperty property : properties) {
       final PropertiesFile containingFile = property.getPropertiesFile();
       final PropertiesFile matched = findWithMatchedSuffix(containingFile, targetResourceBundle);

@@ -43,7 +43,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   public final int updatePass;
   @Nullable private final Function<? super T, String> myTooltipProvider;
-  private AnAction myNavigateAction = new NavigateAction<T>(this);
+  private AnAction myNavigateAction = new NavigateAction<>(this);
   @NotNull private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -66,7 +66,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
-    elementRef = new WeakReference<T>(element);
+    elementRef = new WeakReference<>(element);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
@@ -101,7 +101,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
-    return new LineMarkerGutterIconRenderer<T>(this);
+    return new LineMarkerGutterIconRenderer<>(this);
   }
 
   @Nullable

@@ -116,7 +116,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiAnnotation[] annotations = list.getAnnotations();
     if (annotations.length > 0) {
-      HashSet<PsiAnnotation> set = new HashSet<PsiAnnotation>(Arrays.asList(annotations));
+      HashSet<PsiAnnotation> set = new HashSet<>(Arrays.asList(annotations));
 
       for (PsiAnnotation annotation : annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -438,7 +438,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           public void matchedElements(Collection<PsiElement> matchedElements) {
             if (matchedElements == null) return;
             if (myMatchedElements == null) {
-              myMatchedElements = new HashSet<PsiElement>(matchedElements);
+              myMatchedElements = new HashSet<>(matchedElements);
             }
             else {
               myMatchedElements.addAll(matchedElements);
@@ -1405,7 +1405,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(false);
     }
     else {
-      final List<PsiElement> unmatchedElements = new ArrayList<PsiElement>();
+      final List<PsiElement> unmatchedElements = new ArrayList<>();
 
       if (resourceList1 != null) {
         if (resourceList2 == null) {

@@ -245,7 +245,7 @@ public abstract class HgUtil {
    */
   @NotNull
   public static Set<VirtualFile> hgRoots(@NotNull Project project, @NotNull Collection<FilePath> filePaths) {
-    HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    HashSet<VirtualFile> roots = new HashSet<>();
     for (FilePath path : filePaths) {
       ContainerUtil.addIfNotNull(roots, getHgRootOrNull(project, path));
     }
@@ -321,7 +321,7 @@ public abstract class HgUtil {
    */
   @NotNull
   public static Map<VirtualFile, List<String>> getRelativePathsByRepository(Collection<HgFile> hgFiles) {
-    final Map<VirtualFile, List<String>> map = new HashMap<VirtualFile, List<String>>();
+    final Map<VirtualFile, List<String>> map = new HashMap<>();
     if (hgFiles == null) {
       return map;
     }
@@ -329,7 +329,7 @@ public abstract class HgUtil {
       final VirtualFile repo = file.getRepo();
       List<String> files = map.get(repo);
       if (files == null) {
-        files = new ArrayList<String>();
+        files = new ArrayList<>();
         map.put(repo, files);
       }
       files.add(file.getRelativePath());
@@ -377,7 +377,7 @@ public abstract class HgUtil {
    * Returns all HG roots in the project.
    */
   public static @NotNull List<VirtualFile> getHgRepositories(@NotNull Project project) {
-    final List<VirtualFile> repos = new LinkedList<VirtualFile>();
+    final List<VirtualFile> repos = new LinkedList<>();
     for (VcsRoot root : ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
       if (HgVcs.VCS_NAME.equals(root.getVcs().getName())) {
         repos.add(root.getPath());
@@ -388,7 +388,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
-    Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<VirtualFile, Collection<VirtualFile>>();
+    Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<>();
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (VirtualFile file : files) {
       HgRepository repo = repositoryManager.getRepositoryForFile(file);
@@ -397,7 +397,7 @@ public abstract class HgUtil {
       }
       Collection<VirtualFile> filesForRoot = sorted.get(repo.getRoot());
       if (filesForRoot == null) {
-        filesForRoot = new HashSet<VirtualFile>();
+        filesForRoot = new HashSet<>();
         sorted.put(repo.getRoot(), filesForRoot);
       }
       filesForRoot.add(file);
@@ -408,7 +408,7 @@ public abstract class HgUtil {
   @NotNull
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
                                                                                @NotNull Collection<FilePath> files) {
-    Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<VirtualFile, Collection<FilePath>>();
+    Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<>();
     if (project.isDisposed()) return sorted;
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (FilePath file : files) {
@@ -418,7 +418,7 @@ public abstract class HgUtil {
       }
       Collection<FilePath> filesForRoot = sorted.get(repo.getRoot());
       if (filesForRoot == null) {
-        filesForRoot = new HashSet<FilePath>();
+        filesForRoot = new HashSet<>();
         sorted.put(repo.getRoot(), filesForRoot);
       }
       filesForRoot.add(file);
@@ -473,7 +473,7 @@ public abstract class HgUtil {
     }
 
     Collection<HgChange> hgChanges = statusCommand.executeInCurrentThread(root, Collections.singleton(path));
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     //convert output changes to standart Change class
     for (HgChange hgChange : hgChanges) {
       FileStatus status = convertHgDiffStatus(hgChange.getStatus());
@@ -610,7 +610,7 @@ public abstract class HgUtil {
   @NotNull
   public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException, InterruptedException {
     String hgExecutable = executable.trim();
-    List<String> cmdArgs = new ArrayList<String>();
+    List<String> cmdArgs = new ArrayList<>();
     cmdArgs.add(hgExecutable);
     cmdArgs.add("version");
     cmdArgs.add("-q");
@@ -620,7 +620,7 @@ public abstract class HgUtil {
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
     //return names without duplication (actually for several heads in one branch)
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     for (HgNameWithHashInfo hash : namesWithHashes) {
       if (!names.contains(hash.getName())) {
         names.add(hash.getName());

@@ -103,7 +103,7 @@ public class PyUtil {
 
   @NotNull
   public static <T extends PyElement> T[] getAllChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
-    List<T> result = new SmartList<T>();
+    List<T> result = new SmartList<>();
     for (PsiElement child : element.getChildren()) {
       if (instanceOf(child, aClass)) {
         //noinspection unchecked
@@ -155,17 +155,17 @@ public class PyUtil {
    */
   @NotNull
   public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, false);
+    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, false);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), true, true);
+    return unfoldParentheses(targets, new ArrayList<>(targets.length), true, true);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<PyExpression>(targets.length), false, true);
+    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
   }
 
   // Poor man's filter
@@ -295,7 +295,7 @@ public class PyUtil {
    */
   @NotNull
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
-    List<PyClass> superClasses = new ArrayList<PyClass>();
+    List<PyClass> superClasses = new ArrayList<>();
     for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
       if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
         superClasses.add(ancestor);
@@ -420,7 +420,7 @@ public class PyUtil {
   @Nullable
   public static List<PsiElement> searchForWrappingMethod(PsiElement start, boolean deep) {
     PsiElement seeker = start;
-    List<PsiElement> ret = new ArrayList<PsiElement>(2);
+    List<PsiElement> ret = new ArrayList<>(2);
     while (seeker != null) {
       PyFunction func = PsiTreeUtil.getParentOfType(seeker, PyFunction.class, true, PyClass.class);
       if (func != null) {
@@ -478,7 +478,7 @@ public class PyUtil {
 
   public static void deletePycFiles(String pyFilePath) {
     if (pyFilePath.endsWith(PyNames.DOT_PY)) {
-      List<File> filesToDelete = new ArrayList<File>();
+      List<File> filesToDelete = new ArrayList<>();
       File pyc = new File(pyFilePath + "c");
       if (pyc.exists()) {
         filesToDelete.add(pyc);
@@ -649,7 +649,7 @@ public class PyUtil {
     if (resolveResults.length == 0) {
       return Collections.emptyList();
     }
-    final List<PsiElement> filtered = new ArrayList<PsiElement>();
+    final List<PsiElement> filtered = new ArrayList<>();
     final int maxRate = getMaxRate(resolveResults);
     for (ResolveResult resolveResult : resolveResults) {
       final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
@@ -814,7 +814,7 @@ public class PyUtil {
     if ((expression == null) || expression.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (final Object element : expression) {
       final T toAdd = as(element, elementClass);
       if (toAdd != null) {
@@ -1114,7 +1114,7 @@ public class PyUtil {
    */
   @NotNull
   public static Collection<VirtualFile> getSourceRoots(@NotNull Module module) {
-    final Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    final Set<VirtualFile> result = new LinkedHashSet<>();
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     Collections.addAll(result, manager.getSourceRoots());
     Collections.addAll(result, manager.getContentRoots());
@@ -1146,7 +1146,7 @@ public class PyUtil {
     }
     if (value instanceof PySequenceExpression) {
       final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-      List<String> result = new ArrayList<String>(elements.length);
+      List<String> result = new ArrayList<>(elements.length);
       for (PyExpression element : elements) {
         if (!(element instanceof PyStringLiteralExpression)) {
           return null;
@@ -1556,7 +1556,7 @@ public class PyUtil {
     final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
     if (callableTypeParameters != null) {
       boolean allParametersDefined = true;
-      final List<PyParameter> parameters = new ArrayList<PyParameter>();
+      final List<PyParameter> parameters = new ArrayList<>();
       for (PyCallableParameter callableParameter : callableTypeParameters) {
         final PyParameter parameter = callableParameter.getParameter();
         if (parameter == null) {
@@ -1585,7 +1585,7 @@ public class PyUtil {
       }
     }
     else if (type instanceof PyUnionType) {
-      final List<List<PyParameter>> results = new ArrayList<List<PyParameter>>();
+      final List<List<PyParameter>> results = new ArrayList<>();
       final Collection<PyType> members = ((PyUnionType)type).getMembers();
       for (PyType member : members) {
         if (member instanceof PyCallableType) {

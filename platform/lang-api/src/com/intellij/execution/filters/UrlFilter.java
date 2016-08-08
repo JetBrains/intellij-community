@@ -43,7 +43,7 @@ public class UrlFilter implements Filter {
         item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group()));
       } else {
         if (items == null) {
-          items = new ArrayList<ResultItem>(2);
+          items = new ArrayList<>(2);
           items.add(item);
         }
         items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group())));

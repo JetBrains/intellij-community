@@ -41,7 +41,7 @@ public class RainbowHighlighter {
   private final static int[] RAINBOW_COLORS_DEFAULT = {0x9b3b6a, 0x114d77, 0xbc8650, 0x005910, 0xbc5150};
   private final static int[] RAINBOW_COLORS_DARK = {0x529d52, 0xbe7070, 0x3d7676, 0xbe9970, 0x9d527c};
   private final static int RAINBOW_COLORS_BETWEEN = 4;
-  private final static List<TextAttributesKey> RAINBOW_COLOR_KEYS = new ArrayList<TextAttributesKey>(RAINBOW_COLORS_DEFAULT.length);
+  private final static List<TextAttributesKey> RAINBOW_COLOR_KEYS = new ArrayList<>(RAINBOW_COLORS_DEFAULT.length);
   private final static String UNIT_TEST_COLORS = "#000001,#000002,#000003,#000004"; // Do not modify!
 
   @NotNull private final TextAttributesScheme myColorsScheme;

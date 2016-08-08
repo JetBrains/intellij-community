@@ -24,7 +24,7 @@ import com.intellij.openapi.module.Module;
  * @author yole
  */
 public class ModuleServiceManagerImpl extends ServiceManagerImpl {
-  private static final ExtensionPointName<ServiceDescriptor> MODULE_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.moduleService");
+  private static final ExtensionPointName<ServiceDescriptor> MODULE_SERVICES = new ExtensionPointName<>("com.intellij.moduleService");
 
   public ModuleServiceManagerImpl(Module module) {
     super(true);

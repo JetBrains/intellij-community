@@ -148,7 +148,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
       myOutOfScopeVariable.delete();
     }
 
-    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<PsiElement, Collection<PsiReferenceExpression>>(),file) != null) {
+    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<>(), file) != null) {
       initialize(addedVar);
     }
 

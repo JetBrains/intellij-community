@@ -107,7 +107,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
 
-    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    final Set<PsiElement> elements = new HashSet<>();
     elements.add(element);
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());

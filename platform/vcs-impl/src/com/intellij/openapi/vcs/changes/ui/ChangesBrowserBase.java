@@ -335,7 +335,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected List<AnAction> createDiffActions() {
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     if (myCapableOfExcludingChanges) {
       actions.add(new ToggleChangeAction());
     }
@@ -426,7 +426,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   private File[] getSelectedIoFiles() {
     final List<Change> changes = getSelectedChanges();
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {

@@ -89,16 +89,16 @@ public class AbstractTreeUi {
   private long myLastComparatorStamp;
 
   private DefaultMutableTreeNode myRootNode;
-  private final Map<Object, Object> myElementToNodeMap = new HashMap<Object, Object>();
-  private final Set<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<DefaultMutableTreeNode>();
+  private final Map<Object, Object> myElementToNodeMap = new HashMap<>();
+  private final Set<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<>();
   private TreeExpansionListener myExpansionListener;
   private MySelectionListener mySelectionListener;
 
-  private final QueueProcessor<Runnable> myWorker = new QueueProcessor<Runnable>(runnable -> {
+  private final QueueProcessor<Runnable> myWorker = new QueueProcessor<>(runnable -> {
     runnable.run();
     TimeoutUtil.sleep(1);
   });
-  private final Set<Runnable> myActiveWorkerTasks = new HashSet<Runnable>();
+  private final Set<Runnable> myActiveWorkerTasks = new HashSet<>();
 
   private ProgressIndicator myProgress;
   private AbstractTreeNode<Object> TREE_NODE_WRAPPER;
@@ -106,35 +106,35 @@ public class AbstractTreeUi {
   private boolean myRootNodeWasQueuedToInitialize = false;
   private boolean myRootNodeInitialized = false;
 
-  private final Map<Object, List<NodeAction>> myNodeActions = new HashMap<Object, List<NodeAction>>();
+  private final Map<Object, List<NodeAction>> myNodeActions = new HashMap<>();
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
   private boolean myUpdateIfInactive;
 
-  private final Map<Object, UpdateInfo> myLoadedInBackground = new HashMap<Object, UpdateInfo>();
-  private final Map<Object, List<NodeAction>> myNodeChildrenActions = new HashMap<Object, List<NodeAction>>();
+  private final Map<Object, UpdateInfo> myLoadedInBackground = new HashMap<>();
+  private final Map<Object, List<NodeAction>> myNodeChildrenActions = new HashMap<>();
 
   private long myClearOnHideDelay = -1;
   private volatile long ourUi2Countdown;
 
-  private final Set<Runnable> myDeferredSelections = new HashSet<Runnable>();
-  private final Set<Runnable> myDeferredExpansions = new HashSet<Runnable>();
+  private final Set<Runnable> myDeferredSelections = new HashSet<>();
+  private final Set<Runnable> myDeferredExpansions = new HashSet<>();
 
   private boolean myCanProcessDeferredSelections;
 
   private UpdaterTreeState myUpdaterState;
   private AbstractTreeBuilder myBuilder;
 
-  private final Set<DefaultMutableTreeNode> myUpdatingChildren = new THashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myUpdatingChildren = new THashSet<>();
 
   private boolean myCanYield = false;
 
-  private final List<TreeUpdatePass> myYieldingPasses = new ArrayList<TreeUpdatePass>();
+  private final List<TreeUpdatePass> myYieldingPasses = new ArrayList<>();
 
   private boolean myYieldingNow;
 
-  private final Set<DefaultMutableTreeNode> myPendingNodeActions = new HashSet<DefaultMutableTreeNode>();
-  private final Set<Runnable> myYieldingDoneRunnables = new HashSet<Runnable>();
+  private final Set<DefaultMutableTreeNode> myPendingNodeActions = new HashSet<>();
+  private final Set<Runnable> myYieldingDoneRunnables = new HashSet<>();
 
   private final Alarm myBusyAlarm = new Alarm();
   private final Runnable myWaiterForReady = new TreeRunnable("AbstractTreeUi.myWaiterForReady") {
@@ -156,7 +156,7 @@ public class AbstractTreeUi {
       maybeReady();
     }
   };
-  private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<>();
   private TreePath myRequestedExpand;
 
   private TreePath mySilentExpand;
@@ -177,10 +177,10 @@ public class AbstractTreeUi {
 
   private boolean myPassThroughMode = false;
 
-  private final Set<Object> myAutoExpandRoots = new HashSet<Object>();
+  private final Set<Object> myAutoExpandRoots = new HashSet<>();
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
-  private final Set<DefaultMutableTreeNode> myWillBeExpanded = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myWillBeExpanded = new HashSet<>();
   private SimpleTimerTask myCleanupTask;
 
   private final AtomicBoolean myCancelRequest = new AtomicBoolean();
@@ -188,19 +188,19 @@ public class AbstractTreeUi {
 
   private final AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
-  private final Map<Progressive, ProgressIndicator> myBatchIndicators = new HashMap<Progressive, ProgressIndicator>();
-  private final Map<Progressive, ActionCallback> myBatchCallbacks = new HashMap<Progressive, ActionCallback>();
+  private final Map<Progressive, ProgressIndicator> myBatchIndicators = new HashMap<>();
+  private final Map<Progressive, ActionCallback> myBatchCallbacks = new HashMap<>();
 
-  private final Map<DefaultMutableTreeNode, DefaultMutableTreeNode> myCancelledBuild = new WeakHashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
+  private final Map<DefaultMutableTreeNode, DefaultMutableTreeNode> myCancelledBuild = new WeakHashMap<>();
 
   private boolean mySelectionIsAdjusted;
   private boolean myReleaseRequested;
 
   private boolean mySelectionIsBeingAdjusted;
 
-  private final Set<Object> myRevalidatedObjects = new HashSet<Object>();
+  private final Set<Object> myRevalidatedObjects = new HashSet<>();
 
-  private final Set<Runnable> myUserRunnables = new HashSet<Runnable>();
+  private final Set<Runnable> myUserRunnables = new HashSet<>();
 
   private UiActivityMonitor myActivityMonitor;
   @NonNls private UiActivity myActivityId;
@@ -611,7 +611,7 @@ public class AbstractTreeUi {
     getUpdater().performUpdate();
     DefaultMutableTreeNode node = getNodeForElement(element, false);
     if (node == null) {
-      final List<Object> elements = new ArrayList<Object>();
+      final List<Object> elements = new ArrayList<>();
       while (true) {
         element = getTreeStructure().getParentElement(element);
         if (element == null) {
@@ -692,7 +692,7 @@ public class AbstractTreeUi {
     }, false);
 
 
-    final Ref<NodeDescriptor> rootDescriptor = new Ref<NodeDescriptor>(null);
+    final Ref<NodeDescriptor> rootDescriptor = new Ref<>(null);
     final boolean bgLoading = getTreeStructure().isToBuildChildrenInBackground(rootElement);
 
     Runnable build = new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: build") {
@@ -851,7 +851,7 @@ public class AbstractTreeUi {
       promise = Promise.resolve(update(nodeDescriptor));
     }
     else {
-      final AsyncPromise<Boolean> result = new AsyncPromise<Boolean>();
+      final AsyncPromise<Boolean> result = new AsyncPromise<>();
       promise = result;
 
       Object element = getElementFromDescriptor(nodeDescriptor);
@@ -1217,7 +1217,7 @@ public class AbstractTreeUi {
         }
       }
 
-      final AtomicReference<LoadedChildren> preloaded = new AtomicReference<LoadedChildren>(loadedChildren);
+      final AtomicReference<LoadedChildren> preloaded = new AtomicReference<>(loadedChildren);
 
       if (notRequiredToUpdateChildren) {
         if (myUnbuiltNodes.contains(node) && node.getChildCount() == 0) {
@@ -1516,20 +1516,20 @@ public class AbstractTreeUi {
                                                        @NotNull final TreeUpdatePass pass,
                                                        final boolean isExpanded,
                                                        @Nullable final LoadedChildren loadedChildren) {
-    final Ref<Pair<Boolean, LoadedChildren>> result = new Ref<Pair<Boolean, LoadedChildren>>();
+    final Ref<Pair<Boolean, LoadedChildren>> result = new Ref<>();
 
     execute(new TreeRunnable("AbstractTreeUi.processUnbuilt") {
       @Override
       public void perform() {
         if (!isExpanded && getBuilder().isAlwaysShowPlus(descriptor)) {
-          result.set(new Pair<Boolean, LoadedChildren>(true, null));
+          result.set(new Pair<>(true, null));
           return;
         }
 
         final Object element = getElementFor(node);
         if (element == null) {
           debug("null element for node " + node);
-          result.set(new Pair<Boolean, LoadedChildren>(true, null));
+          result.set(new Pair<>(true, null));
           return;
         }
 
@@ -1574,7 +1574,7 @@ public class AbstractTreeUi {
 
           processNodeActionsIfReady(node);
 
-          result.set(new Pair<Boolean, LoadedChildren>(processed, children));
+          result.set(new Pair<>(processed, children));
         }
         finally {
           removeFromUpdatingChildren(node);
@@ -1608,7 +1608,7 @@ public class AbstractTreeUi {
 
   //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
-    final Ref<Object[]> passOne = new Ref<Object[]>();
+    final Ref<Object[]> passOne = new Ref<>();
     try {
       acquireLock();
       execute(new TreeRunnable("AbstractTreeUi.getChildrenFor") {
@@ -1630,7 +1630,7 @@ public class AbstractTreeUi {
 
     final Object[] passTwo = getTreeStructure().getChildElements(element);
 
-    final HashSet<Object> two = new HashSet<Object>(Arrays.asList(passTwo));
+    final HashSet<Object> two = new HashSet<>(Arrays.asList(passTwo));
 
     if (passOne.get().length != passTwo.length) {
       LOG.error(
@@ -1691,7 +1691,7 @@ public class AbstractTreeUi {
         if (childNodes.isEmpty()) return Promise.DONE;
 
 
-        List<Promise<?>> promises = new SmartList<Promise<?>>();
+        List<Promise<?>> promises = new SmartList<>();
         for (TreeNode each : childNodes) {
           final DefaultMutableTreeNode eachChild = (DefaultMutableTreeNode)each;
           if (isLoadingNode(eachChild)) {
@@ -2190,7 +2190,7 @@ public class AbstractTreeUi {
   @NotNull
   private MutualMap<Object, Integer> loadElementsFromStructure(final NodeDescriptor descriptor,
                                                                @Nullable LoadedChildren preloadedChildren) {
-    MutualMap<Object, Integer> elementToIndexMap = new MutualMap<Object, Integer>(true);
+    MutualMap<Object, Integer> elementToIndexMap = new MutualMap<>(true);
     final Object element = getBuilder().getTreeStructureElement(descriptor);
     if (!isValid(element)) return elementToIndexMap;
 
@@ -2217,9 +2217,9 @@ public class AbstractTreeUi {
                                                            final DefaultMutableTreeNode parent,
                                                            final boolean addLoadingNode,
                                                            @NotNull final LoadedChildren loadedChildren) {
-    final AsyncResult<List<TreeNode>> result = new AsyncResult<List<TreeNode>>();
+    final AsyncResult<List<TreeNode>> result = new AsyncResult<>();
 
-    final List<TreeNode> nodesToInsert = new ArrayList<TreeNode>();
+    final List<TreeNode> nodesToInsert = new ArrayList<>();
     Collection<Object> allElements = elementToIndexMap.getKeys();
 
     final ActionCallback processingDone = new ActionCallback(allElements.size());
@@ -2359,7 +2359,7 @@ public class AbstractTreeUi {
 
   @NotNull
   public List<Object> getLoadedChildrenFor(Object element) {
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new ArrayList<>();
 
     DefaultMutableTreeNode node = getNodeForElement(element, false);
     if (node != null) {
@@ -2380,7 +2380,7 @@ public class AbstractTreeUi {
 
   @NotNull
   public List<Object> getExpandedElements() {
-    final List<Object> result = new ArrayList<Object>();
+    final List<Object> result = new ArrayList<>();
     if (isReleased()) return result;
 
     final Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
@@ -2545,7 +2545,7 @@ public class AbstractTreeUi {
 
   static class ElementNode extends DefaultMutableTreeNode {
 
-    Set<Object> myElements = new HashSet<Object>();
+    Set<Object> myElements = new HashSet<>();
     AbstractTreeUi myUi;
 
     ElementNode(AbstractTreeUi ui, NodeDescriptor descriptor) {
@@ -2647,8 +2647,8 @@ public class AbstractTreeUi {
 
     removeFromUnbuilt(node);
 
-    final Ref<LoadedChildren> children = new Ref<LoadedChildren>();
-    final Ref<Object> elementFromDescriptor = new Ref<Object>();
+    final Ref<LoadedChildren> children = new Ref<>();
+    final Ref<Object> elementFromDescriptor = new Ref<>();
 
     final DefaultMutableTreeNode[] nodeToProcessActions = new DefaultMutableTreeNode[1];
 
@@ -3008,13 +3008,13 @@ public class AbstractTreeUi {
       update = update(childDescriptor, false);
     }
 
-    final AsyncPromise<Void> result = new AsyncPromise<Void>();
-    final Ref<NodeDescriptor> childDesc = new Ref<NodeDescriptor>(childDescriptor);
+    final AsyncPromise<Void> result = new AsyncPromise<>();
+    final Ref<NodeDescriptor> childDesc = new Ref<>(childDescriptor);
 
     update.done(isChanged -> {
       final AtomicBoolean changes = new AtomicBoolean(isChanged);
       final AtomicBoolean forceRemapping = new AtomicBoolean();
-      final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
+      final Ref<Object> newElement = new Ref<>(getElementFromDescriptor(childDesc.get()));
 
       final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
       Promise<Boolean> promise;
@@ -3025,7 +3025,7 @@ public class AbstractTreeUi {
         final Object elementFromMap = elementToIndexMap.getKey(index);
         if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
           if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
-            final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<Boolean>();
+            final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<>();
             promise = updateIndexDone;
             if (parentNode.getUserObject() instanceof NodeDescriptor) {
               final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
@@ -3217,7 +3217,7 @@ public class AbstractTreeUi {
       return new TreePath(((DefaultMutableTreeNode)node).getPath());
     }
     else {
-      List<TreeNode> nodes = new ArrayList<TreeNode>();
+      List<TreeNode> nodes = new ArrayList<>();
       TreeNode eachParent = node;
       while (eachParent != null) {
         nodes.add(eachParent);
@@ -3337,8 +3337,8 @@ public class AbstractTreeUi {
   @NotNull
   private Promise<Void> queueToBackground(@NotNull final Runnable bgBuildAction, @Nullable final Runnable edtPostRunnable) {
     if (!canInitiateNewActivity()) return Promise.REJECTED;
-    final AsyncPromise<Void> result = new AsyncPromise<Void>();
-    final AtomicReference<ProcessCanceledException> fail = new AtomicReference<ProcessCanceledException>();
+    final AsyncPromise<Void> result = new AsyncPromise<>();
+    final AtomicReference<ProcessCanceledException> fail = new AtomicReference<>();
     final Runnable finalizer = new TreeRunnable("AbstractTreeUi.queueToBackground: finalizer") {
       @Override
       public void perform() {
@@ -3502,7 +3502,7 @@ public class AbstractTreeUi {
         int oldIndex = parentNode.getIndex(node);
         int newIndex = oldIndex;
         if (isLoadingChildrenFor(node.getParent()) || getBuilder().isChildrenResortingNeeded(descriptor)) {
-          List<TreeNode> children = new ArrayList<TreeNode>(parentNode.getChildCount());
+          List<TreeNode> children = new ArrayList<>(parentNode.getChildCount());
           for (int i = 0; i < parentNode.getChildCount(); i++) {
             TreeNode child = parentNode.getChildAt(i);
             LOG.assertTrue(child != null);
@@ -3513,8 +3513,8 @@ public class AbstractTreeUi {
         }
 
         if (oldIndex != newIndex) {
-          List<Object> pathsToExpand = new ArrayList<Object>();
-          List<Object> selectionPaths = new ArrayList<Object>();
+          List<Object> pathsToExpand = new ArrayList<>();
+          List<Object> selectionPaths = new ArrayList<>();
           TreeBuilderUtil.storePaths(getBuilder(), node, pathsToExpand, selectionPaths, false);
           removeNodeFromParent(node, false);
           myTreeModel.insertNodeInto(node, parentNode, newIndex);
@@ -3545,7 +3545,7 @@ public class AbstractTreeUi {
 
   private void insertNodesInto(@NotNull final List<TreeNode> toInsert, @NotNull final DefaultMutableTreeNode parentNode) {
     sortChildren(parentNode, toInsert, false, true);
-    final List<TreeNode> all = new ArrayList<TreeNode>(toInsert.size() + parentNode.getChildCount());
+    final List<TreeNode> all = new ArrayList<>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
     all.addAll(TreeUtil.childrenToArray(parentNode));
 
@@ -3554,7 +3554,7 @@ public class AbstractTreeUi {
 
       int[] newNodeIndices = new int[toInsert.size()];
       int eachNewNodeIndex = 0;
-      TreeMap<Integer, TreeNode> insertSet = new TreeMap<Integer, TreeNode>();
+      TreeMap<Integer, TreeNode> insertSet = new TreeMap<>();
       for (int i = 0; i < toInsert.size(); i++) {
         TreeNode eachNewNode = toInsert.get(i);
         while (all.get(eachNewNodeIndex) != eachNewNode) {
@@ -3572,7 +3572,7 @@ public class AbstractTreeUi {
       myTreeModel.nodesWereInserted(parentNode, newNodeIndices);
     }
     else {
-      List<TreeNode> before = new ArrayList<TreeNode>();
+      List<TreeNode> before = new ArrayList<>();
       before.addAll(all);
 
       sortChildren(parentNode, all, true, false);
@@ -3806,7 +3806,7 @@ public class AbstractTreeUi {
           }
 
           clearSelection();
-          Set<Object> toSelect = new THashSet<Object>();
+          Set<Object> toSelect = new THashSet<>();
           ContainerUtil.addAllNotNull(toSelect, elements);
           if (addToSelection) {
             ContainerUtil.addAllNotNull(toSelect, currentElements);
@@ -4103,7 +4103,7 @@ public class AbstractTreeUi {
     if (o instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();
       if (paths != null && paths.length > 0) {
-        Set<DefaultMutableTreeNode> selectedNodes = new HashSet<DefaultMutableTreeNode>();
+        Set<DefaultMutableTreeNode> selectedNodes = new HashSet<>();
         for (TreePath eachPAth : paths) {
           if (eachPAth.getLastPathComponent() instanceof DefaultMutableTreeNode) {
             selectedNodes.add((DefaultMutableTreeNode)eachPAth.getLastPathComponent());
@@ -4333,7 +4333,7 @@ public class AbstractTreeUi {
     }
 
     if (wasRootNodeInitialized()) {
-      List<Object> kidsToExpand = new ArrayList<Object>();
+      List<Object> kidsToExpand = new ArrayList<>();
       Object eachElement = element;
       DefaultMutableTreeNode firstVisible = null;
       while (true) {
@@ -4565,7 +4565,7 @@ public class AbstractTreeUi {
       final Object value = myElementToNodeMap.get(element);
       final List<DefaultMutableTreeNode> nodes;
       if (value instanceof DefaultMutableTreeNode) {
-        nodes = new ArrayList<DefaultMutableTreeNode>();
+        nodes = new ArrayList<>();
         nodes.add((DefaultMutableTreeNode)value);
         myElementToNodeMap.put(element, nodes);
       }
@@ -4696,7 +4696,7 @@ public class AbstractTreeUi {
     maybeSetBusyAndScheduleWaiterForReady(true, element);
     List<NodeAction> list = map.get(element);
     if (list == null) {
-      list = new ArrayList<NodeAction>();
+      list = new ArrayList<>();
       map.put(element, list);
     }
     list.add(action);
@@ -4773,7 +4773,7 @@ public class AbstractTreeUi {
       if (!myUnbuiltNodes.contains(node)) {
         removeLoading(node, false);
 
-        Set<DefaultMutableTreeNode> childrenToUpdate = new HashSet<DefaultMutableTreeNode>();
+        Set<DefaultMutableTreeNode> childrenToUpdate = new HashSet<>();
         for (int i = 0; i < node.getChildCount(); i++) {
           DefaultMutableTreeNode each = (DefaultMutableTreeNode)node.getChildAt(i);
           if (myUnbuiltNodes.contains(each)) {
@@ -4912,8 +4912,8 @@ public class AbstractTreeUi {
 
   private static class LoadedChildren {
     @NotNull private final List<Object> myElements;
-    private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
-    private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
+    private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<>();
+    private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<>();
 
     LoadedChildren(@Nullable Object[] elements) {
       myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);

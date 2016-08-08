@@ -105,7 +105,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   }
 
   private class SynchronizationController {
-    private final Set<SettingsEditor> myChangedEditors = new HashSet<SettingsEditor>();
+    private final Set<SettingsEditor> myChangedEditors = new HashSet<>();
     private final Alarm mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private boolean myIsInSync = false;
 

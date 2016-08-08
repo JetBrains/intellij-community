@@ -64,7 +64,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myProject = project;
     myCopyrightProfile = copyrightProfile;
     myDisplayName = myCopyrightProfile.getName();
-    final Set<EditorCustomization> features = new HashSet<EditorCustomization>();
+    final Set<EditorCustomization> features = new HashSet<>();
     ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);

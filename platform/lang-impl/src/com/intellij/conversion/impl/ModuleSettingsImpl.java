@@ -75,7 +75,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @NotNull
   public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
     final Element facetManager = getComponentElement(FacetManagerImpl.COMPONENT_NAME);
-    final ArrayList<Element> elements = new ArrayList<Element>();
+    final ArrayList<Element> elements = new ArrayList<>();
 
     addFacetTypes(facetTypeId, facetManager, elements);
 
@@ -128,7 +128,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @Override
   @NotNull
   public Collection<File> getSourceRoots(boolean includeTests) {
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       for (Element sourceFolder : JDOMUtil.getChildren(contentRoot, SourceFolderImpl.ELEMENT_NAME)) {
         boolean isTestFolder = Boolean.parseBoolean(sourceFolder.getAttributeValue(SourceFolderImpl.TEST_SOURCE_ATTR));
@@ -147,7 +147,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @Override
   @NotNull
   public Collection<File> getContentRoots() {
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       String path = VfsUtil.urlToPath(contentRoot.getAttributeValue(ContentEntryImpl.URL_ATTRIBUTE));
       result.add(new File(FileUtil.toSystemDependentName(expandPath(path))));
@@ -224,7 +224,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @Override
   @NotNull
   public Collection<ModuleSettings> getAllModuleDependencies() {
-    Set<ModuleSettings> dependencies = new HashSet<ModuleSettings>();
+    Set<ModuleSettings> dependencies = new HashSet<>();
     collectDependencies(dependencies);
     return dependencies;
   }

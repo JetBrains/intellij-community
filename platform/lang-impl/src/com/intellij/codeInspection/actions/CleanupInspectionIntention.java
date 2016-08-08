@@ -165,7 +165,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   private class PerformBatchFixesTask extends AbstractPerformFixesTask {
-    private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<ProblemDescriptor>();
+    private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
     private boolean myApplied = false;
 
     public PerformBatchFixesTask(@NotNull Project project,
@@ -189,7 +189,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
             if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
                                             myBatchModeDescriptors.toArray(new ProblemDescriptor[myBatchModeDescriptors.size()]),
-                                            new ArrayList<PsiElement>(),
+                                            new ArrayList<>(),
                                             null);
               break;
             }

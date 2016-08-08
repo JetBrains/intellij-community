@@ -83,7 +83,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     if (shouldBeActive != null) {
       ProjectView.getInstance(project).selectCB(shouldBeActive, shouldBeActive, false).doWhenDone(() -> {
         List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
-        List<TreePath> toCollapse = new ArrayList<TreePath>();
+        List<TreePath> toCollapse = new ArrayList<>();
         TreePath selectedPath = tree.getSelectionPath();
         for (TreePath treePath : paths) {
           if (treePath.isDescendant(selectedPath)) {

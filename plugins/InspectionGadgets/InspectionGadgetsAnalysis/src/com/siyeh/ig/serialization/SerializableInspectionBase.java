@@ -34,7 +34,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
   public boolean ignoreAnonymousInnerClasses = false;
   @Deprecated @SuppressWarnings({"PublicField"})
   public String superClassString = "java.awt.Component";
-  protected List<String> superClassList = new ArrayList<String>();
+  protected List<String> superClassList = new ArrayList<>();
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {

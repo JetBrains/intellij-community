@@ -49,8 +49,8 @@ import java.util.List;
  */
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
   private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors =
-    new ArrayList<SettingsEditor<RunnerAndConfigurationSettings>>();
-  private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<ProgramRunner, List<SettingsEditor>>();
+    new ArrayList<>();
+  private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
@@ -63,13 +63,13 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   @Override
   public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
-    myGroupSettingsBuilder = new GroupSettingsBuilder<RunnerAndConfigurationSettings>(myCompound);
+    myGroupSettingsBuilder = new GroupSettingsBuilder<>(myCompound);
     return myGroupSettingsBuilder;
   }
 
   private void init() {
     if (myCompound == null) {
-      myCompound = new SettingsEditorGroup<RunnerAndConfigurationSettings>();
+      myCompound = new SettingsEditorGroup<>();
       Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
@@ -173,11 +173,11 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
                                                                         Convertor<RunnerAndConfigurationSettings, T> convertor,
                                                                         ProgramRunner runner) {
     SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor
-      = new SettingsEditorWrapper<RunnerAndConfigurationSettings, T>(editor, convertor);
+      = new SettingsEditorWrapper<>(editor, convertor);
 
     List<SettingsEditor> unwrappedEditors = myRunner2UnwrappedEditors.get(runner);
     if (unwrappedEditors == null) {
-      unwrappedEditors = new ArrayList<SettingsEditor>();
+      unwrappedEditors = new ArrayList<>();
       myRunner2UnwrappedEditors.put(runner, unwrappedEditors);
     }
     unwrappedEditors.add(editor);

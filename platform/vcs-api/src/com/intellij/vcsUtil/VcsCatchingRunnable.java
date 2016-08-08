@@ -30,7 +30,7 @@ public abstract class VcsCatchingRunnable implements Runnable, Getter<List<VcsEx
   private final List<VcsException> myExceptions;
 
   public VcsCatchingRunnable() {
-    myExceptions = new SmartList<VcsException>();
+    myExceptions = new SmartList<>();
   }
 
   @Override

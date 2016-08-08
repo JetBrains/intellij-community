@@ -64,7 +64,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);
 
     if (propertyType != null) {
-      final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+      final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<>();
       for (String name : FxmlConstants.FX_BUILT_IN_TAGS) {
         descriptors.add(new JavaFxBuiltInTagDescriptor(name, null));
       }

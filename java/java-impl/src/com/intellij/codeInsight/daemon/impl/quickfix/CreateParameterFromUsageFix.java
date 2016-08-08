@@ -87,7 +87,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     if (method == null) return;
 
     final List<ParameterInfoImpl> parameterInfos =
-      new ArrayList<ParameterInfoImpl>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
+      new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
     ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);

@@ -208,7 +208,7 @@ public class GitPushOperation {
           if (target == null) {
             return null;
           }
-          pushSpec = new PushSpec<GitPushSource, GitPushTarget>(source, target);
+          pushSpec = new PushSpec<>(source, target);
         }
         String baseRef = pushSpec.getTarget().getBranch().getFullName();
         String currentRef = pushSpec.getSource().getBranch().getFullName();
@@ -353,7 +353,7 @@ public class GitPushOperation {
   private void collectUpdatedFiles(@NotNull UpdatedFiles updatedFiles, @NotNull GitRepository repository,
                                    @NotNull String preUpdatePosition) {
     MergeChangeCollector collector = new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition));
-    ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    ArrayList<VcsException> exceptions = new ArrayList<>();
     collector.collect(updatedFiles, exceptions);
     for (VcsException exception : exceptions) {
       LOG.info(exception);
@@ -439,7 +439,7 @@ public class GitPushOperation {
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
-                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
+                                                        new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
                                                         checkForRebaseOverMergeProblem).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);

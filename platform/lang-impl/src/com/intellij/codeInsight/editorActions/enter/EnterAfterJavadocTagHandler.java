@@ -126,7 +126,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
     int startTagStartOffset = -1;
     int startTagEndOffset = -1;
-    Set<CharSequence> closedTags = new HashSet<CharSequence>();
+    Set<CharSequence> closedTags = new HashSet<>();
     CharSequence startTag = null;
     
     // Try to find start tag to the left of the given offset.

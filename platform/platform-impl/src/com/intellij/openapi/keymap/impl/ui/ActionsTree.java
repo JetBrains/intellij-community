@@ -389,7 +389,7 @@ public class ActionsTree {
   }
 
   private ArrayList<DefaultMutableTreeNode> getNodesByPaths(ArrayList<String> paths){
-    final ArrayList<DefaultMutableTreeNode> result = new ArrayList<DefaultMutableTreeNode>();
+    final ArrayList<DefaultMutableTreeNode> result = new ArrayList<>();
     Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
@@ -441,8 +441,8 @@ public class ActionsTree {
     private ArrayList<String> mySelectionPaths;
 
     public void storePaths() {
-      myPathsToExpand = new ArrayList<String>();
-      mySelectionPaths = new ArrayList<String>();
+      myPathsToExpand = new ArrayList<>();
+      mySelectionPaths = new ArrayList<>();
 
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
 
@@ -499,7 +499,7 @@ public class ActionsTree {
 
 
     private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
-      ArrayList<TreeNode> arrayList = new ArrayList<TreeNode>();
+      ArrayList<TreeNode> arrayList = new ArrayList<>();
       for(int i = 0; i < node.getChildCount(); i++){
         arrayList.add(node.getChildAt(i));
       }

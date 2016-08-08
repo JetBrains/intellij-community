@@ -55,7 +55,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
     final String fileName = file.getName();
     if (file.getParent().getName().equals(Project.DIRECTORY_STORE_FOLDER) && fileName.equals("workspace.xml")) {
 
-      List<Object> componentList = new ArrayList<Object>();
+      List<Object> componentList = new ArrayList<>();
       for (String componentName : COMPONENT_NAMES) {
         Object component = project.getComponent(componentName);
         if (component == null) {

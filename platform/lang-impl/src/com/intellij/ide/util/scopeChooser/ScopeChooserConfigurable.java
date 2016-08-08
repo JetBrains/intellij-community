@@ -92,7 +92,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new MyAddAction(fromPopup));
     result.add(new MyDeleteAction(forAll(o -> {
       if (o instanceof MyNode) {
@@ -147,7 +147,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {
-    final Set<String> predefinedScopes = new HashSet<String>();
+    final Set<String> predefinedScopes = new HashSet<>();
     for (CustomScopesProvider scopesProvider : myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER)) {
       for (NamedScope namedScope : scopesProvider.getFilteredScopes()) {
         predefinedScopes.add(namedScope.getName());
@@ -190,8 +190,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void processScopes() {
-    final List<NamedScope> localScopes = new ArrayList<NamedScope>();
-    final List<NamedScope> sharedScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> localScopes = new ArrayList<>();
+    final List<NamedScope> sharedScopes = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
@@ -228,7 +228,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private static Collection<NamedScope> getPredefinedScopes(Project project) {
-    final Collection<NamedScope> result = new ArrayList<NamedScope>();
+    final Collection<NamedScope> result = new ArrayList<>();
     result.addAll(NamedScopeManager.getInstance(project).getPredefinedScopes());
     result.addAll(DependencyValidationManager.getInstance(project).getPredefinedScopes());
     return result;
@@ -305,7 +305,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private String createUniqueName() {
     String str = InspectionsBundle.message("inspection.profile.unnamed");
-    final HashSet<String> treeScopes = new HashSet<String>();
+    final HashSet<String> treeScopes = new HashSet<>();
     obtainCurrentScopes(treeScopes);
     if (!treeScopes.contains(str)) return str;
     int i = 1;
@@ -530,6 +530,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   public static class ScopeChooserConfigurableState extends MasterDetailsState {
     @Tag("order")
     @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
-    public List<String> myOrder = new ArrayList<String>();
+    public List<String> myOrder = new ArrayList<>();
   }
 }

@@ -242,7 +242,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
 
     if (HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, place) != null &&
-        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>())) {
+        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }

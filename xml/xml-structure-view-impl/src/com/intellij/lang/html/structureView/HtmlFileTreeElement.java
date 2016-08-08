@@ -55,7 +55,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
       return Collections.emptyList();
     }
 
-    final List<XmlTag> rootTags = new SmartList<XmlTag>();
+    final List<XmlTag> rootTags = new SmartList<>();
     document.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE, rootTags), document);
 
     if (rootTags.isEmpty()) {
@@ -75,7 +75,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
       return Collections.<StructureViewTreeElement>singletonList(new HtmlTagTreeElement(rootTag));
     }
     else {
-      final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(rootTags.size());
+      final Collection<StructureViewTreeElement> result = new ArrayList<>(rootTags.size());
       for (XmlTag tag : rootTags) {
         result.add(new HtmlTagTreeElement(tag));
       }

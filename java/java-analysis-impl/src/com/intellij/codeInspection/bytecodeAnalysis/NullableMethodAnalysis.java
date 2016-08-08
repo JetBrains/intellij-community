@@ -130,8 +130,8 @@ class NullableMethodAnalysis {
     NullableMethodInterpreter interpreter = new NullableMethodInterpreter(insns, origins, originsMapping);
     Frame<BasicValue>[] frames =
       jsr ?
-      new AnalyzerExt<BasicValue, Constraint, NullableMethodInterpreter>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode) :
-      new LiteAnalyzerExt<BasicValue, Constraint, NullableMethodInterpreter>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode);
+      new AnalyzerExt<>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode) :
+      new LiteAnalyzerExt<>(interpreter, data, Constraint.EMPTY).analyze("this", methodNode);
 
     BasicValue result = BasicValue.REFERENCE_VALUE;
     for (int i = 0; i < frames.length; i++) {
@@ -148,7 +148,7 @@ class NullableMethodAnalysis {
       Calls calls = ((Calls)result);
       int mergedMappedLabels = calls.mergedLabels;
       if (mergedMappedLabels != 0) {
-        Set<Product> sum = new HashSet<Product>();
+        Set<Product> sum = new HashSet<>();
         Key[] createdKeys = interpreter.keys;
         for (int origin = 0; origin < originsMapping.length; origin++) {
           int mappedOrigin = originsMapping[origin];

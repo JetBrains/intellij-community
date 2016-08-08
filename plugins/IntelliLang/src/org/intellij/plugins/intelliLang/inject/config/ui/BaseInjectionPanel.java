@@ -90,7 +90,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     other.setDisplayName(displayName);
     boolean enabled = true;
     final StringBuilder sb = new StringBuilder();
-    final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>();
+    final ArrayList<InjectionPlace> places = new ArrayList<>();
     for (String s : myTextArea.getText().split("\\s*\n\\s*")) {
       final boolean nextEnabled;
       if (s.startsWith("+")) {

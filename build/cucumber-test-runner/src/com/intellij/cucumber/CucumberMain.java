@@ -50,8 +50,8 @@ public class CucumberMain {
   }
 
   public static int run(final String[] argv, final ClassLoader classLoader) throws IOException {
-    final Ref<Throwable> errorRef = new Ref<Throwable>();
-    final Ref<Runtime> runtimeRef = new Ref<Runtime>();
+    final Ref<Throwable> errorRef = new Ref<>();
+    final Ref<Runtime> runtimeRef = new Ref<>();
 
     try {
       TestRunnerUtil.replaceIdeEventQueueSafely();

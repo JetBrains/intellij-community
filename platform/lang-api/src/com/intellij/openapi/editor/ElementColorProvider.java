@@ -26,7 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public interface ElementColorProvider {
-  ExtensionPointName<ElementColorProvider> EP_NAME = new ExtensionPointName<ElementColorProvider>("com.intellij.colorProvider");
+  ExtensionPointName<ElementColorProvider> EP_NAME = new ExtensionPointName<>("com.intellij.colorProvider");
   
   @Nullable
   Color getColorFrom(@NotNull PsiElement element);

@@ -215,7 +215,7 @@ public class FileNameCacheMicroBenchmark {
   @NotNull
   private static TIntObjectHashMap<CharSequence> generateNames(int nameCount) {
     Random random = new Random();
-    TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<CharSequence>();
+    TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
       int id = FileNameCache.storeName(name);

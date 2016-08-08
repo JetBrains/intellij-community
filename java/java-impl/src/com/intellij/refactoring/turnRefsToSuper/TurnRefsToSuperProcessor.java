@@ -71,7 +71,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
       PsiReference.EMPTY_ARRAY);
 
-    final ArrayList<UsageInfo> result = detectTurnToSuperRefs(refs, new ArrayList<UsageInfo>());
+    final ArrayList<UsageInfo> result = detectTurnToSuperRefs(refs, new ArrayList<>());
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);

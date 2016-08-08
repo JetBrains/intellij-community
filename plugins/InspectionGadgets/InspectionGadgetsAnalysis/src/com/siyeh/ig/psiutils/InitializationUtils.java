@@ -47,7 +47,7 @@ public class InitializationUtils {
   }
 
   public static boolean blockAssignsVariableOrFails(@Nullable PsiCodeBlock block, @NotNull PsiVariable variable, boolean strict) {
-    return blockAssignsVariableOrFails(block, variable, new HashSet<MethodSignature>(), strict);
+    return blockAssignsVariableOrFails(block, variable, new HashSet<>(), strict);
   }
 
   private static boolean blockAssignsVariableOrFails(@Nullable PsiCodeBlock block, @NotNull PsiVariable variable,

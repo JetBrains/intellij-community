@@ -97,9 +97,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<ExternalSystemRunConfiguration>();
+    SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ExternalSystemRunConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 

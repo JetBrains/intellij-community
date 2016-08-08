@@ -156,7 +156,7 @@ public class FluentIterableConversionUtil {
         argument = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument, true, true);
       }
       if (argument instanceof PsiLambdaExpression) {
-        List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<Pair<PsiExpression, Boolean>>();
+        List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<>();
 
         final PsiElement body = ((PsiLambdaExpression)argument).getBody();
         final PsiClass collection = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, expression.getResolveScope());

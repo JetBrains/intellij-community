@@ -64,7 +64,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myVcses = new HashMap<String, VcsDescriptor>();
+    myVcses = new HashMap<>();
     for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
       myVcses.put(vcsDescriptor.getName(), vcsDescriptor);
     }

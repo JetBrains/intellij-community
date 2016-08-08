@@ -57,7 +57,7 @@ public class HelpManagerImpl extends HelpManager {
       HelpSet set = createHelpSet();
       if (set != null) {
         broker = new IdeaHelpBroker(set);
-        myBrokerReference = new WeakReference<IdeaHelpBroker>(broker);
+        myBrokerReference = new WeakReference<>(broker);
       }
     }
 

@@ -84,7 +84,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   }
 
   private void findCandidates() {
-    myCandidates = new ArrayList<PsiVariable>();
+    myCandidates = new ArrayList<>();
     final PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
     final String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {

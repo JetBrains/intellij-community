@@ -119,8 +119,8 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
     final ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getElement().getProject());
     final PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
 
-    final Set<String> bundleNames = new HashSet<String>();
-    final List<LookupElement> variants = new SmartList<LookupElement>();
+    final Set<String> bundleNames = new HashSet<>();
+    final List<LookupElement> variants = new SmartList<>();
     PropertiesFileProcessor processor = new PropertiesFileProcessor() {
       @Override
       public boolean process(String baseName, PropertiesFile propertiesFile) {

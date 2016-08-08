@@ -107,7 +107,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull
   private Collection<String> readBranches() throws IOException {
-    Collection<String> branches = new HashSet<String>();
+    Collection<String> branches = new HashSet<>();
     File branchHeads = new File(new File(myHgDir, "cache"), "branchheads-served");
     String[] branchesWithHashes = FileUtil.loadFile(branchHeads).split("\n");
     for (int i = 1; i < branchesWithHashes.length; ++i) {
@@ -125,7 +125,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
 
   @NotNull
   private static Collection<String> readRefs(@NotNull File refFile) throws IOException {
-    Collection<String> refs = new HashSet<String>();
+    Collection<String> refs = new HashSet<>();
     String[] refsWithHashes = FileUtil.loadFile(refFile).split("\n");
     for (String str : refsWithHashes) {
       String[] refAndName = str.trim().split(" ");

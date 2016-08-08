@@ -272,7 +272,7 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
+    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<>();
     infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     Collections.sort(infoTypes,
                      (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
@@ -329,9 +329,9 @@ public class SeverityEditorDialog extends DialogWrapper {
   protected void doOKAction() {
     apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
     final Collection<SeverityBasedTextAttributes> infoTypes =
-      new HashSet<SeverityBasedTextAttributes>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+      new HashSet<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     final ListModel listModel = myOptionsList.getModel();
-    final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
+    final List<HighlightSeverity> order = new ArrayList<>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
       SeverityBasedTextAttributes info = (SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity());

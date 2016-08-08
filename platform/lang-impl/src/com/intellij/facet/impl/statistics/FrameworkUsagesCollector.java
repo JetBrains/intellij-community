@@ -43,7 +43,7 @@ public class FrameworkUsagesCollector extends AbstractApplicationUsagesCollector
   @Override
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    final Set<String> facets = new HashSet<String>();
+    final Set<String> facets = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
         facets.add(facet.getType().getStringId());

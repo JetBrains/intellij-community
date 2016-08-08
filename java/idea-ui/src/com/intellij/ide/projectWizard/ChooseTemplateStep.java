@@ -65,7 +65,7 @@ public class ChooseTemplateStep extends ModuleWizardStep {
 
   @Override
   public void updateStep() {
-    myTemplateList.setTemplates(new ArrayList<ProjectTemplate>(myProjectTypeStep.getAvailableTemplates()), false);
+    myTemplateList.setTemplates(new ArrayList<>(myProjectTypeStep.getAvailableTemplates()), false);
   }
 
   @Override

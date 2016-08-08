@@ -137,7 +137,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
       myComboBox = new ComboBox();
 
-      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<JdkBundleItem>();
+      final DefaultComboBoxModel<JdkBundleItem> model = new DefaultComboBoxModel<>();
 
       for (JdkBundle jdkBundlePath : pathsList.toArrayList()) {
         //noinspection unchecked

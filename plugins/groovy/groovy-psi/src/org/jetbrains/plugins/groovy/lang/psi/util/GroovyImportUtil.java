@@ -263,7 +263,7 @@ public class GroovyImportUtil {
   }
 
   public static Set<GrImportStatement> findUsedImports(GroovyFile file) {
-    Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
+    Set<GrImportStatement> usedImports = new HashSet<>();
     processFile(file, null, null, usedImports, null, null, null, null, null);
     return usedImports;
   }

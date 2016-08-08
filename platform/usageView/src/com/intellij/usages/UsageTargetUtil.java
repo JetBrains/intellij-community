@@ -37,7 +37,7 @@ public class UsageTargetUtil {
     Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataProvider);
 
-    List<UsageTarget> result = new ArrayList<UsageTarget>();
+    List<UsageTarget> result = new ArrayList<>();
     if (file != null && editor != null) {
       UsageTarget[] targets = findUsageTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
@@ -52,7 +52,7 @@ public class UsageTargetUtil {
   }
 
   public static UsageTarget[] findUsageTargets(Editor editor, PsiFile file) {
-    List<UsageTarget> result = new ArrayList<UsageTarget>();
+    List<UsageTarget> result = new ArrayList<>();
     for (UsageTargetProvider provider : getProviders(file.getProject())) {
       UsageTarget[] targets = provider.getTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
@@ -61,7 +61,7 @@ public class UsageTargetUtil {
   }
 
   public static UsageTarget[] findUsageTargets(PsiElement psiElement) {
-    List<UsageTarget> result = new ArrayList<UsageTarget>();
+    List<UsageTarget> result = new ArrayList<>();
     for (UsageTargetProvider provider : getProviders(psiElement.getProject())) {
       UsageTarget[] targets = provider.getTargets(psiElement);
       if (targets != null) Collections.addAll(result, targets);

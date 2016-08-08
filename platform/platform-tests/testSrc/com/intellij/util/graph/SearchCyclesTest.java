@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public class SearchCyclesTest extends GraphTestCase {
   public void test1() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -40,7 +40,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   public void test2() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "b");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -51,7 +51,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   public void test3() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("d", "a");
@@ -60,7 +60,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   public void test4() throws Exception {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "b");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -72,7 +72,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   public void test5() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+    final HashMap<String, String> graph = new HashMap<>();
     graph.put("a", "be");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -88,7 +88,7 @@ public class SearchCyclesTest extends GraphTestCase {
   }
 
   private static void checkResult(String[] expected, Set<List<String>> cycles) {
-    Set<String> cycleStrings = new HashSet<String>();
+    Set<String> cycleStrings = new HashSet<>();
     for (List<String> cycle : cycles) {
       cycleStrings.add(StringUtil.join(cycle, ""));
     }

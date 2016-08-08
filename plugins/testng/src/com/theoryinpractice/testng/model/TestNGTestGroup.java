@@ -45,7 +45,7 @@ public class TestNGTestGroup extends TestNGTestObject {
     PsiClass[] testClasses = TestNGUtil.getAllTestClasses(classFilter, false);
     if (testClasses != null) {
       for (PsiClass c : testClasses) {
-        classes.put(c, new LinkedHashMap<PsiMethod, List<String>>());
+        classes.put(c, new LinkedHashMap<>());
       }
     }
   }

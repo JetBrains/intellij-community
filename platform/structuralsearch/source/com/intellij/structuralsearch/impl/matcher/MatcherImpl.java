@@ -91,7 +91,7 @@ public class MatcherImpl {
       final LastMatchData data = new LastMatchData();
       data.lastPattern =  PatternCompiler.compilePattern(project, options);
       data.lastOptions = options;
-      lastMatchData = new SoftReference<LastMatchData>(data);
+      lastMatchData = new SoftReference<>(data);
     }
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
@@ -385,7 +385,7 @@ public class MatcherImpl {
   }
 
   class TaskScheduler implements MatchingProcess {
-    private ArrayList<Runnable> tasks = new ArrayList<Runnable>();
+    private ArrayList<Runnable> tasks = new ArrayList<>();
     private boolean ended;
     private Runnable taskQueueEndAction;
 
@@ -488,7 +488,7 @@ public class MatcherImpl {
     protected List<PsiElement> getPsiElementsToProcess() {
       final PsiElement file = this.file;
       this.file = null;
-      return new SmartList<PsiElement>(file);
+      return new SmartList<>(file);
     }
   }
 
@@ -630,7 +630,7 @@ public class MatcherImpl {
           }
 
           final FileViewProvider viewProvider = file.getViewProvider();
-          final List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
+          final List<PsiElement> elementsToProcess = new SmartList<>();
 
           for (Language lang : viewProvider.getLanguages()) {
             elementsToProcess.add(viewProvider.getPsi(lang));

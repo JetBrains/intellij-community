@@ -37,9 +37,9 @@ public class GradleLocalSettings extends AbstractExternalSystemLocalSettings
   implements PersistentStateComponent<GradleLocalSettings.MyState>
 {
   private final AtomicReference<Map<String/* external project path */, String>> myGradleHomes =
-    new AtomicReference<Map<String, String>>(ContainerUtilRt.newHashMap());
+    new AtomicReference<>(ContainerUtilRt.newHashMap());
   private final AtomicReference<Map<String/* external project path */, String>> myGradleVersions =
-    new AtomicReference<Map<String, String>>(ContainerUtilRt.newHashMap());
+    new AtomicReference<>(ContainerUtilRt.newHashMap());
 
   public GradleLocalSettings(@NotNull Project project) {
     super(GradleConstants.SYSTEM_ID, project);

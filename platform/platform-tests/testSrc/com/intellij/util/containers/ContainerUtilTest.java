@@ -66,7 +66,7 @@ public class ContainerUtilTest extends TestCase {
 
   private static void asserIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
     Iterable<Integer> it = ContainerUtil.iterate(collection, condition);
-    List<Integer> actual = new ArrayList<Integer>();
+    List<Integer> actual = new ArrayList<>();
     for (Integer each : it) {
       actual.add(each);
     }
@@ -74,7 +74,7 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testIteratingBackward() throws Exception {
-    List<String> ss = new ArrayList<String>();
+    List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");
     ss.add("c");
@@ -113,8 +113,8 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testLockFreeSingleThreadPerformance() {
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<Object>();
-    final List<Object> stock = new CopyOnWriteArrayList<Object>();
+    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
+    final List<Object> stock = new CopyOnWriteArrayList<>();
 
     measure(stock);
     measure(my);

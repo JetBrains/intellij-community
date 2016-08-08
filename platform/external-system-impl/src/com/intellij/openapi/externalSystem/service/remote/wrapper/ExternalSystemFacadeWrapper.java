@@ -43,13 +43,13 @@ public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettin
   @NotNull
   @Override
   public RemoteExternalSystemProjectResolver<S> getResolver() throws RemoteException, IllegalStateException {
-    return new ExternalSystemProjectResolverWrapper<S>(myDelegate.getResolver(), myProgressManager);
+    return new ExternalSystemProjectResolverWrapper<>(myDelegate.getResolver(), myProgressManager);
   }
 
   @NotNull
   @Override
   public RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException {
-    return new ExternalSystemTaskManagerWrapper<S>(myDelegate.getTaskManager(), myProgressManager);
+    return new ExternalSystemTaskManagerWrapper<>(myDelegate.getTaskManager(), myProgressManager);
   }
 
   @Override

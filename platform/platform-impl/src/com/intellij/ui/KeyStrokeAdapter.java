@@ -316,7 +316,7 @@ public class KeyStrokeAdapter implements KeyListener {
   }
 
   private static final class LazyModifiers {
-    private static final Map<String, Integer> mapNameToMask = new HashMap<String, Integer>();
+    private static final Map<String, Integer> mapNameToMask = new HashMap<>();
 
     static {
       mapNameToMask.put("shift", InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK);
@@ -333,8 +333,8 @@ public class KeyStrokeAdapter implements KeyListener {
   }
 
   private static final class LazyVirtualKeys {
-    private static final Map<String, Integer> myNameToCode = new HashMap<String, Integer>();
-    private static final Map<Integer, String> myCodeToName = new HashMap<Integer, String>();
+    private static final Map<String, Integer> myNameToCode = new HashMap<>();
+    private static final Map<Integer, String> myCodeToName = new HashMap<>();
 
     static {
       try {

@@ -84,7 +84,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
   private static void runActivities(final Project project) {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
     final List<RunnerAndConfigurationSettings> configurations =
-      new ArrayList<RunnerAndConfigurationSettings>(projectStartupTaskManager.getLocalConfigurations());
+      new ArrayList<>(projectStartupTaskManager.getLocalConfigurations());
     configurations.addAll(projectStartupTaskManager.getSharedConfigurations());
 
     ApplicationManager.getApplication().invokeLater(() -> {

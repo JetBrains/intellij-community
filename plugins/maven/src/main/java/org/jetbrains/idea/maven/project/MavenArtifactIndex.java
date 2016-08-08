@@ -65,7 +65,7 @@ public class MavenArtifactIndex {
     List<MavenArtifact> artifacts = groupMap.get(artifactId);
     if (artifacts == null) return Collections.emptyList();
 
-    List<MavenArtifact> res = new SmartList<MavenArtifact>();
+    List<MavenArtifact> res = new SmartList<>();
     for (MavenArtifact artifact : artifacts) {
       if (Comparing.equal(version, artifact.getVersion())) {
         res.add(artifact);
@@ -80,7 +80,7 @@ public class MavenArtifactIndex {
   public static MavenArtifactIndex build(@NotNull List<MavenArtifact> dependencies) {
     if (dependencies.isEmpty()) return EMPTY_INDEX;
 
-    Map<String, Map<String, List<MavenArtifact>>> map = new HashMap<String, Map<String, List<MavenArtifact>>>();
+    Map<String, Map<String, List<MavenArtifact>>> map = new HashMap<>();
 
     for (MavenArtifact dep : dependencies) {
       String groupId = dep.getGroupId();
@@ -91,13 +91,13 @@ public class MavenArtifactIndex {
 
       Map<String, List<MavenArtifact>> groupMap = map.get(groupId);
       if (groupMap == null) {
-        groupMap = new HashMap<String, List<MavenArtifact>>();
+        groupMap = new HashMap<>();
         map.put(groupId, groupMap);
       }
 
       List<MavenArtifact> artifactList = groupMap.get(artifactId);
       if (artifactList == null) {
-        artifactList = new SmartList<MavenArtifact>();
+        artifactList = new SmartList<>();
         groupMap.put(artifactId, artifactList);
       }
 

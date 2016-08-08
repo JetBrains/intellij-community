@@ -60,7 +60,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   @NotNull
   @Override
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    final THashSet<String> result = new THashSet<String>();
+    final THashSet<String> result = new THashSet<>();
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       for (PluginModule module : ideaPlugin.getModules()) {
         ContainerUtil.addIfNotNull(module.getValue().getValue(), result);

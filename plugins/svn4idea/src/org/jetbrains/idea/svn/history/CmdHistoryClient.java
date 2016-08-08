@@ -83,7 +83,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                                              @NotNull SVNRevision startRevision,
                                              @NotNull SVNRevision endRevision,
                                              boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit) {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, startRevision, endRevision);

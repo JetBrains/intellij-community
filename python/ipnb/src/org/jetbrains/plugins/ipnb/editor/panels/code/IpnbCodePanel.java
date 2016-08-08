@@ -101,7 +101,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel<IpnbOutputCell>(outputCell, myParent.getIpnbFilePanel()));
+                     new IpnbCodeOutputPanel<>(outputCell, myParent.getIpnbFilePanel()));
     }
     mainPanel.add(panel);
   }

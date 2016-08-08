@@ -93,7 +93,7 @@ public enum JqlStandardField {
     return NAME_LOOKUP.get(name);
   }
 
-  private static final MultiMap<JqlFieldType, String> TYPE_LOOKUP = new MultiMap<JqlFieldType, String>();
+  private static final MultiMap<JqlFieldType, String> TYPE_LOOKUP = new MultiMap<>();
   static {
     for (JqlStandardField field : VALUES) {
       TYPE_LOOKUP.putValue(field.getType(), field.getName());
@@ -101,7 +101,7 @@ public enum JqlStandardField {
   }
 
   public static Collection<String> allOfType(JqlFieldType type) {
-    return type == JqlFieldType.UNKNOWN? ALL_FIELD_NAMES : new ArrayList<String>(TYPE_LOOKUP.get(type));
+    return type == JqlFieldType.UNKNOWN? ALL_FIELD_NAMES : new ArrayList<>(TYPE_LOOKUP.get(type));
   }
 
   public static final List<String> ALL_FIELD_NAMES = ContainerUtil.map2List(VALUES, field -> field.myName);

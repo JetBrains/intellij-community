@@ -122,7 +122,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
   }
 
   private List<LineRange> allRanges(final GroovyPsiElement scope, final boolean stmtLevel, final boolean topLevel) {
-    final ArrayList<LineRange> result = new ArrayList<LineRange>();
+    final ArrayList<LineRange> result = new ArrayList<>();
     scope.accept(new PsiRecursiveElementVisitor() {
       int lastStart = -1;
 

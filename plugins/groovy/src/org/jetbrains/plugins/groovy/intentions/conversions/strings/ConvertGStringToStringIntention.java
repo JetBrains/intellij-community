@@ -61,7 +61,7 @@ public class ConvertGStringToStringIntention extends Intention {
     if (child == null) return literal.getText();
     String text;
 
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
 
     PsiElement prevSibling = null;
     PsiElement nextSibling;

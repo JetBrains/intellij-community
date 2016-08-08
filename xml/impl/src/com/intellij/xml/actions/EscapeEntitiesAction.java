@@ -52,7 +52,7 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
       public CachedValueProvider.Result<IntObjectHashMap<String>> compute(PsiFile param) {
         final XmlFile file = XmlUtil.findXmlFile(param, Html5SchemaProvider.getCharsDtdLocation());
         assert file != null;
-        final IntObjectHashMap<String> result = new IntObjectHashMap<String>();
+        final IntObjectHashMap<String> result = new IntObjectHashMap<>();
         XmlUtil.processXmlElements(file, new PsiElementProcessor() {
           @Override
           public boolean execute(@NotNull PsiElement element) {
@@ -66,7 +66,7 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
             return true;
           }
         }, true);
-        return new CachedValueProvider.Result<IntObjectHashMap<String>>(result, ModificationTracker.NEVER_CHANGED);
+        return new CachedValueProvider.Result<>(result, ModificationTracker.NEVER_CHANGED);
       }
     }) {
     @Override

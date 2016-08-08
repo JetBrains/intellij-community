@@ -41,7 +41,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
     final PyExecuteFileExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
 
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     final DefaultActionGroup group = new DefaultActionGroup();
     if (PlatformUtils.isPyCharmEducational()) {
       group.add(runAction);

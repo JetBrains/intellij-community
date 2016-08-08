@@ -72,7 +72,7 @@ public class ConfigurationModuleSelector {
         return super.getElementText(element);
       }
     };
-    myModulesList.setModel(new SortedComboBoxModel<Module>(ModulesAlphaComparator.INSTANCE));
+    myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
     myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }
 
@@ -82,7 +82,7 @@ public class ConfigurationModuleSelector {
 
   public void reset(final ModuleBasedConfiguration configuration) {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    final List<Module> list = new ArrayList<Module>();
+    final List<Module> list = new ArrayList<>();
     for (final Module module : modules) {
       if (isModuleAccepted(module)) list.add(module);
     }

@@ -31,9 +31,9 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
     return ServiceManager.getService(PyTestFrameworkService.class);
   }
 
-  public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<String, Boolean>();
-  public Map <String, Boolean> SDK_TO_NOSETEST = new HashMap<String, Boolean>();
-  public Map <String, Boolean> SDK_TO_ATTEST = new HashMap<String, Boolean>();
+  public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<>();
+  public Map <String, Boolean> SDK_TO_NOSETEST = new HashMap<>();
+  public Map <String, Boolean> SDK_TO_ATTEST = new HashMap<>();
 
   @Override
   public PyTestFrameworkService getState() {

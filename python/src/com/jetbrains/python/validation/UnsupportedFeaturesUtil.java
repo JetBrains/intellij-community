@@ -38,10 +38,10 @@ import java.util.*;
  * User: catherine
  */
 public class UnsupportedFeaturesUtil {
-  public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<LanguageLevel, Set<String>>();
-  public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<LanguageLevel, Set<String>>();
-  public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<String, Map<LanguageLevel, Set<String>>>();
-  public static final List<String> ALL_LANGUAGE_LEVELS = new ArrayList<String>();
+  public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
+  public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
+  public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
+  public static final List<String> ALL_LANGUAGE_LEVELS = new ArrayList<>();
 
   static {
     try {
@@ -166,8 +166,8 @@ public class UnsupportedFeaturesUtil {
                 Attributes attr) throws SAXException {
       myContent.reset();
       if (localName.equals("python")) {
-        BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
-        MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
+        BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
+        MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
       }
      }
@@ -202,7 +202,7 @@ public class UnsupportedFeaturesUtil {
       if (localName.equals("class_name")) {
         myClassName = attr.getValue("name");
         if (!CLASS_METHODS.containsKey(myClassName)) {
-          CLASS_METHODS.put(myClassName, new HashMap<LanguageLevel, Set<String>>());
+          CLASS_METHODS.put(myClassName, new HashMap<>());
 
         }
       }
@@ -211,7 +211,7 @@ public class UnsupportedFeaturesUtil {
         if (myClassName != null) {
           final Map<LanguageLevel, Set<String>> map = CLASS_METHODS.get(myClassName);
           if (map != null)
-            map.put(myCurrentLevel, new HashSet<String>());
+            map.put(myCurrentLevel, new HashSet<>());
         }
       }
     }

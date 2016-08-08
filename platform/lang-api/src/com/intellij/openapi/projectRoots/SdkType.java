@@ -202,7 +202,7 @@ public abstract class SdkType implements SdkTypeId {
 
   @NotNull
   public static SdkType[] getAllTypes() {
-    List<SdkType> allTypes = new ArrayList<SdkType>();
+    List<SdkType> allTypes = new ArrayList<>();
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
     Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
     return allTypes.toArray(new SdkType[allTypes.size()]);

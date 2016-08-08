@@ -120,7 +120,7 @@ public class MarkResolvedAction extends BasicAction {
   }
 
   private static Collection<String> collectResolvablePaths(final SvnVcs vcs, VirtualFile[] files) {
-    final Collection<String> target = new TreeSet<String>();
+    final Collection<String> target = new TreeSet<>();
     for (VirtualFile file : files) {
       try {
         File path = new File(file.getPath());

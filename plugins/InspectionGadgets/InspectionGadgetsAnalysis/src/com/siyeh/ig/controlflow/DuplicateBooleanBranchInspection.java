@@ -65,7 +65,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
           return;
         }
       }
-      final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
+      final Set<PsiExpression> conditions = new HashSet<>();
       collectConditions(expression, conditions, tokenType);
       final int numConditions = conditions.size();
       if (numConditions < 2) {

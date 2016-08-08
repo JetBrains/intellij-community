@@ -110,19 +110,20 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
-    Set<SuppressQuickFix> fixes = new THashSet<SuppressQuickFix>(new TObjectHashingStrategy<SuppressQuickFix>() {
+    Set<SuppressQuickFix> fixes = new THashSet<>(new TObjectHashingStrategy<SuppressQuickFix>() {
       @Override
       public int computeHashCode(SuppressQuickFix object) {
         int result = object instanceof InjectionAwareSuppressQuickFix
-          ? ((InjectionAwareSuppressQuickFix)object).isShouldBeAppliedToInjectionHost().hashCode()
-          : 0;
+                     ? ((InjectionAwareSuppressQuickFix)object).isShouldBeAppliedToInjectionHost().hashCode()
+                     : 0;
         return 31 * result + object.getName().hashCode();
       }
 
       @Override
       public boolean equals(SuppressQuickFix o1, SuppressQuickFix o2) {
         if (o1 instanceof InjectionAwareSuppressQuickFix && o2 instanceof InjectionAwareSuppressQuickFix) {
-          if (((InjectionAwareSuppressQuickFix)o1).isShouldBeAppliedToInjectionHost() != ((InjectionAwareSuppressQuickFix)o2).isShouldBeAppliedToInjectionHost()) {
+          if (((InjectionAwareSuppressQuickFix)o1).isShouldBeAppliedToInjectionHost() !=
+              ((InjectionAwareSuppressQuickFix)o2).isShouldBeAppliedToInjectionHost()) {
             return false;
           }
         }
@@ -174,7 +175,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final InspectionSuppressor elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      Set<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
       ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
       for (Language language : viewProvider.getLanguages()) {
         ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));
@@ -184,7 +185,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
     if (!element.getLanguage().isKindOf(viewProvider.getBaseLanguage())) {
       // handling embedding elements {@link EmbeddingElementType
-      Set<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
       ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
       ContainerUtil.addIfNotNull(suppressors, elementLanguageSuppressor);
       return suppressors;

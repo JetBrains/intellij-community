@@ -93,9 +93,9 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
     assert annotationProvider != null;
 
-    final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
-    final Ref<Integer> newLineRef = new Ref<Integer>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
+    final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
+    final Ref<Integer> newLineRef = new Ref<>();
+    final Ref<VcsException> exceptionRef = new Ref<>();
 
     VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).lock();
 

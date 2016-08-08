@@ -49,9 +49,9 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   protected int myFirstErrorOffset = Integer.MAX_VALUE;
   protected int myAttempt = 0;
 
-  private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
-  protected final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
-  private final List<FixEnterProcessor> myAfterEnterProcessors = new ArrayList<FixEnterProcessor>();
+  private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<>();
+  protected final List<FixEnterProcessor> myEnterProcessors = new ArrayList<>();
+  private final List<FixEnterProcessor> myAfterEnterProcessors = new ArrayList<>();
 
   protected static void plainEnter(@NotNull final Editor editor) {
     getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());
@@ -126,7 +126,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
         return;
       }
 
-      OrderedSet<PsiElement> queue = new OrderedSet<PsiElement>();
+      OrderedSet<PsiElement> queue = new OrderedSet<>();
       collectAllElements(atCaret, queue, collectChildrenRecursively(atCaret));
       queue.add(atCaret);
 

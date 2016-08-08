@@ -48,13 +48,13 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || DumbService.isDumb(project)) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<ConfigurableUsageTarget> history = new ArrayList<ConfigurableUsageTarget>(findUsagesManager.getHistory().getAll());
+    List<ConfigurableUsageTarget> history = new ArrayList<>(findUsagesManager.getHistory().getAll());
     Collections.reverse(history);
 
     String description =
       ActionManager.getInstance().getAction(UsageViewImpl.SHOW_RECENT_FIND_USAGES_ACTION_ID).getTemplatePresentation().getDescription();
 
-    List<AnAction> children = new ArrayList<AnAction>(history.size());
+    List<AnAction> children = new ArrayList<>(history.size());
     for (final ConfigurableUsageTarget usageTarget : history) {
       if (!usageTarget.isValid()) {
         continue;

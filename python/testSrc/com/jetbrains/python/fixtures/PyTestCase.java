@@ -266,8 +266,8 @@ public abstract class PyTestCase extends UsefulTestCase {
    */
   @NotNull
   protected Collection<PsiElement> findUsage(@NotNull final PsiElement element) {
-    final Collection<PsiElement> result = new ArrayList<PsiElement>();
-    final CollectProcessor<Usage> usageCollector = new CollectProcessor<Usage>();
+    final Collection<PsiElement> result = new ArrayList<>();
+    final CollectProcessor<Usage> usageCollector = new CollectProcessor<>();
     for (final CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensions()) {
       searcher.processElementUsages(element, usageCollector, new FindUsagesOptions(myFixture.getProject()));
     }
@@ -297,7 +297,7 @@ public abstract class PyTestCase extends UsefulTestCase {
    */
   @NotNull
   protected Set<PsiElement> getElementsToNavigate(@Nullable final PsiElement element) {
-    final Set<PsiElement> result = new HashSet<PsiElement>();
+    final Set<PsiElement> result = new HashSet<>();
     final PsiElement elementToProcess = ((element != null) ? element : myFixture.getElementAtCaret());
     for (final PsiReference reference : elementToProcess.getReferences()) {
       final PsiElement directResolve = reference.resolve();
@@ -347,7 +347,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                         @NotNull final DirectoryProjectConfigurator configurator) {
     final VirtualFile newPath =
       myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<Module>(myFixture.getModule());
+    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
     configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
   }
 
@@ -392,7 +392,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                           @NotNull final Set<String> actual,
                                           @NotNull final Set<String> expected) {
     final Joiner joiner = Joiner.on("\n");
-    Assert.assertEquals(message, joiner.join(new TreeSet<String>(actual)), joiner.join(new TreeSet<String>(expected)));
+    Assert.assertEquals(message, joiner.join(new TreeSet<>(actual)), joiner.join(new TreeSet<>(expected)));
   }
 
 

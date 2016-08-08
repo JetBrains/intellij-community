@@ -73,7 +73,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null) return Collections.emptyList();
 
-    List<TaskData> tasks = new SmartList<TaskData>();
+    List<TaskData> tasks = new SmartList<>();
     for (ExternalSystemNode node : selectedNodes) {
       if (node instanceof TaskNode && !node.isIgnored()) {
         tasks.add((TaskData)node.getData());

@@ -97,7 +97,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   @NotNull
   public GrDocTag[] findTagsByName(@NonNls String name) {
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
-    ArrayList<GrDocTag> list = new ArrayList<GrDocTag>();
+    ArrayList<GrDocTag> list = new ArrayList<>();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrDocTag && name.equals(((GrDocTag)e).getName())) {
         list.add((GrDocTag)e);
@@ -109,7 +109,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   @Override
   @NotNull
   public PsiElement[] getDescriptionElements() {
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       final ASTNode node = child.getNode();
       if (node == null) continue;

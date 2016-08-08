@@ -56,7 +56,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
     if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return;
 
     final PsiElement declaration = variable.getParent();
-    final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+    final List<PsiElement> sideEffects = new ArrayList<>();
     boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
     RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     if (hasSideEffects) {

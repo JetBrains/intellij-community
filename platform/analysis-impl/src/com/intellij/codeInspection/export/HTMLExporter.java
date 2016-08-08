@@ -49,10 +49,10 @@ public class HTMLExporter {
 
   public HTMLExporter(String rootFolder, HTMLComposerImpl composer) {
     myRootFolder = rootFolder;
-    myElementToFilenameMap = new HashMap<RefEntity, String>();
+    myElementToFilenameMap = new HashMap<>();
     myFileCounter = 0;
     myComposer = composer;
-    myGeneratedReferences = new HashSet<RefEntity>();
+    myGeneratedReferences = new HashSet<>();
   }
 
   public String createPage(RefEntity element) {

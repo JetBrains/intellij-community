@@ -54,7 +54,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
     }
   }
 
-  private static final Map<String, Test> myMap = new LinkedHashMap<String, Test>();
+  private static final Map<String, Test> myMap = new LinkedHashMap<>();
   static {
     try {
       final Document document = new SAXBuilder().build(new File(PathManager.getHomePath(),"community/RegExpSupport/testData/RETest.xml"));

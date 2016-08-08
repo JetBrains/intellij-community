@@ -68,7 +68,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   };
 
   static {
-    final List<Fixer> fixers = new ArrayList<Fixer>();
+    final List<Fixer> fixers = new ArrayList<>();
     fixers.add(new LiteralFixer());
     fixers.add(new MethodCallFixer());
     fixers.add(new IfConditionFixer());
@@ -160,7 +160,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
         return;
       }
 
-      List<PsiElement> queue = new ArrayList<PsiElement>();
+      List<PsiElement> queue = new ArrayList<>();
       collectAllElements(atCaret, queue, true);
       queue.add(atCaret);
 

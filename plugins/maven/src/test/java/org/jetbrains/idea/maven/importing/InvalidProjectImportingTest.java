@@ -699,7 +699,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   private static void assertProblems(MavenProject project, String... expectedProblems) {
-    List<String> actualProblems = new ArrayList<String>();
+    List<String> actualProblems = new ArrayList<>();
     for (MavenProjectProblem each : project.getProblems()) {
       actualProblems.add(each.getDescription());
     }

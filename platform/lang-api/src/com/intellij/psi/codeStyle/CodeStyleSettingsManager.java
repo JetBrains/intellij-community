@@ -83,7 +83,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public Element getState() {
     Element result = new Element("state");
     try {
-      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()));
+      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<>(this, new CodeStyleSettingsManager()));
     }
     catch (WriteExternalException e) {
       LOG.error(e);

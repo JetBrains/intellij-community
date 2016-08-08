@@ -481,7 +481,7 @@ public class GroovyExpectedTypesProvider {
     public void visitListOrMap(GrListOrMap listOrMap) {
       if (listOrMap.isMap()) return;
       final TypeConstraint[] constraints = calculateTypeConstraints(listOrMap);
-      List<PsiType> result=new ArrayList<PsiType>(constraints.length);
+      List<PsiType> result= new ArrayList<>(constraints.length);
       for (TypeConstraint constraint : constraints) {
         if (constraint instanceof SubtypeConstraint) {
           final PsiType type = constraint.getType();
@@ -522,7 +522,7 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitSwitchStatement(GrSwitchStatement switchStatement) {
       final GrCaseSection[] sections = switchStatement.getCaseSections();
-      List<PsiType> types = new ArrayList<PsiType>(sections.length);
+      List<PsiType> types = new ArrayList<>(sections.length);
       for (GrCaseSection section : sections) {
         for (GrCaseLabel label : section.getCaseLabels()) {
           final GrExpression value = label.getValue();

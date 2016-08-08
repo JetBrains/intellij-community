@@ -73,7 +73,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
   @Nullable
   public static PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
-    final Ref<GrTypeDefinition> targetClass = new Ref<GrTypeDefinition>();
+    final Ref<GrTypeDefinition> targetClass = new Ref<>();
 
     new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
       @Override

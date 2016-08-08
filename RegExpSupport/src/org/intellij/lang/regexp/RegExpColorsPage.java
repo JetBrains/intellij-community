@@ -47,7 +47,7 @@ public class RegExpColorsPage implements ColorSettingsPage {
     new AttributesDescriptor("Comment",  RegExpHighlighter.COMMENT)
   };
 
-  @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
 
   @NotNull
   public String getDisplayName() {

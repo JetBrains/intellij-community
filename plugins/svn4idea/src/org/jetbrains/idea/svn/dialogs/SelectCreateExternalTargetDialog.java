@@ -50,7 +50,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   public SelectCreateExternalTargetDialog(Project project, final VirtualFile below) {
     super(project, true, "Point to repository location");
     final VirtualFile[] children = below.getChildren();
-    myUsedNames = new HashSet<String>();
+    myUsedNames = new HashSet<>();
     int maxCnt = 1000;  // maybe not take it too seriously ?
     for (VirtualFile child : children) {
       myUsedNames.add(child.getName());

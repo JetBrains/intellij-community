@@ -40,8 +40,8 @@ public class IgnoredFilesComponent {
   private final Lock myWriteLock = myLock.writeLock();
 
   public IgnoredFilesComponent(final Project project, final boolean registerListener) {
-    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
-    myFilesMap = new HashMap<String, IgnoredFileBean>();
+    myFilesToIgnore = new LinkedHashSet<>();
+    myFilesMap = new HashMap<>();
 
     if (registerListener) {
       project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -62,13 +62,13 @@ public class IgnoredFilesComponent {
         }
       });
     }
-    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>();
+    myDirectoriesManuallyRemovedFromIgnored = new HashSet<>();
   }
 
   public IgnoredFilesComponent(final IgnoredFilesComponent other) {
-    myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>(other.myFilesToIgnore);
-    myFilesMap = new HashMap<String, IgnoredFileBean>(other.myFilesMap);
-    myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>(other.myDirectoriesManuallyRemovedFromIgnored);
+    myFilesToIgnore = new LinkedHashSet<>(other.myFilesToIgnore);
+    myFilesMap = new HashMap<>(other.myFilesMap);
+    myDirectoriesManuallyRemovedFromIgnored = new HashSet<>(other.myDirectoriesManuallyRemovedFromIgnored);
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
@@ -102,7 +102,7 @@ public class IgnoredFilesComponent {
           return;
         }
       }
-      List<IgnoredFileBean> toRemove = new ArrayList<IgnoredFileBean>();
+      List<IgnoredFileBean> toRemove = new ArrayList<>();
       for (IgnoredFileBean bean : myFilesToIgnore) {
         if ((bean.getType() == IgnoreSettingsType.UNDER_DIR || bean.getType() == IgnoreSettingsType.FILE) &&
             FileUtil.isAncestor(path, bean.getPath(), false)) {

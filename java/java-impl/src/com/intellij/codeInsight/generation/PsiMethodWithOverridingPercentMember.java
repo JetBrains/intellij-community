@@ -74,8 +74,8 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
 
   @NotNull
   public static PsiMethodWithOverridingPercentMember[] calculateOverridingPercents(@NotNull final Collection<CandidateInfo> candidateInfos) {
-    final List<PsiMethodWithOverridingPercentMember> result = new ArrayList<PsiMethodWithOverridingPercentMember>(candidateInfos.size());
-    final Map<String, Collection<PsiClass>> classShortNames2Inheritors = new HashMap<String, Collection<PsiClass>>();
+    final List<PsiMethodWithOverridingPercentMember> result = new ArrayList<>(candidateInfos.size());
+    final Map<String, Collection<PsiClass>> classShortNames2Inheritors = new HashMap<>();
     for (final CandidateInfo candidateInfo : candidateInfos) {
       final PsiMethod method = (PsiMethod)candidateInfo.getElement();
       if (!method.hasModifierProperty(PsiModifier.FINAL) &&

@@ -78,7 +78,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   @NotNull
   private static List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
     final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
-      new ArrayList<ChangeClassSignatureFromUsageFix.TypeParameterInfoView>();
+      new ArrayList<>();
     for (int i = 0; i < length; i++) {
       result.add(new ChangeClassSignatureFromUsageFix.TypeParameterInfoView(new TypeParameterInfo.Existing(i), null, null));
     }
@@ -96,9 +96,9 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myOriginalParameters = myClass.getTypeParameters();
 
 
-    myTypeParameterInfos = new ArrayList<TypeParameterInfo>(parameters.size());
-    myBoundValueTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(parameters.size());
-    myDefaultValueTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(parameters.size());
+    myTypeParameterInfos = new ArrayList<>(parameters.size());
+    myBoundValueTypeCodeFragments = new ArrayList<>(parameters.size());
+    myDefaultValueTypeCodeFragments = new ArrayList<>(parameters.size());
     for (ChangeClassSignatureFromUsageFix.TypeParameterInfoView p : parameters) {
       myTypeParameterInfos.add(p.getInfo());
       myBoundValueTypeCodeFragments.add(p.getBoundValueFragment());
@@ -184,7 +184,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
   private String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
-    final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
+    final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
       if (info instanceof TypeParameterInfo.New &&
           !PsiNameHelper.getInstance(myClass.getProject()).isIdentifier(info.getName(parameters))) {

@@ -79,7 +79,7 @@ public class SegmentReader {
   public String[] readStringArray() {
     final int count = readInt();
     if (count == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> strings = new ArrayList<String>(count);
+    final ArrayList<String> strings = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
       strings.add(readLimitedString());
     }

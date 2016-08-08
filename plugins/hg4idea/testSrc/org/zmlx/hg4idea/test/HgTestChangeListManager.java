@@ -66,7 +66,7 @@ public class HgTestChangeListManager {
     if (only) {
       Assert.assertEquals(changes.size(), files.length);
     }
-    final Collection<VirtualFile> filesInChangeList = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> filesInChangeList = new HashSet<>();
     for (Change c : changes) {
       filesInChangeList.add(c.getVirtualFile());
     }
@@ -80,7 +80,7 @@ public class HgTestChangeListManager {
    */
   public void commitFiles(VirtualFile... files) {
     ensureUpToDate();
-    final List<Change> changes = new ArrayList<Change>(files.length);
+    final List<Change> changes = new ArrayList<>(files.length);
     for (VirtualFile f : files) {
       changes.addAll(peer.getChangesIn(f));
     }

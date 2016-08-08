@@ -82,7 +82,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       return sdk.getSdkModificator();
     }
   };
-  private Set<SdkModificator> myModifiedModificators = new HashSet<SdkModificator>();
+  private Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
   private boolean myShowOtherProjectVirtualenvs = true;
@@ -251,7 +251,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
     }
     //noinspection unchecked
-    mySdkList.setModel(new CollectionListModel<Sdk>(pythonSdks));
+    mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
     if (projectSdk != null) {
@@ -554,7 +554,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
 
         vFiles = adjustAddedFileSet(myPanel, vFiles);
-        List<VirtualFile> added = new ArrayList<VirtualFile>(vFiles.length);
+        List<VirtualFile> added = new ArrayList<>(vFiles.length);
         for (VirtualFile vFile : vFiles) {
           if (addElement(vFile)) {
             added.add(vFile);

@@ -105,7 +105,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
       final int end = selectionModel.getSelectionEnd();
       final TextRange range = new TextRange(start, end);
 
-      final ArrayList<PsiElement> semicolons = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> semicolons = new ArrayList<>();
       file.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(PsiElement element) {

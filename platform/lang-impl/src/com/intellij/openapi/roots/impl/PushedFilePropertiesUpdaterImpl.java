@@ -68,7 +68,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
   private final Project myProject;
   private final FilePropertyPusher[] myPushers;
   private final FilePropertyPusher[] myFilePushers;
-  private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<Runnable>();
+  private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<>();
 
   public PushedFilePropertiesUpdaterImpl(final Project project) {
     myProject = project;
@@ -248,7 +248,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       }
     });
 
-    List<Runnable> tasks = new ArrayList<Runnable>();
+    List<Runnable> tasks = new ArrayList<>();
 
     for (final Module module : modules) {
       Runnable iteration = ApplicationManager.getApplication().runReadAction(new Computable<Runnable>() {
@@ -288,7 +288,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     
-    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
+    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
     List<Future<?>> results = ContainerUtil.newArrayList();
     if (tasks.size() > 1) {
       int numThreads = Math.max(Math.min(CacheUpdateRunner.indexingThreadCount() - 1, tasks.size() - 1), 1);

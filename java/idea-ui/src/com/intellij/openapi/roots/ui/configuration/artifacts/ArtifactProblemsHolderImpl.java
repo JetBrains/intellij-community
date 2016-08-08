@@ -80,7 +80,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   }
 
   private List<ConfigurationErrorQuickFix> convertQuickFixes(ArtifactProblemQuickFix[] quickFixes) {
-    final List<ConfigurationErrorQuickFix> result = new SmartList<ConfigurationErrorQuickFix>();
+    final List<ConfigurationErrorQuickFix> result = new SmartList<>();
     for (final ArtifactProblemQuickFix fix : quickFixes) {
       result.add(new ConfigurationErrorQuickFix(fix.getActionName()) {
         @Override

@@ -71,7 +71,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
       myS2File = createFileInCommand(mySourceDir, "s2.txt", ourS2Contents);
 
       myTargetDir = createDirInCommand(myRootDir, "target");
-      myTargetFiles = new ArrayList<VirtualFile>();
+      myTargetFiles = new ArrayList<>();
       for (int i = 0; i < 10; i++) {
         myTargetFiles.add(createFileInCommand(myTargetDir, "t" + (i+10) +".txt", ourS1Contents));
       }
@@ -262,7 +262,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
   }
 
   private List<VirtualFile> getAllFiles(final SubTree subTree) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     files.addAll(Arrays.asList(subTree.myRootDir, subTree.mySourceDir, subTree.myS2File, subTree.myS1File, subTree.myTargetDir));
     files.addAll(subTree.myTargetFiles);
     return files;

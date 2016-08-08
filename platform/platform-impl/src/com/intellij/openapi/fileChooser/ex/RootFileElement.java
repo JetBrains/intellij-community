@@ -44,7 +44,7 @@ public class RootFileElement extends FileElement {
         myFiles = getFileSystemRoots();
       }
 
-      List<FileElement> children = new ArrayList<FileElement>();
+      List<FileElement> children = new ArrayList<>();
       for (final VirtualFile file : myFiles) {
         if (file != null) {
           children.add(new FileElement(file, file.getPresentableUrl()));
@@ -57,7 +57,7 @@ public class RootFileElement extends FileElement {
 
   private static VirtualFile[] getFileSystemRoots() {
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    final Set<VirtualFile> roots = new HashSet<>();
     final File[] ioRoots = File.listRoots();
     if (ioRoots != null) {
       for (final File root : ioRoots) {

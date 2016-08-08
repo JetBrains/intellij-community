@@ -30,7 +30,7 @@ public class ClassConditionKey<T> {
   }
 
   public static <T> ClassConditionKey<T> create(Class<T> aClass) {
-    return new ClassConditionKey<T>(aClass);
+    return new ClassConditionKey<>(aClass);
   }
 
   public boolean isInstance(Object o) {

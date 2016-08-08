@@ -93,7 +93,7 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Branches");
-    List<String> branchNamesList = new ArrayList<String>(myRepository.getOpenedBranches());//only opened branches have to be shown
+    List<String> branchNamesList = new ArrayList<>(myRepository.getOpenedBranches());//only opened branches have to be shown
     Collections.sort(branchNamesList);
     for (String branch : branchNamesList) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
@@ -230,7 +230,7 @@ public class HgBranchPopupActions {
   public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup {
     @NotNull final HgRepository myRepository;
     @NotNull final String myCurrentBranchName;
-    @NotNull Collection<Hash> myHeads = new HashSet<Hash>();
+    @NotNull Collection<Hash> myHeads = new HashSet<>();
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
       super(null, true);
@@ -264,7 +264,7 @@ public class HgBranchPopupActions {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      List<AnAction> branchHeadActions = new ArrayList<AnAction>();
+      List<AnAction> branchHeadActions = new ArrayList<>();
       for (Hash hash : myHeads) {
         branchHeadActions
           .add(new HgCommonBranchActions(myRepository.getProject(), Collections.singletonList(myRepository), hash.toShortString()));

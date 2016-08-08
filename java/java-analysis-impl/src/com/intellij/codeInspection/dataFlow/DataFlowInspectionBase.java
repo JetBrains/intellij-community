@@ -221,7 +221,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (qualifier instanceof PsiMethodCallExpression) return null;
 
     try {
-      final List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
+      final List<LocalQuickFix> fixes = new SmartList<>();
 
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
@@ -273,13 +273,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
 
-    ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
+    ArrayList<Instruction> allProblems = new ArrayList<>();
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
     allProblems.addAll(visitor.myCCEInstructions);
     allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), instruction1 -> instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1)));
 
-    HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
+    HashSet<PsiElement> reportedAnchors = new HashSet<>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
       if (reportedAnchors.add(element)) {
         reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
@@ -833,7 +833,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
-    private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
+    private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<>();
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
 

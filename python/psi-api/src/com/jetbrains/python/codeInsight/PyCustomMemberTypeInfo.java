@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class PyCustomMemberTypeInfo<K> {
   @NotNull
-  private final Map<Key<K>, K> myCustomInfo = new HashMap<Key<K>, K>();
+  private final Map<Key<K>, K> myCustomInfo = new HashMap<>();
 
   public PyCustomMemberTypeInfo(@NotNull final Key<K> key, @NotNull final K value) {
     this(Collections.singleton(Pair.create(key, value)));

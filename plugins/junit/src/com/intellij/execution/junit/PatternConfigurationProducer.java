@@ -53,7 +53,7 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
       return false;

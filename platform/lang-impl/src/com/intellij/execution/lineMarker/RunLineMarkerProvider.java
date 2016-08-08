@@ -45,7 +45,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguage(element.getLanguage());
     DefaultActionGroup actionGroup = null;
     Icon icon = null;
-    final List<RunLineMarkerContributor.Info> infos = new ArrayList<RunLineMarkerContributor.Info>();
+    final List<RunLineMarkerContributor.Info> infos = new ArrayList<>();
     for (RunLineMarkerContributor contributor : contributors) {
       RunLineMarkerContributor.Info info = contributor.getInfo(element);
       if (info == null) {

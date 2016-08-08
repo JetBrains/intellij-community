@@ -27,7 +27,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public interface MoveMemberHandler {
-  LanguageExtension<MoveMemberHandler> EP_NAME = new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
+  LanguageExtension<MoveMemberHandler> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.moveMemberHandler");
 
   @Nullable
   MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,

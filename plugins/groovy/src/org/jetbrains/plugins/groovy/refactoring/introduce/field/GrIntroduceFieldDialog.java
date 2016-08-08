@@ -199,7 +199,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private void checkErrors() {
-    List<String> errors = new ArrayList<String>();
+    List<String> errors = new ArrayList<>();
     if (myCurrentMethodRadioButton.isSelected() && myDeclareFinalCheckBox.isSelected() && !isInvokedInAlwaysInvokedConstructor) {
       errors.add(GroovyRefactoringBundle.message("final.field.cant.be.initialized.in.cur.method"));
     }
@@ -298,7 +298,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     final GrVariable var = myContext.getVar();
     final StringPartInfo stringPart = myContext.getStringPart();
 
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     if (var != null) {
       list.add(var.getName());
     }

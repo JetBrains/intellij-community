@@ -39,7 +39,7 @@ final class TestInfoHolder {
   final CachingEnumerator<String> myMethodEnumeratorCache;
   final PersistentStringEnumerator myTestNameEnumerator;
   final PersistentStringEnumerator myModuleNameEnumerator;
-  final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<PersistentEnumeratorDelegate>(6);
+  final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<>(6);
 
   private ScheduledFuture<?> myFlushingFuture;
   private boolean myDisposed;
@@ -112,9 +112,9 @@ final class TestInfoHolder {
           };
           myConstructedDataFiles.add(testNameToUsedClassesAndMethodMap);
 
-          testNameToNearestModule = new PersistentHashMap<Long, TIntArrayList>(testNameToNearestModuleFile,
-                                                                               MethodQNameSerializer.INSTANCE,
-                                                                               new TestNamesExternalizer());
+          testNameToNearestModule = new PersistentHashMap<>(testNameToNearestModuleFile,
+                                                            MethodQNameSerializer.INSTANCE,
+                                                            new TestNamesExternalizer());
           myConstructedDataFiles.add(testNameToNearestModule);
 
           classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
@@ -155,8 +155,8 @@ final class TestInfoHolder {
       myMethodEnumerator = methodNameEnumerator;
       myTestNameEnumerator = testNameEnumerator;
       myModuleNameEnumerator = moduleNameEnumerator;
-      myMethodEnumeratorCache = new CachingEnumerator<String>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
-      myClassEnumeratorCache = new CachingEnumerator<String>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
+      myMethodEnumeratorCache = new CachingEnumerator<>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
+      myClassEnumeratorCache = new CachingEnumerator<>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
 
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(() -> {
         synchronized (myLock) {
@@ -345,7 +345,7 @@ final class TestInfoHolder {
 
     public TIntObjectHashMap<TIntArrayList> read(@NotNull DataInput dataInput) throws IOException {
       int numberOfClasses = DataInputOutputUtil.readINT(dataInput);
-      TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<TIntArrayList>();
+      TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
       int prevClassNameId = 0;
 
       while (numberOfClasses-- > 0) {
@@ -409,8 +409,8 @@ final class TestInfoHolder {
       TIntObjectHashMap<TIntArrayList> removedClassData = previousClassData;
 
       if (previousClassData != null && !previousClassData.isEmpty()) {
-        removedClassData = new TIntObjectHashMap<TIntArrayList>();
-        addedOrChangedClassData = new TIntObjectHashMap<TIntArrayList>();
+        removedClassData = new TIntObjectHashMap<>();
+        addedOrChangedClassData = new TIntObjectHashMap<>();
 
         if (classData != null) {
           for (int classQName : classData.keys()) {

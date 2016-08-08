@@ -67,7 +67,7 @@ public class PyIterableVariableMacro extends Macro {
   @Nullable
   @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    final List<LookupElement> results = new ArrayList<LookupElement>();
+    final List<LookupElement> results = new ArrayList<>();
     final PsiElement element = context.getPsiElementAtStartOffset();
     if (element != null) {
       for (PsiNamedElement iterableElement : getIterableElements(element)) {
@@ -88,7 +88,7 @@ public class PyIterableVariableMacro extends Macro {
   @NotNull
   protected List<PsiNamedElement> getIterableElements(@NotNull PsiElement element) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    final List<PsiNamedElement> components = new ArrayList<PsiNamedElement>();
+    final List<PsiNamedElement> components = new ArrayList<>();
     for (PsiNamedElement namedElement : getVisibleNamedElements(element)) {
       if (namedElement instanceof PyTypedElement) {
         final PyType type = typeEvalContext.getType((PyTypedElement)namedElement);
@@ -102,7 +102,7 @@ public class PyIterableVariableMacro extends Macro {
 
   @NotNull
   private static List<PsiNamedElement> getVisibleNamedElements(@NotNull PsiElement anchor) {
-    final List<PsiNamedElement> results = new ArrayList<PsiNamedElement>();
+    final List<PsiNamedElement> results = new ArrayList<>();
     for (ScopeOwner owner = ScopeUtil.getScopeOwner(anchor); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
       final Scope scope = ControlFlowCache.getScope(owner);
       results.addAll(scope.getNamedElements());

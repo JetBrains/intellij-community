@@ -110,7 +110,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   @Nullable
   private AbstractBlockWrapper getPrevIndentedSiblingFast(@NotNull final AbstractBlockWrapper current) {
     if (myPrevBlockCalculator == null) {
-      myPrevBlockCalculator = new ProbablyIncreasingLowerboundAlgorithm<AbstractBlockWrapper>(myChildren);
+      myPrevBlockCalculator = new ProbablyIncreasingLowerboundAlgorithm<>(myChildren);
     }
 
     final List<AbstractBlockWrapper> leftBlocks = myPrevBlockCalculator.getLeftSubList(current);

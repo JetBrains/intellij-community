@@ -85,7 +85,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
         ArrayUtil.reverseArray(results);
         List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
 
-        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor>();
+        Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();
         for (ProblemDescriptor result : list) {
           for (QuickFix fix : result.getFixes()) {
             if (fix instanceof XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix) {

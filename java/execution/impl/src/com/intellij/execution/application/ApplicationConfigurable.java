@@ -117,7 +117,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   private void createUIComponents() {
-    myMainClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
+    myMainClass = new LabeledComponent<>();
     myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {

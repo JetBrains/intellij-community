@@ -195,7 +195,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @NotNull
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
-    final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    final List<ProjectStructureElement> elements = new ArrayList<>();
     for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getAllArtifactsIncludingInvalid()) {
       elements.add(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
     }

@@ -69,7 +69,7 @@ public class ClassMapCachingNulls<T> {
     List<T> result = null;
     if (value != null) {
       assert value.length != 0;
-      result = new ArrayList<T>(Arrays.asList(value));
+      result = new ArrayList<>(Arrays.asList(value));
     }
     for (final Class aClass1 : aClass.getInterfaces()) {
       result = addFromUpper(result, aClass1);
@@ -86,7 +86,7 @@ public class ClassMapCachingNulls<T> {
     if (fromUpper != null) {
       assert fromUpper.length != 0;
       if (value == null) {
-        value = new ArrayList<T>(fromUpper.length);
+        value = new ArrayList<>(fromUpper.length);
       }
       for (T t : fromUpper) {
         if (!value.contains(t)) {

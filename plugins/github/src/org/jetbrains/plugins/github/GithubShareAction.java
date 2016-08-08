@@ -257,7 +257,7 @@ public class GithubShareAction extends DumbAwareAction {
           // check access to private repos (network)
           GithubUserDetailed userInfo = GithubApiUtil.getCurrentUser(connection);
 
-          HashSet<String> names = new HashSet<String>();
+          HashSet<String> names = new HashSet<>();
           for (GithubRepo info : GithubApiUtil.getUserRepos(connection)) {
             names.add(info.getName());
           }
@@ -326,11 +326,11 @@ public class GithubShareAction extends DumbAwareAction {
         filterOutIgnored(project, repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
       trackedFiles.removeAll(untrackedFiles); // fix IDEA-119855
 
-      final List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
+      final List<VirtualFile> allFiles = new ArrayList<>();
       allFiles.addAll(trackedFiles);
       allFiles.addAll(untrackedFiles);
 
-      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
+      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, allFiles);
         if (!trackedFiles.isEmpty()) {
@@ -349,7 +349,7 @@ public class GithubShareAction extends DumbAwareAction {
 
       Collection<VirtualFile> files2add = ContainerUtil.intersection(untrackedFiles, files2commit);
       Collection<VirtualFile> files2rm = ContainerUtil.subtract(trackedFiles, files2commit);
-      Collection<VirtualFile> modified = new HashSet<VirtualFile>(trackedFiles);
+      Collection<VirtualFile> modified = new HashSet<>(trackedFiles);
       modified.addAll(files2commit);
 
       GitFileUtils.addFiles(project, root, files2add);

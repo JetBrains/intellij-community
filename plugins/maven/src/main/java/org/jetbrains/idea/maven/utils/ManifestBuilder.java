@@ -138,7 +138,7 @@ public class ManifestBuilder {
   private static Map<String, String> getManifestEntries(Element manifestEntries) {
     boolean hasManifestEntries = manifestEntries != null && manifestEntries.getContentSize() > 0;
     Map<String, String> entries = hasManifestEntries ?
-                                  new LinkedHashMap<String, String>(manifestEntries.getContentSize()) :
+                                  new LinkedHashMap<>(manifestEntries.getContentSize()) :
                                   Collections.<String, String>emptyMap();
     if (hasManifestEntries) {
       for (Element element : manifestEntries.getChildren()) {

@@ -66,7 +66,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private ToolWindow myToolWindow;
   private final VcsListener myVcsListener = new MyVcsListener();
   private final Alarm myVcsChangeAlarm;
-  private final List<Content> myAddedContents = new ArrayList<Content>();
+  private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
   public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
@@ -130,7 +130,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private void loadExtensionTabs() {
-    final List<Content> contentList = new LinkedList<Content>();
+    final List<Content> contentList = new LinkedList<>();
     final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
@@ -293,7 +293,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   public static final String SHELF = "Shelf";
   private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
   private static List<Content> doPresetOrdering(final List<Content> contents) {
-    final List<Content> result = new ArrayList<Content>(contents.size());
+    final List<Content> result = new ArrayList<>(contents.size());
     for (final String preset : ourPresetOrder) {
       for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {
         final Content current = iterator.next();
@@ -323,7 +323,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       return;
     }
 
-    final Set<String> existingNames = new HashSet<String>();
+    final Set<String> existingNames = new HashSet<>();
     for (Content existingContent : contents) {
       existingNames.add(existingContent.getTabName());
     }

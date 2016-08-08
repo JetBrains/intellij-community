@@ -70,7 +70,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final List<EditorWindowImpl> allEditors = new WeakList<EditorWindowImpl>();
+  private static final List<EditorWindowImpl> allEditors = new WeakList<>();
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
@@ -456,7 +456,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myDelegate.getComponent();
   }
 
-  private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<EditorMouseListener>();
+  private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<>();
   @Override
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     checkValid();
@@ -500,7 +500,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     }
   }
 
-  private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<EditorMouseMotionListener>();
+  private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<>();
   @Override
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     checkValid();

@@ -60,7 +60,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     ourShortNameBuilderCacheKey = Key.create("project's.short.file.name.builder");
   private static final Key<CachedValue<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>>
     ourShortNameOpenedBuilderCacheKey = Key.create("project's.short.file.name.opened.builder");
-  private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<VirtualFile>(null, null, -1);
+  private static final UniqueNameBuilder<VirtualFile> ourEmptyBuilder = new UniqueNameBuilder<>(null, null, -1);
 
   private static String getUniqueVirtualFilePath(final Project project, VirtualFile file, final boolean skipNonOpenedFiles) {
     Key<CachedValue<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>> key =
@@ -110,7 +110,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.emptySet() :
                                                 FilenameIndex.getVirtualFilesByName(project, fileName,
                                                                                     scope);
-    THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<VirtualFile>(filesWithSameName);
+    THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<>(filesWithSameName);
     // add open files out of project scope
     for(VirtualFile openFile: FileEditorManager.getInstance(project).getOpenFiles()) {
       if (openFile.getName().equals(fileName)) {
@@ -130,7 +130,7 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     if (filesWithSameName.size() > 1) {
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
-      UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<VirtualFile>(path, File.separator, 25);
+      UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<>(path, File.separator, 25);
       for (VirtualFile virtualFile: filesWithSameName) {
         builder.addPath(virtualFile, virtualFile.getPath());
       }

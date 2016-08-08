@@ -142,7 +142,7 @@ public class FunctionalInterfaceSuggester {
 
   private static <T extends PsiElement> Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull T element, final NullableFunction<PsiClass, PsiType> acceptanceChecker) {
     final Project project = element.getProject();
-    final Set<PsiType> types = new HashSet<PsiType>();
+    final Set<PsiType> types = new HashSet<>();
     final Processor<PsiMember> consumer = member -> {
       if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
         if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
@@ -166,7 +166,7 @@ public class FunctionalInterfaceSuggester {
       }
     }
 
-    final ArrayList<PsiType> typesToSuggest = new ArrayList<PsiType>(types);
+    final ArrayList<PsiType> typesToSuggest = new ArrayList<>(types);
     Collections.sort(typesToSuggest, (o1, o2) -> o1.getCanonicalText().compareTo(o2.getCanonicalText()));
     return typesToSuggest;
   }

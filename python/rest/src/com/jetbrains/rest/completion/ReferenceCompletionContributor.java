@@ -59,7 +59,7 @@ public class ReferenceCompletionContributor extends CompletionContributor {
            }
            RestReference[] elements = PsiTreeUtil.getChildrenOfType(file, RestReference.class);
            RestReferenceTarget[] targets = PsiTreeUtil.getChildrenOfType(file, RestReferenceTarget.class);
-           Set<String> names = new HashSet<String>();
+           Set<String> names = new HashSet<>();
            if (targets != null) {
              for (RestReferenceTarget t : targets) {
                names.add(t.getReferenceName());

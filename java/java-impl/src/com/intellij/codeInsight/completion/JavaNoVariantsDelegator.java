@@ -167,11 +167,11 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       return plainVariants;
     }
 
-    final Set<LookupElement> allClasses = new LinkedHashSet<LookupElement>();
+    final Set<LookupElement> allClasses = new LinkedHashSet<>();
     PsiElement qualifierName = qualifier.getReferenceNameElement();
     if (qualifierName != null) {
       JavaClassNameCompletionContributor.addAllClasses(parameters.withPosition(qualifierName, qualifierName.getTextRange().getEndOffset()),
-                                                       true, qMatcher, new CollectConsumer<LookupElement>(allClasses));
+                                                       true, qMatcher, new CollectConsumer<>(allClasses));
     }
     return allClasses;
   }

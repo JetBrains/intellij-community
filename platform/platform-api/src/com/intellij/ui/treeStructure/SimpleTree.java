@@ -178,7 +178,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   public SimpleNode[] getSelectedNodesIfUniform() {
-    List<SimpleNode> result = new ArrayList<SimpleNode>();
+    List<SimpleNode> result = new ArrayList<>();
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       SimpleNode lastNode = null;

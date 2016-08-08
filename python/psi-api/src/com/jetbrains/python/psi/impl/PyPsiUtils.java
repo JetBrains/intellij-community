@@ -300,7 +300,7 @@ public class PyPsiUtils {
     final ASTNode parentNode = node1.getTreeParent();
 
     boolean insideRange = false;
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     for (ASTNode node : parentNode.getChildren(null)) {
       // start
       if (node1 == node) {
@@ -426,7 +426,7 @@ public class PyPsiUtils {
   static <T, U extends PsiElement> List<T> collectStubChildren(U e,
                                                                final StubElement<U> stub, final IElementType elementType,
                                                                final Class<T> itemClass) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
@@ -451,7 +451,7 @@ public class PyPsiUtils {
   }
 
   static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement stub) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
@@ -584,7 +584,7 @@ public class PyPsiUtils {
 
   @NotNull
   private static List<PyExpression> unwindQualifiers(@NotNull final PyQualifiedExpression expr) {
-    final List<PyExpression> path = new LinkedList<PyExpression>();
+    final List<PyExpression> path = new LinkedList<>();
     PyQualifiedExpression e = expr;
     while (e != null) {
       path.add(0, e);
@@ -596,7 +596,7 @@ public class PyPsiUtils {
 
   @Nullable
   private static QualifiedName fromReferenceChain(@NotNull List<PyExpression> components) {
-    final List<String> componentNames = new ArrayList<String>(components.size());
+    final List<String> componentNames = new ArrayList<>(components.size());
     for (PyExpression component : components) {
       final String refName = (component instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)component).getReferencedName() : null;
       if (refName == null) {

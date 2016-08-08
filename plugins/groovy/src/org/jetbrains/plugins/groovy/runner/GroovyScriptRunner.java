@@ -146,7 +146,7 @@ public abstract class GroovyScriptRunner {
       return null;
     }
 
-    Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
+    Set<VirtualFile> core = new HashSet<>(params.getClassPath().getVirtualFiles());
 
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
       if (allowDuplication || !core.contains(virtualFile)) {

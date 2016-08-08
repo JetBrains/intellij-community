@@ -64,11 +64,11 @@ public class LocalTaskImpl extends LocalTask {
   private String myIssueUrl = null;
 
   private boolean myActive;
-  private List<ChangeListInfo> myChangeLists = new ArrayList<ChangeListInfo>();
+  private List<ChangeListInfo> myChangeLists = new ArrayList<>();
   private boolean myRunning = false;
-  private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
+  private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
-  private List<BranchInfo> myBranches = new ArrayList<BranchInfo>();
+  private List<BranchInfo> myBranches = new ArrayList<>();
 
 
   /** for serialization */

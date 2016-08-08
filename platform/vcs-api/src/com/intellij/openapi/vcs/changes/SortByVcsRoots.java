@@ -37,7 +37,7 @@ public class SortByVcsRoots<T> {
   }
 
   public MultiMap<VcsRoot, T> sort(final Collection<T> in) {
-    final MultiMap<VcsRoot, T> result = new MultiMap<VcsRoot,T>();
+    final MultiMap<VcsRoot, T> result = new MultiMap<>();
     for (T t : in) {
       final VcsRoot root = myVcsManager.getVcsRootObjectFor(myConvertor.convert(t));
       if (root != null) {

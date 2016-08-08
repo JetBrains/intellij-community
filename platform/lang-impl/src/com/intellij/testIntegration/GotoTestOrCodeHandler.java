@@ -52,7 +52,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
     if (sourceElement == null) return null;
 
-    List<AdditionalAction> actions = new SmartList<AdditionalAction>();
+    List<AdditionalAction> actions = new SmartList<>();
 
     Collection<PsiElement> candidates;
     if (TestFinderHelper.isTest(selectedElement)) {

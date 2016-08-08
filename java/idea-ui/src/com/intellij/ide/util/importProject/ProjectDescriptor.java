@@ -50,7 +50,7 @@ public class ProjectDescriptor {
   public boolean isLibraryChosen(LibraryDescriptor lib) {
     Set<LibraryDescriptor> available = myLibrariesSet;
     if (available == null) {
-      available = new HashSet<LibraryDescriptor>(myLibraries);
+      available = new HashSet<>(myLibraries);
       myLibrariesSet = available;
     }
     return available.contains(lib);

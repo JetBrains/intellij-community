@@ -76,7 +76,7 @@ public class AppEngineFacetConverterProvider extends ConverterProvider {
 
     @NotNull
     private static List<Element> getAppEngineFacetTags(@NotNull ModuleSettings settings) {
-      List<Element> appEngineFacetTags = new ArrayList<Element>();
+      List<Element> appEngineFacetTags = new ArrayList<>();
       for (Element webFacetTag : settings.getFacetElements("web")) {
         for (Element childFacetTag : JDOMUtil.getChildren(webFacetTag, JpsFacetSerializer.FACET_TAG)) {
           if (AppEngineFacetType.STRING_ID.equals(childFacetTag.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {

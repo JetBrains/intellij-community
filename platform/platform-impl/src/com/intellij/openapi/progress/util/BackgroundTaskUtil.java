@@ -74,7 +74,7 @@ public class BackgroundTaskUtil {
     final ProgressIndicator indicator = new EmptyProgressIndicator(modality);
 
     final Semaphore semaphore = new Semaphore(0);
-    final AtomicReference<Runnable> resultRef = new AtomicReference<Runnable>();
+    final AtomicReference<Runnable> resultRef = new AtomicReference<>();
 
     if (forceEDT) {
       try {
@@ -130,7 +130,7 @@ public class BackgroundTaskUtil {
   @Nullable
   public static <T> T tryComputeFast(@NotNull final Function<ProgressIndicator, T> backgroundTask,
                                      final int waitMillis) {
-    final Ref<T> resultRef = new Ref<T>();
+    final Ref<T> resultRef = new Ref<>();
     ProgressIndicator indicator = executeAndTryWait(indicator1 -> {
       final T result = backgroundTask.fun(indicator1);
       return () -> resultRef.set(result);

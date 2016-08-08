@@ -49,7 +49,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
   protected void applyPatch() throws Exception {
     PatchReader reader = PatchVirtualFileReader.create(LocalFileSystem.getInstance().refreshAndFindFileByPath(patchFilePath));
 
-    List<FilePatch> patches = new ArrayList<FilePatch>(reader.readAllPatches());
+    List<FilePatch> patches = new ArrayList<>(reader.readAllPatches());
 
     new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null, null).execute();
   }

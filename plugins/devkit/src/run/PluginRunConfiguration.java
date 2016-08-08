@@ -95,7 +95,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<PluginRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new PluginRunConfigurationEditor(this));
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<PluginRunConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 

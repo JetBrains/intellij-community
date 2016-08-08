@@ -130,10 +130,10 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   private void doExpand() {
-    List<DefaultMutableTreeNode> toExpand = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> toExpand = new ArrayList<>();
     RunConfigurable.collectNodesRecursively(myRoot, toExpand, FOLDER);
     assertEquals(5, toExpand.size());
-    List<DefaultMutableTreeNode> toExpand2 = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> toExpand2 = new ArrayList<>();
     RunConfigurable.collectNodesRecursively(myRoot, toExpand2, CONFIGURATION_TYPE);
     toExpand.addAll(toExpand2);
     for (DefaultMutableTreeNode node : toExpand) {

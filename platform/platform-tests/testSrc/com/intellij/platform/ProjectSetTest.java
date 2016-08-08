@@ -77,7 +77,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
 
   public void testVcsCheckoutProcessor() throws IOException {
 
-    final List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
+    final List<Pair<String, String>> pairs = new ArrayList<>();
     PlatformTestUtil.registerExtension(VcsCheckoutProcessor.EXTENSION_POINT_NAME, new VcsCheckoutProcessor() {
       @NotNull
       @Override

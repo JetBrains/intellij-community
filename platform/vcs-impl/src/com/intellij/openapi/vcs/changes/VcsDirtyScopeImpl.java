@@ -60,9 +60,9 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
                path1.getPath().equals(path2.getPath());
       }
     };
-  private final Map<VirtualFile, THashSet<FilePath>> myDirtyFiles = new HashMap<VirtualFile, THashSet<FilePath>>();
-  private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<VirtualFile, THashSet<FilePath>>();
-  private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
+  private final Map<VirtualFile, THashSet<FilePath>> myDirtyFiles = new HashMap<>();
+  private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<>();
+  private final Set<VirtualFile> myAffectedContentRoots = new THashSet<>();
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
@@ -85,7 +85,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (myDirtyFiles.isEmpty()) {
           return Collections.<FilePath>emptyList().iterator();
         }
-        final ArrayList<Iterator<FilePath>> iteratorList = new ArrayList<Iterator<FilePath>>(myDirtyFiles.size());
+        final ArrayList<Iterator<FilePath>> iteratorList = new ArrayList<>(myDirtyFiles.size());
         for (THashSet<FilePath> paths : myDirtyFiles.values()) {
           iteratorList.add(paths.iterator());
         }
@@ -130,7 +130,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
       final VirtualFile[] roots = vcsManager.getRootsUnderVcs(myVcs);
 
-      final Set<VirtualFile> result = new HashSet<VirtualFile>(myAffectedContentRoots);
+      final Set<VirtualFile> result = new HashSet<>(myAffectedContentRoots);
       for (VirtualFile root : roots) {
         for (VirtualFile dir : myDirtyDirectoriesRecursively.keySet()) {
           if (VfsUtilCore.isAncestor(dir, root, true)) {
@@ -138,7 +138,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
           }
         }
       }
-      return new SmartList<VirtualFile>(result);
+      return new SmartList<>(result);
     }
     return myAffectedContentRoots;
   }
@@ -216,7 +216,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   public void addDirtyData(@NotNull Collection<FilePath> dirs, @NotNull Collection<FilePath> files) {
-    final HashSet<FilePath> newFiles = new HashSet<FilePath>(files);
+    final HashSet<FilePath> newFiles = new HashSet<>(files);
     newFiles.removeAll(dirs); // if the same dir is added recursively and not recursively, prefer recursive mark
 
     final MultiMap<VirtualFile, FileOrDir> perRoot = MultiMap.createSet();
@@ -290,7 +290,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
   @NotNull
   private THashSet<FilePath> newFilePathsSet() {
-    return new THashSet<FilePath>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    return new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
   }
 
   private void addFilePathToMap(MultiMap<VirtualFile, FileOrDir> perRoot, final FilePath dir, final boolean recursively) {

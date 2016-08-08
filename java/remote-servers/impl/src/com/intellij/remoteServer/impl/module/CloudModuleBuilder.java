@@ -50,7 +50,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   private Project myProject;
 
   public CloudModuleBuilder() {
-    myCloudType2Contribution = new HashMap<ServerType<?>, CloudModuleBuilderContribution>();
+    myCloudType2Contribution = new HashMap<>();
 
     ModuleConfigurationUpdater configurationUpdater = new ModuleConfigurationUpdater() {
 

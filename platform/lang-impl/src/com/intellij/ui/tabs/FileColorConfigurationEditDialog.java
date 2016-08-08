@@ -53,7 +53,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   private final FileColorManager myManager;
   private final ColorSelectionComponent myColorSelectionComponent;
 
-  private final Map<String, NamedScope> myScopeNames = new HashMap<String, NamedScope>();
+  private final Map<String, NamedScope> myScopeNames = new HashMap<>();
 
   public FileColorConfigurationEditDialog(@NotNull final FileColorManager manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
@@ -86,7 +86,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    final List<NamedScope> scopeList = new ArrayList<NamedScope>();
+    final List<NamedScope> scopeList = new ArrayList<>();
     final Project project = myManager.getProject();
     final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(project);
     for (final NamedScopesHolder scopeHolder : scopeHolders) {

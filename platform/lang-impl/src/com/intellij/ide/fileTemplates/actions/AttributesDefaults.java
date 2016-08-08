@@ -32,7 +32,7 @@ import java.util.Properties;
 public class AttributesDefaults {
   private final String myDefaultName;
   private final TextRange myDefaultRange;
-  private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<String, Pair<String, TextRange>>();
+  private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<>();
   private Properties myDefaultProperties = null;
   private boolean myFixedName;
 

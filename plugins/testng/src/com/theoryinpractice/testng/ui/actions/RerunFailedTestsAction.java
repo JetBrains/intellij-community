@@ -102,12 +102,12 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
         TestNGTestObject.collectTestMethods(classes, psiClass, psiMethod.getName(), scope);
         Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
         if (psiMethods == null) {
-          psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
+          psiMethods = new LinkedHashMap<>();
           classes.put(psiClass, psiMethods);
         }
         List<String> strings = psiMethods.get(psiMethod);
         if (strings == null || strings.isEmpty()) {
-          strings = new ArrayList<String>();
+          strings = new ArrayList<>();
         }
         setupParameterName(location, strings);
         psiMethods.put(psiMethod, strings);

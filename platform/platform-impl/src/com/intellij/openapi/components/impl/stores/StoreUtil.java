@@ -46,7 +46,7 @@ public final class StoreUtil {
     Thread currentThread = Thread.currentThread();
     ShutDownTracker.getInstance().registerStopperThread(currentThread);
     try {
-      stateStore.save(new SmartList<Pair<SaveSession, VirtualFile>>());
+      stateStore.save(new SmartList<>());
     }
     catch (IComponentStore.SaveCancelledException e) {
       LOG.info(e);

@@ -65,8 +65,8 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
     super(itemEditor);
 
-    model = new MyListTableModel(columns, new ArrayList<T>(items));
-    table = new TableView<T>(model);
+    model = new MyListTableModel(columns, new ArrayList<>(items));
+    table = new TableView<>(model);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
     table.setStriped(true);
     table.setEnableAntialiasing(true);
@@ -338,7 +338,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   public void reset(@NotNull List<T> items) {
     super.reset(items);
-    model.setItems(new ArrayList<T>(items));
+    model.setItems(new ArrayList<>(items));
   }
 
   private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {

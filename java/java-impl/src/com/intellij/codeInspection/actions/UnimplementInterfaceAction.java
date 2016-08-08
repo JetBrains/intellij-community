@@ -114,7 +114,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     PsiClass targetClass = (PsiClass)target;
 
-    final Map<PsiMethod, PsiMethod> implementations = new HashMap<PsiMethod, PsiMethod>();
+    final Map<PsiMethod, PsiMethod> implementations = new HashMap<>();
     for (PsiMethod psiMethod : targetClass.getAllMethods()) {
       final PsiMethod implementingMethod = MethodSignatureUtil.findMethodBySuperMethod(psiClass, psiMethod, false);
       if (implementingMethod != null) {
@@ -125,7 +125,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (target == psiClass) return;
 
-    final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    final Set<PsiMethod> superMethods = new HashSet<>();
     for (PsiClass aClass : psiClass.getSupers()) {
       Collections.addAll(superMethods, aClass.getAllMethods());
     }

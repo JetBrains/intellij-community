@@ -94,7 +94,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final SvnBranchConfigurationNew configuration = new SvnBranchConfigurationNew();
     configuration.setTrunkUrl(myRepoUrl + "/trunk");
     configuration.addBranches(myRepoUrl + "/branches",
-                              new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
+                              new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
     branchConfigurationManager.setConfiguration(myWorkingCopyDir, configuration);
 
     //((ApplicationImpl) ApplicationManager.getApplication()).setRunPooledInTest(true);
@@ -175,7 +175,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     // we should get exactly 2 revisions for selection (copy and change in b2)
     final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
-    final AtomicReference<String> selectionError = new AtomicReference<String>();
+    final AtomicReference<String> selectionError = new AtomicReference<>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
       public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
@@ -193,7 +193,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
         } else if (list.get(3).getNumber() != numberBefore) {
           selectionError.set("wrong revision for copy statement: " + list.get(3).getNumber());
         }
-        return new SmartList<CommittedChangeList>(list.get(2));  // get a change
+        return new SmartList<>(list.get(2));  // get a change
       }
     };
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
@@ -267,7 +267,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     // we should get exactly 2 revisions for selection (copy and change in b2)
     final QuickMerge quickMerge = newQuickMerge(myRepoUrl + "/branches/b2");
     // by default merges all
-    final AtomicReference<String> selectionError = new AtomicReference<String>();
+    final AtomicReference<String> selectionError = new AtomicReference<>();
     final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
       @Override
       public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
@@ -285,7 +285,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
         } else if (list.get(1).getNumber() != numberBeforeCopy + 1) {
           selectionError.set("wrong revision for copy statement: " + list.get(1).getNumber());
         }
-        return new SmartList<CommittedChangeList>(list.get(0));  // get a change
+        return new SmartList<>(list.get(0));  // get a change
       }
     };
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
@@ -360,7 +360,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
           @Override
           public List<CommittedChangeList> getSelectedLists() {
-            final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+            final List<CommittedChangeList> result = new ArrayList<>();
             for (CommittedChangeList list : lists) {
               if (numberBefore + 1 == list.getNumber() || numberBefore + 2 == list.getNumber()) {
                 result.add(list);

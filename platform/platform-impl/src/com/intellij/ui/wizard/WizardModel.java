@@ -21,7 +21,7 @@ import java.util.List;
 
 public class WizardModel {
 
-  private final List<WizardStep> mySteps = new ArrayList<WizardStep>();
+  private final List<WizardStep> mySteps = new ArrayList<>();
 
   private WizardStep myCurrentStep;
   private WizardNavigationState myCurrentState;

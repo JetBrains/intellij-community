@@ -47,7 +47,7 @@ public class EditorListenerTracker {
 
       EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
       Map<Class, List> after = multicaster.getListeners();
-      Map<Class, List> leaked = new LinkedHashMap<Class, List>();
+      Map<Class, List> leaked = new LinkedHashMap<>();
       for (Map.Entry<Class, List> entry : after.entrySet()) {
         Class aClass = entry.getKey();
         List beforeList = before.get(aClass);

@@ -143,7 +143,7 @@ public abstract class RadComponent implements IComponent {
 
     myChangeSupport = new PropertyChangeSupport(this);
     myConstraints = new GridConstraints();
-    myModifiedPropertyNames = new HashSet<String>();
+    myModifiedPropertyNames = new HashSet<>();
 
     Constructor constructor;
     try {
@@ -661,7 +661,7 @@ public abstract class RadComponent implements IComponent {
 
   public IProperty[] getModifiedProperties() {
     IntrospectedProperty[] props = getPalette().getIntrospectedProperties(this);
-    ArrayList<IProperty> result = new ArrayList<IProperty>();
+    ArrayList<IProperty> result = new ArrayList<>();
     for (IntrospectedProperty prop : props) {
       if (isMarkedAsModified(prop)) {
         result.add(prop);

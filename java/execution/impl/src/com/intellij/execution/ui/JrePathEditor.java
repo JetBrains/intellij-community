@@ -64,7 +64,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   public JrePathEditor() {
     myLabel = new JBLabel(ExecutionBundle.message("run.configuration.jre.label"));
 
-    myComboBoxModel = new SortedComboBoxModel<JreComboBoxItem>((o1, o2) -> {
+    myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
       int result = Comparing.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
         return result;
@@ -78,7 +78,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
       myComboBoxModel.add(new SdkAsJreItem(sdk));
     }
 
-    final Set<String> jrePaths = new HashSet<String>();
+    final Set<String> jrePaths = new HashSet<>();
     for (JreProvider provider : JreProvider.EP_NAME.getExtensions()) {
       String path = provider.getJrePath();
       if (!StringUtil.isEmpty(path)) {

@@ -153,7 +153,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     if (element == null || element instanceof OuterLanguageElement) return null;
     offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
-    List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
                                      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :

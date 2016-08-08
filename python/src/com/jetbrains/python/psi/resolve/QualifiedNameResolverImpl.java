@@ -387,7 +387,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
     checkAccess();
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<>();
     for (PsiElement element : resultsAsList()) {
       if (clazz.isInstance(element)) {
         //noinspection unchecked

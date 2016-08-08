@@ -32,7 +32,7 @@ import java.util.List;
 public class CompositeFilter implements Filter, FilterMixin {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
-  private final List<Filter> myFilters = new ArrayList<Filter>();
+  private final List<Filter> myFilters = new ArrayList<>();
   private boolean myIsAnyHeavy;
   private boolean forceUseAllFilters;
   private final DumbService myDumbService;
@@ -103,7 +103,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   protected List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @Nullable Result newResult) {
     if (newResult != null) {
       if (resultItems == null) {
-        resultItems = new ArrayList<ResultItem>();
+        resultItems = new ArrayList<>();
       }
       List<ResultItem> newItems = newResult.getResultItems();
       for (int i = 0; i < newItems.size(); i++) {
@@ -161,7 +161,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   public String getUpdateMessage() {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
-    final List<String> updateMessage = new ArrayList<String>();
+    final List<String> updateMessage = new ArrayList<>();
     int count = filters.size();
 
     for (int i = 0; i < count; i++) {

@@ -520,7 +520,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
     final PsiClass[] classes = cache.getClassesByName(className, (GlobalSearchScope)scope);
-    final List<PsiClass> results = new ArrayList<PsiClass>();
+    final List<PsiClass> results = new ArrayList<>();
 
     final Processor<PsiClass> processor = aClass -> {
       results.add(aClass);

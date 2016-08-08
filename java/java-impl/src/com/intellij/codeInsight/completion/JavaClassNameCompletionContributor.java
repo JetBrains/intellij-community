@@ -232,7 +232,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                                                           boolean withInners,
                                                                           InsertHandler<JavaPsiClassReferenceElement> insertHandler,
                                                                           Condition<PsiClass> condition) {
-    List<JavaPsiClassReferenceElement> result = new SmartList<JavaPsiClassReferenceElement>();
+    List<JavaPsiClassReferenceElement> result = new SmartList<>();
     if (condition.value(psiClass)) {
       result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
     }

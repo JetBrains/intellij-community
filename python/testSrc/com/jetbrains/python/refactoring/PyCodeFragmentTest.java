@@ -88,11 +88,11 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
         buffer.append("Return instruction inside found").append("\n");
       }
       buffer.append("In:\n");
-      for (String inputVariable : new TreeSet<String>(fragment.getInputVariables())) {
+      for (String inputVariable : new TreeSet<>(fragment.getInputVariables())) {
         buffer.append(inputVariable).append('\n');
       }
       buffer.append("Out:\n");
-      for (String outputVariable : new TreeSet<String>(fragment.getOutputVariables())) {
+      for (String outputVariable : new TreeSet<>(fragment.getOutputVariables())) {
         buffer.append(outputVariable).append('\n');
       }
     }

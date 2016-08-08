@@ -88,7 +88,7 @@ public class HgMergeProvider implements MergeProvider {
           // due to different root changesets which is prohibited.
           // Find common ancestor of two revisions : hg debugancestor rev1 rev2
           // Using quotes may produce wrong escaping errors on Unix-type systems
-          List<String> arguments = new ArrayList<String>();
+          List<String> arguments = new ArrayList<>();
           String localChangeset = localRevisionNumber.getChangeset();
           String serverChangeset = serverRevisionNumber.getChangeset();
           arguments.add(StringUtil.isEmptyOrSpaces(localChangeset) ? localRevisionNumber.getRevision() : localChangeset);

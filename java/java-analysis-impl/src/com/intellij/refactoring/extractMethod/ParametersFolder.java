@@ -40,12 +40,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ParametersFolder {
-  private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<PsiVariable, PsiExpression>();
+  private final Map<PsiVariable, PsiExpression> myExpressions = new HashMap<>();
   private final Map<PsiVariable, String> myArgs = new HashMap<>();
-  private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<PsiVariable, List<PsiExpression>>();
-  private final Set<String> myUsedNames = new HashSet<String>();
+  private final Map<PsiVariable, List<PsiExpression>> myMentionedInExpressions = new HashMap<>();
+  private final Set<String> myUsedNames = new HashSet<>();
 
-  private final Set<PsiVariable> myDeleted = new HashSet<PsiVariable>();
+  private final Set<PsiVariable> myDeleted = new HashSet<>();
   private boolean myFoldingSelectedByDefault;
 
 
@@ -91,7 +91,7 @@ public class ParametersFolder {
       final PsiExpression psiExpression = myExpressions.get(data.variable);
       if (psiExpression == null) continue;
 
-      final Set<PsiExpression> eqExpressions = new HashSet<PsiExpression>();
+      final Set<PsiExpression> eqExpressions = new HashSet<>();
       for (PsiReference reference : ReferencesSearch.search(data.variable, scope)) {
         final PsiExpression expression = findEquivalent(psiExpression, reference.getElement());
         if (expression != null && expression.isValid()) {
@@ -192,7 +192,7 @@ public class ParametersFolder {
 
   private static Set<PsiVariable> findUsedVariables(VariableData data, final List<? extends PsiVariable> inputVariables,
                                              PsiExpression expression) {
-    final Set<PsiVariable> found = new HashSet<PsiVariable>();
+    final Set<PsiVariable> found = new HashSet<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
@@ -219,7 +219,7 @@ public class ParametersFolder {
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
       if (expressions == null) {
-        expressions = new ArrayList<PsiExpression>();
+        expressions = new ArrayList<>();
         while (expression != null) {
           if (isAccessedForWriting((PsiExpression)expression)) {
             return null;

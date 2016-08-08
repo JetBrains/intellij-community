@@ -40,7 +40,7 @@ public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesColle
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
+    Set<UsageDescriptor> result = new HashSet<>();
     for (Module m : ModuleManager.getInstance(project).getModules()) {
       Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {

@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AsyncValueLoader<T> {
-  private final AtomicReference<Promise<T>> ref = new AtomicReference<Promise<T>>();
+  private final AtomicReference<Promise<T>> ref = new AtomicReference<>();
 
   private volatile long modificationCount;
   private volatile long loadedModificationCount;
@@ -83,7 +83,7 @@ public abstract class AsyncValueLoader<T> {
   public final Promise<T> get(boolean checkFreshness) {
     Promise<T> promise = ref.get();
     if (promise == null) {
-      if (!ref.compareAndSet(null, promise = new AsyncPromise<T>())) {
+      if (!ref.compareAndSet(null, promise = new AsyncPromise<>())) {
         return ref.get();
       }
     }
@@ -99,7 +99,7 @@ public abstract class AsyncValueLoader<T> {
           return promise;
         }
 
-        if (!ref.compareAndSet(promise, promise = new AsyncPromise<T>())) {
+        if (!ref.compareAndSet(promise, promise = new AsyncPromise<>())) {
           Promise<T> valueFromAnotherThread = ref.get();
           while (valueFromAnotherThread == null) {
             if (ref.compareAndSet(null, promise)) {

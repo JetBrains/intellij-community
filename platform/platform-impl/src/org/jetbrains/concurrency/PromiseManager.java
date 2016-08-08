@@ -78,7 +78,7 @@ public abstract class PromiseManager<HOST, VALUE> {
   private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
     Promise<VALUE> promise = fieldUpdater.get(host);
     if (promise == null) {
-      if (!fieldUpdater.compareAndSet(host, null, promise = new AsyncPromise<VALUE>())) {
+      if (!fieldUpdater.compareAndSet(host, null, promise = new AsyncPromise<>())) {
         return fieldUpdater.get(host);
       }
     }
@@ -94,7 +94,7 @@ public abstract class PromiseManager<HOST, VALUE> {
           return promise;
         }
 
-        if (!fieldUpdater.compareAndSet(host, promise, promise = new AsyncPromise<VALUE>())) {
+        if (!fieldUpdater.compareAndSet(host, promise, promise = new AsyncPromise<>())) {
           Promise<VALUE> valueFromAnotherThread = fieldUpdater.get(host);
           while (valueFromAnotherThread == null) {
             if (fieldUpdater.compareAndSet(host, null, promise)) {

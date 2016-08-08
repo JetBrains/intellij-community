@@ -77,7 +77,7 @@ public class IntelliJLaf extends DarculaLaf {
     final String elCapitan = null;//"SFNSText-RegularG2"; // we can experiment with different fonts: /System/Library/Fonts/SFNS*
     final FontUIResource uiFont = getFont(face, elCapitan, 13, Font.PLAIN);
     LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
-    for (Object key : new HashSet<Object>(defaults.keySet())) {
+    for (Object key : new HashSet<>(defaults.keySet())) {
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
         FontUIResource font = (FontUIResource)value;

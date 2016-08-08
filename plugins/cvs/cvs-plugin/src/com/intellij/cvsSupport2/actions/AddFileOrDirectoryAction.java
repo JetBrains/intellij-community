@@ -106,7 +106,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     if (!showDialog) {
       return CommandCvsHandler.createAddFilesHandler(project, roots);
     }
-    final Ref<CvsHandler> handler = new Ref<CvsHandler>();
+    final Ref<CvsHandler> handler = new Ref<>();
     final Runnable runnable = () -> {
       final AbstractAddOptionsDialog dialog = AbstractAddOptionsDialog.createDialog(project, roots, dialogOptions);
       handler.set(!dialog.showAndGet() ? CvsHandler.NULL : CommandCvsHandler.createAddFilesHandler(project, roots));
@@ -133,9 +133,9 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
     for (VirtualFile file : files) {
-      final List<VirtualFile> parentsToAdd = new ArrayList<VirtualFile>();
+      final List<VirtualFile> parentsToAdd = new ArrayList<>();
       VirtualFile parent = file.getParent();
       do {
         if (parent == null || CvsUtil.fileExistsInCvs(parent) || result.contains(parent)) break;
@@ -165,7 +165,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
   static class CreateTreeOnFileList {
     private final Collection<VirtualFile> myFiles;
-    private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<VirtualFile, AddedFileInfo>();
+    private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<>();
     private final Project myProject;
 
     public CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {

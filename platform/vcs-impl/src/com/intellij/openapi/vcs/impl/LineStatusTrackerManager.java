@@ -98,7 +98,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     myFileEditorManager = fileEditorManager;
 
     myLineStatusTrackers = new HashMap<>();
-    myPartner = new QueueProcessorRemovePartner<Document, BaseRevisionLoader>(myProject, new Consumer<BaseRevisionLoader>() {
+    myPartner = new QueueProcessorRemovePartner<>(myProject, new Consumer<BaseRevisionLoader>() {
       @Override
       public void consume(BaseRevisionLoader baseRevisionLoader) {
         baseRevisionLoader.run();

@@ -78,7 +78,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     if (myIsInitialized) {
       applyImpl();
     }
-    final Ref<String> errorMessageRef = new Ref<String>();
+    final Ref<String> errorMessageRef = new Ref<>();
     if (! validate(errorMessageRef)) {
       throw new ConfigurationException(errorMessageRef.get());
     }

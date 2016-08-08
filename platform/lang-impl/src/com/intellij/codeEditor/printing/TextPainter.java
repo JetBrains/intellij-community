@@ -235,8 +235,8 @@ class TextPainter extends BasePainter {
 
   private boolean calculateNumberOfPages(final Graphics2D g2d, final PageFormat pageFormat) {
     myNumberOfPages = 0;
-    final Ref<Boolean> firstPage = new Ref<Boolean>(Boolean.TRUE);
-    final Ref<RangeMarker> tmpMarker = new Ref<RangeMarker>();
+    final Ref<Boolean> firstPage = new Ref<>(Boolean.TRUE);
+    final Ref<RangeMarker> tmpMarker = new Ref<>();
     while (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {

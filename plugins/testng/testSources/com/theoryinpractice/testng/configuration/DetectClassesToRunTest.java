@@ -141,8 +141,8 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
                          "  public void testOne(String s){}\n" + //parameterized
                          "}");
 
-    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
-    classes.put(aClass, new HashMap<PsiMethod, List<String>>());
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
+    classes.put(aClass, new HashMap<>());
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
     final SMTestProxy testProxy = new SMTestProxy("testOne", false, "java:test://a.ATest.testOne[a]");
     testProxy.setLocator(new JavaTestLocator());
@@ -180,8 +180,8 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
                          "    }\n" +
                          "}\n");
 
-    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
-    classes.put(aClass, new HashMap<PsiMethod, List<String>>());
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
+    classes.put(aClass, new HashMap<>());
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
     final SMTestProxy testProxy = new SMTestProxy("test", false, "java:test://a.ATest.test[0]");
     testProxy.setLocator(new JavaTestLocator());
@@ -215,7 +215,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
 
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(configuration);
     assertNotNull(testObject);
-    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
     testObject.fillTestObjects(classes);
     assertContainsElements(classes.keySet(), aClass);
     final Map<PsiMethod, List<String>> methods = classes.get(aClass);
@@ -237,7 +237,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
 
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(configuration);
     assertNotNull(testObject);
-    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
     testObject.fillTestObjects(classes);
     assertContainsElements(classes.keySet(), aClass);
     assertEquals(1, classes.size());
@@ -253,7 +253,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
 
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(configuration);
     assertNotNull(testObject);
-    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<>();
     testObject.fillTestObjects(classes);
     assertContainsElements(classes.keySet(), containingClasses);
 

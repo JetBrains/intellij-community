@@ -307,7 +307,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     final Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
 
     assertEquals(2, all.size());
-    Set<String> correctNames = new HashSet<String>(Arrays.asList("AnnotatedClass", "correctMethod"));
+    Set<String> correctNames = new HashSet<>(Arrays.asList("AnnotatedClass", "correctMethod"));
     for (PsiMember member : all) {
       assertTrue(correctNames.contains(member.getName()));
     }

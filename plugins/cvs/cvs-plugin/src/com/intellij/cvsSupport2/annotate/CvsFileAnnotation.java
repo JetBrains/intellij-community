@@ -38,7 +38,7 @@ public class CvsFileAnnotation extends FileAnnotation{
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
-  private final Map<String, String> myRevisionComments = new HashMap<String, String>();
+  private final Map<String, String> myRevisionComments = new HashMap<>();
   @Nullable private final List<VcsFileRevision> myRevisions;
   private final VirtualFile myFile;
   private final String myCurrentRevision;

@@ -39,11 +39,11 @@ import java.util.List;
  */
 abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
 
-  private static final Key<NavigatablePsiElement[]> MARKERS = new Key<NavigatablePsiElement[]>("PyLineMarkerNavigatorMarkers");
+  private static final Key<NavigatablePsiElement[]> MARKERS = new Key<>("PyLineMarkerNavigatorMarkers");
 
   @Override
   public void navigate(final MouseEvent e, final T elt) {
-    final List<NavigatablePsiElement> navElements = new ArrayList<NavigatablePsiElement>();
+    final List<NavigatablePsiElement> navElements = new ArrayList<>();
     final Query<T> elementQuery = search(elt, TypeEvalContext.userInitiated(elt.getProject(), elt.getContainingFile()));
     if (elementQuery == null) {
       return;

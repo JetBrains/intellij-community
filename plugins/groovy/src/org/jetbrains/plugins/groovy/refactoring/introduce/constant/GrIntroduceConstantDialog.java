@@ -174,7 +174,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myTargetClassPanel.setLayout(new BorderLayout());
     myTargetClassPanel.add(myTargetClassLabel, BorderLayout.NORTH);
     myTargetClassPanel.add(myTargetClassEditor, BorderLayout.CENTER);
-    Set<String> possibleClassNames = new LinkedHashSet<String>();
+    Set<String> possibleClassNames = new LinkedHashSet<>();
     for (final PsiElement occurrence : myContext.getOccurrences()) {
       final PsiClass parentClass = getParentClass(occurrence);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
@@ -280,7 +280,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
     }
 
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     if (var != null) {
       names.add(var.getName());
     }
@@ -308,7 +308,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     else {
       UIUtil.setEnabled(myJavaVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<String>();
+      final Set<String> visible = new THashSet<>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);
@@ -429,7 +429,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       if (psiPackage != null) {
         final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(project));
         psiDirectory = directories.length > 1 ? DirectoryChooserUtil
-          .chooseDirectory(directories, null, project, new HashMap<PsiDirectory, String>()) : directories[0];
+          .chooseDirectory(directories, null, project, new HashMap<>()) : directories[0];
       }
       else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, baseDirectory, false);

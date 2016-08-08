@@ -49,7 +49,7 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     @NotNull
     private List<GroovyResolveResult[]> resolveSubExpressions(@NotNull GrBinaryExpression expression, final boolean incompleteCode) {
       // to avoid SOE, resolve all binary sub-expressions starting from the innermost
-      final List<GroovyResolveResult[]> subExpressions = new SmartList<GroovyResolveResult[]>();
+      final List<GroovyResolveResult[]> subExpressions = new SmartList<>();
       expression.getLeftOperand().accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {

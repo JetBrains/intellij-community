@@ -19,8 +19,8 @@ import java.util.Date;
 import java.util.List;
 
 public class Course {
-  @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
-  @Expose private List<StepicUser> authors = new ArrayList<StepicUser>();
+  @Expose private List<Lesson> lessons = new ArrayList<>();
+  @Expose private List<StepicUser> authors = new ArrayList<>();
   @Expose private String description;
   @Expose private String name;
   private String myCourseDirectory = "";
@@ -95,7 +95,7 @@ public class Course {
 
   @Transient
   public void setAuthorsAsString(String[] authors) {
-    this.authors = new ArrayList<StepicUser>();
+    this.authors = new ArrayList<>();
     for (String name : authors) {
       final List<String> firstLast = StringUtil.split(name, " ");
       if (!firstLast.isEmpty()) {

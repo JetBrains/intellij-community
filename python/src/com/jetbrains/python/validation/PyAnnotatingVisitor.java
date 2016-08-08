@@ -47,7 +47,7 @@ public class PyAnnotatingVisitor implements Annotator {
   private final PyAnnotator[] myAnnotators;
 
   public PyAnnotatingVisitor() {
-    final List<PyAnnotator> annotators = new ArrayList<PyAnnotator>();
+    final List<PyAnnotator> annotators = new ArrayList<>();
     for (Class cls : ANNOTATOR_CLASSES) {
       PyAnnotator annotator;
       try {

@@ -252,7 +252,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     } else {
       suffix = "";
     }
-    LinkedHashSet<String> patterns = new LinkedHashSet<String>();
+    LinkedHashSet<String> patterns = new LinkedHashSet<>();
     for (PsiClass pattern : classes) {
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
@@ -271,11 +271,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
 
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
+    SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    new TestNGConfigurationEditor<TestNGConfiguration>(getProject()));
+                    new TestNGConfigurationEditor<>(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<TestNGConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -322,7 +322,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     }
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final LinkedHashSet<String> tests = new LinkedHashSet<String>();
+      final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));

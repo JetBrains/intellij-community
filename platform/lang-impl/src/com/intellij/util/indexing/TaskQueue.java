@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 class TaskQueue {
   private final AtomicInteger myDoWorkRequest = new AtomicInteger();
   private final AtomicInteger myUpdatesCount = new AtomicInteger();
-  private final BlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<Runnable>();
-  private final BlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<Runnable>();
+  private final BlockingQueue<Runnable> myPendingWriteRequestsQueue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<Runnable> myTimestampUpdates = new LinkedBlockingQueue<>();
   private final int myLimit;
   private final int myStealLimit;
   private final int myTimeStampUpdateSizeLimit;

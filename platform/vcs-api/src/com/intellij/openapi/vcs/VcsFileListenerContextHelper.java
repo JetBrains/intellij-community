@@ -33,8 +33,8 @@ public class VcsFileListenerContextHelper {
   private final Set<VirtualFile> myAddContext;
 
   VcsFileListenerContextHelper(final Project project) {
-    myDeletedContext = new java.util.HashSet<FilePath>();
-    myAddContext = new java.util.HashSet<VirtualFile>();
+    myDeletedContext = new java.util.HashSet<>();
+    myAddContext = new java.util.HashSet<>();
   }
 
   public static VcsFileListenerContextHelper getInstance(final Project project) {

@@ -142,7 +142,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   }
 
   public static ParameterInfoImpl[] fromMethod(PsiMethod method) {
-    List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    List<ParameterInfoImpl> result = new ArrayList<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];

@@ -32,7 +32,7 @@ class AttributeIterator implements Iterator {
     }
 
     private Iterator<XmlAttribute> filterNamespaceAttrs(XmlAttribute[] attributes) {
-        final List<XmlAttribute> attrs = new ArrayList<XmlAttribute>(attributes.length);
+        final List<XmlAttribute> attrs = new ArrayList<>(attributes.length);
         for (XmlAttribute attribute : attributes) {
             final String name = attribute.getName();
             if (!name.startsWith("xmlns:") && !name.equals("xmlns")) {

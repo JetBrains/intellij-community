@@ -103,7 +103,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetContainer != null);
 
     Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass).findAll();
-    ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.size());
+    ArrayList<UsageInfo> usageInfos = new ArrayList<>(innerClassRefs.size());
     for (PsiReference innerClassRef : innerClassRefs) {
       PsiElement ref = innerClassRef.getElement();
       if (!PsiTreeUtil.isAncestor(myInnerClass, ref, true)) { // do not show self-references
@@ -204,7 +204,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         ref.bindToElement(newClass);
       }
 
-      List<PsiReference> referencesToRebind = new ArrayList<PsiReference>();
+      List<PsiReference> referencesToRebind = new ArrayList<>();
       for (UsageInfo usage : usages) {
         if (usage.isNonCodeUsage) continue;
         PsiElement refElement = usage.getElement();
@@ -282,7 +282,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
       elementListener.elementMoved(newClass);
 
-      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+      List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
       for (UsageInfo usage : usages) {
         if (usage instanceof NonCodeUsageInfo) {
           nonCodeUsages.add((NonCodeUsageInfo)usage);
@@ -315,8 +315,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<PsiElement, HashSet<PsiElement>>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
 
 
@@ -364,7 +364,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     final PsiElement container = ConflictsUtil.getContainer(reference);
     HashSet<PsiElement> containerSet = reported.get(container);
     if (containerSet == null) {
-      containerSet = new HashSet<PsiElement>();
+      containerSet = new HashSet<>();
       reported.put(container, containerSet);
     }
     if (!containerSet.contains(resolved)) {

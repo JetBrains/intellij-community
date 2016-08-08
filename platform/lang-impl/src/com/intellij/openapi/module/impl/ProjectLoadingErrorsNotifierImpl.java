@@ -42,7 +42,7 @@ import java.util.List;
  * @author nik
  */
 public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
-  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+  private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<>();
   private final Object myLock = new Object();
   private final Project myProject;
 
@@ -75,7 +75,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
   }
 
   private void fireNotifications() {
-    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<ConfigurationErrorType, ConfigurationErrorDescription>();
+    final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> descriptionsMap = new MultiMap<>();
     synchronized (myLock) {
       if (myErrors.isEmpty()) return;
       descriptionsMap.putAllValues(myErrors);

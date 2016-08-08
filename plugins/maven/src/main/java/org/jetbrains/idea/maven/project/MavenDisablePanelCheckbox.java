@@ -42,7 +42,7 @@ public class MavenDisablePanelCheckbox extends JCheckBox {
       public void stateChanged(ChangeEvent e) {
         if (MavenDisablePanelCheckbox.this.isSelected()) {
           if (myDisabledComponents == null) {
-            myDisabledComponents = new HashSet<JComponent>();
+            myDisabledComponents = new HashSet<>();
             disable(myPanel);
           }
         }

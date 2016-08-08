@@ -114,7 +114,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedL
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
                                                             PsiDirectory descriptionDirectory,
                                                             Collection<? super RelatedItemLineMarkerInfo> result) {
-    final List<PsiFile> templateFiles = new SortedList<PsiFile>((o1, o2) -> o1.getName().compareTo(o2.getName()));
+    final List<PsiFile> templateFiles = new SortedList<>((o1, o2) -> o1.getName().compareTo(o2.getName()));
     for (PsiFile file : descriptionDirectory.getFiles()) {
       final String fileName = file.getName();
       if (fileName.endsWith(".template")) {

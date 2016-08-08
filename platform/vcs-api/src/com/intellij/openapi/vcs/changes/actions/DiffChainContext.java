@@ -22,7 +22,7 @@ public class DiffChainContext {
   private final List<String> mySkippedBinaryExtentions;
 
   public DiffChainContext() {
-    mySkippedBinaryExtentions = new LinkedList<String>();
+    mySkippedBinaryExtentions = new LinkedList<>();
   }
 
   public void add(final String extention) {

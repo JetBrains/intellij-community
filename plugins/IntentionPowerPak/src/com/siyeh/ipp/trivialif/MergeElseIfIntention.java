@@ -46,8 +46,8 @@ public class MergeElseIfIntention extends Intention {
     if (lastChild instanceof PsiComment) {
       addElementAndPrevWhiteSpace(lastChild, grandParent, parentStatement);
     }
-    final List<PsiComment> before = new ArrayList<PsiComment>(1);
-    final List<PsiComment> after = new ArrayList<PsiComment>(1);
+    final List<PsiComment> before = new ArrayList<>(1);
+    final List<PsiComment> after = new ArrayList<>(1);
     collectComments(elseBranchContents, before, after);
     for (PsiComment comment : before) {
       addElementAndPrevWhiteSpace(comment, parentStatement, token);

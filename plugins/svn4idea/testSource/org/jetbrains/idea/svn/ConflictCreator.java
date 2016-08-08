@@ -69,7 +69,7 @@ public class ConflictCreator {
 
     final PatchReader reader = new PatchReader(myData.getTheirsPatch());
     final List<TextFilePatch> patches = reader.readAllPatches();
-    final List<FilePatch> filePatchList = new ArrayList<FilePatch>(patches);
+    final List<FilePatch> filePatchList = new ArrayList<>(patches);
     for (Iterator<FilePatch> iterator = filePatchList.iterator(); iterator.hasNext(); ) {
       final FilePatch patch = iterator.next();
       if (patch.isDeletedFile()) {
@@ -79,7 +79,7 @@ public class ConflictCreator {
     }
 
     if (! filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier = new PatchApplier<BinaryFilePatch>(myProject, myTheirsDir, filePatchList, (LocalChangeList) null, null, null);
+      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
       Assert.assertEquals(0, applier.getRemainingPatches().size());

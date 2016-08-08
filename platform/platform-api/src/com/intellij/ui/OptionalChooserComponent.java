@@ -37,7 +37,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
 
   public OptionalChooserComponent(@NotNull final List<Pair<T, Boolean>> list) {
     setInitialList(list);
-    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
+    myWorkingList = new ArrayList<>(myInitialList);
 
     // fill list
     reset();
@@ -65,7 +65,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
   }
 
   public void reset() {
-    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
+    myWorkingList = new ArrayList<>(myInitialList);
     refresh();
   }
 

@@ -74,7 +74,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
-    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<PsiFileSystemItem>();
+    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<>();
     for (ResourceBundle resourceBundle : resourceBundles) {
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
         PsiDirectory containingDirectory = propertiesFile.getContainingFile().getContainingDirectory();
@@ -98,7 +98,7 @@ public class DissociateResourceBundleAction extends AnAction {
 
   @NotNull
   private static Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
-    final Set<ResourceBundle> targetResourceBundles = new HashSet<ResourceBundle>();
+    final Set<ResourceBundle> targetResourceBundles = new HashSet<>();
     final ResourceBundle[] chosenResourceBundles = event.getData(ResourceBundle.ARRAY_DATA_KEY);
     if (chosenResourceBundles != null) {
       for (ResourceBundle resourceBundle : chosenResourceBundles) {

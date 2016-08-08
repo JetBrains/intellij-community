@@ -28,7 +28,7 @@ import java.util.List;
 public class ToolkitBugsProcessor {
   private static final Logger LOG = Logger.getInstance("ToolkitBugProcessor");
 
-  private final List<Handler> myHandlers = new ArrayList<Handler>();
+  private final List<Handler> myHandlers = new ArrayList<>();
 
   public ToolkitBugsProcessor() {
     Class<?>[] classes = getClass().getDeclaredClasses();

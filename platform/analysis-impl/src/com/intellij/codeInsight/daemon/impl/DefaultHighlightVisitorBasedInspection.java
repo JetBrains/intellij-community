@@ -131,7 +131,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                                             final boolean runAnnotators, boolean isOnTheFly) {
     MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators, isOnTheFly);
     file.accept(visitor);
-    return new ArrayList<Pair<PsiFile, HighlightInfo>>(visitor.result);
+    return new ArrayList<>(visitor.result);
   }
 
   @Nls
@@ -144,7 +144,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<Pair<PsiFile, HighlightInfo>>();
+    private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
 
     public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
       this.highlightErrorElements = highlightErrorElements;

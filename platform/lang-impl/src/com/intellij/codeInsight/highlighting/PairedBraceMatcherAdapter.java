@@ -128,7 +128,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
       if (type == pair.getLeftBraceType()) match = pair.getRightBraceType();
 
       if (match != null) {
-        if (result == null) result = new ArrayList<IElementType>(2);
+        if (result == null) result = new ArrayList<>(2);
         result.add(match);
       }
     }

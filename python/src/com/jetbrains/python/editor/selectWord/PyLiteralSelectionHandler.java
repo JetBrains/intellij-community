@@ -50,7 +50,7 @@ public class PyLiteralSelectionHandler extends ExtendWordSelectionHandlerBase {
         TextRange stringRange = ranges.get(i);
         TextRange offsetRange = stringRange.shiftRight(literal.getTextRange().getStartOffset());
         if (offsetRange.contains(cursorOffset) && offsetRange.getLength() > 1) {
-          List<TextRange> result = new ArrayList<TextRange>();
+          List<TextRange> result = new ArrayList<>();
           SelectWordUtil.addWordHonoringEscapeSequences(editorText, nodes.get(i).getTextRange(), cursorOffset,
                                                         new PyStringLiteralLexer(nodes.get(i).getElementType()),
                                                         result);

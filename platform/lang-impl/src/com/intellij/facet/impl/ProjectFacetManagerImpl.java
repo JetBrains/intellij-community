@@ -91,7 +91,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   @NotNull
   @Override
   public List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId) {
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       if (!FacetManager.getInstance(module).getFacetsByType(typeId).isEmpty()) {
         result.add(module);
@@ -112,7 +112,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
 
   @Override
   public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
-    final List<F> result = new ArrayList<F>();
+    final List<F> result = new ArrayList<>();
     for (Module module : modules) {
       result.addAll(FacetManager.getInstance(module).getFacetsByType(typeId));
     }
@@ -167,7 +167,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   }
 
   public static class ProjectFacetManagerState {
-    private Map<String, DefaultFacetConfigurationState> myDefaultConfigurations = new HashMap<String, DefaultFacetConfigurationState>();
+    private Map<String, DefaultFacetConfigurationState> myDefaultConfigurations = new HashMap<>();
 
     @Tag("default-configurations")
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, //entryTagName = "default-configuration",

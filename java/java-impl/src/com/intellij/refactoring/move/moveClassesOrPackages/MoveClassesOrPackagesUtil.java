@@ -60,8 +60,8 @@ public class MoveClassesOrPackagesUtil {
                                        final String newQName) {
     PsiManager manager = element.getManager();
 
-    ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
-    Set<PsiReference> foundReferences = new HashSet<PsiReference>();
+    ArrayList<UsageInfo> results = new ArrayList<>();
+    Set<PsiReference> foundReferences = new HashSet<>();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     for (PsiReference reference : ReferencesSearch.search(element, projectScope, false)) {
@@ -141,7 +141,7 @@ public class MoveClassesOrPackagesUtil {
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
     throws IncorrectOperationException {
     if ( dir.getParentDirectory() == destination ) return;
-    moveDirectoryRecursively(dir, destination, new HashSet<VirtualFile>());
+    moveDirectoryRecursively(dir, destination, new HashSet<>());
   }
 
   private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths)
@@ -317,8 +317,8 @@ public class MoveClassesOrPackagesUtil {
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
-    LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
+    LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
+    Map<PsiDirectory, String> relativePathsToCreate = new HashMap<>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
     final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(

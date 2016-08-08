@@ -83,7 +83,7 @@ public class CardActionsPanel extends JPanel {
   private List<JComponent> buildComponents(ActionGroup group, String parentId) {
     AnAction[] actions = group.getChildren(null);
 
-    List<JComponent> components = new ArrayList<JComponent>();
+    List<JComponent> components = new ArrayList<>();
     PresentationFactory factory = new PresentationFactory();
 
     for (AnAction action : actions) {

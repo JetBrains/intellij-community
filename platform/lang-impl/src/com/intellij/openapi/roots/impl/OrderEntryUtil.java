@@ -222,7 +222,7 @@ public class OrderEntryUtil {
   @NotNull
   public static List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
     OrderEntry[] orderEntries = model.getOrderEntries();
-    List<Library> libraries = new ArrayList<Library>();
+    List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;

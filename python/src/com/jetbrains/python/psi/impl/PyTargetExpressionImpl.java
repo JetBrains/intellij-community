@@ -323,7 +323,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                         @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
-      final List<PyType> memberTypes = new ArrayList<PyType>();
+      final List<PyType> memberTypes = new ArrayList<>();
       for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
         memberTypes.add(tupleType.getElementType(i));
       }
@@ -331,7 +331,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
-      final List<PyType> iterationTypes = new ArrayList<PyType>();
+      final List<PyType> iterationTypes = new ArrayList<>();
       for (PyType member : members) {
         iterationTypes.add(getIterationType(member, source, anchor, context));
       }

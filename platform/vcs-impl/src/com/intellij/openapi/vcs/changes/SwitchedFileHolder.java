@@ -53,7 +53,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
   }
 
   public Map<VirtualFile, String> getFilesMapCopy() {
-    final HashMap<VirtualFile, String> result = new HashMap<VirtualFile, String>();
+    final HashMap<VirtualFile, String> result = new HashMap<>();
     for (final VirtualFile vf : myMap.keySet()) {
       result.put(vf, myMap.get(vf).getSecond());
     }
@@ -62,11 +62,11 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
 
   public void addFile(final VirtualFile file, final String branch, final boolean recursive) {
     // without optimization here
-    myMap.put(file, new Pair<Boolean, String>(recursive, branch));
+    myMap.put(file, new Pair<>(recursive, branch));
   }
 
   public synchronized MultiMap<String, VirtualFile> getBranchToFileMap() {
-    final MultiMap<String, VirtualFile> result = new MultiMap<String, VirtualFile>();
+    final MultiMap<String, VirtualFile> result = new MultiMap<>();
     for (final VirtualFile vf : myMap.keySet()) {
       result.putValue(myMap.get(vf).getSecond(), vf);
     }

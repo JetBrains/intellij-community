@@ -63,11 +63,11 @@ public class SystemBuilder {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     mySettings = settings;
-    myMethodCache = new HashMap<PsiElement, Boolean>();
-    myParameters = new HashMap<PsiParameter, PsiParameter>();
-    myMethods = new HashMap<PsiMethod, PsiMethod>();
-    myTypes = new HashMap<PsiElement, PsiType>();
-    myVisitedConstructions = new HashSet<PsiAnchor>();
+    myMethodCache = new HashMap<>();
+    myParameters = new HashMap<>();
+    myMethods = new HashMap<>();
+    myTypes = new HashMap<>();
+    myVisitedConstructions = new HashSet<>();
     myTypeVariableFactory = new PsiTypeVariableFactory();
   }
 
@@ -353,7 +353,7 @@ public class SystemBuilder {
         final PsiExpression qualifier =
           expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
-        final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
+        final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(methodTypeParameters));
 
         PsiSubstitutor qualifierSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor supertypeSubstitutor = PsiSubstitutor.EMPTY;
@@ -398,7 +398,7 @@ public class SystemBuilder {
           }
         }
 
-        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<PsiTypeParameter, PsiType>();
+        final Map<PsiTypeParameter, PsiType> mapping = new HashMap<>();
 
         for (int i = 0; i < Math.min(parameters.length, arguments.length); i++) {
           final PsiType argumentType = evaluateType(arguments[i], system);

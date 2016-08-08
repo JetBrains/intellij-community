@@ -53,10 +53,10 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DirectoryChooserModuleTreeView");
 
   private final Tree myTree;
-  private final List<DirectoryChooser.ItemWrapper>  myItems = new ArrayList<DirectoryChooser.ItemWrapper>();
-  private final Map<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode> myItemNodes = new HashMap<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode>();
-  private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<Module, DefaultMutableTreeNode>();
-  private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<ModuleGroup, DefaultMutableTreeNode>();
+  private final List<DirectoryChooser.ItemWrapper>  myItems = new ArrayList<>();
+  private final Map<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode> myItemNodes = new HashMap<>();
+  private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<>();
+  private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<>();
   private final DefaultMutableTreeNode myRootNode;
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;

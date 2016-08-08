@@ -67,7 +67,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     myProject = config.getProject();
     myConfig = config;
     myTempFile = tempFile;
-    myClasses = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    myClasses = new LinkedHashMap<>();
   }
 
   @Override
@@ -110,13 +110,13 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private void composeTestSuiteFromClasses() {
-    Map<String, Map<String, List<String>>> map = new LinkedHashMap<String, Map<String, List<String>>>();
+    Map<String, Map<String, List<String>>> map = new LinkedHashMap<>();
 
     final boolean findTestMethodsForClass = shouldSearchForTestMethods();
 
     for (final Map.Entry<PsiClass, Map<PsiMethod, List<String>>> entry : myClasses.entrySet()) {
       final Map<PsiMethod, List<String>> depMethods = entry.getValue();
-      LinkedHashMap<String, List<String>> methods = new LinkedHashMap<String, List<String>>();
+      LinkedHashMap<String, List<String>> methods = new LinkedHashMap<>();
       for (Map.Entry<PsiMethod, List<String>> method : depMethods.entrySet()) {
         methods.put(method.getKey().getName(), method.getValue());
       }
@@ -159,7 +159,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
     File xmlFile;
     if (groupNames != null) {
-      final LinkedHashMap<String, Collection<String>> methodNames = new LinkedHashMap<String, Collection<String>>();
+      final LinkedHashMap<String, Collection<String>> methodNames = new LinkedHashMap<>();
       for (Map.Entry<String, Map<String, List<String>>> entry : map.entrySet()) {
         methodNames.put(entry.getKey(), entry.getValue().keySet());
       }
@@ -239,7 +239,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private Map<String, String> buildTestParameters() {
-    Map<String, String> testParams = new HashMap<String, String>();
+    Map<String, String> testParams = new HashMap<>();
 
     // Override with those from the test runner configuration
     if (myData.PROPERTIES_FILE != null) {

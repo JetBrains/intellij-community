@@ -69,7 +69,7 @@ public class MacPathChooserDialog implements PathChooserDialog {
   private static List<VirtualFile> getChosenFiles(final Stream<File> streamOfFiles) {
 
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final List<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+    final List<VirtualFile> virtualFiles = new ArrayList<>();
 
     streamOfFiles.forEach(file -> {
       final String vfsPath = FileUtil.toSystemIndependentName(file.getAbsolutePath());

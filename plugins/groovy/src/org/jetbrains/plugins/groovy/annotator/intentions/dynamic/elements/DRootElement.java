@@ -27,7 +27,7 @@ import java.util.Set;
  * Date: 30.11.2007
  */
 public class DRootElement {
-  public Map<String, DClassElement> containingClasses = new HashMap<String, DClassElement>();
+  public Map<String, DClassElement> containingClasses = new HashMap<>();
 
   public DRootElement() {
   }

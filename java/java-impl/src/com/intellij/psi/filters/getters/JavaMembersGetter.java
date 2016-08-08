@@ -59,7 +59,7 @@ public class JavaMembersGetter extends MembersGetter {
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(myPlace);
-    final Set<PsiClass> classes = new HashSet<PsiClass>();
+    final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {
       ContainerUtil.addIfNotNull(classes, field.getContainingClass());
     }

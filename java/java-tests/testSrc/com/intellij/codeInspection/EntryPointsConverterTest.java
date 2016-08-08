@@ -28,7 +28,7 @@ public class EntryPointsConverterTest extends TestCase {
   private static void doTest(String type, String fqName, String expectedFQName) throws Exception {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
-    final HashMap<String, SmartRefElementPointer> persistentEntryPoints = new HashMap<String, SmartRefElementPointer>();
+    final HashMap<String, SmartRefElementPointer> persistentEntryPoints = new HashMap<>();
     EntryPointsManagerBase.convert(entryPoints, persistentEntryPoints);
 
     final Element testElement = new Element("comp");

@@ -54,7 +54,7 @@ public class JDBCResourceInspection extends ResourceInspection {
     };
 
   @SuppressWarnings({"StaticCollection"})
-  private static final Set<String> creationMethodNameSet = new HashSet<String>(9);
+  private static final Set<String> creationMethodNameSet = new HashSet<>(9);
 
   static {
     ContainerUtil.addAll(creationMethodNameSet, creationMethodName);

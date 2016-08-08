@@ -122,7 +122,7 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
+    final Set<DocumentEx> bulkDocuments = new THashSet<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
@@ -172,8 +172,8 @@ class UndoableGroup {
   }
 
   boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
-    final List<FinishMarkAction> finishMarks = new ArrayList<FinishMarkAction>();
-    final List<StartMarkAction> startMarks = new ArrayList<StartMarkAction>();
+    final List<FinishMarkAction> finishMarks = new ArrayList<>();
+    final List<StartMarkAction> startMarks = new ArrayList<>();
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) {
         startMarks.add((StartMarkAction)action);
@@ -276,7 +276,7 @@ class UndoableGroup {
 
   @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs != null) Collections.addAll(result, refs);

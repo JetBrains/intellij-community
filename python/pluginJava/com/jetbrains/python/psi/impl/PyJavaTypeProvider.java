@@ -73,7 +73,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
     final int index = params.indexOf(param);
     if (index < 0) return null;
-    final List<PyType> superMethodParameterTypes = new ArrayList<PyType>();
+    final List<PyType> superMethodParameterTypes = new ArrayList<>();
     PySuperMethodsSearch.search(func, context).forEach(psiElement -> {
       if (psiElement instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)psiElement;

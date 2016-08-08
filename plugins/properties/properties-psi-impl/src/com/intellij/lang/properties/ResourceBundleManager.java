@@ -64,14 +64,14 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
                   return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
                 }
               };
-              for (String dissociatedFileUrl : new SmartList<String>(myState.getDissociatedFiles())) {
+              for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
                 if (dissociatedFileUrl.startsWith(fromDirUrl)) {
                   myState.getDissociatedFiles().remove(dissociatedFileUrl);
                   myState.getDissociatedFiles().add(toDirUrl.getValue() + dissociatedFileUrl.substring(fromDirUrl.length()));
                 }
               }
               for (CustomResourceBundleState customResourceBundleState : myState.getCustomResourceBundles()) {
-                for (String fileUrl : new SmartList<String>(customResourceBundleState.getFileUrls())) {
+                for (String fileUrl : new SmartList<>(customResourceBundleState.getFileUrls())) {
                   if (fileUrl.startsWith(fromDirUrl)) {
                     customResourceBundleState.getFileUrls().remove(fileUrl);
                     customResourceBundleState.getFileUrls().add(toDirUrl.getValue() + fileUrl.substring(fromDirUrl.length()));
@@ -130,13 +130,13 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
         if (!(child instanceof PsiFile)) {
           if (child instanceof PsiDirectory) {
             final String deletedDirUrl = ((PsiDirectory)child).getVirtualFile().getUrl() + "/";
-            for (String dissociatedFileUrl : new SmartList<String>(myState.getDissociatedFiles())) {
+            for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
               if (dissociatedFileUrl.startsWith(deletedDirUrl)) {
                 myState.getDissociatedFiles().remove(dissociatedFileUrl);
               }
             }
-            for (CustomResourceBundleState customResourceBundleState : new SmartList<CustomResourceBundleState>(myState.getCustomResourceBundles())) {
-              for (String fileUrl : new ArrayList<String>(customResourceBundleState.getFileUrls())) {
+            for (CustomResourceBundleState customResourceBundleState : new SmartList<>(myState.getCustomResourceBundles())) {
+              for (String fileUrl : new ArrayList<>(customResourceBundleState.getFileUrls())) {
                 if (fileUrl.startsWith(deletedDirUrl)) {
                   customResourceBundleState.getFileUrls().remove(fileUrl);
                 }
@@ -162,7 +162,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
         if (!myState.getDissociatedFiles().isEmpty()) {
           myState.getDissociatedFiles().remove(url.getValue());
         }
-        for (CustomResourceBundleState customResourceBundleState : new SmartList<CustomResourceBundleState>(myState.getCustomResourceBundles())) {
+        for (CustomResourceBundleState customResourceBundleState : new SmartList<>(myState.getCustomResourceBundles())) {
           final Set<String> urls = customResourceBundleState.getFileUrls();
           if (urls.remove(url.getValue())) {
             if (urls.size() < 2) {

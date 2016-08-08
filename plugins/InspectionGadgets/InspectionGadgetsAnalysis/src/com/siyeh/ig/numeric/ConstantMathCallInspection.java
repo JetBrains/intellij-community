@@ -36,7 +36,7 @@ public class ConstantMathCallInspection extends BaseInspection {
 
   @SuppressWarnings("StaticCollection")
   @NonNls static final Set<String> constantMathCall =
-    new HashSet<String>(23);
+    new HashSet<>(23);
 
   static {
     constantMathCall.add("abs");

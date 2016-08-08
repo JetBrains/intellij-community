@@ -303,7 +303,7 @@ public class JdkUtil {
                                             ApplicationNamesInfo.getInstance().getFullProductName());
       final boolean writeDynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
       if (writeDynamicVMOptions) {
-        List<String> dParams = new ArrayList<String>();
+        List<String> dParams = new ArrayList<>();
         for (String param : vmParametersList.getList()) {
           if (param.startsWith("-D")) {
             dParams.add(param);
@@ -311,7 +311,7 @@ public class JdkUtil {
         }
 
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(dParams));
-        final ArrayList<String> restParams = new ArrayList<String>(vmParametersList.getList());
+        final ArrayList<String> restParams = new ArrayList<>(vmParametersList.getList());
         restParams.removeAll(dParams);
         commandLine.addParameters(restParams);
       }
@@ -354,7 +354,7 @@ public class JdkUtil {
   private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {
     if (javaParameters.isUseClasspathJar() && useClasspathJar()) {
       try {
-        final ArrayList<URL> urls = new ArrayList<URL>();
+        final ArrayList<URL> urls = new ArrayList<>();
         for (String path : javaParameters.getClassPath().getPathList()) {
           if (!path.equals(currentPath)) {
             try {

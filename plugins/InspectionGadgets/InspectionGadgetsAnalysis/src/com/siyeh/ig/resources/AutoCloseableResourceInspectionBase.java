@@ -47,7 +47,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
 
-  final List<String> ignoredTypes = new ArrayList<String>(DEFAULT_IGNORED_TYPES);
+  final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   protected final MethodMatcher myMethodMatcher;
 
   public AutoCloseableResourceInspectionBase() {

@@ -81,7 +81,7 @@ public class PermuteArgumentsFix implements IntentionAction {
   public static void registerFix(HighlightInfo info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
     PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     if (expressions.length < 2) return;
-    List<PsiCall> permutations = new ArrayList<PsiCall>();
+    List<PsiCall> permutations = new ArrayList<>();
 
     for (CandidateInfo candidate : candidates) {
       if (candidate instanceof MethodCandidateInfo) {

@@ -104,7 +104,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     myHighlightProblems = highlightProblems;
     myInclusionListener = inclusionListener;
     myChangeDecorator = decorator;
-    myIncludedChanges = new HashSet<T>(initiallyIncluded);
+    myIncludedChanges = new HashSet<>(initiallyIncluded);
     myAlwaysExpandList = true;
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
     myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
@@ -644,7 +644,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
   public void select(final List<T> changes) {
-    final List<TreePath> treeSelection = new ArrayList<TreePath>(changes.size());
+    final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
       @Override
       public boolean accept(Object node) {

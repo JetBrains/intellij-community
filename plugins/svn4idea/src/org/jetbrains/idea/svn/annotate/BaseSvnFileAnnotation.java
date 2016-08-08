@@ -46,7 +46,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   private final MyPartiallyCreatedInfos myInfos;
 
   protected final SvnVcs myVcs;
-  private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
+  private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<>();
 
   private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect(LineAnnotationAspect.DATE, true) {
 
@@ -175,7 +175,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   }
 
   public List<VcsFileRevision> getRevisions() {
-    final List<VcsFileRevision> result = new ArrayList<VcsFileRevision>(myRevisionMap.values());
+    final List<VcsFileRevision> result = new ArrayList<>(myRevisionMap.values());
     Collections.sort(result, new Comparator<VcsFileRevision>() {
       public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
         return o2.getRevisionNumber().compareTo(o1.getRevisionNumber());

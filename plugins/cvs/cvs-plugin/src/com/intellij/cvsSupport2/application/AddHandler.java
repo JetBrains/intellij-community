@@ -38,9 +38,9 @@ import java.util.Iterator;
  * author: lesya
  */
 class AddHandler {
-  private final Collection<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
-  private final Collection<VirtualFile> myAllFiles = new ArrayList<VirtualFile>();
-  private final Collection<File> myIOFiles = new ArrayList<File>();
+  private final Collection<VirtualFile> myAddedFiles = new ArrayList<>();
+  private final Collection<VirtualFile> myAllFiles = new ArrayList<>();
+  private final Collection<File> myIOFiles = new ArrayList<>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
 

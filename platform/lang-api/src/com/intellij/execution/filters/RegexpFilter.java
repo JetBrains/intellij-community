@@ -66,7 +66,7 @@ public class RegexpFilter implements Filter, DumbAware {
       throw new InvalidExpressionException("Expression must contain " + FILE_PATH_MACROS + " macros.");
     }
 
-    final TreeMap<Integer,String> map = new TreeMap<Integer, String>();
+    final TreeMap<Integer,String> map = new TreeMap<>();
 
     map.put(new Integer(filePathIndex), FILE_STR);
 

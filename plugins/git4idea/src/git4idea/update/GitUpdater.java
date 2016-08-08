@@ -165,7 +165,7 @@ public abstract class GitUpdater {
   protected void markEnd(VirtualFile root) throws VcsException {
     // find out what have changed, this is done even if the process was cancelled.
     final MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore);
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
+    final ArrayList<VcsException> exceptions = new ArrayList<>();
     collector.collect(myUpdatedFiles, exceptions);
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);

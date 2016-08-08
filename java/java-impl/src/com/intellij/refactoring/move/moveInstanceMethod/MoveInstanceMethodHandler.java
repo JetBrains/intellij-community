@@ -107,7 +107,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    final List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
+    final List<PsiVariable> suitableVariables = new ArrayList<>();
     message = collectSuitableVariables(method, suitableVariables);
     if (message != null) {
       final String unableToMakeStaticMessage = MakeStaticHandler.validateTarget(method);
@@ -137,7 +137,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   @Nullable
   private static String collectSuitableVariables(final PsiMethod method, final List<PsiVariable> suitableVariables) {
-    final List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
+    final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());
     boolean classTypesFound = false;
@@ -183,7 +183,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method, final PsiVariable targetVariable) {
     final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveInstanceMembersUtil.getThisClassesToMembers(method);
-    Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
+    Map<PsiClass, String> result = new LinkedHashMap<>();
     for (Map.Entry<PsiClass, Set<PsiMember>> entry : classesToMembers.entrySet()) {
       PsiClass aClass = entry.getKey();
       final Set<PsiMember> members = entry.getValue();

@@ -28,7 +28,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class UI {
-  private static final Map<String, Color> ourColors = new HashMap<String, Color>();
+  private static final Map<String, Color> ourColors = new HashMap<>();
 
   private UI() {
   }

@@ -50,7 +50,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
     if (body != null) {
       final PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass != null) {
-        final Set<PsiMethod> methodsToCheck = new HashSet<PsiMethod>();
+        final Set<PsiMethod> methodsToCheck = new HashSet<>();
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitMethodCallExpression(PsiMethodCallExpression expression) {

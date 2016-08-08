@@ -69,7 +69,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       return PyExpression.EMPTY_ARRAY;
     }
     final ASTNode lastEq = eqSigns[eqSigns.length - 1];
-    List<PyExpression> candidates = new ArrayList<PyExpression>();
+    List<PyExpression> candidates = new ArrayList<>();
     ASTNode node = getNode().getFirstChildNode();
     while (node != null && node != lastEq) {
       final PsiElement psi = node.getPsi();
@@ -83,7 +83,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       }
       node = node.getTreeNext();
     }
-    List<PyExpression> targets = new ArrayList<PyExpression>();
+    List<PyExpression> targets = new ArrayList<>();
     for (PyExpression expr : candidates) { // only filter out targets
       if (raw ||
           expr instanceof PyTargetExpression ||
@@ -132,7 +132,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   @NotNull
   public List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
-    List<Pair<PyExpression, PyExpression>> ret = new SmartList<Pair<PyExpression, PyExpression>>();
+    List<Pair<PyExpression, PyExpression>> ret = new SmartList<>();
     if (!PsiTreeUtil.hasErrorElements(this)) { // no parse errors
       PyExpression[] constituents = PsiTreeUtil.getChildrenOfType(this, PyExpression.class); // "a = b = c" -> [a, b, c]
       if (constituents != null && constituents.length > 1) {
@@ -208,7 +208,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   @NotNull
   public List<PsiNamedElement> getNamedElements() {
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());
-    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
+    List<PsiNamedElement> result = new ArrayList<>();
     for (PyExpression expression : expressions) {
       if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).isQualified()) {
         continue;

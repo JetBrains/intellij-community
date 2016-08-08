@@ -125,7 +125,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
       }
     }
 
-    return new Pair<Image, Point>(image, point);
+    return new Pair<>(image, point);
   }
 
   private void initDnD() {

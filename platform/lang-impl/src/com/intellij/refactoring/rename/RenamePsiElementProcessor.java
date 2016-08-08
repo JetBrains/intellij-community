@@ -106,7 +106,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   public static List<RenamePsiElementProcessor> allForElement(@NotNull PsiElement element) {
-    final List<RenamePsiElementProcessor> result = new ArrayList<RenamePsiElementProcessor>();
+    final List<RenamePsiElementProcessor> result = new ArrayList<>();
     for (RenamePsiElementProcessor processor : EP_NAME.getExtensions()) {
       if (processor.canProcessElement(element)) {
         result.add(processor);

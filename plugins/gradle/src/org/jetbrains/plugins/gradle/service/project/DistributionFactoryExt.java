@@ -127,7 +127,7 @@ public class DistributionFactoryExt extends DistributionFactory {
         throw new IllegalArgumentException(
           String.format("The specified %s does not appear to contain a Gradle distribution.", locationDisplayName));
       }
-      Set<File> files = new LinkedHashSet<File>();
+      Set<File> files = new LinkedHashSet<>();
       //noinspection ConstantConditions
       for (File file : libDir.listFiles()) {
         if (file.getName().endsWith(".jar")) {

@@ -168,7 +168,7 @@ public class GitLogParser {
     // R100    dir/anew.txt    anew.txt
     final List<String> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
     String notMatchedPart = null;
-    final List<GitLogRecord> res = new ArrayList<GitLogRecord>(records.size());
+    final List<GitLogRecord> res = new ArrayList<>(records.size());
     for (String record : records) {
       if (!record.trim().isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
         if (notMatchedPart != null) {
@@ -210,8 +210,8 @@ public class GitLogParser {
     final Map<GitLogOption, String> res = parseCommitInfo(commitInfo);
 
     // parsing status and path (if given)
-    final List<String> paths = new ArrayList<String>(1);
-    final List<GitLogStatusInfo> statuses = new ArrayList<GitLogStatusInfo>();
+    final List<String> paths = new ArrayList<>(1);
+    final List<GitLogStatusInfo> statuses = new ArrayList<>();
 
     if (myNameStatusOption != NameStatus.NONE) {
       String pathsAndStatuses = matcher.group(2);
@@ -256,7 +256,7 @@ public class GitLogParser {
     // parsing revision information
     // we rely on the order of options
     final String[] values = commitInfo.split(ITEMS_SEPARATOR);
-    final Map<GitLogOption, String> res = new HashMap<GitLogOption, String>(values.length);
+    final Map<GitLogOption, String> res = new HashMap<>(values.length);
     int i = 0;
     for (; i < values.length && i < myOptions.length; i++) {  // fill valid values
       res.put(myOptions[i], values[i]);

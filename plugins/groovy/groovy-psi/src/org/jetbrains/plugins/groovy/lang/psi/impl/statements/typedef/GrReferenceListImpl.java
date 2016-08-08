@@ -114,7 +114,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   @Override
   public PsiClassType[] getReferencedTypes() {
     if (myCachedTypes == null || !isValid()) {
-      final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
+      final ArrayList<PsiClassType> types = new ArrayList<>();
       for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {
         types.add(new GrClassReferenceType(ref));
       }

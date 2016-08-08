@@ -39,7 +39,7 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation");
 
   private final String myRevision;
-  private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
+  private final List<Annotation> myAnnotations = new ArrayList<>();
   private final StringBuilder myBuffer = new StringBuilder();
   private final LocalPathIndifferentOperationHelper myHelper;
   private final boolean myAnnotateBinary;

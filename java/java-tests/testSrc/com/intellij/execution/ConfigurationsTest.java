@@ -237,7 +237,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     addOutputs(module3, 3);
     module.setModule(module1);
     parameters.configureByModule(module.getModule(), JavaParameters.JDK_AND_CLASSES_AND_TESTS);
-    ArrayList<String> classPath = new ArrayList<String>();
+    ArrayList<String> classPath = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(parameters.getClassPath().getPathsString(), File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
       String token = tokenizer.nextToken();
@@ -527,7 +527,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
 
   private static List<String> readLinesFrom(File file) throws IOException {
     if (!file.exists()) file.createNewFile();
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
     try {
       String line;

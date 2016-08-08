@@ -36,15 +36,15 @@ import java.util.Map;
  * @author Roman.Chernyatchik
  */
 public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
-  private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
-  private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
+  private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<>();
+  private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
-    new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
+    new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
-    new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
-  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
+    new HashMap<>();
+  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<>();
   private final WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos =
-    new WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo>();
+    new WeakHashMap<>();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
@@ -92,8 +92,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
 
     final Project project = getProject();
-    final List<PsiPackage> packages = new ArrayList<PsiPackage>();
-    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiPackage> packages = new ArrayList<>();
+    final List<PsiClass> classes = new ArrayList<>();
 
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;

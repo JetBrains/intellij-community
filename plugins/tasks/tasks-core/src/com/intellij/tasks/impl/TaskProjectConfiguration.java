@@ -42,7 +42,7 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "server")
-  public List<SharedServer> servers = new ArrayList<SharedServer>();
+  public List<SharedServer> servers = new ArrayList<>();
 
   private final TaskManagerImpl myManager;
 

@@ -56,7 +56,7 @@ public class DictionaryTest {
 
   @Test
   public void testDictionaryLoadedFully() {
-    final Set<String> onDisk = new THashSet<String>();
+    final Set<String> onDisk = new THashSet<>();
     getLoader(JETBRAINS_DIC).load(s -> {
       assertNotNull(s);
       String t = myTransformation.transform(s);
@@ -106,8 +106,8 @@ public class DictionaryTest {
   }
 
   private Pair<Set<String>, Set<String>> createWordSets(Dictionary dictionary, int maxCount, int mod) {
-    Set<String> wordsToStore = new THashSet<String>();
-    Set<String> wordsToCheck = new THashSet<String>();
+    Set<String> wordsToStore = new THashSet<>();
+    Set<String> wordsToCheck = new THashSet<>();
 
     Set<String> words = dictionary.getWords();
     assertNotNull(words);

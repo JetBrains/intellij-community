@@ -107,14 +107,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Component to be edited
    */
-  @NotNull private final List<RadComponent> mySelection = new ArrayList<RadComponent>();
+  @NotNull private final List<RadComponent> mySelection = new ArrayList<>();
   /**
    * If true then inspector will show "expert" properties
    */
   private boolean myShowExpertProperties;
 
-  private final Map<HighlightSeverity, SimpleTextAttributes> myHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
-  private final Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+  private final Map<HighlightSeverity, SimpleTextAttributes> myHighlightAttributes = new HashMap<>();
+  private final Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<>();
 
   private final ClassToBindProperty myClassToBindProperty;
   private final BindingProperty myBindingProperty;
@@ -137,8 +137,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myPropertyEditorListener = new MyPropertyEditorListener();
     myLafManagerListener = new MyLafManagerListener();
     myComponentTree=componentTree;
-    myProperties = new ArrayList<Property>();
-    myExpandedProperties = new HashSet<String>();
+    myProperties = new ArrayList<>();
+    myExpandedProperties = new HashSet<>();
     myModel = new MyModel();
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -408,7 +408,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       myModel.fireTableDataChanged();
 
       // Try to restore selection
-      final ArrayList<Property> reversePath=new ArrayList<Property>(2);
+      final ArrayList<Property> reversePath= new ArrayList<>(2);
       while(selectedProperty!=null){
         reversePath.add(selectedProperty);
         selectedProperty=selectedProperty.getParent();
@@ -455,7 +455,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
 
       for(int i=1; i<mySelection.size(); i++) {
-        ArrayList<Property> otherProperties = new ArrayList<Property>();
+        ArrayList<Property> otherProperties = new ArrayList<>();
         collectProperties(mySelection.get(i), otherProperties);
         for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
           final Property prop = myProperties.get(propIndex);
@@ -920,7 +920,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         if (!editor.ensureEditable()) {
           return false;
         }
-        final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+        final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           result.set(setSelectionValue(property, newValue));
 

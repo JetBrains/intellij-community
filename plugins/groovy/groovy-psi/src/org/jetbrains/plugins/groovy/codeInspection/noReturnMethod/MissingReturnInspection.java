@@ -97,7 +97,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
   @Nullable
   public static PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
-    List<PsiType> expectedReturnTypes = new ArrayList<PsiType>();
+    List<PsiType> expectedReturnTypes = new ArrayList<>();
 
     PsiElement parent = closure.getParent();
     if (parent instanceof GrArgumentList && parent.getParent() instanceof GrMethodCall || parent instanceof GrMethodCall) {
@@ -175,9 +175,9 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
       return false;
     }
 
-    final Ref<Boolean> alwaysHaveReturn = new Ref<Boolean>(true);
-    final Ref<Boolean> sometimesHaveReturn = new Ref<Boolean>(false);
-    final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
+    final Ref<Boolean> alwaysHaveReturn = new Ref<>(true);
+    final Ref<Boolean> sometimesHaveReturn = new Ref<>(false);
+    final Ref<Boolean> hasExplicitReturn = new Ref<>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {

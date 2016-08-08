@@ -76,8 +76,8 @@ public class DiffManagerTest {
   }
 
   private static class MyDiffRequest extends DiffRequest {
-    private final List<String> myContentTitles = new ArrayList<String>();
-    private final List<DiffContent> myDiffContents = new ArrayList<DiffContent>();
+    private final List<String> myContentTitles = new ArrayList<>();
+    private final List<DiffContent> myDiffContents = new ArrayList<>();
 
     public MyDiffRequest() {
       super(null);

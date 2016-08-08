@@ -28,11 +28,11 @@ import java.util.ListIterator;
  */
 public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
   public static<Key extends Comparable<Key>, Val> MembershipMap<Key, Val> createMembershipMap(final PairProcessor<Key, Key> keysResemblance) {
-    return new MembershipMap<Key,Val>(keysResemblance, new ComparableComparator<Key>());
+    return new MembershipMap<>(keysResemblance, new ComparableComparator<>());
   }
 
   public static<Key, Val> MembershipMap<Key, Val> createMembershipMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
-    return new MembershipMap<Key,Val>(keysResemblance, comparator);
+    return new MembershipMap<>(keysResemblance, comparator);
   }
 
   private MembershipMap(final PairProcessor<Key, Key> keysResemblance, final Comparator<Key> comparator) {
@@ -80,7 +80,7 @@ public class MembershipMap<Key, Val> extends AreaMap<Key, Val> {
   }
 
   public Pair<Key, Val> getMapping(final Key key) {
-    final Ref<Pair<Key, Val>> result = new Ref<Pair<Key, Val>>();
+    final Ref<Pair<Key, Val>> result = new Ref<>();
     getSimiliar(key, new PairProcessor<Key, Val>() {
       @Override
       public boolean process(final Key key, final Val val) {

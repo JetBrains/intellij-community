@@ -34,7 +34,7 @@ public class Digester {
       return digestRegularFile(file, false);
     }
     try {
-      List<ZipEntry> sorted = new ArrayList<ZipEntry>();
+      List<ZipEntry> sorted = new ArrayList<>();
 
       Enumeration<? extends ZipEntry> temp = zipFile.entries();
       while (temp.hasMoreElements()) {

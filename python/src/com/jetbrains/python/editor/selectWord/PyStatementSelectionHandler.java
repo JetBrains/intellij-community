@@ -35,7 +35,7 @@ public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase 
   }
 
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     PsiElement endElement = e;
     while(endElement.getLastChild() != null) {
       endElement = endElement.getLastChild();

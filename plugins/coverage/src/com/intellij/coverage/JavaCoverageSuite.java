@@ -83,7 +83,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @NotNull
   public String[] getFilteredPackageNames() {
     if (myFilters == null || myFilters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String filter : myFilters) {
       if (filter.equals("*")) {
         result.add(""); //default package
@@ -96,7 +96,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @NotNull
   public String[] getFilteredClassNames() {
     if (myFilters == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (String filter : myFilters) {
       if (!filter.equals("*") && !filter.endsWith(".*")) result.add(filter);
     }
@@ -108,7 +108,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
     // filters
     final List children = element.getChildren(FILTER);
-    List<String> filters = new ArrayList<String>();
+    List<String> filters = new ArrayList<>();
     //noinspection unchecked
     for (Element child : ((Iterable<Element>)children)) {
       filters.add(child.getValue());
@@ -200,7 +200,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   public @NotNull List<PsiPackage> getCurrentSuitePackages(final Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiPackage>>() {
       public List<PsiPackage> compute() {
-        final List<PsiPackage> packages = new ArrayList<PsiPackage>();
+        final List<PsiPackage> packages = new ArrayList<>();
         final PsiManager psiManager = PsiManager.getInstance(project);
         final String[] filters = getFilteredPackageNames();
         if (filters.length == 0) {
@@ -212,7 +212,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
           }
         }
         else {
-          final List<String> nonInherited = new ArrayList<String>();
+          final List<String> nonInherited = new ArrayList<>();
           for (final String filter : filters) {
             if (!isSubPackage(filters, filter)) {
               nonInherited.add(filter);
@@ -241,7 +241,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public @NotNull List<PsiClass> getCurrentSuiteClasses(final Project project) {
-    final List<PsiClass> classes = new ArrayList<PsiClass>();
+    final List<PsiClass> classes = new ArrayList<>();
     final String[] classNames = getFilteredClassNames();
     if (classNames.length > 0) {
       for (final String className : classNames) {

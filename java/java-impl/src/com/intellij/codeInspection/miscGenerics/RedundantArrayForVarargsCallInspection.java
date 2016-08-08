@@ -68,7 +68,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place,
                                              @NotNull final InspectionManager manager,
                                              final boolean isOnTheFly) {
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitCallExpression(PsiCallExpression expression) {

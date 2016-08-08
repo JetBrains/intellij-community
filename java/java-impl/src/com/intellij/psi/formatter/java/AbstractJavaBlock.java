@@ -645,7 +645,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return child;
     }
     else {
-      final ArrayList<Block> localResult = new ArrayList<Block>();
+      final ArrayList<Block> localResult = new ArrayList<>();
       while (child != null) {
         if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
           localResult.add(createJavaBlock(
@@ -672,7 +672,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                @NotNull final ASTNode child,
                                                final Wrap defaultWrap,
                                                final Indent childIndent) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final ArrayList<Block> localResult = new ArrayList<>();
     final Wrap wrap = arrangeChildWrap(child, defaultWrap);
     final Alignment alignment = myReservedAlignment;
     final Alignment alignment2 = myReservedAlignment2;
@@ -705,7 +705,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   @NotNull
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
-    final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
+    final ArrayList<ASTNode> nodes = new ArrayList<>();
     collectNodes(nodes, node);
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings).build(nodes);
   }
@@ -1207,7 +1207,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                      final Indent indent,
                                      final int childrenIndent,
                                      @Nullable final Wrap childWrap) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
+    final ArrayList<Block> localResult = new ArrayList<>();
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
 

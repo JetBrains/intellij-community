@@ -96,7 +96,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
     Object[] extensions = Extensions.getExtensions("com.intellij.referencesSearch");
     final PropertySearcher searcher =
-      (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
+      (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<>(PropertySearcher.class));
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     return new PsiElementVisitor() {
       @Override

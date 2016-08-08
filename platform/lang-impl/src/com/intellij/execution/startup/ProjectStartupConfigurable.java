@@ -276,7 +276,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<ChooseRunConfigurationPopup.ItemWrapper>();
+    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
     final ChooseRunConfigurationPopup.ItemWrapper[] allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
@@ -285,7 +285,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           return executor;
         }
       }, false);
-    final Set<RunnerAndConfigurationSettings> existing = new HashSet<RunnerAndConfigurationSettings>(myModel.getAllConfigurations());
+    final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
@@ -334,8 +334,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Override
   public boolean isModified() {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
-    final Set<RunnerAndConfigurationSettings> shared = new HashSet<RunnerAndConfigurationSettings>(projectStartupTaskManager.getSharedConfigurations());
-    final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(shared);
+    final Set<RunnerAndConfigurationSettings> shared = new HashSet<>(projectStartupTaskManager.getSharedConfigurations());
+    final List<RunnerAndConfigurationSettings> list = new ArrayList<>(shared);
     list.addAll(projectStartupTaskManager.getLocalConfigurations());
     Collections.sort(list, ProjectStartupTasksTableModel.RunnerAndConfigurationSettingsComparator.getInstance());
 
@@ -346,8 +346,8 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() throws ConfigurationException {
-    final List<RunnerAndConfigurationSettings> shared = new ArrayList<RunnerAndConfigurationSettings>();
-    final List<RunnerAndConfigurationSettings> local = new ArrayList<RunnerAndConfigurationSettings>();
+    final List<RunnerAndConfigurationSettings> shared = new ArrayList<>();
+    final List<RunnerAndConfigurationSettings> local = new ArrayList<>();
 
     final Set<RunnerAndConfigurationSettings> sharedSet = myModel.getSharedConfigurations();
     final List<RunnerAndConfigurationSettings> allConfigurations = myModel.getAllConfigurations();

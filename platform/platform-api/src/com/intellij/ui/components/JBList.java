@@ -195,7 +195,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          ArrayList<String> selected = new ArrayList<String>();
+          ArrayList<String> selected = new ArrayList<>();
           JBList list = JBList.this;
           ListCellRenderer renderer = list.getCellRenderer();
           if (renderer != null) {

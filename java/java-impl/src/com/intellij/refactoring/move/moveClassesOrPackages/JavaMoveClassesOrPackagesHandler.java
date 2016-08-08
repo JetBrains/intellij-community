@@ -369,7 +369,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        JPanel panel = new JPanel(new BorderLayout());
 
 
-       final HashSet<String> packages = new HashSet<String>();
+       final HashSet<String> packages = new HashSet<>();
        for (PsiDirectory directory : myDirectories) {
          packages.add(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName());
        }

@@ -90,7 +90,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final List<PyTypeChecker.AnalyzeCallResults> resultsSet = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       final List<Map<PyExpression, Pair<String, ProblemHighlightType>>> problemsSet =
-        new ArrayList<Map<PyExpression, Pair<String, ProblemHighlightType>>>();
+        new ArrayList<>();
       for (PyTypeChecker.AnalyzeCallResults results : resultsSet) {
         problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
       }
@@ -109,8 +109,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     private Map<PyExpression, Pair<String, ProblemHighlightType>> checkMapping(@Nullable PyExpression receiver,
                                                                                @NotNull Map<PyExpression, PyNamedParameter> mapping) {
       final Map<PyExpression, Pair<String, ProblemHighlightType>> problems =
-        new HashMap<PyExpression, Pair<String, ProblemHighlightType>>();
-      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
+        new HashMap<>();
+      final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<>();
       boolean genericsCollected = false;
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();

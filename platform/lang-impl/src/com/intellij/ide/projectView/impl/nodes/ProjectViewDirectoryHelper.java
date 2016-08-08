@@ -145,7 +145,7 @@ public class ProjectViewDirectoryHelper {
   public Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories) {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
@@ -184,7 +184,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   public List<VirtualFile> getTopLevelRoots() {
-    List<VirtualFile> topLevelContentRoots = new ArrayList<VirtualFile>();
+    List<VirtualFile> topLevelContentRoots = new ArrayList<>();
     ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
     ProjectFileIndex index = prm.getFileIndex();
 
@@ -210,7 +210,7 @@ public class ProjectViewDirectoryHelper {
   private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
     final VirtualFile dir = psiDirectory.getVirtualFile();
     if (shouldBeShown(dir, settings)) {
-      final List<PsiElement> children = new ArrayList<PsiElement>();
+      final List<PsiElement> children = new ArrayList<>();
       psiDirectory.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
         @Override
         public boolean execute(@NotNull PsiFileSystemItem element) {
@@ -224,7 +224,7 @@ public class ProjectViewDirectoryHelper {
     }
 
     PsiManager manager = psiDirectory.getManager();
-    Set<PsiElement> directoriesOnTheWayToContentRoots = new THashSet<PsiElement>();
+    Set<PsiElement> directoriesOnTheWayToContentRoots = new THashSet<>();
     for (VirtualFile root : getTopLevelRoots()) {
       VirtualFile current = root;
       while (current != null) {

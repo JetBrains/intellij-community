@@ -45,12 +45,12 @@ import java.util.TreeSet;
  */
 public class TemplateBuilderImpl implements TemplateBuilder {
   private final RangeMarker myContainerElement;
-  private final Map<RangeMarker,Expression> myExpressions = new HashMap<RangeMarker, Expression>();
-  private final Map<RangeMarker,String> myVariableExpressions = new HashMap<RangeMarker, String>();
-  private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<RangeMarker, Boolean>();
-  private final Map<RangeMarker, Boolean> mySkipOnStartMap = new HashMap<RangeMarker, Boolean>();
-  private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<RangeMarker, String>();
-  private final Set<RangeMarker> myElements = new TreeSet<RangeMarker>(RangeMarker.BY_START_OFFSET);
+  private final Map<RangeMarker,Expression> myExpressions = new HashMap<>();
+  private final Map<RangeMarker,String> myVariableExpressions = new HashMap<>();
+  private final Map<RangeMarker, Boolean> myAlwaysStopAtMap = new HashMap<>();
+  private final Map<RangeMarker, Boolean> mySkipOnStartMap = new HashMap<>();
+  private final Map<RangeMarker, String> myVariableNamesMap = new HashMap<>();
+  private final Set<RangeMarker> myElements = new TreeSet<>(RangeMarker.BY_START_OFFSET);
 
   private RangeMarker myEndElement;
   private RangeMarker mySelection;

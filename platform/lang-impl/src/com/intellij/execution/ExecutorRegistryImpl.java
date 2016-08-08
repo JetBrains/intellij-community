@@ -51,12 +51,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
   @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
-  private List<Executor> myExecutors = new ArrayList<Executor>();
+  private List<Executor> myExecutors = new ArrayList<>();
   private ActionManager myActionManager;
-  private final Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
-  private final Set<String> myContextActionIdSet = new HashSet<String>();
-  private final Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
-  private final Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
+  private final Map<String, Executor> myId2Executor = new HashMap<>();
+  private final Set<String> myContextActionIdSet = new HashSet<>();
+  private final Map<String, AnAction> myId2Action = new HashMap<>();
+  private final Map<String, AnAction> myContextActionId2Action = new HashMap<>();
 
   // [Project, ExecutorId, RunnerId]
   private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new java.util.HashSet<Trinity<Project, String, String>>());
@@ -195,7 +195,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   @Override
   public synchronized void disposeComponent() {
     if (!myExecutors.isEmpty()) {
-      for (Executor executor : new ArrayList<Executor>(myExecutors)) {
+      for (Executor executor : new ArrayList<>(myExecutors)) {
         deinitExecutor(executor);
       }
     }

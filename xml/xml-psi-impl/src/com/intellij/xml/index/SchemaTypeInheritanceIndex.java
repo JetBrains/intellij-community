@@ -90,7 +90,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
         if (myMap == null) {
           try {
             myMap = XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(VfsUtilCore.loadText(myCurrentFile)));
-            type.add(new HashSet<SchemaTypeInfo>(myMap.get(new SchemaTypeInfo(name, true, ns))));
+            type.add(new HashSet<>(myMap.get(new SchemaTypeInfo(name, true, ns))));
           }
           catch (IOException e) {
             LOG.info(e);
@@ -124,11 +124,11 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
       @NotNull
       @Override
       public Map<String, Set<SchemaTypeInfo>> map(@NotNull FileContent inputData) {
-        final Map<String, Set<SchemaTypeInfo>> map = new HashMap<String, Set<SchemaTypeInfo>>();
+        final Map<String, Set<SchemaTypeInfo>> map = new HashMap<>();
         final MultiMap<SchemaTypeInfo,SchemaTypeInfo> multiMap =
           XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         for (SchemaTypeInfo key : multiMap.keySet()) {
-          map.put(NsPlusTag.INSTANCE.encode(Pair.create(key.getNamespaceUri(), key.getTagName())), new HashSet<SchemaTypeInfo>(multiMap.get(key)));
+          map.put(NsPlusTag.INSTANCE.encode(Pair.create(key.getNamespaceUri(), key.getTagName())), new HashSet<>(multiMap.get(key)));
         }
         return map;
       }
@@ -151,7 +151,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
 
       @Override
       public Set<SchemaTypeInfo> read(@NotNull DataInput in) throws IOException {
-        final Set<SchemaTypeInfo> set = new HashSet<SchemaTypeInfo>();
+        final Set<SchemaTypeInfo> set = new HashSet<>();
         final int size = DataInputOutputUtil.readINT(in);
         for (int i = 0; i < size; i++) {
           final String nsUri = IOUtil.readUTF(in);

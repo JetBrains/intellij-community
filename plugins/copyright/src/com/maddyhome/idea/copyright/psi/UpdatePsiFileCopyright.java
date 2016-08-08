@@ -94,7 +94,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected abstract void scanFile();
 
   protected void checkComments(PsiElement first, PsiElement last, boolean commentHere) {
-    List<PsiComment> comments = new ArrayList<PsiComment>();
+    List<PsiComment> comments = new ArrayList<>();
     collectComments(first, last, comments);
     checkComments(last, commentHere, comments);
   }
@@ -118,7 +118,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   protected void checkComments(PsiElement last, boolean commentHere, List<PsiComment> comments) {
     try {
       final String keyword = myOptions.getKeyword();
-      final LinkedHashSet<CommentRange> found = new LinkedHashSet<CommentRange>();
+      final LinkedHashSet<CommentRange> found = new LinkedHashSet<>();
       Document doc = null;
       if (!StringUtil.isEmpty(keyword)) {
         Pattern pattern = Pattern.compile(StringUtil.escapeToRegexp(keyword), Pattern.CASE_INSENSITIVE);
@@ -457,7 +457,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   private final PsiFile file;
   private final LanguageOptions langOpts;
-  private final TreeSet<CommentAction> actions = new TreeSet<CommentAction>();
+  private final TreeSet<CommentAction> actions = new TreeSet<>();
 
   private static final Logger logger = Logger.getInstance(UpdatePsiFileCopyright.class.getName());
 }

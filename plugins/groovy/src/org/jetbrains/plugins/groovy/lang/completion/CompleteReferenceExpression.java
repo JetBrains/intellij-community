@@ -370,7 +370,7 @@ public class CompleteReferenceExpression {
       return Collections.emptySet();
     }
 
-    Set<String> propertyNames = new HashSet<String>();
+    Set<String> propertyNames = new HashSet<>();
     for (GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myRefExpr, GrTypeDefinition.class);
          containingClass != null;
          containingClass = PsiTreeUtil.getParentOfType(containingClass, GrTypeDefinition.class)) {
@@ -399,9 +399,9 @@ public class CompleteReferenceExpression {
     private final SubstitutorComputer mySubstitutorComputer;
 
     private final Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
-    private final Set<String> myPropertyNames = new HashSet<String>();
-    private final Set<String> myLocalVars = new HashSet<String>();
-    private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
+    private final Set<String> myPropertyNames = new HashSet<>();
+    private final Set<String> myLocalVars = new HashSet<>();
+    private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<>();
 
     private List<GroovyResolveResult> myInapplicable;
 
@@ -566,7 +566,7 @@ public class CompleteReferenceExpression {
     public GroovyResolveResult[] getCandidates() {
       if (!hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
-      List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>(results.length);
+      List<GroovyResolveResult> list = new ArrayList<>(results.length);
       myPropertyNames.removeAll(myPreferredFieldNames);
 
       Set<String> usedFields = ContainerUtil.newHashSet();

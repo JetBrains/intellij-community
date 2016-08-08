@@ -78,7 +78,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   // Name editor calls "setName" to apply new name. It is scheme name, not presentable name —
   // but only bundled scheme name could be different from presentable and bundled scheme is not editable (could not be renamed). So, it is ok.
-  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<Keymap>(new ListItemEditor<Keymap>() {
+  private final ComboBoxModelEditor<Keymap> myEditor = new ComboBoxModelEditor<>(new ListItemEditor<Keymap>() {
     @NotNull
     @Override
     public String getName(@NotNull Keymap item) {
@@ -701,7 +701,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void ensureUniqueKeymapNames() throws ConfigurationException {
-    Set<String> keymapNames = new THashSet<String>();
+    Set<String> keymapNames = new THashSet<>();
     for (Keymap keymap : myEditor.getModel().getItems()) {
       if (!keymapNames.add(keymap.getName())) {
         throw new ConfigurationException(KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message"));

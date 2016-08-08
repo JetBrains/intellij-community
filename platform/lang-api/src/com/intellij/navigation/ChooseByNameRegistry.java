@@ -27,8 +27,8 @@ import java.util.Collections;
  */
 
 public class ChooseByNameRegistry {
-  private final List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<ChooseByNameContributor>();
-  private final List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<ChooseByNameContributor>();
+  private final List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<>();
+  private final List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<>();
   private boolean myGotoClassExtensionsLoaded = false;
   private boolean myGotoSymbolExtensionsLoaded = false;
 

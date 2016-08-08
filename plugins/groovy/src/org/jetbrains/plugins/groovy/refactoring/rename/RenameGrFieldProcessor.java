@@ -66,7 +66,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
   public Collection<PsiReference> findReferences(PsiElement element) {
     assert element instanceof GrField;
 
-    ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
+    ArrayList<PsiReference> refs = new ArrayList<>();
 
     GrField field = (GrField)element;
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
@@ -95,7 +95,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     MultiMap<PsiNamedElement, UsageInfo> propertyUsages = MultiMap.createLinked();
     MultiMap<PsiNamedElement, UsageInfo> simpleUsages = MultiMap.createLinked();
 
-    List<PsiReference> unknownUsages = new ArrayList<PsiReference>();
+    List<PsiReference> unknownUsages = new ArrayList<>();
 
     for (UsageInfo usage : usages) {
       final PsiReference ref = usage.getReference();
@@ -298,7 +298,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
                              String newName,
                              Map<? extends PsiElement, String> allRenames,
                              List<UsageInfo> result) {
-    List<UsageInfo> collisions = new ArrayList<UsageInfo>();
+    List<UsageInfo> collisions = new ArrayList<>();
 
     for (UsageInfo info : result) {
       if (!(info instanceof MoveRenameUsageInfo)) continue;

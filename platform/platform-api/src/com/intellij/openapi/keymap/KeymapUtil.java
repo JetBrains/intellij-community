@@ -54,8 +54,8 @@ public class KeymapUtil {
   @NonNls private static final String ALT_GRAPH = "altGraph";
   @NonNls private static final String DOUBLE_CLICK = "doubleClick";
 
-  private static final Set<Integer> ourTooltipKeys = new HashSet<Integer>();
-  private static final Set<Integer> ourOtherTooltipKeys = new HashSet<Integer>();
+  private static final Set<Integer> ourTooltipKeys = new HashSet<>();
+  private static final Set<Integer> ourOtherTooltipKeys = new HashSet<>();
   private static RegistryValue ourTooltipKeysProperty;
 
   private KeymapUtil() {

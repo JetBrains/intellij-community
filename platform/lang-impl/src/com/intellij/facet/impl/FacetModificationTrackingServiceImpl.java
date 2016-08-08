@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class FacetModificationTrackingServiceImpl extends FacetModificationTrackingService {
   private final Map<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
-    new THashMap<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>>();
+    new THashMap<>();
 
   public FacetModificationTrackingServiceImpl(final Module module) {
     module.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener());

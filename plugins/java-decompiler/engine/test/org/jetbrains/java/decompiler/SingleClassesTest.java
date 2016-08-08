@@ -118,7 +118,7 @@ public class SingleClassesTest {
   }
 
   private static List<File> collectClasses(File classFile) {
-    List<File> files = new ArrayList<File>();
+    List<File> files = new ArrayList<>();
     files.add(classFile);
 
     File parent = classFile.getParentFile();

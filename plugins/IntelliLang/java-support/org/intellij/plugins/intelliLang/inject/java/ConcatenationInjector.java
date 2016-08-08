@@ -136,8 +136,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
-      final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
+      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         public boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression) {
@@ -339,7 +339,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
       if (objects.isEmpty()) return;
       final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
-        new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+        new ArrayList<>();
       final int len = objects.size();
       for (int i = 0; i < len; i++) {
         String curPrefix = null;

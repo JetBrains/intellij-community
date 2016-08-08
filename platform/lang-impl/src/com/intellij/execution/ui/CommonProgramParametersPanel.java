@@ -125,7 +125,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<String> macros = new SmartList<String>(PathMacros.getInstance().getUserMacroNames());
+        List<String> macros = new SmartList<>(PathMacros.getInstance().getUserMacroNames());
         if (myModuleContext != null || myHasModuleMacro) {
           macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
         }

@@ -37,7 +37,7 @@ import java.awt.event.KeyEvent;
 import java.util.Set;
 
 public class QuickAccessSettings {
-  private final Set<Integer> myModifierVks = new THashSet<Integer>();
+  private final Set<Integer> myModifierVks = new THashSet<>();
   @NonNls public static final String SWITCH_UP = "SwitchUp";
   @NonNls public static final String SWITCH_DOWN = "SwitchDown";
   @NonNls public static final String SWITCH_LEFT = "SwitchLeft";
@@ -78,7 +78,7 @@ public class QuickAccessSettings {
       return;
     }
 
-    Set<String> vksSet = new THashSet<String>();
+    Set<String> vksSet = new THashSet<>();
     ContainerUtil.addAll(vksSet, getModifierRegistryValue().split(" "));
     myModifierVks.clear();
     int mask = getModifierMask(vksSet);
@@ -139,7 +139,7 @@ public class QuickAccessSettings {
 
   @NotNull
   public static Set<Integer> getModifiersVKs(int mask) {
-    Set<Integer> codes = new THashSet<Integer>();
+    Set<Integer> codes = new THashSet<>();
     if ((mask & InputEvent.SHIFT_MASK) > 0) {
       codes.add(KeyEvent.VK_SHIFT);
     }

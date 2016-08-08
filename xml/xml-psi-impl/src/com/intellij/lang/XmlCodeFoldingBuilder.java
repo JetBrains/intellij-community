@@ -68,7 +68,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     List<FoldingDescriptor> foldings = null;
 
     if (rootTag != null) {
-      foldings = new ArrayList<FoldingDescriptor>();
+      foldings = new ArrayList<>();
 
       doAddForChildren(xmlDocument, foldings, document);
     }

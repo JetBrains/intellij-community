@@ -62,7 +62,7 @@ public class PythonTask {
   private String myRunnerScript;
   private HelperPackage myHelper = null;
 
-  private List<String> myParameters = new ArrayList<String>();
+  private List<String> myParameters = new ArrayList<>();
   private final String myRunTabTitle;
   private String myHelpId;
   private Runnable myAfterCompletion;

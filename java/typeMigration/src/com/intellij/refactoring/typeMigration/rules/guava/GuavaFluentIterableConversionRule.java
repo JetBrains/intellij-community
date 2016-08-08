@@ -49,7 +49,7 @@ import java.util.*;
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
   private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
-    new HashMap<String, TypeConversionDescriptorFactory>();
+    new HashMap<>();
 
   public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of");
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
@@ -281,7 +281,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   public static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
                                                                           PsiType to,
                                                                           TypeMigrationLabeler labeler) {
-    List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<TypeConversionDescriptorBase>();
+    List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
     NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<TypeConversionRule>() {
       @NotNull
@@ -370,14 +370,14 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     private final PsiType myToType;
 
     private GuavaChainedConversionDescriptor(List<TypeConversionDescriptorBase> descriptors, PsiType to) {
-      myMethodDescriptors = new ArrayList<TypeConversionDescriptorBase>(descriptors);
+      myMethodDescriptors = new ArrayList<>(descriptors);
       Collections.reverse(myMethodDescriptors);
       myToType = to;
     }
 
     @Override
     public PsiExpression replace(@NotNull PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
-      Stack<PsiMethodCallExpression> methodChainStack = new Stack<PsiMethodCallExpression>();
+      Stack<PsiMethodCallExpression> methodChainStack = new Stack<>();
       PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
       while (current != null) {
         methodChainStack.add(current);

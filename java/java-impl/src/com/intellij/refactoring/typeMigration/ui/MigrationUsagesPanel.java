@@ -49,7 +49,7 @@ public class MigrationUsagesPanel extends UsagesPanel {
     if (rootElement == null) return;
     final Set<PsiElement> usages = labeler.getTypeUsages((TypeMigrationUsageInfo)migration, ((TypeMigrationUsageInfo)root));
     if (usages != null) {
-      final List<UsageInfo> infos = new ArrayList<UsageInfo>(usages.size());
+      final List<UsageInfo> infos = new ArrayList<>(usages.size());
       for (PsiElement usage : usages) {
         if (usage != null && usage.isValid()) {
           infos.add(new UsageInfo(usage));

@@ -314,7 +314,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private final class MenuItemSynchronizer implements PropertyChangeListener, Disposable {
     @NonNls private static final String SELECTED = "selected";
 
-    private final Set<String> mySynchronized = new HashSet<String>();
+    private final Set<String> mySynchronized = new HashSet<>();
 
     private MenuItemSynchronizer() {
       myPresentation.addPropertyChangeListener(this);

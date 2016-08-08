@@ -55,8 +55,8 @@ public class GroovyExtensionProvider {
     }
 
 
-    List<String> instanceClasses = new ArrayList<String>();
-    List<String> staticClasses = new ArrayList<String>();
+    List<String> instanceClasses = new ArrayList<>();
+    List<String> staticClasses = new ArrayList<>();
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
       PsiFile file = directory.findFile(ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
       if (file instanceof PropertiesFile) {

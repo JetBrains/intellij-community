@@ -52,7 +52,7 @@ public class PropertiesRootBlock extends AbstractBlock {
 
   @Override
   protected List<Block> buildChildren() {
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
       if (!(child instanceof PsiWhiteSpace)) {

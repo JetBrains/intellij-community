@@ -52,8 +52,8 @@ import java.io.IOException;
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements PanelWithAnchor {
   private final ModulesComboBox myModules = new ModulesComboBox();
   private final JBLabel myModuleLabel = new JBLabel(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.label"));
-  private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
-  private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
+  private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<>();
+  private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<>();
   private JComponent anchor;
   private final JrePathEditor myJrePathEditor;
 

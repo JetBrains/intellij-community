@@ -316,8 +316,8 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     assert console instanceof ConsoleViewImpl : "Console has no editor!";
     final ConsoleViewImpl consoleView = (ConsoleViewImpl)console;
     final Editor editor = consoleView.getEditor();
-    final List<String> resultStrings = new ArrayList<String>();
-    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
+    final List<String> resultStrings = new ArrayList<>();
+    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

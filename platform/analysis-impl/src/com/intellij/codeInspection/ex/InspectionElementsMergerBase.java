@@ -96,8 +96,8 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
 
       if (sourceElement != null) {
         if (content == null) {
-          content = new ArrayList<Element>();
-          scopes = new LinkedHashMap<String, Element>();
+          content = new ArrayList<>();
+          scopes = new LinkedHashMap<>();
         }
 
         collectContent(sourceElement, content, scopes);

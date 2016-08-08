@@ -43,7 +43,7 @@ public class ReferenceSelectioner extends BasicSelectioner {
     }
 
     PsiElement element = e;
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
     while (element instanceof PsiJavaCodeReferenceElement) {
       PsiElement firstChild = element.getFirstChild();
 

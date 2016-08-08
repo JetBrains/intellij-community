@@ -61,7 +61,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   public DetectionExcludesConfigurable(@NotNull Project project, @NotNull DetectionExcludesConfigurationImpl configuration) {
     myProject = project;
     myConfiguration = configuration;
-    myModel = new SortedListModel<ExcludeListItem>(ExcludeListItem.COMPARATOR);
+    myModel = new SortedListModel<>(ExcludeListItem.COMPARATOR);
   }
 
   @Nls
@@ -120,7 +120,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   }
 
   private void doAddAction(AnActionButton button) {
-    final List<FrameworkType> types = new ArrayList<FrameworkType>();
+    final List<FrameworkType> types = new ArrayList<>();
     for (FrameworkType type : FrameworkDetectorRegistry.getInstance().getFrameworkTypes()) {
       if (!isExcluded(type)) {
         types.add(type);

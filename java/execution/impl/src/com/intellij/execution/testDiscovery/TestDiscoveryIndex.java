@@ -155,7 +155,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
       private Collection<String> testIdsToTestNames(TIntArrayList localList, TestInfoHolder localHolder) throws IOException {
         if (localList == null) return Collections.emptyList();
 
-        final ArrayList<String> result = new ArrayList<String>(localList.size());
+        final ArrayList<String> result = new ArrayList<>(localList.size());
         for (int testNameId : localList.toNativeArray()) {
           if (testNameId < 0) {
             int a = 1;
@@ -190,7 +190,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
           )
         );
         if (list == null) return Collections.emptyList();
-        final ArrayList<String> result = new ArrayList<String>(list.size());
+        final ArrayList<String> result = new ArrayList<>(list.size());
         for (int moduleNameId : list.toNativeArray()) {
           final String moduleNameWithPrefix = holder.myModuleNameEnumerator.valueOf(moduleNameId);
           if (moduleNameWithPrefix != null && moduleNameWithPrefix.startsWith(prefix)) {
@@ -316,8 +316,8 @@ public class TestDiscoveryIndex implements ProjectComponent {
             remoteDataHolder -> {
               TIntObjectHashMap<TIntArrayList> remoteClassData = remoteDataHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
               if (remoteClassData == null) return null;
-              TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<TIntArrayList>(remoteClassData.size());
-              Ref<IOException> exceptionRef = new Ref<IOException>();
+              TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>(remoteClassData.size());
+              Ref<IOException> exceptionRef = new Ref<>();
               boolean processingResult = remoteClassData.forEachEntry((remoteClassKey, remoteClassMethodIds) -> {
                 try {
                   int localClassKey =
@@ -352,7 +352,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
     try {
       int numberOfClasses = DataInputOutputUtil.readINT(inputStream);
-      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<TIntArrayList>(numberOfClasses);
+      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<>(numberOfClasses);
       while (numberOfClasses-- > 0) {
         String classQName = IOUtil.readUTFFast(buffer, inputStream);
         int classId = holder.myClassEnumeratorCache.enumerate(classQName);

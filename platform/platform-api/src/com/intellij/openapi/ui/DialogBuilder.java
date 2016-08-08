@@ -154,7 +154,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public void removeAllActions() {
-    myActions = new ArrayList<ActionDescriptor>();
+    myActions = new ArrayList<>();
   }
 
   public Window getWindow() {
@@ -456,7 +456,7 @@ public class DialogBuilder implements Disposable {
     @NotNull
     protected Action[] createActions() {
       if (myActions == null) return super.createActions();
-      ArrayList<Action> actions = new ArrayList<Action>(myActions.size());
+      ArrayList<Action> actions = new ArrayList<>(myActions.size());
       for (ActionDescriptor actionDescriptor : myActions) {
         actions.add(actionDescriptor.getAction(this));
       }

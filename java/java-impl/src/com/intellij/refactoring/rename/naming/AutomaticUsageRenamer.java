@@ -29,14 +29,14 @@ import java.util.*;
 public abstract class AutomaticUsageRenamer<T> {
   private final String myOldName;
   private final String myNewName;
-  private final Map<T, String> myRenames = new LinkedHashMap<T, String>();
-  private final List<T> myElements = new ArrayList<T>();
-  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<T, List<RenameableUsage>>();
+  private final Map<T, String> myRenames = new LinkedHashMap<>();
+  private final List<T> myElements = new ArrayList<>();
+  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<>();
 
   protected AutomaticUsageRenamer(List<? extends T> renamedElements, String oldName, String newName) {
     myOldName = oldName;
     myNewName = newName;
-    List<T> elements = new ArrayList<T>(renamedElements);
+    List<T> elements = new ArrayList<>(renamedElements);
     Collections.sort(elements, (o1, o2) -> {
       int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
       if (i != 0) return i;

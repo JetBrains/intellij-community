@@ -27,7 +27,7 @@ import java.util.*;
 public class ChunkGraphTest extends GraphTestCase {
 
   public void testGraph1() {
-    final Map<String, String> arcs = new HashMap<String, String>();
+    final Map<String, String> arcs = new HashMap<>();
     arcs.put("a", "b");
     arcs.put("b", "c");
     arcs.put("c", "bd");
@@ -36,17 +36,17 @@ public class ChunkGraphTest extends GraphTestCase {
 
     final Graph<Chunk<String>> graph = getAlgorithmsInstance().computeSCCGraph(initGraph(arcs));
 
-    final List<Chunk<String>> expectedNodes = new ArrayList<Chunk<String>>();
-    Chunk<String> A = new Chunk<String>("a");
+    final List<Chunk<String>> expectedNodes = new ArrayList<>();
+    Chunk<String> A = new Chunk<>("a");
     expectedNodes.add(A);
-    Chunk<String> BC = new Chunk<String>(toSet("b", "c"));
+    Chunk<String> BC = new Chunk<>(toSet("b", "c"));
     expectedNodes.add(BC);
-    Chunk<String> DE = new Chunk<String>(toSet("d", "e"));
+    Chunk<String> DE = new Chunk<>(toSet("d", "e"));
     expectedNodes.add(DE);
 
     checkVertices(expectedNodes, graph.getNodes().iterator());
 
-    final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<Chunk<String>, Set<Chunk<String>>>();
+    final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<>();
     expectedArcs.put(A, toSet());
     expectedArcs.put(BC, toSet(A));
     expectedArcs.put(DE, toSet(BC));
@@ -55,7 +55,7 @@ public class ChunkGraphTest extends GraphTestCase {
   }
 
   public void testGraph2() {
-    final Map<String, String> arcs = new HashMap<String, String>();
+    final Map<String, String> arcs = new HashMap<>();
     arcs.put("a", "b");
     arcs.put("b", "ac");
     arcs.put("c", "ad");
@@ -63,15 +63,15 @@ public class ChunkGraphTest extends GraphTestCase {
 
     final Graph<Chunk<String>> graph = getAlgorithmsInstance().computeSCCGraph(initGraph(arcs));
 
-    final List<Chunk<String>> expectedNodes = new ArrayList<Chunk<String>>();
-    Chunk<String> ABC = new Chunk<String>(toSet("a", "b", "c"));
+    final List<Chunk<String>> expectedNodes = new ArrayList<>();
+    Chunk<String> ABC = new Chunk<>(toSet("a", "b", "c"));
     expectedNodes.add(ABC);
-    Chunk<String> D = new Chunk<String>("d");
+    Chunk<String> D = new Chunk<>("d");
     expectedNodes.add(D);
 
     checkVertices(expectedNodes, graph.getNodes().iterator());
 
-    final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<Chunk<String>, Set<Chunk<String>>>();
+    final Map<Chunk<String>, Set<Chunk<String>>> expectedArcs = new HashMap<>();
     expectedArcs.put(ABC, toSet());
     expectedArcs.put(D, toSet(ABC));
 
@@ -80,23 +80,23 @@ public class ChunkGraphTest extends GraphTestCase {
 
   private static void checkArcs(Map<Chunk<String>, Set<Chunk<String>>> expectedArcs, Graph<Chunk<String>> graph) {
     for (Chunk<String> chunk : graph.getNodes()) {
-      final List<Chunk<String>> ins = new ArrayList<Chunk<String>>();
+      final List<Chunk<String>> ins = new ArrayList<>();
       final Iterator<Chunk<String>> insIterator = graph.getIn(chunk);
       while (insIterator.hasNext()) {
         ins.add(insIterator.next());
       }
       final Set<Chunk<String>> expectedIns = expectedArcs.get(chunk);
       assertTrue(expectedIns.size() == ins.size());
-      assertTrue(expectedIns.equals(new HashSet<Chunk<String>>(ins)));
+      assertTrue(expectedIns.equals(new HashSet<>(ins)));
     }
   }
 
   private static <T> Set<T> toSet(T... strings) {
-    return new HashSet<T>(Arrays.asList(strings));
+    return new HashSet<>(Arrays.asList(strings));
   }
 
   private static Set<Chunk<String>> toSet() {
-    return new HashSet<Chunk<String>>();
+    return new HashSet<>();
   }
 
   private static Set<Chunk<String>> toSet(Chunk<String> c) {
@@ -105,11 +105,11 @@ public class ChunkGraphTest extends GraphTestCase {
 
 
   private static void checkVertices(List<Chunk<String>> expected, Iterator<Chunk<String>> nodes) {
-    List<Chunk<String>> realNodes = new ArrayList<Chunk<String>>();
+    List<Chunk<String>> realNodes = new ArrayList<>();
     while (nodes.hasNext()) {
       realNodes.add(nodes.next());
     }
     assertTrue(expected.size() == realNodes.size());
-    assertTrue(new HashSet<Chunk<String>>(expected).equals(new HashSet<Chunk<String>>(realNodes)));
+    assertTrue(new HashSet<>(expected).equals(new HashSet<>(realNodes)));
   }
 }

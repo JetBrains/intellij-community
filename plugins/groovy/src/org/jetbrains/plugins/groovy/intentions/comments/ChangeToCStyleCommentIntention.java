@@ -58,7 +58,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     final JavaPsiFacade manager = JavaPsiFacade.getInstance(selectedComment.getProject());
     final PsiElementFactory factory = manager.getElementFactory();
     String text = getCommentContents(firstComment);
-    final List<PsiElement> commentsToDelete = new ArrayList<PsiElement>();
+    final List<PsiElement> commentsToDelete = new ArrayList<>();
     PsiElement nextComment = firstComment;
     while (true) {
       nextComment = getNextNonWhiteSpace(nextComment);

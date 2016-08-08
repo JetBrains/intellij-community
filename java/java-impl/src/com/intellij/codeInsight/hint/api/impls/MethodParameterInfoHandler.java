@@ -317,7 +317,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     if (call instanceof PsiCallExpression) {
       CandidateInfo[] candidates = getCandidates((PsiCallExpression)call);
-      ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
+      ArrayList<CandidateInfo> result = new ArrayList<>();
 
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
         cand:

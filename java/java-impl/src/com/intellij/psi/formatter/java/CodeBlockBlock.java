@@ -92,7 +92,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   @Override
   protected List<Block> buildChildren() {
-    final List<Block> result = new ArrayList<Block>();
+    final List<Block> result = new ArrayList<>();
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
 
@@ -145,7 +145,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                                                final Alignment childAlignment,
                                                final Wrap childWrap,
                                                final Indent indent) {
-    final List<Block> localResult = new ArrayList<Block>();
+    final List<Block> localResult = new ArrayList<>();
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
     Indent childIndent = Indent.getNormalIndent();

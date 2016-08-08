@@ -96,7 +96,7 @@ public final class IterationState {
   private int myCurrentPastLineEndBackgroundSegment; // 0 - before selection, 1 - in selection, 2 - after selection
   private Color myCurrentBackgroundColor;
 
-  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
+  private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
 
   private final FoldingModelEx myFoldingModel;
 
@@ -109,7 +109,7 @@ public final class IterationState {
   private final int myDefaultFontType;
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
-  private final List<TextAttributes> myCachedAttributesList = new ArrayList<TextAttributes>(5);
+  private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
   private final DocumentEx myDocument;
   private final EditorEx myEditor;
   private final Color myReadOnlyColor;
@@ -193,7 +193,7 @@ public final class IterationState {
     private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, final boolean onlyFullLine) {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
-      final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      final List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
         @Override
         protected boolean accept(RangeHighlighterEx ex) {

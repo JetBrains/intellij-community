@@ -118,14 +118,14 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     return null;
   }
 
-  private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<String, NullableLazyValue<Icon>>();
-  private final Map<String, NullableLazyValue<String>> myNames = new HashMap<String, NullableLazyValue<String>>();
+  private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<>();
+  private final Map<String, NullableLazyValue<String>> myNames = new HashMap<>();
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final FactoryMap<Class, Set<PresentationTemplate>> mySuperClasses = new ConcurrentFactoryMap<Class, Set<PresentationTemplate>>() {
     @Override
     protected Set<PresentationTemplate> create(Class key) {
-      LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<PresentationTemplate>();
-      walkSupers(key, new LinkedHashSet<Class>(), templates);
+      LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<>();
+      walkSupers(key, new LinkedHashSet<>(), templates);
       return templates;
     }
 

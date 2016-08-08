@@ -242,7 +242,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox<String>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -291,7 +291,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private List<TemplateContextType> getApplicableContexts() {
-    ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
+    ArrayList<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
         result.add(type);
@@ -554,11 +554,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     }
 
-    return new ArrayList<Variable>(newVariableNames.values());
+    return new ArrayList<>(newVariableNames.values());
   }
 
   private List<Variable> getCurrentVariables() {
-    List<Variable> myVariables = new ArrayList<Variable>();
+    List<Variable> myVariables = new ArrayList<>();
 
     for(int i = 0; i < myTemplate.getVariableCount(); i++) {
       myVariables.add(new Variable(myTemplate.getVariableNameAt(i),

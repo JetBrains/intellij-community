@@ -95,9 +95,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     myProject = project;
 
     myFileTree = new FileTree();
-    myDirtyFileSet = new HashSet<VirtualFile>();
+    myDirtyFileSet = new HashSet<>();
 
-    myFile2Highlighter = new HashMap<VirtualFile, EditorHighlighter>();
+    myFile2Highlighter = new HashMap<>();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
@@ -252,7 +252,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory, final boolean skip) {
     List<VirtualFile> files = myFileTree.getFiles(psiDirectory.getVirtualFile());
-    List<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
+    List<PsiFile> psiFileList = new ArrayList<>(files.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(psiDirectory);
@@ -280,7 +280,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
     List<VirtualFile> files = myFileTree.getFilesUnderDirectory(psiDirectory.getVirtualFile());
-    List<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
+    List<PsiFile> psiFileList = new ArrayList<>(files.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(psiDirectory);
@@ -307,7 +307,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     */
    public Iterator<PsiFile> getFiles(Module module) {
     if (module.isDisposed()) return Collections.<PsiFile>emptyList().iterator();
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> psiFileList = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile virtualFile : contentRoots) {
@@ -513,8 +513,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   void setShowPackages(boolean state) {
     getTodoTreeStructure().setShownPackages(state);
-    ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    ArrayList<Object> pathsToSelect = new ArrayList<Object>();
+    ArrayList<Object> pathsToExpand = new ArrayList<>();
+    ArrayList<Object> pathsToSelect = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     getTree().clearSelection();
     getTodoTreeStructure().validateCache();
@@ -526,8 +526,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @param state if <code>true</code> then view is in "flatten packages" mode.
    */
   void setFlattenPackages(boolean state) {
-    ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    ArrayList<Object> pathsToSelect = new ArrayList<Object>();
+    ArrayList<Object> pathsToExpand = new ArrayList<>();
+    ArrayList<Object> pathsToSelect = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     getTree().clearSelection();
     TodoTreeStructure todoTreeStructure = getTodoTreeStructure();
@@ -663,8 +663,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   void setShowModules(boolean state) {
     getTodoTreeStructure().setShownModules(state);
-    ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    ArrayList<Object> pathsToSelect = new ArrayList<Object>();
+    ArrayList<Object> pathsToExpand = new ArrayList<>();
+    ArrayList<Object> pathsToSelect = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
     getTree().clearSelection();
     getTodoTreeStructure().validateCache();

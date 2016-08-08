@@ -34,7 +34,7 @@ import java.util.Set;
 
 public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
-  private static final Set<IElementType> binaryPromotionOperators = new THashSet<IElementType>();
+  private static final Set<IElementType> binaryPromotionOperators = new THashSet<>();
 
   static {
     binaryPromotionOperators.add(JavaTokenType.ASTERISK);

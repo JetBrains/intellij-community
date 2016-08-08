@@ -134,7 +134,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
     final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
     if (vcs != null) {
-      ArrayList<VcsDirectoryMapping> newMappings = new ArrayList<VcsDirectoryMapping>(mappings);
+      ArrayList<VcsDirectoryMapping> newMappings = new ArrayList<>(mappings);
       newMappings.add(new VcsDirectoryMapping(addedModuleContentRoot.getPath(), vcs.getName()));
       vcsManager.setDirectoryMappings(newMappings);
     }
@@ -172,7 +172,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   }
 
   public static List<Module> getSortedModules(Project project) {
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = new ArrayList<>();
     final Module primaryModule = getPrimaryModule(project);
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {

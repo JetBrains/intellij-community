@@ -98,7 +98,7 @@ public class TableLayout extends TabLayout {
       }
     }
 
-    List<TableRow> toMove = new ArrayList<TableRow>();
+    List<TableRow> toMove = new ArrayList<>();
     for (int i = selectedRow + 1; i < data.table.size(); i++) {
       toMove.add(data.table.get(i));
     }

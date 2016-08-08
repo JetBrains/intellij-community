@@ -38,7 +38,7 @@ import java.util.Map;
 public class PropertiesAnchorizer {
   private final static Logger LOG = Logger.getInstance(PropertiesAnchorizer.class);
 
-  private final Map<IProperty, PropertyAnchor> myAnchors = new HashMap<IProperty, PropertyAnchor>();
+  private final Map<IProperty, PropertyAnchor> myAnchors = new HashMap<>();
 
   public PropertiesAnchorizer(Project project) {
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
@@ -56,7 +56,7 @@ public class PropertiesAnchorizer {
     private final Collection<IProperty> myProperties;
 
     public PropertyAnchor(Collection<IProperty> properties) {
-      myProperties = new ArrayList<IProperty>(properties);
+      myProperties = new ArrayList<>(properties);
     }
 
     @NotNull
@@ -89,7 +89,7 @@ public class PropertiesAnchorizer {
   public PropertyAnchor createOrUpdate(final Collection<IProperty> properties) {
     LOG.assertTrue(!properties.isEmpty());
 
-    final List<IProperty> propertiesWithoutAnchor = new SmartList<IProperty>();
+    final List<IProperty> propertiesWithoutAnchor = new SmartList<>();
     PropertyAnchor representativeAnchor = null;
     for (IProperty property : properties) {
       final PropertyAnchor anchor = myAnchors.get(property);

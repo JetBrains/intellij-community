@@ -23,7 +23,7 @@ public class CourseInfo {
   boolean isAdaptive;
   @SerializedName("is_public") boolean isPublic;
   List<Integer> sections;
-  List<Integer> instructors = new ArrayList<Integer>();
+  List<Integer> instructors = new ArrayList<>();
 
   List<StepicUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;

@@ -22,7 +22,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private int myIndent;
   private PsiBuilder.Marker myAfterLastEolMarker;
 
-  private final Stack<TokenSet> myStopTokensStack = new Stack<TokenSet>();
+  private final Stack<TokenSet> myStopTokensStack = new Stack<>();
 
   @NotNull
   public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {

@@ -327,7 +327,7 @@ public class BuildManager implements Disposable {
     if (projects.length == 0) {
       return Collections.emptyList();
     }
-    final List<Project> projectList = new SmartList<Project>();
+    final List<Project> projectList = new SmartList<>();
     for (Project project : projects) {
       if (isValidProject(project)) {
         projectList.add(project);
@@ -359,7 +359,7 @@ public class BuildManager implements Disposable {
   private void doNotify(final Collection<File> paths, final boolean notifyDeletion) {
     // ensure events processed in the order they arrived
     runCommand(() -> {
-      final List<String> filtered = new ArrayList<String>(paths.size());
+      final List<String> filtered = new ArrayList<>(paths.size());
       for (File file : paths) {
         final String path = FileUtil.toSystemIndependentName(file.getPath());
         if (PATH_FILTER.fun(path)) {
@@ -437,7 +437,7 @@ public class BuildManager implements Disposable {
   }
 
   private static List<String> convertToStringPaths(final Collection<InternedPath> interned) {
-    final ArrayList<String> list = new ArrayList<String>(interned.size());
+    final ArrayList<String> list = new ArrayList<>(interned.size());
     for (InternedPath path : interned) {
       list.add(path.getValue());
     }
@@ -556,7 +556,7 @@ public class BuildManager implements Disposable {
   }
 
   public Collection<TaskFuture> cancelAutoMakeTasks(Project project) {
-    final Collection<TaskFuture> futures = new SmartList<TaskFuture>();
+    final Collection<TaskFuture> futures = new SmartList<>();
     synchronized (myAutomakeFutures) {
       for (Map.Entry<TaskFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
@@ -655,7 +655,9 @@ public class BuildManager implements Disposable {
         sessionId = UUID.randomUUID();
       }
 
-      final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<BuilderMessageHandler>(handler, sessionId, new CancelBuildSessionAction<BuilderMessageHandler>());
+      final RequestFuture<? extends BuilderMessageHandler> future = usingPreloadedProcess? preloadedFuture : new RequestFuture<>(handler,
+                                                                                                                                 sessionId,
+                                                                                                                                 new CancelBuildSessionAction<>());
       // futures we need to wait for: either just "future" or both "future" and "buildFuture" below
       TaskFuture[] delegatesToWait = {future};
 
@@ -680,9 +682,9 @@ public class BuildManager implements Disposable {
             LOG.info("Scheduling build for " +
                      projectPath +
                      "; CHANGED: " +
-                     new HashSet<String>(convertToStringPaths(data.myChanged)) +
+                     new HashSet<>(convertToStringPaths(data.myChanged)) +
                      "; DELETED: " +
-                     new HashSet<String>(convertToStringPaths(data.myDeleted)));
+                     new HashSet<>(convertToStringPaths(data.myDeleted)));
           }
           needRescan = data.getAndResetRescanFlag();
           currentFSChanges = needRescan ? null : data.createNextEvent();
@@ -878,7 +880,7 @@ public class BuildManager implements Disposable {
 
   @NotNull
   public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(Project project) {
-    final Set<Sdk> candidates = new LinkedHashSet<Sdk>();
+    final Set<Sdk> candidates = new LinkedHashSet<>();
     final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
       candidates.add(defaultSdk);
@@ -961,7 +963,9 @@ public class BuildManager implements Disposable {
       if (project.isDisposed()) {
         return null;
       }
-      final RequestFuture<PreloadedProcessMessageHandler> future = new RequestFuture<PreloadedProcessMessageHandler>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<PreloadedProcessMessageHandler>());
+      final RequestFuture<PreloadedProcessMessageHandler> future =
+        new RequestFuture<>(new PreloadedProcessMessageHandler(), UUID.randomUUID(),
+                            new CancelBuildSessionAction<>());
       try {
         myMessageDispatcher.registerBuildMessageHandler(future, null);
         final OSProcessHandler processHandler = launchBuildProcess(project, myListenPort, future.getRequestID(), true);
@@ -1027,7 +1031,7 @@ public class BuildManager implements Disposable {
 
     boolean isProfilingMode = false;
     String userDefinedHeapSize = null;
-    final List<String> userAdditionalOptionsList = new SmartList<String>();
+    final List<String> userAdditionalOptionsList = new SmartList<>();
     final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     final boolean userLocalOptionsActive = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions);
     final String additionalOptions = userLocalOptionsActive ? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
@@ -1152,7 +1156,7 @@ public class BuildManager implements Disposable {
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
-    final List<String> launcherCp = new ArrayList<String>();
+    final List<String> launcherCp = new ArrayList<>();
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     launcherCp.add(compilerPath);
@@ -1476,7 +1480,7 @@ public class BuildManager implements Disposable {
   }
 
   private class ProjectWatcher extends ProjectManagerAdapter {
-    private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
+    private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
     public void projectOpened(final Project project) {
@@ -1499,7 +1503,7 @@ public class BuildManager implements Disposable {
         }
       });
       conn.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
-        private final Set<String> myRootsToRefresh = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        private final Set<String> myRootsToRefresh = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
         @Override
         public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
@@ -1517,7 +1521,7 @@ public class BuildManager implements Disposable {
           if (project.isDisposed()) {
             return;
           }
-          final Set<String> candidates = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+          final Set<String> candidates = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
           synchronized (myRootsToRefresh) {
             candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
@@ -1621,8 +1625,8 @@ public class BuildManager implements Disposable {
   private static class ProjectData {
     @NotNull
     final ExecutorService taskQueue;
-    private final Set<InternedPath> myChanged = new THashSet<InternedPath>();
-    private final Set<InternedPath> myDeleted = new THashSet<InternedPath>();
+    private final Set<InternedPath> myChanged = new THashSet<>();
+    private final Set<InternedPath> myDeleted = new THashSet<>();
     private long myNextEventOrdinal;
     private boolean myNeedRescan = true;
 

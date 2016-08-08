@@ -128,9 +128,9 @@ public class CommonCodeStyleSettingsManager {
   }
 
   private Map<Language, CommonCodeStyleSettings> initCommonSettingsMap() {
-    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+    Map<Language, CommonCodeStyleSettings> map = new LinkedHashMap<>();
     myCommonSettingsMap = map;
-    myUnknownSettingsMap = new LinkedHashMap<String, Content>();
+    myUnknownSettingsMap = new LinkedHashMap<>();
     return map;
   }
 

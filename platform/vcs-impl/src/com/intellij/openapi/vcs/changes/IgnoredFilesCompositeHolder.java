@@ -42,7 +42,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   public IgnoredFilesCompositeHolder(final Project project) {
     super();
     myProject = project;
-    myHolderMap = new HashMap<AbstractVcs, IgnoredFilesHolder>();
+    myHolderMap = new HashMap<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
@@ -101,7 +101,7 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   @Override
   public Collection<VirtualFile> values() {
     if (myHolderMap.size() == 1) return myHolderMap.values().iterator().next().values();
-    final HashSet<VirtualFile> result = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> result = new HashSet<>();
     for (IgnoredFilesHolder holder : myHolderMap.values()) {
       result.addAll(holder.values());
     }

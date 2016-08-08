@@ -55,9 +55,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private HashSet<FileType> myTempFileTypes;
   private final FileTypeManagerImpl myManager;
   private FileTypeAssocTable<FileType> myTempPatternsTable;
-  private final Map<FileNameMatcher, FileType> myReassigned = new THashMap<FileNameMatcher, FileType>();
+  private final Map<FileNameMatcher, FileType> myReassigned = new THashMap<>();
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
-  private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<UserFileType, UserFileType>();
+  private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
 
   public FileTypeConfigurable(FileTypeManager fileTypeManager) {
     myManager = (FileTypeManagerImpl)fileTypeManager;
@@ -100,7 +100,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private static FileType[] getModifiableFileTypes() {
     FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    ArrayList<FileType> result = new ArrayList<FileType>();
+    ArrayList<FileType> result = new ArrayList<>();
     for (FileType fileType : registeredFileTypes) {
       if (!fileType.isReadOnly()) result.add(fileType);
     }
@@ -133,7 +133,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myTempPatternsTable = myManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
 
-    myTempFileTypes = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
+    myTempFileTypes = new HashSet<>(Arrays.asList(getModifiableFileTypes()));
     myOriginalToEditedMap.clear();
 
     updateFileTypeList();
@@ -145,7 +145,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   @Override
   public boolean isModified() {
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
-    HashSet<FileType> types = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
+    HashSet<FileType> types = new HashSet<>(Arrays.asList(getModifiableFileTypes()));
     return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
@@ -177,7 +177,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private void updateExtensionList() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    List<String> extensions = new ArrayList<String>();
+    List<String> extensions = new ArrayList<>();
 
     for (FileNameMatcher assoc : myTempPatternsTable.getAssociations(type)) {
       extensions.add(assoc.getPresentableString());
@@ -222,7 +222,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     //TODO: support adding binary file types...
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
     TypeEditor<AbstractFileType> editor =
-      new TypeEditor<AbstractFileType>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
+      new TypeEditor<>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
     if (editor.showAndGet()) {
       myTempFileTypes.add(type);
       updateFileTypeList();
@@ -366,7 +366,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider() {
         @Override
         public Iterable<FileType> getCurrentFileTypeList() {
-          ArrayList<FileType> result = new ArrayList<FileType>();
+          ArrayList<FileType> result = new ArrayList<>();
           for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
             result.add((FileType)myFileTypesList.getModel().getElementAt(i));
           }
@@ -428,7 +428,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       private String myExtension;
 
       private MySpeedSearch(JList component) {
-        super(component, new ArrayList<PairConvertor<Object, String, Boolean>>());
+        super(component, new ArrayList<>());
         initConvertors();
       }
 

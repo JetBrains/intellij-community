@@ -47,7 +47,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
   private final Project myProject;
   private DefaultListModel myModel;
   private final ChangeListManagerImpl myChangeListManager;
-  private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<String>();
+  private final Set<String> myDirectoriesManuallyRemovedFromIgnored = new HashSet<>();
 
   public IgnoredSettingsPanel(Project project) {
     myList = new JBList();

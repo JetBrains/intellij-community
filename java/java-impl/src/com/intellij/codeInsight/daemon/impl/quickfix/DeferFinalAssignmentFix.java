@@ -100,7 +100,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
 
   private void deferVariable(PsiElement outerCodeBlock, PsiVariable variable, PsiElement tempDeclarationAnchor) throws IncorrectOperationException {
     if (outerCodeBlock == null) return;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();

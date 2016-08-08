@@ -77,7 +77,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       return newChildren;
     }
     if (settings.isShowMembers()) {
-      List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+      List<AbstractTreeNode> newChildren = new ArrayList<>();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiFileNode && ((PsiFileNode)child).getValue() instanceof PyFile) {
           newChildren.add(new PyFileNode(project, ((PsiFileNode)child).getValue(), settings));
@@ -111,7 +111,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
 
   @NotNull
   private static Collection<AbstractTreeNode> hideSkeletons(@NotNull Collection<AbstractTreeNode> children) {
-    List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> newChildren = new ArrayList<>();
     for (AbstractTreeNode child : children) {
       if (child instanceof PsiDirectoryNode) {
         PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
@@ -161,7 +161,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     if (!(containingFile instanceof PyFile)) {
       return null;
     }
-    List<PsiElement> parents = new ArrayList<PsiElement>();
+    List<PsiElement> parents = new ArrayList<>();
     PyDocStringOwner container = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     while (container != null) {
       if (container instanceof PyFile) {

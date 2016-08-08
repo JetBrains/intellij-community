@@ -40,7 +40,7 @@ public class FavoritesTreeUtil {
     if (path == null) {
       return FavoritesTreeNodeDescriptor.EMPTY_ARRAY;
     }
-    ArrayList<FavoritesTreeNodeDescriptor> result = new ArrayList<FavoritesTreeNodeDescriptor>();
+    ArrayList<FavoritesTreeNodeDescriptor> result = new ArrayList<>();
     for (TreePath treePath : path) {
       DefaultMutableTreeNode lastPathNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       Object userObject = lastPathNode.getUserObject();
@@ -54,13 +54,13 @@ public class FavoritesTreeUtil {
   }
 
   public static List<AbstractTreeNode> getLogicalPathToSelected(final Tree tree) {
-    final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> result = new ArrayList<>();
     final TreePath selectionPath = tree.getSelectionPath();
     return getLogicalPathTo(result, selectionPath);
   }
 
   public static List<Integer> getLogicalIndexPathTo(TreePath selectionPath) {
-    final List<Integer> result = new ArrayList<Integer>();
+    final List<Integer> result = new ArrayList<>();
     final Object component = selectionPath.getLastPathComponent();
     if (component instanceof DefaultMutableTreeNode) {
       final Object uo = ((DefaultMutableTreeNode)component).getUserObject();

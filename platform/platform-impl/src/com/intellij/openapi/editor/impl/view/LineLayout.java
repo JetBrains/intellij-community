@@ -129,7 +129,7 @@ abstract class LineLayout {
     if (view.getEditor().myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
       return Collections.singletonList(new BidiRun(textLength));
     }
-    List<BidiRun> runs = new ArrayList<BidiRun>();
+    List<BidiRun> runs = new ArrayList<>();
     int flags = view.getBidiFlags();
     if (startOffsetInEditor >= 0) {
       // running bidi algorithm separately for text fragments corresponding to different lexer tokens
@@ -294,7 +294,7 @@ abstract class LineLayout {
       runs = BidiRun.EMPTY_ARRAY;
     }
     else {
-      List<BidiRun> runList = new ArrayList<BidiRun>();
+      List<BidiRun> runList = new ArrayList<>();
       for (BidiRun run : getRunsInLogicalOrder()) {
         if (run.endOffset <= startOffset) continue;
         if (run.startOffset >= endOffset) break;
@@ -546,7 +546,7 @@ abstract class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun subRun = new BidiRun(level, start, end);
-      List<Chunk> subChunks = new ArrayList<Chunk>();
+      List<Chunk> subChunks = new ArrayList<>();
       for (Chunk chunk : getChunks()) {
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;

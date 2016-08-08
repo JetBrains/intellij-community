@@ -530,7 +530,7 @@ public class ExternalSystemUtil {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         final Semaphore targetDone = new Semaphore();
-        final Ref<Boolean> result = new Ref<Boolean>(false);
+        final Ref<Boolean> result = new Ref<>(false);
         final Disposable disposable = Disposer.newDisposable();
 
         project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {

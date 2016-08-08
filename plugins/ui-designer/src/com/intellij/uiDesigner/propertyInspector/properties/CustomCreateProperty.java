@@ -142,7 +142,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     if (vFile == null) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
 
-    final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
+    final Ref<SmartPsiElementPointer> refMethod = new Ref<>();
     CommandProcessor.getInstance().executeCommand(
       aClass.getProject(),
       () -> ApplicationManager.getApplication().runWriteAction(() -> {

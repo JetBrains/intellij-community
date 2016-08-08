@@ -196,7 +196,7 @@ public final class SearchScope {
           iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
-            final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
+            final Collection<VirtualFile> libraryFiles = new THashSet<>();
             Collections.addAll(libraryFiles, enumerator.getClassesRoots());
             Collections.addAll(libraryFiles, enumerator.getSourceRoots());
             final Processor<VirtualFile> adapter = virtualFile1 -> iterator.processFile(virtualFile1);

@@ -111,7 +111,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
               if (dependencies.get(psiFile).contains(file)) {
                 Set<PsiFile> fileDeps = getDependencies().get(file);
                 if (fileDeps == null) {
-                  fileDeps = new HashSet<PsiFile>();
+                  fileDeps = new HashSet<>();
                   getDependencies().put(file, fileDeps);
                 }
                 fileDeps.add(psiFile);
@@ -131,7 +131,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
   private static void subtractScope(final DependenciesBuilder builders, final AnalysisScope scope) {
     final Map<PsiFile, Set<PsiFile>> dependencies = builders.getDependencies();
 
-    Set<PsiFile> excluded = new HashSet<PsiFile>();
+    Set<PsiFile> excluded = new HashSet<>();
 
     for (final PsiFile psiFile : dependencies.keySet()) {
       if (scope.contains(psiFile)) {

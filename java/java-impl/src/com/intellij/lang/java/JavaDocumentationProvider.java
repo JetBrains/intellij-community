@@ -433,7 +433,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
                                                                  StringBuilder builder,
                                                                  CodeDocumentationAwareCommenter commenter, PsiMethod psiMethod) {
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    final Map<String, String> param2Description = new HashMap<String, String>();
+    final Map<String, String> param2Description = new HashMap<>();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
 
     for (PsiMethod superMethod : superMethods) {
@@ -670,7 +670,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
 
   public static Set<String> getHtmlMethodSignatures(PsiMethod method, boolean java8FormatFirst) {
-    final Set<String> signatures = new LinkedHashSet<String>();
+    final Set<String> signatures = new LinkedHashSet<>();
     signatures.add(formatMethodSignature(method, true, java8FormatFirst));
     signatures.add(formatMethodSignature(method, false, java8FormatFirst));
 
@@ -747,7 +747,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
           VirtualFile file = root.findFileByRelativePath(relPath);
           List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProvider.getUrls(file, project, null);
           if (!ContainerUtil.isEmpty(urls)) {
-            List<String> result = new SmartList<String>();
+            List<String> result = new SmartList<>();
             for (Url url : urls) {
               result.add(url.toExternalForm());
             }

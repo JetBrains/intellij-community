@@ -40,7 +40,7 @@ public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element.getContainingFile());
         if (propertiesFile == null) return PsiReference.EMPTY_ARRAY;
         XmlProperty property = new XmlProperty(PsiTreeUtil.getParentOfType(element, XmlTag.class), (XmlPropertiesFileImpl)propertiesFile);
-        return new PsiReference[] { new PsiReferenceBase.Immediate<PsiElement>(element, PomService.convertToPsi(property))};
+        return new PsiReference[] {new PsiReferenceBase.Immediate<>(element, PomService.convertToPsi(property))};
       }
     });
   }

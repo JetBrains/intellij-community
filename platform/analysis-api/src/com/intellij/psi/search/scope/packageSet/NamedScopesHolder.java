@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedScopesHolder implements PersistentStateComponent<Element> {
-  private List<NamedScope> myScopes = new ArrayList<NamedScope>();
+  private List<NamedScope> myScopes = new ArrayList<>();
   @NonNls private static final String SCOPE_TAG = "scope";
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
@@ -74,7 +74,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @NotNull public NamedScope[] getScopes() {
-    final List<NamedScope> scopes = new ArrayList<NamedScope>();
+    final List<NamedScope> scopes = new ArrayList<>();
     List<NamedScope> list = getPredefinedScopes();
     scopes.addAll(list);
     scopes.addAll(myScopes);
@@ -91,7 +91,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   public void setScopes(NamedScope[] scopes) {
-    myScopes = new ArrayList<NamedScope>(Arrays.asList(scopes));
+    myScopes = new ArrayList<>(Arrays.asList(scopes));
     fireScopeListeners();
   }
 

@@ -589,7 +589,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       Assert.assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
-      Set<String> highlightSet = new HashSet<String>();
+      Set<String> highlightSet = new HashSet<>();
       ContainerUtil.addAll(highlightSet, highlighted);
       for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(myTexts[i])) {
@@ -602,7 +602,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         }
       }
       // see if disabled matches
-      Set<String> disabledSet = new HashSet<String>();
+      Set<String> disabledSet = new HashSet<>();
       ContainerUtil.addAll(disabledSet, disabled);
       for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(myTexts[i])) {

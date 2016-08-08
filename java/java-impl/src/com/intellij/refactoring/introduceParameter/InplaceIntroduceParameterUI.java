@@ -73,7 +73,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
 
   @Override
   protected JPanel createReplaceFieldsWithGettersPanel() {
-    final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
+    final LabeledComponent<JComboBox> component = new LabeledComponent<>();
     myReplaceFieldsCb = new JComboBox(new Integer[]{IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE});

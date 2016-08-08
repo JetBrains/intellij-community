@@ -61,7 +61,7 @@ public class ReloadCustomComponentsAction extends AnAction {
     if (editor.isFormInvalid()) {
       return true;
     }
-    final Ref<Boolean> result = new Ref<Boolean>();
+    final Ref<Boolean> result = new Ref<>();
     FormEditingUtil.iterate(editor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof RadErrorComponent || !component.getComponentClassName().startsWith("javax.swing")) {

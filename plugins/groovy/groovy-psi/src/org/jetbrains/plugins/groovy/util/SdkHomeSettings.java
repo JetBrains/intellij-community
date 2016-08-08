@@ -88,7 +88,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
       return Collections.emptyList();
     }
 
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile file : lib.getChildren()) {
       if ("jar".equals(file.getExtension())) {
         ContainerUtil.addIfNotNull(StandardFileSystems.getJarRootForLocalFile(file), result);

@@ -65,7 +65,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
 
   private static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
     final PsiElement elementAtCaret = file.findElementAt(offset);
-    final List<GrControlFlowOwner> result = new ArrayList<GrControlFlowOwner>();
+    final List<GrControlFlowOwner> result = new ArrayList<>();
 
     for (GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(elementAtCaret);
          owner != null && !result.contains(owner);

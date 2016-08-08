@@ -88,12 +88,12 @@ public class BrowserSelector {
   }
 
   private static MutableCollectionComboBoxModel<WebBrowser> createBrowsersComboModel(@NotNull Condition<WebBrowser> browserCondition) {
-    List<WebBrowser> list = new ArrayList<WebBrowser>();
+    List<WebBrowser> list = new ArrayList<>();
     if (browserCondition.value(null)) {
       list.add(null);
     }
     list.addAll(WebBrowserManager.getInstance().getBrowsers(browserCondition));
-    return new MutableCollectionComboBoxModel<WebBrowser>(list);
+    return new MutableCollectionComboBoxModel<>(list);
   }
 
   @Nullable

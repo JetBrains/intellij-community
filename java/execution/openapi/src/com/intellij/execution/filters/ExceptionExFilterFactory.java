@@ -66,7 +66,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
                                  final int startOffset,
                                  int startLineNumber,
                                  @NotNull final Consumer<AdditionalHighlight> consumer) {
-      Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<String, Trinity<TextRange, TextRange, TextRange>>();
+      Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<>();
       final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
 
       final ExceptionWorker worker = new ExceptionWorker(myCache);

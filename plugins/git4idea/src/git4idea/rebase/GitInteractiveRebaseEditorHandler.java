@@ -108,7 +108,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   public int editCommits(final String path) {
     ensureOpen();
-    final Ref<Boolean> isSuccess = new Ref<Boolean>();
+    final Ref<Boolean> isSuccess = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         try {

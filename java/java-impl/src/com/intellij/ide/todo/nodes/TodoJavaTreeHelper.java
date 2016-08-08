@@ -60,7 +60,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   public void addPackagesToChildren(final ArrayList<AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
+    final List<VirtualFile> sourceRoots = new ArrayList<>();
     if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
       ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
@@ -68,7 +68,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
-    final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
+    final Set<PsiPackage> topLevelPackages = new HashSet<>();
     for (final VirtualFile root : sourceRoots) {
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory == null) {
@@ -108,7 +108,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
     }
 
     GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
-    ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
+    ArrayList<PsiPackage> packages = new ArrayList<>();
     for (PsiPackage psiPackage : topLevelPackages) {
       final PsiPackage aPackage = findNonEmptyPackage(psiPackage, module, project, builder, scope);
       if (aPackage != null){
@@ -123,7 +123,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
           children.add(packageNode);
         }
       } else {
-        Set<PsiPackage> allPackages = new HashSet<PsiPackage>();
+        Set<PsiPackage> allPackages = new HashSet<>();
         traverseSubPackages(psiPackage, module, builder, project, allPackages);
         for (PsiPackage aPackage : allPackages) {
           TodoPackageNode packageNode = new TodoPackageNode(project, new PackageElement(module, aPackage, false), builder);

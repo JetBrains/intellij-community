@@ -43,7 +43,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
   }
 
   static List<StructureViewTreeElement> collectElements(final XmlElement element) {
-    final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
+    final List<StructureViewTreeElement> elements = new ArrayList<>();
 
     XmlUtil.processXmlElements(element, new PsiElementProcessor() {
       @Override
@@ -105,7 +105,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
         for(XmlAttlistDecl a:attLists) {
           final String aname = a.getName();
           if (!Comparing.equal(aname, name)) continue;
-          if (attrMap == null) attrMap = new LinkedHashMap<String, XmlAttributeDecl>();
+          if (attrMap == null) attrMap = new LinkedHashMap<>();
 
           for(XmlAttributeDecl d : a.getAttributeDecls()) {
             attrMap.put(d.getName(), d);

@@ -76,7 +76,7 @@ public class StorageUtil {
 
   public static void checkUnknownMacros(@NotNull Project project, boolean notify) {
     // use linked set/map to get stable results
-    Set<String> unknownMacros = new LinkedHashSet<String>();
+    Set<String> unknownMacros = new LinkedHashSet<>();
     Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore = ContainerUtil.newLinkedHashMap();
     collect(project, unknownMacros, substitutorToStore);
     for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -99,7 +99,7 @@ public class StorageUtil {
                                          boolean showDialog,
                                          @NotNull Set<String> unknownMacros,
                                          @NotNull Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
-    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<String>(unknownMacros)))) {
+    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, new THashSet<>(unknownMacros)))) {
       return;
     }
 

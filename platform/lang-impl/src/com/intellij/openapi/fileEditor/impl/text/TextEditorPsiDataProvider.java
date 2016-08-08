@@ -211,7 +211,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   private Language[] computeLanguages(@NotNull Editor editor, @NotNull Caret caret) {
-    LinkedHashSet<Language> set = new LinkedHashSet<Language>(4);
+    LinkedHashSet<Language> set = new LinkedHashSet<>(4);
     Language injectedLanguage = (Language)getData(injectedId(LANGUAGE.getName()), editor, caret);
     addIfNotNull(injectedLanguage, set);
     Language language = (Language)getData(LANGUAGE.getName(), editor, caret);

@@ -71,7 +71,7 @@ public class ArrangementMatchNodeComponentFactory {
                                              @NotNull final StdArrangementMatchRule rule,
                                              final boolean allowModification)
   {
-    final Ref<ArrangementUiComponent> ref = new Ref<ArrangementUiComponent>();
+    final Ref<ArrangementUiComponent> ref = new Ref<>();
     rendererTarget.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {

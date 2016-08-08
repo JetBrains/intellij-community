@@ -45,12 +45,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private final List<String> myTargets = new ArrayList<String>();
+  private final List<String> myTargets = new ArrayList<>();
   private final JavaParameters myCommandLine = new JavaParameters();
   private String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
-  @NonNls private final List<String> myExpandedProperties = new ArrayList<String>();
+  @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
   @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
   @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
   @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";

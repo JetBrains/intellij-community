@@ -73,13 +73,13 @@ public class JavaFxPsiUtil {
   }
 
   private static List<String> parseInstructions(XmlFile file, String instructionName) {
-    final List<String> definedImports = new ArrayList<String>();
+    final List<String> definedImports = new ArrayList<>();
     final XmlDocument document = file.getDocument();
     if (document != null) {
       final XmlProlog prolog = document.getProlog();
 
       final Collection<XmlProcessingInstruction>
-        instructions = new ArrayList<XmlProcessingInstruction>(PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class));
+        instructions = new ArrayList<>(PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class));
       for (final XmlProcessingInstruction instruction : instructions) {
         final String instructionTarget = getInstructionTarget(instructionName, instruction);
         if (instructionTarget != null) {
@@ -1155,8 +1155,8 @@ public class JavaFxPsiUtil {
     @Nullable
     @Override
     public Result<PsiClass> compute() {
-      final Ref<PsiClass> injectedController = new Ref<PsiClass>();
-      final Ref<PsiFile> dep = new Ref<PsiFile>();
+      final Ref<PsiClass> injectedController = new Ref<>();
+      final Ref<PsiFile> dep = new Ref<>();
       final PsiClass fxmlLoader =
         JavaPsiFacade.getInstance(myProject).findClass(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER, GlobalSearchScope.allScope(myProject));
       if (fxmlLoader != null) {
@@ -1194,12 +1194,12 @@ public class JavaFxPsiUtil {
           });
         }
       }
-      return new Result<PsiClass>(injectedController.get(), dep.get() != null ? dep.get() : PsiModificationTracker.MODIFICATION_COUNT);
+      return new Result<>(injectedController.get(), dep.get() != null ? dep.get() : PsiModificationTracker.MODIFICATION_COUNT);
     }
 
     private static abstract class JavaFxRetrieveControllerProcessor implements Processor<PsiReference> {
-      private final Ref<PsiClass> myInjectedController = new Ref<PsiClass>();
-      private final Ref<PsiFile> myContainingFile = new Ref<PsiFile>();
+      private final Ref<PsiClass> myInjectedController = new Ref<>();
+      private final Ref<PsiFile> myContainingFile = new Ref<>();
 
       protected abstract boolean isResolveToSetter(PsiMethodCallExpression methodCallExpression);
 

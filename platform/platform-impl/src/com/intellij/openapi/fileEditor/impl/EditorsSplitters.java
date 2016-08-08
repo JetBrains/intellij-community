@@ -78,7 +78,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
 
   private EditorWindow myCurrentWindow;
-  private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
+  private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<>();
 
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
@@ -298,7 +298,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public VirtualFile[] getOpenFiles() {
-    final Set<VirtualFile> files = new ArrayListSet<VirtualFile>();
+    final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
       for (final EditorWithProviderComposite editor : editors) {
@@ -314,7 +314,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull public VirtualFile[] getSelectedFiles() {
-    final Set<VirtualFile> files = new ArrayListSet<VirtualFile>();
+    final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
       if (file != null) {
@@ -337,8 +337,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    List<FileEditor> editors = new ArrayList<FileEditor>();
-    Set<EditorWindow> windows = new THashSet<EditorWindow>(myWindows);
+    List<FileEditor> editors = new ArrayList<>();
+    Set<EditorWindow> windows = new THashSet<>(myWindows);
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
       windows.add(currentWindow);
@@ -363,7 +363,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  private final Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<>();
 
   private void updateFileIconLater(VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
@@ -659,7 +659,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   //---------------------------------------------------------
 
   public EditorWithProviderComposite[] getEditorsComposites() {
-    List<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
+    List<EditorWithProviderComposite> res = new ArrayList<>();
 
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
@@ -672,7 +672,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   public List<EditorWithProviderComposite> findEditorComposites(@NotNull VirtualFile file) {
-    List<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
+    List<EditorWithProviderComposite> res = new ArrayList<>();
     for (final EditorWindow window : myWindows) {
       final EditorWithProviderComposite fileComposite = window.findFileComposite(file);
       if (fileComposite != null) {
@@ -684,7 +684,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   private List<EditorWindow> findWindows(final VirtualFile file) {
-    List<EditorWindow> res = new ArrayList<EditorWindow>();
+    List<EditorWindow> res = new ArrayList<>();
     for (final EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
@@ -699,7 +699,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   EditorWindow[] getOrderedWindows() {
-    final List<EditorWindow> res = new ArrayList<EditorWindow>();
+    final List<EditorWindow> res = new ArrayList<>();
 
     // Collector for windows in tree ordering:
     class Inner{
@@ -791,7 +791,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
 
       List<Element> fileElements = leaf.getChildren("file");
-      final List<Element> children = new ArrayList<Element>(fileElements.size());
+      final List<Element> children = new ArrayList<>(fileElements.size());
 
       // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
       int toRemove = fileElements.size() - UISettings.getInstance().EDITOR_TAB_LIMIT;
@@ -817,7 +817,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
     @Override
     protected JPanel processFiles(@NotNull List<Element> fileElements, final JPanel context) {
-      final Ref<EditorWindow> windowRef = new Ref<EditorWindow>();
+      final Ref<EditorWindow> windowRef = new Ref<>();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
@@ -889,7 +889,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final float proportion = Float.valueOf(splitterElement.getAttributeValue("split-proportion")).floatValue();
         final JPanel firstComponent = process(firstChild, null);
         final JPanel secondComponent = process(secondChild, null);
-        final Ref<JPanel> panelRef = new Ref<JPanel>();
+        final Ref<JPanel> panelRef = new Ref<>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -904,8 +904,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         });
         return panelRef.get();
       }
-      final Ref<JPanel> firstComponent = new Ref<JPanel>();
-      final Ref<JPanel> secondComponent = new Ref<JPanel>();
+      final Ref<JPanel> firstComponent = new Ref<>();
+      final Ref<JPanel> secondComponent = new Ref<>();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {

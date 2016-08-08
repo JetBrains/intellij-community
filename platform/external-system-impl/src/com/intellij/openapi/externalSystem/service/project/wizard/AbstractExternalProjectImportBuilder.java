@@ -249,7 +249,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
     projectFile = getExternalProjectConfigToUse(projectFile);
-    final Ref<ConfigurationException> error = new Ref<ConfigurationException>();
+    final Ref<ConfigurationException> error = new Ref<>();
     final ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @Override
       public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
@@ -270,7 +270,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final Project project = getProject(wizardContext);
     final File finalProjectFile = projectFile;
     final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
-    final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
+    final Ref<ConfigurationException> exRef = new Ref<>();
     executeAndRestoreDefaultProjectSettings(project, () -> {
       try {
         ExternalSystemUtil.refreshProject(

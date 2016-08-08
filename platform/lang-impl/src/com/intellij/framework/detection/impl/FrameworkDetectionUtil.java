@@ -61,14 +61,14 @@ public class FrameworkDetectionUtil {
 
   private static List<DetectedFrameworkDescription> doGetDisabledDescriptions(@NotNull List<? extends DetectedFrameworkDescription> currentDescriptions,
                                                                               @NotNull List<? extends DetectedFrameworkDescription> allDescriptions) {
-    List<DetectedFrameworkDescription> disabled = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> disabled = new ArrayList<>();
     for (DetectedFrameworkDescription description : currentDescriptions) {
       if (!description.canSetupFramework(allDescriptions)) {
         disabled.add(description);
       }
     }
     if (!disabled.isEmpty()) {
-      List<DetectedFrameworkDescription> remaining = new ArrayList<DetectedFrameworkDescription>(currentDescriptions);
+      List<DetectedFrameworkDescription> remaining = new ArrayList<>(currentDescriptions);
       remaining.removeAll(disabled);
       disabled.addAll(doGetDisabledDescriptions(remaining, allDescriptions));
     }
@@ -79,7 +79,7 @@ public class FrameworkDetectionUtil {
                                                                             @NotNull List<? extends DetectedFrameworkDescription> otherDescriptions) {
     final List<DetectedFrameworkDescription> disabled = getDisabledDescriptions(currentDescriptions, otherDescriptions);
     if (disabled.isEmpty()) return currentDescriptions;
-    final List<DetectedFrameworkDescription> descriptions = new ArrayList<DetectedFrameworkDescription>(currentDescriptions);
+    final List<DetectedFrameworkDescription> descriptions = new ArrayList<>(currentDescriptions);
     descriptions.removeAll(disabled);
     return descriptions;
   }
@@ -88,7 +88,7 @@ public class FrameworkDetectionUtil {
                                      final ModifiableModelsProvider modelsProvider, final ModulesProvider modulesProvider) {
     AccessToken token = WriteAction.start();
     try {
-      List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<DetectedFrameworkDescription>();
+      List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<>();
       //todo[nik] perform real sorting
       for (DetectedFrameworkDescription description : descriptions) {
         if (description.getDetector().getUnderlyingFrameworkType() == null) {

@@ -182,7 +182,7 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   private void doPullUp(final String className, final String superClassName, final boolean toAbstract, final String... memberNames ) {
     final PyClass clazz = findClass(className);
     final PyClass superClass = findClass(superClassName);
-    final Collection<PyMemberInfo<PyElement>> membersToMove = new ArrayList<PyMemberInfo<PyElement>>(memberNames.length);
+    final Collection<PyMemberInfo<PyElement>> membersToMove = new ArrayList<>(memberNames.length);
     for (final String memberName : memberNames) {
       final PyElement member = findMember(className, memberName);
       final PyMemberInfo<PyElement> memberInfo = MembersManager.findMember(clazz, member);

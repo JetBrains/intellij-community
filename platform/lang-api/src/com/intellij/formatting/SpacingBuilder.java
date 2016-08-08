@@ -173,7 +173,7 @@ public class SpacingBuilder {
   }
 
   private final CommonCodeStyleSettings myCodeStyleSettings;
-  private final List<SpacingRule> myRules = new ArrayList<SpacingRule>();
+  private final List<SpacingRule> myRules = new ArrayList<>();
 
   /**
    * @param codeStyleSettings

@@ -316,7 +316,7 @@ public class PluginDownloader {
         depends = ((PluginNode)descriptor).getDepends();
       }
       else {
-        depends = new ArrayList<PluginId>(Arrays.asList(descriptor.getDependentPluginIds()));
+        depends = new ArrayList<>(Arrays.asList(descriptor.getDependentPluginIds()));
       }
       downloader.setDepends(depends);
       return downloader;

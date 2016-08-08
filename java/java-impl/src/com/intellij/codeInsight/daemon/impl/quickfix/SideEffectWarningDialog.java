@@ -55,7 +55,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<AbstractAction> actions = new ArrayList<AbstractAction>();
+    List<AbstractAction> actions = new ArrayList<>();
     myRemoveAllAction = new AbstractAction() {
       {
         UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.remove"), this);

@@ -85,7 +85,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       final PsiModifierListOwner element = refMethod.getElement();
       if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
-      final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+      final List<ProblemDescriptor> result = new ArrayList<>();
       for (RefParameter refParameter : unusedParameters) {
         final PsiParameter parameter = refParameter.getElement();
         final PsiIdentifier psiIdentifier = parameter != null ? parameter.getNameIdentifier() : null;
@@ -185,7 +185,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
   public static ArrayList<RefParameter> getUnusedParameters(RefMethod refMethod) {
     boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
-    ArrayList<RefParameter> res = new ArrayList<RefParameter>();
+    ArrayList<RefParameter> res = new ArrayList<>();
     RefParameter[] methodParameters = refMethod.getParameters();
     RefParameter[] result = new RefParameter[methodParameters.length];
     System.arraycopy(methodParameters, 0, result, 0, methodParameters.length);
@@ -294,7 +294,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
     private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
                                                                 final PsiParameter parameterToDelete) {
-      ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
+      ArrayList<ParameterInfoImpl> newParameters = new ArrayList<>();
       PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
       for (int i = 0; i < oldParameters.length; i++) {
         PsiParameter oldParameter = oldParameters[i];

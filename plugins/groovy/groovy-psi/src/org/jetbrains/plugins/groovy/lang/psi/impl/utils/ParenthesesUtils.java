@@ -84,7 +84,7 @@ public class ParenthesesUtils {
     NUM_PRECEDENCES = i;
   }
 
-  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<IElementType, Integer>(NUM_PRECEDENCES);
+  private static final Map<IElementType, Integer> s_binaryOperatorPrecedence = new HashMap<>(NUM_PRECEDENCES);
 
   static {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mPLUS, ADDITIVE_PRECEDENCE);

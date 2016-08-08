@@ -44,8 +44,8 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
                                 @NotNull final CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
-    final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<PsiClassType>();
-    final Set<PsiClass> parameterizedTypes = new THashSet<PsiClass>();
+    final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
+    final Set<PsiClass> parameterizedTypes = new THashSet<>();
     for (final PsiType type : leftTypes) {
       if (type instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)type;

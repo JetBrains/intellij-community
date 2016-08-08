@@ -54,7 +54,7 @@ public class HgAnnotateCommand {
   }
 
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, @Nullable HgRevisionNumber revision) {
-    final List<String> arguments = new ArrayList<String>();
+    final List<String> arguments = new ArrayList<>();
     arguments.add("-cvnudl");
     HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs != null &&
@@ -78,7 +78,7 @@ public class HgAnnotateCommand {
   }
 
   private static List<HgAnnotationLine> parse(List<String> outputLines) {
-    List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>(outputLines.size());
+    List<HgAnnotationLine> annotations = new ArrayList<>(outputLines.size());
     for (String line : outputLines) {
       Matcher matcher = LINE_PATTERN.matcher(line);
       if (matcher.matches()) {

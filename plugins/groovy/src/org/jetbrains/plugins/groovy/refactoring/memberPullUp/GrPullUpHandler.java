@@ -167,7 +167,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     final GrMemberInfo[] infos = _infos.toArray(new GrMemberInfo[_infos.size()]);
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
       final PsiPackage targetPackage =

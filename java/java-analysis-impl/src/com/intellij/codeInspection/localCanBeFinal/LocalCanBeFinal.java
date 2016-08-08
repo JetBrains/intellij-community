@@ -79,7 +79,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       final List<ProblemDescriptor> problems = checkCodeBlock(initializer.getBody(), manager, isOnTheFly);
       if (problems != null) {
         if (allProblems == null) {
-          allProblems = new ArrayList<ProblemDescriptor>(1);
+          allProblems = new ArrayList<>(1);
         }
         allProblems.addAll(problems);
       }
@@ -131,8 +131,8 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, false);
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final HashSet<PsiVariable> result = new HashSet<PsiVariable>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
+    final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
@@ -194,7 +194,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
 
       private HashSet<PsiElement> getDeclaredVariables(PsiCodeBlock block) {
-        final HashSet<PsiElement> result = new HashSet<PsiElement>();
+        final HashSet<PsiElement> result = new HashSet<>();
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new JavaElementVisitor() {

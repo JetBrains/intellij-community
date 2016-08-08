@@ -214,7 +214,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiClassType javaLangObject = PsiType.getJavaLangObject(nameElement.getManager(), nameElement.getResolveScope());
-      final List<PsiClass> weaklingList = new ArrayList<PsiClass>(weaklings);
+      final List<PsiClass> weaklingList = new ArrayList<>(weaklings);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
       if (weaklingList.isEmpty()) {

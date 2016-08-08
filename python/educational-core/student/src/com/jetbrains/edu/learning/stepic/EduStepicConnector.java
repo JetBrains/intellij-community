@@ -198,7 +198,7 @@ public class EduStepicConnector {
   private static boolean postCredentials(String user, String password) {
     String url = EduStepicNames.STEPIC_URL + EduStepicNames.LOGIN;
     final HttpPost request = new HttpPost(url);
-    List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+    List <NameValuePair> nvps = new ArrayList<>();
     nvps.add(new BasicNameValuePair("csrfmiddlewaretoken", ourCSRFToken));
     nvps.add(new BasicNameValuePair("login", user));
     nvps.add(new BasicNameValuePair("next", "/"));
@@ -285,7 +285,7 @@ public class EduStepicConnector {
   @NotNull
   public static List<CourseInfo> getCourses() {
     try {
-      List<CourseInfo> result = new ArrayList<CourseInfo>();
+      List<CourseInfo> result = new ArrayList<>();
       int pageNumber = 1;
       while (addCoursesFromStepic(result, pageNumber)) {
         pageNumber += 1;
@@ -433,7 +433,7 @@ public class EduStepicConnector {
     final StepicWrappers.SectionContainer
       sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
-    final List<Lesson> lessons = new ArrayList<Lesson>();
+    final List<Lesson> lessons = new ArrayList<>();
     for (Integer unitId : unitIds) {
       StepicWrappers.UnitContainer
         unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
@@ -441,7 +441,7 @@ public class EduStepicConnector {
       StepicWrappers.LessonContainer
         lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), StepicWrappers.LessonContainer.class);
       Lesson lesson = lessonContainer.lessons.get(0);
-      lesson.taskList = new ArrayList<Task>();
+      lesson.taskList = new ArrayList<>();
       for (Integer s : lesson.steps) {
         createTask(lesson, s);
       }
@@ -465,7 +465,7 @@ public class EduStepicConnector {
       task.addTestsTexts(wrapper.name, wrapper.text);
     }
 
-    task.taskFiles = new HashMap<String, TaskFile>();      // TODO: it looks like we don't need taskFiles as map anymore
+    task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (block.options.files != null) {
       for (TaskFile taskFile : block.options.files) {
         task.taskFiles.put(taskFile.name, taskFile);
@@ -519,7 +519,7 @@ public class EduStepicConnector {
       final StepicWrappers.AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, StepicWrappers.AttemptContainer.class).attempts.get(0);
 
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-      final ArrayList<StepicWrappers.SolutionFile> files = new ArrayList<StepicWrappers.SolutionFile>();
+      final ArrayList<StepicWrappers.SolutionFile> files = new ArrayList<>();
       for (TaskFile fileEntry : taskFiles.values()) {
         files.add(new StepicWrappers.SolutionFile(fileEntry.name, fileEntry.text));
       }

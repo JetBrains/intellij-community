@@ -309,7 +309,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   @Override
   public VirtualFile[] getOutputRoots(final boolean includeTests) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> result = new ArrayList<>();
 
     final VirtualFile outputPathForTests = includeTests ? getCompilerOutputPathForTests() : null;
     if (outputPathForTests != null) {
@@ -325,7 +325,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   @Override
   public String[] getOutputRootUrls(final boolean includeTests) {
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     final String outputPathForTests = includeTests ? getCompilerOutputUrlForTests() : null;
     if (outputPathForTests != null) {

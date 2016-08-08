@@ -244,7 +244,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
-    List<String[]> errors = new ArrayList<String[]>();
+    List<String[]> errors = new ArrayList<>();
 
     while (tokenizer.hasMoreTokens()) {
       String namePattern = tokenizer.nextToken();

@@ -91,7 +91,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           @NotNull
           @Override
           protected Map<String, PsiClass> compute() {
-            Map<String, PsiClass> map = new HashMap<String, PsiClass>();
+            Map<String, PsiClass> map = new HashMap<>();
             for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
               if (rule instanceof BaseGuavaTypeConversionRule) {
                 final String fromClass = ((BaseGuavaTypeConversionRule)rule).ruleFromClass();
@@ -271,7 +271,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
           LOG.assertTrue(substitutionMap.size() == 2);
           LOG.assertTrue(GuavaLambda.FUNCTION.getJavaAnalogueClassQName().equals(targetClass.getQualifiedName()));
           final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(currentType);
-          final List<PsiType> types = new ArrayList<PsiType>(substitutionMap.values());
+          final List<PsiType> types = new ArrayList<>(substitutionMap.values());
           types.remove(returnType);
           final PsiType parameterType = types.get(0);
           return elementFactory.createType(targetClass, parameterType, returnType);
@@ -336,8 +336,8 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
                          @NotNull CommonProblemDescriptor[] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
-      final List<PsiElement> elementsToFix = new ArrayList<PsiElement>();
-      final List<PsiType> migrationTypes = new ArrayList<PsiType>();
+      final List<PsiElement> elementsToFix = new ArrayList<>();
+      final List<PsiType> migrationTypes = new ArrayList<>();
 
       for (CommonProblemDescriptor descriptor : descriptors) {
         final MigrateGuavaTypeFix fix = getFix(descriptor);
@@ -394,7 +394,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
                                                                              @NotNull final List<PsiType> types) {
       LOG.assertTrue(elements.size() == types.size());
-      final Map<PsiElement, PsiType> mappings = new HashMap<PsiElement, PsiType>();
+      final Map<PsiElement, PsiType> mappings = new HashMap<>();
       final Iterator<PsiType> typeIterator = types.iterator();
       for (PsiElement element : elements) {
         PsiType type = typeIterator.next();

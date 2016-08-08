@@ -42,7 +42,7 @@ import java.util.Set;
  */
 public class DefaultGroovyVariableNameValidator implements NameValidator {
   private final GroovyPsiElement myContext;
-  private final Set<String> mySet = new HashSet<String>();
+  private final Set<String> mySet = new HashSet<>();
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context) {
     this(context, Collections.<String>emptyList(), true, false);

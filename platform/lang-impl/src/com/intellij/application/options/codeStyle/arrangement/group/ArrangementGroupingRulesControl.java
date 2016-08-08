@@ -115,7 +115,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull
   public List<ArrangementGroupingRule> getRules() {
-    List<ArrangementGroupingRule> result = new ArrayList<ArrangementGroupingRule>();
+    List<ArrangementGroupingRule> result = new ArrayList<>();
     DefaultTableModel model = getModel();
     for (int i = 0, max = model.getRowCount(); i < max; i++) {
       ArrangementGroupingComponent component = (ArrangementGroupingComponent)model.getValueAt(i, 0);

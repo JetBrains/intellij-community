@@ -101,7 +101,7 @@ class XsContentDFA extends XmlContentDFA {
   @Override
   public List<XmlElementDescriptor> getPossibleElements() {
     final List vector = myContentModel.whatCanGoHere(myState);
-    ArrayList<XmlElementDescriptor> list = new ArrayList<XmlElementDescriptor>();
+    ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
       if (o instanceof XSElementDecl) {
         final XSElementDecl elementDecl = (XSElementDecl)o;
@@ -130,7 +130,7 @@ class XsContentDFA extends XmlContentDFA {
   @Nullable
   private static XSElementDeclaration getElementDeclaration(XmlTag tag, XSModel xsModel) {
 
-    List<XmlTag> ancestors = new ArrayList<XmlTag>();
+    List<XmlTag> ancestors = new ArrayList<>();
     for (XmlTag t = tag; t != null; t = t.getParentTag()) {
       ancestors.add(t);
     }

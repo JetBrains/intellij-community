@@ -75,14 +75,14 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     if (myInlineThisOnly) {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
-    Set<UsageInfo> usages = new HashSet<UsageInfo>();
+    Set<UsageInfo> usages = new HashSet<>();
     for (PsiReference reference : ReferencesSearch.search(myClass)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
     final String qName = myClass.getQualifiedName();
     if (qName != null) {
-      List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
+      List<UsageInfo> nonCodeUsages = new ArrayList<>();
       if (mySearchInComments) {
         TextOccurrencesUtil.addUsagesInStringsAndComments(myClass, qName, nonCodeUsages,
                                                       new NonCodeUsageInfoFactory(myClass, qName));
@@ -136,7 +136,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
-    final MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> result = new MultiMap<>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(@NotNull final PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
@@ -205,8 +205,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final PsiClassType superType = getSuperType(myClass);
     LOG.assertTrue(superType != null);
-    List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
-    List<PsiNewExpression> newExpressions = new ArrayList<PsiNewExpression>();
+    List<PsiElement> elementsToDelete = new ArrayList<>();
+    List<PsiNewExpression> newExpressions = new ArrayList<>();
     for(UsageInfo info: usages) {
       final PsiElement element = info.getElement();
       if (element instanceof PsiNewExpression) {

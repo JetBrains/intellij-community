@@ -41,7 +41,7 @@ import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection {
 
-  private static final Set<IElementType> booleanTokens = new HashSet<IElementType>();
+  private static final Set<IElementType> booleanTokens = new HashSet<>();
   static {
     booleanTokens.add(JavaTokenType.ANDAND);
     booleanTokens.add(JavaTokenType.AND);
@@ -104,7 +104,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   private void buildSimplifiedPolyadicExpression(PsiPolyadicExpression expression, StringBuilder out) {
     final IElementType tokenType = expression.getOperationTokenType();
     final PsiExpression[] operands = expression.getOperands();
-    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+    final List<PsiExpression> expressions = new ArrayList<>();
     if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.AND)) {
       for (PsiExpression operand : operands) {
         if (evaluate(operand) == Boolean.TRUE) {

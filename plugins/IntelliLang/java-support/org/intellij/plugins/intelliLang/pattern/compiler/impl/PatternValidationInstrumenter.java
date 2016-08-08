@@ -36,7 +36,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
   private boolean myHasStaticInitializer;
 
   private final HashMap<String, String> myAnnotations;
-  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<String>();
+  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
 
   final Configuration.InstrumentationType myInstrumentationType;
   String myClassName;

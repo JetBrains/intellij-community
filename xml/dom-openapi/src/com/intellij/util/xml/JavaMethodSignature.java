@@ -83,7 +83,7 @@ public class JavaMethodSignature {
   }
 
   public final List<Method> getAllMethods(final Class startFrom) {
-    final List<Method> result = new ArrayList<Method>();
+    final List<Method> result = new ArrayList<>();
     processMethods(startFrom, Processors.cancelableCollectProcessor(result));
     return result;
   }

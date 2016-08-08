@@ -32,7 +32,7 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
   public ComboBoxModelEditor(@NotNull ListItemEditor<T> itemEditor) {
     super(itemEditor);
 
-    comboBox = new ComboBox<T>(model);
+    comboBox = new ComboBox<>(model);
     comboBox.setEditor(new NameEditor());
     comboBox.setRenderer(new MyListCellRenderer());
   }

@@ -104,7 +104,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private boolean myUiInitialized;
 
-  private final List<Configurable> myName2Config = new ArrayList<Configurable>();
+  private final List<Configurable> myName2Config = new ArrayList<>();
   private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;

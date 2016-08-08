@@ -45,10 +45,10 @@ abstract class GeneralRunner implements ContinuationContext {
     myProject = project;
     myCancellable = cancellable;
     myQueueLock = new Object();
-    myQueue = new LinkedList<TaskDescriptor>();
-    myDisasters = new HashMap<Object, Object>();
-    myHandlersMap = new HashMap<Class<? extends Exception>, Consumer<Exception>>();
-    myTasksPatchers = new ArrayList<Consumer<TaskDescriptor>>();
+    myQueue = new LinkedList<>();
+    myDisasters = new HashMap<>();
+    myHandlersMap = new HashMap<>();
+    myTasksPatchers = new ArrayList<>();
     myTriggerSuspend = false;
   }
 

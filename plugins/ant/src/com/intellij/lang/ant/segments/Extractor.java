@@ -44,7 +44,7 @@ public class Extractor implements Disposable {
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
   private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
-  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<Runnable>();
+  private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -94,7 +94,7 @@ public class Extractor implements Disposable {
   private void scheduleTask(final DeferredActionsQueue queue, final Runnable task) {
     myTaskQueue.add(task);
     myExecutor.execute(() -> {
-      final List<Runnable> currentTasks = new ArrayList<Runnable>(MAX_TASKS_TO_PROCESS_AT_ONCE);
+      final List<Runnable> currentTasks = new ArrayList<>(MAX_TASKS_TO_PROCESS_AT_ONCE);
       if (myTaskQueue.drainTo(currentTasks, MAX_TASKS_TO_PROCESS_AT_ONCE) > 0) {
         // there is a requirement that these activities must be run from the swing thread
         // will be blocking one of pooled threads here, which is ok

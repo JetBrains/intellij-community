@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * check if we should visit element
  */
 public interface PythonVisitorFilter {
-  LanguageExtension<PythonVisitorFilter> INSTANCE = new LanguageExtension<PythonVisitorFilter>("Pythonid.visitorFilter");
+  LanguageExtension<PythonVisitorFilter> INSTANCE = new LanguageExtension<>("Pythonid.visitorFilter");
 
   boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file);
 }

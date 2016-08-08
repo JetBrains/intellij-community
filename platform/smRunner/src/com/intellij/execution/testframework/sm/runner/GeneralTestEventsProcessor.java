@@ -48,13 +48,13 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   private final String myTestFrameworkName;
   private final Project myProject;
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
-  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
 
   public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
-    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", runnable -> {
+    myTransferToEDTQueue = new TransferToEDTQueue<>("SM queue", runnable -> {
       runnable.run();
       return true;
     }, project.getDisposed(), 300);

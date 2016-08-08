@@ -58,7 +58,7 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
+  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
   }
@@ -242,7 +242,7 @@ public class StudyProjectComponent implements ProjectComponent {
     for (Keymap keymap : keymapManager.getAllKeymaps()) {
       List<Pair<String, String>> pairs = myDeletedShortcuts.get(keymap);
       if (pairs == null) {
-        pairs = new ArrayList<Pair<String, String>>();
+        pairs = new ArrayList<>();
         myDeletedShortcuts.put(keymap, pairs);
       }
       for (String shortcutString : shortcuts) {

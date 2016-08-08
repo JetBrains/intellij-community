@@ -164,7 +164,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       }
     }
     else if (type instanceof PyUnionType) {
-      final List<PyType> memberReturnTypes = new ArrayList<PyType>();
+      final List<PyType> memberReturnTypes = new ArrayList<>();
       final PyUnionType unionType = (PyUnionType)type;
       for (PyType member : unionType.getMembers()) {
         memberReturnTypes.add(getGeneratorReturnType(member, context));

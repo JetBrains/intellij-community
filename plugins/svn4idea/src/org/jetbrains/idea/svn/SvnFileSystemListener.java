@@ -93,13 +93,13 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
   }
 
-  private final MultiMap<Project, AddedFileInfo> myAddedFiles = new MultiMap<Project, AddedFileInfo>();
-  private final MultiMap<Project, File> myDeletedFiles = new MultiMap<Project, File>();
-  private final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
-  private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<Project, List<VcsException>>();
-  private final List<VirtualFile> myFilesToRefresh = new ArrayList<VirtualFile>();
+  private final MultiMap<Project, AddedFileInfo> myAddedFiles = new MultiMap<>();
+  private final MultiMap<Project, File> myDeletedFiles = new MultiMap<>();
+  private final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
+  private final Map<Project, List<VcsException>> myMoveExceptions = new HashMap<>();
+  private final List<VirtualFile> myFilesToRefresh = new ArrayList<>();
   @Nullable private File myStorageForUndo;
-  private final List<Couple<File>> myUndoStorageContents = new ArrayList<Couple<File>>();
+  private final List<Couple<File>> myUndoStorageContents = new ArrayList<>();
   private boolean myUndoingMove = false;
 
   private boolean myIsInCommand;
@@ -121,7 +121,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList == null) {
-      exceptionList = new ArrayList<VcsException>();
+      exceptionList = new ArrayList<>();
       myMoveExceptions.put(project, exceptionList);
     }
     exceptionList.add(handleMoveException(e));
@@ -697,8 +697,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private void refreshFiles(final Project project) {
-    final List<VirtualFile> toRefreshFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> toRefreshDirs = new ArrayList<VirtualFile>();
+    final List<VirtualFile> toRefreshFiles = new ArrayList<>();
+    final List<VirtualFile> toRefreshDirs = new ArrayList<>();
     for (VirtualFile file : myFilesToRefresh) {
       if (file == null) continue;
       if (file.isDirectory()) {
@@ -739,9 +739,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private void processAddedFiles(final Project project) {
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    final List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
-    final Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
-    final Set<VirtualFile> recursiveItems = new HashSet<VirtualFile>();
+    final List<VirtualFile> addedVFiles = new ArrayList<>();
+    final Map<VirtualFile, File> copyFromMap = new HashMap<>();
+    final Set<VirtualFile> recursiveItems = new HashSet<>();
     fillAddedFiles(project, vcs, addedVFiles, copyFromMap, recursiveItems);
     if (addedVFiles.isEmpty()) return;
     final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
@@ -755,7 +755,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
           final Collection<VirtualFile> filesToProcess = promptAboutAddition(vcs, addedVFiles, value, vcsHelper);
           if (filesToProcess != null && !filesToProcess.isEmpty()) {
-            final List<VcsException> exceptions = new ArrayList<VcsException>();
+            final List<VcsException> exceptions = new ArrayList<>();
             runInBackground(project, "Adding files to Subversion",
                             createAdditionRunnable(project, vcs, copyFromMap, filesToProcess, exceptions));
             if (!exceptions.isEmpty()) {
@@ -888,9 +888,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private void processDeletedFiles(Project project) {
-    final List<Pair<FilePath, WorkingCopyFormat>> deletedFiles = new ArrayList<Pair<FilePath, WorkingCopyFormat>>();
-    final Collection<FilePath> filesToProcess = new ArrayList<FilePath>();
-    List<VcsException> exceptions = new ArrayList<VcsException>();
+    final List<Pair<FilePath, WorkingCopyFormat>> deletedFiles = new ArrayList<>();
+    final Collection<FilePath> filesToProcess = new ArrayList<>();
+    List<VcsException> exceptions = new ArrayList<>();
     final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
 
     try {
@@ -988,7 +988,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       final Collection<FilePath> files = vcsHelper
         .selectFilePathsToProcess(ObjectsConvertor.convert(deletedFiles, convertor), SvnBundle.message("confirmation.title.delete.multiple.files"), null,
                                   SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
-      filesToProcess = files == null ? null : new ArrayList<FilePath>(files);
+      filesToProcess = files == null ? null : new ArrayList<>(files);
     }
     return filesToProcess;
   }

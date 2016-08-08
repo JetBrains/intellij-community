@@ -43,7 +43,7 @@ public class GroovyGenerateGetterSetterAction extends GrBaseGenerateAction {
   static {
     GenerateAccessorProviderRegistrar.registerProvider(s -> {
       if (!(s instanceof GrTypeDefinition)) return Collections.emptyList();
-      final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+      final List<EncapsulatableClassMember> result = new ArrayList<>();
       for (PsiField field : s.getFields()) {
         if (!(field instanceof PsiEnumConstant) && field instanceof GrField) {
           result.add(new GrFieldMember((GrField)field));

@@ -47,7 +47,7 @@ import java.util.Map;
 public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool {
 
   private final static Logger LOG = Logger.getInstance(MigrateAssertToMatcherAssertInspection.class);
-  private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<String, Pair<String, String>>();
+  private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<>();
 
   static {
     ASSERT_METHODS.put("assertArrayEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.is($expected$)"));
@@ -153,7 +153,8 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       }
 
       if (myStaticallyImportMatchers) {
-        for (PsiJavaCodeReferenceElement ref : ContainerUtil.reverse(new ArrayList<PsiJavaCodeReferenceElement>(PsiTreeUtil.findChildrenOfType(replaced, PsiJavaCodeReferenceElement.class)))) {
+        for (PsiJavaCodeReferenceElement ref : ContainerUtil.reverse(
+          new ArrayList<>(PsiTreeUtil.findChildrenOfType(replaced, PsiJavaCodeReferenceElement.class)))) {
           if (!ref.isValid()) continue;
           final PsiElement resolvedElement = ref.resolve();
           if (resolvedElement instanceof PsiClass) {

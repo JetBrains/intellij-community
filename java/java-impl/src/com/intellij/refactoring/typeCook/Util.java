@@ -287,7 +287,7 @@ public class Util {
 
       PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-      final Set<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
+      final Set<PsiTypeVariable> cluster = new HashSet<>();
 
       for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);

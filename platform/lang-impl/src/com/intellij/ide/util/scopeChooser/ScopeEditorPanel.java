@@ -380,7 +380,7 @@ public class ScopeEditorPanel {
   private ArrayList<PackageSet> getSelectedSets(boolean recursively) {
     int[] rows = myPackageTree.getSelectionRows();
     if (rows == null) return null;
-    final ArrayList<PackageSet> result = new ArrayList<PackageSet>();
+    final ArrayList<PackageSet> result = new ArrayList<>();
     for (int row : rows) {
       final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
       final PackageSet set = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, recursively);

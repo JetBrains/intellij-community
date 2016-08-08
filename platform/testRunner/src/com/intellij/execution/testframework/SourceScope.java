@@ -37,7 +37,7 @@ public abstract class SourceScope {
 
   public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
     Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
-    Map<Module, Collection<Module>> result = new HashMap<Module, Collection<Module>>();
+    Map<Module, Collection<Module>> result = new HashMap<>();
     for (final Module module : graph.getNodes()) {
       buildDependenciesForModule(module, graph, result);
     }
@@ -45,7 +45,7 @@ public abstract class SourceScope {
   }
 
   private static void buildDependenciesForModule(final Module module, final Graph<Module> graph, Map<Module, Collection<Module>> map) {
-    final Set<Module> deps = new com.intellij.util.containers.HashSet<Module>();
+    final Set<Module> deps = new com.intellij.util.containers.HashSet<>();
     map.put(module, deps);
 
     new Object() {
@@ -161,7 +161,7 @@ public abstract class SourceScope {
 
   private static class ModuleWithDependenciesAndLibsDependencies extends GlobalSearchScope {
     private final GlobalSearchScope myMainScope;
-    private final List<GlobalSearchScope> myScopes = new ArrayList<GlobalSearchScope>();
+    private final List<GlobalSearchScope> myScopes = new ArrayList<>();
 
     public ModuleWithDependenciesAndLibsDependencies(final Module module) {
       super(module.getProject());

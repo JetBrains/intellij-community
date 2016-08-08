@@ -251,7 +251,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     @Override
     public Configurable[] getConfigurables() {
       if (!isInitialized) {
-        ArrayList<Configurable> list = new ArrayList<Configurable>();
+        ArrayList<Configurable> list = new ArrayList<>();
         if (super.myEp.dynamic) {
           Composite composite = cast(Composite.class, this);
           if (composite != null) {

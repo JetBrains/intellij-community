@@ -57,7 +57,7 @@ public class CCDeleteAllAnswerPlaceholdersAction extends DumbAwareAction {
       }
       editor = ((TextEditor)fileEditor).getEditor();
     }
-    List<AnswerPlaceholder> placeholders = new ArrayList<AnswerPlaceholder>(taskFile.getAnswerPlaceholders());
+    List<AnswerPlaceholder> placeholders = new ArrayList<>(taskFile.getAnswerPlaceholders());
     final ClearPlaceholders action = new ClearPlaceholders(taskFile, placeholders, editor);
     EduUtils.runUndoableAction(project, ACTION_NAME, action, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }

@@ -102,7 +102,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    final Ref<TextRange> maximumRange = new Ref<TextRange>();
+    final Ref<TextRange> maximumRange = new Ref<>();
 
     final int finalCursorOffset = cursorOffset;
     SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {

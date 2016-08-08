@@ -185,7 +185,7 @@ public class RunInspectionAction extends GotoActionBase {
       @NotNull
       @Override
       protected Action[] createActions() {
-        final List<Action> actions = new ArrayList<Action>();
+        final List<Action> actions = new ArrayList<>();
         final boolean hasFixAll = toolWrapper.getTool() instanceof CleanupLocalInspectionTool;
         actions.add(new AbstractAction(hasFixAll ? AnalysisScopeBundle.message("action.analyze.verb")
                                                  : CommonBundle.getOkButtonText()) {

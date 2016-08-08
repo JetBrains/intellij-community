@@ -177,8 +177,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
 
   @Override
   public void loadState(Element element) {
-    List<TodoPattern> patternsList = new SmartList<TodoPattern>();
-    List<TodoFilter> filtersList = new SmartList<TodoFilter>();
+    List<TodoPattern> patternsList = new SmartList<>();
+    List<TodoFilter> filtersList = new SmartList<>();
     for (Element child : element.getChildren()) {
       if (ELEMENT_PATTERN.equals(child.getName())) {
         TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());

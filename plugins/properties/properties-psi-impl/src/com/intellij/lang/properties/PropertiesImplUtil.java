@@ -95,7 +95,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
         return baseDirectory.getFiles();
       }
     });
-    final List<PropertiesFile> bundleFiles = new ArrayList<PropertiesFile>(1);
+    final List<PropertiesFile> bundleFiles = new ArrayList<>(1);
     for (final PsiFile psiFile : psiFiles) {
       final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
       if (propertiesFile == null) {
@@ -154,8 +154,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
   public static List<IProperty> findPropertiesByKey(@NotNull final Project project, @NotNull final String key) {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final ArrayList<IProperty> properties =
-      new ArrayList<IProperty>(PropertyKeyIndex.getInstance().get(key, project, scope));
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      new ArrayList<>(PropertyKeyIndex.getInstance().get(key, project, scope));
+    final Set<VirtualFile> files = new HashSet<>();
     FileBasedIndex.getInstance().processValues(XmlPropertiesIndex.NAME, new XmlPropertiesIndex.Key(key), null, new FileBasedIndex.ValueProcessor<String>() {
       @Override
       public boolean process(VirtualFile file, String value) {

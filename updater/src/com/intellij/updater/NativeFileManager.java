@@ -71,7 +71,7 @@ public class NativeFileManager {
   }
 
   public static List<Process> getProcessesUsing(File file) {
-    List<Process> processes = new LinkedList<Process>();
+    List<Process> processes = new LinkedList<>();
     // If the DLL was not present (XP or other OS), do not try to find it again.
     if (ourFailed) {
       return processes;

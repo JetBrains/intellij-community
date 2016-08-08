@@ -70,8 +70,8 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
 
     project.save();
 
-    List<Module> modules = new SmartList<Module>();
-    List<Module> incompatibleModules = new SmartList<Module>();
+    List<Module> modules = new SmartList<>();
+    List<Module> incompatibleModules = new SmartList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!EclipseModuleManagerImpl.isEclipseStorage(module)) {
         try {
@@ -114,7 +114,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       }
     }
     else {
-      LinkedHashMap<Module, String> module2StorageRoot = new LinkedHashMap<Module, String>();
+      LinkedHashMap<Module, String> module2StorageRoot = new LinkedHashMap<>();
       for (Module module : dialog.getSelectedModules()) {
         VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
         String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);

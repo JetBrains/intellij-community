@@ -103,7 +103,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     if (type != null && type.isValid()) return type;
 
     type = new GrClassReferenceType(getBaseClassReferenceGroovy());
-    myCachedBaseType = new SoftReference<PsiClassType>(type);
+    myCachedBaseType = new SoftReference<>(type);
     return type;
   }
 
