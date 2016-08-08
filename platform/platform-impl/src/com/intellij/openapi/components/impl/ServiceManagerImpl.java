@@ -80,7 +80,7 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
-        if (!ComponentManagerImpl.isComponentSuitableForOs(descriptor.os)) {
+        if (!Extensions.isComponentSuitableForOs(descriptor.os)) {
           return;
         }
 

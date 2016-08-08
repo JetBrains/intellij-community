@@ -444,6 +444,6 @@
     <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
     <additionalTextAttributes scheme="Darcula" file="idea/FindViewColorsScheme.xml"/>
 
-    <credentialStore implementation="com.intellij.ide.passwordSafe.MacOsCredentialStoreFactory"/>
+    <credentialStore implementation="com.intellij.ide.passwordSafe.MacOsCredentialStoreFactory" os="mac"/>
   </extensions>
 </idea-plugin>
