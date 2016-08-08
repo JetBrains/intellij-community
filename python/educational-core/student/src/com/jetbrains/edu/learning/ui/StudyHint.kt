@@ -36,6 +36,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     
     if (myPlaceholder == null) {
       studyToolWindow.setText(OUR_WARNING_MESSAGE)
+      studyToolWindow.setActionToolbar(DefaultActionGroup())
     }
     
     val course = taskManager.course
