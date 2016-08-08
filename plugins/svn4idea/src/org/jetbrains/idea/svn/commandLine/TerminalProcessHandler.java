@@ -15,32 +15,25 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnUtil;
 
 import java.util.List;
-import java.util.regex.Matcher;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalProcessHandler extends SvnProcessHandler {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final CapturingProcessAdapter terminalOutputCapturer = new CapturingProcessAdapter();
 
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
   public TerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine, forceUtf8, forceBinary);
+    setHasPty(true);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {
@@ -49,7 +42,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   @Override
   protected boolean processHasSeparateErrorStream() {
-    return false;
+    return true;
   }
 
   @Override
@@ -69,23 +62,15 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
       super.notifyTextAvailable(text, outputType);
     }
-    else {
-      terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
+    else if (!StringUtil.isEmpty(text)) {
+      StringBuilder lastLine = getLastLineFor(outputType);
+      String currentLine = lastLine.append(text).toString();
+      lastLine.setLength(0);
 
-      text = filterText(text);
-
-      if (!StringUtil.isEmpty(text)) {
-        StringBuilder lastLine = getLastLineFor(outputType);
-        String currentLine = lastLine.append(text).toString();
-        lastLine.setLength(0);
-
-        currentLine = filterCombinedText(currentLine);
-
-        // check if current line presents some interactive output
-        boolean handled = handlePrompt(currentLine, outputType);
-        if (!handled) {
-          notify(currentLine, outputType, lastLine);
-        }
+      // check if current line presents some interactive output
+      boolean handled = handlePrompt(currentLine, outputType);
+      if (!handled) {
+        notify(currentLine, outputType, lastLine);
       }
     }
   }
@@ -107,40 +92,16 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     return result;
   }
 
-  @NotNull
-  protected String filterCombinedText(@NotNull String currentLine) {
-    return currentLine;
-  }
-
-  @NotNull
-  protected String filterText(@NotNull String text) {
-    return text;
-  }
-
   private void notify(@NotNull String text, @NotNull Key outputType, @NotNull StringBuilder lastLine) {
     // text is not more than one line - either one line or part of the line
     if (StringUtil.endsWith(text, "\n")) {
       // we have full line - notify listeners
-      super.notifyTextAvailable(text, resolveOutputType(text, outputType));
+      super.notifyTextAvailable(text, outputType);
     }
     else {
       // save line part to lastLine
       lastLine.append(text);
     }
-  }
-
-  @NotNull
-  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
-    Key result = outputType;
-
-    if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
-      Matcher errorMatcher = SvnUtil.ERROR_PATTERN.matcher(line);
-      Matcher warningMatcher = SvnUtil.WARNING_PATTERN.matcher(line);
-
-      result = errorMatcher.find() || warningMatcher.find() ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT;
-    }
-
-    return result;
   }
 
   @NotNull
@@ -154,9 +115,5 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     else {
       throw new IllegalArgumentException("Unknown process output type " + outputType);
     }
-  }
-
-  public String getTerminalOutput() {
-    return terminalOutputCapturer.getOutput().getStdout();
   }
 }

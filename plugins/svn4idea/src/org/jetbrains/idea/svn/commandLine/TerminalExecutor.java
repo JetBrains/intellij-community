@@ -15,23 +15,27 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalExecutor extends CommandExecutor {
+
+  // max available value is 480
+  // if greater value is provided than the default value of 80 will be assumed
+  // this could provide unnecessary line breaks and thus could break parsing logic
+  private static final int TERMINAL_WINDOW_MAX_COLUMNS = 480;
+
+  static {
+    if (SystemInfo.isWindows) {
+      System.setProperty("win.pty.cols", String.valueOf(TERMINAL_WINDOW_MAX_COLUMNS));
+    }
+  }
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -60,65 +64,12 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), false);
-  }
-
-  /**
-   * TODO: remove this when separate streams for output and errors are implemented for Unix.
-   */
-  @NotNull
-  @Override
-  public ByteArrayOutputStream getBinaryOutput() {
-    if (this instanceof WinTerminalExecutor) {
-      return super.getBinaryOutput();
-    }
-
-    ByteArrayOutputStream result = new ByteArrayOutputStream();
-    byte[] outputBytes = CharsetToolkit.getUtf8Bytes(getOutput());
-
-    result.write(outputBytes, 0, outputBytes.length);
-
-    return result;
+    return new TerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
   }
 
   @NotNull
   @Override
   protected GeneralCommandLine createCommandLine() {
     return new PtyCommandLine();
-  }
-
-  @NotNull
-  @Override
-  protected Process createProcess() throws ExecutionException {
-    List<String> parameters = escapeArguments(buildParameters());
-
-    return createProcess(parameters);
-  }
-
-  @NotNull
-  protected List<String> buildParameters() {
-    return CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList());
-  }
-
-  @NotNull
-  protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
-    try {
-      return ((PtyCommandLine)myCommandLine).startProcessWithPty(parameters, false);
-    }
-    catch (IOException e) {
-      throw new ExecutionException(e);
-    }
-  }
-
-  @Override
-  public void logCommand() {
-    super.logCommand();
-
-    LOG.info("Terminal output " + ((TerminalProcessHandler)myHandler).getTerminalOutput());
-  }
-
-  @NotNull
-  protected List<String> escapeArguments(@NotNull List<String> arguments) {
-    return arguments;
   }
 }
