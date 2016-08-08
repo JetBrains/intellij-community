@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +31,11 @@ public enum DocStringFormat {
   /**
    * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
    */
-  PLAIN("Plain"),
-  EPYTEXT("Epytext"),
-  REST("reStructuredText"),
-  NUMPY("NumPy"),
-  GOOGLE("Google");
+  PLAIN("Plain", ""),
+  EPYTEXT("Epytext", "epytext"),
+  REST("reStructuredText", "rest"),
+  NUMPY("NumPy", "numpy"),
+  GOOGLE("Google", "google");
 
   public static final List<String> ALL_NAMES = getAllNames();
 
@@ -67,10 +66,12 @@ public enum DocStringFormat {
     return ObjectUtils.notNull(fromName(name), PLAIN);
   }
 
-  String myName;
+  private final String myName;
+  private final String myFormatterCommand;
 
-  DocStringFormat(@NotNull String name) {
+  DocStringFormat(@NotNull String name, @NotNull String formatterCommand) {
     myName = name;
+    myFormatterCommand = formatterCommand;
   }
 
   @NotNull
@@ -78,4 +79,8 @@ public enum DocStringFormat {
     return myName;
   }
 
+  @NotNull
+  public String getFormatterCommand() {
+    return myFormatterCommand;
+  }
 }
