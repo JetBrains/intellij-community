@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,9 @@ public class FreezeLogger {
   private static final int MAX_ALLOWED_TIME = 500;
   
   public static void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
+    final ModalityState initial = ModalityState.current();
     ALARM.cancelAllRequests();
-    ALARM.addRequest(() -> dumpThreads(project), MAX_ALLOWED_TIME);
+    ALARM.addRequest(() -> dumpThreads(project, initial), MAX_ALLOWED_TIME);
     
     try {
       action.run();
@@ -42,7 +44,11 @@ public class FreezeLogger {
     }
   }
   
-  private static void dumpThreads(@Nullable Project project) {
+  private static void dumpThreads(@Nullable Project project, @NotNull ModalityState initialState) {
+    if (!initialState.equals(ModalityState.current())) {
+      return;
+    }
+    
     final String edtTrace = ThreadDumper.dumpEdtStackTrace();
     if (edtTrace.contains("java.lang.ClassLoader.loadClass")) {
       return;
