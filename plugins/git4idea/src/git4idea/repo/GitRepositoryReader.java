@@ -85,6 +85,7 @@ class GitRepositoryReader {
     Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = createBranchesFromData(remotes, refs);
     Map<GitLocalBranch, Hash> localBranches = branches.first;
 
+    //HeadInfo headInfo = readHead(refs);
     HeadInfo headInfo = readHead(refs);
     Repository.State state = readRepositoryState(headInfo);
 
@@ -93,6 +94,9 @@ class GitRepositoryReader {
     if (!headInfo.isBranch || !localBranches.isEmpty()) {
       currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
       currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
+      if (currentBranch != null && headInfo.isSymbolicRef()) {
+        currentBranch = new GitSymbolicRef(headInfo.symbolicRefName, currentBranch);
+      }
     }
     else if (headInfo.content != null) {
       currentBranch = new GitLocalBranch(headInfo.content);
@@ -344,7 +348,7 @@ class GitRepositoryReader {
         while (last.isSymbolicRef) {
           last = refs.get(last.referencedRef);
         }
-        return new HeadInfo(true, last.refName);
+        return new HeadInfo(true, last.refName, target == last.refName ? null : target);
       }
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
@@ -502,10 +506,20 @@ class GitRepositoryReader {
   private static class HeadInfo {
     @Nullable private final String content;
     private final boolean isBranch;
+    @Nullable private final String symbolicRefName;
 
     HeadInfo(boolean branch, @Nullable String content) {
+      this(branch, content, null);
+    }
+
+    HeadInfo(boolean branch, @Nullable String content, @Nullable String symbolicRefName) {
       isBranch = branch;
       this.content = content;
+      this.symbolicRefName = symbolicRefName;
+    }
+
+    boolean isSymbolicRef() {
+      return symbolicRefName != null;
     }
   }
 

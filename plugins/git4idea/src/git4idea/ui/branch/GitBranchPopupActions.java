@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitSymbolicRef;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,6 +67,9 @@ class GitBranchPopupActions {
     popupGroup.addSeparator("Local Branches");
     List<GitBranch> localBranches = new ArrayList<GitBranch>(myRepository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
+    //for (GitBranch localBranch : filterLocalBranches(localBranches, myRepository.getCurrentBranch())) {
+    //  popupGroup.add(new LocalBranchActions(myProject, repositoryList, localBranch.getName(), myRepository));
+    //}
     for (GitBranch localBranch : localBranches) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
         popupGroup.add(new LocalBranchActions(myProject, repositoryList, localBranch.getName(), myRepository));
@@ -78,6 +84,17 @@ class GitBranchPopupActions {
     }
     
     return popupGroup;
+  }
+
+  private static Collection<GitBranch> filterLocalBranches(Collection<GitBranch> localBranches, GitLocalBranch currentBranch) {
+    return ContainerUtil.filter(localBranches, new Condition<GitBranch>() {
+      @Override
+      public boolean value(GitBranch branch) {
+        return currentBranch instanceof GitSymbolicRef ?
+               ((GitSymbolicRef) currentBranch).getReferencedBranch().equals(branch) :
+               currentBranch.equals(branch);
+      }
+    });
   }
 
   public static class GitNewBranchAction extends NewBranchAction<GitRepository> {
