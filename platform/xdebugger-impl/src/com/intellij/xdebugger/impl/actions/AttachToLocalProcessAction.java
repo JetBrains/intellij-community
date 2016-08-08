@@ -397,8 +397,7 @@ public class AttachToLocalProcessAction extends AnAction {
     @Override
     public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
       addToHistory(myProject, selectedValue);
-      selectedValue.startDebugSession(myProject);
-      return FINAL_CHOICE;
+      return doFinalStep(() -> selectedValue.startDebugSession(myProject));
     }
   }
 
