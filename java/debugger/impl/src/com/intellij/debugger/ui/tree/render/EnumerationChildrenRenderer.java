@@ -147,13 +147,11 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
 
   @Nullable
   public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
-    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
-      Renderer renderer = ((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor().getLastRenderer();
-      if (renderer instanceof CompoundNodeRenderer) {
-        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
-        if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-          return (EnumerationChildrenRenderer)childrenRenderer;
-        }
+    Renderer renderer = valueDescriptor.getLastRenderer();
+    if (renderer instanceof CompoundNodeRenderer) {
+      ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
+      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
+        return (EnumerationChildrenRenderer)childrenRenderer;
       }
     }
     return null;

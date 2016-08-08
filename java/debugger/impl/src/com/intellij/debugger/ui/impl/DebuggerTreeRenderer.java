@@ -132,9 +132,12 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = AllIcons.Debugger.Value;
     }
 
-    EnumerationChildrenRenderer enumerationChildrenRenderer = EnumerationChildrenRenderer.getCurrent(valueDescriptor);
-    if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
-      nodeIcon = AllIcons.Debugger.Watch;
+    if (valueDescriptor instanceof UserExpressionDescriptorImpl) {
+      EnumerationChildrenRenderer enumerationChildrenRenderer =
+        EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor());
+      if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
+        nodeIcon = AllIcons.Debugger.Watch;
+      }
     }
 
     // if watches in variables enabled, always use watch icon

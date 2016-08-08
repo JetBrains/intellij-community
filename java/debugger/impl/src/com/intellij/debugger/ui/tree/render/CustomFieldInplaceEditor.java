@@ -15,14 +15,21 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.sun.jdi.Type;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,24 +38,69 @@ import java.util.List;
  */
 public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final EnumerationChildrenRenderer myRenderer;
+  private final boolean myAddNew;
 
-  public CustomFieldInplaceEditor(XDebuggerTreeNode node, UserExpressionDescriptorImpl descriptor, EnumerationChildrenRenderer renderer) {
+  public CustomFieldInplaceEditor(@NotNull XDebuggerTreeNode node,
+                                  @Nullable UserExpressionDescriptorImpl descriptor,
+                                  @Nullable EnumerationChildrenRenderer renderer) {
     super(node, "customField");
     myRenderer = renderer;
-    myExpressionEditor.setExpression(TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()));
+    myAddNew = descriptor == null;
+    if (!myAddNew) {
+      myExpressionEditor.setExpression(TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()));
+    }
+  }
+
+  public static void editNew(@NotNull XValueNodeImpl parentNode) {
+    ValueDescriptorImpl descriptor = ((JavaValue)parentNode.getValueContainer()).getDescriptor();
+    EnumerationChildrenRenderer renderer = EnumerationChildrenRenderer.getCurrent(descriptor);
+    XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode();
+    DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer) {
+      @Override
+      public void cancelEditing() {
+        super.cancelEditing();
+        parentNode.removeTemporaryEditorNode(newNode);
+      }
+
+      @Override
+      protected List<Pair<String, TextWithImports>> getRendererChildren() {
+        if (renderer != null) {
+          return renderer.getChildren();
+        }
+        else {
+          Type type = descriptor.getType();
+          String name = type != null ? type.name() : null;
+          EnumerationChildrenRenderer enumerationChildrenRenderer = new EnumerationChildrenRenderer();
+          enumerationChildrenRenderer.setAppendDefaultChildren(true);
+          NodeRenderer renderer =
+            NodeRendererSettings.getInstance().createCompoundTypeRenderer(name, name, null, enumerationChildrenRenderer);
+          renderer.setEnabled(true);
+          NodeRendererSettings.getInstance().getCustomRenderers().addRenderer(renderer);
+          NodeRendererSettings.getInstance().fireRenderersChanged();
+          return enumerationChildrenRenderer.getChildren();
+        }
+      }
+    }.show());
+  }
+
+  protected List<Pair<String, TextWithImports>> getRendererChildren() {
+    return myRenderer.getChildren();
   }
 
   @Override
   public void doOKAction() {
-    int index = myNode.getParent().getIndex(myNode);
-    List<Pair<String, TextWithImports>> children = myRenderer.getChildren();
-    Pair<String, TextWithImports> old = children.get(index);
-    children.set(index, Pair.create(old.first, TextWithImportsImpl.fromXExpression(myExpressionEditor.getExpression())));
-
-    if (myTree.isDetached()) {
-      myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree));
+    List<Pair<String, TextWithImports>> children = getRendererChildren();
+    TextWithImports newText = TextWithImportsImpl.fromXExpression(myExpressionEditor.getExpression());
+    if (myAddNew) {
+      children.add(0, Pair.create("", newText));
     }
-    XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
+    else {
+      int index = myNode.getParent().getIndex(myNode);
+      Pair<String, TextWithImports> old = children.get(index);
+      children.set(index, Pair.create(old.first, newText));
+    }
+
+    XDebuggerUtilImpl.rebuildTreeAndViews(myTree);
 
     super.doOKAction();
   }

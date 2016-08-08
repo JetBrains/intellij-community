@@ -209,6 +209,30 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     fireNodesInserted(messages);
   }
 
+  public XDebuggerTreeNode addTemporaryEditorNode() {
+    getChildren();
+    MessageTreeNode node = new MessageTreeNode(myTree, this, true);
+    myCachedAllChildren.add(0, node);
+    fireNodesInserted(Collections.singleton(node));
+    return node;
+  }
+
+  public void removeTemporaryEditorNode(XDebuggerTreeNode node) {
+    if (myCachedAllChildren != null) {
+      removeChildNode(myCachedAllChildren, node);
+    }
+  }
+
+  @SuppressWarnings("SuspiciousMethodCalls")
+  protected int removeChildNode(List children, XDebuggerTreeNode node) {
+    int index = children.indexOf(node);
+    if (index != -1) {
+      children.remove(node);
+      fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
+    }
+    return index;
+  }
+
   @NotNull
   @Override
   public List<? extends TreeNode> getChildren() {

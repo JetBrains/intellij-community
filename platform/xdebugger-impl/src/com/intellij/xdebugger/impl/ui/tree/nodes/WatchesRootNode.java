@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeNode;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.xdebugger.impl.frame.XDebugView.getSession;
 
 /**
  * @author nik
@@ -145,14 +142,8 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myTree.getTreeModel().nodesWereInserted(this, new int[]{index});
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   public int removeChildNode(XDebuggerTreeNode node) {
-    int index = myChildren.indexOf(node);
-    if (index != -1) {
-      myChildren.remove(node);
-      fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
-    }
-    return index;
+    return removeChildNode(myChildren, node);
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
