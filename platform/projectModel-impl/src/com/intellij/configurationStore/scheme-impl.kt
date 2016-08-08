@@ -56,7 +56,7 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : S
     return attributeProvider.apply("name") ?: throw IllegalStateException("name is missed in the scheme data")
   }
 
-  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>, name: String, attributeProvider: Function<String, String?>, duringLoad: Boolean): MUTABLE_SCHEME
+  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>, name: String, attributeProvider: Function<String, String?>): MUTABLE_SCHEME
 
   override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
 

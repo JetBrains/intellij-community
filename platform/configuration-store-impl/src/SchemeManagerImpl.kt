@@ -278,13 +278,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     try {
+      val filesToDelete = THashSet<String>()
       val oldSchemes = schemes
       val schemes = oldSchemes.toMutableList()
       val newSchemesOffset = schemes.size
       if (provider != null && provider.enabled) {
         provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
           catchAndLog(name) {
-            val scheme = loadScheme(name, input, schemes)
+            val scheme = loadScheme(name, input, schemes, filesToDelete)
             if (readOnly && scheme != null) {
               readOnlyExternalizableSchemes.put(scheme.name, scheme)
             }
@@ -300,12 +301,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
             }
 
             catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { loadScheme(filename, it, schemes) }
+              file.inputStream().use { loadScheme(filename, it, schemes, filesToDelete) }
             }
           }
         }
       }
 
+      this.filesToDelete.addAll(filesToDelete)
       replaceSchemeList(oldSchemes, schemes)
 
       @Suppress("UNCHECKED_CAST")
@@ -380,18 +382,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>): MUTABLE_SCHEME? {
+  private fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>, filesToDelete: MutableSet<String>? = null): MUTABLE_SCHEME? {
     val extension = getFileExtension(fileName, false)
-    // equals by identity
-    val duringLoad = schemes !== this.schemes
-    if (duringLoad && filesToDelete.contains(fileName)) {
+    if (filesToDelete != null && filesToDelete.contains(fileName)) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
       return null
     }
 
     val fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length)
     fun checkExisting(schemeName: String): Boolean {
-      if (!duringLoad) {
+      if (filesToDelete == null) {
         return true
       }
 
@@ -430,6 +430,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       return info
     }
 
+    val duringLoad = filesToDelete != null
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
@@ -465,7 +466,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
               val externalInfo = createInfo(schemeName, null)
               val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
-              scheme = processor.createScheme(dataHolder, schemeName, attributeProvider, duringLoad)
+              scheme = processor.createScheme(dataHolder, schemeName, attributeProvider)
               schemeToInfo.put(scheme, externalInfo)
               break@read
             }
