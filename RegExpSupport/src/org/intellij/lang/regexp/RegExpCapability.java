@@ -32,6 +32,9 @@ public enum RegExpCapability {
   OMIT_NUMBERS_IN_QUANTIFIERS,
   COMMENT_MODE,
   ALLOW_HEX_DIGIT_CLASS,
+  /**
+   * supports [] to be valid character class
+   */
   ALLOW_EMPTY_CHARACTER_CLASS,
   ALLOW_HORIZONTAL_WHITESPACE_CLASS,
   UNICODE_CATEGORY_SHORTHAND,
