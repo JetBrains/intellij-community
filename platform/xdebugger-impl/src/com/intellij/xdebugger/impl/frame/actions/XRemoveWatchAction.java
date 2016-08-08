@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@ import java.util.List;
  * @author nik
  */
 public class XRemoveWatchAction extends XWatchesTreeActionBase {
-
-  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty();
+  @Override
+  public void update(AnActionEvent e) {
+    XDebuggerTree tree = XDebuggerTree.getTree(e);
+    e.getPresentation().setEnabledAndVisible(tree != null && !getSelectedNodes(tree, WatchNodeImpl.class).isEmpty());
   }
 
   @Override
