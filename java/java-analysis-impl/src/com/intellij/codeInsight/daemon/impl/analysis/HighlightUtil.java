@@ -278,14 +278,6 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return null;
-    if (operandType instanceof PsiLambdaExpressionType) {
-      return HighlightInfo
-        .newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Lambda expression is not expected here").create();
-    }
-    if (operandType instanceof PsiMethodReferenceType) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(
-        "Method reference expression is not expected here").create();
-    }
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
