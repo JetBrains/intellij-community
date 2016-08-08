@@ -30,7 +30,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
   private static final int TOO_BORING_REACTION = -1;
   private static final String HARD_REACTION = "Too Hard";
   private static final String BORING_REACTION = "Too Boring";
-  private static final String SOLVED_TASK_TOOLTIP = "Task Is Solved";
+  private static final String SOLVED_TASK_TOOLTIP = "Reaction Disabled Due To Task Is Solved";
   private static final String HARD_LABEL_TOOLTIP = "Click To Get An Easier Task";
   private static final String BORING_LABEL_TOOLTIP = "Click To Get A More Challenging Task";
 
@@ -108,7 +108,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
       myButtonPanel = new JPanel();
       myButtonPanel.setLayout(new BoxLayout(myButtonPanel, BoxLayout.PAGE_AXIS));
-      myButtonPanel.setToolTipText(isEnabled ? enabledTooltip : SOLVED_TASK_TOOLTIP);
+      myButtonPanel.setToolTipText(isEnabled && task.getStatus() == StudyStatus.Solved ? enabledTooltip : SOLVED_TASK_TOOLTIP);
       myButtonPanel.add(Box.createVerticalStrut(5));
       myButtonPanel.add(myLabel);
       myButtonPanel.add(Box.createVerticalStrut(5));
