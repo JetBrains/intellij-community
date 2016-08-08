@@ -17,13 +17,13 @@ package com.siyeh.ig.fixes.equality;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.equality.ReplaceEqualityWithEqualsInspection;
+import com.siyeh.ig.equality.EqualityOperatorComparesObjectsInspection;
 
 /**
- * @see ReplaceEqualityWithEqualsInspection
+ * @see EqualityOperatorComparesObjectsInspection
  * @author Bas Leijdekkers
  */
-public abstract class ReplaceEqualityWithEqualsInspectionTestBase extends IGQuickFixesTestCase {
+public abstract class EqualityOperatorComparesObjectsInspectionTestBase extends IGQuickFixesTestCase {
 
   public void testEnumComparison() { assertQuickfixNotAvailable(); }
   public void testNullComparison() { assertQuickfixNotAvailable(); }
@@ -34,14 +34,14 @@ public abstract class ReplaceEqualityWithEqualsInspectionTestBase extends IGQuic
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ReplaceEqualityWithEqualsInspection());
+    myFixture.enableInspections(new EqualityOperatorComparesObjectsInspection());
     myDefaultHint = "Replace";
     myRelativePath = "equality/replace_equality_with_equals";
   }
 
   protected void doTest(boolean isEqual, boolean isSafe) {
     doTest(InspectionGadgetsBundle.message(
-      isSafe ? "replace.equality.with.safe.equals.descriptor" : "replace.equality.with.equals.descriptor",
+      isSafe ? "equality.operator.compares.objects.safe.quickfix" : "equality.operator.compares.objects.quickfix",
       isEqual ? "==" : "!=",
       isEqual ? "" : "!"));
   }

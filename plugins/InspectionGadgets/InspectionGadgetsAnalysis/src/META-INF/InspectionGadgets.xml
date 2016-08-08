@@ -784,10 +784,10 @@
                      key="if.can.be.assertion.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.asserttoif.IfCanBeAssertionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceEqualityWithEquals" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.equality.with.equals.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="EqualityOperatorComparesObjects" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equality.operator.compares.objects.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.equality.ReplaceEqualityWithEqualsInspection"/>
+                     implementationClass="com.siyeh.ig.equality.EqualityOperatorComparesObjectsInspection"/>
 
     <!--group.names.data.flow.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanVariableAlwaysNegated" bundle="com.siyeh.InspectionGadgetsBundle"

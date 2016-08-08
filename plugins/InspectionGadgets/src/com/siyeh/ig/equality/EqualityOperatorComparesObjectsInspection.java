@@ -32,19 +32,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceEqualityWithEqualsInspection extends BaseInspection {
+public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("replace.equality.with.equals.name");
+    return InspectionGadgetsBundle.message("equality.operator.compares.objects.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("replace.equality.with.equals.descriptor", infos);
+    return InspectionGadgetsBundle.message("equality.operator.compares.objects.descriptor", infos);
   }
 
   @Override
@@ -143,14 +143,14 @@ public class ReplaceEqualityWithEqualsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.equality.with.safe.equals.descriptor", myInfos);
+      return InspectionGadgetsBundle.message("equality.operator.compares.objects.safe.quickfix", myInfos);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.equality.with.safe.equals.name");
+      return InspectionGadgetsBundle.message("equality.operator.compares.objects.safe.family.quickfix");
     }
 
     @Override
@@ -170,14 +170,14 @@ public class ReplaceEqualityWithEqualsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.equality.with.equals.descriptor", myInfos);
+      return InspectionGadgetsBundle.message("equality.operator.compares.objects.quickfix", myInfos);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.equality.with.equals.name");
+      return InspectionGadgetsBundle.message("equality.operator.compares.objects.family.quickfix");
     }
 
     @Override

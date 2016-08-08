@@ -22,14 +22,14 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 /**
  * @author Pavel.Dolgov
  */
-public class ReplaceEqualityWithEqualsInspectionJdk7Test extends ReplaceEqualityWithEqualsInspectionTestBase {
+public class EqualityOperatorComparesObjectsInspectionJdk6Test extends EqualityOperatorComparesObjectsInspectionTestBase {
 
-  public void testSimpleObjectSafeComparison() { doTest(true, true); }
-  public void testNegatedObjectSafeComparison() { doTest(false, true); }
+  public void testSimpleObjectOldSafeComparison() { doTest(true, true); }
+  public void testNegatedObjectOldSafeComparison() { doTest(false, true); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())
-      .setLanguageLevel(LanguageLevel.JDK_1_7);
+    builder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath())
+      .setLanguageLevel(LanguageLevel.JDK_1_6);
   }
 }
