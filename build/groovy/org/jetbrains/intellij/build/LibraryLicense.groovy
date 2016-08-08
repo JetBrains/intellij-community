@@ -77,7 +77,7 @@ class LibraryLicense {
   }
 
   public List<String> getLibraryNames() {
-    return ContainerUtil.createMaybeSingletonList(libraryName) + (additionalLibraryNames ?: [])
+    return ContainerUtil.createMaybeSingletonList(libraryName ?: name) + (additionalLibraryNames ?: [])
   }
 
   public String getLibraryLicenseUrl() {
