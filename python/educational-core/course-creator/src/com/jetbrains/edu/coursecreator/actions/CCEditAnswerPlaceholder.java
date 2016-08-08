@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
+import com.jetbrains.edu.learning.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
 
 public class CCEditAnswerPlaceholder extends CCAnswerPlaceholderAction {
