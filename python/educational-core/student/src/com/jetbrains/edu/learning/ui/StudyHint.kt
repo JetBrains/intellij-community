@@ -58,13 +58,18 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
           group.addAll(GoBackward(), GoForward(), Separator.getInstance(), EditHint(), AddHint(), RemoveHint())
         }
         studyToolWindow.setActionToolbar(group)
-        if (!hints.isEmpty()) {
-          studyToolWindow.setText(hints[myShownHintNumber])
-        }
-        else {
-          studyToolWindow.setText(HINTS_NOT_AVAILABLE)
-        }
+        setHintText(hints)
       }
+    }
+  }
+
+  private fun setHintText(hints: List<String>) {
+    if (!hints.isEmpty()) {
+      studyToolWindow.setText(hints[myShownHintNumber])
+    }
+    else {
+      myShownHintNumber = -1
+      studyToolWindow.setText(HINTS_NOT_AVAILABLE)
     }
   }
 
@@ -110,7 +115,8 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
       if (state) {
         isEditingMode = true
         val factory = EditorFactory.getInstance()
-        currentDocument = factory.createDocument(myPlaceholder!!.hints[myShownHintNumber])
+        val initialText = if (myShownHintNumber < myPlaceholder!!.hints.size) myPlaceholder.hints[myShownHintNumber] else ""
+        currentDocument = factory.createDocument(initialText)
         WebBrowserManager.getInstance().isShowBrowserHover = false
         if (currentDocument != null) {
           val createdEditor = factory.createEditor(currentDocument as Document, project) as EditorEx
@@ -134,8 +140,13 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
       }
       else {
         isEditingMode = false
-        myPlaceholder!!.setHintByIndex(myShownHintNumber, currentDocument!!.text)
-        studyToolWindow.setText(myPlaceholder.hints[myShownHintNumber])
+        if (myShownHintNumber < myPlaceholder!!.hints.size) {
+          myPlaceholder.setHintByIndex(myShownHintNumber, currentDocument!!.text)
+        }
+        else {
+          myPlaceholder.addHint(currentDocument!!.text)
+        }
+        setHintText(myPlaceholder.hints)
         studyToolWindow.setDefaultTopComponent()
       }
     }
@@ -154,7 +165,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
     }
 
     override fun update(e: AnActionEvent?) {
-      e?.presentation?.isEnabled = !isEditingMode && myPlaceholder != null && !myPlaceholder.hints.isEmpty()
+      e?.presentation?.isEnabled = !isEditingMode && myPlaceholder != null
     }
   }
 
@@ -162,12 +173,13 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?, project: Project)
 
     override fun actionPerformed(e: AnActionEvent) {
       myPlaceholder!!.removeHint(myShownHintNumber)
-      myShownHintNumber = if (myPlaceholder.hints.size == 1) 0 else if (myShownHintNumber + 1 < myPlaceholder.hints.size) myShownHintNumber + 1 else myShownHintNumber - 1
-      studyToolWindow.setText(myPlaceholder.hints[myShownHintNumber])
+      myShownHintNumber += if (myShownHintNumber < myPlaceholder.hints.size) 0 else -1
+      
+      setHintText(myPlaceholder.hints)
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder != null && myPlaceholder.hints.size > 1 && !isEditingMode
+      e.presentation.isEnabled = myPlaceholder != null && myPlaceholder.hints.size > 0 && !isEditingMode
     }
   }
 }
