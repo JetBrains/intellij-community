@@ -31,11 +31,13 @@ class Test {
     }
 
     override fun tearDown() {
-        CompletionLoggerProvider.getInstance().dispose()
-        //todo check if lookup is disposed and no more completion cancelled event is triggered
+        try {
+            super.tearDown()
+        } finally {
+            CompletionLoggerProvider.getInstance().dispose()
         val statsDir = pathProvider.getStatsDataDirectory()
-        statsDir.deleteRecursively()
-        super.tearDown()
+            statsDir.deleteRecursively()
+        }
     }
 
     fun `test do not block EDT on logging`() {

@@ -10,7 +10,7 @@ abstract class CompletionLoggerProvider {
     
     open fun dispose() = Unit
     
-    companion object Factory {
+    companion object {
         fun getInstance(): CompletionLoggerProvider = ServiceManager.getService(CompletionLoggerProvider::class.java)
     }
 
