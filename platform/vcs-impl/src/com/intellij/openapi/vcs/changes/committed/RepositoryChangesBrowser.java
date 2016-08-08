@@ -34,9 +34,9 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
@@ -128,7 +128,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     protected Navigatable[] getNavigatables(final DataContext dataContext) {
       Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-      return changes != null ? getNavigatableArray(myProject, getAfterRevisionsFiles(Arrays.asList(changes))) : null;
+      return changes != null ? getNavigatableArray(myProject, getAfterRevisionsFiles(Stream.of(changes))) : null;
     }
   }
 }
