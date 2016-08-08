@@ -34,6 +34,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class InlayModelImpl implements InlayModel, Disposable {
+  public static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset);
+
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
@@ -107,7 +109,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       if (inlay.getType() == type && (startOffset == endOffset || inlay.getOffset() != endOffset)) result.add(inlay);
       return true;
     });
-    Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
+    Collections.sort(result, INLAY_COMPARATOR);
     return result;
   }
 
@@ -120,7 +122,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       if (inlay.getType() == type && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) result.add(inlay);
       return true;
     });
-    Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
+    Collections.sort(result, INLAY_COMPARATOR);
     return result;
   }
 
@@ -135,7 +137,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
       return true;
     });
-    Collections.sort(result, Comparator.comparingInt(Inlay::getOffset));
+    Collections.sort(result, INLAY_COMPARATOR);
     return result;
   }
 
