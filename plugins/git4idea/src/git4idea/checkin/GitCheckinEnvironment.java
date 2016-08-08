@@ -51,10 +51,12 @@ import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletio
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitUserRegistry;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
@@ -81,6 +83,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -712,6 +715,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAmendComponent = new MyAmendComponent(project, panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
+      mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
 
       GridBag gb = new GridBag().
         setDefaultAnchor(GridBagConstraints.WEST).
@@ -721,6 +725,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
       myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
       myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
+    }
+
+    @NotNull
+    private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+      VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
+      String signature = user != null ? escapeXml(VcsUserUtil.toExactString(user)) : "";
+      return "<html>Adds the following line at the end of the commit message:<br/>" +
+             "Signed-off by: " + signature + "</html>";
     }
 
     @NotNull
