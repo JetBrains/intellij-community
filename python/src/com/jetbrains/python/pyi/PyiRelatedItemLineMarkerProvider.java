@@ -23,7 +23,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -50,7 +49,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
     if (pythonStub != null) {
       final List<GotoRelatedItem> relatedItems = GotoRelatedItem.createItems(Collections.singletonList(pythonStub));
       result.add(new RelatedItemLineMarkerInfo<PsiElement>(
-        element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDDEN_MARKERS,
+        element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
         element1 -> "Has stub item in " + pythonStub.getContainingFile().getName(), new GutterIconNavigationHandler<PsiElement>() {
           @Override
           public void navigate(MouseEvent e, PsiElement elt) {

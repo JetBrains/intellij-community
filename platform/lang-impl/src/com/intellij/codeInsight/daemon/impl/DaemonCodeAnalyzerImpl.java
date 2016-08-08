@@ -43,8 +43,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -100,7 +98,6 @@ import java.util.concurrent.TimeoutException;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
@@ -712,14 +709,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   @NotNull
   public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    return ObjectUtils.notNull(markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY), Collections.emptyList());
-  }
-
-  static void setLineMarkers(@NotNull Document document, @NotNull List<LineMarkerInfo> lineMarkers, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
+    List<LineMarkerInfo> result = new ArrayList<>();
+    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
+                                       new CommonProcessors.CollectProcessor<>(result));
+    return result;
   }
 
   void setLastIntentionHint(@NotNull Project project,

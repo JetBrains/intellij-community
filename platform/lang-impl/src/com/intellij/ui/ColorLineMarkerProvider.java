@@ -69,7 +69,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
       super(element, 
             element.getTextRange(),
             new ColorIcon(12, color),
-            Pass.UPDATE_ALL, 
+            Pass.LINE_MARKERS,
             FunctionUtil.<Object, String>nullConstant(), 
             new GutterIconNavigationHandler<PsiElement>() {
               @Override

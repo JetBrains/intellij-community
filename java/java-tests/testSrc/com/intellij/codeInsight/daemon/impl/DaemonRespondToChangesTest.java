@@ -873,7 +873,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
         LineMarkerInfo<PsiComment> info = null;
         if (element instanceof PsiComment) {
-          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.LEFT);
+          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.LEFT);
           msg += " provider info: "+info + "\n";
         }
         log.append(msg);

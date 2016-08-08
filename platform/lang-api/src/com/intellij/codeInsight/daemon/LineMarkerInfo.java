@@ -69,9 +69,8 @@ public class LineMarkerInfo<T extends PsiElement> {
     elementRef = new WeakReference<T>(element);
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
-    this.updatePass = updatePass;
-
     endOffset = range.getEndOffset();
+    this.updatePass = 11; //Pass.LINE_MARKERS;
   }
 
   /**
