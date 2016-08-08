@@ -17,9 +17,9 @@ package org.jetbrains.jps.model
 
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.SystemInfo
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.concurrent.Executors
 
@@ -31,13 +31,13 @@ class JdkVersionDetectorTest {
   @Test fun detectJdkVersion() {
     val jdkHome = System.getProperty("java.home")
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersion(jdkHome, { service.submit(it) })
-    assertEquals("java version \"${SystemInfo.JAVA_VERSION}\"", jdkVersion)
+    assertThat(jdkVersion).contains("\"${SystemInfo.JAVA_VERSION}\"")
   }
 
   @Test fun detectJdkVersionInfo() {
     val jdkHome = System.getProperty("java.home")
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome, { service.submit(it) })
-    assertEquals("java version \"${SystemInfo.JAVA_VERSION}\"", jdkVersion?.version)
-    assertEquals(if (SystemInfo.is64Bit) Bitness.x64 else Bitness.x32, jdkVersion?.bitness)
+    assertThat(jdkVersion?.version).contains("\"${SystemInfo.JAVA_VERSION}\"")
+    assertThat(jdkVersion?.bitness).isEqualTo(if (SystemInfo.is64Bit) Bitness.x64 else Bitness.x32)
   }
 }
