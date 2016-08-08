@@ -22,7 +22,9 @@ import com.sun.jna.Pointer
 val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
-private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary
+private val LIBRARY by lazy {
+  com.sun.jna.Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary
+}
 
 fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: String) {
   saveGenericPassword(serviceName, accountName, password.toByteArray())
