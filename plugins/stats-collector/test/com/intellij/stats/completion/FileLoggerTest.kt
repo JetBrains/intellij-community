@@ -7,14 +7,8 @@ import org.junit.Test
 import org.mockito.Matchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
-import org.picocontainer.MutablePicoContainer
 import java.io.File
 
-fun <T> MutablePicoContainer.replaceComponent(componentInterface: Class<T>, componentInstance: T) {
-    val name = componentInterface.name
-    this.unregisterComponent(name)
-    this.registerComponentInstance(name, componentInstance)
-}
 
 class FileLoggerTest : PlatformTestCase() {
     private lateinit var dir: File
@@ -56,6 +50,5 @@ class FileLoggerTest : PlatformTestCase() {
         
         assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
     }
-
-
+    
 }
