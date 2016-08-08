@@ -21,5 +21,5 @@ public class EduStepicNames {
   public static final String STEPS = "/steps";
   public static final String SECTIONS = "/sections/";
   public static final String ENROLLMENTS = "/enrollments";
-  public static final String STEPIC_REGISTRATION_LINK = "https://stepic.org/registration";
+  public static final String STEPIC_REGISTRATION_LINK = "https://stepic.org/registration?next=%2Fexplore%2Fcourses";
 }
