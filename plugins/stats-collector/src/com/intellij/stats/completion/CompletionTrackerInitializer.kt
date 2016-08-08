@@ -21,7 +21,7 @@ class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInf
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
-            val logger = CompletionLoggerProvider.Factory.getInstance().newCompletionLogger()
+            val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
