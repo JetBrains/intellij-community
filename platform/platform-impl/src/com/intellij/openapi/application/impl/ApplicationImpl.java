@@ -33,7 +33,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -434,14 +433,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       task.run();
     }
     else {
-      ProgressManager progressManager = ServiceManager.getService(ProgressManager.class);
-      if (progressManager == null) {
-        // https://youtrack.jetbrains.com/issue/IDEA-134164
-        task.run();
-      }
-      else {
-        progressManager.runProcess(task, indicator);
-      }
+      ProgressManager.getInstance().runProcess(task, indicator);
     }
   }
 
