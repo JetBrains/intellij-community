@@ -433,7 +433,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Perform calculation over this iterable.
    */
-  public final <T> T reduce(@Nullable T first, @NotNull PairFunction<T, E, T> function) {
+  public final <T> T reduce(@Nullable T first, @NotNull PairFunction<T, ? super E, T> function) {
     T cur = first;
     for (E e : this) {
       cur = function.fun(cur, e);
@@ -444,14 +444,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns the index of the first matching element.
    */
-  public final E find(@NotNull Condition<E> condition) {
+  public final E find(@NotNull Condition<? super E> condition) {
     return filter(condition).first();
   }
 
   /**
    * Returns the index of the matching element.
    */
-  public final int indexOf(@NotNull Condition<E> condition) {
+  public final int indexOf(@NotNull Condition<? super E> condition) {
     int index = 0;
     for (E e : this) {
       if (condition.value(e)) {
@@ -514,7 +514,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * without additional memory allocation.
    */
   @NotNull
-  public final JBIterable<JBIterable<E>> partition(final SeparatorOption option, final Condition<E> condition) {
+  public final JBIterable<JBIterable<E>> partition(final SeparatorOption option, final Condition<? super E> separatorCondition) {
     return intercept(new Function<Iterator<E>, Iterator<JBIterable<E>>>() {
       @Override
       public Iterator<JBIterable<E>> fun(Iterator<E> iterator) {
@@ -538,7 +538,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
             JBIterable<E> next = once(it.takeWhile(new Condition<E>() {
               @Override
               public boolean value(E e) {
-                if (!condition.value(e)) return true;
+                if (!separatorCondition.value(e)) return true;
                 stored = Collections.singletonList(e);
                 return false;
               }
