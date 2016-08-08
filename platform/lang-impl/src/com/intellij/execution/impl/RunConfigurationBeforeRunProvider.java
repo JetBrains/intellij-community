@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -188,7 +189,19 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (builder == null) {
       return false;
     }
-    final ExecutionEnvironment environment = builder.target(env.getExecutionTarget()).build();
+
+    List<ExecutionTarget> targets = ApplicationManager.getApplication().runReadAction(new Computable<List<ExecutionTarget>>() {
+      @Override
+      public List<ExecutionTarget> compute() {
+        return ExecutionTargetManager.getTargetsFor(env.getProject(), settings);
+      }
+    });
+
+    if (targets.isEmpty()) {
+      return false;
+    }
+
+    final ExecutionEnvironment environment = builder.target(targets.get(0)).build();
     environment.setExecutionId(env.getExecutionId());
     if (!ExecutionTargetManager.canRun(settings, environment.getExecutionTarget())) {
       return false;
