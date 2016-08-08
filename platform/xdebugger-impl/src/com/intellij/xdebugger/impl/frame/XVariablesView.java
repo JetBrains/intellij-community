@@ -104,7 +104,6 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.updateEditor();
-    clearInlays(tree);
   }
 
   protected void addEmptyMessage(XValueContainerNode root) {

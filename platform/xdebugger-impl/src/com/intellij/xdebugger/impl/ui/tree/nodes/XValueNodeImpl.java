@@ -15,28 +15,16 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -54,10 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * @author nik
@@ -151,41 +137,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
             return;
           }
 
-          XDebugSession session = XDebuggerManager.getInstance(myTree.getProject()).getCurrentSession();
-          XSourcePosition currentPosition = session == null ? null :session.getCurrentPosition();
-          String value = null;
+          data.put(file, position, XValueNodeImpl.this);
+          timestamps.put(file, document.getModificationStamp());
 
-          final XValue container = getValueContainer();
-          if (container instanceof JavaValue) {
-            ValueDescriptorImpl desc = ((JavaValue)container).getDescriptor();
-            if (desc.isNull() || desc.isPrimitive()) value = " " + desc.getValueText();
-          }
-
-          if (value != null && currentPosition != null && currentPosition.getFile().equals(position.getFile()) && currentPosition.getLine() == position.getLine()) {
-            String finalValue = value;
-            UIUtil.invokeLaterIfNeeded(() -> {
-              FileEditor editor = FileEditorManager.getInstance(myTree.getProject()).getSelectedEditor(file);
-              if (editor instanceof TextEditor) {
-                Editor e = ((TextEditor)editor).getEditor();
-                CharSequence text = e.getDocument().getImmutableCharSequence();
-                int offset = position.getOffset();
-                while (offset < text.length() && Character.isJavaIdentifierPart(text.charAt(offset))) offset++;
-                List<Inlay> existing = e.getInlayModel().getElementsInRange(offset, offset, Inlay.Type.INLINE);
-                for (Inlay inlay : existing) {
-                  if (inlay.getRenderer() instanceof MyRenderer) {
-                    Disposer.dispose(inlay);
-                  }
-                }
-                e.getInlayModel().addElement(offset, Inlay.Type.INLINE, new MyRenderer(finalValue));
-              }
-            });
-          }
-          else {
-            data.put(file, position, XValueNodeImpl.this);
-            timestamps.put(file, document.getModificationStamp());
-
-            myTree.updateEditor();
-          }
+          myTree.updateEditor();
         }
       };
 
@@ -194,32 +149,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     catch (Exception ignore) {
-    }
-  }
-
-  public static class MyRenderer extends Inlay.Renderer {
-    private static final FontInfo FONT = new FontInfo(Font.SANS_SERIF, 10, Font.ITALIC);
-    private final String myText;
-
-    private MyRenderer(String text) {
-      myText = text;
-    }
-
-    @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return FONT.fontMetrics().stringWidth(myText) + 5;
-    }
-
-    @Override
-    public void paint(@NotNull Graphics g, @NotNull Rectangle r, @NotNull Editor editor) {
-      g.setColor(new Color(0, 150, 150));
-      g.fillRoundRect(r.x + 1, r.y + 2, r.width - 3, r.height - 4, 2, 2);
-      g.setColor(new Color(50, 200, 200));
-      g.drawRoundRect(r.x + 1, r.y + 2, r.width - 3, r.height - 4, 2, 2);
-      g.setColor(JBColor.cyan);
-      g.setFont(FONT.getFont());
-      FontMetrics metrics = g.getFontMetrics();
-      g.drawString(myText, r.x + 1, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 + 1);
     }
   }
 
