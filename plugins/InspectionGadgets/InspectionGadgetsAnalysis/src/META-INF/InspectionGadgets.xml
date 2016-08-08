@@ -2547,10 +2547,10 @@
                      key="split.multi.catch.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.exceptions.SplitMultiCatchInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ExpandToNormalAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="expand.to.normal.annotation.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SingleElementAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.annotation.ExpandToNormalAnnotationInspection"/>
+                     implementationClass="com.siyeh.ig.annotation.SingleElementAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AddArrayCreationExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="add.array.creation.expression.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

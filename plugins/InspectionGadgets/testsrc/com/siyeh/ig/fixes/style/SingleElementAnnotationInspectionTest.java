@@ -17,9 +17,9 @@ package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.annotation.ExpandToNormalAnnotationInspection;
+import com.siyeh.ig.annotation.SingleElementAnnotationInspection;
 
-public class ExpandToNormalAnnotationInspectionTest extends IGQuickFixesTestCase {
+public class SingleElementAnnotationInspectionTest extends IGQuickFixesTestCase {
 
   public void testOneAttr() {
     doTest();
@@ -64,8 +64,8 @@ public class ExpandToNormalAnnotationInspectionTest extends IGQuickFixesTestCase
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ExpandToNormalAnnotationInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("expand.to.normal.annotation.quickfix");
+    myFixture.enableInspections(new SingleElementAnnotationInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("single.element.annotation.quickfix");
     myRelativePath = "style/expand_annotation";
   }
 }

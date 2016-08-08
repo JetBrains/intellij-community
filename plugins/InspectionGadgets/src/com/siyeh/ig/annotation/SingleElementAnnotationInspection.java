@@ -28,15 +28,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Set;
 
-public class ExpandToNormalAnnotationInspection extends BaseInspection {
+public class SingleElementAnnotationInspection extends BaseInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("expand.to.normal.annotation.name");
+    return InspectionGadgetsBundle.message("single.element.annotation.name");
   }
 
   @NotNull
@@ -61,14 +60,14 @@ public class ExpandToNormalAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("expand.to.normal.annotation.quickfix");
+      return InspectionGadgetsBundle.message("single.element.annotation.quickfix");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("expand.to.normal.annotation.family.quickfix");
+      return InspectionGadgetsBundle.message("single.element.annotation.family.quickfix");
     }
 
     @Override
