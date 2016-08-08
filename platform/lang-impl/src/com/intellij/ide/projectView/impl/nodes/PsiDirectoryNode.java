@@ -189,10 +189,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     PsiFileSystemItemFilter filter = getFilter();
     if (filter != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile != null && !filter.accept(psiFile)) return false;
+      if (psiFile != null && !filter.shouldShow(psiFile)) return false;
 
       PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(file);
-      if (psiDirectory != null && !filter.accept(psiDirectory)) return false;
+      if (psiDirectory != null && !filter.shouldShow(psiDirectory)) return false;
     }
 
     if (Registry.is("ide.hide.excluded.files")) {

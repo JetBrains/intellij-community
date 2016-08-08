@@ -177,7 +177,7 @@ public class ProjectViewDirectoryHelper {
       if (withSubDirectories) {
         PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
-          if (!skipDirectory(subdir) || filter != null && !filter.accept(subdir)) {
+          if (!skipDirectory(subdir) || filter != null && !filter.shouldShow(subdir)) {
             continue;
           }
           VirtualFile directoryFile = subdir.getVirtualFile();
@@ -291,7 +291,7 @@ public class ProjectViewDirectoryHelper {
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
         continue;
       }
-      if (filter != null && !filter.accept((PsiFileSystemItem)child)) {
+      if (filter != null && !filter.shouldShow((PsiFileSystemItem)child)) {
         continue;
       }
       if (child instanceof PsiFile) {
@@ -323,7 +323,7 @@ public class ProjectViewDirectoryHelper {
     final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
-      if (skipDirectory(subdir) || filter != null && !filter.accept(subdir)) {
+      if (skipDirectory(subdir) || filter != null && !filter.shouldShow(subdir)) {
         continue;
       }
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(subdir.getVirtualFile())) {

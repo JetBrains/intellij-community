@@ -110,10 +110,10 @@ public class TreeViewUtil {
       if (!file.isDirectory()) {
         if (filter == null) return false;
         PsiFile childFile = manager.findFile(file);
-        if (childFile != null && filter.accept(childFile)) return false;
+        if (childFile != null && filter.shouldShow(childFile)) return false;
       }
       PsiDirectory childDir = manager.findDirectory(file);
-      if (childDir != null && (filter == null || filter.accept(childDir))) {
+      if (childDir != null && (filter == null || filter.shouldShow(childDir))) {
         directoriesCount++;
         if (strictlyEmpty && directoriesCount > 1) return false;
         if (JavaDirectoryService.getInstance().getPackage(childDir) != null) {
