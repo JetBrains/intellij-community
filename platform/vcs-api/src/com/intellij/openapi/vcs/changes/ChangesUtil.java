@@ -28,7 +28,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.NullableFunction;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -173,20 +172,23 @@ public class ChangesUtil {
     return result;
   }
 
+  /**
+   * Leave this method as is as there are some external usages.
+   */
+  @SuppressWarnings("unused")
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return VfsUtilCore.toVirtualFileArray(getAfterRevisionsFiles(changes));
+    return getAfterRevisionsFiles(changes).toArray(VirtualFile[]::new);
   }
 
   @NotNull
-  public static List<VirtualFile> getAfterRevisionsFiles(@NotNull Collection<Change> changes) {
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Collection<Change> changes) {
     return changes.stream()
       .map(Change::getAfterRevision)
       .filter(Objects::nonNull)
       .map(ContentRevision::getFile)
       .map(ChangesUtil::refreshAndFind)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .filter(Objects::nonNull);
   }
 
   @Nullable
@@ -200,14 +202,17 @@ public class ChangesUtil {
     return file != null && file.isValid() ? file : null;
   }
 
-  public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
-    List<Navigatable> result = new ArrayList<Navigatable>();
-    for (VirtualFile selectedFile : selectedFiles) {
-      if (!selectedFile.isDirectory()) {
-        result.add(new OpenFileDescriptor(project, selectedFile));
-      }
-    }
-    return result.toArray(new Navigatable[result.size()]);
+  @NotNull
+  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull VirtualFile[] files) {
+    return getNavigatableArray(project, Stream.of(files));
+  }
+
+  @NotNull
+  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<VirtualFile> files) {
+    return files
+      .filter(file -> !file.isDirectory())
+      .map(file -> new OpenFileDescriptor(project, file))
+      .toArray(Navigatable[]::new);
   }
 
   public static boolean allChangesInOneListOrWholeListsSelected(@NotNull final Project project, @NotNull Change[] changes) {
