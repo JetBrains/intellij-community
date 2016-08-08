@@ -17,22 +17,21 @@ package com.siyeh.ig.fixes.asserttoif;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.asserttoif.IfToAssertionInspection;
+import com.siyeh.ig.asserttoif.AssertionCanBeIfInspection;
 
 /**
- * @see IfToAssertionInspection
  * @author Bas Leijdekkers
  */
-public class IfToAssertionInspectionTest extends IGQuickFixesTestCase {
+public class AssertionCanBeIfInspectionTest extends IGQuickFixesTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new IfToAssertionInspection());
-    myRelativePath = "asserttoif/if_to_assert";
-    myDefaultHint = InspectionGadgetsBundle.message("if.to.assertion.descriptor");
+    myFixture.enableInspections(new AssertionCanBeIfInspection());
+    myRelativePath = "asserttoif/assert_to_if";
+    myDefaultHint = InspectionGadgetsBundle.message("assert.can.be.if.quickfix");
   }
 
-  public void testRandomThrowable() { doTest(); }
-  public void testParentheses() { doTest(); }
+  public void testIncomplete() { doTest(); }
+  public void testMessage() { doTest(); }
 }

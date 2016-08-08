@@ -31,18 +31,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssertToIfInspection extends BaseInspection {
+public class AssertionCanBeIfInspection extends BaseInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assert.to.if.name");
+    return InspectionGadgetsBundle.message("assertion.can.be.if.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("assert.to.if.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -84,7 +84,7 @@ public class AssertToIfInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("assert.to.if.descriptor");
+      return InspectionGadgetsBundle.message("assert.can.be.if.quickfix");
     }
 
     @Nls

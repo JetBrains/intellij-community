@@ -776,14 +776,14 @@
                      key="unnecessary.return.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AssertToIf" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="assert.to.if.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="AssertionCanBeIf" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="assertion.can.be.if.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.asserttoif.AssertToIfInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IfToAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="if.to.assertion.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.asserttoif.AssertionCanBeIfInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="IfCanBeAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="if.can.be.assertion.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.asserttoif.IfToAssertionInspection"/>
+                     implementationClass="com.siyeh.ig.asserttoif.IfCanBeAssertionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceEqualityWithEquals" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="replace.equality.with.equals.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
