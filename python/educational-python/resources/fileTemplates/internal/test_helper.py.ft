@@ -69,7 +69,7 @@ def patch_input():
         save_input = builtins.input
         builtins.input = mock_fun
         return save_input
-    elif sys.version_info[0] == 2 or sys.version_info[1] < 3:
+    elif sys.version_info[0] == 2:
         import __builtin__
         save_input = __builtin__.raw_input
         __builtin__.raw_input = mock_fun
@@ -81,7 +81,7 @@ def revert_input(saved_input):
     if sys.version_info[0] == 3:
         import builtins
         builtins.input = saved_input
-    elif sys.version_info[0] == 2 or sys.version_info[1] < 3:
+    elif sys.version_info[0] == 2:
         import __builtin__
         __builtins__.raw_input = saved_input
         __builtin__.input = saved_input
