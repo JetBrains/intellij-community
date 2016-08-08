@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -140,6 +141,15 @@ public class InlayModelImpl implements InlayModel, Disposable {
     });
     Collections.sort(result, INLAY_COMPARATOR);
     return result;
+  }
+
+  @Override
+  public boolean hasInlayAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    List<Inlay> inlays = getElementsInRange(offset, offset, Inlay.Type.INLINE);
+    if (inlays.isEmpty()) return false;
+    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+    return visualPosition.equals(inlayStartPosition);
   }
 
   @Override

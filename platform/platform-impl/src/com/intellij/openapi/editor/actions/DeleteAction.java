@@ -33,8 +33,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.MacUIUtil;
 
-import java.util.List;
-
 public class DeleteAction extends EditorAction {
   public DeleteAction() {
     super(new Handler());
@@ -52,10 +50,7 @@ public class DeleteAction extends EditorAction {
       CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
-        int offset = editor.getCaretModel().getOffset();
-        VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
-        List<Inlay> inlays = editor.getInlayModel().getElementsInRange(offset, offset, Inlay.Type.INLINE);
-        if (!inlays.isEmpty() && visualPosition.equals(editor.offsetToVisualPosition(offset, false, false))) {
+        if (editor.getInlayModel().hasInlayAt(editor.getCaretModel().getVisualPosition())) {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, false);
           EditorModificationUtil.scrollToCaret(editor);
         }

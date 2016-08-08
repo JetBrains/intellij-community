@@ -234,7 +234,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   @Override
-  public void moveCaretRelatively(final int columnShift, final int lineShift, final boolean withSelection, final boolean scrollToCaret) {
+  public void moveCaretRelatively(final int _columnShift, final int lineShift, final boolean withSelection, final boolean scrollToCaret) {
     assertIsDispatchThread();
     if (mySkipChangeRequests) {
       return;
@@ -246,6 +246,21 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       CopyPasteManager.getInstance().stopKillRings();
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
+      int columnShift = _columnShift;
+      if (withSelection && lineShift == 0) {
+        if (columnShift == -1) {
+          if (myEditor.getInlayModel().hasInlayAt(new VisualPosition(myVisibleCaret.line,
+                                                                     myVisibleCaret.column - (myOffset == getSelectionEnd() ? 2 : 1)))) {
+            columnShift = -2;
+          }
+        }
+        else if (columnShift == 1) {
+          if (myEditor.getInlayModel().hasInlayAt(new VisualPosition(myVisibleCaret.line,
+                                                                     myVisibleCaret.column + (myOffset == getSelectionStart() ? 1 : 0)))) {
+            columnShift = 2;
+          }
+        }
+      }
       int oldOffset = myOffset;
       final int leadSelectionOffset = getLeadSelectionOffset();
       final VisualPosition leadSelectionPosition = getLeadSelectionPosition();
