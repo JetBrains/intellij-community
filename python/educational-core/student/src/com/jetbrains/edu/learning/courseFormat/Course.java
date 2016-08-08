@@ -138,7 +138,7 @@ public class Course {
     if (!EduNames.STUDY.equals(courseMode)) return true;
     final Date date = EduStepicConnector.getCourseUpdateDate(id);
     if (date == null) return true;
-    if (myUpdateDate == null) return false;
+    if (myUpdateDate == null) return true;
     if (date.after(myUpdateDate)) return false;
     for (Lesson lesson : lessons) {
       if (!lesson.isUpToDate()) return false;
