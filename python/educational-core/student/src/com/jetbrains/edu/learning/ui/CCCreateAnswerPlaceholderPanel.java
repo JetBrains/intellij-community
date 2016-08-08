@@ -1,4 +1,4 @@
-package com.jetbrains.edu.coursecreator.ui;
+package com.jetbrains.edu.learning.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;

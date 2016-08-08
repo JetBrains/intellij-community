@@ -14,13 +14,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
-import com.jetbrains.edu.coursecreator.ui.CCCreateAnswerPlaceholderDialog;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
