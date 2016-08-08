@@ -85,7 +85,7 @@ class LibraryLicensesListGenerator {
       LibraryLicense lib = it.key
       String moduleName = it.value
       def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
-      def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
+      def license = lib.libraryLicenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
       projectBuilder.info(" $lib.name (in module $moduleName)")
       lines << "|$name| ${lib.version ?: ""}|$license|".toString()
     }
