@@ -42,8 +42,7 @@ class InstructionKey implements Comparable<InstructionKey> {
   }
 
   InstructionKey push(int nextOffset, int returnOffset) {
-    int[] nextStack = ArrayUtil.realloc(myCallStack, myCallStack.length + 1);
-    nextStack[myCallStack.length] = returnOffset;
+    int[] nextStack = ArrayUtil.append(myCallStack, returnOffset);
     return new InstructionKey(nextOffset, nextStack);
   }
 
