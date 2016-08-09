@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.RunActivity;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.task.RunProjectTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 7/13/2016
  */
-public class RunActivityImpl extends AbstractActivity implements RunActivity {
+public class RunProjectTaskImpl extends AbstractProjectTask implements RunProjectTask {
   @NotNull private final RunProfile myRunProfile;
   @Nullable private Executor myExecutor;
   @Nullable private ExecutionTarget myTarget;
@@ -37,16 +37,16 @@ public class RunActivityImpl extends AbstractActivity implements RunActivity {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunnerAndConfigurationSettings mySettings;
 
-  public RunActivityImpl(@NotNull RunProfile runProfile) {
+  public RunProjectTaskImpl(@NotNull RunProfile runProfile) {
     myRunProfile = runProfile;
   }
 
-  public RunActivityImpl(@NotNull RunProfile runProfile,
-                         @NotNull Executor executor,
-                         @NotNull ExecutionTarget target,
-                         @Nullable RunnerSettings runnerSettings,
-                         @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                         @Nullable RunnerAndConfigurationSettings settings) {
+  public RunProjectTaskImpl(@NotNull RunProfile runProfile,
+                            @NotNull Executor executor,
+                            @NotNull ExecutionTarget target,
+                            @Nullable RunnerSettings runnerSettings,
+                            @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                            @Nullable RunnerAndConfigurationSettings settings) {
     myRunProfile = runProfile;
     myExecutor = executor;
     myTarget = target;
@@ -94,6 +94,6 @@ public class RunActivityImpl extends AbstractActivity implements RunActivity {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Run activity '" + myRunProfile.getName() + "'";
+    return "Run task '" + myRunProfile.getName() + "'";
   }
 }

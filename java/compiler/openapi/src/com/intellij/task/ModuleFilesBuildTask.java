@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Vladislav.Soroka
  * @since 7/18/2016
  */
-public interface ModuleBuildActivity extends BuildActivity {
-  @NotNull
-  Module getModule();
+public interface ModuleFilesBuildTask extends ModuleBuildTask {
+  VirtualFile[] getFiles();
 }

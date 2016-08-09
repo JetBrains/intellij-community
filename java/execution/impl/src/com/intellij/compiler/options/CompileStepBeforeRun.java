@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.activity.*;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
@@ -36,6 +35,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.task.*;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -138,8 +138,8 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
       final Semaphore done = new Semaphore();
       done.down();
-      final ActivityStatusNotification callback = new ActivityStatusNotification() {
-        public void finished(@NotNull ActivityExecutionResult executionResult) {
+      final ProjectTaskNotification callback = new ProjectTaskNotification() {
+        public void finished(@NotNull ProjectTaskResult executionResult) {
           if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
             result.set(Boolean.TRUE);
           }
@@ -148,12 +148,12 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       };
 
       TransactionGuard.submitTransaction(myProject, () -> {
-        Activity activity;
+        ProjectTask projectTask;
         Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
-        final ActivityManager activityManager = ActivityManager.getInstance(myProject);
+        final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
         if (forceMakeProject) {
           // user explicitly requested whole-project make
-          activity = activityManager.createAllModulesBuildActivity(true, myProject);
+          projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
         }
         else {
           final Module[] modules = runConfiguration.getModules();
@@ -164,15 +164,15 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                           runConfiguration.getClass().getName());
               }
             }
-            activity = activityManager.createModulesBuildActivity(true, modules);
+            projectTask = projectTaskManager.createModulesBuildTask(true, modules);
           }
           else {
-            activity = activityManager.createAllModulesBuildActivity(true, myProject);
+            projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
           }
         }
 
         if (!myProject.isDisposed()) {
-          activityManager.run(new ActivityContext(sessionId, configuration), activity, callback);
+          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, callback);
         }
         else {
           done.up();

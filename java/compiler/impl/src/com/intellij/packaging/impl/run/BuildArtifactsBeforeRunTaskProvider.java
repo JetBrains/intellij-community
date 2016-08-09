@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.run;
 
-import com.intellij.activity.*;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
@@ -37,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.task.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -176,9 +176,9 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       }
     }.execute();
 
-    final ActivityStatusNotification callback = new ActivityStatusNotification() {
+    final ProjectTaskNotification callback = new ProjectTaskNotification() {
       @Override
-      public void finished(@NotNull ActivityExecutionResult executionResult) {
+      public void finished(@NotNull ProjectTaskResult executionResult) {
         result.set(!executionResult.isAborted() && executionResult.getErrors() == 0);
         finished.up();
       }
@@ -188,12 +188,12 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       if (myProject.isDisposed()) {
         return;
       }
-      ActivityManager activityManager = ActivityManager.getInstance(myProject);
-      Activity artifactsBuildActivity =
-        activityManager.createArtifactsBuildActivity(true, artifacts.toArray(new Artifact[artifacts.size()]));
+      ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
+      ProjectTask artifactsBuildProjectTask =
+        projectTaskManager.createArtifactsBuildTask(true, artifacts.toArray(new Artifact[artifacts.size()]));
       finished.down();
       Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
-      activityManager.run(new ActivityContext(sessionId), artifactsBuildActivity, callback);
+      projectTaskManager.run(new ProjectTaskContext(sessionId), artifactsBuildProjectTask, callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,29 +25,26 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * TODO
- * get compiled files status
- *
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public abstract class ActivityRunner {
+public abstract class ProjectTaskRunner {
 
-  public static final ExtensionPointName<ActivityRunner> EP_NAME = ExtensionPointName.create("com.intellij.activityRunner");
+  public static final ExtensionPointName<ProjectTaskRunner> EP_NAME = ExtensionPointName.create("com.intellij.projectTaskRunner");
 
   public abstract void run(@NotNull Project project,
-                           @NotNull ActivityContext context,
-                           @Nullable ActivityStatusNotification callback,
-                           @NotNull Collection<? extends Activity> activities);
+                           @NotNull ProjectTaskContext context,
+                           @Nullable ProjectTaskNotification callback,
+                           @NotNull Collection<? extends ProjectTask> tasks);
 
   public void run(@NotNull Project project,
-                  @NotNull ActivityContext context,
-                  @Nullable ActivityStatusNotification callback,
-                  @NotNull Activity... activities) {
-    run(project, context, callback, Arrays.asList(activities));
+                  @NotNull ProjectTaskContext context,
+                  @Nullable ProjectTaskNotification callback,
+                  @NotNull ProjectTask... tasks) {
+    run(project, context, callback, Arrays.asList(tasks));
   }
 
-  public abstract boolean canRun(@NotNull Activity activity);
+  public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
-  public abstract ExecutionEnvironment createActivityExecutionEnvironment(@NotNull Project project, @NotNull RunActivity activity);
+  public abstract ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull RunProjectTask task);
 }

@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task;
 
-import com.intellij.activity.Activity;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2016
+ * @since 4/29/2016
  */
-public class ActivityList extends ArrayList<Activity> implements Activity {
-  public ActivityList(@NotNull Collection<? extends Activity> c) {
-    super(c);
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return toString();
-  }
+public interface ProjectTaskNotification {
+  /**
+   * @param executionResult provides aggregated information about the {@link ProjectTask} execution
+   */
+  void finished(@NotNull ProjectTaskResult executionResult);
 }

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
+import com.intellij.task.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,60 +43,60 @@ import java.util.stream.Stream;
  * @author Vladislav.Soroka
  * @since 5/11/2016
  */
-public class InternalActivityRunner extends ActivityRunner {
+public class InternalProjectTaskRunner extends ProjectTaskRunner {
   @Override
   public void run(@NotNull Project project,
-                  @NotNull ActivityContext context,
-                  @Nullable ActivityStatusNotification callback,
-                  @NotNull Collection<? extends Activity> activities) {
+                  @NotNull ProjectTaskContext context,
+                  @Nullable ProjectTaskNotification callback,
+                  @NotNull Collection<? extends ProjectTask> tasks) {
     CompileStatusNotification compileNotification =
       callback == null ? null : (aborted, errors, warnings, compileContext) ->
-        callback.finished(new ActivityExecutionResult(aborted, errors, warnings));
+        callback.finished(new ProjectTaskResult(aborted, errors, warnings));
 
-    Map<Class<? extends Activity>, List<Activity>> activityMap = groupBy(activities);
-    runModulesBuildActivities(project, context, compileNotification, activityMap);
-    runFilesBuildActivities(project, compileNotification, activityMap);
-    runArtifactsBuildActivities(project, context, compileNotification, activityMap);
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
+    runModulesBuildTasks(project, context, compileNotification, taskMap);
+    runFilesBuildTasks(project, compileNotification, taskMap);
+    runArtifactsBuildTasks(project, context, compileNotification, taskMap);
   }
 
   @Override
-  public boolean canRun(@NotNull Activity activity) {
+  public boolean canRun(@NotNull ProjectTask projectTask) {
     return true;
   }
 
   @Override
-  public ExecutionEnvironment createActivityExecutionEnvironment(@NotNull Project project, @NotNull RunActivity activity) {
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull RunProjectTask task) {
     return null;
   }
 
-  public static Map<Class<? extends Activity>, List<Activity>> groupBy(@NotNull Collection<? extends Activity> activities) {
-    return activities.stream().collect(Collectors.groupingBy(o -> {
-      if (o instanceof ModuleFilesBuildActivity) return ModuleFilesBuildActivity.class;
-      if (o instanceof ModuleBuildActivity) return ModuleBuildActivity.class;
-      if (o instanceof ArtifactBuildActivity) return ArtifactBuildActivity.class;
+  public static Map<Class<? extends ProjectTask>, List<ProjectTask>> groupBy(@NotNull Collection<? extends ProjectTask> tasks) {
+    return tasks.stream().collect(Collectors.groupingBy(o -> {
+      if (o instanceof ModuleFilesBuildTask) return ModuleFilesBuildTask.class;
+      if (o instanceof ModuleBuildTask) return ModuleBuildTask.class;
+      if (o instanceof ArtifactBuildTask) return ArtifactBuildTask.class;
       return o.getClass();
     }));
   }
 
-  private static void runModulesBuildActivities(@NotNull Project project,
-                                                @NotNull ActivityContext context,
-                                                @Nullable CompileStatusNotification compileNotification,
-                                                @NotNull Map<Class<? extends Activity>, List<Activity>> activitiesMap) {
-    Collection<? extends Activity> buildActivities = activitiesMap.get(ModuleBuildActivity.class);
+  private static void runModulesBuildTasks(@NotNull Project project,
+                                           @NotNull ProjectTaskContext context,
+                                           @Nullable CompileStatusNotification compileNotification,
+                                           @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
+    Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
 
 
-    if (!ContainerUtil.isEmpty(buildActivities)) {
+    if (!ContainerUtil.isEmpty(buildTasks)) {
       List<Module> toMake = new SmartList<>();
       List<Module> toCompile = new SmartList<>();
 
-      for (Activity buildActivity : buildActivities) {
-        ModuleBuildActivity moduleBuildActivity = (ModuleBuildActivity)buildActivity;
+      for (ProjectTask buildProjectTask : buildTasks) {
+        ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
 
-        if (moduleBuildActivity.isIncrementalBuild()) {
-          toMake.add(moduleBuildActivity.getModule());
+        if (moduleBuildTask.isIncrementalBuild()) {
+          toMake.add(moduleBuildTask.getModule());
         }
         else {
-          toCompile.add(moduleBuildActivity.getModule());
+          toCompile.add(moduleBuildTask.getModule());
         }
       }
       CompilerManager compilerManager = CompilerManager.getInstance(project);
@@ -116,7 +116,7 @@ public class InternalActivityRunner extends ActivityRunner {
 
   private static CompileScope createScope(Project project,
                                           CompilerManager compilerManager,
-                                          ActivityContext context,
+                                          ProjectTaskContext context,
                                           Collection<Module> modules) {
     CompileScope scope = compilerManager.createModuleGroupCompileScope(project, modules.toArray(new Module[modules.size()]), true);
     RunConfiguration configuration = context.getRunConfiguration();
@@ -128,35 +128,35 @@ public class InternalActivityRunner extends ActivityRunner {
     return scope;
   }
 
-  private static void runFilesBuildActivities(@NotNull Project project,
-                                              @Nullable CompileStatusNotification compileNotification,
-                                              @NotNull Map<Class<? extends Activity>, List<Activity>> activitiesMap) {
-    Collection<? extends Activity> filesTargets = activitiesMap.get(ModuleFilesBuildActivity.class);
+  private static void runFilesBuildTasks(@NotNull Project project,
+                                         @Nullable CompileStatusNotification compileNotification,
+                                         @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
+    Collection<? extends ProjectTask> filesTargets = tasksMap.get(ModuleFilesBuildTask.class);
     if (!ContainerUtil.isEmpty(filesTargets)) {
       VirtualFile[] files = filesTargets.stream()
-        .flatMap(target -> Stream.of(ModuleFilesBuildActivity.class.cast(target).getFiles()))
+        .flatMap(target -> Stream.of(ModuleFilesBuildTask.class.cast(target).getFiles()))
         .toArray(VirtualFile[]::new);
       CompilerManager.getInstance(project).compile(files, compileNotification);
     }
   }
 
-  private static void runArtifactsBuildActivities(@NotNull Project project,
-                                                  @NotNull ActivityContext context,
-                                                  @Nullable CompileStatusNotification compileNotification,
-                                                  @NotNull Map<Class<? extends Activity>, List<Activity>> activitiesMap) {
+  private static void runArtifactsBuildTasks(@NotNull Project project,
+                                             @NotNull ProjectTaskContext context,
+                                             @Nullable CompileStatusNotification compileNotification,
+                                             @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
 
-    Collection<? extends Activity> buildActivities = activitiesMap.get(ArtifactBuildActivity.class);
-    if (!ContainerUtil.isEmpty(buildActivities)) {
+    Collection<? extends ProjectTask> buildTasks = tasksMap.get(ArtifactBuildTask.class);
+    if (!ContainerUtil.isEmpty(buildTasks)) {
       List<Artifact> toMake = new SmartList<>();
       List<Artifact> toCompile = new SmartList<>();
-      for (Activity buildActivity : buildActivities) {
-        ArtifactBuildActivity artifactBuildActivity = (ArtifactBuildActivity)buildActivity;
+      for (ProjectTask buildProjectTask : buildTasks) {
+        ArtifactBuildTask artifactBuildTask = (ArtifactBuildTask)buildProjectTask;
 
-        if (artifactBuildActivity.isIncrementalBuild()) {
-          toMake.add(artifactBuildActivity.getArtifact());
+        if (artifactBuildTask.isIncrementalBuild()) {
+          toMake.add(artifactBuildTask.getArtifact());
         }
         else {
-          toCompile.add(artifactBuildActivity.getArtifact());
+          toCompile.add(artifactBuildTask.getArtifact());
         }
       }
 

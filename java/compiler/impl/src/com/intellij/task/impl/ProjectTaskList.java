@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.ArtifactBuildActivity;
-import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.task.ProjectTask;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/14/2016
+ * @since 7/14/2016
  */
-public class ArtifactBuildActivityImpl extends AbstractBuildActivity implements ArtifactBuildActivity {
-  private final Artifact myArtifact;
-
-  public ArtifactBuildActivityImpl(Artifact artifact, boolean isIncrementalBuild) {
-    super(isIncrementalBuild);
-    myArtifact = artifact;
-  }
-
-  @Override
-  public Artifact getArtifact() {
-    return myArtifact;
+public class ProjectTaskList extends ArrayList<ProjectTask> implements ProjectTask {
+  public ProjectTaskList(@NotNull Collection<? extends ProjectTask> c) {
+    super(c);
   }
 
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Artifact '" + myArtifact.getName() + "' build activity";
+    return toString();
   }
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
-import com.intellij.activity.RunActivity;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -30,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiClass;
+import com.intellij.task.RunProjectTask;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +48,10 @@ import java.util.Collections;
 public class GradleApplicationEnvironmentBuilder {
 
   @Nullable
-  public ExecutionEnvironment build(@NotNull Project project, @NotNull RunActivity activity) {
-    if (!(activity.getRunProfile() instanceof ApplicationConfiguration)) return null;
+  public ExecutionEnvironment build(@NotNull Project project, @NotNull RunProjectTask runProjectTask) {
+    if (!(runProjectTask.getRunProfile() instanceof ApplicationConfiguration)) return null;
 
-    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)activity.getRunProfile();
+    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)runProjectTask.getRunProfile();
     PsiClass mainClass = applicationConfiguration.getMainClass();
     if(mainClass == null) return null;
 
@@ -79,7 +79,7 @@ public class GradleApplicationEnvironmentBuilder {
     final String runAppTaskName = "run " + mainClass.getName();
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
-    String executorId = activity.getExecutor() == null ? DefaultRunExecutor.EXECUTOR_ID : activity.getExecutor().getId();
+    String executorId = runProjectTask.getExecutor() == null ? DefaultRunExecutor.EXECUTOR_ID : runProjectTask.getExecutor().getId();
     ExecutionEnvironment environment =
       ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId);
     if (environment != null) {

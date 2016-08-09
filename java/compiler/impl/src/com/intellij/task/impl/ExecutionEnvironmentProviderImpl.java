@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.ActivityRunner;
-import com.intellij.activity.RunActivity;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -26,6 +24,8 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.task.ProjectTaskRunner;
+import com.intellij.task.RunProjectTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,18 +37,18 @@ public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentPro
 
   @Nullable
   @Override
-  public ExecutionEnvironment createActivityExecutionEnvironment(@NotNull Project project,
-                                                                 @NotNull RunProfile runProfile,
-                                                                 @NotNull Executor executor,
-                                                                 @NotNull ExecutionTarget target,
-                                                                 @Nullable RunnerSettings runnerSettings,
-                                                                 @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                                                                 @Nullable RunnerAndConfigurationSettings settings) {
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                         @NotNull RunProfile runProfile,
+                                                         @NotNull Executor executor,
+                                                         @NotNull ExecutionTarget target,
+                                                         @Nullable RunnerSettings runnerSettings,
+                                                         @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                                                         @Nullable RunnerAndConfigurationSettings settings) {
 
-    RunActivity runActivity = new RunActivityImpl(runProfile, executor, target, runnerSettings, configurationSettings, settings);
-    for (ActivityRunner activityRunner : ActivityRunner.EP_NAME.getExtensions()) {
-      if (activityRunner.canRun(runActivity)) {
-        return activityRunner.createActivityExecutionEnvironment(project, runActivity);
+    RunProjectTask runTask = new RunProjectTaskImpl(runProfile, executor, target, runnerSettings, configurationSettings, settings);
+    for (ProjectTaskRunner projectTaskRunner : ProjectTaskRunner.EP_NAME.getExtensions()) {
+      if (projectTaskRunner.canRun(runTask)) {
+        return projectTaskRunner.createExecutionEnvironment(project, runTask);
       }
     }
     return null;

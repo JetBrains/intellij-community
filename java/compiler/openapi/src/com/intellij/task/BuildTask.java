@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
-
-import com.intellij.openapi.vfs.VirtualFile;
+package com.intellij.task;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/18/2016
+ * @since 5/11/2016
  */
-public interface ModuleFilesBuildActivity extends ModuleBuildActivity {
-  VirtualFile[] getFiles();
+public interface BuildTask extends ProjectTask {
+  boolean isIncrementalBuild();
 }

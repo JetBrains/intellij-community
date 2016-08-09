@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
+
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
+ * @since 7/18/2016
  */
-public interface BuildActivity extends Activity {
-  boolean isIncrementalBuild();
+public interface ModuleBuildTask extends BuildTask {
+  @NotNull
+  Module getModule();
 }

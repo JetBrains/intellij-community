@@ -13,17 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.task;
 
 /**
- * An {@link Activity} represents a single atomic piece of work for IDE workflow, such as 'Make Project' or run configurations.
- *
  * @author Vladislav.Soroka
- * @since 7/13/2016
+ * @since 8/5/2016
  */
-public interface Activity {
-  @NotNull
-  String getPresentableName();
+public class ProjectTaskResult {
+  private final boolean aborted;
+  private final int errors;
+  private final int warnings;
+
+  public ProjectTaskResult(boolean aborted, int errors, int warnings) {
+    this.aborted = aborted;
+    this.errors = errors;
+    this.warnings = warnings;
+  }
+
+  public boolean isAborted() {
+    return aborted;
+  }
+
+  public int getErrors() {
+    return errors;
+  }
+
+  public int getWarnings() {
+    return warnings;
+  }
 }

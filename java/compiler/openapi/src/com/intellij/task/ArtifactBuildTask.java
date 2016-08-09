@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
 import com.intellij.packaging.artifacts.Artifact;
 
@@ -21,6 +21,6 @@ import com.intellij.packaging.artifacts.Artifact;
  * @author Vladislav.Soroka
  * @since 7/18/2016
  */
-public interface ArtifactBuildActivity extends BuildActivity {
+public interface ArtifactBuildTask extends BuildTask {
   Artifact getArtifact();
 }

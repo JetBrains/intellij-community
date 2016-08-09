@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 5/11/2016
  */
-public interface RunActivity extends Activity {
+public interface RunProjectTask extends ProjectTask {
 
   @NotNull
   RunProfile getRunProfile();

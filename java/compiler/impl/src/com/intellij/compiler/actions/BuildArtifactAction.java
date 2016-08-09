@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -42,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -121,10 +121,10 @@ public class BuildArtifactAction extends DumbAwareAction {
   private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
     final Artifact[] artifacts = getArtifacts(items, project);
     if (rebuild) {
-      ActivityManager.getInstance(project).rebuild(artifacts);
+      ProjectTaskManager.getInstance(project).rebuild(artifacts);
     }
     else {
-      ActivityManager.getInstance(project).build(artifacts);
+      ProjectTaskManager.getInstance(project).build(artifacts);
     }
   }
 

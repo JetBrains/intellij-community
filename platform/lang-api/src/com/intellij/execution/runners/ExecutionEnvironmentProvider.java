@@ -32,11 +32,11 @@ import org.jetbrains.annotations.Nullable;
 public interface ExecutionEnvironmentProvider {
 
   @Nullable
-  ExecutionEnvironment createActivityExecutionEnvironment(@NotNull Project project,
-                                                          @NotNull RunProfile runProfile,
-                                                          @NotNull Executor executor,
-                                                          @NotNull ExecutionTarget target,
-                                                          @Nullable RunnerSettings runnerSettings,
-                                                          @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                                                          @Nullable RunnerAndConfigurationSettings settings);
+  ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                  @NotNull RunProfile runProfile,
+                                                  @NotNull Executor executor,
+                                                  @NotNull ExecutionTarget target,
+                                                  @Nullable RunnerSettings runnerSettings,
+                                                  @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                                                  @Nullable RunnerAndConfigurationSettings settings);
 }

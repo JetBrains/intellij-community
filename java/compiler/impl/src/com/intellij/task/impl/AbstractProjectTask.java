@@ -13,34 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.ModuleBuildActivity;
-import com.intellij.openapi.module.Module;
+import com.intellij.task.ProjectTask;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
+ * @since 7/13/2016
  */
-public class ModuleBuildActivityImpl extends AbstractBuildActivity implements ModuleBuildActivity {
+public abstract class AbstractProjectTask implements ProjectTask {
   @NotNull
-  private final Module myModule;
+  private Collection<ProjectTask> myDependencies;
 
-  public ModuleBuildActivityImpl(@NotNull Module module, boolean isIncrementalBuild) {
-    super(isIncrementalBuild);
-    myModule = module;
+  public AbstractProjectTask() {
+    this(Collections.emptyList());
+  }
+
+  public AbstractProjectTask(@NotNull Collection<ProjectTask> dependencies) {
+    myDependencies = dependencies;
   }
 
   @NotNull
-  @Override
-  public Module getModule() {
-    return myModule;
+  public Collection<ProjectTask> getDependsOn() {
+    return myDependencies;
   }
 
-  @NotNull
+  public void setDependsOn(@NotNull Collection<ProjectTask> dependencies) {
+    myDependencies = dependencies;
+  }
+
   @Override
-  public String getPresentableName() {
-    return "Module '" + myModule.getName() + "' build activity";
+  public String toString() {
+    return getPresentableName();
   }
 }

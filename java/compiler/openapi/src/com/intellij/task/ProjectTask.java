@@ -13,41 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task;
 
-import com.intellij.activity.Activity;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-
 /**
+ * An {@link ProjectTask} represents a single atomic piece of work for IDE workflow, such as 'Make Project' or run configurations.
+ *
  * @author Vladislav.Soroka
  * @since 7/13/2016
  */
-public abstract class AbstractActivity implements Activity {
+public interface ProjectTask {
   @NotNull
-  private Collection<Activity> myDependencies;
-
-  public AbstractActivity() {
-    this(Collections.emptyList());
-  }
-
-  public AbstractActivity(@NotNull Collection<Activity> dependencies) {
-    myDependencies = dependencies;
-  }
-
-  @NotNull
-  public Collection<Activity> getDependsOn() {
-    return myDependencies;
-  }
-
-  public void setDependsOn(@NotNull Collection<Activity> dependencies) {
-    myDependencies = dependencies;
-  }
-
-  @Override
-  public String toString() {
-    return getPresentableName();
-  }
+  String getPresentableName();
 }

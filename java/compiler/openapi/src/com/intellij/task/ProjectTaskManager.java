@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -30,67 +30,69 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 4/29/2016
  */
-public abstract class ActivityManager {
+public abstract class ProjectTaskManager {
   protected final @NotNull Project myProject;
 
-  public ActivityManager(@NotNull Project project) {
+  public ProjectTaskManager(@NotNull Project project) {
     myProject = project;
   }
 
-  public static ActivityManager getInstance(Project project) {
-    return ServiceManager.getService(project, ActivityManager.class);
+  public static ProjectTaskManager getInstance(Project project) {
+    return ServiceManager.getService(project, ProjectTaskManager.class);
   }
 
-  public abstract void run(@NotNull Activity activity, @Nullable ActivityStatusNotification callback);
+  public abstract void run(@NotNull ProjectTask projectTask, @Nullable ProjectTaskNotification callback);
 
-  public abstract void run(@NotNull ActivityContext context, @NotNull Activity activity, @Nullable ActivityStatusNotification callback);
+  public abstract void run(@NotNull ProjectTaskContext context,
+                           @NotNull ProjectTask projectTask,
+                           @Nullable ProjectTaskNotification callback);
 
-  public abstract void buildAllModules(@Nullable ActivityStatusNotification callback);
+  public abstract void buildAllModules(@Nullable ProjectTaskNotification callback);
 
   public void buildAllModules() {
     buildAllModules(null);
   }
 
-  public abstract void rebuildAllModules(@Nullable ActivityStatusNotification callback);
+  public abstract void rebuildAllModules(@Nullable ProjectTaskNotification callback);
 
   public void rebuildAllModules() {
     rebuildAllModules(null);
   }
 
-  public abstract void build(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
+  public abstract void build(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
 
   public void build(@NotNull Module... modules) {
     build(modules, null);
   }
 
-  public abstract void rebuild(@NotNull Module[] modules, @Nullable ActivityStatusNotification callback);
+  public abstract void rebuild(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
 
   public void rebuild(@NotNull Module... modules) {
     rebuild(modules, null);
   }
 
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable ActivityStatusNotification callback);
+  public abstract void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback);
 
   public void compile(@NotNull VirtualFile... files) {
     compile(files, null);
   }
 
-  public abstract void build(@NotNull Artifact[] artifacts, @Nullable ActivityStatusNotification callback);
+  public abstract void build(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback);
 
   public void build(@NotNull Artifact[] artifacts) {
     build(artifacts, null);
   }
 
-  public abstract void rebuild(@NotNull Artifact[] artifacts, @Nullable ActivityStatusNotification callback);
+  public abstract void rebuild(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback);
 
   public void rebuild(@NotNull Artifact... artifacts) {
     rebuild(artifacts, null);
   }
 
-  public abstract Activity createAllModulesBuildActivity(boolean isIncrementalBuild, Project project);
+  public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
 
-  public abstract Activity createModulesBuildActivity(boolean isIncrementalBuild, Module... modules);
+  public abstract ProjectTask createModulesBuildTask(boolean isIncrementalBuild, Module... modules);
 
-  public abstract Activity createArtifactsBuildActivity(boolean isIncrementalBuild, Artifact... artifacts);
+  public abstract ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, Artifact... artifacts);
 
 }

@@ -18,7 +18,6 @@ package com.intellij.compiler.actions;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.activity.ActivityManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.task.ProjectTaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,12 +38,12 @@ public class CompileAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
-      ActivityManager.getInstance(project).rebuild(module);
+      ProjectTaskManager.getInstance(project).rebuild(module);
     }
     else {
       VirtualFile[] files = getCompilableFiles(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
-        ActivityManager.getInstance(project).compile(files);
+        ProjectTaskManager.getInstance(project).compile(files);
       }
     }
 

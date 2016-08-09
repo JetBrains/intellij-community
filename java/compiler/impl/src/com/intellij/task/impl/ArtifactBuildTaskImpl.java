@@ -13,32 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task.impl;
+
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.task.ArtifactBuildTask;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2016
+ * @since 5/14/2016
  */
-public class ActivityExecutionResult {
-  private final boolean aborted;
-  private final int errors;
-  private final int warnings;
+public class ArtifactBuildTaskImpl extends AbstractBuildTask implements ArtifactBuildTask {
+  private final Artifact myArtifact;
 
-  public ActivityExecutionResult(boolean aborted, int errors, int warnings) {
-    this.aborted = aborted;
-    this.errors = errors;
-    this.warnings = warnings;
+  public ArtifactBuildTaskImpl(Artifact artifact, boolean isIncrementalBuild) {
+    super(isIncrementalBuild);
+    myArtifact = artifact;
   }
 
-  public boolean isAborted() {
-    return aborted;
+  @Override
+  public Artifact getArtifact() {
+    return myArtifact;
   }
 
-  public int getErrors() {
-    return errors;
-  }
-
-  public int getWarnings() {
-    return warnings;
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Artifact '" + myArtifact.getName() + "' build task";
   }
 }

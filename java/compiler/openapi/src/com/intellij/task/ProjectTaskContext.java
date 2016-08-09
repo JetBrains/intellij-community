@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.Nullable;
@@ -22,20 +22,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 7/15/2016
  */
-public class ActivityContext {
+public class ProjectTaskContext {
   @Nullable
   private Object mySessionId;
   @Nullable
   private RunConfiguration myRunConfiguration;
 
-  public ActivityContext() {
+  public ProjectTaskContext() {
   }
 
-  public ActivityContext(@Nullable Object sessionId) {
+  public ProjectTaskContext(@Nullable Object sessionId) {
     mySessionId = sessionId;
   }
 
-  public ActivityContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration) {
+  public ProjectTaskContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration) {
     mySessionId = sessionId;
     myRunConfiguration = runConfiguration;
   }

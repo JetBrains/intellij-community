@@ -15,22 +15,22 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.activity.ActivityExecutionResult;
-import com.intellij.activity.ActivityManager;
-import com.intellij.activity.ActivityStatusNotification;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.ProjectTaskNotification;
+import com.intellij.task.ProjectTaskResult;
 import org.jetbrains.annotations.NotNull;
 
 public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
-    ActivityManager.getInstance(project).rebuildAllModules(new ActivityStatusNotification() {
+    ProjectTaskManager.getInstance(project).rebuildAllModules(new ProjectTaskNotification() {
       @Override
-      public void finished(@NotNull ActivityExecutionResult executionResult) {
+      public void finished(@NotNull ProjectTaskResult executionResult) {
         if (executionResult.isAborted() || project.isDisposed()) {
           return;
         }

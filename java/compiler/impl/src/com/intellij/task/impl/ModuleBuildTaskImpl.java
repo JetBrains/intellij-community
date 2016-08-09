@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity;
+package com.intellij.task.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.task.ModuleBuildTask;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
+ * @since 5/11/2016
  */
-public interface ActivityStatusNotification {
-  /**
-   * @param executionResult provides aggregated information about activity execution
-   */
-  void finished(@NotNull ActivityExecutionResult executionResult);
+public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuildTask {
+  @NotNull
+  private final Module myModule;
+
+  public ModuleBuildTaskImpl(@NotNull Module module, boolean isIncrementalBuild) {
+    super(isIncrementalBuild);
+    myModule = module;
+  }
+
+  @NotNull
+  @Override
+  public Module getModule() {
+    return myModule;
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return "Module '" + myModule.getName() + "' build task";
+  }
 }

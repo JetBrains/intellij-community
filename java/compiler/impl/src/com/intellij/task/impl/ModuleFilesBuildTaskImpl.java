@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.activity.impl;
+package com.intellij.task.impl;
 
-import com.intellij.activity.ModuleFilesBuildActivity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.task.ModuleFilesBuildTask;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,15 +28,15 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  * @since 5/14/2016
  */
-public class ModuleFilesBuildActivityImpl extends ModuleBuildActivityImpl implements ModuleFilesBuildActivity {
+public class ModuleFilesBuildTaskImpl extends ModuleBuildTaskImpl implements ModuleFilesBuildTask {
   private final VirtualFile[] myFiles;
 
-  public ModuleFilesBuildActivityImpl(Module module, boolean isIncrementalBuild, VirtualFile... files) {
+  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, VirtualFile... files) {
     super(module, isIncrementalBuild);
     myFiles = files;
   }
 
-  public ModuleFilesBuildActivityImpl(Module module, boolean isIncrementalBuild, Collection<VirtualFile> files) {
+  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, Collection<VirtualFile> files) {
     this(module, isIncrementalBuild, ArrayUtil.toObjectArray(files, VirtualFile.class));
   }
 
@@ -48,6 +48,6 @@ public class ModuleFilesBuildActivityImpl extends ModuleBuildActivityImpl implem
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Files build activity '" + Arrays.toString(myFiles) + "'";
+    return "Files build task '" + Arrays.toString(myFiles) + "'";
   }
 }
