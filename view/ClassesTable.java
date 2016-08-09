@@ -62,6 +62,8 @@ class ClassesTable extends JBTable {
     diffColumn.setMaxWidth(JBUI.scale(DIFF_COLUMN_MAX_WIDTH));
     diffColumn.setResizable(false);
 
+    setShowGrid(false);
+
     setDefaultRenderer(ReferenceType.class, new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, @Nullable Object value,
