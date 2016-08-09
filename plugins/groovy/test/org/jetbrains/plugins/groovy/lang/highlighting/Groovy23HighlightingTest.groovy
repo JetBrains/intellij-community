@@ -204,5 +204,17 @@ public class Consumer {
     fixture.testHighlighting()
   }
 
+  void 'test class initializers in traits'() {
+    testHighlighting '''\
+trait T {
+  static {
+  }
+
+  {
+  }
+}
+'''
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }

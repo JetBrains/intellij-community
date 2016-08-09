@@ -973,7 +973,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitClassInitializer(GrClassInitializer initializer) {
     final PsiClass aClass = initializer.getContainingClass();
-    if (aClass != null && aClass.isInterface()) {
+    if (GrTraitUtil.isInterface(aClass)) {
       final TextRange range = GrHighlightUtil.getInitializerHeaderTextRange(initializer);
       myHolder.createErrorAnnotation(range, GroovyBundle.message("initializers.are.not.allowed.in.interface"));
     }
