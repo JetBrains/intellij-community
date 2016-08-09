@@ -12,6 +12,8 @@ import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +65,15 @@ class ClassesTable extends JBTable {
     diffColumn.setResizable(false);
 
     setShowGrid(false);
+
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if(SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
+          System.out.println("right clicked");
+        }
+      }
+    });
 
     setDefaultRenderer(ReferenceType.class, new ColoredTableCellRenderer() {
       @Override
