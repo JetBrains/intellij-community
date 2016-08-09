@@ -28,8 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
@@ -64,57 +64,52 @@ public class JdkUtil {
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
 
   private JdkUtil() { }
 
   /**
-   * @return the specified attribute of the JDK (examines rt.jar) or null if cannot determine the value
+   * Returns the specified attribute of the JDK (examines rt.jar), or {@code null} if cannot determine the value.
    */
   @Nullable
-  public static String getJdkMainAttribute(@NotNull Sdk jdk, Attributes.Name attribute) {
-    VirtualFile homeDirectory = jdk.getHomeDirectory();
-
-    VirtualFile rtJar = null;
-    if (homeDirectory != null) {
-      rtJar = homeDirectory.findFileByRelativePath("jre/lib/rt.jar");                             // JDK
-      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("lib/rt.jar");              // JRE
-      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("jre/lib/vm.jar");          // IBM JDK
-      if (rtJar == null) rtJar = homeDirectory.findFileByRelativePath("../Classes/classes.jar");  // Apple JDK
-    }
-
-    if (rtJar == null) {
-      if (attribute == Attributes.Name.IMPLEMENTATION_VERSION) {
-        String versionString = jdk.getVersionString();
-        if (versionString != null) {
-          final int start = versionString.indexOf("\"");
-          final int end = versionString.lastIndexOf("\"");
-          versionString = start >= 0 && (end > start) ? versionString.substring(start + 1, end) : null;
+  public static String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
+    if (attribute == Attributes.Name.IMPLEMENTATION_VERSION) {
+      // optimization: JDK version string is cached
+      String versionString = jdk.getVersionString();
+      if (versionString != null) {
+        int start = versionString.indexOf('"'), end = versionString.lastIndexOf('"');
+        if (start >= 0 && end > start) {
+          return versionString.substring(start + 1, end);
         }
-        return versionString;
-      }
-      else {
-        return null;
       }
     }
 
-    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(rtJar);
-    return jarRoot != null ? getJarMainAttribute(jarRoot, attribute) : null;
+    String homePath = jdk.getHomePath();
+    if (homePath != null) {
+      File signatureJar = FileUtil.findFirstThatExist(
+        homePath + "/jre/lib/rt.jar",
+        homePath + "/lib/rt.jar",
+        homePath + "/jre/lib/vm.jar",
+        homePath + "/../Classes/classes.jar",
+        homePath + "/jrt-fs.jar");
+      if (signatureJar != null) {
+        return JarUtil.getJarAttribute(signatureJar, attribute);
+      }
+    }
+
+    return null;
   }
 
+  /** @deprecated to be removed in IDEA 2018 */
   @Nullable
-  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, Attributes.Name attribute) {
+  @SuppressWarnings("unused")
+  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
     VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifestFile != null) {
-      try {
-        InputStream stream = manifestFile.getInputStream();
-        try {
-          return new Manifest(stream).getMainAttributes().getValue(attribute);
-        }
-        finally {
-          stream.close();
-        }
+      try (InputStream stream = manifestFile.getInputStream()) {
+        return new Manifest(stream).getMainAttributes().getValue(attribute);
       }
       catch (IOException e) {
         LOG.debug(e);
