@@ -19,6 +19,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -109,8 +110,13 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                     if (validFilesCount > 1) {
                       toDo = myEditor::recreateEditorsPanel;
                     } else {
-                      toDo = () -> FileEditorManager.getInstance(myProject)
-                        .closeFile(new ResourceBundleAsVirtualFile(myEditor.getResourceBundle()));
+                      toDo = () -> {
+                        final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
+                        final VirtualFile file = fileEditorManager.getFile(myEditor);
+                        if (file != null) {
+                          fileEditorManager.closeFile(file);
+                        }
+                      };
                     }
                     break;
                   }
