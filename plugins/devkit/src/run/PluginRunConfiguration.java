@@ -83,7 +83,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       if (ideaJdk != null) {
         final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
         if (sandboxHome != null) {
-          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/idea.log", predefinedLogFile.isEnabled(), true, false);
+          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled(), true, false);
         }
       }
     }
