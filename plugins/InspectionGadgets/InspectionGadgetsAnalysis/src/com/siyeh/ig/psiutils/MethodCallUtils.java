@@ -316,6 +316,12 @@ public class MethodCallUtils {
     }
 
     @Override
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
     public void visitIfStatement(PsiIfStatement statement) {
       final PsiExpression condition = statement.getCondition();
       final Object result = ExpressionUtils.computeConstantExpression(condition);
