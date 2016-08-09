@@ -158,5 +158,17 @@ trait A {
     assert map.size() == 1 // need to implement only foo(a, b, c)
   }
 
+  void 'test class initializers in traits'() {
+    testHighlighting '''\
+trait T {
+  static {
+  }
+
+  {
+  }
+}
+'''
+  }
+
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
 }
