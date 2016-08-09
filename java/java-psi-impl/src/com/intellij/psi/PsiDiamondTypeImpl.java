@@ -35,6 +35,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -353,6 +354,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
     buf.append("static ");
     buf.append("<");
+    //it's possible that constructor type parameters and class type parameters are same named:
+    //it's important that class type parameters names are preserved(they are first in the list),
+    //though constructor parameters would be renamed in case of conflicts
+    final UniqueNameGenerator generator = new UniqueNameGenerator();
     buf.append(StringUtil.join(params, new Function<PsiTypeParameter, String>() {
       @Override
       public String fun(PsiTypeParameter psiTypeParameter) {
@@ -369,7 +374,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
             extendsList = " extends " + StringUtil.join(extendsListTypes, canonicalTypePresentationFun, "&");
           }
         }
-        return psiTypeParameter.getName() + extendsList;
+        return generator.generateUniqueName(psiTypeParameter.getName()) + extendsList;
       }
     }, ", "));
     buf.append(">");
@@ -430,10 +435,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
     Set<PsiTypeParameter> params = new LinkedHashSet<PsiTypeParameter>();
+    Collections.addAll(params, containingClass.getTypeParameters());
     if (listOwner != null) {
       Collections.addAll(params, listOwner.getTypeParameters());
     }
-    Collections.addAll(params, containingClass.getTypeParameters());
     return params.toArray(new PsiTypeParameter[params.size()]);
   }
 
