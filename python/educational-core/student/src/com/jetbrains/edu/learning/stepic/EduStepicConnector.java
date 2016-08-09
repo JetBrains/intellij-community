@@ -516,8 +516,17 @@ public class EduStepicConnector {
       final String attemptResponseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
       final StatusLine statusLine = attemptResponse.getStatusLine();
       EntityUtils.consume(responseEntity);
+      if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+        if (StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)) {
+          return;
+        }
+        else {
+          login(login, password);
+          postAttempt(task, passed, login, password);
+        }
+      }
       if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
-        LOG.error("Failed to make attempt " + attemptResponseString);
+        LOG.warn("Failed to make attempt " + attemptResponseString);
       }
       final StepicWrappers.AttemptWrapper.Attempt attempt = new Gson().fromJson(attemptResponseString, StepicWrappers.AttemptContainer.class).attempts.get(0);
 
