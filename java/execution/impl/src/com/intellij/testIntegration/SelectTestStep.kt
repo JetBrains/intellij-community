@@ -130,32 +130,9 @@ class SelectTestStep(title: String?,
   }
 
   private fun getConfigurations(entry: RecentTestsPopupEntry): List<RecentTestsPopupEntry> {
-    val items = mutableListOf<RecentTestsPopupEntry>()
-    
-    entry.accept(object : TestEntryVisitor() {
-      override fun visitTest(test: SingleTestEntry) {
-        val configuration = test.suite?.runConfigurationEntry ?: RunConfigurationEntry(test.runConfiguration)
-        items.add(test.suite ?: return)
-
-        if (isSingleTestConfiguration(configuration)) {
-          items.add(test.suite ?: return)
-          return
-        }
-        
-        items.add(configuration)
-        if (configuration.suites.size > 1) {
-          items.add(0, test.suite ?: return)
-        }
-      }
-
-      private fun isSingleTestConfiguration(configuration: RunConfigurationEntry): Boolean {
-        val suites = configuration.suites
-        return suites.size == 1 && suites[0].tests.size == 1
-      }
-      
-    })
-    
-    return items
+    val collector = TestConfigurationCollector()
+    entry.accept(collector)
+    return collector.getEnclosingConfigurations()
   }
 
 }

@@ -57,3 +57,19 @@ class ConfigurationsCollector : TestEntryVisitor() {
     entries.add(suite)
   }
 }
+
+
+class TestConfigurationCollector : TestEntryVisitor() {
+  private val items = mutableListOf<RecentTestsPopupEntry>()
+  
+  fun getEnclosingConfigurations(): List<RecentTestsPopupEntry> = items
+  
+  override fun visitTest(test: SingleTestEntry) {
+    val configurationEntry = test.suite?.runConfigurationEntry ?: RunConfigurationEntry(test.runConfiguration)
+    items.add(configurationEntry)
+    if (test.suite != null && configurationEntry.suites.size > 1) {
+      items.add(0, test.suite!!)
+    }
+  }
+  
+}
