@@ -237,19 +237,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new CatchingConsumer<List<String>, Exception>() {
-      @Override
-      public void consume(List<String> releases) {
-        if (releases != null) {
-          consumer.consume(releases);
-        }
-      }
-
-      @Override
-      public void consume(Exception e) {
-        consumer.consume(e);
-      }
-    });
+    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, consumer);
   }
 
   @Override
