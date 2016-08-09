@@ -1607,6 +1607,7 @@
                                           implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
     <documentationDelegateProvider implementation="org.jetbrains.plugins.groovy.lang.documentation.GrLightDocumentationDelegateProvider"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyBreadcrumbsInfoProvider"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

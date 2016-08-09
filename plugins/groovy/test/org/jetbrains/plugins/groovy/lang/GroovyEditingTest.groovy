@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang;
+package org.jetbrains.plugins.groovy.lang
 
-
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -234,4 +238,21 @@ class A {}
   void testDollarRegex1() {
     doTest('$<caret>', '/', '$/<caret>/$')
   }*/
+  
+  public void testKeepMultilineStringTrailingSpaces() throws Throwable {
+    myFixture.configureByFile(getTestName(false) + '.groovy')
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    String stripSpaces = editorSettings.getStripTrailingSpaces();
+    try {
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+      Document doc = getEditor().getDocument();
+      EditorTestUtil.performTypingAction(getEditor(), (char)' ');
+      PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
+      FileDocumentManager.getInstance().saveDocument(doc);
+    }
+    finally {
+      editorSettings.setStripTrailingSpaces(stripSpaces);
+    }
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
 }
