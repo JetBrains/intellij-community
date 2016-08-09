@@ -201,10 +201,35 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
                                            @NotNull PsiMethod method,
                                            @NotNull ParameterClassMember[] members) {
     final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
-    chooser.selectElements(members);
+    chooser.selectElements(getInitialSelection(method, members));
     chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
     chooser.show();
     return chooser;
+  }
+
+  /**
+   * Exclude parameters passed to super() or this() calls from initial selection
+   */
+  private static ParameterClassMember[] getInitialSelection(@NotNull PsiMethod method,
+                                                            @NotNull ParameterClassMember[] members) {
+    final Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
+    final PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null);
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethod calledMethod = ((PsiMethodCallExpression)expression).resolveMethod();
+        if (calledMethod != null && calledMethod.isConstructor()) {
+          for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
+            if (arg instanceof PsiReferenceExpression) {
+              ContainerUtil.addIfNotNull(((PsiReferenceExpression)arg).resolve(), resolvedInSuperOrThis);
+            }
+          }
+        }
+      }
+    }
+    return ContainerUtil.findAll(members, member -> !resolvedInSuperOrThis.contains(member.getParameter())).toArray(ParameterClassMember.EMPTY_ARRAY);
   }
 
   @NotNull
