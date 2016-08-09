@@ -480,9 +480,14 @@ public class StudyUtils {
     if (task == null) {
       return null;
     }
-
-    
     String text = task.getText();
+    final Lesson lesson = task.getLesson();
+    if (lesson == null) return null;
+    final Course course = lesson.getCourse();
+    if (course != null && course.isAdaptive()) {
+      text += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
+
     if (text != null && !text.isEmpty()) {
       return wrapTextToDisplayLatex(text);
     }

@@ -20,6 +20,9 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magni
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.PASSED_INDEX
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testIntegration.RecentTestsData
+import com.intellij.testIntegration.RunConfigurationEntry
+import com.intellij.testIntegration.SuiteEntry
+import com.intellij.testIntegration.TestConfigurationCollector
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -91,6 +94,49 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     assertThat(tests).hasSize(1)
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
   }
+
+
+  fun `test show test without suite`() {
+    data.addTest("Test.sssss".test(), FAILED_INDEX, now, allTests)
+    val testsToShow = data.getTestsToShow()
+    assertThat(testsToShow).hasSize(1)
+  }
+
+
+  fun `test additional entries`() {
+    data.addSuite("Test2".suite(), now, allTests)
+    data.addSuite("Test".suite(), now, allTests)
+    data.addTest("Test.sss".test(), FAILED_INDEX, now, allTests)
+
+    val tests = data.getTestsToShow()
+    assertThat(tests).hasSize(1)
+
+    val failedTest = tests[0]
+
+    val collector = TestConfigurationCollector()
+    failedTest.accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(2)
+    assertThat(configs[0]).isInstanceOf(SuiteEntry::class.java)
+    assertThat(configs[1]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
+  fun `test if configuration consists of single test show only configuration`() {
+    data.addSuite("Test".suite(), now, allTests)
+    data.addTest("Test.sss".test(), FAILED_INDEX, now, allTests)
+    val tests = data.getTestsToShow()
+    
+    assertThat(tests).hasSize(1)
+    
+    val collector = TestConfigurationCollector()
+    tests[0].accept(collector)
+    val configs = collector.getEnclosingConfigurations()
+    
+    assertThat(configs).hasSize(1)
+    assertThat(configs[0]).isInstanceOf(RunConfigurationEntry::class.java)
+  }
+
   
   
 }
