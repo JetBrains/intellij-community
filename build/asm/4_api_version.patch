@@ -1,0 +1,24 @@
+Index: org/objectweb/asm/ClassVisitor.java
+===================================================================
+--- org/objectweb/asm/ClassVisitor.java
++++ org/objectweb/asm/ClassVisitor.java
+@@ -78,7 +78,18 @@
+         if (api < Opcodes.ASM4 || api > Opcodes.ASM6) {
+             throw new IllegalArgumentException();
+         }
+-        this.api = api;
++        this.api = Opcodes.ASM6; //[JB: use the latest API version]
++        this.cv = cv;
++    }
++
++    //[JB: use the latest API version]
++    public ClassVisitor() {
++        this(null);
++    }
++
++    //[JB: use the latest API version]
++    public ClassVisitor(final ClassVisitor cv) {
++        this.api = Opcodes.ASM6;
+         this.cv = cv;
+     }
+ 

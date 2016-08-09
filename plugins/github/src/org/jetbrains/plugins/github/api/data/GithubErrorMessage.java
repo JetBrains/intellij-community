@@ -27,6 +27,7 @@ public class GithubErrorMessage {
   private String message;
   private List<Error> errors;
 
+  @RestModel
   public static class Error {
     private String resource;
     private String field;

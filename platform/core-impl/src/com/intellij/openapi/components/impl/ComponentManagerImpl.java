@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -48,6 +51,8 @@ import org.picocontainer.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.extensions.Extensions.isComponentSuitableForOs;
 
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
@@ -270,32 +275,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return options == null ||
            isComponentSuitableForOs(options.get("os")) &&
            (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
-  }
-
-  static boolean isComponentSuitableForOs(@Nullable String os) {
-    if (StringUtil.isEmpty(os)) {
-      return true;
-    }
-
-    if (os.equals("mac")) {
-      return SystemInfoRt.isMac;
-    }
-    else if (os.equals("linux")) {
-      return SystemInfoRt.isLinux;
-    }
-    else if (os.equals("windows")) {
-      return SystemInfoRt.isWindows;
-    }
-    else if (os.equals("unix")) {
-      return SystemInfoRt.isUnix;
-    }
-    else if (os.equals("freebsd")) {
-      return SystemInfoRt.isFreeBSD;
-    }
-    else {
-      LOG.warn("Unknown OS " + os);
-      return true;
-    }
   }
 
   @Override

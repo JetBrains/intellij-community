@@ -47,6 +47,7 @@ public class GithubGist {
 
   private Date createdAt;
 
+  @RestModel
   public static class GistFile {
     private Long size;
     @Mandatory private String filename;

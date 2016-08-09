@@ -31,6 +31,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
@@ -178,6 +180,10 @@ public class MacPathChooserDialog implements PathChooserDialog {
     }
     else {
       if (owner instanceof Frame) {
+        if (owner instanceof IdeFrame.Child) {
+          IdeFrame.Child ideFrameChild = (IdeFrame.Child)owner;
+          owner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
+        }
         fileDialog = new FileDialog((Frame)owner, title, mode);
       }
       else if (owner instanceof Dialog) {
@@ -188,7 +194,7 @@ public class MacPathChooserDialog implements PathChooserDialog {
       }
     }
 
-      return fileDialog;
+    return fileDialog;
   }
 
   @NotNull
