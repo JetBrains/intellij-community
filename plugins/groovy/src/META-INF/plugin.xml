@@ -823,6 +823,9 @@
                      displayName="Java-style property access"
                      groupName="Style" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary 'def'" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
                      groupName="Style" enabledByDefault="true" level="WEAK WARNING"

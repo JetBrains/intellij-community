@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>
+  This inspection reports unnecessary <code>def</code> keyword when it is used with explicit type declaration.
+</p>
+For example:
+<pre>
+def boolean foo() {} // keyword is unnecessary
+def Object bar // keyword is unnecessary
+def (int a, String b) = [] // keyword is needed and therefore not highlighted
+</pre>
+</body>
+</html>
