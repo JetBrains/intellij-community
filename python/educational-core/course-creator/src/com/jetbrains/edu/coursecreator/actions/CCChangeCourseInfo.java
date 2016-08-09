@@ -71,7 +71,7 @@ public class CCChangeCourseInfo extends DumbAwareAction {
       course.setDescription(panel.getDescription());
       setVersion(course, panel);
       ProjectView.getInstance(project).refresh();
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       InspectionProfileManager.getInstance().fireProfileChanged(profile);
     }
   }
