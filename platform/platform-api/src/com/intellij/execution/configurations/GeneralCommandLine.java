@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
@@ -142,6 +143,10 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   public GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
     myWorkDirectory = workDirectory;
+    if (SystemInfo.isUnix && workDirectory != null) {
+      getEnvironment().put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+    }
+
     return this;
   }
 
