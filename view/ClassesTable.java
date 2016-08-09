@@ -197,7 +197,7 @@ class ClassesTable extends JBTable {
 
     // Workaround: save selection after content of classes table has been hided
     private ReferenceType mySelectedClassWhenHided = null;
-    private boolean myIsWithContent = true;
+    private boolean myIsWithContent = false;
 
     DiffViewTableModel() {
       super(new AbstractTableColumnDescriptor[]{
@@ -266,11 +266,6 @@ class ClassesTable extends JBTable {
     DiffValue update(long count) {
       return new DiffValue(count, count);
     }
-
-    @Override
-    public String toString() {
-      return "?";
-    }
   }
 
   private static class DiffValue {
@@ -296,16 +291,6 @@ class ClassesTable extends JBTable {
 
     int diff() {
       return (int) (myCurrentCount - myOldCount);
-    }
-
-    @Override
-    public String toString() {
-      if (myOldCount == myCurrentCount) {
-        return String.valueOf(myOldCount);
-      }
-
-      long diff = diff();
-      return String.format("%d (%s%d)", myCurrentCount, diff > 0 ? "+" : "-", Math.abs(diff));
     }
   }
 }
