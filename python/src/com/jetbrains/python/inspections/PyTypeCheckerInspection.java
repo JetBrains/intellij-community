@@ -26,9 +26,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -88,29 +89,22 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
-      final PyAnnotation annotation = node.getAnnotation();
-      final String comment = node.getTypeCommentAnnotation();
-      if (annotation != null || comment != null) {
-        final PyType expected = myTypeEvalContext.getReturnType(node);
-        final Map<PyReturnStatement, PyType> returnStatements = ((PyFunctionImpl)node).getReturnStatementsWithTypes(myTypeEvalContext);
-        final Collection<PyType> types = returnStatements.values();
-        final PyType actual = PyUnionType.union(types);
-        final boolean match = PyTypeChecker.match(expected, actual, myTypeEvalContext);
-        if (!match) {
-          List<PyReturnStatement> errorPlaces = new ArrayList<>();
-          for (Map.Entry<PyReturnStatement, PyType> entry : returnStatements.entrySet())
-          {
-            final PyReturnStatement retStmt = entry.getKey();
-            final PyType retType = entry.getValue();
-            if (!PyTypeChecker.match(expected, retType, myTypeEvalContext)) {
-              errorPlaces.add(retStmt);
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      final PyExpression returnExpr = node.getExpression();
+      if (returnExpr != null) {
+        ScopeOwner owner = ScopeUtil.getScopeOwner(returnExpr);
+        if (owner instanceof PyFunction) {
+          final PyFunction function = (PyFunction)owner;
+          final PyAnnotation annotation = function.getAnnotation();
+          final String typeCommentAnnotation = function.getTypeCommentAnnotation();
+          if (annotation != null || typeCommentAnnotation != null) {
+            final PyType actual = myTypeEvalContext.getType(returnExpr);
+            final PyType expected = myTypeEvalContext.getReturnType(function);
+            if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
+              final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+              final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+              registerProblem(returnExpr, String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
             }
-          }
-          for (PyReturnStatement err : errorPlaces) {
-            final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
-            final String actualName = PythonDocumentationProvider.getTypeName(returnStatements.get(err), myTypeEvalContext);
-            registerProblem(err.getExpression(), String.format("Expected type '%s', got '%s' instead", expectedName, actualName));
           }
         }
       }

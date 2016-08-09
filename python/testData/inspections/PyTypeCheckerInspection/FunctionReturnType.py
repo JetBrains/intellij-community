@@ -24,7 +24,7 @@ def f():
     # type: () -> Optional[str]
     x = int(input())
     if x > 0:
-        return 42
+        return <warning descr="Expected type 'Optional[str]', got 'int' instead">42</warning>
     elif x == 0:
         return 'abc'
     else:
