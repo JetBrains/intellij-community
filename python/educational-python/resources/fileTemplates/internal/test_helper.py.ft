@@ -83,7 +83,7 @@ def revert_input(saved_input):
         builtins.input = saved_input
     elif sys.version_info[0] == 2:
         import __builtin__
-        __builtins__.raw_input = saved_input
+        __builtin__.raw_input = saved_input
         __builtin__.input = saved_input
 
 
