@@ -20,10 +20,10 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 public abstract class Instrumenter extends ClassVisitor {
   protected Instrumenter() {
-    super(Opcodes.ASM5);
+    super(Opcodes.API_VERSION);
   }
   protected Instrumenter(ClassVisitor visitor) {
-    super(Opcodes.ASM5, visitor);
+    super(Opcodes.API_VERSION, visitor);
   }
 
   public abstract boolean instrumented();

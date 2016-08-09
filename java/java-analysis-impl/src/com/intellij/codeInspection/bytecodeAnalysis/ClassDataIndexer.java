@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
     final Map<Key, List<Equation>> equations = new HashMap<>();
 
-    classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       private String className;
       private boolean stableClass;
 
@@ -104,8 +104,8 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
-        return new MethodVisitor(Opcodes.ASM5, node) {
+        final MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
+        return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
 
           @Override

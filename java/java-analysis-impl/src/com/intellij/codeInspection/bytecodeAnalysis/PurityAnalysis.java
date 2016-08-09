@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,7 @@ class DataInterpreter extends Interpreter<DataValue> {
   final EffectQuantum[] effects;
 
   protected DataInterpreter(MethodNode methodNode) {
-    super(Opcodes.ASM5);
+    super(Opcodes.API_VERSION);
     this.methodNode = methodNode;
     shift = (methodNode.access & Opcodes.ACC_STATIC) == 0 ? 2 : 1;
     arity = Type.getArgumentTypes(methodNode.desc).length;

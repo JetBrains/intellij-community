@@ -124,7 +124,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
     ClassWriter classWriter = new ClassWriter(0);
-    ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5, classWriter) {
+    ClassVisitor classVisitor = new ClassVisitor(Opcodes.API_VERSION, classWriter) {
       @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         if ("java/lang/Object".equals(superName)) {

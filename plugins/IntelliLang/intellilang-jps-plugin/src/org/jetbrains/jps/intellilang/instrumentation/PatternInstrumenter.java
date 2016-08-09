@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   public PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
                              InstrumentationType instrumentation,
                              InstrumentationClassFinder classFinder) {
-    super(Opcodes.ASM5, classvisitor);
+    super(Opcodes.API_VERSION, classvisitor);
     myPatternAnnotationClassName = patternAnnotationClassName;
 
     myInstrumentationType = instrumentation;
@@ -253,14 +253,14 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
           final Ref<String> patternString = new Ref<String>(null);
           // dig into annotation class and check if it is annotated with pattern annotation.
           // if yes, load the pattern string from the pattern annotation and associate it with this annotation
-          final ClassVisitor visitor = new ClassVisitor(Opcodes.ASM5) {
+          final ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
             @Override
             public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
               if (patternString.get() != null || !myPatternAnnotationClassName.equals(Type.getType(desc).getClassName())) {
                 return null; // already found or is not pattern annotation
               }
               // dig into pattern annotation in order to discover the pattern string
-              return new AnnotationVisitor(Opcodes.ASM5) {
+              return new AnnotationVisitor(Opcodes.API_VERSION) {
                 public void visit(@NonNls String name, Object value) {
                   if ("value".equals(name) && value instanceof String) {
                     patternString.set((String)value);

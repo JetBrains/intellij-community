@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
@@ -153,7 +154,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
   final int shift;
 
   ParametersUsage(MethodNode methodNode) {
-    super(ASM5);
+    super(API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
     boolean[] emptyParams = new boolean[arity];
     val1 = new ParamsValue(emptyParams, 1);
@@ -308,7 +309,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   final int shift;
 
   IParametersUsage(MethodNode methodNode) {
-    super(ASM5);
+    super(Opcodes.API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
     shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
     rangeStart = shift;
