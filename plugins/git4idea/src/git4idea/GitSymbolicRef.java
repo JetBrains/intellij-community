@@ -16,7 +16,9 @@
 package git4idea;
 
 import git4idea.branch.GitBranchUtil;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Ilya Zinoviev
@@ -38,5 +40,16 @@ public final class GitSymbolicRef extends GitLocalBranch {
   @Override
   public String toString() {
     return getName() + "(" + GitBranchUtil.stripRefsPrefix(referencedBranch.toString()) + ")";
+  }
+
+  @Nullable
+  @Override
+  public final GitRemoteBranch findTrackedBranch(@NotNull GitRepository repository) {
+    return referencedBranch.findTrackedBranch(repository);
+  }
+
+  @NotNull
+  public String getPrintableName() {
+    return super.getName() + "(" + referencedBranch.getName() + ")";
   }
 }

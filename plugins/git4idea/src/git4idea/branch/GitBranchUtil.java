@@ -282,7 +282,12 @@ public class GitBranchUtil {
     }
 
     GitBranch branch = repository.getCurrentBranch();
-    String branchName = (branch == null ? "" : branch.getName());
+    String branchName;
+    if (branch instanceof GitSymbolicRef) {
+      branchName = (branch == null ? "" : ((GitSymbolicRef)branch).getPrintableName());
+    } else {
+      branchName = (branch == null ? "" : branch.getName());
+    }
     return prefix + branchName;
   }
 

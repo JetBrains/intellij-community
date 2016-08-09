@@ -84,7 +84,7 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
   @NotNull
   @Override
   public String getNameForLocalOperations() {
-    return myName;
+    return getName();
   }
 
 }

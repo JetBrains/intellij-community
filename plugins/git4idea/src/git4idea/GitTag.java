@@ -35,7 +35,7 @@ public class GitTag extends GitReference {
 
   @NotNull
   public String getFullName() {
-    return REFS_TAGS_PREFIX + myName;
+    return REFS_TAGS_PREFIX + getName();
   }
 
   @Deprecated

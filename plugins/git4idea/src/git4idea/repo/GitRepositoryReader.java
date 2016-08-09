@@ -242,7 +242,7 @@ class GitRepositoryReader {
       String refName = entry.getValue().refName;
       Hash hash = entry.getValue().hash;
       if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.put(new GitLocalBranch(refName), hash);
+        localBranches.put(fromRefInfo(entry.getValue()), hash);
       }
       else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
         GitRemoteBranch remoteBranch = parseRemoteBranch(refName, remotes);
@@ -255,6 +255,12 @@ class GitRepositoryReader {
       }
     }
     return Pair.create(localBranches, remoteBranches);
+  }
+
+  private static GitLocalBranch fromRefInfo(RefInfo refInfo) {
+    return refInfo.isSymbolicRef ?
+           new GitSymbolicRef(refInfo.refName, new GitLocalBranch(refInfo.referencedRef)) :
+           new GitLocalBranch(refInfo.refName);
   }
 
   @Nullable
@@ -348,7 +354,7 @@ class GitRepositoryReader {
         while (last.isSymbolicRef) {
           last = refs.get(last.referencedRef);
         }
-        return new HeadInfo(true, last.refName, target == last.refName ? null : target);
+        return new HeadInfo(true, last.refName, target.equals(last.refName) ? null : target);
       }
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
@@ -439,7 +445,7 @@ class GitRepositoryReader {
           }
           else {
             RefInfo referencedRef = resolved.get(link);
-            resolved.put(refName, new RefInfo(refName, referencedRef.hash, referencedRef.refName));
+            resolved.put(refName, new RefInfo(refName, referencedRef.hash, getRightRefName(referencedRef)));
             iterator.remove();
             progressed = true;
           }
@@ -454,6 +460,10 @@ class GitRepositoryReader {
       LOG.warn("Cyclic symbolic links among .git/refs: " + unresolved);
     }
     return resolved;
+  }
+
+  private static String getRightRefName(RefInfo refInfo) {
+    return refInfo.referencedRef != null ? refInfo.referencedRef : refInfo.refName;
   }
 
   @NotNull

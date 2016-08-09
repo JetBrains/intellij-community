@@ -28,7 +28,7 @@ public abstract class GitReference implements Comparable<GitReference> {
 
   public static final TObjectHashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY = FilePathHashingStrategy.create();
 
-  @NotNull protected final String myName;
+  @NotNull private final String myName;
 
   public GitReference(@NotNull String name) {
     myName = new String(name);
