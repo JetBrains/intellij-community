@@ -30,7 +30,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.Nls;
