@@ -16,26 +16,14 @@
 package com.intellij.testIntegration
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude
 import com.intellij.openapi.vfs.VirtualFileManager
-import java.util.*
 
 class RecentTestsData {
 
   private val runConfigurationSuites = hashMapOf<String, RunConfigurationEntry>()
   private var testsWithoutSuites = arrayListOf<SingleTestInfo>()
   
-  fun addSuite(url: String, runDate: Date, runConfiguration: RunnerAndConfigurationSettings) {
-    val suite = SuiteEntry(url, runDate, runConfiguration)
-    addRunConfigurationSuite(suite)
-  }
-
-  fun addTest(url: String, magnitude: Magnitude, runDate: Date, runConfiguration: RunnerAndConfigurationSettings) {
-    val test = SingleTestEntry(url, runDate, runConfiguration, magnitude)
-    addRunConfigurationTest(test)
-  }
-  
-  private fun addRunConfigurationSuite(suite: SuiteEntry) {
+  fun addSuite(suite: SuiteEntry) {
     moveSuiteTestsToSuite(suite)
     
     val id = suite.runConfiguration.uniqueID
@@ -66,7 +54,7 @@ class RecentTestsData {
     testsWithoutSuites = filteredTests
   }
 
-  private fun addRunConfigurationTest(test: SingleTestEntry) {
+  fun addTest(test: SingleTestEntry) {
     val suiteEntry = findRunConfigurationSuite(test.url, test.runConfiguration)
     if (suiteEntry != null) {
       suiteEntry.addTest(test)

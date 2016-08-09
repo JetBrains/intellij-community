@@ -20,6 +20,8 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magni
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.PASSED_INDEX
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testIntegration.RecentTestsData
+import com.intellij.testIntegration.SingleTestEntry
+import com.intellij.testIntegration.SuiteEntry
 import org.assertj.core.api.Assertions.assertThat
 import java.util.*
 
@@ -37,27 +39,31 @@ class RecentTestsOrderTest: LightIdeaTestCase() {
   }
   
   fun addPassedSuite(suiteUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addSuite(suiteUrl, date, runConfiguration)
+    val suite = SuiteEntry(suiteUrl, date, runConfiguration)
+    data.addSuite(suite)
   }
   
   fun addFailedSuite(suiteUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addSuite(suiteUrl, date, runConfiguration)
+    val suite = SuiteEntry(suiteUrl, date, runConfiguration)
+    data.addSuite(suite)
   }
   
   fun addPassedTest(testUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addTest(testUrl, PASSED_INDEX, date, runConfiguration)
+    val test = SingleTestEntry(testUrl, date, runConfiguration, PASSED_INDEX)
+    data.addTest(test)
   }
   
   fun addFailedTest(testUrl: String, date: Date = Date(), runConfiguration: RunnerAndConfigurationSettings = allTests) {
-    data.addTest(testUrl, FAILED_INDEX, date, runConfiguration)
+    val test = SingleTestEntry(testUrl, date, runConfiguration, FAILED_INDEX)
+    data.addTest(test)
   }
   
   fun `test run configuration with one suite shows only suite`() {
     val suite = "MySingleTest".suite()
     val test1 = "MySingleTest.test1".test()
     
-    data.addTest(test1, PASSED_INDEX, now, allTests)
-    data.addSuite(suite, now, allTests)
+    data.addTest(SingleTestEntry(test1, now, allTests, PASSED_INDEX))
+    data.addSuite(SuiteEntry(suite, now, allTests))
     
     val testsToShow = data.getTestsToShow()
     assertThat(testsToShow).hasSize(1)

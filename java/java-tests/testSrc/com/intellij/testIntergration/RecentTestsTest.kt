@@ -19,10 +19,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.FAILED_INDEX
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.PASSED_INDEX
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testIntegration.RecentTestsData
-import com.intellij.testIntegration.RunConfigurationEntry
-import com.intellij.testIntegration.SuiteEntry
-import com.intellij.testIntegration.TestConfigurationCollector
+import com.intellij.testIntegration.*
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -52,14 +49,19 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
   
   fun `test all tests passed`() {
-    data.addTest("Test.textXXX".test(), PASSED_INDEX, now, allTests)
-    data.addSuite("Test".suite(), now, allTests)
-    data.addSuite("JFSDTest".suite(), now, allTests)
-    data.addTest("Test.textYYY".test(), PASSED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), PASSED_INDEX, now, allTests)
-    data.addTest("Test.textZZZ".test(), PASSED_INDEX, now, allTests)
-    data.addTest("Test.textQQQ".test(), PASSED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
+    
+    
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    
+    data.addTest(SingleTestEntry("Test.textYYY".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textZZZ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("Test.textQQQ".test(), now, allTests, PASSED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
 
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(1)
@@ -68,13 +70,13 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
 
   fun `test if one failed in run configuration show failed suite`() {
-    data.addSuite("JFSDTest".suite(), now, allTests)
-    data.addSuite("Test".suite(), now, allTests)
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
 
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
     
-    data.addTest("Test.textXXX".test(), PASSED_INDEX, now, allTests)
+    data.addTest(SingleTestEntry("Test.textXXX".test(), now, allTests, PASSED_INDEX))
     
     val tests = data.getTestsToShow()
 
@@ -86,9 +88,9 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   
   
   fun `test if configuration with single test show failed test`() {
-    data.addSuite("JFSDTest".suite(), now, allTests)
-    data.addTest("JFSDTest.testItMakesMeSadToFixIt".test(), FAILED_INDEX, now, allTests)
-    data.addTest("JFSDTest.testUnconditionalAlignmentErrorneous".test(), PASSED_INDEX, now, allTests)
+    data.addSuite(SuiteEntry("JFSDTest".suite(), now, allTests))
+    data.addTest(SingleTestEntry("JFSDTest.testItMakesMeSadToFixIt".test(), now, allTests, FAILED_INDEX))
+    data.addTest(SingleTestEntry("JFSDTest.testUnconditionalAlignmentErrorneous".test(), now, allTests, PASSED_INDEX))
     
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(1)
@@ -97,16 +99,16 @@ class RecentTestsStepTest: LightIdeaTestCase() {
 
 
   fun `test show test without suite`() {
-    data.addTest("Test.sssss".test(), FAILED_INDEX, now, allTests)
+    data.addTest(SingleTestEntry("Test.sssss".test(), now, allTests, FAILED_INDEX))
     val testsToShow = data.getTestsToShow()
     assertThat(testsToShow).hasSize(1)
   }
 
 
   fun `test additional entries`() {
-    data.addSuite("Test2".suite(), now, allTests)
-    data.addSuite("Test".suite(), now, allTests)
-    data.addTest("Test.sss".test(), FAILED_INDEX, now, allTests)
+    data.addSuite(SuiteEntry("Test2".suite(), now, allTests))
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
 
     val tests = data.getTestsToShow()
     assertThat(tests).hasSize(1)
@@ -123,8 +125,8 @@ class RecentTestsStepTest: LightIdeaTestCase() {
   }
 
   fun `test if configuration consists of single test show only configuration`() {
-    data.addSuite("Test".suite(), now, allTests)
-    data.addTest("Test.sss".test(), FAILED_INDEX, now, allTests)
+    data.addSuite(SuiteEntry("Test".suite(), now, allTests))
+    data.addTest(SingleTestEntry("Test.sss".test(), now, allTests, FAILED_INDEX))
     val tests = data.getTestsToShow()
     
     assertThat(tests).hasSize(1)
