@@ -102,7 +102,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         // We only allow entries from the running JDK, to keep existing crypto extensions working.
         String javaHome = System.getProperty("java.home");
         for (URL url : loader.getURLs()) {
-          if (url.toString().contains(javaHome)) {
+          if (urlToPath(url).contains(javaHome)) {
             classpath.add(url);
           }
         }
