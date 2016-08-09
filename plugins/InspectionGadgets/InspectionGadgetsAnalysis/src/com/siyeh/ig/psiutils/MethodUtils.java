@@ -196,14 +196,19 @@ public class MethodUtils {
 
   @Nullable
   public static PsiMethod getSuper(@NotNull PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return null;
-    }
-    final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    final MethodSignatureBackedByPsiMethod signature = getSuperMethodSignature(method);
     if (signature == null) {
       return null;
     }
     return signature.getMethod();
+  }
+
+  @Nullable
+  public static MethodSignatureBackedByPsiMethod getSuperMethodSignature(@NotNull PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return null;
+    }
+    return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
   public static boolean isOverridden(PsiMethod method) {
