@@ -62,7 +62,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
     Sdk sdk = settingsStep.getSdk();
 
     if (sdk instanceof PyDetectedSdk) {
-      addDetectedSdk(settingsStep, sdk);
+      sdk = addDetectedSdk(settingsStep, sdk);
     }
 
     if (generator instanceof PythonProjectGenerator) {
@@ -90,9 +90,6 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
           ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(newProject);
         }
       }
-      if (((PythonProjectGenerator)generator).hideInterpreter()) {
-        installRequirements(newProject);
-      }
     }
   }
 
@@ -109,7 +106,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   }
 
 
-  private static void addDetectedSdk(ProjectSpecificSettingsStep settingsStep, Sdk sdk) {
+  private static Sdk addDetectedSdk(ProjectSpecificSettingsStep settingsStep, Sdk sdk) {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
     final String name = sdk.getName();
@@ -133,6 +130,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
     catch (ConfigurationException exception) {
       LOG.error("Error adding detected python interpreter " + exception.getMessage());
     }
+    return sdk;
   }
 
   @Nullable
