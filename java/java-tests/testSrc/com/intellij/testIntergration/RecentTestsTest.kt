@@ -91,6 +91,14 @@ class RecentTestsStepTest: LightIdeaTestCase() {
     assertThat(tests).hasSize(1)
     assertThat(tests[0].presentation).isEqualTo("JFSDTest.testItMakesMeSadToFixIt")
   }
+
+
+  fun `test show test without suite`() {
+    data.addTest("Test.sssss".test(), FAILED_INDEX, now, allTests)
+    val testsToShow = data.getTestsToShow()
+    assertThat(testsToShow).hasSize(1)
+  }
+
   
   
 }
