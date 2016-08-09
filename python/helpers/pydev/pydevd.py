@@ -405,6 +405,8 @@ class PyDB:
         for t in all_threads:
             if getattr(t, 'is_pydev_daemon_thread', False):
                 pass # I.e.: skip the DummyThreads created from pydev daemon threads
+            elif hasattr(t, 'pydev_do_not_trace'):
+                pass  # skip some other threads, i.e. ipython history saving thread from debug console
             else:
                 if t is thread_suspended_at_bp:
                     continue
