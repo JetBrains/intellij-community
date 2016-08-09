@@ -23,8 +23,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -107,11 +107,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myDescriptionPane.setEditable(true);
     myDescriptionPane.setEnabled(true);
     myAuthorLabel.setEnabled(true);
-    myDescriptionPane.setPreferredSize(new Dimension(150, 150));
+    myDescriptionPane.setPreferredSize(new Dimension(150, 200));
     myDescriptionPane.setFont(coursesCombo.getFont());
     myInfoPanel.add(myAuthorLabel);
-    myInfoPanel.add(myDescriptionPane);
-    myInfoPanel.setBorder(BorderFactory.createLineBorder(new JBColor(10067616, 10067616)));
+    myInfoPanel.add(new JBScrollPane(myDescriptionPane));
 
     panel.add(myInfoPanel, BorderLayout.CENTER);
     add(panel);

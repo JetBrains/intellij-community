@@ -67,6 +67,9 @@ public class EduStepicConnector {
   public static final String PYCHARM_PREFIX = "pycharm";
   private static BasicCookieStore ourCookieStore;
 
+  private static final String ADAPTIVE_NOTE =
+    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it become!";
+
   private EduStepicConnector() {
   }
 
@@ -380,7 +383,7 @@ public class EduStepicConnector {
         }
         
         if (info.isAdaptive()) {
-          info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription());
+          info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription() + ADAPTIVE_NOTE);
         }
         
         result.add(info);
