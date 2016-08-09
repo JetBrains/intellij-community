@@ -8,10 +8,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -127,7 +124,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
       }
     });
 
-    JBScrollPane scroll = new JBScrollPane(myTable);
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     addToTop(myFilterTextField);
     addToCenter(scroll);
   }
