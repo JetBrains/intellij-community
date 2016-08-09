@@ -49,6 +49,10 @@ public class MethodUtils {
     return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
+  public static boolean isFinalize(@Nullable PsiMethod method) {
+    return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
+  }
+
   public static boolean isToString(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
