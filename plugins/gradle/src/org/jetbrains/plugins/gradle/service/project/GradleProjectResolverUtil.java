@@ -48,6 +48,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 
@@ -359,19 +360,39 @@ public class GradleProjectResolverUtil {
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
       if (mergedDependency instanceof ExternalProjectDependency) {
+        class ProjectDependencyInfo {
+          DataNode<GradleSourceSetData> dataNode;
+          ExternalSourceSet sourceSet;
+          Collection<File> dependencyArtifacts;
+
+          public ProjectDependencyInfo(Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair, Collection<File> dependencyArtifacts) {
+            this.dataNode = pair.first;
+            this.sourceSet = pair.second;
+            this.dependencyArtifacts = dependencyArtifacts;
+          }
+        }
+
         final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
         String moduleId = getModuleId(projectDependency);
-        Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
+        Collection<ProjectDependencyInfo> projectDependencyInfos = ContainerUtil.newArrayList();
 
+        Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
         if (projectPair == null) {
           for (File file : projectDependency.getProjectDependencyArtifacts()) {
             moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath()));
-            if (moduleId != null) break;
+            if (moduleId != null) {
+              projectPair = sourceSetMap.get(moduleId);
+              if (projectPair != null) {
+                projectDependencyInfos.add(new ProjectDependencyInfo(projectPair, Collections.singleton(file)));
+              }
+            }
           }
-          projectPair = sourceSetMap.get(moduleId);
+        }
+        else {
+          projectDependencyInfos.add(new ProjectDependencyInfo(projectPair, projectDependency.getProjectDependencyArtifacts()));
         }
 
-        if (projectPair == null) {
+        if (projectDependencyInfos.isEmpty()) {
           final LibraryLevel level = LibraryLevel.MODULE;
           final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, "");
           LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
@@ -389,17 +410,23 @@ public class GradleProjectResolverUtil {
           }
         }
         else {
-          ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, projectPair.first.getData());
-          moduleDependencyData.setScope(dependencyScope);
-          if ("test".equals(projectPair.second.getName())) {
-            moduleDependencyData.setProductionOnTestDependency(true);
+          for (ProjectDependencyInfo projectDependencyInfo : projectDependencyInfos) {
+            ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, projectDependencyInfo.dataNode.getData());
+            moduleDependencyData.setScope(dependencyScope);
+            if ("test".equals(projectDependencyInfo.sourceSet.getName())) {
+              moduleDependencyData.setProductionOnTestDependency(true);
+            }
+            moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
+            moduleDependencyData.setExported(mergedDependency.getExported());
+            moduleDependencyData.setModuleDependencyArtifacts(ContainerUtil.map(projectDependencyInfo.dependencyArtifacts, File::getPath));
+            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
           }
-          moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
-          moduleDependencyData.setExported(mergedDependency.getExported());
-          moduleDependencyData.setModuleDependencyArtifacts(ContainerUtil.map(
-            projectDependency.getProjectDependencyArtifacts(), file -> file.getPath()));
 
-          depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+          // put transitive dependencies to the ownerDataNode,
+          // since we can not determine from what project dependency artifact it was originated
+          if(projectDependencyInfos.size() > 1) {
+            depOwnerDataNode = ownerDataNode;
+          }
         }
       }
       else if (mergedDependency instanceof ExternalLibraryDependency) {

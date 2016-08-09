@@ -499,6 +499,59 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testNonDefaultProjectConfigurationDependencyWithMultipleArtifacts() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  configurations {\n" +
+      "    tests.extendsFrom testRuntime\n" +
+      "  }\n" +
+      "  task testJar(type: Jar) {\n" +
+      "    classifier 'test'\n" +
+      "    from project.sourceSets.test.output\n" +
+      "  }\n" +
+      "\n" +
+      "  artifacts {\n" +
+      "    tests testJar\n" +
+      "    archives testJar\n" +
+      "  }\n" +
+      "\n" +
+      "  dependencies {\n" +
+      "    testCompile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    testCompile project(path: ':project1', configuration: 'tests')\n" +
+      "  }\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDeps("project1_main");
+    assertModuleLibDeps("project1_main");
+    assertModuleLibDepScope("project1_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("project2_main");
+    assertModuleLibDeps("project2_main");
+    assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("project2_test", "project2_main", "project1_main", "project1_test");
+    assertModuleModuleDepScope("project2_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project1_test", DependencyScope.COMPILE);
+  }
+
+
+  @Test
   @TargetVersions("2.0+")
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
     createSettingsFile("include 'project1'\n" +
