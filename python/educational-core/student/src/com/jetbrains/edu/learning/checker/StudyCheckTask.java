@@ -59,19 +59,6 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
     ProjectView.getInstance(myProject).refresh();
     clearState();
-
-    List<Step> additionalSteps = myTask.getAdditionalSteps();
-    if (additionalSteps.isEmpty() || myTask.getActiveStepIndex() == additionalSteps.size() - 1) {
-      return;
-    }
-    for (TaskFile taskFile : myTask.getTaskFiles().values()) {
-      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-        if (placeholder.getStatus() != StudyStatus.Solved) {
-          return;
-        }
-      }
-    }
-    ApplicationManager.getApplication().invokeLater(() -> StudyStepUtils.switchStep(myProject, myTask, myTask.getActiveStepIndex() + 1));
   }
 
   protected void clearState() {
@@ -223,6 +210,10 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         String finalSuccessMessage = successMessage;
         ApplicationManager.getApplication()
           .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(finalSuccessMessage, MessageType.INFO.getPopupBackground(), myProject));
+      }
+
+      if (!noMoreSteps) {
+        ApplicationManager.getApplication().invokeLater(() -> StudyStepUtils.switchStep(myProject, myTask, myTask.getActiveStepIndex() + 1));
       }
     }
   }
