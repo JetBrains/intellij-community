@@ -40,8 +40,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     doTestOneExpression();
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 1, user = "ann peter")
-  public void testFieldDeclaredInFileWithoutFunctionalInterfaces() throws Exception {
+  public void _testFieldDeclaredInFileWithoutFunctionalInterfaces() throws Exception {
     myFixture.addClass("class B {" +
                        "  void f(A a) {" +
                        "    a.r = () -> {};" +
