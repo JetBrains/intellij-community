@@ -766,11 +766,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
     Map<K, V> map = newHashMap();
+    fillMapWithValues(map, values, keyConvertor);
+    return map;
+  }
+
+  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
+                                              @NotNull Iterator<V> values,
+                                              @NotNull Convertor<V, K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
     }
-    return map;
   }
 
   @NotNull
