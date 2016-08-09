@@ -149,6 +149,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
           final StepicUser user = taskManager.getUser();
           user.setEmail(login);
           user.setPassword(password);
+          
+          // login to post credentials
+          EduStepicConnector.login(login, password);
         }
       }
       else {
