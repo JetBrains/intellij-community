@@ -46,9 +46,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     super(node, "customField");
     myDescriptor = descriptor;
     myRenderer = renderer;
-    if (descriptor != null) {
-      myExpressionEditor.setExpression(TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()));
-    }
+    myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
   }
 
   public static void editNew(@NotNull XValueNodeImpl parentNode) {
