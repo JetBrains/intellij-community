@@ -151,7 +151,6 @@ class ClassesTable extends JBTable {
 
   void setClassesAndCounts(List<ReferenceType> classes, long[] counts) {
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
-
     final int newSelectedIndex = classes.indexOf(selectedClass);
     myElems = Collections.unmodifiableList(new ArrayList<>(classes));
     for (int i = 0, size = myElems.size(); i < size; i++) {
@@ -159,9 +158,9 @@ class ClassesTable extends JBTable {
       myCounts.put(ref, myCounts.getOrDefault(ref, myUnknownValue).update(counts[i]));
     }
 
-    getRowSorter().allRowsChanged();
+    showContent();
 
-    if (newSelectedIndex != -1) {
+    if (newSelectedIndex != -1 && !myModel.isHided()) {
       changeSelection(convertRowIndexToView(newSelectedIndex),
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
@@ -173,7 +172,7 @@ class ClassesTable extends JBTable {
     myModel.hide();
   }
 
-  void showContent() {
+  private void showContent() {
     myModel.show();
   }
 
@@ -197,8 +196,8 @@ class ClassesTable extends JBTable {
     private final static int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
-    private ReferenceType selectedClassWhenHided = null;
-    private boolean isHide = false;
+    private ReferenceType mySelectedClassWhenHided = null;
+    private boolean myIsWithContent = true;
 
     DiffViewTableModel() {
       super(new AbstractTableColumnDescriptor[]{
@@ -224,27 +223,32 @@ class ClassesTable extends JBTable {
     }
 
     ReferenceType getSelectedClassBeforeHided() {
-      return selectedClassWhenHided;
+      return mySelectedClassWhenHided;
     }
 
     void hide() {
-      if (!isHide) {
-        selectedClassWhenHided = getSelectedClass();
-        isHide = true;
+      if (myIsWithContent) {
+        mySelectedClassWhenHided = getSelectedClass();
+        myIsWithContent = false;
+        clearSelection();
         getRowSorter().allRowsChanged();
       }
     }
 
     void show() {
-      if (isHide) {
-        isHide = false;
+      if (!myIsWithContent) {
+        myIsWithContent = true;
         getRowSorter().allRowsChanged();
       }
     }
 
+    boolean isHided() {
+      return !myIsWithContent;
+    }
+
     @Override
     public int getRowCount() {
-      return isHide ? 0 : myElems.size();
+      return myIsWithContent ? myElems.size() : 0;
     }
   }
 

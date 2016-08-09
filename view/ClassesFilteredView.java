@@ -100,7 +100,6 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
       @Override
       public void sessionPaused() {
-        SwingUtilities.invokeLater(myTable::showContent);
         if (myNeedReloadClasses) {
           updateClassesAndCounts();
         }
