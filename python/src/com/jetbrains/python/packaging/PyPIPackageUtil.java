@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.FieldNamingPolicy;
@@ -64,7 +65,10 @@ public class PyPIPackageUtil {
   public static final String PYPI_URL = PYPI_HOST + "/pypi";
   public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
-  public static final Map<String, String> PACKAGES_TOPLEVEL = Maps.newConcurrentMap();
+  /**
+   * Contains mapping "importable top-level package" -> "package name on PyPI".
+   */
+  public static final ImmutableMap<String, String> PACKAGES_TOPLEVEL = loadPackageAliases();
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
 
@@ -95,15 +99,6 @@ public class PyPIPackageUtil {
   @Nullable private volatile Set<String> myPackageNames = null;
 
 
-  static {
-    try {
-      fillPackages();
-    }
-    catch (IOException e) {
-      LOG.error("Cannot find \"packages\". " + e.getMessage());
-    }
-  }
-
   /**
    * Prevents simultaneous updates of {@link PyPackageService#PY_PACKAGES}
    * because the corresponding response contains tons of data and multiple
@@ -119,15 +114,21 @@ public class PyPIPackageUtil {
     return ApplicationNamesInfo.getInstance().getProductName() + "/" + ApplicationInfo.getInstance().getFullVersion();
   }
 
-  private static void fillPackages() throws IOException {
+  @NotNull
+  private static ImmutableMap<String, String> loadPackageAliases() {
+    final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/packages"))) {
       final String text = FileUtil.loadTextAndClose(reader);
       final List<String> lines = StringUtil.split(text, "\n");
       for (String line : lines) {
         final List<String> split = StringUtil.split(line, " ");
-        PACKAGES_TOPLEVEL.put(split.get(0), split.get(1));
+        builder.put(split.get(0), split.get(1));
       }
     }
+    catch (IOException e) {
+      LOG.error("Cannot find \"packages\". " + e.getMessage());
+    }
+    return builder.build(); 
   }
 
   @NotNull
