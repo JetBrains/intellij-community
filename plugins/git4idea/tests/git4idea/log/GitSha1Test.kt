@@ -18,33 +18,17 @@ package git4idea.log
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
-import git4idea.GitVcs
 import git4idea.test.GitExecutor.*
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.GitTestUtil
-import junit.framework.TestCase
 
 class GitSha1Test : GitSingleRepoTest() {
-  var AFILE = "a.txt"
-  val BFILE = "b.txt"
+  var A_FILE = "a.txt"
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    try {
-      initTest()
-    }
-    catch (e: Exception) {
-      super.tearDown()
-      throw e
-    }
-
-  }
-
-  private fun initTest() {
-    myVcs = GitVcs.getInstance(myProject)!!
-    TestCase.assertNotNull(myVcs)
-    GitTestUtil.createFileStructure(myProjectRoot, AFILE, BFILE)
+    GitTestUtil.createFileStructure(myProjectRoot, A_FILE)
     addCommit("initial")
   }
 
@@ -53,42 +37,33 @@ class GitSha1Test : GitSingleRepoTest() {
     val newFile = "newFile.txt"
     touch(newFile, "Hello World!")
     add(newFile)
-    updateChangeListManager()
-    val changes = changeListManager.allChanges
-    assertTrue(changes.size == 1)
-    val beforeAfterSha1 = BlobIndexUtil.getBeforeAfterSha1(changes.elementAt(0))
-    TestCase.assertEquals(BlobIndexUtil.NOT_COMMITTED_HASH, (beforeAfterSha1.first))
-    TestCase.assertEquals(git("hash-object " + newFile), beforeAfterSha1.second)
+    checkSha1ForSingleChange(BlobIndexUtil.NOT_COMMITTED_HASH, git("hash-object $newFile"))
   }
 
   fun `test sha for del`() {
     cd(myProjectPath)
-    val virtualFile = myProjectRoot.findChild(AFILE)
-    val path = virtualFile!!.path
-    val expectedBefore = git("hash-object " + path)
-    git("rm " + path)
-    updateChangeListManager()
-    val changes = changeListManager.allChanges
-    assertTrue(changes.size == 1)
-    val beforeAfterSha1 = BlobIndexUtil.getBeforeAfterSha1(changes.elementAt(0))
-    TestCase.assertEquals(BlobIndexUtil.NOT_COMMITTED_HASH, beforeAfterSha1.second)
-    TestCase.assertEquals(expectedBefore, beforeAfterSha1.first)
+    val path = myProjectRoot.findChild(A_FILE)!!.path
+    val expectedBefore = git("hash-object $path")
+    git("rm $path")
+    checkSha1ForSingleChange(expectedBefore, BlobIndexUtil.NOT_COMMITTED_HASH)
   }
 
   fun `test sha for modified`() {
     cd(myProjectPath)
-    val virtualFile = myProjectRoot.findChild(AFILE)
+    val virtualFile = myProjectRoot.findChild(A_FILE)
     val path = virtualFile!!.path
-    val expectedBefore = git("hash-object " + path)
-    append(AFILE, "echo content\n with line separator")
-    myProjectRoot.refresh(false, true)
+    val expectedBefore = git("hash-object $path")
+    setFileText(virtualFile, "echo content\n with line separator")
+    checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))
+  }
+
+  private fun checkSha1ForSingleChange(expectedBefore: String?, expectedAfter: String?) {
     updateChangeListManager()
     val changes = changeListManager.allChanges
     assertTrue(changes.size == 1)
-    val expectedAfter = git("hash-object " + path)
-    val beforeAfterSha1 = BlobIndexUtil.getBeforeAfterSha1(changes.elementAt(0))
-    TestCase.assertEquals(expectedBefore, beforeAfterSha1.first)
-    TestCase.assertEquals(expectedAfter, beforeAfterSha1.second)
+    val beforeAfterSha1 = BlobIndexUtil.getBeforeAfterSha1(changes.first())
+    assertEquals(expectedBefore, beforeAfterSha1.first)
+    assertEquals(expectedAfter, beforeAfterSha1.second)
   }
 }
 
