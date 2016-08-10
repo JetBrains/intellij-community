@@ -22,15 +22,18 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
@@ -205,15 +208,16 @@ class CompoundRendererConfigurable extends JPanel {
   private void updateContext(final String qName) {
     ApplicationManager.getApplication().runReadAction(() -> {
       Project project = myProject;
-      PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
-      if (psiClass != null) {
-        psiClass = (PsiClass)psiClass.getNavigationElement();
+      if (project != null) {
+        Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
+        if (pair.first != null) {
+          XSourcePositionImpl position = XSourcePositionImpl.createByElement(pair.first);
+          myLabelEditor.setSourcePosition(position);
+          myChildrenEditor.setSourcePosition(position);
+          myChildrenExpandedEditor.setSourcePosition(position);
+          myListChildrenEditor.setSourcePosition(position);
+        }
       }
-      XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
-      myLabelEditor.setSourcePosition(position);
-      myChildrenEditor.setSourcePosition(position);
-      myChildrenExpandedEditor.setSourcePosition(position);
-      myListChildrenEditor.setSourcePosition(position);
     });
   }
 
