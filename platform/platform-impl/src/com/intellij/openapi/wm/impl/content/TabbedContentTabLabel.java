@@ -28,6 +28,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.WatermarkIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,8 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       if (nextTabWithName.getFirst().equals(myContent.getTabNameWithoutPrefix(tabName))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
-          jLabel.setIcon(((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY));
+          Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
+          jLabel.setIcon(isSelected() ? baseIcon : new WatermarkIcon(baseIcon, .5f));
         }
       }
     }
