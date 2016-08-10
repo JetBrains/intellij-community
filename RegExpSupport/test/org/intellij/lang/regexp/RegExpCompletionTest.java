@@ -22,7 +22,7 @@ import com.intellij.util.ArrayUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,9 +42,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testPosixBracketExpression() {
-      EnumSet<RegExpCapability> capabilities = RegExpParserDefinition.DEFAULT_CAPABILITIES.clone();
-      capabilities.add(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
-      RegExpParserDefinition.setTestingCapabilities(capabilities, getTestRootDisposable());
+      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
 
       myFixture.configureByText(RegExpFileType.INSTANCE, "[[:alp<caret>");
       myFixture.completeBasic();
@@ -52,9 +50,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testNegatePosixBracketExpression() {
-      EnumSet<RegExpCapability> capabilities = RegExpParserDefinition.DEFAULT_CAPABILITIES.clone();
-      capabilities.add(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
-      RegExpParserDefinition.setTestingCapabilities(capabilities, getTestRootDisposable());
+      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
 
       myFixture.configureByText(RegExpFileType.INSTANCE, "[[:^alp<caret>");
       myFixture.completeBasic();
@@ -62,15 +58,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testBackSlashVariants() throws Throwable {
-        doBackSlashVariantsTest();
-    }
-  
-    public void testBackSlashVariants2() throws Throwable {
-        doBackSlashVariantsTest();
-    }
-
-    private void doBackSlashVariantsTest() throws Throwable {
-        java.util.List<String> nameList =
+        List<String> nameList =
           new ArrayList<>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                                         "t", "n", "r", "f", "a", "e", "h", "H", "v", "V", "R"));
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
@@ -79,8 +67,8 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
-  public void testPropertyVariants() throws Throwable {
-        java.util.List<String> nameList = new ArrayList<>();
+    public void testPropertyVariants() throws Throwable {
+        List<String> nameList = new ArrayList<>();
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
         }
