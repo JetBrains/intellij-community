@@ -18,18 +18,23 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +57,13 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     myDescriptor = descriptor;
     myRenderer = renderer;
     myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
+
+    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode)node.getParent()).getValueContainer()).getDescriptor();
+    Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject());
+    if (pair.first != null) {
+      XSourcePositionImpl position = XSourcePositionImpl.createByElement(pair.first);
+      myExpressionEditor.setSourcePosition(position);
+    }
   }
 
   public static void editNew(@NotNull XValueNodeImpl parentNode) {
@@ -71,8 +83,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
           return renderer.getChildren();
         }
         else {
-          Type type = descriptor.getType();
-          String name = type != null ? type.name() : null;
+          String name = getTypeName(descriptor);
           EnumerationChildrenRenderer enumerationChildrenRenderer = new EnumerationChildrenRenderer();
           enumerationChildrenRenderer.setAppendDefaultChildren(true);
           NodeRenderer renderer =
@@ -84,6 +95,12 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
         }
       }
     }.show());
+  }
+
+  @Nullable
+  private static String getTypeName(ValueDescriptorImpl descriptor) {
+    Type type = descriptor.getType();
+    return type != null ? type.name() : null;
   }
 
   protected List<Pair<String, TextWithImports>> getRendererChildren() {
