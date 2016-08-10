@@ -143,10 +143,6 @@ public class GeneralCommandLine implements UserDataHolder {
   @NotNull
   public GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
     myWorkDirectory = workDirectory;
-    if (SystemInfo.isUnix && workDirectory != null) {
-      getEnvironment().put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
-    }
-
     return this;
   }
 
@@ -403,6 +399,10 @@ public class GeneralCommandLine implements UserDataHolder {
       else {
         environment.putAll(myEnvParams);
       }
+    }
+    File workDirectory = getWorkDirectory();
+    if (SystemInfo.isUnix && workDirectory != null) {
+      environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
     }
   }
 
