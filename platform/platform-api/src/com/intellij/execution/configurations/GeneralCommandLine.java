@@ -400,9 +400,12 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
-    File workDirectory = getWorkDirectory();
-    if (SystemInfo.isUnix && workDirectory != null) {
-      environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+
+    if (SystemInfo.isUnix) {
+      File workDirectory = getWorkDirectory();
+      if (workDirectory != null) {
+        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+      }
     }
   }
 
