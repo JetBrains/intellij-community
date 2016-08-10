@@ -22,9 +22,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -58,10 +58,9 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   
   private static boolean containsGroovyClasses(Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      ReadAction.compute(() ->
-        CachedValueProvider.Result.create(
-          FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
-          PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)));
+      CachedValueProvider.Result.create(
+        FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
+        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {
@@ -76,6 +75,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   
   @Override
   public void patchJavaParameters(Executor executor, RunProfile configuration, JavaParameters javaParameters) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
       return;
     }
