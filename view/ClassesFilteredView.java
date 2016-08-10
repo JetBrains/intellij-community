@@ -6,6 +6,9 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
@@ -14,16 +17,17 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
-import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
-import org.jetbrains.debugger.memory.component.MemoryViewManager;
-import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.component.MemoryViewManager;
+import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
+import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
 import org.jetbrains.debugger.memory.utils.KeyboardUtils;
 import org.jetbrains.debugger.memory.utils.SingleAlarmWithMutableDelay;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -120,6 +124,17 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
         ((DebuggerManagerThreadImpl) myDebugProcess.getManagerThread())
             .schedule(new MyUpdateClassesCommand(suspendContext));
+      }
+    });
+
+    myTable.addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
+        if (popupMenu != null) {
+          popupMenu.getComponent().show(comp, x, y);
+        }
       }
     });
 
