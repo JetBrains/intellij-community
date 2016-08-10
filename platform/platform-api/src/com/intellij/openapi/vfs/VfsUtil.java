@@ -566,7 +566,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
+    List<VirtualFile> list = ContainerUtil.filter(files, Condition.NOT_NULL);
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
