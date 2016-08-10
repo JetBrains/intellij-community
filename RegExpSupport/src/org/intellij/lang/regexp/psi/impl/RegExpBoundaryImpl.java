@@ -37,10 +37,12 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
         } else if (type == RegExpTT.DOLLAR) {
             return Type.LINE_END;
         } else {
-            assert type == RegExpTT.BOUNDARY;
+            assert type == RegExpTT.BOUNDARY : type;
             final String s = getUnescapedText();
             if (s.equals("\\b")) {
                 return Type.WORD;
+            } else if (s.equals("\\b{g}")) {
+                return Type.UNICODE_EXTENDED_GRAPHEME;
             } else if (s.equals("\\B))")) {
                 return Type.NON_WORD;
             } else if (s.equals("\\A))")) {

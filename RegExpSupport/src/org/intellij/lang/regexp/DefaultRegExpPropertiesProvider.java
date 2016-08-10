@@ -113,6 +113,7 @@ public final class DefaultRegExpPropertiesProvider {
     {"w", "Word character: [a-zA-Z_0-9]"},
     {"W", "Nonword character: [^\\w]"},
     {"b", "Word boundary"},
+    {"b{g}", "Unicode extended grapheme cluster boundary"},
     {"B", "Non-word boundary"},
     {"A", "Beginning of the input"},
     {"G", "End of the previous match"},
