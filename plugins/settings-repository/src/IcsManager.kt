@@ -152,10 +152,18 @@ class IcsManager(dir: Path) {
     }
   }
 
+  fun newStreamProvider() {
+    val application = ApplicationManager.getApplication()
+    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  }
+
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
+    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
+      storage.streamProvider = ApplicationLevelProvider()
+    }
 
     autoSyncManager.registerListeners(application)
 
@@ -178,6 +186,8 @@ class IcsManager(dir: Path) {
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override val enabled: Boolean
       get() = repositoryActive
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
       val fullPath = toRepositoryPath(path, roamingType, null)

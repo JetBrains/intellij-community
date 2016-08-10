@@ -282,7 +282,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       val oldSchemes = schemes
       val schemes = oldSchemes.toMutableList()
       val newSchemesOffset = schemes.size
-      if (provider != null && provider.enabled) {
+      if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
         provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
           catchAndLog(name) {
             val scheme = loadScheme(name, input, schemes, filesToDelete)
@@ -500,7 +500,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val T.fileName: String?
     get() = schemeToInfo.get(this)?.fileNameWithoutExtension
 
-  private fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   private fun readSchemeFromFile(file: VirtualFile, schemes: MutableList<T> = this.schemes): MUTABLE_SCHEME? {
     val fileName = file.name
