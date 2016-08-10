@@ -39,9 +39,7 @@ def (int a, b) = [1, 2]
       launchAction findSingleIntention("Fix all 'Unnecessary 'def''")
       checkResult '''\
 def foo(Object a) {}
-
 boolean baz(def a) {}
-
 Object bar
 def baf
 def (int a, b) = [1, 2]

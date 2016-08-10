@@ -15,6 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
@@ -22,5 +26,10 @@ public class GrRemoveModifierFix extends GrModifierFix {
 
   public GrRemoveModifierFix(@GrModifier.GrModifierConstant String modifier) {
     super(GroovyInspectionBundle.message("unnecessary.modifier.remove", modifier), modifier, false, GrModifierFix.MODIFIER_LIST_CHILD);
+  }
+
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> super.doFix(project, descriptor));
   }
 }
