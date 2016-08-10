@@ -58,7 +58,7 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
           List<ModificationTracker> trackers = new ArrayList<>();
           trackers.add(ArtifactManager.getInstance(myProject).getModificationTracker());
           for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
-            ContainerUtil.addIfNotNull(type.getAllSubstitutionsModificationTracker(myProject), trackers);
+            ContainerUtil.addIfNotNull(trackers, type.getAllSubstitutionsModificationTracker(myProject));
           }
           return CachedValueProvider.Result.create(result, trackers.toArray(new ModificationTracker[trackers.size()]));
         }, false);

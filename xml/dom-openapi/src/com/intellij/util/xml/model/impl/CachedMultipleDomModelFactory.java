@@ -112,7 +112,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
       for (M model: models) {
         final Set<XmlFile> files = model.getConfigFiles();
         for (XmlFile file: files) {
-          ContainerUtil.addIfNotNull(getDomRoot(file), list);
+          ContainerUtil.addIfNotNull(list, getDomRoot(file));
         }
         configFiles.addAll(files);
       }

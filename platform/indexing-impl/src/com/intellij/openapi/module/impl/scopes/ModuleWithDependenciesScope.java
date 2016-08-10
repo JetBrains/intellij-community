@@ -22,8 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.MagicConstant;
@@ -67,7 +65,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
       myModules = ContainerUtil.newTroveSet(modules);
       for (Module m : modules) {
         for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
-          ContainerUtil.addIfNotNull(entry.getFile(), roots);
+          ContainerUtil.addIfNotNull(roots, entry.getFile());
         }
       }
     }

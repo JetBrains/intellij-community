@@ -171,7 +171,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     new ReadAction() {
       protected void run(@NotNull final Result result) {
         for (ArtifactPointer pointer : task.getArtifactPointers()) {
-          ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
+          ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
         }
       }
     }.execute();

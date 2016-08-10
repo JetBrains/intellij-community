@@ -56,7 +56,7 @@ public class ConfigurableExtensionPointUtil {
       }
       else {
 //        dumpConfigurable(configurablesExtensionPoint, ep, configurable);
-        ContainerUtil.addIfNotNull(configurable, result);
+        ContainerUtil.addIfNotNull(result, configurable);
       }
     }
 

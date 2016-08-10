@@ -943,7 +943,7 @@ public class TypeConversionUtil {
             InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
               @Override
               public boolean process(PsiClass psiClass) {
-                ContainerUtil.addIfNotNull(psiClass.getQualifiedName(), set);
+                ContainerUtil.addIfNotNull(set, psiClass.getQualifiedName());
                 return true;
               }
             });

@@ -215,10 +215,10 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips), result);
+      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips), result);
+      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     return result;
   }

@@ -256,7 +256,7 @@ public class DomUtil {
           }
           GenericAttributeValue element = domManager.getDomElement(attribute);
           if (checkHasXml(attribute, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }
@@ -268,7 +268,7 @@ public class DomUtil {
           }
           DomElement element = domManager.getDomElement(subTag);
           if (checkHasXml(subTag, element)) {
-            ContainerUtil.addIfNotNull(element, result);
+            ContainerUtil.addIfNotNull(result, element);
           }
         }
       }

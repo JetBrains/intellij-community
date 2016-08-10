@@ -40,13 +40,13 @@ public class InspectionValidatorUtil {
 
   public static void addDescriptor(@NotNull final Collection<VirtualFile> result, @Nullable final ConfigFile configFile) {
     if (configFile != null) {
-      ContainerUtil.addIfNotNull(configFile.getVirtualFile(), result);
+      ContainerUtil.addIfNotNull(result, configFile.getVirtualFile());
     }
   }
 
   public static void addFile(@NotNull final Collection<VirtualFile> result, @Nullable final PsiFile psiFile) {
     if (psiFile != null) {
-      ContainerUtil.addIfNotNull(psiFile.getVirtualFile(), result);
+      ContainerUtil.addIfNotNull(result, psiFile.getVirtualFile());
     }
   }
 
@@ -58,7 +58,7 @@ public class InspectionValidatorUtil {
     for (VirtualFile file : result) {
       if (index.getSourceRootForFile(file) == null) {
         set.add(file);
-        ContainerUtil.addIfNotNull(index.getModuleForFile(file), modules);
+        ContainerUtil.addIfNotNull(modules, index.getModuleForFile(file));
       }
     }
     if (!set.isEmpty()) {

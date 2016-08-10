@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -226,7 +225,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
 
           for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
-            ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
+            ContainerUtil.addIfNotNull(categories, templateGroupFactory.getFileTemplatesDescriptor());
           }
 
           //noinspection HardCodedStringLiteral

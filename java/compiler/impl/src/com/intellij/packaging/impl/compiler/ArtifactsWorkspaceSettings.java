@@ -52,7 +52,7 @@ public class ArtifactsWorkspaceSettings implements PersistentStateComponent<Arti
     final List<Artifact> result = new ArrayList<>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
     for (String name : myState.myArtifactsToBuild) {
-      ContainerUtil.addIfNotNull(artifactManager.findArtifact(name), result);
+      ContainerUtil.addIfNotNull(result, artifactManager.findArtifact(name));
     }
     return result;
   }

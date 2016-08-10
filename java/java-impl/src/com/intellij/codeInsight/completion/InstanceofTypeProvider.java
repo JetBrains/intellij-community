@@ -21,7 +21,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -50,7 +49,7 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
       if (type instanceof PsiClassType) {
         final PsiClassType classType = (PsiClassType)type;
         if (!classType.isRaw()) {
-          ContainerUtil.addIfNotNull(classType.resolve(), parameterizedTypes);
+          ContainerUtil.addIfNotNull(parameterizedTypes, classType.resolve());
         }
 
         expectedClassTypes.add(classType.rawType());

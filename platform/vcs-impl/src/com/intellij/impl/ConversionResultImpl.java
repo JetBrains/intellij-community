@@ -106,7 +106,7 @@ public class ConversionResultImpl implements ConversionResult {
   private static List<VirtualFile> findVirtualFiles(Collection<File> ioFiles) {
     List<VirtualFile> files = new ArrayList<>();
     for (File file : ioFiles) {
-      ContainerUtil.addIfNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), files);
+      ContainerUtil.addIfNotNull(files, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
     }
     return files;
   }

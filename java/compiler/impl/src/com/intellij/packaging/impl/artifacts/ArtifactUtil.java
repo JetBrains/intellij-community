@@ -422,13 +422,13 @@ public class ArtifactUtil {
         else if (element instanceof FileCopyPackagingElement) {
           final FileCopyPackagingElement fileCopyElement = (FileCopyPackagingElement)element;
           if (firstName.equals(fileCopyElement.getOutputFileName()) && tail.isEmpty()) {
-            ContainerUtil.addIfNotNull(fileCopyElement.findFile(), result);
+            ContainerUtil.addIfNotNull(result, fileCopyElement.findFile());
           }
         }
         else if (element instanceof DirectoryCopyPackagingElement || element instanceof ExtractedDirectoryPackagingElement) {
           final VirtualFile sourceRoot = ((FileOrDirectoryCopyPackagingElement<?>)element).findFile();
           if (sourceRoot != null) {
-            ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+            ContainerUtil.addIfNotNull(result, sourceRoot.findFileByRelativePath(path));
           }
         }
         else if (element instanceof ModuleOutputPackagingElement) {

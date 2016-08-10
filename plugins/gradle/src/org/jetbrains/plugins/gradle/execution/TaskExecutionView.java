@@ -243,7 +243,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
         for (TreePath path : paths) {
           if (tree.isPathSelected(path.getParentPath())) continue;
           ExecutionInfo executionInfo = getSelectedExecution(path);
-          ContainerUtil.addIfNotNull(executionInfo, executionInfos);
+          ContainerUtil.addIfNotNull(executionInfos, executionInfo);
         }
         return executionInfos.isEmpty()
                ? null

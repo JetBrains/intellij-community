@@ -74,10 +74,10 @@ public class InjectionCache {
           if (element instanceof PsiParameter) {
             final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
             if (scope instanceof PsiNamedElement) {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)scope).getName());
             }
             else {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
             }
           }
           else if (element instanceof PsiNamedElement) {
@@ -86,7 +86,7 @@ public class InjectionCache {
               if (!annoClasses.contains(s)) annoClasses.add(s);
             }
             else {
-              ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+              ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
             }
           }
         }

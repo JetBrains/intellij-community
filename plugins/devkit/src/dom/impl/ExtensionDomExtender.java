@@ -331,7 +331,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
     for (Dependency dependency : ideaPlugin.getDependencies()) {
-      ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+      ContainerUtil.addIfNotNull(result, dependency.getStringValue());
     }
 
     if (ideaPlugin.getPluginId() == null) {
@@ -347,9 +347,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
               final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
               if (fileElement != null) {
                 final IdeaPlugin mainPlugin = fileElement.getRootElement();
-                ContainerUtil.addIfNotNull(mainPlugin.getPluginId(), result);
+                ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
                 for (Dependency dependency : mainPlugin.getDependencies()) {
-                  ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+                  ContainerUtil.addIfNotNull(result, dependency.getStringValue());
                 }
               }
             }

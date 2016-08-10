@@ -42,7 +42,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
       rootArea.getExtensionPoint(JpsPluginBean.EP_NAME).addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @Nullable PluginDescriptor pluginDescriptor) {
-          ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
+          ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
 
         @Override
@@ -56,7 +56,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
       extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
         @Override
         public void extensionAdded(@NotNull Object extension, @Nullable PluginDescriptor pluginDescriptor) {
-          ContainerUtil.addIfNotNull(pluginDescriptor, myExternalBuildPlugins);
+          ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
 
         @Override

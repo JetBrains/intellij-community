@@ -211,7 +211,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, files);
     }
-    ContainerUtil.addIfNotNull(myProject.getBaseDir(), result);
+    ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
     return VfsUtilCore.toVirtualFileArray(result);
   }
 

@@ -45,7 +45,7 @@ class GetCompositeCollectionInvocation implements Invocation {
 
     final List<DomElement> list = new ArrayList<>();
     for (final XmlTag subTag : tag.getSubTags()) {
-      ContainerUtil.addIfNotNull(map.get(subTag), list);
+      ContainerUtil.addIfNotNull(list, map.get(subTag));
     }
     return list;
   }

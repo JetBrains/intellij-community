@@ -103,7 +103,7 @@ public abstract class ElementCreator {
 
     List<PsiElement> result = new SmartList<>();
     for (final SmartPsiElementPointer pointer : myCreatedElements[0]) {
-      ContainerUtil.addIfNotNull(pointer.getElement(), result);
+      ContainerUtil.addIfNotNull(result, pointer.getElement());
     }
     return PsiUtilCore.toPsiElementArray(result);
   }

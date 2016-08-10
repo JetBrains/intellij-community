@@ -283,8 +283,8 @@ public class JdkUtil {
     }
 
     final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
-    ContainerUtil.addIfNotNull(classpathFile, filesToDelete);
-    ContainerUtil.addIfNotNull(vmParamsFile, filesToDelete);
+    ContainerUtil.addIfNotNull(filesToDelete, classpathFile);
+    ContainerUtil.addIfNotNull(filesToDelete, vmParamsFile);
   }
 
   private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,

@@ -173,7 +173,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
       for (final Language language : provider.getLanguages()) {
         if (language != dataLanguage && language != provider.getBaseLanguage()) {
-          ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), viewDescriptors);
+          ContainerUtil.addIfNotNull(viewDescriptors, createBaseLanguageStructureView(fileEditor, language));
         }
       }
     }

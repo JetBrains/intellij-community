@@ -206,7 +206,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     for (final T t : toDelete) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
-        ContainerUtil.addIfNotNull(element.getContainingFile(), files);
+        ContainerUtil.addIfNotNull(files, element.getContainingFile());
       }
     }
 

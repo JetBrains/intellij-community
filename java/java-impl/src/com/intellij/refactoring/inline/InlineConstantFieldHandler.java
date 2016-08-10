@@ -122,7 +122,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
           if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
             PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class);
             if (assignmentExpression != null) {
-              ContainerUtil.addIfNotNull(assignmentExpression.getRExpression(), result);
+              ContainerUtil.addIfNotNull(result, assignmentExpression.getRExpression());
             }
           }
         }

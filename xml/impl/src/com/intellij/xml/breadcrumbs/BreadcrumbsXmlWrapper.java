@@ -324,7 +324,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     if (viewProvider == null) return null;
 
     for (final Language language : viewProvider.getLanguages()) {
-      ContainerUtil.addIfNotNull(viewProvider.findElementAt(offset, language), leafs);
+      ContainerUtil.addIfNotNull(leafs, viewProvider.findElementAt(offset, language));
     }
     while (!leafs.isEmpty()) {
       final PsiElement element = leafs.remove();
@@ -335,7 +335,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         return element;
       }
       if (!(element instanceof PsiFile)) {
-        ContainerUtil.addIfNotNull(element.getParent(), leafs);
+        ContainerUtil.addIfNotNull(leafs, element.getParent());
       }
     }
     return null;

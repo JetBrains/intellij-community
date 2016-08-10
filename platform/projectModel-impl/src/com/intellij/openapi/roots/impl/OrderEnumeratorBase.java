@@ -383,7 +383,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       final boolean added =
         handler.addCustomRootsForLibrary(forOrderEntry, type, urls);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
       if (added) {
         return true;
@@ -416,7 +416,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       final List<String> urls = new ArrayList<>();
       final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
 
       if (added) return true;

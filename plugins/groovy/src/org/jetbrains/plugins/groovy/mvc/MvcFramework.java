@@ -245,7 +245,7 @@ public abstract class MvcFramework {
     VirtualFile sdkRoot = getSdkRoot(module);
     if (sdkRoot != null) toExclude.add(VfsUtil.virtualToIoFile(sdkRoot));
 
-    ContainerUtil.addIfNotNull(getCommonPluginsDir(module), toExclude);
+    ContainerUtil.addIfNotNull(toExclude, getCommonPluginsDir(module));
     final VirtualFile appRoot = findAppRoot(module);
     if (appRoot != null) {
       VirtualFile pluginDir = appRoot.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY);

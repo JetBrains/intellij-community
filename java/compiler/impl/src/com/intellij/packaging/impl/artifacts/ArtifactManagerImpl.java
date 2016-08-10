@@ -293,7 +293,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     List<LocalFileSystem.WatchRequest> requestsToRemove = new ArrayList<>();
     for (String path : pathsToRemove) {
       final LocalFileSystem.WatchRequest request = myWatchedOutputs.remove(path);
-      ContainerUtil.addIfNotNull(request, requestsToRemove);
+      ContainerUtil.addIfNotNull(requestsToRemove, request);
     }
 
     Set<LocalFileSystem.WatchRequest> newRequests = LocalFileSystem.getInstance().replaceWatchedRoots(requestsToRemove, toAdd, null);

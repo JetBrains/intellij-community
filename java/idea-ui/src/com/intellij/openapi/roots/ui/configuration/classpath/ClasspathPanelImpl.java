@@ -667,7 +667,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   public void forceInitFromModel() {
     Set<ClasspathTableItem<?>> oldSelection = new HashSet<>();
     for (int i : myEntryTable.getSelectedRows()) {
-      ContainerUtil.addIfNotNull(getItemAt(i), oldSelection);
+      ContainerUtil.addIfNotNull(oldSelection, getItemAt(i));
     }
     myModel.clear();
     myModel.init();

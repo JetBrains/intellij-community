@@ -26,10 +26,7 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -133,7 +130,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       if (!classes.add(aClass)) {
         return;
       }
-      ContainerUtil.addIfNotNull(createPresentationTemplate(aClass), templates);
+      ContainerUtil.addIfNotNull(templates, createPresentationTemplate(aClass));
       final Class superClass = aClass.getSuperclass();
       if (superClass != null) {
         walkSupers(superClass, classes, templates);

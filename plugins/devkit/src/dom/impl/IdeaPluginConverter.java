@@ -25,7 +25,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
@@ -63,7 +62,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     final THashSet<String> result = new THashSet<>();
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       for (PluginModule module : ideaPlugin.getModules()) {
-        ContainerUtil.addIfNotNull(module.getValue().getValue(), result);
+        ContainerUtil.addIfNotNull(result, module.getValue().getValue());
       }
     }
     return result;

@@ -277,7 +277,7 @@ public class MvcModuleStructureUtil {
     List<VirtualFile> rootsToFacetSetup = new ArrayList<>(appRoots.size());
     for (VirtualFile appRoot : appRoots) {
       if (checkValidity(appRoot)) {
-        ContainerUtil.addIfNotNull(addSourceRootsAndLibDirectory(appRoot, structure), actions);
+        ContainerUtil.addIfNotNull(actions, addSourceRootsAndLibDirectory(appRoot, structure));
         rootsToFacetSetup.add(appRoot);
       }
     }

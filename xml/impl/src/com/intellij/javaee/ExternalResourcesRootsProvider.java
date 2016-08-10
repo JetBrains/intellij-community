@@ -69,7 +69,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
 
     String path = FetchExtResourceAction.getExternalResourcesPath();
     VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);
-    ContainerUtil.addIfNotNull(extResources, roots);
+    ContainerUtil.addIfNotNull(roots, extResources);
 
     return roots;
   }

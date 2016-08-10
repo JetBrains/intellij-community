@@ -668,7 +668,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         field.setName(propertyName);
         return GenerateMembersUtil.suggestGetterName(field);
       }));
-      ContainerUtil.addIfNotNull(nameByComment, getters);
+      ContainerUtil.addIfNotNull(getters, nameByComment);
       return ArrayUtil.toStringArray(getters);
     }
     return new String[] {myInitialMethodName};

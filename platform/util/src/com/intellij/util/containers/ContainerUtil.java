@@ -1908,7 +1908,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> List<T> packNullables(@NotNull T... elements) {
     List<T> list = new ArrayList<T>();
     for (T element : elements) {
-      addIfNotNull(element, list);
+      addIfNotNull(list, element);
     }
     return list.isEmpty() ? ContainerUtil.<T>emptyList() : list;
   }
@@ -2623,6 +2623,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
 
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     ContainerUtilRt.addIfNotNull(element, result);
   }

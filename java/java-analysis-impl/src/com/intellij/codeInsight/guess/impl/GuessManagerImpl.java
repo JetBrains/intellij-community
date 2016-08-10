@@ -121,7 +121,7 @@ public class GuessManagerImpl extends GuessManager {
   public PsiType[] guessTypeToCast(PsiExpression expr) { //TODO : make better guess based on control flow
     LinkedHashSet<PsiType> types = new LinkedHashSet<>();
 
-    ContainerUtil.addIfNotNull(getControlFlowExpressionType(expr), types);
+    ContainerUtil.addIfNotNull(types, getControlFlowExpressionType(expr));
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);
 

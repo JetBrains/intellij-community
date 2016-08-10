@@ -56,7 +56,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
         List<RelatedItemLineMarkerInfo> markers = new ArrayList<>();
         RelatedItemLineMarkerProvider relatedItemLineMarkerProvider = (RelatedItemLineMarkerProvider)provider;
         for (PsiElement parent : parents) {
-          ContainerUtil.addIfNotNull(relatedItemLineMarkerProvider.getLineMarkerInfo(parent), markers);
+          ContainerUtil.addIfNotNull(markers, relatedItemLineMarkerProvider.getLineMarkerInfo(parent));
         }
         relatedItemLineMarkerProvider.collectNavigationMarkers(parents, markers, true);
 
@@ -81,7 +81,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
           }
         }
         if (element != null) {
-          ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
+          ContainerUtil.addIfNotNull(addedFiles, element.getContainingFile());
         }
         result.add(item);
       }

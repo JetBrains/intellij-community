@@ -64,7 +64,6 @@ import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -303,7 +302,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         classPath.addAll(PathManager.getUtilClassPath());
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
         params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
         params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(forceMaven2));
