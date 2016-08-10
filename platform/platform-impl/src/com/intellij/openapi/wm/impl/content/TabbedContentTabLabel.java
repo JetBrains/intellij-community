@@ -153,7 +153,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          jLabel.setIcon(isSelected() ? baseIcon : new WatermarkIcon(baseIcon, .5f));
+          jLabel.setIcon(isSelected() || baseIcon == null ? baseIcon : new WatermarkIcon(baseIcon, .5f));
         }
       }
     }
