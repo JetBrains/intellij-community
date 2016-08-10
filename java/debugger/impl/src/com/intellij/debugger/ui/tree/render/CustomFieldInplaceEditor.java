@@ -115,7 +115,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
       children.add(0, Pair.create("", newText));
     }
     else {
-      Integer index = myDescriptor.getUserData(UserExpressionDescriptorImpl.ENUMERATION_INDEX);
+      int index = myDescriptor.getEnumerationIndex();
       children.set(index, Pair.create(children.get(index).first, newText));
     }
 

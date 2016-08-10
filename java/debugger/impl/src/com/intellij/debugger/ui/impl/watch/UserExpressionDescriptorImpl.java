@@ -29,7 +29,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -39,17 +38,22 @@ import com.sun.jdi.Type;
 import org.jetbrains.annotations.Nullable;
 
 public class UserExpressionDescriptorImpl extends EvaluationDescriptor implements UserExpressionDescriptor{
-  public static final Key<Integer> ENUMERATION_INDEX = Key.create("ENUMERATION_INDEX");
-
   private final ValueDescriptorImpl myParentDescriptor;
   private final String myTypeName;
   private final String myName;
+  private final int myEnumerationIndex;
 
-  public UserExpressionDescriptorImpl(Project project, ValueDescriptorImpl parent, String typeName, String name, TextWithImports text) {
+  public UserExpressionDescriptorImpl(Project project,
+                                      ValueDescriptorImpl parent,
+                                      String typeName,
+                                      String name,
+                                      TextWithImports text,
+                                      int enumerationIndex) {
     super(text, project);
     myParentDescriptor = parent;
     myTypeName = typeName;
     myName = name;
+    myEnumerationIndex = enumerationIndex;
   }
 
   public String getName() {
@@ -77,5 +81,9 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
 
   protected EvaluationContextImpl getEvaluationContext(final EvaluationContextImpl evaluationContext) {
     return evaluationContext.createEvaluationContext(myParentDescriptor.getValue());
+  }
+
+  public int getEnumerationIndex() {
+    return myEnumerationIndex;
   }
 }

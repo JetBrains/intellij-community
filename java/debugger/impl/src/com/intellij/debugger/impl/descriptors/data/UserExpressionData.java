@@ -38,11 +38,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
   }
 
   protected UserExpressionDescriptorImpl createDescriptorImpl(@NotNull Project project) {
-    UserExpressionDescriptorImpl descriptor = new UserExpressionDescriptorImpl(project, myParentDescriptor, myTypeName, myName, myText);
-    if (myEnumerationIndex > -1) {
-      descriptor.putUserData(UserExpressionDescriptorImpl.ENUMERATION_INDEX, myEnumerationIndex);
-    }
-    return descriptor;
+    return new UserExpressionDescriptorImpl(project, myParentDescriptor, myTypeName, myName, myText, myEnumerationIndex);
   }
 
   public boolean equals(Object object) {

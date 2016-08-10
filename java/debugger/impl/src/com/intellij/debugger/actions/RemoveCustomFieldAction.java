@@ -35,16 +35,13 @@ public class RemoveCustomFieldAction extends EditCustomFieldAction {
     UserExpressionDescriptorImpl descriptor = (UserExpressionDescriptorImpl)((JavaValue)node.getValueContainer()).getDescriptor();
     EnumerationChildrenRenderer enumerationChildrenRenderer = getParentEnumerationRenderer(descriptor);
     if (enumerationChildrenRenderer != null) {
-      Integer index = descriptor.getUserData(UserExpressionDescriptorImpl.ENUMERATION_INDEX);
-      if (index != null) {
-        enumerationChildrenRenderer.getChildren().remove(index.intValue());
-        TreeNode parent = node.getParent();
-        int indexToSelect = parent.getIndex(node) + 1;
-        if (indexToSelect < parent.getChildCount()) {
-          TreeUtil.selectNode(node.getTree(), parent.getChildAt(indexToSelect));
-        }
-        XDebuggerUtilImpl.rebuildTreeAndViews(node.getTree());
+      enumerationChildrenRenderer.getChildren().remove(descriptor.getEnumerationIndex());
+      TreeNode parent = node.getParent();
+      int indexToSelect = parent.getIndex(node) + 1;
+      if (indexToSelect < parent.getChildCount()) {
+        TreeUtil.selectNode(node.getTree(), parent.getChildAt(indexToSelect));
       }
+      XDebuggerUtilImpl.rebuildTreeAndViews(node.getTree());
     }
   }
 }
