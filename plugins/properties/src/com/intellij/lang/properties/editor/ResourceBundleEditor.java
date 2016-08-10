@@ -38,6 +38,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -131,6 +132,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
+  private ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -223,6 +225,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         onSelectionChanged(event);
       }
     });
+    myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
   }
 
   public ResourceBundle getResourceBundle() {
@@ -534,7 +537,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
     }
-    undoManager.flushCurrentCommandMerger();
   }
 
   private void installPropertiesChangeListeners() {
@@ -686,6 +688,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     return myDataProviderPanel;
   }
 
+  public StructureViewComponent getStructureViewComponent() {
+    return myStructureViewComponent;
+  }
+
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       return new SelectInContext(){
@@ -823,7 +829,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
+    return myHighlighter;
   }
 
   @Override

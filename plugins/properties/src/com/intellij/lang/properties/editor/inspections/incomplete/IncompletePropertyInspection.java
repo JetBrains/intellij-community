@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author Dmitry Batkovich
@@ -75,15 +76,17 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ResourceBundleEditorProblemDescriptor[] checkPropertyGroup(@NotNull List<IProperty> properties, @NotNull ResourceBundle resourceBundle) {
-    return !isPropertyComplete(properties, resourceBundle)
-           ? new ResourceBundleEditorProblemDescriptor[] {new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                                    PropertiesBundle.message("incomplete.property.inspection.description",
-                                                                                           properties.get(0).getName()),
-                                                                                                    new IgnoreLocalesQuickFix(properties.get(0), resourceBundle))}
-           : null;
+  public Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
+    return properties -> !isPropertyComplete(properties, resourceBundle)
+    ? new ResourceBundleEditorProblemDescriptor[]{new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                            PropertiesBundle.message(
+                                                                                              "incomplete.property.inspection.description",
+                                                                                              properties[0].getName()),
+                                                                                            new IgnoreLocalesQuickFix(properties[0],
+                                                                                                                      resourceBundle))}
+    : null;
   }
 
   @NotNull
@@ -145,11 +148,11 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   public boolean isPropertyComplete(final String key, final ResourceBundle resourceBundle) {
-    return isPropertyComplete(ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), file -> file.findPropertyByKey(key)), resourceBundle);
+    return isPropertyComplete(resourceBundle.getPropertiesFiles().stream().map(f -> f.findPropertyByKey(key)).toArray(IProperty[]::new), resourceBundle);
   }
 
-  private boolean isPropertyComplete(final List<IProperty> properties, final ResourceBundle resourceBundle) {
-    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, property -> property.getPropertiesFile());
+  private boolean isPropertyComplete(final IProperty[] properties, final ResourceBundle resourceBundle) {
+    final Set<PropertiesFile> existed = ContainerUtil.map2Set(properties, IProperty::getPropertiesFile);
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!existed.contains(file) && !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(file))) {
         return false;
