@@ -18,14 +18,15 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -36,19 +37,21 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSettingsPage;
-import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class SimpleEditorPreview implements PreviewPanel {
   private final ColorSettingsPage myPage;
@@ -105,22 +108,16 @@ public class SimpleEditorPreview implements PreviewPanel {
   }
 
   public void setDemoText(final String text) {
-    UIUtil.invokeAndWaitIfNeeded( new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            myTextIsChanging = true;
-            myHighlightData.clear();
-            String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
-            myEditor.getSelectionModel().removeSelection();
-            myEditor.getDocument().setText(stripped);
-          } finally {
-            myTextIsChanging = false;
-          }
-        });
-      }
-    });
+    try {
+      myTextIsChanging = true;
+      myHighlightData.clear();
+      String stripped = myHighlightsExtractor.extractHighlights(text, myHighlightData);
+      myEditor.getSelectionModel().removeSelection();
+      myEditor.getDocument().setText(stripped);
+    }
+    finally {
+      myTextIsChanging = false;
+    }
   }
 
   private void addMouseMotionListener(final Editor view,
@@ -154,7 +151,10 @@ public class SimpleEditorPreview implements PreviewPanel {
           ClickNavigator.setCursor(editor, Cursor.HAND_CURSOR);
         }
         else {
-          myDispatcher.getMulticaster().selectionInPreviewChanged(highlightData.getHighlightType());
+          myDispatcher.getMulticaster().selectionInPreviewChanged(
+            RainbowHighlighter.isRainbowTempKey(highlightData.getHighlightKey())
+            ? RainbowHighlighter.RAINBOW_TYPE
+            : highlightData.getHighlightType());
         }
         return;
       }
@@ -225,33 +225,36 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                                myPage.getHighlighter(), true,
                                                                myBlinkingAlarm, BLINK_COUNT, myPage);
 
-      scrollHighlightInView(highlights, myEditor);
+      scrollHighlightInView(highlights);
     }
   }
 
-  private static void scrollHighlightInView(final List<HighlightData> highlightDatas, final Editor editor) {
+  void scrollHighlightInView(@Nullable final List<HighlightData> highlightDatas) {
+    if (highlightDatas == null) return;
+
     boolean needScroll = true;
     int minOffset = Integer.MAX_VALUE;
     for (HighlightData data : highlightDatas) {
-      if (isOffsetVisible(editor, data.getStartOffset())) {
+      if (isOffsetVisible(data.getStartOffset())) {
         needScroll = false;
         break;
       }
       minOffset = Math.min(minOffset, data.getStartOffset());
     }
     if (needScroll && minOffset != Integer.MAX_VALUE) {
-      LogicalPosition pos = editor.offsetToLogicalPosition(minOffset);
-      editor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
+      LogicalPosition pos = myEditor.offsetToLogicalPosition(minOffset);
+      myEditor.getScrollingModel().scrollTo(pos, ScrollType.MAKE_VISIBLE);
     }
   }
 
-  private static boolean isOffsetVisible(final Editor editor, final int startOffset) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
-    return point.y >= visibleArea.y && point.y < (visibleArea.y + visibleArea.height);
+  private boolean isOffsetVisible(final int startOffset) {
+    return myEditor
+      .getScrollingModel()
+      .getVisibleArea()
+      .contains(myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(startOffset)));
   }
 
-  private void stopBlinking() {
+  public void stopBlinking() {
     myBlinkingAlarm.cancelAllRequests();
   }
 

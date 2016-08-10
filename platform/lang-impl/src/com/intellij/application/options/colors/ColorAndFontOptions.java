@@ -538,26 +538,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     //todo: single point configuration?
-    //if (provider instanceof RainbowColorSettingsPage) {
-    //  descriptions.add(new RainbowAttributeDescriptor(group,
-    //                                                  ApplicationBundle.message("rainbow.option.panel.display.name"),
-    //                                                  scheme,
-    //                                                  scheme.getInitRainbowState(),
-    //                                                  scheme.getCurrentRainbowState()));
-    //}
+    if (provider instanceof RainbowColorSettingsPage) {
+      descriptions.add(new RainbowAttributeDescriptor(group,
+                                                      ApplicationBundle.message("rainbow.option.panel.display.name"),
+                                                      scheme,
+                                                      scheme.getInitRainbowState(),
+                                                      scheme.getCurrentRainbowState()));
+    }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
-      if (provider instanceof RainbowColorSettingsPage
-          && ((RainbowColorSettingsPage)provider).isRainbowType(descriptor.getKey())) {
-        //todo: joined sub-descriptor
-        descriptions.add(new RainbowAttributeDescriptor(group,
-                                                        descriptor.getDisplayName()
-                                                        + EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR
-                                                        + ApplicationBundle.message("rainbow.option.panel.display.name"),
-                                                        scheme,
-                                                        scheme.getInitRainbowState(),
-                                                        scheme.getCurrentRainbowState()));
-      }
+    //  if (provider instanceof RainbowColorSettingsPage
+    //      && ((RainbowColorSettingsPage)provider).isRainbowType(descriptor.getKey())) {
+    //    //todo: joined sub-descriptor?
+    //    descriptions.add(new RainbowAttributeDescriptor(group,
+    //                                                    descriptor.getDisplayName()
+    //                                                    + EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR
+    //                                                    + ApplicationBundle.message("rainbow.option.panel.display.name"),
+    //                                                    scheme,
+    //                                                    scheme.getInitRainbowState(),
+    //                                                    scheme.getCurrentRainbowState()));
+    //  }
     }
 
     ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();

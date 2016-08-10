@@ -17,14 +17,17 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +71,13 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
   public void resetDefault() {
     myActive = null;
     if (getComponentCount() != 0) {
+      final PaintLocker locker = new PaintLocker(this);
       try {
-        setIgnoreRepaint(true);
         setPreferredSize(getSize());
         remove(0);
       }
       finally {
-        setIgnoreRepaint(false);
-        revalidate();
+        locker.release();
       }
     }
   }
@@ -91,9 +93,8 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
     }
 
     if (getComponentCount() == 0 || myActive != getComponent(0)) {
-      boolean ignoreRepaint = getIgnoreRepaint();
+      final PaintLocker locker = new PaintLocker(this);
       try {
-        setIgnoreRepaint(true);
         if (getComponentCount() != 0) {
           remove(0);
         }
@@ -101,8 +102,7 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
         add((JPanel)myActive);
       }
       finally {
-        setIgnoreRepaint(ignoreRepaint);
-        revalidate();
+        locker.release();
       }
     }
     myActive.reset(descriptor);
@@ -110,12 +110,14 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
   }
 
   private void addRainbowHighlighting(@NotNull DocumentEx document,
-                                      @NotNull List<HighlightData> showLineData,
+                                      @Nullable List<HighlightData> showLineData,
                                       @NotNull List<HighlightData> data,
                                       @NotNull RainbowHighlighter rainbowHighlighter,
                                       @NotNull List<TextAttributesKey> rainbowTempKeys) {
     if (!rainbowTempKeys.isEmpty()) {
-      List<HighlightData> newData = new ArrayList<HighlightData>(showLineData);
+      List<HighlightData> newData = new ArrayList<HighlightData>();
+      if (showLineData != null) newData.addAll(showLineData);
+
       HashMap<String, Integer> id2index = new HashMap<String, Integer>();
 
       for (HighlightData d : data) {
@@ -163,31 +165,42 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
   protected void updatePreviewPanel(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     if (!(myPreviewPanel instanceof SimpleEditorPreview)) return;
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;
+      String demoText = (myPage instanceof RainbowColorSettingsPage
+                         && descriptor instanceof RainbowAttributeDescriptor)
+                        ? ((RainbowColorSettingsPage)myPage).getRainbowDemoText()
+                        : myPage.getDemoText();
+      List<HighlightData> showLineData = null;
 
-    SimpleEditorPreview simpleEditorPreview = (SimpleEditorPreview)myPreviewPanel;
-
-    if (myActive == myRainbowPanel
-        && myPage instanceof RainbowColorSettingsPage
-        && descriptor instanceof RainbowAttributeDescriptor) {
-      if (myRainbowPanel.myGlobalState.isRainbowOn) {
+      if (myPage instanceof RainbowColorSettingsPage && myRainbowPanel.myGlobalState.isRainbowOn) {
         RainbowHighlighter highlighter = new RainbowHighlighter(descriptor.getScheme());
         List<TextAttributesKey> tempKeys = highlighter.getRainbowTempKeys();
-        Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
-        simpleEditorPreview.setDemoText(demo.first + "\n" + ((RainbowColorSettingsPage)myPage).getRainbowDemoText());
-        addRainbowHighlighting(simpleEditorPreview.getEditor().getDocument(),
-                               demo.second,
+        EditorEx editor = simpleEditorPreview.getEditor();
+        if (myActive == myRainbowPanel) {
+          Pair<String, List<HighlightData>> demo = getColorDemoLine(highlighter, tempKeys);
+          simpleEditorPreview.setDemoText(demo.first + "\n" + demoText);
+          showLineData = demo.second;
+        }
+        else {
+          simpleEditorPreview.setDemoText(demoText);
+        }
+        addRainbowHighlighting(editor.getDocument(),
+                               showLineData,
                                simpleEditorPreview.getHighlightDataForExtension(),
                                highlighter,
                                tempKeys);
       }
       else {
-        simpleEditorPreview.setDemoText(((RainbowColorSettingsPage)myPage).getRainbowDemoText());
+        simpleEditorPreview.setDemoText(demoText);
         removeRainbowHighlighting(simpleEditorPreview.getHighlightDataForExtension());
       }
-    }
-    else {
-      simpleEditorPreview.setDemoText(myPage.getDemoText());
-    }
+
+      simpleEditorPreview.updateView();
+      if (descriptor instanceof RainbowAttributeDescriptor) {
+        simpleEditorPreview.scrollHighlightInView(showLineData);
+      }
+    }));
   }
 
   @NotNull
@@ -216,5 +229,22 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
   public void addListener(@NotNull Listener listener) {
     myRainbowPanel.addListener(listener);
     myColorAndFontPanel.addListener(listener);
+  }
+
+  private static class PaintLocker {
+    private Container myPaintHolder;
+    private boolean myPaintState;
+
+    public PaintLocker(@NotNull JComponent component) {
+      myPaintHolder = component.getParent();
+      myPaintState = myPaintHolder.getIgnoreRepaint();
+      myPaintHolder.setIgnoreRepaint(true);
+    }
+
+    public void release() {
+      myPaintHolder.validate();
+      myPaintHolder.setIgnoreRepaint(myPaintState);
+      myPaintHolder.repaint();
+    }
   }
 }
