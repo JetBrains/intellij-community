@@ -86,7 +86,15 @@ public class PyPIPackageUtil {
       LOG.error("Cannot find \"packages\". " + e.getMessage());
     }
   }
+
+  /**
+   * Prevents simultaneous updates of {@link PyPackageService#PY_PACKAGES}
+   * because the corresponding response contains tons of data and multiple
+   * queries at the same time can cause memory issues. 
+   */
+  private final Object myPyPIPackageCacheUpdateLock = new Object();
   
+
   private PyPIPackageUtil() {
     try {
       final DefaultXmlRpcTransportFactory factory = new PyPIXmlRpcTransportFactory(new URL(PYPI_URL));
@@ -414,9 +422,11 @@ public class PyPIPackageUtil {
   @NotNull
   public Map<String, String> loadAndGetPackages() throws IOException {
     Map<String, String> pyPIPackages = getPyPIPackages();
-    if (pyPIPackages.isEmpty()) {
-      updatePyPICache(PyPackageService.getInstance());
-      pyPIPackages = getPyPIPackages();
+    synchronized (myPyPIPackageCacheUpdateLock) {
+      if (pyPIPackages.isEmpty()) {
+        updatePyPICache(PyPackageService.getInstance());
+        pyPIPackages = getPyPIPackages();
+      }
     }
     return pyPIPackages;
   }
