@@ -17,29 +17,29 @@ package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.AddArrayCreationExpressionInspection;
+import com.siyeh.ig.style.UnnecessaryConstantArrayCreationExpressionInspection;
 
-public class AddArrayCreationExpressionFixTest extends IGQuickFixesTestCase {
+public class UnnecessaryConstantArrayCreationExpressionFixTest extends IGQuickFixesTestCase {
 
-    public void testPrimitive() { doTest("int[]"); }
-    public void testGeneric() { doTest("java.util.Map[][]"); }
-    public void testNotAnArray() { assertQuickfixNotAvailable(); }
+  public void testPrimitive() { doTest("int[]"); }
+  public void testTwoDimension() { doTest("Map[][]"); }
+  public void testInitializerWithoutNew() { assertQuickfixNotAvailable(); }
 
   @Override
   protected void doTest(String hint) {
-    super.doTest(InspectionGadgetsBundle.message("add.array.creation.expression.descriptor", hint));
+    super.doTest(InspectionGadgetsBundle.message("unnecessary.constant.array.creation.expression.quickfix", hint));
   }
 
   @Override
   protected void assertQuickfixNotAvailable() {
-    String message = InspectionGadgetsBundle.message("add.array.creation.expression.descriptor", "@");
+    String message = InspectionGadgetsBundle.message("unnecessary.constant.array.creation.expression.quickfix", "@");
     super.assertQuickfixNotAvailable(message.substring(0, message.indexOf('@')));
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new AddArrayCreationExpressionInspection());
-    myRelativePath = "style/array_creation_expression";
+    myFixture.enableInspections(new UnnecessaryConstantArrayCreationExpressionInspection());
+    myRelativePath = "style/unnecessary_constant_array_creation_expression";
   }
 }

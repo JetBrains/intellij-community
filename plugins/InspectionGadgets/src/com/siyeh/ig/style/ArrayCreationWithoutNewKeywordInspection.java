@@ -28,18 +28,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddArrayCreationExpressionInspection extends BaseInspection {
+public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("add.array.creation.expression.name");
+    return InspectionGadgetsBundle.message("array.creation.without.new.keyword.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("add.array.creation.expression.descriptor", infos);
+    return getDisplayName();
   }
 
   @Override
@@ -83,14 +83,14 @@ public class AddArrayCreationExpressionInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("add.array.creation.expression.descriptor", myType);
+      return InspectionGadgetsBundle.message("array.creation.without.new.keyword.quickfix", myType);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("add.array.creation.expression.name");
+      return InspectionGadgetsBundle.message("array.creation.without.new.keyword.family.quickfix");
     }
 
     @Override

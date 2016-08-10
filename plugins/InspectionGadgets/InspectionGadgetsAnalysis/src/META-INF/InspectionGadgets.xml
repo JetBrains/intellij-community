@@ -2547,10 +2547,10 @@
                      key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.annotation.SingleElementAnnotationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AddArrayCreationExpression" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="add.array.creation.expression.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="ArrayCreationWithoutNewKeyword" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="array.creation.without.new.keyword.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.AddArrayCreationExpressionInspection"/>
+                     implementationClass="com.siyeh.ig.style.ArrayCreationWithoutNewKeywordInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualityOperatorComparesObjects" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equality.operator.compares.objects.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
