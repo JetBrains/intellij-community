@@ -37,10 +37,10 @@ public class RemoveCustomFieldAction extends EditCustomFieldAction {
     if (enumerationChildrenRenderer != null) {
       enumerationChildrenRenderer.getChildren().remove(descriptor.getEnumerationIndex());
       TreeNode parent = node.getParent();
-      int indexToSelect = parent.getIndex(node) + 1;
-      if (indexToSelect < parent.getChildCount()) {
-        TreeUtil.selectNode(node.getTree(), parent.getChildAt(indexToSelect));
-      }
+      int index = parent.getIndex(node);
+      int indexToSelect = index + 1 < parent.getChildCount() ? index + 1 : index - 1;
+      TreeUtil.selectNode(node.getTree(), indexToSelect >= 0 ? parent.getChildAt(indexToSelect) : parent);
+
       XDebuggerUtilImpl.rebuildTreeAndViews(node.getTree());
     }
   }
