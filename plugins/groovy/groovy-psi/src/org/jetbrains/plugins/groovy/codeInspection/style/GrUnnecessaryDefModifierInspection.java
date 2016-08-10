@@ -48,19 +48,31 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         if (!(list instanceof GrModifierList)) return;
 
         PsiElement parent = list.getParent();
-        if (!(parent instanceof GrMethod) && !(parent instanceof GrParameter) && !(parent instanceof GrVariableDeclaration)) return;
+        if (!isModifierUnnecessary(parent)) return;
 
-        if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
-            parent instanceof GrVariable && ((GrVariable)parent).getTypeElementGroovy() != null ||
-            parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTypeElementGroovy() != null) {
-          holder.registerProblem(
-            modifier,
-            GroovyInspectionBundle.message("unnecessary.modifier.description", GrModifier.DEF),
-            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            FIX
-          );
-        }
+        holder.registerProblem(
+          modifier,
+          GroovyInspectionBundle.message("unnecessary.modifier.description", GrModifier.DEF),
+          ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          FIX
+        );
       }
     };
+  }
+
+  private static boolean isModifierUnnecessary(PsiElement modifierListOwner) {
+    if (modifierListOwner instanceof GrMethod) {
+      return ((GrMethod)modifierListOwner).getReturnTypeElementGroovy() != null || ((GrMethod)modifierListOwner).isConstructor();
+    }
+    else if (modifierListOwner instanceof GrParameter) {
+      return true;
+    }
+    else if (modifierListOwner instanceof GrVariable) {
+      return ((GrVariable)modifierListOwner).getTypeElementGroovy() != null;
+    }
+    else if (modifierListOwner instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)modifierListOwner).getTypeElementGroovy() != null;
+    }
+    return false;
   }
 }
