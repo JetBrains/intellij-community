@@ -1,5 +1,7 @@
 package com.intellij.openapi.diff.impl.patch.lib.base85xjava;
 
+import com.intellij.util.containers.hash.HashMap;
+
 /**
  * The main Base85x-java program
  * 
@@ -8,28 +10,48 @@ package com.intellij.openapi.diff.impl.patch.lib.base85xjava;
  */
 public class Base85x {
 
-	public static byte[] alphabet = { '$', '%', '(', ')', '*', '+', ',', '-', '.', '/',
-								   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-								   ':', ';', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F',
-								   'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-								   'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-								   '[', ']', '^', '_', '`', 'a', 'b', 'c', 'd', 'e',
-								   'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-								   'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-								   'z', '{', '|', '}', '~' }; 
-	
+    private static final char[] ALPHABET_85 = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+            'U', 'V', 'W', 'X', 'Y', 'Z',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+            'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+            'u', 'v', 'w', 'x', 'y', 'z',
+            '!', '#', '$', '%', '&', '(', ')', '*', '+', '-',
+            ';', '<', '=', '>', '?', '@', '^', '_', '`', '{',
+            '|', '}', '~'
+    };
+    
+    private static HashMap<Character, Integer> INDEX_OF_MAP = initIndexMap();
 
-	public static byte[] encode(String data) {
+        private static HashMap<Character, Integer> initIndexMap() {
+          HashMap<Character, Integer> result = new HashMap<>(ALPHABET_85.length);
+          for (int i = 0; i < ALPHABET_85.length; i++) {
+            result.put(ALPHABET_85[i], i);
+          }
+          return result;
+        }
+
+        public static char getCharAt(int i) {
+		return ALPHABET_85[i];
+        }
+
+        public static int getIndexOf(char c) {
+		return INDEX_OF_MAP.get(c);
+        }
+        
+	public static char[] encode(String data) {
 		return Base85x.encode(data.getBytes());
 	}
 	
 	public static byte[] decode(String data) {
-		return Base85x.decode(data.getBytes());
+		return Base85x.decode(data.toCharArray());
 	}
 	
-	public static byte[] encode(byte[] data) {
+	public static char[] encode(byte[] data) {
 		int length = data.length;
-		byte[] out = new byte[(length/4)*5 + ((length%4 != 0) ? length%4+1 : 0)];
+		char[] out = new char[(length/4)*5 + ((length%4 != 0) ? length%4+1 : 0)];
 		int k = 0;
 		// 64 bit integer
 		long b;
@@ -57,11 +79,11 @@ public class Base85x {
 			b /= 85;
 			c1 = (int) (b%85);
 
-			out[k] = alphabet[c1]; k++;
-			out[k] = alphabet[c2]; k++;
-			out[k] = alphabet[c3]; k++;
-			out[k] = alphabet[c4]; k++;
-			out[k] = alphabet[c5]; k++;
+			out[k] = getCharAt(c1); k++;
+			out[k] = getCharAt(c2); k++;
+			out[k] = getCharAt(c3); k++;
+			out[k] = getCharAt(c4); k++;
+			out[k] = getCharAt(c5); k++;
 		}
 		if ((rest = length%4) != 0) {
 			int j;
@@ -69,7 +91,7 @@ public class Base85x {
 			for (j = 0; j < rest; j++) {
 				block[j] = data[i+j]; 
 			}
-			byte[] out_rest = Base85x.encode(block); 
+			char[] out_rest = Base85x.encode(block); 
 			for (j = 0; j < rest+1; j++) {
 				out[k] = out_rest[j];
 				k++;
@@ -78,7 +100,7 @@ public class Base85x {
 		return out;
 	}
 	
-	public static byte[] decode(byte[] data) {
+	public static byte[] decode(char[] data) {
 		int length = data.length;
 		byte[] out = new byte[(length/5)*4 + ((length%5 != 0) ? length%5-1 : 0)];
 		int k = 0;
@@ -88,17 +110,11 @@ public class Base85x {
 		int b = 0;
 		
 		for (i = 0; i+5 <= length; i += 5) {
-			b1 = (int) data[i+0] & 0xFF;
-			b2 = (int) data[i+1] & 0xFF;
-			b3 = (int) data[i+2] & 0xFF;
-			b4 = (int) data[i+3] & 0xFF;
-			b5 = (int) data[i+4] & 0xFF;
-						
-			b1 = ((b1 >= 93) ? b1-42 : ((b1 >= 63) ? b1-41 : ((b1 >= 40) ? b1-38 : b1-36)));
-			b2 = ((b2 >= 93) ? b2-42 : ((b2 >= 63) ? b2-41 : ((b2 >= 40) ? b2-38 : b2-36)));
-			b3 = ((b3 >= 93) ? b3-42 : ((b3 >= 63) ? b3-41 : ((b3 >= 40) ? b3-38 : b3-36)));
-			b4 = ((b4 >= 93) ? b4-42 : ((b4 >= 63) ? b4-41 : ((b4 >= 40) ? b4-38 : b4-36)));
-			b5 = ((b5 >= 93) ? b5-42 : ((b5 >= 63) ? b5-41 : ((b5 >= 40) ? b5-38 : b5-36)));
+			b1 = getIndexOf(data[i]);
+			b2 = getIndexOf(data[i + 1]);
+			b3 = getIndexOf(data[i + 2]);
+			b4 = getIndexOf(data[i + 3]);
+			b5 = getIndexOf(data[i + 4]);
 
 			// overflow into negative numbers
 			// is normal and does not do any damage because
@@ -113,7 +129,7 @@ public class Base85x {
 				
 		if ((rest = length%5) != 0) {
 			int j;
-			byte[] block = {'~', '~', '~', '~', '~'};
+			char[] block = {'~', '~', '~', '~', '~'};
 			for (j = 0; j < rest; j++) {
 				block[j] = data[i+j];
 			}
