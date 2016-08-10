@@ -57,7 +57,8 @@ import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -339,6 +340,7 @@ public class CompilerManagerImpl extends CompilerManager {
   public Collection<ClassObject> compileJavaCode(List<String> options,
                                                  Collection<File> platformCp,
                                                  Collection<File> classpath,
+                                                 Collection<File> modulePath,
                                                  Collection<File> sourcePath,
                                                  Collection<File> files,
                                                  File outputDir) throws IOException, CompilationException {
@@ -376,7 +378,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final ExternalJavacManager javacManager = getJavacManager();
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.<String>emptyList(), options, platformCp, classpath, sourcePath, files, outs, diagnostic, outputCollector,
+      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
       new JavacCompilerTool(), CanceledStatus.NULL
     );
 

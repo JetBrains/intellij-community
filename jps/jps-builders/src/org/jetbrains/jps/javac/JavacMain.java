@@ -53,6 +53,7 @@ public class JavacMain {
                                 final Collection<File> sources,
                                 Collection<File> classpath,
                                 Collection<File> platformClasspath,
+                                Collection<File> modulePath,
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
@@ -128,7 +129,20 @@ public class JavacMain {
           return false;
         }
       }
-      
+
+      if (!modulePath.isEmpty()) {
+        final JavaFileManager.Location modulePathLocation = StandardLocation.locationFor("MODULE_PATH");
+        if (modulePathLocation != null) { // if this option is supported
+          try {
+            fileManager.setLocation(modulePathLocation, modulePath);
+          }
+          catch (IOException e) {
+            fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+            return false;
+          }
+        }
+      }
+
       try {
         // ensure the source path is set;
         // otherwise, if not set, javac attempts to search both classes and sources in classpath;

@@ -297,6 +297,7 @@ public abstract class CompilerManager {
   public abstract Collection<ClassObject> compileJavaCode(List<String> options,
                                                           Collection<File> platformCp,
                                                           Collection<File> classpath,
+                                                          Collection<File> modulePath,
                                                           Collection<File> sourcePath,
                                                           Collection<File> files,
                                                           File outputDir) throws IOException, CompilationException;

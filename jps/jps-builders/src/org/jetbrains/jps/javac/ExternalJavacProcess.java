@@ -35,7 +35,8 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -146,6 +147,7 @@ public class ExternalJavacProcess {
                                                  Collection<File> files,
                                                  Collection<File> classpath,
                                                  Collection<File> platformCp,
+                                                 Collection<File> modulePath,
                                                  Collection<File> sourcePath,
                                                  Map<File, Set<File>> outs,
                                                  final CanceledStatus canceledStatus) {
@@ -184,8 +186,9 @@ public class ExternalJavacProcess {
 
     try {
       JavaCompilingTool tool = getCompilingTool();
-      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus,
-                                           tool);
+      final boolean rc = JavacMain.compile(
+        options, files, classpath, platformCp, modulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool
+      );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
     catch (Throwable e) {
@@ -230,6 +233,7 @@ public class ExternalJavacProcess {
               final List<File> cp = toFiles(request.getClasspathList());
               final List<File> platformCp = toFiles(request.getPlatformClasspathList());
               final List<File> srcPath = toFiles(request.getSourcepathList());
+              final List<File> modulePath = toFiles(request.getModulePathList());
 
               final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
               for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
@@ -247,7 +251,7 @@ public class ExternalJavacProcess {
                 public void run() {
                   try {
                     context.channel().writeAndFlush(
-                      compile(context, sessionId, options, files, cp, platformCp, srcPath, outs, cancelHandler)
+                      compile(context, sessionId, options, files, cp, platformCp, modulePath, srcPath, outs, cancelHandler)
                     ).awaitUninterruptibly();
                   }
                   finally {
