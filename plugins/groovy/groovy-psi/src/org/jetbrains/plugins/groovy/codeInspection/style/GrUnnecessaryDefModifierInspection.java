@@ -20,8 +20,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -33,9 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool {
 
-  private static final GrModifierFix FIX = new GrModifierFix(
-    "Remove 'def'", GrModifier.DEF, false, GrModifierFix.MODIFIER_LIST_CHILD
-  );
+  private static final GrModifierFix FIX = new GrRemoveModifierFix(GrModifier.DEF);
 
   @NotNull
   @Override
@@ -52,7 +52,12 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
             parent instanceof GrVariable && ((GrVariable)parent).getTypeElementGroovy() != null ||
             parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTypeElementGroovy() != null) {
-          holder.registerProblem(modifier, "'def' is not necessary", ProblemHighlightType.LIKE_UNUSED_SYMBOL, FIX);
+          holder.registerProblem(
+            modifier,
+            GroovyInspectionBundle.message("unnecessary.modifier.description", GrModifier.DEF),
+            ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            FIX
+          );
         }
       }
     });
