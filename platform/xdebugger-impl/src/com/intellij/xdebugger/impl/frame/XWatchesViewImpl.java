@@ -101,9 +101,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       }
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
-    final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(getTree()).disableUpDownActions();
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(getTree());
 
     decorator.setAddAction(button -> executeAction(XDebuggerActions.XNEW_WATCH));
+    decorator.setAddIcon(AllIcons.Debugger.NewWatch);
     decorator.setAddActionName(actionManager.getAction(XDebuggerActions.XNEW_WATCH).getTemplatePresentation().getText());
 
     AnAction removeWatchAction = actionManager.getAction(XDebuggerActions.XREMOVE_WATCH);
@@ -142,6 +143,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       if (nodes.size() != 1) return false;
       return myRootNode.getIndex(nodes.get(0)) > 0;
     });
+    decorator.setMoveUpActionName("Move Watch Up");
     decorator.setMoveDownAction(button -> {
       List<? extends WatchNode> nodes = XWatchesTreeActionBase.getSelectedNodes(getTree(), WatchNode.class);
       assert nodes.size() == 1;
@@ -153,6 +155,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       if (nodes.size() != 1) return false;
       return myRootNode.getIndex(nodes.get(0)) < myRootNode.getWatchChildren().size() - 1;
     });
+    decorator.setMoveDownActionName("Move Watch Down");
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR,
                                                    SystemInfo.isMac ? 1 : 0, 0,
                                                    SystemInfo.isMac ? 0 : 1, 0);
