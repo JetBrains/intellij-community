@@ -65,7 +65,7 @@ import java.util.Map;
 public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
-  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = count -> new GrAnnotation[count];
+  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = GrAnnotation[]::new;
 
   private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
 
@@ -153,6 +153,12 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return result.toArray(new PsiElement[result.size()]);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
+    return findChildByType(NAME_TO_MODIFIER_ELEMENT_TYPE.get(name));
   }
 
   @Override
@@ -257,7 +263,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       return hasMaskExplicitModifier(name, stub.getModifiersFlags());
     }
 
-    return findChildByType(NAME_TO_MODIFIER_ELEMENT_TYPE.get(name)) != null;
+    return getModifier(name) != null;
   }
 
   public static boolean hasMaskExplicitModifier(String name, int mask) {

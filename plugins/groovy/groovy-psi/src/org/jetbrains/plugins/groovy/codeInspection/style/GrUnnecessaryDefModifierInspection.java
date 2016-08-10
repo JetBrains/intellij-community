@@ -20,10 +20,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -47,9 +45,8 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
       public void visitModifierList(GrModifierList modifierList) {
         PsiElement parent = modifierList.getParent();
         if (!(parent instanceof GrMethod) && !(parent instanceof GrParameter) && !(parent instanceof GrVariableDeclaration)) return;
-        if (!modifierList.hasExplicitModifier(GrModifier.DEF)) return;
 
-        PsiElement modifier = findDefModifierElement(modifierList);
+        PsiElement modifier = modifierList.getModifier(GrModifier.DEF);
         if (modifier == null) return;
 
         if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
@@ -59,16 +56,5 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         }
       }
     });
-  }
-
-  @Nullable
-  private static PsiElement findDefModifierElement(@NotNull GrModifierList modifierList) {
-    PsiElement def = null;
-    for (PsiElement element : modifierList.getModifiers()) {
-      if (element.getNode().getElementType().equals(GroovyTokenTypes.kDEF)) {
-        def = element;
-      }
-    }
-    return def;
   }
 }
