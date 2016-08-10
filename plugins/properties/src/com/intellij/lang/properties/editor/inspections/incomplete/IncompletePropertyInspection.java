@@ -148,7 +148,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
   }
 
   public boolean isPropertyComplete(final String key, final ResourceBundle resourceBundle) {
-    return isPropertyComplete(resourceBundle.getPropertiesFiles().stream().map(f -> f.findPropertyByKey(key)).toArray(IProperty[]::new), resourceBundle);
+    return isPropertyComplete(resourceBundle.getPropertiesFiles().stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new), resourceBundle);
   }
 
   private boolean isPropertyComplete(final IProperty[] properties, final ResourceBundle resourceBundle) {
