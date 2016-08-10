@@ -74,7 +74,7 @@ public class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeTooltip(List<HighlightInfo> infos) {
+  private static String createCompositeTooltip(@NotNull List<HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();

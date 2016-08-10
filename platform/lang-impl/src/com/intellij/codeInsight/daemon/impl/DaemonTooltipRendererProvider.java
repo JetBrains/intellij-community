@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
@@ -88,13 +87,14 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         return o1.getToolTip().compareTo(o2.getToolTip());
       });
       final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
+      String toolTip = composite.getToolTip();
+      MyRenderer myRenderer = new MyRenderer(toolTip == null ? null : UIUtil.convertSpace2Nbsp(toolTip), new Object[]{highlighters});
       if (bigRenderer == null) {
-        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.getToolTip()), new Object[] {highlighters});
+        bigRenderer = myRenderer;
       }
       else {
-        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.getToolTip()), new Object[] {highlighters});
-        renderer.addBelow(bigRenderer.getText());
-        bigRenderer = renderer;
+        myRenderer.addBelow(bigRenderer.getText());
+        bigRenderer = myRenderer;
       }
     }
     return bigRenderer;

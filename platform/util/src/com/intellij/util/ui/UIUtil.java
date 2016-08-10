@@ -2363,7 +2363,8 @@ public class UIUtil {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
   }
 
-  public static String convertSpace2Nbsp(String html) {
+  @NotNull
+  public static String convertSpace2Nbsp(@NotNull String html) {
     @NonNls StringBuilder result = new StringBuilder();
     int currentPos = 0;
     int braces = 0;
