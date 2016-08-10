@@ -44,7 +44,7 @@ public class BinaryEncoder {
   }
 
   public static int getLineSizeFromChar(char charSize) throws BinaryPatchException {
-    int result = getIndexOf(charSize) - getIndexOf('A') + 1;
+    int result = getIndexOf(charSize) - A_LETTER_SHIFT + 1;
     checkLenIsValid(result, "Can't decode binary file patch: wrong char-size symbol");
     return result;
   }
