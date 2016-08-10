@@ -81,11 +81,11 @@ public class InstancesWindow extends DialogWrapper {
   private final ReferenceType myReferenceType;
   private MyInstancesView myInstancesView;
 
-  public InstancesWindow(@NotNull Project project,
-                         @NotNull XDebugSession session,
+  public InstancesWindow(@NotNull XDebugSession session,
                          @NotNull ReferenceType referenceType) {
-    super(project, false);
-    myProject = project;
+    super(session.getProject(), false);
+
+    myProject = session.getProject();
     myDebugSession = session;
     myReferenceType = referenceType;
     setTitle("Instances of " + referenceType.name());

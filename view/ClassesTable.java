@@ -4,7 +4,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
 import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
@@ -20,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-class ClassesTable extends JBTable {
+public class ClassesTable extends JBTable {
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
   private static final int COUNT_COLUMN_MAX_WIDTH = 100;
@@ -31,6 +33,7 @@ class ClassesTable extends JBTable {
 
   private final DiffViewTableModel myModel = new DiffViewTableModel();
   private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
+  private final XDebugSession myDebugSession;
 
   private boolean myOnlyWithDiff;
   private boolean myOnlyWithInstances;
@@ -40,9 +43,10 @@ class ClassesTable extends JBTable {
 
   private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
 
-  ClassesTable(boolean onlyWithDiff, boolean onlyWithInstances) {
+  ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances) {
     setModel(myModel);
 
+    myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
 
@@ -126,8 +130,13 @@ class ClassesTable extends JBTable {
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
 
+  @NotNull
+  public XDebugSession getDebugSession() {
+    return myDebugSession;
+  }
+
   @Nullable
-  ReferenceType getSelectedClass() {
+  public ReferenceType getSelectedClass() {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);

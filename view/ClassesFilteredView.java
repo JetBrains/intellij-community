@@ -6,9 +6,9 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
@@ -58,7 +58,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
     MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance(myProject).getState();
 
-    myTable = new ClassesTable(memoryViewManagerState.isShowWithDiffOnly,
+    myTable = new ClassesTable(myDebugSession, memoryViewManagerState.isShowWithDiffOnly,
         memoryViewManagerState.isShowWithInstancesOnly);
 
     myTable.addKeyListener(new KeyAdapter() {
@@ -130,10 +130,9 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     myTable.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
-        DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
-        if (popupMenu != null) {
-          popupMenu.getComponent().show(comp, x, y);
+        ActionPopupMenu menu = createContextMenu();
+        if (menu != null) {
+          menu.getComponent().show(comp, x, y);
         }
       }
     });
@@ -154,8 +153,7 @@ public class ClassesFilteredView extends BorderLayoutPanel {
 
   private void handleClassSelection(@Nullable ReferenceType ref) {
     if (ref != null && myDebugSession.isSuspended()) {
-      InstancesWindow window = new InstancesWindow(myProject, myDebugSession, ref);
-      window.show();
+      new InstancesWindow(myDebugSession, ref).show();
     }
   }
 
@@ -187,6 +185,11 @@ public class ClassesFilteredView extends BorderLayoutPanel {
     @Override
     public void commandCancelled() {
     }
+  }
+
+  private ActionPopupMenu createContextMenu() {
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
+    return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
   }
 
   private void loadClassesAndCounts() {

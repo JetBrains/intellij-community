@@ -36,7 +36,7 @@ public class ShowInstancesByClassAction extends XDebuggerTreeActionBase {
       XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
       ObjectReference ref = getObjectReference(node);
       if(debugSession != null && ref != null){
-        new InstancesWindow(project, debugSession, ref.referenceType()).show();
+        new InstancesWindow(debugSession, ref.referenceType()).show();
       }
     }
   }
