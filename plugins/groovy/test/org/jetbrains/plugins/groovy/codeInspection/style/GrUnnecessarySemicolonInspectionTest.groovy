@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,86 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.codeInspection.style
 
-import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author Max Medvedev
- */
-class RemoveUnnecessarySemicolonTest extends LightCodeInsightFixtureTestCase {
-  private static final String hint = GroovyIntentionsBundle.message('remove.unnecessary.semicolons.name');
+@CompileStatic
+class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
 
-  final String basePath = TestUtils.testDataPath + 'intentions/removeUnnecessarySemicolon/'
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
-  void testSimpleCase1() {
-    doTest('print 2;<caret>\nprint 3', 'print 2\nprint 3')
+  void 'test simple'() {
+    doTest '''\
+ ;<caret> print 1;
+; ; print 2 ; ;
+ ; ; ;print 3 ;;;
+
+print 1; print 2
+print 1; ;print 2
+print 1 ;;  print 2
+print 1 ; ;;print 2
+ ;
+''', '''\
+  print 1
+  print 2  
+   print 3 
+
+print 1; print 2
+print 1; print 2
+print 1 ;  print 2
+print 1 ; print 2
+ 
+'''
   }
 
-  void testSimpleCase2() {
-    doTest('print 2<caret>;\nprint 3', 'print 2\nprint 3')
+  void 'test closure'() {
+    doTest '''\
+print(a);
+{->print 3}
+print(a); <caret>;;
+{->}
+print(a);; ;{->}
+''', '''\
+print(a);
+{->print 3}
+print(a); 
+{->}
+print(a); {->}
+'''
   }
 
-  void testSimpleCase3() {
-    doTest('prin<selection>t 2;\np</selection>rint 3', 'prin<selection>t 2\np</selection>rint 3')
+  void 'test traditional for'() {
+    doTest 'for(int i = 0; i < 5; i++);<caret>',
+           'for(int i = 0; i < 5; i++)'
   }
 
-  void testDontRemoveSimple() {
-    doTest('print 2<caret>; print 3')
-  }
-
-  void testClosure() {
-    doTest('print( a )<caret>;\n{->print 3}')
+  void 'test class members'() {
+    doTest '''\
+class A {
+  def x;<caret>
+  def y;
+  def a; def b
+}
+''', '''\
+class A {
+  def x
+  def y
+  def a; def b
+}
+'''
   }
 
   private doTest(String before, String after) {
-    myFixture.configureByText('a.groovy', before)
-    def intentions = myFixture.filterAvailableIntentions(hint)
-    assertEquals(1, intentions.size())
-
-    myFixture.launchAction(intentions[0])
-    myFixture.checkResult(after)
-  }
-
-  private doTest(String text) {
-    try {
-      doTest(text, text)
+    fixture.with {
+      enableInspections GrUnnecessarySemicolonInspection
+      configureByText '_.groovy', before
+//      checkHighlighting()
+      launchAction findSingleIntention("Fix all 'Unnecessary semicolon'")
+      checkResult after
     }
-    catch (RefactoringErrorHintException e) {
-      return;
-    }
-    fail('RefactoringErrorHintException should be thrown')
   }
 
-  private doFalseTest(String before) {
-    myFixture.configureByText('a.groovy', before)
-    def intentions = myFixture.filterAvailableIntentions(hint)
-    assertEmpty(intentions)
-  }
-  
   void testBig() {
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-    doTest('''\
-<selection>/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.intellij.refactoring.util;
+    doTest '''\
+package com.intellij.refactoring.util;<caret>
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -309,23 +317,7 @@ public class CommonRefactoringUtil {
     return false;
   }
 }
-</selection>''', '''\
-<selection>/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+''', '''\
 package com.intellij.refactoring.util
 
 import com.intellij.codeInsight.hint.HintManager
@@ -358,8 +350,8 @@ public class CommonRefactoringUtil {
 
   public static void showErrorMessage(String title, String message, @Nullable @NonNls String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message)
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project)
-      dialog.show()
+    RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project)
+    dialog.show()
   }
 
   /**
@@ -374,12 +366,12 @@ public class CommonRefactoringUtil {
   public static void showErrorHint(Project project, @Nullable Editor editor, String message, String title, @Nullable @NonNls String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message)
 
-      if (editor == null) {
+    if (editor == null) {
       showErrorMessage(title, message, helpId, project)
-      }
+    }
     else {
       HintManager.getInstance().showErrorHint(editor, message)
-      }
+    }
   }
 
   @NonNls
@@ -389,7 +381,7 @@ public class CommonRefactoringUtil {
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {
     final VirtualFile file = element.getContainingFile().getVirtualFile()
-      return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles()
+    return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles()
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
@@ -421,13 +413,13 @@ public class CommonRefactoringUtil {
     final Collection<VirtualFile> failed = new THashSet<VirtualFile>()   // those located in jars
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false
 
-      for (PsiElement element : elements) {
+    for (PsiElement element : elements) {
       if (element instanceof PsiDirectory) {
         final PsiDirectory dir = (PsiDirectory)element
-          final VirtualFile vFile = dir.getVirtualFile()
-          if (vFile.getFileSystem() instanceof JarFileSystem) {
+        final VirtualFile vFile = dir.getVirtualFile()
+        if (vFile.getFileSystem() instanceof JarFileSystem) {
           failed.add(vFile)
-          }
+        }
         else {
           if (recursively) {
             addVirtualFiles(vFile, readonly)
@@ -439,9 +431,9 @@ public class CommonRefactoringUtil {
       }
       else if (element instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories()
-          for (PsiDirectory directory : directories) {
+        for (PsiDirectory directory : directories) {
           VirtualFile virtualFile = directory.getVirtualFile()
-              if (recursively) {
+          if (recursively) {
             if (virtualFile.getFileSystem() instanceof JarFileSystem) {
               failed.add(virtualFile)
             }
@@ -461,22 +453,22 @@ public class CommonRefactoringUtil {
       }
       else if (element instanceof PsiCompiledElement) {
         final PsiFile file = element.getContainingFile()
-          if (file != null) {
+        if (file != null) {
           failed.add(file.getVirtualFile())
-          }
+        }
       }
       else {
         PsiFile file = element.getContainingFile()
-          if (file == null) {
+        if (file == null) {
           if (!element.isWritable()) {
             seenNonWritablePsiFilesWithoutVirtualFile = true
           }
         }
         else {
           final VirtualFile vFile = file.getVirtualFile()
-              if (vFile != null) {
+          if (vFile != null) {
             readonly.add(vFile)
-              }
+          }
           else {
             if (!element.isWritable()) {
               seenNonWritablePsiFilesWithoutVirtualFile = true
@@ -487,31 +479,31 @@ public class CommonRefactoringUtil {
     }
 
     final VirtualFile[] files = VfsUtil.toVirtualFileArray(readonly)
-      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
-      ContainerUtil.addAll(failed, status.getReadonlyFiles())
-      if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
+    ContainerUtil.addAll(failed, status.getReadonlyFiles())
+    if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix)
-          message.append('\\n')
-          int i = 0
-          for (VirtualFile virtualFile : failed) {
+      message.append('\\n')
+      int i = 0
+      for (VirtualFile virtualFile : failed) {
         final String presentableUrl = virtualFile.getPresentableUrl()
-              final String subj = virtualFile.isDirectory()
+        final String subj = virtualFile.isDirectory()
                             ? RefactoringBundle.message("directory.description", presentableUrl)
                             : RefactoringBundle.message("file.description", presentableUrl)
-              if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+        if (virtualFile.getFileSystem() instanceof JarFileSystem) {
           message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj))
-              }
+        }
         else {
           message.append(RefactoringBundle.message("0.is.read.only", subj))
-              }
+        }
         if (i++ > 20) {
           message.append("...\\n")
-            break
+          break
         }
       }
       showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project)
-          return false
-      }
+      return false
+    }
 
     return failed.isEmpty()
   }
@@ -522,12 +514,12 @@ public class CommonRefactoringUtil {
     }
     if (!vFile.isSymLink()) {
       final VirtualFile[] children = vFile.getChildren()
-        if (children != null) {
+      if (children != null) {
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance()
-            for (VirtualFile virtualFile : children) {
+        for (VirtualFile virtualFile : children) {
           if (fileTypeManager.isFileIgnored(virtualFile)) continue
-                addVirtualFiles(virtualFile, list)
-            }
+          addVirtualFiles(virtualFile, list)
+        }
       }
     }
   }
@@ -543,24 +535,6 @@ public class CommonRefactoringUtil {
     return false
   }
 }
-</selection>''')
-  }
-
-  void testTraditionalFor() {
-    doTest('<selection>for(int i = 0; i < 5; i++);</selection>', '<selection>for(int i = 0; i < 5; i++)</selection>')
-  }
-
-  void testClassMembers() {
-    doTest('''\
-<selection>class A {
-    def x;
-    def y;
-}</selection>
-''', '''\
-<selection>class A {
-    def x
-    def y
-}</selection>
-''')
+'''
   }
 }

@@ -826,6 +826,9 @@
     <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
                      displayName="Unnecessary 'def'" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupName="Style"
+                     displayName="Unnecessary semicolon" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
                      groupName="Style" enabledByDefault="true" level="WEAK WARNING"
@@ -1435,11 +1438,6 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy.style</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.style.JavaStylePropertiesInvocationIntention</className>
-    </intentionAction>
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.groovy.style</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.style.RemoveUnnecessarySemicolonsIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

@@ -777,7 +777,8 @@ public class PsiUtil {
     return skipSet(elem, forward, TokenSets.WHITE_SPACES_OR_COMMENTS, true);
   }
 
-  private static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
+  @Nullable
+  public static PsiElement skipSet(PsiElement elem, boolean forward, TokenSet set, boolean skipNLs) {
     while (elem != null &&
            elem.getNode() != null &&
            set.contains(elem.getNode().getElementType()) &&
