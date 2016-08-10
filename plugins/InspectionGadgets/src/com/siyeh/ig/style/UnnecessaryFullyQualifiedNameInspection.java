@@ -133,6 +133,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       this.fullyQualifiedText = fullyQualifiedText;
     }
 
+    @NotNull
     public Collection<PsiElement> getShortenedElements() {
       return Collections.unmodifiableCollection(shortenedElements);
     }

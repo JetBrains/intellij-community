@@ -148,7 +148,10 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       if (pointers.size() > 1) {
         final List<PsiElement> elements = new ArrayList<>();
         for (SmartPsiElementPointer pointer : pointers) {
-          elements.add(pointer.getElement());
+          PsiElement psiElement = pointer.getElement();
+          if (psiElement != null) {
+            elements.add(psiElement);
+          }
         }
         HighlightUtils.highlightElements(elements);
       }
