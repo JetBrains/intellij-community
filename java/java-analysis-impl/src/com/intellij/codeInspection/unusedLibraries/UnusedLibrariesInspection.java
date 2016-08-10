@@ -49,11 +49,6 @@ import java.util.*;
 
 public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
   @Nullable
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
