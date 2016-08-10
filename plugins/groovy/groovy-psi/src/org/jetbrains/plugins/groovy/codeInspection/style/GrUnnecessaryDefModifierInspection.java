@@ -52,7 +52,7 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
             parent instanceof GrVariable && ((GrVariable)parent).getTypeElementGroovy() != null ||
             parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTypeElementGroovy() != null) {
-          holder.registerProblem(modifier, "'def' is not necessary", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, FIX);
+          holder.registerProblem(modifier, "'def' is not necessary", ProblemHighlightType.LIKE_UNUSED_SYMBOL, FIX);
         }
       }
     });

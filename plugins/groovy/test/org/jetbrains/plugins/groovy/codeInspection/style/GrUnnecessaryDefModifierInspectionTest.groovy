@@ -29,9 +29,9 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
     fixture.with {
       enableInspections GrUnnecessaryDefModifierInspection
       configureByText '_.groovy', '''\
-def foo(<weak_warning descr="'def' is not necessary">def</weak_warning> Object a) {}
-<weak_warning descr="'def' is not necessary">d<caret>ef</weak_warning> boolean baz(def a) {}
-<weak_warning descr="'def' is not necessary">def</weak_warning> Object bar
+def foo(<warning descr="'def' is not necessary">def</warning> Object a) {}
+<warning descr="'def' is not necessary">d<caret>ef</warning> boolean baz(def a) {}
+<warning descr="'def' is not necessary">def</warning> Object bar
 def baf
 def (int a, b) = [1, 2]
 '''
