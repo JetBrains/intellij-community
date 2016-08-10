@@ -290,10 +290,14 @@ def getProperties(String home, String buildNumber) {
           if (enableUITests) {
             dir("android") {
               dir("lib") {
-                fileset(dir: "${home}/${androidRoot}/android/lib") {
-                  include(name: "**/fest-*.jar")
+                fileset(dir: "${home}/../swing-testing/fest-swing/lib") {
+                  include(name: "*.jar")
                 }
                 fileset(file: "${home}/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28/truth-0.28.jar")
+                jar("uitest-framework.jar") {
+                  module("fest-swing")
+                  moduleTests("uitest-framework")
+                }
               }
               dir("testData") {
                 dir("guiTests") {
@@ -303,6 +307,7 @@ def getProperties(String home, String buildNumber) {
 
               dir("ui-tests-dir") {
                 moduleTests("android")
+                moduleTests("android-uitests")
               }
             }
           }

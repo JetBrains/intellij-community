@@ -98,6 +98,8 @@ target(compile: "Compile project") {
 
   if (p("studio.ui.tests")) {
     projectBuilder.makeModuleTests(findModule("android"))
+    projectBuilder.makeModuleTests(findModule("uitest-framework"))
+    projectBuilder.makeModuleTests(findModule("android-uitests"))
   }
 }
 
