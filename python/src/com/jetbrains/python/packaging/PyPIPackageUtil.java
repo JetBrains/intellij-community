@@ -149,7 +149,7 @@ public class PyPIPackageUtil {
 
     for (String pyPackage : packagesList) {
       if (simpleIndex) {
-        final Pair<String, String> nameVersion = splitNameVersion(pyPackage);
+        final Pair<String, String> nameVersion = splitNameVersion(StringUtil.trimTrailing(pyPackage, '/'));
         ourAdditionalPackageNames.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
       }
       else {
