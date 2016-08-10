@@ -2,12 +2,11 @@ package org.jetbrains.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.view.ClassesTable;
-
-import java.awt.*;
 
 abstract class ClassesActionBase extends AnAction {
   @Override
@@ -28,8 +27,12 @@ abstract class ClassesActionBase extends AnAction {
   protected abstract void perform(AnActionEvent e);
 
   @Nullable
-  ClassesTable getTable(AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    return component == null ? null : (ClassesTable) component;
+  ReferenceType getSelectedClass(AnActionEvent e) {
+    return e.getData(ClassesTable.SELECTED_CLASS_KEY);
+  }
+
+  @Nullable
+  XDebugSession getDebugSession(AnActionEvent e) {
+    return e.getData(ClassesTable.DEBUG_SESSION_KEY);
   }
 }

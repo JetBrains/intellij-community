@@ -1,8 +1,8 @@
 package org.jetbrains.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
-import org.jetbrains.debugger.memory.view.ClassesTable;
 import org.jetbrains.debugger.memory.view.InstancesWindow;
 
 public class ShowInstancesFromClassesViewAction extends ClassesActionBase {
@@ -13,12 +13,10 @@ public class ShowInstancesFromClassesViewAction extends ClassesActionBase {
 
   @Override
   protected void perform(AnActionEvent e) {
-    ClassesTable classesView = getTable(e);
-    if(classesView != null){
-      ReferenceType selectedClass = classesView.getSelectedClass();
-      if(selectedClass != null) {
-        new InstancesWindow(classesView.getDebugSession(), selectedClass).show();
-      }
+    XDebugSession debugSession = getDebugSession(e);
+    ReferenceType selectedClass = getSelectedClass(e);
+    if (debugSession != null && selectedClass != null) {
+      new InstancesWindow(debugSession, selectedClass).show();
     }
   }
 }

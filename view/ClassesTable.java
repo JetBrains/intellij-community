@@ -1,11 +1,14 @@
 package org.jetbrains.debugger.memory.view;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
@@ -14,15 +17,15 @@ import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClassesTable extends JBTable {
+public class ClassesTable extends JBTable implements DataProvider {
+  public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
+  public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
   private static final int COUNT_COLUMN_MAX_WIDTH = 100;
@@ -69,15 +72,6 @@ public class ClassesTable extends JBTable {
     diffColumn.setResizable(false);
 
     setShowGrid(false);
-
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if(SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
-          System.out.println("right clicked");
-        }
-      }
-    });
 
     setDefaultRenderer(ReferenceType.class, new ColoredTableCellRenderer() {
       @Override
@@ -130,13 +124,8 @@ public class ClassesTable extends JBTable {
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
 
-  @NotNull
-  public XDebugSession getDebugSession() {
-    return myDebugSession;
-  }
-
   @Nullable
-  public ReferenceType getSelectedClass() {
+  ReferenceType getSelectedClass() {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
@@ -210,6 +199,19 @@ public class ClassesTable extends JBTable {
     }
 
     return i == pattern.length();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if(SELECTED_CLASS_KEY.is(dataId)) {
+      return getSelectedClass();
+    }
+    if(DEBUG_SESSION_KEY.is(dataId)) {
+      return myDebugSession;
+    }
+
+    return null;
   }
 
   private class DiffViewTableModel extends AbstractTableModelWithColumns {
