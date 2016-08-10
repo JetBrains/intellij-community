@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.CompressedBytesReadAwareGZIPInputStream;
+import com.intellij.util.io.CountingGZIPInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,7 +188,7 @@ public class NetUtils {
         indicator.setIndeterminate(true);
       }
     }
-    CompressedBytesReadAwareGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CompressedBytesReadAwareGZIPInputStream.class);
+    CountingGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CountingGZIPInputStream.class);
     final byte[] buffer = new byte[8 * 1024];
     int count;
     int bytesWritten = 0;
