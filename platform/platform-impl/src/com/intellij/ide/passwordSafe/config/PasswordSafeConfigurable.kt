@@ -32,7 +32,7 @@ class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : Con
 }
 
 class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
-  private val saveOnDisk = RadioButton("Save on &disk with master password protection")
+  private val saveOnDisk = RadioButton("Save on &disk")
   private val rememberPasswordsUntilClosing = RadioButton("Remember passwords &until the application is closed")
 
   override fun reset(settings: PasswordSafeSettings) {
