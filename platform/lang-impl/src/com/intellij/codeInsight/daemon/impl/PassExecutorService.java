@@ -115,6 +115,7 @@ class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmart();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmart();
+    List<Pair<FileEditor, TextEditorHighlightingPass>> passesWithNoDocuments = new ArrayList<>();
     Set<VirtualFile> vFiles = new HashSet<>();
 
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
@@ -145,7 +146,10 @@ class PassExecutorService implements Disposable {
           TextEditorHighlightingPass textEditorHighlightingPass = convertToTextHighlightingPass(pass, document, nextPassId, prevId);
           document = textEditorHighlightingPass.getDocument();
           documentBoundPasses.putValue(fileEditor, textEditorHighlightingPass);
-          if (document != null) {
+          if (document == null) {
+            passesWithNoDocuments.add(Pair.create(fileEditor, textEditorHighlightingPass));
+          }
+          else {
             documentToEditors.putValue(document, fileEditor);
           }
           prevId = textEditorHighlightingPass.getId();
@@ -183,6 +187,12 @@ class PassExecutorService implements Disposable {
       for (EditorBoundHighlightingPass pass : createdEditorBoundPasses) {
         createScheduledPass(fileEditor, pass, toBeSubmitted, allCreatedPasses, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
       }
+    }
+
+    for (Pair<FileEditor, TextEditorHighlightingPass> pair : passesWithNoDocuments) {
+      FileEditor fileEditor = pair.first;
+      TextEditorHighlightingPass pass = pair.second;
+      createScheduledPass(fileEditor, pass, toBeSubmitted, ContainerUtil.emptyList(), freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     if (CHECK_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest()) {
