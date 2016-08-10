@@ -2531,10 +2531,10 @@
                      key="replace.lambda.with.anonymous.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceMethodRefWithLambda" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="replace.method.ref.with.lambda.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="MethodRefCanBeReplacedWithLambda" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="method.ref.can.be.replaced.with.lambda.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.ReplaceMethodRefWithLambdaInspection"/>
+                     implementationClass="com.siyeh.ig.style.MethodRefCanBeReplacedWithLambdaInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SplitTryWithMultipleResources" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="split.try.with.multiple.resources.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"

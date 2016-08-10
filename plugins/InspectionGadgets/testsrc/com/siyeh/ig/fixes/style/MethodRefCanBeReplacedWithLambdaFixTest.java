@@ -19,15 +19,15 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.ReplaceMethodRefWithLambdaInspection;
+import com.siyeh.ig.style.MethodRefCanBeReplacedWithLambdaInspection;
 
-public class ReplaceMethodReferenceWithLambdaFixTest extends IGQuickFixesTestCase {
+public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
-    myFixture.enableInspections(new ReplaceMethodRefWithLambdaInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("replace.method.ref.with.lambda.descriptor");
+    myFixture.enableInspections(new MethodRefCanBeReplacedWithLambdaInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
   }
 
   @Override

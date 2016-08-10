@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
@@ -43,20 +42,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReplaceMethodRefWithLambdaInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceMethodRefWithLambdaInspection.class.getName());
+public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("replace.method.ref.with.lambda.name");
+    return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("replace.method.ref.with.lambda.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -110,14 +108,14 @@ public class ReplaceMethodRefWithLambdaInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.method.ref.with.lambda.descriptor");
+      return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.method.ref.with.lambda.name");
+      return getName();
     }
 
     @Override
