@@ -757,6 +757,7 @@ public class EduStepicConnector {
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
+      task.addTestsTexts("tests.py", task.getTestsText(project));
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
       request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
