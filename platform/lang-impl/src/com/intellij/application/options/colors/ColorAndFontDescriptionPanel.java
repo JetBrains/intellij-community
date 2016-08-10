@@ -31,6 +31,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
+    setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myEffectsModel = new EffectsComboModel(ContainerUtil.newArrayList(myEffectsMap.keySet()));
     //noinspection unchecked
     myEffectsCombo.setModel(myEffectsModel);

@@ -1,213 +1,114 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.colors.RainbowDescriptionPanel">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="10" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="9" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="348" height="367"/>
+      <xy x="20" y="20" width="317" height="342"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="fcf61" class="com.intellij.ui.components.JBCheckBox" binding="myRainbow">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="66"/>
+          </grid>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="checkbox.rainbow"/>
         </properties>
       </component>
-      <component id="2aaea" class="javax.swing.JLabel">
+      <component id="5556e" class="javax.swing.JLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="21"/>
+          </grid>
         </constraints>
         <properties>
           <text resource-bundle="messages/ApplicationBundle" key="label.override.gradient"/>
         </properties>
       </component>
-      <component id="a9be4" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop1">
+      <hspacer id="13e59">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="44" height="24"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
-        </properties>
-      </component>
-      <component id="abc5e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="16" height="16"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text value="#1"/>
-        </properties>
-      </component>
-      <component id="2ec12" class="com.intellij.ui.ColorPanel" binding="myStop1">
-        <constraints>
-          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="57" height="21"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <component id="b9be4" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop2">
-        <constraints>
-          <grid row="3" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
-        </properties>
-      </component>
-      <component id="bc5e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="16" height="16"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text value="#2"/>
-        </properties>
-      </component>
-      <component id="89ac3" class="com.intellij.ui.ColorPanel" binding="myStop2">
-        <constraints>
-          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="57" height="21"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <component id="c9be4" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop3">
-        <constraints>
-          <grid row="4" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
-        </properties>
-      </component>
-      <component id="cbc5e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="16" height="16"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text value="#3"/>
-        </properties>
-      </component>
-      <component id="9ae84" class="com.intellij.ui.ColorPanel" binding="myStop3">
-        <constraints>
-          <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="57" height="21"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <component id="d9be4" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop4">
-        <constraints>
-          <grid row="5" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
-        </properties>
-      </component>
-      <component id="dbc5e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="16" height="16"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text value="#4"/>
-        </properties>
-      </component>
-      <component id="c5026" class="com.intellij.ui.ColorPanel" binding="myStop4">
-        <constraints>
-          <grid row="5" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="57" height="21"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <component id="e9be4" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop5">
-        <constraints>
-          <grid row="6" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
-        </properties>
-      </component>
-      <component id="ebc5e" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="16" height="16"/>
-          </grid>
-        </constraints>
-        <properties>
-          <text value="#5"/>
-        </properties>
-      </component>
-      <component id="18914" class="com.intellij.ui.ColorPanel" binding="myStop5">
-        <constraints>
-          <grid row="6" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false">
-            <preferred-size width="57" height="21"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <grid id="945b4" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="30" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="7" column="1" row-span="2" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="true"/>
-        </constraints>
-        <properties>
-          <visible value="false"/>
-        </properties>
-        <border type="none"/>
-        <children>
-          <component id="7f4a6" class="javax.swing.JTextPane" binding="myInheritanceLabel">
-            <constraints>
-              <grid row="1" column="0" row-span="2" col-span="2" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="labl"/>
-              <visible value="true"/>
-            </properties>
-          </component>
-          <component id="60bfb" class="com.intellij.ui.components.JBCheckBox" binding="myInheritAttributesBox">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="label.inherit.attributes"/>
-              <visible value="true"/>
-            </properties>
-            <clientProperties>
-              <hideActionText class="java.lang.Boolean" value="false"/>
-            </clientProperties>
-          </component>
-        </children>
-      </grid>
-      <vspacer id="9aa06">
-        <constraints>
-          <grid row="9" column="2" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
-      <hspacer id="cde47">
-        <constraints>
-          <grid row="8" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="2" row-span="7" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
-      <component id="853c3" class="javax.swing.JLabel">
+      <vspacer id="1f6f2">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="44" height="16"/>
+          <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="14"/>
           </grid>
         </constraints>
+      </vspacer>
+      <component id="f26f6" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop1">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
         <properties>
-          <text resource-bundle="messages/ApplicationBundle" key="label.base.color"/>
+          <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.1"/>
         </properties>
+      </component>
+      <component id="11363" class="com.intellij.ui.ColorPanel" binding="myStop1">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="e998a" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop2">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.2"/>
+        </properties>
+      </component>
+      <component id="a303b" class="com.intellij.ui.ColorPanel" binding="myStop2">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="f929a" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop3">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.3"/>
+        </properties>
+      </component>
+      <component id="1c10d" class="com.intellij.ui.ColorPanel" binding="myStop3">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="6dc1" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop4">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.4"/>
+        </properties>
+      </component>
+      <component id="8db13" class="com.intellij.ui.ColorPanel" binding="myStop4">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="bce0f" class="com.intellij.ui.components.JBCheckBox" binding="myCbStop5">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/ApplicationBundle" key="checkbox.stop.5"/>
+        </properties>
+      </component>
+      <component id="1b18c" class="com.intellij.ui.ColorPanel" binding="myStop5">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
       </component>
     </children>
   </grid>

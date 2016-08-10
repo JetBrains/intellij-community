@@ -35,6 +35,7 @@ public class ColorAndFontGlobalState {
   }
 
   public void apply() {
+    //FIXME: we need better place for per-language state storage
     RainbowHighlighter.setRainbowEnabled(isRainbowOn);
   }
 
@@ -49,6 +50,6 @@ public class ColorAndFontGlobalState {
 
   @Override
   public int hashCode() {
-    return 31 * (isRainbowOn ? 1 : 0);
+    return isRainbowOn ? 1 : 0;
   }
 }

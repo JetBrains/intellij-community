@@ -17,12 +17,11 @@ package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColorPanel;
-import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,9 +51,8 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   protected ColorPanel myStop5;
   private ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
-  private JTextPane myInheritanceLabel;
-
-  private JBCheckBox myInheritAttributesBox;
+  //private JTextPane myInheritanceLabel;
+  //private JBCheckBox myInheritAttributesBox;
   private JBCheckBox myRainbow;
 
   ColorAndFontGlobalState myGlobalState;
@@ -64,28 +62,29 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myGlobalState = globalState;
     add(myPanel, BorderLayout.CENTER);
 
-    setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
+    setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         onSettingsChanged(e);
       }
     };
-    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5, myInheritAttributesBox}) {
+    for (JBCheckBox c : new JBCheckBox[]{myRainbow, myCbStop1, myCbStop2, myCbStop3, myCbStop4, myCbStop5/*, myInheritAttributesBox*/}) {
       c.addActionListener(actionListener);
     }
     for (ColorPanel c : new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5}) {
       c.addActionListener(actionListener);
     }
 
-    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
-    myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        onHyperLinkClicked(e);
-      }
-    });
-    myInheritanceLabel.setBorder(BorderFactory.createEmptyBorder());
+    // FIXME: inherited per-language on/off
+    //Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
+    //myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
+    //  @Override
+    //  protected void hyperlinkActivated(HyperlinkEvent e) {
+    //    onHyperLinkClicked(e);
+    //  }
+    //});
+    //myInheritanceLabel.setBorder(BorderFactory.createEmptyBorder());
   }
 
   @NotNull

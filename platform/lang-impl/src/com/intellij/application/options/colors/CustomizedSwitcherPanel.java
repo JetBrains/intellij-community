@@ -69,12 +69,12 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
   @Override
   public void resetDefault() {
-    myActive = null;
-    if (getComponentCount() != 0) {
+    if (myActive != null) {
       final PaintLocker locker = new PaintLocker(this);
       try {
-        setPreferredSize(getSize());
-        remove(0);
+        setPreferredSize(getSize());// froze [this] size
+        remove(myActive.getPanel());
+        myActive = null;
       }
       finally {
         locker.release();
@@ -84,29 +84,39 @@ class CustomizedSwitcherPanel extends JPanel implements OptionsPanelImpl.ColorDe
 
   @Override
   public void reset(@NotNull EditorSchemeAttributeDescriptor descriptor) {
-    myActive = null;
-    if (descriptor instanceof RainbowAttributeDescriptor) {
-      myActive = myRainbowPanel;
-    }
-    else if (descriptor instanceof ColorAndFontDescription) {
-      myActive = myColorAndFontPanel;
-    }
+    JComponent oldPanel = myActive == null ? null : myActive.getPanel();
+    myActive = getPanelForDescriptor(descriptor);
+    JComponent newPanel = myActive == null ? null : myActive.getPanel();
 
-    if (getComponentCount() == 0 || myActive != getComponent(0)) {
+    if (oldPanel != newPanel) {
       final PaintLocker locker = new PaintLocker(this);
       try {
-        if (getComponentCount() != 0) {
-          remove(0);
+        if (oldPanel != null) {
+          remove(oldPanel);
         }
-        setPreferredSize(null);
-        add((JPanel)myActive);
+        if (newPanel != null) {
+          setPreferredSize(null);// make [this] resizable
+          add(newPanel);
+        }
       }
       finally {
         locker.release();
       }
     }
-    myActive.reset(descriptor);
+    if (myActive != null) {
+      myActive.reset(descriptor);
+    }
     updatePreviewPanel(descriptor);
+  }
+
+  protected OptionsPanelImpl.ColorDescriptionPanel getPanelForDescriptor(@NotNull EditorSchemeAttributeDescriptor descriptor) {
+    if (descriptor instanceof RainbowAttributeDescriptor) {
+      return myRainbowPanel;
+    }
+    else if (descriptor instanceof ColorAndFontDescription) {
+      return myColorAndFontPanel;
+    }
+    return null;
   }
 
   private void addRainbowHighlighting(@NotNull DocumentEx document,
