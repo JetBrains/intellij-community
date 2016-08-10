@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.Base85;
+import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.vcs.FileStatus;
@@ -66,8 +66,8 @@ public class BinaryPatchWriter {
       writer.write(lineSeparator);
       writer.write(String.format(LITERAL_HEADER, afterContent == null ? 0 : afterContent.length));
       writer.write(lineSeparator);
-      Base85.encode(afterFile.exists() ? new FileInputStream(afterFile) : new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY),
-                    afterFile.length(), writer);
+      BinaryEncoder
+        .encode(afterFile.exists() ? new FileInputStream(afterFile) : new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY), writer);
       writer.write(lineSeparator);
     }
   }

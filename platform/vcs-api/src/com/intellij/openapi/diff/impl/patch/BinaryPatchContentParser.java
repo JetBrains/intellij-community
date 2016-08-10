@@ -64,10 +64,10 @@ public class BinaryPatchContentParser {
 
   private static void getContent(@NotNull ListIterator<String> iterator,
                                  @NotNull ByteArrayOutputStream afterStream, @NotNull String lenFromLiteral)
-    throws EofBinaryPatchSyntaxException, IOException, Base85.BinaryPatchException {
+    throws EofBinaryPatchSyntaxException, IOException, BinaryEncoder.BinaryPatchException {
     long afterSize = Long.parseLong(lenFromLiteral);
     checkNotEOF(iterator);
-    Base85.decode(iterator, afterSize, afterStream);
+    BinaryEncoder.decode(iterator, afterSize, afterStream);
   }
 
   private static void checkNotEOF(@NotNull ListIterator<String> iterator) throws EofBinaryPatchSyntaxException {
