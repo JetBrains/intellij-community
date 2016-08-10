@@ -106,6 +106,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         // is vertical tab before jdk 1.8
         return true;
       case UNICODE_GRAPHEME:
+        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_9);
       case XML_NAME_START:
       case NON_XML_NAME_START:
       case XML_NAME_PART:

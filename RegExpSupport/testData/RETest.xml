@@ -38,7 +38,7 @@
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern>\X</pattern>
-      <expected>ERR</expected>
+      <expected>OK</expected>
     </test>
     <test>
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\-</weak_warning>[<weak_warning descr="Redundant character escape">\*</weak_warning>\-\[\]\\<weak_warning descr="Redundant character escape">\+]</weak_warning>]]></pattern>

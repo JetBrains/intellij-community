@@ -126,7 +126,8 @@ public final class DefaultRegExpPropertiesProvider {
     {"f", "Form-feed character ('\\u000C')"},
     {"a", "Alert (bell) character ('\\u0007')"},
     {"e", "Escape character ('\\u001B')"},
-    {"R", "Unicode line ending: \\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029]"}
+    {"R", "Unicode line ending: \\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029]"},
+    {"X", "Unicode extended grapheme cluster"}
   };
 
   private final String[][] myPosixCharacterClasses = {
