@@ -30,21 +30,21 @@ import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.Inflater;
 
-import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.getCharAt;
-import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.getIndexOf;
+import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.decodeChar;
+import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encodeChar;
 
 public class BinaryEncoder {
 
   private static final Logger LOG = Logger.getInstance(BinaryEncoder.class);
-  private static final int A_LETTER_SHIFT = getIndexOf('A');
+  private static final int A_LETTER_SHIFT = decodeChar('A');
 
   public static char getCharForLineSize(int lineSize) throws BinaryPatchException {
     checkLenIsValid(lineSize, "Can't encode binary file patch: wrong line size");
-    return getCharAt(A_LETTER_SHIFT + lineSize - 1);
+    return encodeChar(A_LETTER_SHIFT + lineSize - 1);
   }
 
   public static int getLineSizeFromChar(char charSize) throws BinaryPatchException {
-    int result = getIndexOf(charSize) - A_LETTER_SHIFT + 1;
+    int result = decodeChar(charSize) - A_LETTER_SHIFT + 1;
     checkLenIsValid(result, "Can't decode binary file patch: wrong char-size symbol");
     return result;
   }
