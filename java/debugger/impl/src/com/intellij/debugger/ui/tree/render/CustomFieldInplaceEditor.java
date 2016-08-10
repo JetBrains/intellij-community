@@ -22,15 +22,20 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreePath;
 import java.util.List;
 
 /**
@@ -97,8 +102,19 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
       children.set(index, Pair.create(children.get(index).first, newText));
     }
 
+    myTree.putClientProperty(XDebuggerTreeRestorer.SELECTION_PATH_PROPERTY,
+                             createDummySelectionTreePath(newText.getText(), (XDebuggerTreeNode)myNode.getParent()));
+
     XDebuggerUtilImpl.rebuildTreeAndViews(myTree);
 
     super.doOKAction();
+  }
+
+  private static TreePath createDummySelectionTreePath(String name, XDebuggerTreeNode parentNode) {
+    return new XValueNodeImpl(parentNode.getTree(), parentNode, name, new XValue() {
+      @Override
+      public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      }
+    }).getPath();
   }
 }
