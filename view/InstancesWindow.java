@@ -40,7 +40,6 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -56,10 +55,10 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.debugger.memory.utils.DebugCommand;
 import org.jetbrains.debugger.memory.utils.InstanceJavaValue;
 import org.jetbrains.debugger.memory.utils.InstanceValueDescriptor;
+import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -141,6 +140,7 @@ public class InstancesWindow extends DialogWrapper {
   }
 
   private class MyInstancesView extends JBPanel implements Disposable {
+    private static final String HISTORY_ID_PREFIX = "filtering";
     private static final int MAX_TREE_NODE_COUNT = 1000;
     private static final int FILTERING_CHUNK_SIZE = 30;
 
@@ -168,8 +168,8 @@ public class InstancesWindow extends DialogWrapper {
       myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
       JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
-      myFilterConditionEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "FilterExpression",
-          null, XExpressionImpl.EMPTY_EXPRESSION, false, true, true);
+      myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, editorsProvider,
+          HISTORY_ID_PREFIX + myReferenceType.name(), null, InstancesWindow.this.myDisposable);
       new SwingWorker<Void, Void>() {
         @Override
         protected Void doInBackground() throws Exception {
@@ -225,13 +225,17 @@ public class InstancesWindow extends DialogWrapper {
       myInstancesTree.getRoot().setLeaf(false);
       myInstancesTree.setExpandableItemsEnabled(true);
 
-      myFilterButton.addActionListener(e ->
-          myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree)));
+      myFilterButton.addActionListener(e -> {
+        String expression = myFilterConditionEditor.getExpression().getExpression();
+        if(!expression.isEmpty()) {
+          myFilterConditionEditor.saveTextInHistory();
+        }
+        myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
+      });
 
       JBScrollPane treeScrollPane = new JBScrollPane(myInstancesTree);
       add(filteringPane, BorderLayout.NORTH);
       add(treeScrollPane, BorderLayout.CENTER);
-
     }
 
     @Override
@@ -351,14 +355,6 @@ public class InstancesWindow extends DialogWrapper {
 
     private class MyActionListener extends AnActionListener.Adapter {
       @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesView.myInstancesTree &&
-            (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
-          myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
-        }
-      }
-
-      @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesView.myInstancesTree &&
             (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
@@ -379,6 +375,8 @@ public class InstancesWindow extends DialogWrapper {
               markers.markValue(valueContainer,
                   new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
             }
+
+            myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
           }
         }
       }
