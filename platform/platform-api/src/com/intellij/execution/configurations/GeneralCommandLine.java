@@ -464,6 +464,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     @Override
     public void putAll(Map<? extends String, ? extends String> map) {
+      //noinspection ConstantConditions
       if (map != null) {
         super.putAll(map);
       }
