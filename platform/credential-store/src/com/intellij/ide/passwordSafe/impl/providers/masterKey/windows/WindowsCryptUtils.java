@@ -16,10 +16,7 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey.windows;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIFunctionMapper;
 import com.sun.jna.win32.W32APITypeMapper;
@@ -30,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.sun.jna.Library.OPTION_FUNCTION_MAPPER;
-import static com.sun.jna.Library.OPTION_TYPE_MAPPER;
 
 /**
  * Windows Utilities for the Password Safe
@@ -41,8 +36,8 @@ public class WindowsCryptUtils {
    * Unicode options for the libraries
    */
   private static final Map<String, Object> UNICODE_OPTIONS = ContainerUtil.newHashMap(
-    pair(OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE),
-    pair(OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE));
+    pair(Library.OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE),
+    pair(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE));
 
   private WindowsCryptUtils() { }
 

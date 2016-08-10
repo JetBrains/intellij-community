@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.passwordSafe.config;
 
-import com.intellij.ide.passwordSafe.PasswordSafeSettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;

@@ -50,5 +50,6 @@
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="configuration-store-impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="credential-store" />
   </component>
 </module>

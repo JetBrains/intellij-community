@@ -12,12 +12,7 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey.windows;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.IntegerType;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
+import com.sun.jna.*;
 import com.sun.jna.ptr.ByReference;
 import com.sun.jna.win32.StdCallLibrary;
 

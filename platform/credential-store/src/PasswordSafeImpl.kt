@@ -18,6 +18,7 @@ package com.intellij.ide.passwordSafe.impl
 import com.intellij.ide.passwordSafe.*
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.SettingsSavingComponent
