@@ -210,16 +210,23 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   public XDebuggerTreeNode addTemporaryEditorNode() {
-    getChildren();
+    if (isLeaf()) {
+      setLeaf(false);
+    }
+    myTree.expandPath(getPath());
     MessageTreeNode node = new MessageTreeNode(myTree, this, true);
-    myCachedAllChildren.add(0, node);
+    if (myMessageChildren == null) {
+      myMessageChildren = ContainerUtil.newSmartList();
+    }
+    myMessageChildren.add(0, node);
+    myCachedAllChildren = null;
     fireNodesInserted(Collections.singleton(node));
     return node;
   }
 
   public void removeTemporaryEditorNode(XDebuggerTreeNode node) {
-    if (myCachedAllChildren != null) {
-      removeChildNode(myCachedAllChildren, node);
+    if (myMessageChildren != null) {
+      removeChildNode(myMessageChildren, node);
     }
   }
 
