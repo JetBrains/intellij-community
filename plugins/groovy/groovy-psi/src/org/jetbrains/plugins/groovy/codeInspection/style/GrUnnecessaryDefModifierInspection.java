@@ -24,8 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -40,14 +39,16 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+    return new PsiElementVisitor() {
       @Override
-      public void visitModifierList(GrModifierList modifierList) {
-        PsiElement parent = modifierList.getParent();
-        if (!(parent instanceof GrMethod) && !(parent instanceof GrParameter) && !(parent instanceof GrVariableDeclaration)) return;
+      public void visitElement(PsiElement modifier) {
+        if (modifier.getNode().getElementType() != GroovyTokenTypes.kDEF) return;
 
-        PsiElement modifier = modifierList.getModifier(GrModifier.DEF);
-        if (modifier == null) return;
+        PsiElement list = modifier.getParent();
+        if (!(list instanceof GrModifierList)) return;
+
+        PsiElement parent = list.getParent();
+        if (!(parent instanceof GrMethod) && !(parent instanceof GrParameter) && !(parent instanceof GrVariableDeclaration)) return;
 
         if (parent instanceof GrMethod && ((GrMethod)parent).getReturnTypeElementGroovy() != null ||
             parent instanceof GrVariable && ((GrVariable)parent).getTypeElementGroovy() != null ||
@@ -60,6 +61,6 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
           );
         }
       }
-    });
+    };
   }
 }
