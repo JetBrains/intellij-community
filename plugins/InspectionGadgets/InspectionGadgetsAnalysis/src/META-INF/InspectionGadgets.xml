@@ -784,10 +784,6 @@
                      key="if.can.be.assertion.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.asserttoif.IfCanBeAssertionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="EqualityOperatorComparesObjects" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="equality.operator.compares.objects.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.equality.EqualityOperatorComparesObjectsInspection"/>
 
     <!--group.names.data.flow.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanVariableAlwaysNegated" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -2555,6 +2551,10 @@
                      key="add.array.creation.expression.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.AddArrayCreationExpressionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="EqualityOperatorComparesObjects" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equality.operator.compares.objects.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.equality.EqualityOperatorComparesObjectsInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
