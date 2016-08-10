@@ -1,7 +1,11 @@
 <html>
 <body>
-This inspection reports <b>if</b> statements that throw a <b>java.lang.Throwable</b> when the condition is <b>true</b>
-and don't have an <b>else</b> branch.
-<p>The quick fix for this inspection offers to replace such <b>if</b> with an <b>assert</b> statement.
+This inspection reports <b>if</b> statements (with no <b>else</b> branch) throwing <code>java.lang.Throwable</code>.<br>
+For example:<br>
+<code><b>if</b> (param == 2) <b>throw new</b> Exception();</code>
+
+<p>Quick fix replaces it with an <b>assert</b> statement.<br>
+Example:<br>
+<code><b>assert</b> param != 2;</code>
 </body>
 </html>
