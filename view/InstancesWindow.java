@@ -51,6 +51,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
@@ -245,7 +246,7 @@ public class InstancesWindow extends DialogWrapper {
           EvaluationContextImpl evaluationContext = debugProcess
               .getDebuggerContext().createEvaluationContext();
 
-          if(evaluationContext != null) {
+          if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {
               myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
               myFilteringTask.execute();
@@ -297,6 +298,13 @@ public class InstancesWindow extends DialogWrapper {
       return myDebugSession instanceof XDebugSessionImpl
           ? ((XDebugSessionImpl) myDebugSession).getValueMarkers()
           : null;
+    }
+
+    private void addChildrenToTree(XValueChildrenList children, boolean last) {
+      XDebuggerTreeNode root =  myInstancesTree.getRoot();
+      if(root != null) {
+        ((XValueNodeImpl)root).addChildren(children, last);
+      }
     }
 
     private void setSourcePositionForEditor() {
@@ -359,8 +367,12 @@ public class InstancesWindow extends DialogWrapper {
         SwingUtilities.invokeLater(() -> {
           myTreeState = XDebuggerTreeState.saveState(myInstancesTree);
           cancelFilteringTask();
-          myInstancesTree.getRoot().clearChildren();
-          ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(myRunningAppChildNode, true);
+
+          XDebuggerTreeNode root = myInstancesTree.getRoot();
+          if(root != null) {
+            root.clearChildren();
+            addChildrenToTree(myRunningAppChildNode, true);
+          }
         });
       }
 
@@ -438,7 +450,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       protected void done() {
-        ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(XValueChildrenList.EMPTY, true);
+        addChildrenToTree(XValueChildrenList.EMPTY, true);
         hideProgressPane();
       }
 
@@ -461,7 +473,7 @@ public class InstancesWindow extends DialogWrapper {
 
             @Override
             public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-              XValueChildrenList children = new XValueChildrenList(FILTERING_CHUNK_SIZE);
+              XValueChildrenList children = new XValueChildrenList();
               int endOfChunk = min(chunkBegin + FILTERING_CHUNK_SIZE, size);
               for (int j = chunkBegin; j < endOfChunk
                   && !isCancelled() && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
@@ -477,8 +489,7 @@ public class InstancesWindow extends DialogWrapper {
 
               if (children.size() > 0) {
                 totalChildren.addAndGet(children.size());
-                SwingUtilities.invokeLater(() ->
-                    ((XValueNodeImpl) myInstancesTree.getRoot()).addChildren(children, false));
+                SwingUtilities.invokeLater(() -> addChildrenToTree(children, false));
               }
 
               SwingUtilities.invokeLater(() -> myFilteringProgressBar.setValue(endOfChunk));
@@ -505,11 +516,12 @@ public class InstancesWindow extends DialogWrapper {
 
       private MyFilteringResult isSatisfy(@NotNull ExpressionEvaluator evaluator, @NotNull Value value) {
         try {
-          Value evaluate = evaluator.evaluate(myEvaluationContext.createEvaluationContext(value));
-          if (evaluate instanceof BooleanValue && ((BooleanValue) evaluate).value()) {
+          Value result = evaluator.evaluate(myEvaluationContext.createEvaluationContext(value));
+          if (result instanceof BooleanValue && ((BooleanValue) result).value()) {
             return MyFilteringResult.MATCH;
           }
         } catch (EvaluateException e) {
+          System.out.println(e.getMessage());
           return MyFilteringResult.EVAL_ERROR;
         }
 
