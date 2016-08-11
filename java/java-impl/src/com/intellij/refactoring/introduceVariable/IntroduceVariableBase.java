@@ -770,7 +770,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (true) {
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
-      if (containerParent instanceof PsiLambdaExpression) break;
+      // allow to find occurrences outside lambda as we allow this for loops, ifs, etc
+      // if (containerParent instanceof PsiLambdaExpression) break;
       if (!skipForStatement && containerParent instanceof PsiForStatement) break;
       containerParent = containerParent.getParent();
       if (containerParent instanceof PsiCodeBlock) {
