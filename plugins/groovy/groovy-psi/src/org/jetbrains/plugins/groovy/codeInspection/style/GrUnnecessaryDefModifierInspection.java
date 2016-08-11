@@ -27,10 +27,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspectionTool {
 
@@ -47,8 +44,8 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         PsiElement list = modifier.getParent();
         if (!(list instanceof GrModifierList)) return;
 
-        PsiElement parent = list.getParent();
-        if (!isModifierUnnecessary(parent)) return;
+        PsiElement owner = list.getParent();
+        if (!PsiUtil.modifierListMayBeEmpty(owner)) return;
 
         holder.registerProblem(
           modifier,
@@ -58,21 +55,5 @@ public class GrUnnecessaryDefModifierInspection extends GroovySuppressableInspec
         );
       }
     };
-  }
-
-  private static boolean isModifierUnnecessary(PsiElement modifierListOwner) {
-    if (modifierListOwner instanceof GrMethod) {
-      return ((GrMethod)modifierListOwner).getReturnTypeElementGroovy() != null || ((GrMethod)modifierListOwner).isConstructor();
-    }
-    else if (modifierListOwner instanceof GrParameter) {
-      return true;
-    }
-    else if (modifierListOwner instanceof GrVariable) {
-      return ((GrVariable)modifierListOwner).getTypeElementGroovy() != null;
-    }
-    else if (modifierListOwner instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration)modifierListOwner).getTypeElementGroovy() != null;
-    }
-    return false;
   }
 }
