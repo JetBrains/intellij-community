@@ -59,7 +59,7 @@ public class LightProjectDescriptor {
 
   @NotNull
   public Module createMainModule(@NotNull Project project) {
-    return createModule(project, "light_idea_test_case.iml");
+    return createModule(project, FileUtil.join(FileUtil.getTempDirectory(), "light_idea_test_case.iml"));
   }
 
   protected Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
@@ -69,7 +69,7 @@ public class LightProjectDescriptor {
         //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
         FileUtil.delete(imlFile);
       }
-      return ModuleManager.getInstance(project).newModule(imlFile.getAbsolutePath(), getModuleType().getId());
+      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
     });
   }
 
