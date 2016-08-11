@@ -33,15 +33,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class InlayPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public InlayPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
@@ -143,21 +142,36 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
     public void doApplyInformationToEditor() {
       assert myDocument != null;
       Map<Integer, Integer> existingWidths = new HashMap<>();
+      Set<String> removedHints = new HashSet<>();
       for (Inlay inlay : myEditor.getInlayModel().getElementsInRange(0, myDocument.getTextLength() + 1, Inlay.Type.INLINE)) {
         if (!(inlay.getRenderer() instanceof MyRenderer)) continue;
         int offset = inlay.getOffset();
         String oldText = ((MyRenderer)inlay.getRenderer()).myText;
         String newText = myAnnotations.get(offset);
         if (!Objects.equals(newText, oldText)) {
-          if (newText != null) existingWidths.put(offset, inlay.getWidthInPixels());
+          if (newText == null) {
+            removedHints.add(oldText);
+          }
+          else {
+            existingWidths.put(offset, inlay.getWidthInPixels());
+          }
           Disposer.dispose(inlay);
         }
-        else myAnnotations.remove(offset);
+        else {
+          myAnnotations.remove(offset);
+        }
       }
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();
-        Integer oldWidth = existingWidths.get(offset);
-        InlayAnimationManager.addElementWithAnimation(myEditor, offset, new MyRenderer(e.getValue()), oldWidth == null ? 0 : oldWidth);
+        String text = e.getValue();
+        MyRenderer renderer = new MyRenderer(text);
+        if (removedHints.contains(text)) {
+          myEditor.getInlayModel().addElement(offset, Inlay.Type.INLINE, renderer);
+        }
+        else {
+          Integer oldWidth = existingWidths.get(offset);
+          InlayAnimationManager.addElementWithAnimation(myEditor, offset, renderer, oldWidth == null ? 0 : oldWidth);
+        }
       }
     }
   }
