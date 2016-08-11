@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,16 +34,13 @@ import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encod
 
 public class BinaryEncoder {
 
-  private static final Logger LOG = Logger.getInstance(BinaryEncoder.class);
-  private static final int A_LETTER_SHIFT = decodeChar('A');
-
-  public static char getCharForLineSize(int lineSize) throws BinaryPatchException {
+  public static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {
     checkLenIsValid(lineSize, "Can't encode binary file patch: wrong line size");
-    return encodeChar(A_LETTER_SHIFT + lineSize - 1);
+    return encodeChar(decodeChar('A') + lineSize - 1);
   }
 
-  public static int getLineSizeFromChar(char charSize) throws BinaryPatchException {
-    int result = decodeChar(charSize) - A_LETTER_SHIFT + 1;
+  public static int getLineSizeFromChar(char charSize) throws BinaryPatchException, Base85x.Base85FormatException {
+    int result = decodeChar(charSize) - decodeChar('A') + 1;
     checkLenIsValid(result, "Can't decode binary file patch: wrong char-size symbol");
     return result;
   }
@@ -55,7 +51,7 @@ public class BinaryEncoder {
     }
   }
 
-  public static void encode(@NotNull InputStream input, @NotNull Writer writer) throws IOException {
+  public static void encode(@NotNull InputStream input, @NotNull Writer writer) throws IOException, BinaryPatchException {
     int maxLineSize = 52;
     byte[] deflated = new byte[maxLineSize];
     DeflaterInputStream deflaterStream = new DeflaterInputStream(input);
@@ -66,15 +62,15 @@ public class BinaryEncoder {
         if (lineSize <= 0) break;
         writer.append(getCharForLineSize(lineSize));
         //fill encoded block to be divisible by 4
-        int newSize = ((lineSize + 3) / 4) * 4;    
+        int newSize = ((lineSize + 3) / 4) * 4;
         Arrays.fill(deflated, lineSize, newSize, (byte)0);
         writer.append(new String(Base85x.encode(ArrayUtil.realloc(deflated, newSize))));
         writer.append('\n');
       }
       while (lineSize > 0);
     }
-    catch (BinaryPatchException e) {
-      LOG.error(e.getMessage());
+    catch (Base85x.Base85FormatException e) {
+      throw new BinaryPatchException(e);
     }
     finally {
       deflaterStream.close();
@@ -107,14 +103,21 @@ public class BinaryEncoder {
         throw new BinaryPatchException(String.format("Length of decoded binary patch mismatches: expected %d, received %d", size, count));
       }
     }
+    catch (Base85x.Base85FormatException e) {
+      throw new BinaryPatchException(e);
+    }
     finally {
       inflater.end();
     }
   }
-  
-  static class BinaryPatchException extends Exception {
+
+  public static class BinaryPatchException extends Exception {
     public BinaryPatchException(String s) {
       super(s);
+    }
+
+    public BinaryPatchException(Base85x.Base85FormatException e) {
+      this(e.getMessage());
     }
   }
 }

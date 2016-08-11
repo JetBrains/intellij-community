@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -29,6 +30,8 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED_HASH;
 
 public class BinaryPatchWriter {
+
+  private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
   private final static String GIT_DIFF_HEADER = "diff --git %s %s";
   private final static String FILE_MODE_HEADER = "%s file mode %d";
@@ -66,8 +69,13 @@ public class BinaryPatchWriter {
       writer.write(lineSeparator);
       writer.write(String.format(LITERAL_HEADER, afterContent == null ? 0 : afterContent.length));
       writer.write(lineSeparator);
-      BinaryEncoder
-        .encode(afterFile.exists() ? new FileInputStream(afterFile) : new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY), writer);
+      try {
+        BinaryEncoder
+          .encode(afterFile.exists() ? new FileInputStream(afterFile) : new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY), writer);
+      }
+      catch (BinaryEncoder.BinaryPatchException e) {
+        LOG.error("Can't write patch for binary file: " + afterFile.getPath(), e);
+      }
       writer.write(lineSeparator);
     }
   }
