@@ -107,6 +107,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
               new SmartList<>();
             final IProperty[] properties =
               files.stream().map(f -> f.findPropertyByKey(key)).filter(Objects::nonNull).toArray(IProperty[]::new);
+            if (properties.length == 0) return false;
             for (InspectionVisitorWrapper v : visitors) {
               final ResourceBundleEditorProblemDescriptor[] problemDescriptors = v.getProblemVisitor().apply(properties);
               if (!ArrayUtil.isEmpty(problemDescriptors)) {
