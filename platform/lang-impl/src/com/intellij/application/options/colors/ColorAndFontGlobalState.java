@@ -16,13 +16,24 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 public class ColorAndFontGlobalState {
-  public boolean isRainbowOn;
+  private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+
+  private boolean myIsRainbowOn;
+  public boolean isRainbowOn() {
+    return myIsRainbowOn;
+  }
+  public void setRainbowOn(boolean rainbowOn) {
+    if (rainbowOn != myIsRainbowOn) {
+      myIsRainbowOn = rainbowOn;
+    }
+  }
 
   ColorAndFontGlobalState() {
-    isRainbowOn = RainbowHighlighter.isRainbowEnabled();
+    myIsRainbowOn = RainbowHighlighter.isRainbowEnabled();
   }
 
   public ColorAndFontGlobalState(@NotNull ColorAndFontGlobalState state) {
@@ -31,12 +42,12 @@ public class ColorAndFontGlobalState {
 
   public void copyFrom(@NotNull ColorAndFontGlobalState state) {
     assert this != state;
-    isRainbowOn = state.isRainbowOn;
+    myIsRainbowOn = state.myIsRainbowOn;
   }
 
   public void apply() {
     //FIXME: we need better place for per-language state storage
-    RainbowHighlighter.setRainbowEnabled(isRainbowOn);
+    RainbowHighlighter.setRainbowEnabled(myIsRainbowOn);
   }
 
   @Override
@@ -45,11 +56,19 @@ public class ColorAndFontGlobalState {
     if (o == null || getClass() != o.getClass()) return false;
 
     ColorAndFontGlobalState state = (ColorAndFontGlobalState)o;
-    return isRainbowOn == state.isRainbowOn;
+    return myIsRainbowOn == state.myIsRainbowOn;
   }
 
   @Override
   public int hashCode() {
-    return isRainbowOn ? 1 : 0;
+    return myIsRainbowOn ? 1 : 0;
+  }
+
+  public void addListener(@NotNull ColorAndFontSettingsListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void stateChanged() {
+    myDispatcher.getMulticaster().settingsChanged();
   }
 }

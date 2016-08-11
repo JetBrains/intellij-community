@@ -25,6 +25,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
 
   @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = new HashMap<String, TextAttributesKey>();
 
@@ -255,5 +256,40 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.GENERAL_SETTINGS;
+  }
+
+  @Override
+  public boolean isRainbowType(TextAttributesKey type) {
+    return DefaultLanguageHighlighterColors.LOCAL_VARIABLE.equals(type)
+           || DefaultLanguageHighlighterColors.PARAMETER.equals(type)
+           || DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE.equals(type);
+  }
+
+  @NotNull
+  @Override
+  public String getRainbowDemoText() {
+    return
+      "Global <global_var>variable1</global_var>\n" +
+      "Global <global_var>variable2</global_var>\n" +
+      "<doc_comment>/** \n" +
+      " * Doc comment\n" +
+      " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter1</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter2</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter3</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter4</doc_tag_value> documentation\n" +
+      " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter5</doc_tag_value> documentation\n" +
+      " */</doc_comment>\n" +
+      "Function <func_decl>declaration</func_decl> (<param>parameter1</param>\n" +
+      "                      <param>parameter2</param>\n" +
+      "                      <param>parameter3</param>\n" +
+      "                      <param>parameter4</param>\n" +
+      "                      <param>parameter5</param>)\n" +
+      "    Local <local_var>variable1</local_var>\n" +
+      "    Local <local_var>variable2</local_var>\n" +
+      "    Local <local_var>variable3</local_var>\n" +
+      "    Local <local_var>variable4</local_var>\n" +
+      "    Local <local_var>variable5</local_var>\n" +
+      "Function <func_call>call</func_call>()";
   }
 }

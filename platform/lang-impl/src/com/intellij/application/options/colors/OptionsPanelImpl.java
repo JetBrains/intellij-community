@@ -74,6 +74,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       @Override
       public void onSettingsChanged(ActionEvent e) {
         myDispatcher.getMulticaster().settingsChanged();
+        myOptions.getGlobalOption().stateChanged();
       }
 
       @Override
@@ -96,6 +97,14 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
             if (runnable != null) callback.doWhenDone(runnable);
           }
         }
+      }
+    });
+
+    myOptions.getGlobalOption().addListener(new ColorAndFontSettingsListener.Abstract() {
+      @Override
+      public void settingsChanged() {
+        if (!mySchemesProvider.areSchemesLoaded()) return;
+        processListValueChanged();
       }
     });
 

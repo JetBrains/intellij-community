@@ -113,9 +113,9 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
     if (rainbowCurState.size() < myCbStops.length) return;
 
-    myRainbow.setSelected(myGlobalState.isRainbowOn);
+    myRainbow.setSelected(myGlobalState.isRainbowOn());
 
-    boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && myGlobalState.isRainbowOn;
+    boolean isEnable = !ColorAndFontOptions.isReadOnly(attributeDescriptor.getScheme()) && myGlobalState.isRainbowOn();
     for (int i = 0; i < myCbStops.length; ++i) {
       Pair<Boolean, Color> state = rainbowCurState.get(i);
       myCbStops[i].setEnabled(isEnable);
@@ -136,14 +136,13 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     List<Pair<Boolean, Color>> rainbowCurState = descriptor.getRainbowCurState();
     if (rainbowCurState.size() < myCbStops.length) return;
 
-    myGlobalState.isRainbowOn = myRainbow.isSelected();
+    myGlobalState.setRainbowOn(myRainbow.isSelected());
     for (int i = 0; i < myCbStops.length; ++i) {
       boolean isOverride = myCbStops[i].isSelected();
       rainbowCurState.set(i, Pair.create(isOverride,
                                          isOverride ? myStops[i].getSelectedColor() : descriptor.getDefaultColor(i)));
     }
 
-    reset(descriptor);
     descriptor.apply(scheme);
   }
 
