@@ -131,7 +131,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
             LOG.catchAndLog {
-              for (factory in com.intellij.credentialStore.CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+              for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
                 val store = factory.create() ?: continue
                 for ((k, v) in newDb) {
                   store.setPassword(k, v)

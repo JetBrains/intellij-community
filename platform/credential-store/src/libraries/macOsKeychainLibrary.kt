@@ -29,6 +29,9 @@ private val LIBRARY by lazy {
   Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary
 }
 
+private const val errSecItemNotFound = -25300
+private const val errSecInvalidRecord = -67701
+
 internal class KeyChainCredentialStore(serviceName: String) : CredentialStore {
   private val serviceName = serviceName.toByteArray()
 
@@ -62,15 +65,20 @@ fun findGenericPassword(serviceName: ByteArray, accountName: String): String? {
 fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
   val itemRef = arrayOf<Pointer?>(null)
   val accountNameBytes = accountName.toByteArray()
-  checkForError("find (for delete)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
-  val pointer = itemRef[0]
+  val code = LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef)
+  if (code == errSecItemNotFound || code == errSecInvalidRecord) {
+    return
+  }
+
+  checkForError("find (for delete)", code)
+  val pointer = itemRef.get(0)
   if (pointer != null) {
     checkForError("delete", LIBRARY.SecKeychainItemDelete(pointer))
     LIBRARY.CFRelease(pointer)
   }
 }
 
-// http://developer.apple.com/mac/library/DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
+// https://developer.apple.com/library/mac/documentation/Security/Reference/keychainservices/index.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
 private interface MacOsKeychainLibrary : Library {
   fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray, passwordLength: Int, passwordData: ByteArray, itemRef: Pointer? = null): Int
@@ -117,20 +125,22 @@ fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: B
 }
 
 private fun checkForError(message: String, code: Int) {
-  if (code != 0 && code != /* errSecItemNotFound, always returned from find it seems */-25300) {
-    val translated = LIBRARY.SecCopyErrorMessageString(code, null)
-    val builder = StringBuilder(message).append(": ")
-    if (translated == null) {
-      builder.append(code)
-    }
-    else {
-      val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-      for (i in 0..buf.size - 1) {
-        buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
-      }
-      LIBRARY.CFRelease(translated)
-      builder.append(buf).append(" (").append(code).append(')')
-    }
-    LOG.error(builder.toString())
+  if (code == 0 || code == errSecItemNotFound) {
+    return
   }
+
+  val translated = LIBRARY.SecCopyErrorMessageString(code, null)
+  val builder = StringBuilder(message).append(": ")
+  if (translated == null) {
+    builder.append(code)
+  }
+  else {
+    val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
+    for (i in 0..buf.size - 1) {
+      buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
+    }
+    LIBRARY.CFRelease(translated)
+    builder.append(buf).append(" (").append(code).append(')')
+  }
+  LOG.error(builder.toString())
 }

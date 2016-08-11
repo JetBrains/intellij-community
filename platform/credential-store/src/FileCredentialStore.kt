@@ -29,8 +29,6 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.Key
-import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
@@ -133,7 +131,7 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
     // try old key - as hash
     var value = db.get(rawKey)
     if (value == null) {
-      value = db.remove(toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray())))
+      value = db.remove(rawKey)
       if (value != null) {
         db.put(rawKey, value)
         needToSave.set(true)
@@ -159,12 +157,6 @@ class FileCredentialStore(keyToValue: Map<String, String>? = null, baseDirectory
       store.setPassword(k, v)
     }
   }
-}
-
-internal fun generate(): ByteArray {
-  val bytes = ByteArray(16)
-  SecureRandom().nextBytes(bytes)
-  return bytes
 }
 
 interface MasterKeyStorage {

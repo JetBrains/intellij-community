@@ -16,6 +16,7 @@
 package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.Logger
+import java.security.MessageDigest
 import java.util.*
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
@@ -30,3 +31,5 @@ internal interface CredentialStore {
 internal fun getRawKey(key: String, requestor: Class<*>?) = if (requestor == null) key else "${requestor.name}/$key"
 
 internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
+
+internal fun toOldKey(newKey: String) = toOldKey(MessageDigest.getInstance("SHA-256").digest(newKey.toByteArray()))
