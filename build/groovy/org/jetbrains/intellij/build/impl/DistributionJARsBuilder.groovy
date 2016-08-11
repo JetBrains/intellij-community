@@ -62,23 +62,24 @@ class DistributionJARsBuilder {
     this.allPlugins = allPlugins
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*.properties")
-      include(name: "fileTemplates/**/*")
-      include(name: "inspectionDescriptions/**/*")
-      include(name: "intentionDescriptions/**/*")
-      include(name: "tips/**/*")
-      include(name: "search/**/*")
+      include(name: "fileTemplates/**")
+      include(name: "inspectionDescriptions/**")
+      include(name: "intentionDescriptions/**")
+      include(name: "tips/**")
+      include(name: "search/**")
     }
 
     buildContext.ant.patternset(id: RESOURCES_EXCLUDED) {
       exclude(name: "**/*.properties")
-      exclude(name: "fileTemplates/**/*")
+      exclude(name: "fileTemplates/**")
       exclude(name: "fileTemplates")
-      exclude(name: "inspectionDescriptions/**/*")
+      exclude(name: "inspectionDescriptions/**")
       exclude(name: "inspectionDescriptions")
-      exclude(name: "intentionDescriptions/**/*")
+      exclude(name: "intentionDescriptions/**")
       exclude(name: "intentionDescriptions")
-      exclude(name: "tips/**/*")
+      exclude(name: "tips/**")
       exclude(name: "tips")
+      exclude(name: "search/**")
     }
   }
 
@@ -163,17 +164,23 @@ class DistributionJARsBuilder {
 
       jar("forms_rt.jar") { module("forms_rt") }
 
-      productLayout.additionalPlatformModules.entrySet().findAll { it.value != "resources_en.jar" }.each {
+      productLayout.additionalPlatformModules.entrySet().findAll { it.value != productLayout.mainJarName }.each {
         def moduleName = it.key
         jar(it.value) {
-          module(moduleName)
+          module(moduleName) {
+            ant.patternset(refid: resourcesExcluded)
+          }
         }
       }
 
       jar("resources_en.jar", true) {
-        productLayout.additionalPlatformModules.entrySet().findAll { it.value == "resources_en.jar"}.each {
-          modulePatches([it.key])
-          module(it.key)
+        productLayout.additionalPlatformModules.keySet().each {
+          modulePatches([it]) {
+            ant.patternset(refid: resourcesIncluded)
+          }
+          module(it) {
+            ant.patternset(refid: resourcesIncluded)
+          }
         }
         module("platform-resources-en")
         module("coverage-common") {
@@ -190,6 +197,14 @@ class DistributionJARsBuilder {
         productLayout.platformImplementationModules.each { module it }
         module("coverage-common") {
           ant.patternset(refid: resourcesExcluded)
+        }
+        productLayout.additionalPlatformModules.entrySet().findAll {it.value == productLayout.mainJarName}.each {
+          modulePatches([it.key]) {
+            ant.patternset(refid: resourcesExcluded)
+          }
+          module(it.key) {
+            ant.patternset(refid: resourcesExcluded)
+          }
         }
         productLayout.additionalJarsToUnpackIntoMainJar.each {
           ant.zipfileset(src: it)
