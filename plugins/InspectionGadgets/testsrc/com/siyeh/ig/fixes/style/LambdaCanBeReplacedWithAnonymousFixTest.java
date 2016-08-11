@@ -17,14 +17,14 @@ package com.siyeh.ig.fixes.style;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.style.ReplaceLambdaWithAnonymousInspection;
+import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
 
-public class ReplaceLambdaWithAnonymousFixTest extends IGQuickFixesTestCase {
+public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ReplaceLambdaWithAnonymousInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+    myFixture.enableInspections(new LambdaCanBeReplacedWithAnonymousInspection());
+    myDefaultHint = InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
   }
 
   public void testSimpleRunnable() {

@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.containers.HashMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,20 +38,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceLambdaWithAnonymousInspection.class.getName());
+public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance("#" + LambdaCanBeReplacedWithAnonymousInspection.class.getName());
 
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
+    return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+    return getDisplayName();
   }
 
   @Override
@@ -179,19 +178,16 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
 
   private static class LambdaToAnonymousVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitParameterList(PsiParameterList parameterList) {
-      super.visitParameterList(parameterList);
-      if (isConvertibleLambdaExpression(parameterList.getParent())) {
-        registerError(parameterList);
-      }
-    }
-
-    @Override
-    public void visitJavaToken(PsiJavaToken token) {
-      super.visitJavaToken(token);
-      if (token.getTokenType() == JavaTokenType.ARROW) {
-        if (isConvertibleLambdaExpression(token.getParent())) {
-          registerError(token);
+    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+      super.visitLambdaExpression(lambdaExpression);
+      if (isConvertibleLambdaExpression(lambdaExpression)) {
+        PsiParameterList parameterList = lambdaExpression.getParameterList();
+        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(parameterList, PsiWhiteSpace.class, PsiComment.class);
+        if (nextElement instanceof PsiJavaToken && ((PsiJavaToken)nextElement).getTokenType() == JavaTokenType.ARROW) {
+          registerErrorAtRange(parameterList, nextElement);
+        }
+        else {
+          registerError(parameterList);
         }
       }
     }
@@ -244,22 +240,22 @@ public class ReplaceLambdaWithAnonymousInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.descriptor");
+      return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.lambda.with.anonymous.name");
+      return getName();
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement element = descriptor.getStartElement();
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiLambdaExpression) {
-        ReplaceLambdaWithAnonymousInspection.doFix(project, (PsiLambdaExpression)parent);
+        LambdaCanBeReplacedWithAnonymousInspection.doFix(project, (PsiLambdaExpression)parent);
       }
     }
   }
