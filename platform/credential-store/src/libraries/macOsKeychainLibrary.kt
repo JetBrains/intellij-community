@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe.macOs
+package com.intellij.credentialStore.macOs
 
-import com.intellij.ide.passwordSafe.LOG
+import com.intellij.credentialStore.CredentialStore
+import com.intellij.credentialStore.LOG
 import com.intellij.openapi.util.SystemInfo
+import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 
@@ -27,12 +29,22 @@ private val LIBRARY by lazy {
   Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary
 }
 
-fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: String) {
-  saveGenericPassword(serviceName, accountName, password.toByteArray())
-}
+internal class KeyChainCredentialStore(serviceName: String) : CredentialStore {
+  private val serviceName = serviceName.toByteArray()
 
-private fun saveGenericPassword(serviceName: ByteArray, accountName: String, passwordData: ByteArray) {
-  saveGenericPassword(serviceName, accountName, passwordData, passwordData.size)
+  override fun get(key: String): String? {
+    return findGenericPassword(serviceName, key)
+  }
+
+  override fun set(key: String, password: ByteArray?) {
+    if (password == null) {
+      deleteGenericPassword(serviceName, key)
+      return
+    }
+
+    saveGenericPassword(serviceName, key, password, password.size)
+    password.fill(0)
+  }
 }
 
 fun findGenericPassword(serviceName: ByteArray, accountName: String): String? {
@@ -60,7 +72,7 @@ fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
 
 // http://developer.apple.com/mac/library/DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
-interface MacOsKeychainLibrary : com.sun.jna.Library {
+private interface MacOsKeychainLibrary : Library {
   fun SecKeychainAddGenericPassword(keychain: Pointer?, serviceNameLength: Int, serviceName: ByteArray, accountNameLength: Int, accountName: ByteArray, passwordLength: Int, passwordData: ByteArray, itemRef: Pointer? = null): Int
 
   fun SecKeychainItemModifyContent(/*SecKeychainItemRef*/ itemRef: Pointer, /*SecKeychainAttributeList**/ attrList: Pointer?, length: Int, data: ByteArray): Int
@@ -89,17 +101,18 @@ interface MacOsKeychainLibrary : com.sun.jna.Library {
   fun SecKeychainItemFreeContent(/*SecKeychainAttributeList*/attrList: Pointer?, data: Pointer?)
 }
 
-private fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: ByteArray, passwordSize: Int) {
+fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: ByteArray, passwordSize: Int = password.size) {
   val accountNameBytes = accountName.toByteArray()
   val itemRef = arrayOf<Pointer?>(null)
-  checkForError("find (for save)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
+  val library = LIBRARY
+  checkForError("find (for save)", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
   val pointer = itemRef[0]
   if (pointer == null) {
-    checkForError("save (new)", LIBRARY.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, password))
+    checkForError("save (new)", library.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, password))
   }
   else {
-    checkForError("save (update)", LIBRARY.SecKeychainItemModifyContent(pointer, null, passwordSize, password))
-    LIBRARY.CFRelease(pointer)
+    checkForError("save (update)", library.SecKeychainItemModifyContent(pointer, null, passwordSize, password))
+    library.CFRelease(pointer)
   }
 }
 

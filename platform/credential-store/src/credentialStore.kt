@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe;
+package com.intellij.credentialStore
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import java.util.*
 
-public interface CredentialStoreFactory {
-  ExtensionPointName<CredentialStoreFactory> CREDENTIAL_STORE_FACTORY = ExtensionPointName.create("com.intellij.credentialStore");
+internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
-  @Nullable
-  PasswordStorage create();
+internal interface CredentialStore {
+  fun get(key: String): String?
+
+  // passed byte array will be cleared
+  fun set(key: String, password: ByteArray?)
 }
+
+internal fun getRawKey(key: String, requestor: Class<*>?) = if (requestor == null) key else "${requestor.name}/$key"
+
+internal fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)

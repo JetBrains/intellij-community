@@ -15,10 +15,13 @@
  */
 package com.intellij.ide.passwordSafe.impl
 
-import com.intellij.ide.passwordSafe.*
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings.ProviderType
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettingsListener
+import com.intellij.credentialStore.FileCredentialStore
+import com.intellij.credentialStore.LOG
+import com.intellij.credentialStore.PasswordSafeSettings
+import com.intellij.credentialStore.PasswordSafeSettings.ProviderType
+import com.intellij.credentialStore.PasswordSafeSettingsListener
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.SettingsSavingComponent
@@ -126,7 +129,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
 private fun createPersistentCredentialStore(existing: FileCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
   LOG.catchAndLog {
-    for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+    for (factory in com.intellij.credentialStore.CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
       val store = factory.create() ?: continue
       if (convertFileStore) {
         LOG.catchAndLog {

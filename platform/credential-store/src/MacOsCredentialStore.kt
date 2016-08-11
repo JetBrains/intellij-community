@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe
+package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.macOs.deleteGenericPassword
-import com.intellij.ide.passwordSafe.macOs.findGenericPassword
-import com.intellij.ide.passwordSafe.macOs.isMacOsCredentialStoreSupported
-import com.intellij.ide.passwordSafe.macOs.saveGenericPassword
+import com.intellij.credentialStore.macOs.KeyChainCredentialStore
+import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
+import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.util.SystemProperties
 import java.security.MessageDigest
 
 private class MacOsCredentialStore(serviceName: String) : PasswordStorage {
-  private val serviceName = serviceName.toByteArray()
+  private val store = KeyChainCredentialStore(serviceName)
 
   override fun getPassword(requestor: Class<*>?, key: String): String? {
     val rawKey = getRawKey(key, requestor)
@@ -32,7 +31,7 @@ private class MacOsCredentialStore(serviceName: String) : PasswordStorage {
     @Suppress("CanBeVal")
     var value: String?
     try {
-      value = findGenericPassword(serviceName, rawKey)
+      value = store.get(rawKey)
     }
     catch (e: Throwable) {
       LOG.error(e)
@@ -42,10 +41,10 @@ private class MacOsCredentialStore(serviceName: String) : PasswordStorage {
     if (value == null) {
       LOG.catchAndLog {
         val oldKey = toOldKey(MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray()))
-        value = findGenericPassword(serviceName, oldKey)
+        value = store.get(oldKey)
         if (value != null) {
-          LOG.catchAndLog { deleteGenericPassword(serviceName, oldKey) }
-          saveGenericPassword(serviceName, key, value!!)
+          LOG.catchAndLog { store.set(oldKey, null) }
+          store.set(key, value!!.toByteArray())
         }
       }
     }
@@ -54,13 +53,7 @@ private class MacOsCredentialStore(serviceName: String) : PasswordStorage {
 
   override fun setPassword(requestor: Class<*>?, key: String, value: String?) {
     LOG.catchAndLog {
-      val rawKey = getRawKey(key, requestor)
-      if (value == null) {
-        deleteGenericPassword(serviceName, rawKey)
-      }
-      else {
-        saveGenericPassword(serviceName, rawKey, value)
-      }
+      store.set(getRawKey(key, requestor), value?.toByteArray())
     }
   }
 }

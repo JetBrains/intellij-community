@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.passwordSafe
+package com.intellij.credentialStore
 
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.EnterPasswordComponent
@@ -132,7 +131,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
             LOG.catchAndLog {
-              for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
+              for (factory in com.intellij.credentialStore.CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
                 val store = factory.create() ?: continue
                 for ((k, v) in newDb) {
                   store.setPassword(k, v)
