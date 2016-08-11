@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
@@ -104,6 +105,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.annotator.UtilKt.checkModifierIsNotAllowed;
+import static org.jetbrains.plugins.groovy.annotator.UtilKt.checkVariableModifiers;
+import static org.jetbrains.plugins.groovy.annotator.UtilKt.registerFix;
 
 /**
  * @author ven
@@ -951,8 +956,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (parent instanceof GrTypeDefinition) {
       checkTypeDefinitionModifiers(myHolder, (GrTypeDefinition)parent);
     }
-    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinition) {
+    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinitionBody) {
       checkFieldModifiers(myHolder, (GrVariableDeclaration)parent);
+    }
+    else if (parent instanceof GrVariableDeclaration) {
+      checkVariableModifiers(myHolder, ((GrVariableDeclaration)parent));
     }
     else if (parent instanceof GrClassInitializer) {
       checkClassInitializerModifiers(myHolder, modifierList);
@@ -993,44 +1001,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       registerFix(annotation, new GrModifierFix(member, PsiModifier.FINAL, true, false, GrModifierFix.MODIFIER_LIST), modifierList);
     }
 
-    checkModifierIsNotAllowed(modifierList, PsiModifier.NATIVE, GroovyBundle.message("variable.cannot.be.native"), holder);
-    checkModifierIsNotAllowed(modifierList, PsiModifier.ABSTRACT, GroovyBundle.message("variable.cannot.be.abstract"), holder);
-
     if (member.getContainingClass() instanceof GrInterfaceDefinition) {
       checkModifierIsNotAllowed(modifierList,
                                 PsiModifier.PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
       checkModifierIsNotAllowed(modifierList, PsiModifier.PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be",
                                                                                           PsiModifier.PROTECTED),
                                 holder);
-    }
-  }
-
-  private static void registerFix(Annotation annotation, LocalQuickFix fix, PsiElement place) {
-    final InspectionManager manager = InspectionManager.getInstance(place.getProject());
-    assert !place.getTextRange().isEmpty() : place.getContainingFile().getName();
-
-    final ProblemDescriptor descriptor = manager.createProblemDescriptor(place, place, annotation.getMessage(),
-                                                                         annotation.getHighlightType(), true, LocalQuickFix.EMPTY_ARRAY);
-    final TextRange range = TextRange.create(annotation.getStartOffset(), annotation.getEndOffset());
-    annotation.registerFix(fix, range, null, descriptor);
-  }
-
-  private static void checkModifierIsNotAllowed(@NotNull GrModifierList modifierList,
-                                                @NotNull @GrModifier.GrModifierConstant String modifier,
-                                                @Nullable String message,
-                                                @NotNull AnnotationHolder holder) {
-    checkModifierIsNotAllowedImpl(modifierList, modifier, message, holder, false);
-  }
-
-  private static void checkModifierIsNotAllowedImpl(@NotNull GrModifierList modifierList,
-                                                    @NotNull @GrModifier.GrModifierConstant String modifier,
-                                                    @Nullable String message,
-                                                    @NotNull AnnotationHolder holder,
-                                                    final boolean explicit) {
-    if (explicit ? modifierList.hasModifierProperty(modifier) : modifierList.hasExplicitModifier(modifier)) {
-      PsiElement modifierOrList = getModifierOrList(modifierList, modifier);
-      final Annotation annotation = holder.createErrorAnnotation(modifierOrList, message);
-      registerFix(annotation, new GrModifierFix((PsiMember)modifierList.getParent(), modifier, true, false, GrModifierFix.MODIFIER_LIST), modifierList);
     }
   }
 

@@ -2007,4 +2007,8 @@ def doParse() {
 def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>() {}
 '''
   }
+
+  void testLocalVariableModifiers() { doTest() }
+
+  void testFieldModifiers() { doTest() }
 }
