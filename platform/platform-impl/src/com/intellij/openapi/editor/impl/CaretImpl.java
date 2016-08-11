@@ -781,12 +781,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
     int y = myEditor.myUseNewRendering ? myEditor.visibleLineToY(visualPosition.line) :  myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
-    int offset = myEditor.logicalPositionToOffset(position);
-    List<Inlay> inlays = myEditor.getInlayModel().getElementsInRange(offset, offset, Inlay.Type.INLINE);
     int height = lineHeight;
-    for (Inlay inlay : inlays) {
-      height = Math.max(height, inlay.getHeightInPixels());
-    }
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
     for (SoftWrap softWrap : softWraps) {
       height += StringUtil.countNewLines(softWrap.getText()) * lineHeight;
