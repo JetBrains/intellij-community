@@ -462,7 +462,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
-    myDocument.addDocumentListener(mySelectionModel, myCaretModel);
 
     myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);

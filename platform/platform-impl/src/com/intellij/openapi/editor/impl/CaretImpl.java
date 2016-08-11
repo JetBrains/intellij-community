@@ -143,7 +143,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       releaseBulkCaretMarker();
     }
-    documentChanged();
+    updateSelectionOnDocumentChange();
   }
 
   public void beforeDocumentChange() {
@@ -154,7 +154,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
-  public void documentChanged() {
+  private void updateSelectionOnDocumentChange() {
     RangeMarker marker = mySelectionMarker;
     if (marker != null) {
       int endAfter;
@@ -809,7 +809,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
-  void updateCaretPosition(@NotNull final DocumentEventImpl event) {
+  void afterDocumentChange(@NotNull final DocumentEventImpl event) {
     final DocumentEx document = myEditor.getDocument();
     if (document.isInBulkUpdate()) return;
     boolean performSoftWrapAdjustment = event.getNewLength() > 0 // We want to put caret just after the last added symbol
@@ -859,6 +859,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     updateVisualLineInfo();
+    updateSelectionOnDocumentChange();
   }
 
   private boolean needToShiftWhiteSpaces(final DocumentEvent e) {

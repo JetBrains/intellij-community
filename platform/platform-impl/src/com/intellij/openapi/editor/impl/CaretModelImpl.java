@@ -83,7 +83,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       myIsInUpdate = false;
       doWithCaretMerging(() -> {
         for (CaretImpl caret : myCarets) {
-          caret.updateCaretPosition((DocumentEventImpl)e);
+          caret.afterDocumentChange((DocumentEventImpl)e);
         }
       });
     }
@@ -94,6 +94,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void beforeDocumentChange(DocumentEvent e) {
+    if (!myEditor.getDocument().isInBulkUpdate()) {
+      for (CaretImpl caret : myCarets) {
+        caret.beforeDocumentChange();
+      }
+    }
     myIsInUpdate = true;
   }
 
