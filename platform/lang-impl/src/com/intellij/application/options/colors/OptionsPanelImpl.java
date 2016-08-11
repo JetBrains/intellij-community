@@ -104,7 +104,10 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       @Override
       public void settingsChanged() {
         if (!mySchemesProvider.areSchemesLoaded()) return;
-        processListValueChanged();
+        if (myOptionsTree.getSelectedValue() != null) {
+          // update options & preview after global state change
+          processListValueChanged();
+        }
       }
     });
 
