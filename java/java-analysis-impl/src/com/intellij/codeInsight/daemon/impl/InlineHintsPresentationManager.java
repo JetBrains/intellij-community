@@ -36,7 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class InlineHintsPresentationManager implements Disposable, UISettingsListener {
-  private static final int ANIMATION_STEP_MS = 50;
+  private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_STEPS = 4;
 
   private final Alarm OUR_ALARM = new Alarm(this);
