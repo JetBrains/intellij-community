@@ -901,6 +901,10 @@ class PyDB:
                 sys.stderr.write("No module named %s\n" % file)
                 return
             else:
+                if filename.endswith('__init__.py'):
+                    new_target = os.path.join(os.path.dirname(filename), '__main__.py')
+                if os.path.isfile(new_target):
+                    filename = new_target
                 file = filename
 
         if os.path.isdir(file):
