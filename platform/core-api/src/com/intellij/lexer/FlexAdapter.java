@@ -18,6 +18,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class FlexAdapter extends LexerBase {
 
   private static final Logger LOG = Logger.getInstance(FlexAdapter.class);
+  private static final boolean logLexerErrors = SystemProperties.getBooleanProperty("log.flex.adapter.errors", true); // Used by Upsource
 
   private final FlexLexer myFlex;
 
@@ -105,13 +107,17 @@ public class FlexAdapter extends LexerBase {
       myTokenType = myFlex.advance();
       myTokenEnd = myFlex.getTokenEnd();
     }
-    catch (Exception e) {
-      LOG.error(myFlex.getClass().getName(), e);
+    catch (Exception  e) {
+      if (logLexerErrors) {
+        LOG.error(myFlex.getClass().getName(), e);
+      }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
     }
     catch (Error e) {
-      LOG.error(myFlex.getClass().getName(), e);
+      if (logLexerErrors) {
+        LOG.error(myFlex.getClass().getName(), e);
+      }
       myTokenType = TokenType.WHITE_SPACE;
       myTokenEnd = myBufferEnd;
     }
