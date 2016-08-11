@@ -136,7 +136,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @NotNull
   @Override
   public InlayModel getInlayModel() {
-    throw new UnsupportedOperationException();
+    return new TextComponentInlayModel();
   }
 
   @Override
