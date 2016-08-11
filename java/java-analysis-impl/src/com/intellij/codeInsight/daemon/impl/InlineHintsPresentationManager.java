@@ -16,6 +16,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
@@ -29,18 +32,32 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
-public class InlineHintsPresentationManager {
+public class InlineHintsPresentationManager implements Disposable, UISettingsListener {
   private static final int ANIMATION_STEP_MS = 50;
   private static final int ANIMATION_STEPS = 4;
 
-  private final Alarm OUR_ALARM = new Alarm();
+  private final Alarm OUR_ALARM = new Alarm(this);
 
-  private InlineHintsPresentationManager() {}
+  private FontInfo myFontInfo;
 
   public static InlineHintsPresentationManager getInstance() {
     return ServiceManager.getService(InlineHintsPresentationManager.class);
+  }
+
+  private InlineHintsPresentationManager() {
+    UISettings settings = UISettings.getInstance();
+    assert settings != null;
+    settings.addUISettingsListener(this, this);
+    updateFontInfo();
+  }
+
+  private void updateFontInfo() {
+    Font font = UIManager.getFont("Label.font");
+    font = font.deriveFont(Math.max(1, font.getSize2D() - 1));
+    myFontInfo = new FontInfo(font);
   }
 
   public boolean isInlineHint(@NotNull Inlay inlay) {
@@ -66,8 +83,15 @@ public class InlineHintsPresentationManager {
     }
   }
 
-  private static class MyRenderer extends Inlay.Renderer {
-    private static final FontInfo FONT = new FontInfo("Segoe UI", 11, Font.PLAIN);
+  @Override
+  public void dispose() {}
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    updateFontInfo();
+  }
+
+  private class MyRenderer extends Inlay.Renderer {
     private final String myText;
 
     private MyRenderer(String text) {
@@ -76,7 +100,7 @@ public class InlineHintsPresentationManager {
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return FONT.fontMetrics().stringWidth(myText) + 14;
+      return myFontInfo.fontMetrics().stringWidth(myText) + 14;
     }
 
     @Override
@@ -92,7 +116,7 @@ public class InlineHintsPresentationManager {
         g.setColor(backgroundColor);
         g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
         g.setColor(attributes.getForegroundColor());
-        g.setFont(FONT.getFont());
+        g.setFont(myFontInfo.getFont());
         FontMetrics metrics = g.getFontMetrics();
         Shape savedClip = g.getClip();
         g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)

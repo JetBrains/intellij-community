@@ -848,6 +848,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.reset();
     }
     myFoldingModel.rebuild();
+    myInlayModel.reinitSettings();
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
       if (!myUseNewRendering) {

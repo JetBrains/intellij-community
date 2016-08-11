@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +56,13 @@ public class FontInfo {
   private FontMetrics myFontMetrics = null;
   private boolean myHasGlyphsToBreakDrawingIteration;
   private boolean myCheckedForProblemGlyphs;
+
+  public FontInfo(@NotNull Font font) {
+    myFont = font;
+    mySize = font.getSize();
+    myStyle = font.getStyle();
+    myUseLigatures = TextAttribute.LIGATURES_ON.equals(font.getAttributes().get(TextAttribute.LIGATURES));
+  }
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     this(familyName, size, style, false);    

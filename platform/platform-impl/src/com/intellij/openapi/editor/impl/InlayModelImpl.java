@@ -86,6 +86,13 @@ public class InlayModelImpl implements InlayModel, Disposable {
     }, this);
   }
 
+  void reinitSettings() {
+    myInlayTree.process(inlay -> {
+      inlay.updateSize();
+      return true;
+    });
+  }
+
   @Override
   public void dispose() {
     myInlayTree.dispose();

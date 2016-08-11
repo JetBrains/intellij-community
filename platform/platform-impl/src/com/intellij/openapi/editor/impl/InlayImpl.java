@@ -26,8 +26,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
   @NotNull
   private final Type myType;
-  private final int myWidthInPixels;
-  private final int myHeightInPixels;
+  private int myWidthInPixels;
+  private int myHeightInPixels;
   @NotNull
   private final Renderer myRenderer;
 
@@ -36,16 +36,20 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     myEditor = editor;
     myOriginalOffset = offset;
     myType = type;
-    myWidthInPixels = renderer.calcWidthInPixels(editor);
-    if (type == Type.INLINE && myWidthInPixels <= 0) {
+    myRenderer = renderer;
+    updateSize();
+    myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
+  }
+
+  void updateSize() {
+    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
+    if (myType == Type.INLINE && myWidthInPixels <= 0) {
       throw new IllegalArgumentException("Positive width should be defined for an inline inlay");
     }
-    myHeightInPixels = renderer.calcHeightInPixels(editor);
+    myHeightInPixels = myRenderer.calcHeightInPixels(myEditor);
     if (myHeightInPixels <= 0) {
       throw new IllegalArgumentException("Inlay height should be positive");
     }
-    myRenderer = renderer;
-    myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, 0);
   }
 
   @Override
