@@ -76,7 +76,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addModifier(PsiModifier.FINAL);
     }
 
-    if (myProperty.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (myProperty.hasModifierProperty(PsiModifier.ABSTRACT) && GrTraitUtil.isTrait(myProperty.getContainingClass())) {
       addModifier(PsiModifier.ABSTRACT);
     }
 
