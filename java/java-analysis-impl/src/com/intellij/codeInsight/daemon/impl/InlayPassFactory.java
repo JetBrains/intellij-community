@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
         String text = descriptor.getPlaceholderText();
         assert text != null;
         int colonPos = text.indexOf(':');
-        myAnnotations.put(descriptor.getRange().getStartOffset(), text.substring(0, colonPos + 2));
+        myAnnotations.put(descriptor.getRange().getStartOffset(), text.substring(0, colonPos));
       }
     }
 
@@ -177,7 +178,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
   }
 
   private static class MyRenderer extends Inlay.Renderer {
-    private static final FontInfo FONT = new FontInfo(Font.SANS_SERIF, 10, Font.ITALIC);
+    private static final FontInfo FONT = new FontInfo("Segoe UI", 11, Font.PLAIN);
     private final String myText;
 
     private MyRenderer(String text) {
@@ -186,7 +187,7 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      return FONT.fontMetrics().stringWidth(myText) + 4;
+      return FONT.fontMetrics().stringWidth(myText) + 14;
     }
 
     @Override
@@ -194,14 +195,19 @@ public class InlayPassFactory extends AbstractProjectComponent implements TextEd
       TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
       if (attributes != null) {
         GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        g.setColor(attributes.getBackgroundColor());
+        Color backgroundColor = attributes.getBackgroundColor();
+        g.setColor(ColorUtil.brighter(backgroundColor, 1));
+        g.fillRoundRect(r.x + 1, r.y + 1, r.width - 2, r.height - 4, 4, 4);
+        g.setColor(ColorUtil.darker(backgroundColor, 1));
+        g.fillRoundRect(r.x + 1, r.y + 3, r.width - 2, r.height - 4, 4, 4);
+        g.setColor(backgroundColor);
         g.fillRoundRect(r.x + 1, r.y + 2, r.width - 2, r.height - 4, 4, 4);
         g.setColor(attributes.getForegroundColor());
         g.setFont(FONT.getFont());
         FontMetrics metrics = g.getFontMetrics();
         Shape savedClip = g.getClip();
         g.clipRect(r.x + 2, r.y + 3, r.width - 4, r.height - 6); // support drawing in smaller rectangle (used in animation)
-        g.drawString(myText, r.x + 4, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2);
+        g.drawString(myText, r.x + 7, r.y + (r.height + metrics.getAscent() - metrics.getDescent()) / 2 - 1);
         g.setClip(savedClip);
         config.restore();
       }
