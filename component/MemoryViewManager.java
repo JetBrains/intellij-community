@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
 import org.jetbrains.debugger.memory.toolwindow.MemoryViewToolWindowFactory;
 
@@ -67,6 +68,7 @@ public class MemoryViewManager extends ApplicationComponent.Adapter
     myDispatcher.removeListener(listener);
   }
 
+  @Nullable
   public ToolWindow getToolWindow(Project project) {
     return ToolWindowManager.getInstance(project).getToolWindow(MemoryViewToolWindowFactory.TOOL_WINDOW_ID);
   }
